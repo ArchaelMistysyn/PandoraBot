@@ -3,6 +3,8 @@ import commands
 from discord.ext import commands
 import csv
 import random
+import pandas as pd
+
 
 # manage fortress bosses
 def spawn_boss() -> str:
@@ -45,6 +47,31 @@ def get_message_id() -> int:
         message_value = int(f.read())
     return message_value
 
+def get_random_bossname() -> str:
+    boss_name = ""
+
+    boss_data = pd.read_csv("BossOptions.csv")
+
+    # generate boss name
+    random_number = random.randint(0, len(boss_data.fortress_name_a))
+    boss_name = boss_data.fortress_name_a[random_number]
+    random_number = random.randint(0, len(boss_data.fortress_name_b))
+    boss_name += " " + boss_data.fortress_name_b[random_number] + ", "
+    random_number = random.randint(0, 100)
+    checker = 1
+    if random_number <1:
+        boss_name = "Starlit Fortune, Heavenly Treasury"
+    else:
+        for index, row in boss_data.iterrows():
+            checker += row['boss_spawn_rate']
+            print(row['boss_spawn_rate'])
+            if checker < random_number:
+                boss_tier = row['boss_tier']
+                boss_name += boss_tier
+                break
+    print(boss_name)
+    return boss_name
+
 
 def store_boss_details(channel_id: int, message_id: int) -> str:
     # store channel id
@@ -66,30 +93,40 @@ def store_boss_details(channel_id: int, message_id: int) -> str:
         boss_type_defence = 'melee'
 
     # generate weaknesses
-    boss_weakness_temp = random.randint(1, 8)
-    match boss_weakness_temp:
-        case 1:
-            boss_weakness_temp = "Fire"
-        case 2:
-            boss_weakness_temp = "Water"
-        case 3:
-            boss_weakness_temp = "Wind"
-        case 4:
-            boss_weakness_temp = "Earth"
-        case 5:
-            boss_weakness_temp = "Lightning"
-        case 6:
-            boss_weakness_temp = "Light"
-        case 7:
-            boss_weakness_temp = "Shadow"
-        case 8:
-            boss_weakness_temp = "celestial"
-        case _:
-            boss_weakness_temp = "Blood"
+    boss_elemental_weakness = ["Fire", "Water"]
+    weakness_count = 0
+    while weakness_count < 2:
+        boss_weakness_temp = random.randint(1, 8)
+        match boss_weakness_temp:
+            case 1:
+                boss_weakness_temp = "Fire"
+            case 2:
+                boss_weakness_temp = "Water"
+            case 3:
+                boss_weakness_temp = "Wind"
+            case 4:
+                boss_weakness_temp = "Earth"
+            case 5:
+                boss_weakness_temp = "Lightning"
+            case 6:
+                boss_weakness_temp = "Light"
+            case 7:
+                boss_weakness_temp = "Shadow"
+            case 8:
+                boss_weakness_temp = "celestial"
+            case _:
+                boss_weakness_temp = "Blood"
+        if weakness_count == 0:
+            boss_elemental_weakness[weakness_count] = boss_weakness_temp
+            weakness_count += 1
+        elif weakness_count == 1 and boss_weakness_temp != boss_elemental_weakness[0]:
+            boss_elemental_weakness[weakness_count] = boss_weakness_temp
+            weakness_count += 1
+        else:
+            weakness_count += 1
 
 
-    boss_name = get_random_bosstier() + " "
-    boss_name += get_random_bossname_a() + get_random_bussname_b()+ get_random_bussname_c()
+    boss_name = get_random_bossname()
 
     with open(filename, 'w', newline='') as file:
         writer = csv.writer(file)

@@ -52,3 +52,15 @@ def test_create_csv() -> str:
                          num_rolls, wpn_rolls, wpn_rolls_value])
 
     return 'success'
+
+
+def read_custom_weapon(filename: str, weapon_id: int) -> str:
+    weapon_info = ''
+    with open('filename.csv', newline='') as csvfile:
+        reader = csv.DictReader(csvfile)
+        for row in reader:
+            if row['wpn_id']==weapon_id:
+                weapon_info = row
+
+
+    return weapon_info
