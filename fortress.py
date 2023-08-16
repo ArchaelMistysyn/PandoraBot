@@ -4,17 +4,18 @@ from discord.ext import commands
 import csv
 import random
 import pandas as pd
+import os
 
 
 # manage fortress bosses
 def spawn_boss() -> str:
     # return a random boss object?
-    return 'active boss post - details will go here'
+    return f'`{get_random_bossname()} \n has appeared!`'
 
 
 def update_existing_boss() -> str:
     # existing boss post details will update.
-    return f'The active boss post has been named to {get_random_bossname()}'
+    return f'`{get_random_bossname()} \n has appeared!`'
 
 
 def check_existing_boss(message_id: int) -> bool:
@@ -44,7 +45,10 @@ def get_message_id() -> int:
         print(e)
         message_value = 0
     else:
-        message_value = int(f.read())
+        if os.path.getsize('messageid.txt') == 0:
+            message_value = 0
+        else:
+            message_value = int(f.read())
     return message_value
 
 

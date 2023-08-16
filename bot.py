@@ -26,7 +26,7 @@ def run_discord_bot():
 
     @client.event
     async def on_ready():
-        print(f'{client.user} is now running!')
+        print(f'{client.user} Online!')
         # write line to inventory file
         # outcome = inventory.test_create_csv()
         # print(f'{outcome}!')
@@ -49,7 +49,7 @@ def run_discord_bot():
                 fortress.store_boss_details(channel_id, message_id)
         else:
             # important to set this to the correct id
-            fortress.store_boss_details(1140881391840673883, message_id)
+            fortress.store_boss_details(1141256394662760498, message_id)
 
     @client.event
     async def on_message(message):
@@ -66,5 +66,16 @@ def run_discord_bot():
             await send_message(message, user_message, is_private=True)
         else:
             await send_message(message, user_message, is_private=False)
+
+            if user_message == 'testreroll':
+                channel_id = fortress.get_channel_id()
+                message_id = fortress.get_message_id()
+                if channel_id != 0:
+                    channel = client.get_channel(channel_id)
+                    updated_boss = fortress.update_existing_boss()
+                    message = await channel.fetch_message(message_id)
+                    await message.edit(content=updated_boss)
+
+
 
     client.run(TOKEN)

@@ -25,6 +25,3 @@ def get_response(message: str) -> str:
         response += ' \n Please react :sparkle: to open the box.'
         return response
 
-    if p_message == 'testreroll':
-        response = fortress.update_existing_boss()
-        return response
