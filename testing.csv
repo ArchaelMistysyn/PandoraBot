@@ -1,0 +1,2 @@
+wpn_id,wpn_name,wpn_enhancement,wpn_sharpness,num_elements,wpn_elements,wpn_base_dmg_min,wpn_base_dmg_max,wpn_material,wpn_base_typenum_rolls,item_rolls,wpn_rolls_value,
+1,+0 Sturdy Wooden Sword,0,0,2,"['Fire', 'Lightning']",26,50,Wooden,Sword,1,['Elemental Penetration'],['10%']
