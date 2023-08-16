@@ -1,5 +1,5 @@
 import discord
-import commands
+import chatcommands
 from discord.ext import commands
 import csv
 import random
@@ -14,7 +14,7 @@ def spawn_boss() -> str:
 
 def update_existing_boss() -> str:
     # existing boss post details will update.
-    return 'The boss information successfully updated'
+    return f'The active boss post has been named to {get_random_bossname()}'
 
 
 def check_existing_boss(message_id: int) -> bool:
@@ -47,29 +47,40 @@ def get_message_id() -> int:
         message_value = int(f.read())
     return message_value
 
+
 def get_random_bossname() -> str:
     boss_name = ""
 
-    boss_data = pd.read_csv("BossOptions.csv")
+    boss_data = pd.read_csv("fortressname.csv")
 
     # generate boss name
-    random_number = random.randint(0, len(boss_data.fortress_name_a))
+    random_number = random.randint(0, boss_data['fortress_name_a'].count())
     boss_name = boss_data.fortress_name_a[random_number]
-    random_number = random.randint(0, len(boss_data.fortress_name_b))
+    random_number = random.randint(0, boss_data['fortress_name_b'].count())
     boss_name += " " + boss_data.fortress_name_b[random_number] + ", "
-    random_number = random.randint(0, 100)
+    random_number = random.randint(1, 100)
+    # print(random_number)
     checker = 1
-    if random_number <1:
+    z1 = 0
+    z2 = 0
+    if random_number == 1:
         boss_name = "Starlit Fortune, Heavenly Treasury"
     else:
-        for index, row in boss_data.iterrows():
-            checker += row['boss_spawn_rate']
-            print(row['boss_spawn_rate'])
-            if checker < random_number:
-                boss_tier = row['boss_tier']
+        for x in boss_data['spawn_rate']:
+            checker += x
+            if random_number <= checker:
+                break
+            else:
+                z1 += 1
+
+        for y in boss_data['fortress_tier']:
+            if z1 == z2:
+                boss_tier = y
                 boss_name += boss_tier
                 break
-    print(boss_name)
+            else:
+                z2 += 1
+
     return boss_name
 
 
@@ -125,9 +136,8 @@ def store_boss_details(channel_id: int, message_id: int) -> str:
         else:
             weakness_count += 1
 
-
     boss_name = get_random_bossname()
-
+    """
     with open(filename, 'w', newline='') as file:
         writer = csv.writer(file)
         field = ["boss_id", "boss_name",
@@ -139,7 +149,7 @@ def store_boss_details(channel_id: int, message_id: int) -> str:
         writer.writerow([boss_id, boss_name,
                          boss_type_defence, boss_weakness_a, boss_weakness_b,
                          boss_tier, boss_base_hp, boss_current_hp, boss_regen_rate,
-                         boss_active_duration, boss_received_damage_byplayer, boss_received_damage_rate])
+                         boss_active_duration, boss_received_damage_byplayer, boss_received_damage_rate])"""
 
     return 'success'
 

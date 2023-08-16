@@ -1,5 +1,5 @@
 import discord
-import commands
+import chatcommands
 from discord.ext import commands
 import json
 import asyncio
@@ -11,7 +11,7 @@ import pandas as pd
 # chat responses
 async def send_message(message, user_message, is_private):
     try:
-        response = commands.get_response(user_message)
+        response = chatcommands.get_response(user_message)
         await message.author.send(response) if is_private else await message.channel.send(response)
     except Exception as e:
         print(e)

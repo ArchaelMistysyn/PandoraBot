@@ -1,4 +1,5 @@
 import random
+import fortress
 
 
 # text commands
@@ -22,4 +23,8 @@ def get_response(message: str) -> str:
         response += ' You find a floating box, but correct yourself, as you find that it lacks too much form'
         response += ' to be called a box. You lay your hand on the incandescent light as if it was predetermined to be'
         response += ' \n Please react :sparkle: to open the box.'
+        return response
+
+    if p_message == 'testreroll':
+        response = fortress.update_existing_boss()
         return response
