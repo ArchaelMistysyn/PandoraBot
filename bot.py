@@ -39,17 +39,19 @@ def run_discord_bot():
             channel = client.get_channel(channel_id)
 
             if fortress.check_existing_boss(message_id):
-                updated_boss = fortress.update_existing_boss()
+                boss_object = fortress.spawn_boss(channel_id, message_id)
+                updated_boss = boss_object
                 message = await channel.fetch_message(message_id)
-                await message.edit(content=updated_boss)
+                await message.edit(content=str(updated_boss))
             else:
-                boss_post = fortress.spawn_boss()
-                sent_message = await channel.send(content=boss_post)
-                message_id = sent_message.id
-                fortress.store_boss_details(channel_id, message_id)
+                # initialize boss post
+                fortress.store_boss_ids(channel_id, message_id)
+                boss_object = fortress.spawn_boss(channel_id, message_id)
+                sent_message = await channel.send(content=str(boss_object))
+                boss_object.message_id = sent_message.id
         else:
             # important to set this to the correct id
-            fortress.store_boss_details(1141256394662760498, message_id)
+            fortress.store_boss_ids(1141256394662760498, message_id)
 
     @client.event
     async def on_message(message):
@@ -72,9 +74,9 @@ def run_discord_bot():
                 message_id = fortress.get_message_id()
                 if channel_id != 0:
                     channel = client.get_channel(channel_id)
-                    updated_boss = fortress.update_existing_boss()
+                    updated_boss = fortress.spawn_boss(channel_id, message_id)
                     message = await channel.fetch_message(message_id)
-                    await message.edit(content=updated_boss)
+                    await message.edit(content=str(updated_boss))
 
 
 
