@@ -334,12 +334,12 @@ def get_boss_descriptor(boss_type: str) -> str:
 
     match boss_type:
         case "Fortress":
-            boss_data = pd.read_csv("Fortressname.csv")
+            boss_data = pd.read_csv("fortressname.csv")
 
             # generate Fortress descriptor
-            random_number = random.randint(0, boss_data['Fortress_name_a'].count())
+            random_number = random.randint(0, boss_data['fortress_name_a'].count())
             boss_descriptor = boss_data.Fortress_name_a[random_number]
-            random_number = random.randint(0, boss_data['Fortress_name_b'].count())
+            random_number = random.randint(0, boss_data['fortress_name_b'].count())
             boss_descriptor += " " + boss_data.Fortress_name_b[random_number] + ", "
 
         case "Primordial":
