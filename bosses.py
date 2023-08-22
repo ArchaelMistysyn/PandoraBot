@@ -6,7 +6,6 @@ import random
 import pandas as pd
 import os
 
-
 # Boss class
 class CurrentBoss:
     def __init__(self, boss_type, boss_name, boss_tier, boss_iteration,
@@ -26,8 +25,9 @@ class CurrentBoss:
 
     # return the boss display string
     def __str__(self):
-        boss_output = f"{self.boss_name}\n {self.boss_type}\n ({self.boss_cHP} / {self.boss_mHP})\n"
-        boss_output += f"\n Weakness: {self.boss_typeweak}   "
+        boss_output = f"**{self.boss_name}**\nTier {self.tier} {self.boss_type}"
+        boss_output += f"\n({self.boss_cHP} / {self.boss_mHP})\n"
+        boss_output += f"Weakness: {self.boss_typeweak}"
         boss_output += str(self.boss_eleweak_a) + str(self.boss_eleweak_b)
         return boss_output
     # store the boss data in a csv
@@ -39,7 +39,7 @@ class CurrentBoss:
         x = 0
 
 
-def spawn_boss(channel_id: int, message_id: int, boss_type_num: int) -> CurrentBoss:
+def spawn_boss(channel_id: int, boss_type_num: int) -> CurrentBoss:
     # initialize boss information
     new_boss_tier = get_random_bosstier()
     match boss_type_num:
@@ -63,6 +63,8 @@ def spawn_boss(channel_id: int, message_id: int, boss_type_num: int) -> CurrentB
     while boss_eleweak_a == boss_eleweak_b:
         boss_eleweak_b = get_boss_eleweak()
 
+    message_id=0
+
     # create the boss object
     boss_object = CurrentBoss(boss_type, new_boss_name, new_boss_tier, boss_iteration,
                                        boss_type_weak, boss_eleweak_a, boss_eleweak_b, channel_id, message_id)
@@ -75,6 +77,13 @@ def check_existing_boss(message_id: int) -> bool:
     else:
         return True
 
+def calculate_hp(boss_object: CurrentBoss) -> bool:
+    if boss_object.boss_cHP <= 0:
+        isAlive = False
+    else:
+        isAlive = True
+
+    return isAlive
 
 def get_channel_id() -> int:
     try:
@@ -87,19 +96,19 @@ def get_channel_id() -> int:
     return channel_value
 
 
-def get_message_id() -> int:
-    try:
-        f = open("messageid.txt", "r")
-    except Exception as e:
-        print(e)
-        message_value = 0
-    else:
-        if os.path.getsize('messageid.txt') == 0:
-            message_value = 0
-        else:
-            message_value = int(f.read())
-    return message_value
+def drawProgressBar(d, x, y, w, h, progress, bg="black", fg="red"):
+    # draw background
+    d.ellipse((x+w, y, x+h+w, y+h), fill=bg)
+    d.ellipse((x, y, x+h, y+h), fill=bg)
+    d.rectangle((x+(h/2), y, x+w+(h/2), y+h), fill=bg)
 
+    # draw progress bar
+    w *= progress
+    d.ellipse((x+w, y, x+h+w, y+h),fill=fg)
+    d.ellipse((x, y, x+h, y+h),fill=fg)
+    d.rectangle((x+(h/2), y, x+w+(h/2), y+h),fill=fg)
+
+    return d
 
 def get_random_bosstier() -> int:
         random_number = random.randint(1, 100)
@@ -160,18 +169,12 @@ def get_boss_typeweak() -> str:
 
 
 # store boss channel and message ids
-def store_boss_ids(channel_id: int, message_id: int) -> str:
+def store_channel_id(channel_id: int) -> str:
     # store channel id
     f = open("channelid.txt", "w")
     f.write(str(channel_id))
     f.close()
-    # store message id
-    f = open("messageid.txt", "w")
-    f.write(str(message_id))
-    f.close()
-    # store boss information
-    filename = 'bosstest.csv'
-    boss_id = 1
+
     return 'success'
 
 
@@ -337,10 +340,10 @@ def get_boss_descriptor(boss_type: str) -> str:
             boss_data = pd.read_csv("fortressname.csv")
 
             # generate Fortress descriptor
-            random_number = random.randint(0, boss_data['fortress_name_a'].count())
-            boss_descriptor = boss_data.Fortress_name_a[random_number]
-            random_number = random.randint(0, boss_data['fortress_name_b'].count())
-            boss_descriptor += " " + boss_data.Fortress_name_b[random_number] + ", "
+            random_number = random.randint(0, (boss_data['fortress_name_a'].count()-1))
+            boss_descriptor = boss_data.fortress_name_a[random_number]
+            random_number = random.randint(0, (boss_data['fortress_name_b'].count()-1))
+            boss_descriptor += " " + boss_data.fortress_name_b[random_number] + ", "
 
         case "Primordial":
             random_number = random.randint(1,10)
