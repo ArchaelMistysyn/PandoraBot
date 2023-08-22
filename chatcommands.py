@@ -1,5 +1,5 @@
 import random
-import fortress
+import bosses
 
 
 # text commands

@@ -59,7 +59,7 @@ def read_custom_weapon(filename: str, weapon_id: int) -> str:
     with open('filename.csv', newline='') as csvfile:
         reader = csv.DictReader(csvfile)
         for row in reader:
-            if row['wpn_id']==weapon_id:
+            if row['wpn_id'] == weapon_id:
                 weapon_info = row
 
 
