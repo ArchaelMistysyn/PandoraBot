@@ -1,0 +1,5 @@
+player_id,wpn_id,wpn_name,num_elements,wpn_elements,wpn_damage_type,wpn_enhancement,wpn_blessing_tier,wpn_material_tier,num_stars,wpn_prefix_values,wpn_suffix_values,wpn_atk_spd,wpn_base_dmg_min,wpn_base_dmg_max
+mistysyn,1,+0 Sturdy Wood Torch,1,<:eshadow:1141653468080242748>,<:emelee:1141654530619088906>,0,Sturdy,Wood,1,,,1.1,1,25
+mistysyn,1,+0 Sturdy Wood Darts,1,<:efire:1141653476816986193>,<:eranged:1141654478748135545>,0,Sturdy,Wood,1,,,1.1,1,25
+mistysyn,1,+0 Sturdy Wood Whip,1,<:eshadow:1141653468080242748>,<:eranged:1141654478748135545>,0,Sturdy,Wood,1,,,1.2,5,30
+mistysyn,1,+0 Sturdy Wood Crossbow,1,<:ewater:1141653475059572779>,<:eranged:1141654478748135545>,0,Sturdy,Wood,1,,,1.1,1,25

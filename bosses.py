@@ -14,7 +14,7 @@ class CurrentBoss:
         self.boss_type = boss_type
         self.boss_name = boss_name
         self.tier = boss_tier
-        self.boss_mHP = (1 + (boss_iteration * .5)) * boss_tier * get_base_hp(boss_type)
+        self.boss_mHP = int((1 + (boss_iteration * .5)) * boss_tier * get_base_hp(boss_type))
         self.boss_cHP = self.boss_mHP
         self.boss_iteration = boss_iteration
         self.boss_typeweak = boss_typeweak
@@ -30,13 +30,16 @@ class CurrentBoss:
         boss_output += f"Weakness: {self.boss_typeweak}"
         boss_output += str(self.boss_eleweak_a) + str(self.boss_eleweak_b)
         return boss_output
-    # store the boss data in a csv
-    def save_boss(self):
-        x = 0
+
 
     # calculate the bosses new hp
-    def calculate_hp(self):
-        x = 0
+    def calculate_hp(self) -> bool:
+        if self.boss_cHP <= 0:
+            isAlive = False
+        else:
+            isAlive = True
+
+        return isAlive
 
 
 def spawn_boss(channel_id: int, boss_type_num: int) -> CurrentBoss:
@@ -57,11 +60,11 @@ def spawn_boss(channel_id: int, boss_type_num: int) -> CurrentBoss:
     new_boss_name = get_boss_name(boss_type, new_boss_tier)
 
     boss_iteration = 0
-    boss_type_weak = get_boss_typeweak()
-    boss_eleweak_a = get_boss_eleweak()
+    boss_type_weak = get_type()
+    boss_eleweak_a = get_element()
     boss_eleweak_b = boss_eleweak_a
     while boss_eleweak_a == boss_eleweak_b:
-        boss_eleweak_b = get_boss_eleweak()
+        boss_eleweak_b = get_element()
 
     message_id=0
 
@@ -77,13 +80,6 @@ def check_existing_boss(message_id: int) -> bool:
     else:
         return True
 
-def calculate_hp(boss_object: CurrentBoss) -> bool:
-    if boss_object.boss_cHP <= 0:
-        isAlive = False
-    else:
-        isAlive = True
-
-    return isAlive
 
 def get_channel_id() -> int:
     try:
@@ -129,43 +125,47 @@ def get_random_bosstier() -> int:
 
 
 # generate ele weakness
-def get_boss_eleweak() -> str:
+def get_element() -> str:
+    # generate an element
     random_number = random.randint(1, 8)
     match random_number:
         case 1:
-            boss_weakness_temp = "<:efire:1141653476816986193>"
+            element_temp = "<:efire:1141653476816986193>"
         case 2:
-            boss_weakness_temp = "<:ewater:1141653475059572779>"
+            element_temp = "<:ewater:1141653475059572779>"
         case 3:
-            boss_weakness_temp = "<:ewind:1141653474480767016>"
+            element_temp = "<:ewind:1141653474480767016>"
         case 4:
-            boss_weakness_temp = "<:eearth:1141653473528664126>"
+            element_temp = "<:eearth:1141653473528664126>"
         case 5:
-            boss_weakness_temp = "<:elightning:1141653471154671698>"
+            element_temp = "<:elightning:1141653471154671698>"
         case 6:
-            boss_weakness_temp = "<:elight:1141653466343800883>"
+            element_temp = "<:elight:1141653466343800883>"
         case 7:
-            boss_weakness_temp = "<:eshadow:1141653468080242748>"
+            element_temp = "<:eshadow:1141653468080242748>"
         case 8:
-            boss_weakness_temp = "<:ecelestial:1141653469938339971>"
+            element_temp = "<:ecelestial:1141653469938339971>"
         case _:
-            boss_weakness_temp = "<a:eshadow2:1141653468965257216>"
+            element_temp = "<a:eshadow2:1141653468965257216>"
 
-    return boss_weakness_temp
+    return element_temp
 
 
 # generate type weakness
-def get_boss_typeweak() -> str:
-    # generate weaknesses
+def get_type() -> str:
+    # generate a type
     random_number = random.randint(1, 2)
     match random_number:
         case 1:
-            boss_type_defence = '<:eranged:1141654478748135545>'
+            type_temp = '<:eranged:1141654478748135545>'
         case 2:
-            boss_type_defence = '<:emelee:1141654530619088906>'
+            type_temp = '<:emelee:1141654530619088906>'
+        case 3:
+            type_temp = "<:emagical:1143754281846059119>"
         case _:
-            boss_type_defence = 'error'
-    return boss_type_defence
+           type_temp = "<:esummon:1143754335478616114>"
+
+    return type_temp
 
 
 # store boss channel and message ids

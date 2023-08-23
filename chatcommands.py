@@ -1,5 +1,6 @@
 import random
 import bosses
+import inventory
 
 
 # text commands
@@ -8,9 +9,6 @@ def get_response(message: str) -> str:
 
     if p_message == 'status':
         return 'Im running cutie'
-
-    if p_message == 'random':
-        return str(random.randint(1,100))
 
     if p_message == '!help':
         return '`Try typing /begin adventure`'
@@ -24,4 +22,5 @@ def get_response(message: str) -> str:
         response += ' to be called a box. You lay your hand on the incandescent light as if it was predetermined to be'
         response += ' \n Please react :sparkle: to open the box.'
         return response
+
 
