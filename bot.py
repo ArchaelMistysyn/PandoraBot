@@ -5,8 +5,10 @@ import asyncio
 import inventory
 import bosses
 import random
+import player
+import damagecalc
+import chatcommands
 from discord import embeds
-from PIL import Image, ImageFont, ImageDraw, ImageEnhance
 
 
 # run the bot
@@ -16,50 +18,85 @@ def run_discord_bot():
     intents.message_content = True
     pandora_bot = Bot(command_prefix='!', intents=intents)
 
+    # handle username changes
+    @pandora_bot.event
+    async def on_user_update(before, after):
+        if before.name != after.name:
+            temp_player = player.get_player_by_name(before.name)
+            temp_player.update_player_name(after.name)
+
+    # bot startup actions
     @pandora_bot.event
     async def on_ready():
         print(f'{pandora_bot.user} Online!')
-        # write line to inventory file
-        # outcome = inventory.test_create_csv()
-        # print(f'{outcome}!')
 
-        # run the active boss. text files should be initialized to 0 before running.
+        # get boss channel info
         channel_id = bosses.get_channel_id()
-        message_id = 0
-        if channel_id != 0:
-            channel = pandora_bot.get_channel(channel_id)
+        channel = pandora_bot.get_channel(channel_id)
 
-            # initialize the boss post
-            boss_object = bosses.spawn_boss(channel_id, 1)
-            out = Image.new("RGB", (150, 100), (255, 255, 255))
-            d = ImageDraw.Draw(out)
-            d = bosses.drawProgressBar(d, 10, 10, 100, 25, 1)
-            # out.save("output.jpg")
-
-            sent_message = await channel.send(content=str(boss_object))
-            boss_object.message_id = sent_message.id
-
-            # e = discord.embed(title = "embed", url = "https://r2.starryai.com/results/725215039/7fddb218-4199-45b2-bba6-0e2a04a3e4d7.webp")
-            # await channel.send(embed=e)
-            bosses.store_channel_id(channel_id)
+        # register all members
+        member_list = channel.guild.members
+        for x in member_list:
+            player_x = player.PlayerProfile()
+            player_x.player_name = x
+            player_x.add_new_player()
 
         # set timer 1 minute
-        pandora_bot.loop.create_task(timed_task(60, boss_object))
+        pandora_bot.loop.create_task(timed_task(60, channel_id, channel))
 
     @pandora_bot.event
-    async def timed_task(duration_seconds, boss_object):
-        active_boss = boss_object
-        channel_id = active_boss.boss_channel_id
-        if channel_id != 0:
-            channel = pandora_bot.get_channel(channel_id)
+    async def timed_task(duration_seconds, channel_id, channel):
 
+        # initialize channel info
+        bosses.store_channel_id(channel_id)
+
+        # initialize the boss post
+        active_boss = bosses.spawn_boss(channel_id, 1)
+        hp_bar_location = active_boss.draw_boss_hp()
+        sent_message = await channel.send(content=str(active_boss))
+        active_boss.message_id = sent_message.id
+
+        # participate reaction
+        participate = '⚔'
+        await sent_message.add_reaction(participate)
+
+        def battle(reaction, user):
+            return user == channel.author and str(reaction.emoji) == participate
+
+        # e = discord.embed(title = "embed", url = "")
+        # await channel.send(embed=e)
+
+        # update boss on a timed loop
         while True:
+            try:
+                reaction, user = await pandora_bot.wait_for("reaction_add", timeout=600, check=battle)
+                player_object = player.PlayerProfile()
+                player_object.player_name = str(user)
+                player_object.player_id = player.get_player_by_name(str(player_object.player_name))
+                if str(reaction.emoji) == participate:
+                    is_participating = False
+                    for x in active_boss.participating_players:
+                        if x == player:
+                            is_participating = True
+                    if not is_participating:
+                        active_boss.participating_players.append(player_object.player_name)
+                        player_object.get_equipped()
+                        active_boss.player_dmg_min.append(damagecalc.get_dmg_min(player_object))
+                        active_boss.player_dmg_max.append(damagecalc.get_dmg_max(player_object))
+
+                    status = "You have joined the raid!"
+                    await channel.send(status)
+                    break
+            except Exception as e:
+                print(e)
+
+            total_player_damage = 0
             await asyncio.sleep(duration_seconds)
-            player1_damage = 1000
-            player2_damage = 2000
-            player3_damage = 3000
-            total_player_damage = player1_damage + player2_damage + player3_damage
-            active_boss.boss_cHP -= total_player_damage
+            for x in active_boss.player_dmg_min:
+                total_player_damage += x
+            for y in active_boss.player_dmg_max:
+                total_player_damage += y
+            active_boss.boss_cHP -= total_player_damage/2
 
             if active_boss.calculate_hp():
                 # update boss info
@@ -77,13 +114,13 @@ def run_discord_bot():
 
                 # spawn a new boss
                 match active_boss.boss_type:
-                    case "fortress":
+                    case "Fortress":
                         if random_number == 2:
                             new_boss_type = 2
-                    case "dragon":
+                    case "Dragon":
                         if random_number == 2:
                             new_boss_type = 3
-                    case "primordial":
+                    case "Primordial":
                         new_boss_type = 1
                     case _:
                         error = "this boss should not be a Paragon"
@@ -101,36 +138,178 @@ def run_discord_bot():
             await channel.send(f'This command is on a {hours} hour cooldown' )
         raise error
 
-    @pandora_bot.command(name='lab', help="run a labyrinth")
+    @pandora_bot.command(name='lab', help="**!lab** to run a daily labyrinth")
     @commands.cooldown(1, 60 * 60 * 24, commands.BucketType.user)
     async def lab(channel):
-        weapon_object = inventory.CustomWeapon(channel.author)
+        command_user = player.PlayerProfile
+        command_user.player_name = channel.author
+        command_user.player_id = player.get_player_by_name(command_user.player_name)
+        weapon_object = inventory.CustomWeapon(command_user.player_id)
         response = "You found a tier " + str(weapon_object.item_base_tier) + " weapon!\n"
         response += str(weapon_object)
         response += "\n\nWould you like to keep or discard this item?"
         message = await channel.send(response)
 
-        keep = '✅'
-        discard = '❌'
+        keep_weapon = '☑️'
+        discard_weapon = '🚫'
 
-        await message.add_reaction(keep)
-        await message.add_reaction(discard)
+        await message.add_reaction(keep_weapon)
+        await message.add_reaction(discard_weapon)
 
         def check(reaction, user):
-            return user == channel.author and str(reaction.emoji) in [keep, discard]
+            return user == channel.author and str(reaction.emoji) in [keep_weapon, discard_weapon]
 
         while True:
             try:
                 reaction, user = await pandora_bot.wait_for("reaction_add", timeout=60, check=check)
 
-                if str(reaction.emoji) == keep:
+                if str(reaction.emoji) == keep_weapon:
                     if not inventory.if_exists("inventory.csv", weapon_object.item_id):
                         status = inventory.inventory_add_weapon(weapon_object)
                         await channel.send(status)
                         break
 
-                if str(reaction.emoji) == discard:
+                if str(reaction.emoji) == discard_weapon:
                     await channel.send('You have discarded the item')
+                    break
+            except Exception as e:
+                print(e)
+
+    @pandora_bot.command(name='dung', help="**!dung** to run a daily dungeon")
+    @commands.cooldown(1, 60 * 60 * 24, commands.BucketType.user)
+    async def dung(channel):
+        command_user = player.PlayerProfile
+        command_user.player_name = channel.author
+        command_user.player_id = player.get_player_by_name(command_user.player_name)
+        armour_object = inventory.CustomArmour(command_user.player_id)
+        response = "You found a tier " + str(armour_object.item_base_tier) + " armour!\n"
+        response += str(armour_object)
+        response += "\n\nWould you like to keep or discard this item?"
+        message = await channel.send(response)
+
+        keep_armour = '✅'
+        discard_armour = '❌'
+
+        await message.add_reaction(keep_armour)
+        await message.add_reaction(discard_armour)
+
+        def check(reaction, user):
+            return user == channel.author and str(reaction.emoji) in [keep_armour, discard_armour]
+
+        while True:
+            try:
+                reaction, user = await pandora_bot.wait_for("reaction_add", timeout=60, check=check)
+
+                if str(reaction.emoji) == keep_armour:
+                    if not inventory.if_exists("inventory.csv", armour_object.item_id):
+                        status = inventory.inventory_add_armour(armour_object)
+                        await channel.send(status)
+                        break
+
+                if str(reaction.emoji) == discard_armour:
+                    await channel.send('You have discarded the item')
+                    break
+            except Exception as e:
+                print(e)
+
+    @pandora_bot.command(name='tow', help="**!tow** to run a daily tower")
+    @commands.cooldown(1, 60 * 60 * 24, commands.BucketType.user)
+    async def tow(channel):
+        command_user = player.PlayerProfile
+        command_user.player_name = channel.author
+        command_user.player_id = player.get_player_by_name(command_user.player_name)
+        acc_object = inventory.CustomAccessory(command_user.player_id)
+        response = "You found a tier " + str(acc_object.item_base_tier) + " accessory!\n"
+        response += str(acc_object)
+        response += "\n\nWould you like to keep or discard this item?"
+        message = await channel.send(response)
+
+        keep_accessory = '💍'
+        discard_accessory = '📵'
+
+        await message.add_reaction(keep_accessory)
+        await message.add_reaction(discard_accessory)
+
+        def check(reaction, user):
+            return user == channel.author and str(reaction.emoji) in [keep_accessory, discard_accessory]
+
+        while True:
+            try:
+                reaction, user = await pandora_bot.wait_for("reaction_add", timeout=60, check=check)
+
+                if str(reaction.emoji) == keep_accessory:
+                    if not inventory.if_exists("inventory.csv",acc_object.item_id):
+                        status = inventory.inventory_add_accessory(acc_object)
+                        await channel.send(status)
+                        break
+
+                if str(reaction.emoji) == discard_accessory:
+                    await channel.send('You have discarded the item')
+                    break
+            except Exception as e:
+                print(e)
+
+    @pandora_bot.command(name='equip', help="**!equip itemTYPE itemID** to equip an item")
+    async def equip(channel, item_shortcut, item_id):
+        filename = 'inventory.csv'
+        item_id = item_id.upper()
+        match item_shortcut:
+            case 'weapon':
+                if inventory.if_exists('inventory.csv', item_id):
+                    selected_item = inventory.read_weapon(filename, item_id)
+                    current_user = player.get_player_by_name(str(channel.author))
+                    if current_user.player_id == selected_item.player_owner:
+                        response = current_user.equip(item_shortcut, selected_item.item_id)
+                    else:
+                        response = "wrong item id"
+                else:
+                    response = "wrong item id"
+            case 'armour':
+                if inventory.if_exists('inventory.csv', item_id):
+                    selected_item = inventory.read_armour(filename, item_id)
+                    current_user = player.get_player_by_name(str(channel.author))
+                    if current_user.player_id == selected_item.player_owner:
+                        response = current_user.equip(item_shortcut, selected_item.item_id)
+                    else:
+                        response = "wrong item id"
+                else:
+                    response = "wrong item id"
+            case 'accessory':
+                if inventory.if_exists('inventory.csv', item_id):
+                    selected_item = inventory.read_accessory(filename, item_id)
+                    current_user = player.get_player_by_name(str(channel.author))
+                    if current_user.player_id == selected_item.player_owner:
+                        response = current_user.equip(item_shortcut, selected_item.item_id)
+                    else:
+                        response = "wrong item id"
+                else:
+                    response = "wrong item id"
+            case 'wing':
+                response = "bad input"
+            case 'crest':
+                response = "bad input"
+            case _:
+                response = "Equippable item type not recognized"
+
+        await channel.send(response)
+
+    @pandora_bot.command(name='quest', help="**!quest** to start the story quest")
+    async def quest(channel):
+        # quest progression
+        sparkle = '✨'
+        story_response = chatcommands.get_command_text("!story1")
+        sent_message = await channel.send(content=str(story_response))
+        await sent_message.add_reaction(sparkle)
+
+        def box_open(reaction, user):
+            return user == channel.author and str(reaction.emoji) == sparkle
+
+        while True:
+            try:
+                reaction, user = await pandora_bot.wait_for("reaction_add", timeout=60, check=box_open)
+                if str(reaction.emoji) == sparkle:
+                    status = chatcommands.get_command_text('story2')
+                    await channel.send(status)
                     break
             except Exception as e:
                 print(e)

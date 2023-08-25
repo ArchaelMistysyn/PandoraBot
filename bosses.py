@@ -5,6 +5,7 @@ import csv
 import random
 import pandas as pd
 import os
+from PIL import Image, ImageFont, ImageDraw, ImageEnhance
 
 # Boss class
 class CurrentBoss:
@@ -22,6 +23,9 @@ class CurrentBoss:
         self.boss_eleweak_b = boss_eleweak_b
         self.boss_channel_id = boss_channel_id
         self.boss_message_id = boss_message_id
+        self.participating_players = []
+        self.player_dmg_min = []
+        self.player_dmg_max = []
 
     # return the boss display string
     def __str__(self):
@@ -31,7 +35,6 @@ class CurrentBoss:
         boss_output += str(self.boss_eleweak_a) + str(self.boss_eleweak_b)
         return boss_output
 
-
     # calculate the bosses new hp
     def calculate_hp(self) -> bool:
         if self.boss_cHP <= 0:
@@ -40,6 +43,15 @@ class CurrentBoss:
             isAlive = True
 
         return isAlive
+
+    def draw_boss_hp(self) -> str:
+        # draw the boss hp bar
+        out = Image.new("RGB", (150, 100), (255, 255, 255))
+        d = ImageDraw.Draw(out)
+        d = drawProgressBar(d, 10, 10, 100, 25, 1)
+        image_location = "boss_hp.jpg"
+        out.save(image_location)
+        return image_location
 
 
 def spawn_boss(channel_id: int, boss_type_num: int) -> CurrentBoss:

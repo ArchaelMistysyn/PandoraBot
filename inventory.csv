@@ -1,5 +1,11 @@
-player_id,wpn_id,wpn_name,num_elements,wpn_elements,wpn_damage_type,wpn_enhancement,wpn_blessing_tier,wpn_material_tier,num_stars,wpn_prefix_values,wpn_suffix_values,wpn_atk_spd,wpn_base_dmg_min,wpn_base_dmg_max
-mistysyn,1,+0 Sturdy Wood Torch,1,<:eshadow:1141653468080242748>,<:emelee:1141654530619088906>,0,Sturdy,Wood,1,,,1.1,1,25
-mistysyn,1,+0 Sturdy Wood Darts,1,<:efire:1141653476816986193>,<:eranged:1141654478748135545>,0,Sturdy,Wood,1,,,1.1,1,25
-mistysyn,1,+0 Sturdy Wood Whip,1,<:eshadow:1141653468080242748>,<:eranged:1141654478748135545>,0,Sturdy,Wood,1,,,1.2,5,30
-mistysyn,1,+0 Sturdy Wood Crossbow,1,<:ewater:1141653475059572779>,<:eranged:1141654478748135545>,0,Sturdy,Wood,1,,,1.1,1,25
+player_id,item_id,item_name,num_elements,item_elements,item_damage_type,item_enhancement,item_blessing_tier,item_material_tier,item_num_stars,item_prefix_values,item_suffix_values,item_bonus_stat,item_base_dmg_min,item_base_dmg_max,item_num_sockets,item_inlaid_gem_id
+10001,W1,+0 Enchanted Steel Dagger,1,<:ewind:1141653474480767016>,<:emelee:1141654530619088906>,0,Enchanted,Steel,1,,,1.1,1,25,0,
+10001,A2,+0 Enchanted Steel Armour,0,,,0,Enchanted,Steel,1,,,25,1,25,0,
+10001,Y3,+0 Sparkling Inert Amulet,0,,,0,Sparkling,Inert,1,,,0,1,25,0,
+10001,W4,+0 Faint Essence Golem,1,<:ewater:1141653475059572779>,<:esummon:1143754335478616114>,0,Faint,Essence,1,,,1.1,1,25,0,
+10001,A5,+0 Enchanted Steel Armour,0,,,0,Enchanted,Steel,1,,,25,1,25,0,
+10001,Y6,+0 Sparkling Inert Ring,0,,,0,Sparkling,Inert,1,,,0,1,25,0,
+10001,W7,+0 Faint Essence Golem,1,<:elight:1141653466343800883>,<:esummon:1143754335478616114>,0,Faint,Essence,1,,,1.1,1,25,0,
+10001,A7,+0 Enchanted Steel Armour,0,,,0,Enchanted,Steel,1,,,25,1,25,0,
+10001,Y7,+0 Sparkling Inert Ring,0,,,0,Sparkling,Inert,1,,,0,1,25,0,
+10001,Y10,+0 Sparkling Inert Ring,0,,,0,Sparkling,Inert,1,,,0,10,35,0,
