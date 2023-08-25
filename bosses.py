@@ -38,11 +38,11 @@ class CurrentBoss:
     # calculate the bosses new hp
     def calculate_hp(self) -> bool:
         if self.boss_cHP <= 0:
-            isAlive = False
+            is_alive = False
         else:
-            isAlive = True
+            is_alive = True
 
-        return isAlive
+        return is_alive
 
     def draw_boss_hp(self) -> str:
         # draw the boss hp bar
