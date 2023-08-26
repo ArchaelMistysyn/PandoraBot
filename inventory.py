@@ -4,7 +4,7 @@ import bosses
 import damagecalc
 import pandas as pd
 import player
-
+import discord
 
 class CustomItem:
     def __init__(self, player_owner):
@@ -40,6 +40,8 @@ class CustomItem:
         self.item_num_stars = 1
         self.item_suffix_values = ""
         self.item_prefix_values = ""
+        self.item_material_tier = "Iron"
+        self.item_blessing_tier = "Inert"
         self.item_enhancement = 0
         self.item_num_elements = 0
         self.item_elements = ""
@@ -53,7 +55,7 @@ class CustomWeapon(CustomItem):
         CustomItem.__init__(self, player_owner)
 
         # initialize item_id
-        df = pd.read_csv('inventory.csv')
+        df = pd.read_csv('cinventory.csv')
         self.item_id = "W" + str(1 + df['item_id'].count())
 
         # generate weapon specifications
@@ -61,12 +63,9 @@ class CustomWeapon(CustomItem):
         self.item_type = generate_weapon_base(self.item_base_tier, self.item_damage_type)
 
         # generate the weapon name
-        if self.item_damage_type != "<:esummon:1143754335478616114>":
-            self.item_material_tier = "Steel"
-            self.item_blessing_tier = "Enchanted"
-        else:
-            self.item_blessing_tier = "Faint"
-            self.item_material_tier = "Essence"
+        if self.item_damage_type == "<:esummon:1143754335478616114>":
+            self.item_blessing_tier = "Standard"
+            self.item_material_tier = "Illusion"
 
         # set attack speed
         match self.item_base_tier:
@@ -88,22 +87,12 @@ class CustomWeapon(CustomItem):
         # calculate item's damage per hit
         self.item_damage_min = damagecalc.item_damage_calc(self.base_damage_min, self.item_material_tier,
                                                            self.item_blessing_tier)
-        self.item_damage_max = damagecalc.item_damage_calc(self.base_damage_min, self.item_material_tier,
+        self.item_damage_max = damagecalc.item_damage_calc(self.base_damage_max, self.item_material_tier,
                                                            self.item_blessing_tier)
 
         # set the item name
         self.item_name = generate_item_name(self.item_enhancement, self.item_blessing_tier, self.item_material_tier,
                                             self.item_type)
-
-    # return the weapon display string
-    def __str__(self):
-        item_output = "**" + self.item_name + "**" + "\n"
-        for x in range(self.item_num_stars):
-            item_output += "<:estar1:1143756443967819906>"
-        item_output += "\n" + self.item_damage_type + self.item_elements
-        item_output += "\nDamage Bonus: " + str(self.item_damage_min) + " - " + str(self.item_damage_max)
-        item_output += " Attack Speed: " + str(self.item_bonus_stat) + "/min"
-        return item_output
 
 
 class CustomArmour(CustomItem):
@@ -111,45 +100,35 @@ class CustomArmour(CustomItem):
         CustomItem.__init__(self, player_owner)
 
         # initialize item_id
-        df = pd.read_csv('inventory.csv')
+        df = pd.read_csv('cinventory.csv')
         self.item_id = "A" + str(1 + df['item_id'].count())
 
         # generate armour specifications
         self.item_damage_type = ""
         self.item_type = generate_armour_base(self.item_base_tier)
 
-        self.item_blessing_tier = "Enchanted"
-        self.item_material_tier = "Steel"
-
         # set damage mitigation
-        if self.item_base_tier <= 4:
-            temp_mitigation = 25
-        elif self.item_base_tier <= 3:
-            temp_mitigation = 15
-        elif self.item_base_tier <= 2:
-            temp_mitigation = 10
-        else:
-            temp_mitigation = 5
+        match self.item_base_tier:
+            case 4:
+                temp_mitigation = 25
+            case 3:
+                temp_mitigation = 15
+            case 2:
+                temp_mitigation = 10
+            case _:
+                temp_mitigation = 5
 
         self.item_bonus_stat = temp_mitigation
 
         # calculate item's damage per hit
         self.item_damage_min = damagecalc.item_damage_calc(self.base_damage_min, self.item_material_tier,
                                                            self.item_blessing_tier)
-        self.item_damage_max = damagecalc.item_damage_calc(self.base_damage_min, self.item_material_tier,
+        self.item_damage_max = damagecalc.item_damage_calc(self.base_damage_max, self.item_material_tier,
                                                            self.item_blessing_tier)
 
         # set the item name
         self.item_name = generate_item_name(self.item_enhancement, self.item_blessing_tier, self.item_material_tier,
                                             self.item_type)
-
-    # return the armour display string
-    def __str__(self):
-        item_output = "**" + self.item_name + "**" + "\n"
-        for x in range(self.item_num_stars):
-            item_output += "<:estar1:1143756443967819906>"
-        item_output += "\nDamage Bonus: " + str(self.item_damage_min) + " - " + str(self.item_damage_max)
-        return item_output
 
 
 class CustomAccessory(CustomItem):
@@ -157,33 +136,65 @@ class CustomAccessory(CustomItem):
         CustomItem.__init__(self, player_owner)
 
         # initialize item_id
-        df = pd.read_csv('inventory.csv')
+        df = pd.read_csv('cinventory.csv')
         self.item_id = "Y" + str(1 + df['item_id'].count())
 
         # generate armour specifications
         self.item_damage_type = ""
         self.item_type = generate_accessory_base()
 
-        self.item_blessing_tier = "Sparkling"
-        self.item_material_tier = "Inert"
+        self.item_material_tier = "Crude"
 
+        random_num = random.randint(1,4)
+        # set accessory unique skill
+        match self.item_base_tier:
+            case 4:
+                match random_num:
+                    case 1:
+                        temp_unique_skill = "Curse of Immorality"
+                    case _:
+                        temp_unique_skill = "Perfect Counter"
+            case 3:
+                match random_num:
+                    case 1:
+                        temp_unique_skill = "Coup de Grace"
+                    case 2:
+                        temp_unique_skill = "Final Stand"
+                    case 3:
+                        temp_unique_skill = "Mountain's Will"
+                    case _:
+                        temp_unique_skill = "Inferno's Will"
+            case 2:
+                match random_num:
+                    case 1:
+                        temp_unique_skill = "Breaker"
+                    case 2:
+                        temp_unique_skill = "Last Breath"
+                    case 3:
+                        temp_unique_skill = "Guardian Stance"
+                    case _:
+                        temp_unique_skill = "Onslaught Stance"
+            case _:
+                match random_num:
+                    case 1:
+                        temp_unique_skill = "First Blood"
+                    case 2:
+                        temp_unique_skill = "Hybrid Stance"
+                    case 3:
+                        temp_unique_skill = "Defensive Stance"
+                    case _:
+                        temp_unique_skill = "Offensive Stance"
+
+        self.item_bonus_stat = temp_unique_skill
         # calculate item's damage per hit
         self.item_damage_min = damagecalc.item_damage_calc(self.base_damage_min, self.item_material_tier,
                                                            self.item_blessing_tier)
-        self.item_damage_max = damagecalc.item_damage_calc(self.base_damage_min, self.item_material_tier,
+        self.item_damage_max = damagecalc.item_damage_calc(self.base_damage_max, self.item_material_tier,
                                                            self.item_blessing_tier)
 
         # set the item name
         self.item_name = generate_item_name(self.item_enhancement, self.item_blessing_tier, self.item_material_tier,
                                             self.item_type)
-
-    # return the accessory display string
-    def __str__(self):
-        item_output = "**" + self.item_name + "**" + "\n"
-        for x in range(self.item_num_stars):
-            item_output += "<:estar1:1143756443967819906>"
-        item_output += "\nDamage Bonus: " + str(self.item_damage_min) + " - " + str(self.item_damage_max)
-        return item_output
 
 
 def generate_item_name(item_enhancement, item_blessing_tier, item_material_tier, item_type) -> str:
@@ -192,7 +203,8 @@ def generate_item_name(item_enhancement, item_blessing_tier, item_material_tier,
     return item_name
 
 
-def read_weapon(filename: str, item_id: str) -> CustomWeapon:
+def read_weapon(item_id: str) -> CustomWeapon:
+    filename = 'cinventory.csv'
     with (open(filename, 'r') as f):
         for line in csv.DictReader(f):
             if str(line['item_id']) == str(item_id):
@@ -200,74 +212,104 @@ def read_weapon(filename: str, item_id: str) -> CustomWeapon:
                 target_item = CustomWeapon(player_id)
                 target_item.player_owner = player_id
                 target_item.item_id = item_id
+                target_item.item_name = str(line['item_name'])
                 target_item.item_num_elements = int(line['num_elements'])
                 target_item.item_elements = str(line['item_elements'])
                 target_item.item_damage_type = str(line['item_damage_type'])
                 target_item.item_enhancement = int(line['item_enhancement'])
+                target_item.item_base_tier = int(line['item_base_tier'])
                 target_item.item_blessing_tier = str(line['item_blessing_tier'])
                 target_item.item_material_tier = str(line['item_material_tier'])
                 target_item.item_num_stars = int(line['item_num_stars'])
                 target_item.item_prefix_values = str(line['item_prefix_values'])
                 target_item.item_suffix_values = str(line['item_suffix_values'])
                 target_item.item_bonus_stat = str(line['item_bonus_stat'])
-                target_item.item_base_dmg_min = int(line['item_base_dmg_min'])
-                target_item.item_base_dmg_max = int(line['item_base_dmg_max'])
+                target_item.item_base_damage_min = int(line['item_base_dmg_min'])
+                target_item.item_base_damage_max = int(line['item_base_dmg_max'])
                 target_item.item_num_sockets = int(line['item_num_sockets'])
                 target_item.item_inlaid_gem_id = str(line['item_inlaid_gem_id'])
+                target_item.item_damage_min = damagecalc.item_damage_calc(target_item.item_base_damage_min,
+                                                                          target_item.item_material_tier,
+                                                                          target_item.item_blessing_tier)
+                target_item.item_damage_max = damagecalc.item_damage_calc(target_item.item_base_damage_max,
+                                                                          target_item.item_material_tier,
+                                                                          target_item.item_blessing_tier)
                 break
 
     return target_item
 
 
-def read_armour(filename: str, item_id: str) -> CustomArmour:
+def display_weapon(item_id):
+    x = 1
+
+
+def read_armour(item_id: str) -> CustomArmour:
+    filename = 'cinventory.csv'
     with (open(filename, 'r') as f):
         for line in csv.DictReader(f):
             if str(line['item_id']) == str(item_id):
                 player_id = int(line['player_id'])
-                target_item = CustomWeapon(player_id)
+                target_item = CustomArmour(player_id)
                 target_item.player_owner = player_id
                 target_item.item_id = item_id
+                target_item.item_name = str(line['item_name'])
                 target_item.item_num_elements = int(line['num_elements'])
                 target_item.item_elements = str(line['item_elements'])
                 target_item.item_damage_type = str(line['item_damage_type'])
                 target_item.item_enhancement = int(line['item_enhancement'])
+                target_item.item_base_tier = int(line['item_base_tier'])
                 target_item.item_blessing_tier = str(line['item_blessing_tier'])
                 target_item.item_material_tier = str(line['item_material_tier'])
                 target_item.item_num_stars = int(line['item_num_stars'])
                 target_item.item_prefix_values = str(line['item_prefix_values'])
                 target_item.item_suffix_values = str(line['item_suffix_values'])
                 target_item.item_bonus_stat = str(line['item_bonus_stat'])
-                target_item.item_base_dmg_min = int(line['item_base_dmg_min'])
-                target_item.item_base_dmg_max = int(line['item_base_dmg_max'])
+                target_item.item_base_damage_min = int(line['item_base_dmg_min'])
+                target_item.item_base_damage_max = int(line['item_base_dmg_max'])
                 target_item.item_num_sockets = int(line['item_num_sockets'])
                 target_item.item_inlaid_gem_id = str(line['item_inlaid_gem_id'])
+                target_item.item_damage_min = damagecalc.item_damage_calc(target_item.item_base_damage_min,
+                                                                          target_item.item_material_tier,
+                                                                          target_item.item_blessing_tier)
+                target_item.item_damage_max = damagecalc.item_damage_calc(target_item.item_base_damage_max,
+                                                                          target_item.item_material_tier,
+                                                                          target_item.item_blessing_tier)
                 break
 
     return target_item
 
 
-def read_accessory(filename: str, item_id: str) -> CustomAccessory:
+def read_accessory(item_id: str) -> CustomAccessory:
+    filename = 'cinventory.csv'
     with (open(filename, 'r') as f):
         for line in csv.DictReader(f):
             if str(line['item_id']) == str(item_id):
                 player_id = int(line['player_id'])
-                target_item = CustomWeapon(player_id)
+                target_item = CustomAccessory(player_id)
                 target_item.player_owner = player_id
                 target_item.item_id = item_id
+                target_item.item_name = str(line['item_name'])
                 target_item.item_num_elements = int(line['num_elements'])
                 target_item.item_elements = str(line['item_elements'])
                 target_item.item_damage_type = str(line['item_damage_type'])
                 target_item.item_enhancement = int(line['item_enhancement'])
+                target_item.item_base_tier = int(line['item_base_tier'])
                 target_item.item_blessing_tier = str(line['item_blessing_tier'])
                 target_item.item_material_tier = str(line['item_material_tier'])
                 target_item.item_num_stars = int(line['item_num_stars'])
                 target_item.item_prefix_values = str(line['item_prefix_values'])
                 target_item.item_suffix_values = str(line['item_suffix_values'])
                 target_item.item_bonus_stat = str(line['item_bonus_stat'])
-                target_item.item_base_dmg_min = int(line['item_base_dmg_min'])
-                target_item.item_base_dmg_max = int(line['item_base_dmg_max'])
+                target_item.item_base_damage_min = int(line['item_base_dmg_min'])
+                target_item.item_base_damage_max = int(line['item_base_dmg_max'])
                 target_item.item_num_sockets = int(line['item_num_sockets'])
                 target_item.item_inlaid_gem_id = str(line['item_inlaid_gem_id'])
+                target_item.item_damage_min = damagecalc.item_damage_calc(target_item.item_base_damage_min,
+                                                                          target_item.item_material_tier,
+                                                                          target_item.item_blessing_tier)
+                target_item.item_damage_max = damagecalc.item_damage_calc(target_item.item_base_damage_max,
+                                                                          target_item.item_material_tier,
+                                                                          target_item.item_blessing_tier)
                 break
 
     return target_item
@@ -465,7 +507,7 @@ def generate_accessory_base() -> str:
 # write item to inventory
 def inventory_add_weapon(item: CustomWeapon) -> str:
     # file specifications
-    filename = 'inventory.csv'
+    filename = 'cinventory.csv'
 
     # item name and id
     player_id = item.player_owner
@@ -479,6 +521,7 @@ def inventory_add_weapon(item: CustomWeapon) -> str:
 
     # item damage adjustments
     item_enhancement = item.item_enhancement
+    item_base_tier = item.item_base_tier
     item_blessing_tier = item.item_blessing_tier
     item_material_tier = item.item_material_tier
 
@@ -502,7 +545,7 @@ def inventory_add_weapon(item: CustomWeapon) -> str:
 
         writer.writerow([player_id, item_id, item_name,
                          num_elements, item_elements, item_damage_type,
-                         item_enhancement, item_blessing_tier, item_material_tier,
+                         item_enhancement, item_base_tier, item_blessing_tier, item_material_tier,
                          item_num_stars, item_prefix_values, item_suffix_values,
                          item_bonus_stat, item_base_dmg_min, item_base_dmg_max,
                          item_num_sockets,item_inlaid_gem_id])
@@ -513,7 +556,7 @@ def inventory_add_weapon(item: CustomWeapon) -> str:
 # write item to inventory
 def inventory_add_armour(item: CustomArmour) -> str:
     # file specifications
-    filename = 'inventory.csv'
+    filename = 'cinventory.csv'
 
     # item name and id
     player_id = item.player_owner
@@ -527,6 +570,7 @@ def inventory_add_armour(item: CustomArmour) -> str:
 
     # item damage adjustments
     item_enhancement = item.item_enhancement
+    item_base_tier = item.item_base_tier
     item_blessing_tier = item.item_blessing_tier
     item_material_tier = item.item_material_tier
 
@@ -550,7 +594,7 @@ def inventory_add_armour(item: CustomArmour) -> str:
 
         writer.writerow([player_id, item_id, item_name,
                          num_elements, item_elements, item_damage_type,
-                         item_enhancement, item_blessing_tier, item_material_tier,
+                         item_enhancement, item_base_tier, item_blessing_tier, item_material_tier,
                          item_num_stars, item_prefix_values, item_suffix_values,
                          item_bonus_stat, item_base_dmg_min, item_base_dmg_max,
                          item_num_sockets,item_inlaid_gem_id])
@@ -561,7 +605,7 @@ def inventory_add_armour(item: CustomArmour) -> str:
 # write item to inventory
 def inventory_add_accessory(item: CustomAccessory) -> str:
     # file specifications
-    filename = 'inventory.csv'
+    filename = 'cinventory.csv'
 
     # item name and id
     player_id = item.player_owner
@@ -575,6 +619,7 @@ def inventory_add_accessory(item: CustomAccessory) -> str:
 
     # item damage adjustments
     item_enhancement = item.item_enhancement
+    item_base_tier = item.item_base_tier
     item_blessing_tier = item.item_blessing_tier
     item_material_tier = item.item_material_tier
 
@@ -598,7 +643,7 @@ def inventory_add_accessory(item: CustomAccessory) -> str:
 
         writer.writerow([player_id, item_id, item_name,
                          num_elements, item_elements, item_damage_type,
-                         item_enhancement, item_blessing_tier, item_material_tier,
+                         item_enhancement, item_base_tier, item_blessing_tier, item_material_tier,
                          item_num_stars, item_prefix_values, item_suffix_values,
                          item_bonus_stat, item_base_dmg_min, item_base_dmg_max,
                          item_num_sockets,item_inlaid_gem_id])
@@ -607,9 +652,39 @@ def inventory_add_accessory(item: CustomAccessory) -> str:
 
 
 # check if item already exists. Prevent duplication
-def if_exists(filename: str, item_id: int) -> bool:
+def if_custom_exists(item_id: int) -> bool:
+    filename = 'cinventory.csv'
     df = pd.read_csv(filename)
     if str(item_id) in df['item_id'].values:
         return True
     else:
         return False
+
+
+def display_cinventory(player_id: int) -> str:
+    filename = 'cinventory.csv'
+    df = pd.read_csv(filename)
+    df = df[df['player_id'] == player_id][['item_id', 'item_name']]
+    player_inventory = df.to_string(index=False)
+    return player_inventory
+
+
+def get_gear_tier_colours(base_tier):
+    match base_tier:
+        case 1:
+            tier_colour = discord.Colour.green()
+            tier_emoji = "🟢"
+        case 2:
+            tier_colour = discord.Colour.blue()
+            tier_emoji = "🔵"
+        case 3:
+            tier_colour = discord.Colour.purple()
+            tier_emoji = "🟣"
+        case 4:
+            tier_colour = discord.Colour.gold()
+            tier_emoji = "🟡"
+        case _:
+            tier_colour = discord.Colour.red()
+            tier_emoji = "🔴"
+
+    return tier_colour, tier_emoji

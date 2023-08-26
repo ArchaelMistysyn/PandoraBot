@@ -1,0 +1,7 @@
+player_id,item_id,item_name,num_elements,item_elements,item_damage_type,item_enhancement,item_base_tier,item_blessing_tier,item_material_tier,item_num_stars,item_prefix_values,item_suffix_values,item_bonus_stat,item_base_dmg_min,item_base_dmg_max,item_num_sockets,item_inlaid_gem_id
+10001,W1,+0 Inert Iron Crossbow,1,<:ewind:1141653474480767016>,<:eranged:1141654478748135545>,0,1,Inert,Iron,1,,,1.1,1,25,0,
+10001,A2,+0 Inert Iron Armour,0,,,0,1,Inert,Iron,1,,,5,1,25,0,
+10001,Y3,+0 Inert Crude Earring,0,,,0,1,Inert,Crude,1,,,Hybrid Stance,1,25,0,
+10001,W4,+0 Inert Iron Rod,1,<:ewater:1141653475059572779>,<:emagical:1143754281846059119>,0,2,Inert,Iron,1,,,1.2,5,30,0,
+10003,W5,+0 Inert Iron Lantern,1,<:eshadow:1141653468080242748>,<:emagical:1143754281846059119>,0,1,Inert,Iron,1,,,1.1,1,25,0,
+10001,W6,+0 Inert Iron Ballista,1,<:efire:1141653476816986193>,<:eranged:1141654478748135545>,0,2,Inert,Iron,1,,,1.2,5,30,0,

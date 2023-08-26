@@ -30,8 +30,11 @@ def run_discord_bot():
     async def on_ready():
         print(f'{pandora_bot.user} Online!')
 
-        # get boss channel info
-        channel_id = bosses.get_channel_id()
+        # get boss channel info // needs to be updated for multiple values
+        # channel_id = bosses.get_channel_id()
+        # ctx = pandora_bot.get_channel(channel_id)
+
+        channel_id = 1141256419161673739
         ctx = pandora_bot.get_channel(channel_id)
 
         # register all members
@@ -47,13 +50,44 @@ def run_discord_bot():
     @pandora_bot.event
     async def timed_task(duration_seconds, channel_id, ctx):
 
-        # initialize channel info
-        bosses.store_channel_id(channel_id)
-
         # initialize the boss post
-        active_boss = bosses.spawn_boss(channel_id, 1)
-        hp_bar_location = active_boss.draw_boss_hp()
-        sent_message = await ctx.send(content=str(active_boss))
+        active_boss = bosses.spawn_boss(2)
+        img_link = "https://i.ibb.co/hyT1d8M/dragon.jpg"
+        hp_bar_location = active_boss.draw_boss_hp(active_boss.boss_cHP/active_boss.boss_mHP)
+
+        # build embedded message
+        match active_boss.boss_tier:
+            case 1:
+                tier_colour = discord.Colour.green()
+                life_emoji = "💚"
+            case 2:
+                tier_colour = discord.Colour.blue()
+                life_emoji = "💙"
+            case 3:
+                tier_colour = discord.Colour.purple()
+                life_emoji = "💜"
+            case 4:
+                tier_colour = discord.Colour.gold()
+                life_emoji = "💛"
+            case _:
+                tier_colour = discord.Colour.red()
+                life_emoji = "❤️"
+
+        boss_title = f'{active_boss.boss_name}'
+        boss_field = f'Tier {active_boss.boss_tier} {active_boss.boss_type}'
+        boss_hp = f'{life_emoji}({active_boss.boss_cHP} / {active_boss.boss_mHP})'
+        boss_weakness = f'Weakness: {active_boss.boss_typeweak}'
+        boss_weakness += f'{active_boss.boss_eleweak_a}{active_boss.boss_eleweak_b}'
+        embed_msg = discord.Embed(colour=tier_colour,
+                                  title=boss_title,
+                                  description="")
+        embed_msg.add_field(name=boss_field, value=boss_hp, inline=False)
+        embed_msg.add_field(name=boss_weakness, value="", inline=False)
+        embed_msg.set_image(url=img_link)
+        # file = discord.File("boss_hp.jpg", filename="image.jpg")
+        # embed_msg.set_thumbnail(url="attachment://image.jpg")
+        sent_message = await ctx.send(embed=embed_msg)
+
         active_boss.message_id = sent_message.id
 
         # participate reaction
@@ -63,34 +97,8 @@ def run_discord_bot():
         def battle(reaction, user):
             return user == ctx.author and str(reaction.emoji) == participate
 
-        # e = discord.embed(title = "embed", url = "")
-        # await channel.send(embed=e)
-        # update boss on a timed loop
-        """"while True:
-            try:
-                reaction, user = await pandora_bot.wait_for("reaction_add", timeout=600, check=battle)
-                player_object = player.PlayerProfile()
-                player_object.player_name = str(user)
-                player_object.player_id = player.get_player_by_name(str(player_object.player_name))
-                if str(reaction.emoji) == participate:
-                    is_participating = False
-                    for x in active_boss.participating_players:
-                        if x == player:
-                            is_participating = True
-                    if not is_participating:
-                        active_boss.participating_players.append(player_object.player_name)
-                        player_object.get_equipped()
-                        active_boss.player_dmg_min.append(damagecalc.get_dmg_min(player_object))
-                        active_boss.player_dmg_max.append(damagecalc.get_dmg_max(player_object))
-
-                    status = "You have joined the raid!"
-                    await ctx.send(status)
-                    break
-            except Exception as e:
-                print(e)
-        """
         while True:
-            total_player_damage = 10000
+            total_player_damage = 100000
             await asyncio.sleep(duration_seconds)
             """for x in active_boss.player_dmg_min:
                 total_player_damage += x
@@ -100,33 +108,74 @@ def run_discord_bot():
 
             if active_boss.calculate_hp():
                 # update boss info
-                message = await ctx.fetch_message(active_boss.message_id )
-                await message.edit(content=str(active_boss))
+                boss_hp = f'{life_emoji}({active_boss.boss_cHP} / {active_boss.boss_mHP})'
+                embed_msg.remove_field(index=0)
+                embed_msg.remove_field(index=0)
+                embed_msg.add_field(name=boss_field, value=boss_hp, inline=False)
+                embed_msg.add_field(name=boss_weakness, value="", inline=False)
+                await sent_message.edit(embed=embed_msg)
             else:
                 # update dead boss info
                 active_boss.boss_cHP = 0
-                message = await ctx.fetch_message(active_boss.message_id )
-                dead_boss = str(active_boss) + "\n**SLAIN**\n__Damage Rankings__\n__Loot Awarded__"
-                await message.edit(content=str(dead_boss))
+                embed_msg.remove_field(index=0)
+                embed_msg.remove_field(index=0)
+                embed_msg.add_field(name=boss_field, value=boss_hp, inline=False)
+                embed_msg.add_field(name=boss_weakness, value="", inline=False)
+                embed_msg.add_field(name="SLAIN", value="", inline=False)
+                embed_msg.add_field(name="Damage Rankings", value="", inline=False)
+                embed_msg.add_field(name="Loot Awarded", value="", inline=False)
+                # embed_msg.set_image(url="slain image?")
+                await sent_message.edit(embed=embed_msg)
 
                 random_number = random.randint(1, 2)
-                new_boss_type = 1
-
+                new_boss_type = 2
+                img_link = "https://i.ibb.co/hyT1d8M/dragon.jpg"
                 # spawn a new boss
                 match active_boss.boss_type:
-                    case "Fortress":
-                        if random_number == 2:
-                            new_boss_type = 2
                     case "Dragon":
                         if random_number == 2:
                             new_boss_type = 3
+                            img_link = "https://i.ibb.co/DMhCjpB/primordial.png"
                     case "Primordial":
-                        new_boss_type = 1
+                        new_boss_type = 2
                     case _:
-                        error = "this boss should not be a Paragon"
+                        error = "this boss should not be anything else"
 
-                active_boss = bosses.spawn_boss(channel_id, new_boss_type)
-                sent_message = await ctx.send(content=str(active_boss))
+                active_boss = bosses.spawn_boss(new_boss_type)
+
+                # build embedded message
+                match active_boss.boss_tier:
+                    case 1:
+                        tier_colour = discord.Colour.green()
+                        life_emoji = "💚"
+                    case 2:
+                        tier_colour = discord.Colour.blue()
+                        life_emoji = "💙"
+                    case 3:
+                        tier_colour = discord.Colour.purple()
+                        life_emoji = "💜"
+                    case 4:
+                        tier_colour = discord.Colour.gold()
+                        life_emoji = "💛"
+                    case _:
+                        tier_colour = discord.Colour.red()
+                        life_emoji = "❤️"
+
+                boss_title = f'{active_boss.boss_name}'
+                boss_field = f'Tier {active_boss.boss_tier} {active_boss.boss_type}'
+                boss_hp = f'{life_emoji}({active_boss.boss_cHP} / {active_boss.boss_mHP})'
+                boss_weakness = f'Weakness: {active_boss.boss_typeweak}'
+                boss_weakness += f'{active_boss.boss_eleweak_a}{active_boss.boss_eleweak_b}'
+                embed_msg = discord.Embed(colour=tier_colour,
+                                          title=boss_title,
+                                          description="")
+                embed_msg.add_field(name=boss_field, value=boss_hp, inline=False)
+                embed_msg.add_field(name=boss_weakness, value="", inline=False)
+                embed_msg.set_image(url=img_link)
+                # file = discord.File("boss_hp.jpg", filename="image.jpg")
+                # embed_msg.set_thumbnail(url="attachment://image.jpg")
+
+                sent_message = await ctx.send(embed=embed_msg)
                 active_boss.message_id = sent_message.id
 
     @pandora_bot.event
@@ -145,10 +194,29 @@ def run_discord_bot():
         command_user.player_name = ctx.author
         command_user.player_id = player.get_player_by_name(command_user.player_name)
         weapon_object = inventory.CustomWeapon(command_user.player_id)
-        response = "You found a tier " + str(weapon_object.item_base_tier) + " weapon!\n"
-        response += str(weapon_object)
-        response += "\n\nWould you like to keep or discard this item?"
-        message = await ctx.send(response)
+
+        gear_colours = inventory.get_gear_tier_colours(weapon_object.item_base_tier)
+        tier_colour = gear_colours[0]
+        tier_emoji = gear_colours[1]
+
+        item_title = f'{weapon_object.item_name}'
+        display_stars = ""
+        damage_bonus = f'Base Damage: {str(weapon_object.item_damage_min)} - {str(weapon_object.item_damage_max)}'
+        item_rolls = f'Base Attack Speed {weapon_object.item_bonus_stat}/min'
+        for x in range(weapon_object.item_num_stars):
+            display_stars += "<:estar1:1143756443967819906>"
+        for y in range((5 - weapon_object.item_num_stars)):
+            display_stars += "<:ebstar2:1144826056222724106>"
+        item_types = f'{weapon_object.item_damage_type}{weapon_object.item_elements}'
+        inquiry = "Would you like to keep or discard this item?"
+        embed_msg = discord.Embed(colour=tier_colour,
+                                  title=item_title,
+                                  description=display_stars)
+        embed_msg.add_field(name=item_types, value=damage_bonus, inline=False)
+        embed_msg.add_field(name="Item Rolls", value=item_rolls, inline=False)
+        embed_msg.add_field(name=f'{tier_emoji} Tier {str(weapon_object.item_base_tier)} item found!', value=inquiry, inline=False)
+        embed_msg.set_thumbnail(url="https://i.ibb.co/ygGCRnc/sworddefaulticon.png")
+        message = await ctx.send(embed=embed_msg)
 
         keep_weapon = '☑️'
         discard_weapon = '🚫'
@@ -164,7 +232,7 @@ def run_discord_bot():
                 reaction, user = await pandora_bot.wait_for("reaction_add", timeout=60, check=check)
 
                 if str(reaction.emoji) == keep_weapon:
-                    if not inventory.if_exists("inventory.csv", weapon_object.item_id):
+                    if not inventory.if_custom_exists(weapon_object.item_id):
                         status = inventory.inventory_add_weapon(weapon_object)
                         await ctx.send(status)
                         break
@@ -182,10 +250,30 @@ def run_discord_bot():
         command_user.player_name = ctx.author
         command_user.player_id = player.get_player_by_name(command_user.player_name)
         armour_object = inventory.CustomArmour(command_user.player_id)
-        response = "You found a tier " + str(armour_object.item_base_tier) + " armour!\n"
-        response += str(armour_object)
-        response += "\n\nWould you like to keep or discard this item?"
-        message = await ctx.send(response)
+
+        gear_colours = inventory.get_gear_tier_colours(armour_object.item_base_tier)
+        tier_colour = gear_colours[0]
+        tier_emoji = gear_colours[1]
+
+        item_title = f'{armour_object.item_name}'
+        display_stars = ""
+        damage_bonus = f'Base Damage: {str(armour_object.item_damage_min)} - {str(armour_object.item_damage_max)}'
+        item_rolls = f'Base Damage Mitigation {armour_object.item_bonus_stat}%'
+        for x in range(armour_object.item_num_stars):
+            display_stars += "<:estar1:1143756443967819906>"
+        for y in range((5 - armour_object.item_num_stars)):
+            display_stars += "<:ebstar2:1144826056222724106>"
+        item_types = f'{armour_object.item_damage_type}{armour_object.item_elements}'
+        inquiry = "Would you like to keep or discard this item?"
+        embed_msg = discord.Embed(colour=tier_colour,
+                                  title=item_title,
+                                  description=display_stars)
+        embed_msg.add_field(name=item_types, value=damage_bonus, inline=False)
+        embed_msg.add_field(name="Item Rolls", value=item_rolls, inline=False)
+        embed_msg.add_field(name=f'{tier_emoji} Tier {str(armour_object.item_base_tier)} item found!', value=inquiry,
+                            inline=False)
+        embed_msg.set_thumbnail(url="https://i.ibb.co/p2K2GFK/armouricon.png")
+        message = await ctx.send(embed=embed_msg)
 
         keep_armour = '✅'
         discard_armour = '❌'
@@ -201,7 +289,7 @@ def run_discord_bot():
                 reaction, user = await pandora_bot.wait_for("reaction_add", timeout=60, check=check)
 
                 if str(reaction.emoji) == keep_armour:
-                    if not inventory.if_exists("inventory.csv", armour_object.item_id):
+                    if not inventory.if_custom_exists(armour_object.item_id):
                         status = inventory.inventory_add_armour(armour_object)
                         await ctx.send(status)
                         break
@@ -219,10 +307,30 @@ def run_discord_bot():
         command_user.player_name = ctx.author
         command_user.player_id = player.get_player_by_name(command_user.player_name)
         acc_object = inventory.CustomAccessory(command_user.player_id)
-        response = "You found a tier " + str(acc_object.item_base_tier) + " accessory!\n"
-        response += str(acc_object)
-        response += "\n\nWould you like to keep or discard this item?"
-        message = await ctx.send(response)
+
+        gear_colours = inventory.get_gear_tier_colours(acc_object.item_base_tier)
+        tier_colour = gear_colours[0]
+        tier_emoji = gear_colours[1]
+
+        item_title = f'{acc_object.item_name}'
+        display_stars = ""
+        damage_bonus = f'Base Damage: {str(acc_object.item_damage_min)} - {str(acc_object.item_damage_max)}'
+        item_rolls = f'{acc_object.item_bonus_stat}'
+        for x in range(acc_object.item_num_stars):
+            display_stars += "<:estar1:1143756443967819906>"
+        for y in range((5 - acc_object.item_num_stars)):
+            display_stars += "<:ebstar2:1144826056222724106>"
+        item_types = f'{acc_object.item_damage_type}{acc_object.item_elements}'
+        inquiry = "Would you like to keep or discard this item?"
+        embed_msg = discord.Embed(colour=tier_colour,
+                                  title=item_title,
+                                  description=display_stars)
+        embed_msg.add_field(name=item_types, value=damage_bonus, inline=False)
+        embed_msg.add_field(name="Item Rolls", value=item_rolls, inline=False)
+        embed_msg.add_field(name=f'{tier_emoji} Tier {str(acc_object.item_base_tier)} item found!', value=inquiry,
+                            inline=False)
+        embed_msg.set_thumbnail(url="https://i.ibb.co/FbhP60F/ringicon.png")
+        message = await ctx.send(embed=embed_msg)
 
         keep_accessory = '💍'
         discard_accessory = '📵'
@@ -238,7 +346,7 @@ def run_discord_bot():
                 reaction, user = await pandora_bot.wait_for("reaction_add", timeout=60, check=check)
 
                 if str(reaction.emoji) == keep_accessory:
-                    if not inventory.if_exists("inventory.csv",acc_object.item_id):
+                    if not inventory.if_custom_exists(acc_object.item_id):
                         status = inventory.inventory_add_accessory(acc_object)
                         await ctx.send(status)
                         break
@@ -249,49 +357,84 @@ def run_discord_bot():
             except Exception as e:
                 print(e)
 
-    @pandora_bot.command(name='equip', help="**!equip itemTYPE itemID** to equip an item")
-    async def equip(ctx, item_shortcut, item_id):
-        filename = 'inventory.csv'
+    @pandora_bot.command(name='equip', help="**!equip [itemID]** to equip an item")
+    async def equip(ctx, item_id):
         item_id = item_id.upper()
-        match item_shortcut:
-            case 'weapon':
-                if inventory.if_exists('inventory.csv', item_id):
-                    selected_item = inventory.read_weapon(filename, item_id)
+        item_type = item_id[0].upper()
+        if inventory.if_custom_exists(item_id):
+            match item_type:
+                case 'W':
+                    selected_item = inventory.read_weapon(item_id)
                     current_user = player.get_player_by_name(str(ctx.author))
                     if current_user.player_id == selected_item.player_owner:
-                        response = current_user.equip(item_shortcut, selected_item.item_id)
+                        response = current_user.equip(item_type, selected_item.item_id)
                     else:
                         response = "wrong item id"
-                else:
-                    response = "wrong item id"
-            case 'armour':
-                if inventory.if_exists('inventory.csv', item_id):
-                    selected_item = inventory.read_armour(filename, item_id)
+                case 'A':
+                    selected_item = inventory.read_armour(item_id)
                     current_user = player.get_player_by_name(str(ctx.author))
                     if current_user.player_id == selected_item.player_owner:
-                        response = current_user.equip(item_shortcut, selected_item.item_id)
+                        response = current_user.equip(item_type, selected_item.item_id)
                     else:
                         response = "wrong item id"
-                else:
-                    response = "wrong item id"
-            case 'accessory':
-                if inventory.if_exists('inventory.csv', item_id):
-                    selected_item = inventory.read_accessory(filename, item_id)
+                case 'Y':
+                    selected_item = inventory.read_accessory(item_id)
                     current_user = player.get_player_by_name(str(ctx.author))
                     if current_user.player_id == selected_item.player_owner:
-                        response = current_user.equip(item_shortcut, selected_item.item_id)
+                        response = current_user.equip(item_type, selected_item.item_id)
                     else:
                         response = "wrong item id"
-                else:
-                    response = "wrong item id"
-            case 'wing':
-                response = "bad input"
-            case 'crest':
-                response = "bad input"
-            case _:
-                response = "Equippable item type not recognized"
+                case 'wing':
+                    response = "bad input"
+                case 'crest':
+                    response = "bad input"
+                case _:
+                    response = "Equippable item type not recognized"
+        else:
+            response = "wrong item id"
 
         await ctx.send(response)
+
+    @pandora_bot.command(name='fort', help="**!fort** to challenge a fortress")
+    async def fort(ctx):
+
+        # initialize the boss post
+        active_boss = bosses.spawn_boss(1)
+        img_link = "https://i.ibb.co/0ngNM7h/castle.png"
+        hp_bar_location = active_boss.draw_boss_hp(active_boss.boss_cHP / active_boss.boss_mHP)
+
+        # build embedded message
+        match active_boss.boss_tier:
+            case 1:
+                tier_colour = discord.Colour.green()
+                life_emoji = "💚"
+            case 2:
+                tier_colour = discord.Colour.blue()
+                life_emoji = "💙"
+            case 3:
+                tier_colour = discord.Colour.purple()
+                life_emoji = "💜"
+            case 4:
+                tier_colour = discord.Colour.gold()
+                life_emoji = "💛"
+            case _:
+                tier_colour = discord.Colour.red()
+                life_emoji = "❤️"
+
+        boss_title = f'{active_boss.boss_name}'
+        boss_field = f'Tier {active_boss.boss_tier} {active_boss.boss_type}'
+        boss_hp = f'{life_emoji}({active_boss.boss_cHP} / {active_boss.boss_mHP})'
+        boss_weakness = f'Weakness: {active_boss.boss_typeweak}'
+        boss_weakness += f'{active_boss.boss_eleweak_a}{active_boss.boss_eleweak_b}'
+        embed_msg = discord.Embed(colour=tier_colour,
+                                  title=boss_title,
+                                  description="")
+        embed_msg.add_field(name=boss_field, value=boss_hp, inline=False)
+        embed_msg.add_field(name=boss_weakness, value="", inline=False)
+        embed_msg.set_image(url=img_link)
+        # file = discord.File("boss_hp.jpg", filename="image.jpg")
+        # embed_msg.set_thumbnail(url="attachment://image.jpg")
+        sent_message = await ctx.send(embed=embed_msg)
 
     @pandora_bot.command(name='quest', help="**!quest** to start the story quest")
     async def quest(ctx):
@@ -313,5 +456,120 @@ def run_discord_bot():
                     break
             except Exception as e:
                 print(e)
+
+    @pandora_bot.command(name='gear', help="**!inv** to display your gear inventory")
+    async def gear(ctx):
+        user = ctx.author
+        player_object = player.get_player_by_name(user)
+        player_inventory = inventory.display_cinventory(player_object.player_id)
+        await ctx.send(player_inventory)
+
+    @pandora_bot.command(name='item', help="**!item** to display your item details")
+    async def item(ctx, item_id):
+        message = ""
+        user = ctx.author
+        player_object = player.get_player_by_name(user)
+        item_type = item_id[0].upper()
+        if inventory.if_custom_exists(item_id):
+            match item_type:
+                case 'W':
+                    selected_item = inventory.read_weapon(item_id)
+                    if player_object.player_id == selected_item.player_owner:
+                        gear_colours = inventory.get_gear_tier_colours(selected_item.item_base_tier)
+                        tier_colour = gear_colours[0]
+
+                        item_title = f'{selected_item.item_name}'
+                        display_stars = ""
+                        damage_bonus = f'Base Damage: {str(selected_item.item_damage_min)}'
+                        damage_bonus += f' - {str(selected_item.item_damage_max)}'
+                        item_rolls = f'Base Attack Speed {selected_item.item_bonus_stat}/min'
+
+                        for x in range(selected_item.item_num_stars):
+                            display_stars += "<:estar1:1143756443967819906>"
+                        for y in range((5 - selected_item.item_num_stars)):
+                            display_stars += "<:ebstar2:1144826056222724106>"
+
+                        item_types = f'{selected_item.item_damage_type}{selected_item.item_elements}'
+
+                        embed_msg = discord.Embed(colour=tier_colour,
+                                                  title=item_title,
+                                                  description=display_stars)
+                        embed_msg.add_field(name=item_types, value=damage_bonus, inline=False)
+                        embed_msg.add_field(name="Item Rolls", value=item_rolls, inline=False)
+                        embed_msg.set_thumbnail(url="https://i.ibb.co/ygGCRnc/sworddefaulticon.png")
+
+                        await ctx.send(embed=embed_msg)
+                    else:
+                        message = "wrong item id"
+                        await ctx.send(message)
+                case 'A':
+                    selected_item = inventory.read_armour(item_id)
+                    if player_object.player_id == selected_item.player_owner:
+                        gear_colours = inventory.get_gear_tier_colours(selected_item.item_base_tier)
+                        tier_colour = gear_colours[0]
+
+                        item_title = f'{selected_item.item_name}'
+                        display_stars = ""
+                        damage_bonus = f'Base Damage: {str(selected_item.item_damage_min)}'
+                        damage_bonus += f' - {str(selected_item.item_damage_max)}'
+                        item_rolls = f'Base Damage Mitigation {selected_item.item_bonus_stat}%'
+
+                        for x in range(selected_item.item_num_stars):
+                            display_stars += "<:estar1:1143756443967819906>"
+                        for y in range((5 - selected_item.item_num_stars)):
+                            display_stars += "<:ebstar2:1144826056222724106>"
+
+                        item_types = f'{selected_item.item_damage_type}{selected_item.item_elements}'
+
+                        embed_msg = discord.Embed(colour=tier_colour,
+                                                  title=item_title,
+                                                  description=display_stars)
+                        embed_msg.add_field(name=item_types, value=damage_bonus, inline=False)
+                        embed_msg.add_field(name="Item Rolls", value=item_rolls, inline=False)
+                        embed_msg.set_thumbnail(url="https://i.ibb.co/ygGCRnc/sworddefaulticon.png")
+
+                        await ctx.send(embed=embed_msg)
+                    else:
+                        message = "wrong item id"
+                        await ctx.send(message)
+                case 'Y':
+                    selected_item = inventory.read_accessory(item_id)
+                    if player_object.player_id == selected_item.player_owner:
+                        gear_colours = inventory.get_gear_tier_colours(selected_item.item_base_tier)
+                        tier_colour = gear_colours[0]
+
+                        item_title = f'{selected_item.item_name}'
+                        display_stars = ""
+                        damage_bonus = f'Base Damage: {str(selected_item.item_damage_min)}'
+                        damage_bonus += f' - {str(selected_item.item_damage_max)}'
+                        item_rolls = f'{selected_item.item_bonus_stat}'
+
+                        for x in range(selected_item.item_num_stars):
+                            display_stars += "<:estar1:1143756443967819906>"
+                        for y in range((5 - selected_item.item_num_stars)):
+                            display_stars += "<:ebstar2:1144826056222724106>"
+
+                        item_types = f'{selected_item.item_damage_type}{selected_item.item_elements}'
+
+                        embed_msg = discord.Embed(colour=tier_colour,
+                                                  title=item_title,
+                                                  description=display_stars)
+                        embed_msg.add_field(name=item_types, value=damage_bonus, inline=False)
+                        embed_msg.add_field(name="Item Rolls", value=item_rolls, inline=False)
+                        embed_msg.set_thumbnail(url="https://i.ibb.co/ygGCRnc/sworddefaulticon.png")
+
+                        await ctx.send(embed=embed_msg)
+                    else:
+                        message = "wrong item id"
+                        await ctx.send(message)
+                case 'G':
+                    message = "bad input"
+                    await ctx.send(message)
+                case 'C':
+                    message = "bad input"
+                    await ctx.send(message)
+                case _:
+                    message = "bad input: item type not recognized"
+                    await ctx.send(message)
 
     pandora_bot.run(TOKEN)

@@ -11,17 +11,16 @@ from PIL import Image, ImageFont, ImageDraw, ImageEnhance
 class CurrentBoss:
     def __init__(self, boss_type, boss_name, boss_tier, boss_iteration,
                  boss_typeweak, boss_eleweak_a, boss_eleweak_b,
-                 boss_channel_id, boss_message_id):
+                 boss_message_id):
         self.boss_type = boss_type
         self.boss_name = boss_name
-        self.tier = boss_tier
+        self.boss_tier = boss_tier
         self.boss_mHP = int((1 + (boss_iteration * .5)) * boss_tier * get_base_hp(boss_type))
         self.boss_cHP = self.boss_mHP
         self.boss_iteration = boss_iteration
         self.boss_typeweak = boss_typeweak
         self.boss_eleweak_a = boss_eleweak_a
         self.boss_eleweak_b = boss_eleweak_b
-        self.boss_channel_id = boss_channel_id
         self.boss_message_id = boss_message_id
         self.participating_players = []
         self.player_dmg_min = []
@@ -29,11 +28,7 @@ class CurrentBoss:
 
     # return the boss display string
     def __str__(self):
-        boss_output = f"**{self.boss_name}**\nTier {self.tier} {self.boss_type}"
-        boss_output += f"\n({self.boss_cHP} / {self.boss_mHP})\n"
-        boss_output += f"Weakness: {self.boss_typeweak}"
-        boss_output += str(self.boss_eleweak_a) + str(self.boss_eleweak_b)
-        return boss_output
+        return self.boss_name
 
     # calculate the bosses new hp
     def calculate_hp(self) -> bool:
@@ -44,19 +39,19 @@ class CurrentBoss:
 
         return is_alive
 
-    def draw_boss_hp(self) -> str:
+    def draw_boss_hp(self, percentage) -> str:
         # draw the boss hp bar
         out = Image.new("RGB", (150, 100), (255, 255, 255))
         d = ImageDraw.Draw(out)
-        d = drawProgressBar(d, 10, 10, 100, 25, 1)
+        d = drawProgressBar(d, 10, 10, 100, 25, percentage)
         image_location = "boss_hp.jpg"
         out.save(image_location)
         return image_location
 
 
-def spawn_boss(channel_id: int, boss_type_num: int) -> CurrentBoss:
+def spawn_boss(boss_type_num: int) -> CurrentBoss:
     # initialize boss information
-    new_boss_tier = get_random_bosstier()
+    new_boss_tier = get_random_bosstier(boss_type_num)
     match boss_type_num:
         case 1:
             boss_type = "Fortress"
@@ -72,17 +67,17 @@ def spawn_boss(channel_id: int, boss_type_num: int) -> CurrentBoss:
     new_boss_name = get_boss_name(boss_type, new_boss_tier)
 
     boss_iteration = 0
-    boss_type_weak = get_type()
+    boss_typeweak = get_type()
     boss_eleweak_a = get_element()
     boss_eleweak_b = boss_eleweak_a
     while boss_eleweak_a == boss_eleweak_b:
         boss_eleweak_b = get_element()
 
-    message_id=0
+    message_id = 0
 
     # create the boss object
     boss_object = CurrentBoss(boss_type, new_boss_name, new_boss_tier, boss_iteration,
-                                       boss_type_weak, boss_eleweak_a, boss_eleweak_b, channel_id, message_id)
+                                       boss_typeweak, boss_eleweak_a, boss_eleweak_b, message_id)
     return boss_object
 
 
@@ -94,6 +89,7 @@ def check_existing_boss(message_id: int) -> bool:
 
 
 def get_channel_id() -> int:
+    # this needs to be updated for multiple values
     try:
         f = open("channelid.txt", "r")
     except Exception as e:
@@ -118,11 +114,15 @@ def drawProgressBar(d, x, y, w, h, progress, bg="black", fg="red"):
 
     return d
 
-def get_random_bosstier() -> int:
+
+def get_random_bosstier(boss_type_num: int) -> int:
         random_number = random.randint(1, 100)
         if random_number <= 1:
-            boss_tier = 5
-        elif random_number <= 10:
+            if boss_type_num == 4:
+                boss_tier = 5
+            else:
+                boss_tier = 4
+        elif random_number <= 5:
             boss_tier = 4
         elif random_number <= 30:
             boss_tier = 3

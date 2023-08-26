@@ -54,23 +54,23 @@ class PlayerProfile:
         filename = "playerlist.csv"
         df = pd.read_csv(filename)
         match item_type:
-            case 'weapon':
+            case 'W':
                 self.equipped_weapon = item_id
                 response = f"Weapon {item_id} is now equipped."
                 df.loc[df["player_name"] == str(self.player_name), "equip_wpn_id"] = item_id
-            case 'armour':
+            case 'A':
                 self.equipped_armour = item_id
                 response = f"Armour {item_id} is now equipped."
                 df.loc[df["player_name"] == str(self.player_name), "equip_armour_id"] = item_id
-            case 'accessory':
+            case 'Y':
                 self.equipped_acc = item_id
                 response = f"Accessory {item_id} is now equipped."
                 df.loc[df["player_name"] == str(self.player_name), "equip_acc_id"] = item_id
-            case 'wing':
+            case 'G':
                 self.equipped_wing = item_id
                 response = f"Wing {item_id} is now equipped."
                 df.loc[df["player_name"] == str(self.player_name), "equip_wing_id"] = item_id
-            case 'crest':
+            case 'C':
                 self.equipped_crest = item_id
                 response = f"Crest {item_id} is now equipped."
                 df.loc[df["player_name"] == str(self.player_name), "equip_crest_id"] = item_id

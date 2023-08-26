@@ -3,17 +3,15 @@ import player
 
 
 def item_damage_calc(base_damage: int, material_tier: str, blessing_tier: str) -> int:
-
     material_damage = get_item_tier_damage(material_tier)
     blessing_damage = get_item_tier_damage(blessing_tier)
     weapon_damage_temp = (base_damage + material_damage + blessing_damage)
-
     return int(weapon_damage_temp)
 
 
 def get_item_tier_damage(material_tier: str) -> int:
     match material_tier:
-        case  "Steel" | "Sparkling" | "Essence" | "Inert" | "Faint" | "Enchanted":
+        case  "Steel" | "Sparkling" | "Essence" | "Metallic" | "Faint" | "Enchanted":
             damage_temp = 10
         case "Silver" | "Glittering" | "Spirit" | "Gold" | "Luminous":
             damage_temp = 50
@@ -21,14 +19,16 @@ def get_item_tier_damage(material_tier: str) -> int:
             damage_temp = 100
         case "Diamond" | "Radiant" | "Phantasmal":
             damage_temp = 200
-        case _:
+        case "Crystal" | "Divine" | "Spectral" | "Resplendant":
             damage_temp = 400
+        case _:
+            damage_temp = 0
 
     return damage_temp
 
 
 def get_dmg_min(player_object: player.PlayerProfile) -> int:
-    filename = "inventory.csv"
+    filename = "cinventory.csv"
     dmg_min = 0
 
     if player_object.equipped_armour == "":
@@ -54,7 +54,7 @@ def get_dmg_min(player_object: player.PlayerProfile) -> int:
 
 
 def get_dmg_max(player_object: player.PlayerProfile) -> int:
-    filename = "inventory.csv"
+    filename = "cinventory.csv"
     dmg_max = 0
 
     if player_object.equipped_armour == "":
