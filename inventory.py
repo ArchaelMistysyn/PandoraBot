@@ -6,11 +6,11 @@ import pandas as pd
 import player
 import discord
 
+
 class CustomItem:
     def __init__(self, player_owner):
         # initialize owner id
-        player_object = player.get_player_by_name(player_owner)
-        self.player_owner = player_object.player_id
+        self.player_owner = player_owner
         # generate item_tier
         random_num = random.randint(1, 100)
         if random_num <= 1:
@@ -43,8 +43,7 @@ class CustomItem:
         self.item_material_tier = "Iron"
         self.item_blessing_tier = "Inert"
         self.item_enhancement = 0
-        self.item_num_elements = 0
-        self.item_elements = ""
+        self.item_elements = []
         self.item_bonus_stat = 0
         self.item_damage_min = 0
         self.item_damage_max = 0
@@ -81,7 +80,6 @@ class CustomWeapon(CustomItem):
         self.item_bonus_stat = temp_attack_speed
 
         # set element
-        self.item_num_elements = 1
         self.item_elements = bosses.get_element()
 
         # calculate item's damage per hit
@@ -213,8 +211,7 @@ def read_weapon(item_id: str) -> CustomWeapon:
                 target_item.player_owner = player_id
                 target_item.item_id = item_id
                 target_item.item_name = str(line['item_name'])
-                target_item.item_num_elements = int(line['num_elements'])
-                target_item.item_elements = str(line['item_elements'])
+                target_item.item_elements = str(line['item_elements']).split(';')
                 target_item.item_damage_type = str(line['item_damage_type'])
                 target_item.item_enhancement = int(line['item_enhancement'])
                 target_item.item_base_tier = int(line['item_base_tier'])
@@ -253,8 +250,7 @@ def read_armour(item_id: str) -> CustomArmour:
                 target_item.player_owner = player_id
                 target_item.item_id = item_id
                 target_item.item_name = str(line['item_name'])
-                target_item.item_num_elements = int(line['num_elements'])
-                target_item.item_elements = str(line['item_elements'])
+                target_item.item_elements = str(line['item_elements']).split(';')
                 target_item.item_damage_type = str(line['item_damage_type'])
                 target_item.item_enhancement = int(line['item_enhancement'])
                 target_item.item_base_tier = int(line['item_base_tier'])
@@ -289,8 +285,7 @@ def read_accessory(item_id: str) -> CustomAccessory:
                 target_item.player_owner = player_id
                 target_item.item_id = item_id
                 target_item.item_name = str(line['item_name'])
-                target_item.item_num_elements = int(line['num_elements'])
-                target_item.item_elements = str(line['item_elements'])
+                target_item.item_elements = str(line['item_elements']).split(';')
                 target_item.item_damage_type = str(line['item_damage_type'])
                 target_item.item_enhancement = int(line['item_enhancement'])
                 target_item.item_base_tier = int(line['item_base_tier'])
@@ -515,8 +510,11 @@ def inventory_add_weapon(item: CustomWeapon) -> str:
     item_name = item.item_name
 
     # item elements and damage type
-    num_elements = item.item_num_elements
-    item_elements = item.item_elements
+    item_elements = ""
+    for x in item.item_elements:
+        item_elements = str(x) + ";"
+    if item_elements != "":
+        item_elements = item_elements[:-1]
     item_damage_type = item.item_damage_type
 
     # item damage adjustments
@@ -544,7 +542,7 @@ def inventory_add_weapon(item: CustomWeapon) -> str:
         writer = csv.writer(file)
 
         writer.writerow([player_id, item_id, item_name,
-                         num_elements, item_elements, item_damage_type,
+                         item_elements, item_damage_type,
                          item_enhancement, item_base_tier, item_blessing_tier, item_material_tier,
                          item_num_stars, item_prefix_values, item_suffix_values,
                          item_bonus_stat, item_base_dmg_min, item_base_dmg_max,
@@ -564,8 +562,11 @@ def inventory_add_armour(item: CustomArmour) -> str:
     item_name = item.item_name
 
     # item elements and damage type
-    num_elements = item.item_num_elements
-    item_elements = item.item_elements
+    item_elements = ""
+    for x in item.item_elements:
+        item_elements = str(x) + ";"
+    if item_elements != "":
+        item_elements = item_elements[:-1]
     item_damage_type = item.item_damage_type
 
     # item damage adjustments
@@ -593,7 +594,7 @@ def inventory_add_armour(item: CustomArmour) -> str:
         writer = csv.writer(file)
 
         writer.writerow([player_id, item_id, item_name,
-                         num_elements, item_elements, item_damage_type,
+                         item_elements, item_damage_type,
                          item_enhancement, item_base_tier, item_blessing_tier, item_material_tier,
                          item_num_stars, item_prefix_values, item_suffix_values,
                          item_bonus_stat, item_base_dmg_min, item_base_dmg_max,
@@ -613,8 +614,11 @@ def inventory_add_accessory(item: CustomAccessory) -> str:
     item_name = item.item_name
 
     # item elements and damage type
-    num_elements = item.item_num_elements
-    item_elements = item.item_elements
+    item_elements = ""
+    for x in item.item_elements:
+        item_elements = str(x) + ";"
+    if item_elements != "":
+        item_elements = item_elements[:-1]
     item_damage_type = item.item_damage_type
 
     # item damage adjustments
@@ -642,7 +646,7 @@ def inventory_add_accessory(item: CustomAccessory) -> str:
         writer = csv.writer(file)
 
         writer.writerow([player_id, item_id, item_name,
-                         num_elements, item_elements, item_damage_type,
+                         item_elements, item_damage_type,
                          item_enhancement, item_base_tier, item_blessing_tier, item_material_tier,
                          item_num_stars, item_prefix_values, item_suffix_values,
                          item_bonus_stat, item_base_dmg_min, item_base_dmg_max,
@@ -665,7 +669,8 @@ def display_cinventory(player_id: int) -> str:
     filename = 'cinventory.csv'
     df = pd.read_csv(filename)
     df = df[df['player_id'] == player_id][['item_id', 'item_name']]
-    player_inventory = df.to_string(index=False)
+    # .ljust(10) can pad the text
+    player_inventory = df.to_string(index=False, header=False)
     return player_inventory
 
 

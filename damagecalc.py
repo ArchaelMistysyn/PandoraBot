@@ -77,3 +77,60 @@ def get_dmg_max(player_object: player.PlayerProfile) -> int:
         dmg_max *= weapon_object.item_bonus_stat
 
     return dmg_max
+
+
+def accessory_ability_damage(acc_keyword, boss_cHP, boss_mHP, player_hp) -> float:
+    damage_multiplier = 1.0
+
+    match acc_keyword:
+        case "Hybrid Stance":
+            damage_multiplier = 1.05
+        case "Offensive Stance":
+            damage_multiplier = 1.1
+        case "First Blood":
+            if (boss_cHP / boss_mHP) > 0.75:
+                damage_multiplier = 1.25
+            else:
+                damage_multiplier = 1.0
+        case "Onslaught Pose":
+            damage_multiplier = 1.2
+        case "Last Breath":
+            if player_hp == 1:
+                damage_multiplier = 0.25
+            else:
+                damage_multiplier = 1.0
+        case "Breaker":
+            if (boss_cHP / boss_mHP) > 0.5:
+                damage_multiplier = 1.5
+            else:
+                damage_multiplier = 1.0
+        case "Inferno's Will":
+            damage_multiplier = 1.2
+        case "Final Stand":
+            if player_hp == 1:
+                damage_multiplier = 5.0
+            else:
+                damage_multiplier = 1.0
+        case "Coup de Grace":
+            if (boss_cHP / boss_mHP) < 0.5:
+                damage_multiplier = 1.5
+            else:
+                damage_multiplier = 1.0
+        case "Perfect Counter":
+            damage_multiplier = 1.5
+        case _:
+            damage_multiplier = 1.0
+    return damage_multiplier
+
+
+def boss_weakness_multiplier(weapon, boss_typeweak, boss_eleweak_a, boss_eleweak_b) -> float:
+    resist_multiplier = 0.5
+    type_multiplier = 0.8
+    for x in weapon.item_elements:
+        if str(x) == boss_eleweak_a or str(x) == boss_eleweak_b:
+            resist_multiplier += 0.75
+    if weapon.item_damage_type == boss_typeweak:
+        type_multiplier += 0.75
+
+    defences_multiplier = resist_multiplier * type_multiplier
+    return defences_multiplier

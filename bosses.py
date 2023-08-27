@@ -166,7 +166,7 @@ def get_element() -> str:
 # generate type weakness
 def get_type() -> str:
     # generate a type
-    random_number = random.randint(1, 2)
+    random_number = random.randint(1, 4)
     match random_number:
         case 1:
             type_temp = '<:eranged:1141654478748135545>'
@@ -193,7 +193,7 @@ def store_channel_id(channel_id: int) -> str:
 def get_base_hp(base_type: str) -> int:
     match base_type:
         case "Fortress":
-            base_hp = 25000
+            base_hp = 250
         case "Dragon":
             base_hp = 50000
         case "Primordial":

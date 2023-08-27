@@ -2,6 +2,7 @@ import pandas as pd
 import csv
 from csv import DictReader
 import inventory
+import damagecalc
 
 
 class PlayerProfile:
@@ -13,6 +14,8 @@ class PlayerProfile:
         self.equipped_acc = ""
         self.equipped_wing = ""
         self.equipped_crest = ""
+        self.player_hp = 100
+        self.player_stamina = 0
 
     def __str__(self):
         return str(self.player_name)
@@ -32,8 +35,49 @@ class PlayerProfile:
             self.player_id = 10001 + df['player_id'].count()
             with open(filename, 'a', newline='') as file:
                 writer = csv.writer(file)
-                writer.writerow([self.player_id, self.player_name])
+                writer.writerow([self.player_id, self.player_name, self.player_stamina])
             return "Player added"
+
+    def spend_stamina(self, cost) -> bool:
+        is_spent = False
+        if self.player_stamina >= cost:
+            self.player_stamina -= cost
+            filename = "playerlist.csv"
+            df = pd.read_csv(filename)
+            df.loc[df['player_id'] == self.player_id, 'stamina'] = df['stamina'] - cost
+            df.to_csv(filename, index=False)
+            is_spent = True
+        return is_spent
+
+    def add_stamina(self, amount):
+        filename = "playerlist.csv"
+        df = pd.read_csv(filename)
+        df.loc[df['player_id'] == self.player_id, 'stamina'] = df['stamina'] + int(amount)
+        df.to_csv(filename, index=False)
+
+    def get_player_damage(self, boss_object) -> int:
+        player_damage = 0
+        self.get_equipped()
+        e_weapon = inventory.read_weapon(self.equipped_weapon)
+        player_damage += (e_weapon.item_damage_min + e_weapon.item_damage_max) / 2
+        e_armour = inventory.read_armour(self.equipped_armour)
+        player_damage += (e_armour.item_damage_min + e_armour.item_damage_max) / 2
+        e_acc = inventory.read_armour(self.equipped_acc)
+        player_damage += (e_acc.item_damage_min + e_acc.item_damage_max) / 2
+
+        # bonus stats
+        float_damage = float(player_damage) * float(e_weapon.item_bonus_stat)
+        float_damage *= damagecalc.accessory_ability_damage(e_acc.item_bonus_stat,
+                                                            boss_object.boss_cHP, boss_object.boss_mHP, self.player_hp)
+
+        float_damage *= damagecalc.boss_weakness_multiplier(e_weapon,
+                                                            boss_object.boss_typeweak,
+                                                            boss_object.boss_eleweak_a,
+                                                            boss_object.boss_eleweak_b)
+
+        player_damage = int(float_damage)
+
+        return player_damage
 
     def get_equipped(self):
         filename = "playerlist.csv"
@@ -90,6 +134,7 @@ def get_player_by_id(player_id: int) -> PlayerProfile:
         for line in csv.DictReader(f):
             if str(line['player_id']) == str(player_id):
                 target_player.player_name = int(line["player_name"])
+                target_player.player_stamina = int(line["stamina"])
 
         target_player.player_id = player_id
     return target_player
@@ -104,14 +149,15 @@ def get_player_by_id(player_id: int) -> PlayerProfile:
     print(target_player.player_id)
     return target_player"""
 
+
 def get_player_by_name(player_name: str) -> PlayerProfile:
     target_player = PlayerProfile()
     filename = "playerlist.csv"
-
     with (open(filename, 'r') as f):
         for line in csv.DictReader(f):
             if str(line['player_name']) == str(player_name):
                 target_player.player_id = int(line["player_id"])
+                target_player.player_stamina = int(line["stamina"])
 
         target_player.player_name = player_name
     return target_player

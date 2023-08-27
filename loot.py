@@ -30,23 +30,35 @@ class basicItem:
 def award_loot(boss_type, boss_tier, player_list) -> str:
     filename = "droptable.csv"
     loot_msg = ""
+    labels = ['player_name', 'item_id', 'item_qty']
+    df_change = pd.DataFrame(columns=labels)
     with (open(filename, 'r') as f):
         for line in csv.DictReader(f):
             if str(line['boss_type']) == str(boss_type) and int(line['boss_tier']) <= int(boss_tier):
                 dropped_item = str(line["item_id"])
                 drop_rate = str(line["drop_rate"])
                 for x in player_list:
-                    if is_dropped(drop_rate):
-                        # store dropped_item in craft inventory where player_name = x
-                        loot_msg += x + " has received: " + get_item_emoji(dropped_item) + "\n"
-
+                    qty = 1
+                    if int(line['boss_tier']) <= 3:
+                        for y in range(boss_tier):
+                            if is_dropped(drop_rate):
+                                qty += 1
+                    if qty != 0:
+                        for z in range(qty):
+                            item_emoji = get_item_emoji(dropped_item)
+                            df_change.loc[len(df_change)] = [x, str(line["item_id"]), qty]
+                        loot_msg += str(x) + " has received: " + str(qty) + "x " + item_emoji + "\n"
+    filename = 'binventory.csv'
+    df_existing = pd.read_csv(filename)
+    df_updated = pd.concat([df_existing, df_change]).groupby(['player_name', 'item_id']).sum().reset_index()
+    df_updated.to_csv(filename, index=False)
     return loot_msg
 
 
 def is_dropped(drop_rate) -> bool:
     random_num = random.randint(1, 100)
 
-    if random_num <= drop_rate:
+    if random_num <= int(drop_rate):
         return True
     else:
         return False
