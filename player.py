@@ -9,6 +9,7 @@ class PlayerProfile:
     def __init__(self):
         self.player_id = 0
         self.player_name = ""
+        self.player_username = ""
         self.equipped_weapon = ""
         self.equipped_armour = ""
         self.equipped_acc = ""
@@ -16,15 +17,26 @@ class PlayerProfile:
         self.equipped_crest = ""
         self.player_hp = 100
         self.player_stamina = 0
+        self.player_exp = 0
+        self.player_lvl = 0
+        self.player_echelon = 0
 
     def __str__(self):
         return str(self.player_name)
 
     def update_player_name(self, new_name: str):
-        self.player_name = new_name
         filename = "playerlist.csv"
         df = pd.read_csv(filename)
-        df['player_name'] = df['player_name'].str.replace(self.player_name, new_name)
+        df['player_name'] = df['player_name'].replace(str(self.player_name), new_name)
+        df.to_csv(filename, index=False)
+        self.player_name = new_name
+
+    def update_username(self, new_name: str):
+        filename = "playerlist.csv"
+        df = pd.read_csv(filename)
+        df['player_username'] = df['player_username'].replace(str(self.player_name), new_name)
+        df.to_csv(filename, index=False)
+        self.player_username = new_name
 
     def add_new_player(self) -> str:
         filename = "playerlist.csv"
@@ -35,7 +47,8 @@ class PlayerProfile:
             self.player_id = 10001 + df['player_id'].count()
             with open(filename, 'a', newline='') as file:
                 writer = csv.writer(file)
-                writer.writerow([self.player_id, self.player_name, self.player_stamina])
+                writer.writerow([self.player_id, self.player_name, self.player_username,
+                                 self.player_stamina, self.player_exp, self.player_lvl, self.player_echelon])
             return "Player added"
 
     def spend_stamina(self, cost) -> bool:
@@ -55,14 +68,38 @@ class PlayerProfile:
         df.loc[df['player_id'] == self.player_id, 'stamina'] = df['stamina'] + int(amount)
         df.to_csv(filename, index=False)
 
+    def add_exp(self, amount):
+        filename = "playerlist.csv"
+        df = pd.read_csv(filename)
+        df.loc[df['player_id'] == self.player_id, 'player_exp'] = df['player_exp'] + int(amount)
+        df.to_csv(filename, index=False)
+
+    def add_level(self, amount):
+        filename = "playerlist.csv"
+        df = pd.read_csv(filename)
+        df.loc[df['player_id'] == self.player_id, 'player_exp'] = df['player_lvl'] + int(amount)
+        df.to_csv(filename, index=False)
+
+    def add_echelon(self, amount):
+        filename = "playerlist.csv"
+        df = pd.read_csv(filename)
+        df.loc[df['player_id'] == self.player_id, 'player_echelon'] = df['player_echelon'] + int(amount)
+        df.to_csv(filename, index=False)
+
+    def set_username(self, new_username):
+        filename = "playerlist.csv"
+        df = pd.read_csv(filename)
+        df.loc[df['player_id'] == self.player_id, 'player_username'] = new_username
+        df.to_csv(filename, index=False)
+
     def get_player_damage(self, boss_object) -> int:
         player_damage = 0
         self.get_equipped()
-        e_weapon = inventory.read_weapon(self.equipped_weapon)
+        e_weapon = inventory.read_custom_item(self.equipped_weapon)
         player_damage += (e_weapon.item_damage_min + e_weapon.item_damage_max) / 2
-        e_armour = inventory.read_armour(self.equipped_armour)
+        e_armour = inventory.read_custom_item(self.equipped_armour)
         player_damage += (e_armour.item_damage_min + e_armour.item_damage_max) / 2
-        e_acc = inventory.read_armour(self.equipped_acc)
+        e_acc = inventory.read_custom_item(self.equipped_acc)
         player_damage += (e_acc.item_damage_min + e_acc.item_damage_max) / 2
 
         # bonus stats
@@ -94,10 +131,10 @@ class PlayerProfile:
             temp = df.loc[df['player_id'] == self.player_id, ['equip_crest_id']].values[0]
             self.equipped_crest = temp[0]
 
-    def equip(self, item_type, item_id) -> str:
+    def equip(self, item_identifier, item_id) -> str:
         filename = "playerlist.csv"
         df = pd.read_csv(filename)
-        match item_type:
+        match item_identifier:
             case 'W':
                 self.equipped_weapon = item_id
                 response = f"Weapon {item_id} is now equipped."
@@ -126,6 +163,16 @@ class PlayerProfile:
         return response
 
 
+def check_username(new_name: str):
+    filename = "playerlist.csv"
+    df = pd.read_csv(filename)
+    if new_name in df['player_username'].values:
+        can_proceed = False
+    else:
+        can_proceed = True
+    return can_proceed
+
+
 def get_player_by_id(player_id: int) -> PlayerProfile:
     target_player = PlayerProfile()
     filename = "playerlist.csv"
@@ -134,20 +181,14 @@ def get_player_by_id(player_id: int) -> PlayerProfile:
         for line in csv.DictReader(f):
             if str(line['player_id']) == str(player_id):
                 target_player.player_name = int(line["player_name"])
+                target_player.player_username = str(line["player_username"])
                 target_player.player_stamina = int(line["stamina"])
+                target_player.player_exp = int(line["player_exp"])
+                target_player.player_lvl = int(line["player_lvl"])
+                target_player.player_echelon = int(line["player_echelon"])
 
         target_player.player_id = player_id
     return target_player
-
-
-"""def get_player_by_name(player_name: str) -> PlayerProfile:
-    target_player = PlayerProfile()
-    filename = "playerlist.csv"
-    df = pd.read_csv(filename)
-    target_player.player_name = player_name
-    target_player.player_id = df.loc[df["player_name"] == str(player_name), "player_id"].values[0]
-    print(target_player.player_id)
-    return target_player"""
 
 
 def get_player_by_name(player_name: str) -> PlayerProfile:
@@ -157,7 +198,11 @@ def get_player_by_name(player_name: str) -> PlayerProfile:
         for line in csv.DictReader(f):
             if str(line['player_name']) == str(player_name):
                 target_player.player_id = int(line["player_id"])
+                target_player.player_username = str(line["player_username"])
                 target_player.player_stamina = int(line["stamina"])
+                target_player.player_exp = int(line["player_exp"])
+                target_player.player_lvl = int(line["player_lvl"])
+                target_player.player_echelon = int(line["player_echelon"])
 
         target_player.player_name = player_name
     return target_player

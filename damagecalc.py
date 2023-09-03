@@ -2,11 +2,13 @@ import inventory
 import player
 
 
-def item_damage_calc(base_damage: int, material_tier: str, blessing_tier: str) -> int:
+def item_damage_calc(base_damage: int, item_enhancement: int, material_tier: str, blessing_tier: str) -> int:
+    enhancement_multiplier = 1 + (float(item_enhancement) * 0.01)
     material_damage = get_item_tier_damage(material_tier)
     blessing_damage = get_item_tier_damage(blessing_tier)
-    weapon_damage_temp = (base_damage + material_damage + blessing_damage)
-    return int(weapon_damage_temp)
+    weapon_damage_temp = float(base_damage + material_damage + blessing_damage) * enhancement_multiplier
+    weapon_damage_total = int(weapon_damage_temp)
+    return int(weapon_damage_total)
 
 
 def get_item_tier_damage(material_tier: str) -> int:
@@ -34,19 +36,19 @@ def get_dmg_min(player_object: player.PlayerProfile) -> int:
     if player_object.equipped_armour == "":
         dmg_min += 0
     else:
-        armour_object = inventory.read_armour(filename, player_object.equipped_armour)
+        armour_object = inventory.read_custom_item(player_object.equipped_armour)
         dmg_min += armour_object.item_damage_max
 
     if player_object.equipped_acc == "":
         dmg_min += 0
     else:
-        acc_object = inventory.read_accessory(filename, player_object.equipped_acc)
+        acc_object = inventory.read_custom_item(player_object.equipped_acc)
         dmg_min += acc_object.item_damage_max
 
     if player_object.equipped_weapon == "":
         dmg_min += 0
     else:
-        weapon_object = inventory.read_weapon(filename, player_object.equipped_weapon)
+        weapon_object = inventory.read_custom_item(player_object.equipped_weapon)
         dmg_min += weapon_object.item_damage_max
         dmg_min *= weapon_object.item_bonus_stat
 
@@ -60,19 +62,19 @@ def get_dmg_max(player_object: player.PlayerProfile) -> int:
     if player_object.equipped_armour == "":
         dmg_max += 0
     else:
-        armour_object = inventory.read_armour(filename, player_object.equipped_armour)
+        armour_object = inventory.read_custom_item(player_object.equipped_armour)
         dmg_max += armour_object.item_damage_max
 
     if player_object.equipped_acc == "":
         dmg_max += 0
     else:
-        acc_object = inventory.read_accessory(filename, player_object.equipped_acc)
+        acc_object = inventory.read_custom_item(player_object.equipped_acc)
         dmg_max += acc_object.item_damage_max
 
     if player_object.equipped_weapon == "":
         dmg_max += 0
     else:
-        weapon_object = inventory.read_weapon(filename, player_object.equipped_weapon)
+        weapon_object = inventory.read_custom_item(player_object.equipped_weapon)
         dmg_max += weapon_object.item_damage_max
         dmg_max *= weapon_object.item_bonus_stat
 
@@ -118,19 +120,21 @@ def accessory_ability_damage(acc_keyword, boss_cHP, boss_mHP, player_hp) -> floa
                 damage_multiplier = 1.0
         case "Perfect Counter":
             damage_multiplier = 1.5
+        case "Bahamut's Grace":
+            damage_multiplier = 2.0
         case _:
             damage_multiplier = 1.0
     return damage_multiplier
 
 
 def boss_weakness_multiplier(weapon, boss_typeweak, boss_eleweak_a, boss_eleweak_b) -> float:
-    resist_multiplier = 0.5
+    resist_multiplier = 0.7
     type_multiplier = 0.8
     for x in weapon.item_elements:
         if str(x) == boss_eleweak_a or str(x) == boss_eleweak_b:
-            resist_multiplier += 0.75
+            resist_multiplier += 0.5
     if weapon.item_damage_type == boss_typeweak:
-        type_multiplier += 0.75
+        type_multiplier += 0.5
 
     defences_multiplier = resist_multiplier * type_multiplier
     return defences_multiplier

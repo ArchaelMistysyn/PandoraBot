@@ -193,7 +193,7 @@ def store_channel_id(channel_id: int) -> str:
 def get_base_hp(base_type: str) -> int:
     match base_type:
         case "Fortress":
-            base_hp = 250
+            base_hp = 1000
         case "Dragon":
             base_hp = 50000
         case "Primordial":

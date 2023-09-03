@@ -30,27 +30,28 @@ class basicItem:
 def award_loot(boss_type, boss_tier, player_list) -> str:
     filename = "droptable.csv"
     loot_msg = ""
-    labels = ['player_name', 'item_id', 'item_qty']
+    labels = ['player_id', 'item_id', 'item_qty']
     df_change = pd.DataFrame(columns=labels)
     with (open(filename, 'r') as f):
         for line in csv.DictReader(f):
             if str(line['boss_type']) == str(boss_type) and int(line['boss_tier']) <= int(boss_tier):
                 dropped_item = str(line["item_id"])
-                drop_rate = str(line["drop_rate"])
+                drop_rate = int(line["drop_rate"])
+                item_name = get_loot_name(dropped_item)
+                item_emoji = get_loot_emoji(dropped_item)
                 for x in player_list:
-                    qty = 1
+                    temp_player = player.get_player_by_name(str(x))
+                    qty = 0
                     if int(line['boss_tier']) <= 3:
                         for y in range(boss_tier):
                             if is_dropped(drop_rate):
                                 qty += 1
                     if qty != 0:
-                        for z in range(qty):
-                            item_emoji = get_item_emoji(dropped_item)
-                            df_change.loc[len(df_change)] = [x, str(line["item_id"]), qty]
-                        loot_msg += str(x) + " has received: " + str(qty) + "x " + item_emoji + "\n"
+                        df_change.loc[len(df_change)] = [temp_player.player_id, dropped_item, qty]
+                        loot_msg += f'{temp_player.player_username} received: {str(qty)}x {item_emoji} {item_name}\n'
     filename = 'binventory.csv'
     df_existing = pd.read_csv(filename)
-    df_updated = pd.concat([df_existing, df_change]).groupby(['player_name', 'item_id']).sum().reset_index()
+    df_updated = pd.concat([df_existing, df_change]).groupby(['player_id', 'item_id']).sum().reset_index()
     df_updated.to_csv(filename, index=False)
     return loot_msg
 
@@ -64,7 +65,7 @@ def is_dropped(drop_rate) -> bool:
         return False
 
 
-def get_item_emoji(item_id) -> str:
+def get_loot_emoji(item_id) -> str:
     filename = "itemlist.csv"
 
     with (open(filename, 'r') as f):
@@ -73,3 +74,14 @@ def get_item_emoji(item_id) -> str:
                 str_emoji = str(line["item_emoji"])
 
     return str_emoji
+
+
+def get_loot_name(item_id) -> str:
+    filename = "itemlist.csv"
+
+    with (open(filename, 'r') as f):
+        for line in csv.DictReader(f):
+            if str(line["item_id"]) == str(item_id):
+                str_name = str(line["item_name"])
+
+    return str_name

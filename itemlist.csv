@@ -1,25 +1,25 @@
 item_id,item_name,item_tier,item_base_rate,item_emoji,item_description
-I1,Vibrant Condensed Energy,1,100,<a:elootitem:1144477550379274322>,100% base chance to upgrade enhancement. Reduced by 1% per enhancement.
-I2,Vivid Condensed Energy,2,101,<a:elootitem:1144477550379274322>,101% base chance to upgrade enhancement. Reduced by 1% per enhancement.
-I3,Viridescent Condensed Energy,3,102,<a:elootitem:1144477550379274322>,102% base chance to upgrade enhancement. Reduced by 1% per enhancement.
-I4,Clouded Ore,1,1,<a:elootitem:1144477550379274322>,1% chance to upgrade material tier.
-I5,Clear Ore,2,2,<a:elootitem:1144477550379274322>,2% chance to upgrade material tier.
-I6,Crystal Ore,3,3,<a:elootitem:1144477550379274322>,3% chance to upgrade material tier.
-I7,Light Soul,1,1,<a:elootitem:1144477550379274322>,1% chance to upgrade blessing tier.
-I8,Luminous Soul,2,2,<a:elootitem:1144477550379274322>,2% chance to upgrade blessing tier.
-I9,Lustrous Soul,3,3,<a:elootitem:1144477550379274322>,3% chance to upgrade blessing tier.
-I10,Heavy Socket Hammers,1,10,<a:elootitem:1144477550379274322>,10% chance to add a socket to a gear item.
-I11,Hallowed Socket Hammers,2,15,<a:elootitem:1144477550379274322>,15% chance to add a socket to a gear item.
-I12,Heroic Socket Hammers,3,20,<a:elootitem:1144477550379274322>,20% chance to add a socket to a gear item.
+I1,Vibrant Condensed Energy,1,100,<a:eenergy:1145534127349706772>,100% base chance to upgrade enhancement. Reduced by 1% per enhancement.
+I2,Vivid Condensed Energy,2,101,<a:eenergy:1145534127349706772>,101% base chance to upgrade enhancement. Reduced by 1% per enhancement.
+I3,Viridescent Condensed Energy,3,102,<a:eenergy:1145534127349706772>,102% base chance to upgrade enhancement. Reduced by 1% per enhancement.
+I4,Clouded Ore,1,1,<:eore:1145534835507593236>,1% chance to upgrade material tier.
+I5,Clear Ore,2,2,<:eore:1145534835507593236>,2% chance to upgrade material tier.
+I6,Crystal Ore,3,3,<:eore:1145534835507593236>,3% chance to upgrade material tier.
+I7,Light Soul,1,1,<:esoul:1145520258241806466>,1% chance to upgrade blessing tier.
+I8,Luminous Soul,2,2,<:esoul:1145520258241806466>,2% chance to upgrade blessing tier.
+I9,Lustrous Soul,3,3,<:esoul:1145520258241806466>,3% chance to upgrade blessing tier.
+I10,Heavy Socket Hammers,1,10,<:ehammer:1145520259248427069>,10% chance to add a socket to a gear item.
+I11,Hallowed Socket Hammers,2,15,<:ehammer:1145520259248427069>,15% chance to add a socket to a gear item.
+I12,Heroic Socket Hammers,3,20,<:ehammer:1145520259248427069>,20% chance to add a socket to a gear item.
 I13,Static Comet Powder,1,10,<a:elootitem:1144477550379274322>,10% chance to upgrade the star level of an item. Adding a roll if successful
 I14,Sparking Comet Powder,2,15,<a:elootitem:1144477550379274322>,15% chance to upgrade the star level of an item. Adding a roll if successful
 I15,Scintillating Comet Powder,3,20,<a:elootitem:1144477550379274322>,20% chance to upgrade the star level of an item. Adding a roll if successful
-I16,Puzzling Tuning Matrix,1,25,<a:elootitem:1144477550379274322>,25% chance to reset item to two stars with one roll tier 1 or higher
-I17,Perplexing Tuning Matrix,2,50,<a:elootitem:1144477550379274322>,50% chance to reset item to two stars with one roll tier 2 or higher
-I18,Paradoxical Tuning Matrix,3,75,<a:elootitem:1144477550379274322>,75% chance to reset item to two stars with one roll tier 3 or higher
-I19,Perfect Tuning Matrix,4,100,<a:elootitem:1144477550379274322>,100% chance to reset item to two stars with one roll tier 4 or higher
-I20,Elemental Origin,4,10,<a:elootitem:1144477550379274322>,10% chance to add an elemental damage type to a weapon
-I21,Void Traces,4,1,<a:elootitem:1144477550379274322>,1% chance to upgrade a tier 5 material weapon into a void tier material weapon
+I16,Puzzling Tuning Matrix,1,25,<a:ematrix:1145520262268325919>,25% chance to reset item to two stars with one roll tier 1 or higher
+I17,Perplexing Tuning Matrix,2,50,<a:ematrix:1145520262268325919>,50% chance to reset item to two stars with one roll tier 2 or higher
+I18,Paradoxical Tuning Matrix,3,75,<a:ematrix:1145520262268325919>,75% chance to reset item to two stars with one roll tier 3 or higher
+I19,Perfect Tuning Matrix,4,100,<a:ematrix:1145520262268325919>,100% chance to reset item to two stars with one roll tier 4 or higher
+I20,Elemental Origin,4,10,<a:eorigin:1145520263954440313>,10% chance to add an elemental damage type to a weapon
+I21,Void Traces,4,1,<a:evoid:1145520260573827134>,1% chance to upgrade a tier 5 material weapon into a void tier material weapon
 I22,Feathered Wings,1,100,<a:elootitem:1144477550379274322>,Use to receive base tier 1 wings
 I23,Lucent Wings,2,100,<a:elootitem:1144477550379274322>,Use to receive base tier 2 wings
 I24,Wonderous Wings,3,100,<a:elootitem:1144477550379274322>,Use to receive base tier 3 wings
