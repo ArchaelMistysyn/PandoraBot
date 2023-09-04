@@ -56,7 +56,8 @@ def run_discord_bot():
             await asyncio.sleep(duration_seconds)
             filename = "playerlist.csv"
             df = pd.read_csv(filename)
-            df.loc[df['stamina'] < 100, 'stamina'] = df['stamina']+1
+            df.loc[df['stamina'] >= 1998, 'stamina'] = 2000
+            df.loc[df['stamina'] < 1998, 'stamina'] = df['stamina'] + 2
             df.to_csv(filename, index=False)
 
     @pandora_bot.event
@@ -64,6 +65,7 @@ def run_discord_bot():
 
         # initialize the boss post
         active_boss = bosses.spawn_boss(2)
+        active_boss.set_boss_lvl(1)
         img_link = "https://i.ibb.co/hyT1d8M/dragon.jpg"
         hp_bar_location = active_boss.draw_boss_hp(active_boss.boss_cHP/active_boss.boss_mHP)
 
@@ -86,8 +88,8 @@ def run_discord_bot():
                 life_emoji = "❤️"
 
         boss_title = f'{active_boss.boss_name}'
-        boss_field = f'Tier {active_boss.boss_tier} {active_boss.boss_type}'
-        boss_hp = f'{life_emoji}({active_boss.boss_cHP} / {active_boss.boss_mHP})'
+        boss_field = f'Tier {active_boss.boss_tier} {active_boss.boss_type} - Level: {active_boss.boss_lvl}'
+        boss_hp = f'{life_emoji} ({active_boss.boss_cHP} / {active_boss.boss_mHP})'
         boss_weakness = f'Weakness: {active_boss.boss_typeweak}'
         boss_weakness += f'{active_boss.boss_eleweak_a}{active_boss.boss_eleweak_b}'
         embed_msg = discord.Embed(colour=tier_colour,
@@ -120,14 +122,14 @@ def run_discord_bot():
 
             if active_boss.calculate_hp():
                 # update boss info
-                boss_hp = f'{life_emoji}({active_boss.boss_cHP} / {active_boss.boss_mHP})'
+                boss_hp = f'{life_emoji} ({active_boss.boss_cHP} / {active_boss.boss_mHP})'
                 embed_msg.remove_field(index=0)
                 embed_msg.insert_field_at(index=0, name=boss_field, value=boss_hp, inline=False)
                 await sent_message.edit(embed=embed_msg)
             else:
                 # update dead boss info
                 active_boss.boss_cHP = 0
-                boss_hp = f'{life_emoji}({active_boss.boss_cHP} / {active_boss.boss_mHP})'
+                boss_hp = f'{life_emoji} ({active_boss.boss_cHP} / {active_boss.boss_mHP})'
                 embed_msg.remove_field(index=0)
                 embed_msg.remove_field(index=0)
                 embed_msg.add_field(name=boss_field, value=boss_hp, inline=False)
@@ -173,8 +175,8 @@ def run_discord_bot():
                         life_emoji = "❤️"
 
                 boss_title = f'{active_boss.boss_name}'
-                boss_field = f'Tier {active_boss.boss_tier} {active_boss.boss_type}'
-                boss_hp = f'{life_emoji}({active_boss.boss_cHP} / {active_boss.boss_mHP})'
+                boss_field = f'Tier {active_boss.boss_tier} {active_boss.boss_type} - Level: {active_boss.boss_lvl}'
+                boss_hp = f'{life_emoji} ({active_boss.boss_cHP} / {active_boss.boss_mHP})'
                 boss_weakness = f'Weakness: {active_boss.boss_typeweak}'
                 boss_weakness += f'{active_boss.boss_eleweak_a}{active_boss.boss_eleweak_b}'
                 embed_msg = discord.Embed(colour=tier_colour,
@@ -206,7 +208,7 @@ def run_discord_bot():
     async def lab(ctx):
         player_name = str(ctx.author)
         command_user = player.get_player_by_name(player_name)
-        if command_user.spend_stamina(4):
+        if command_user.spend_stamina(25):
             weapon_object = inventory.CustomWeapon(command_user.player_id)
             embed_msg = weapon_object.create_citem_embed()
 
@@ -246,12 +248,12 @@ def run_discord_bot():
             await ctx.send('Not enough !stamina')
 
     @pandora_bot.command(name='dung', help="**!dung** to run a daily dungeon")
-    @commands.max_concurrency(1, per=commands.BucketType.default, wait=False)
+    @commands.max_concurrency(25, per=commands.BucketType.default, wait=False)
     # @commands.cooldown(1, 60 * 60 * 24, commands.BucketType.user)
     async def dung(ctx):
         player_name = str(ctx.author)
         command_user = player.get_player_by_name(player_name)
-        if command_user.spend_stamina(4):
+        if command_user.spend_stamina(25):
             armour_object = inventory.CustomArmour(command_user.player_id)
             embed_msg = armour_object.create_citem_embed()
 
@@ -291,12 +293,12 @@ def run_discord_bot():
             await ctx.send('Not enough !stamina')
 
     @pandora_bot.command(name='tow', help="**!tow** to run a daily tower")
-    @commands.max_concurrency(1, per=commands.BucketType.default, wait=False)
+    @commands.max_concurrency(25, per=commands.BucketType.default, wait=False)
     # @commands.cooldown(1, 60 * 60 * 24, commands.BucketType.user)
     async def tow(ctx):
         player_name = str(ctx.author)
         command_user = player.get_player_by_name(player_name)
-        if command_user.spend_stamina(4):
+        if command_user.spend_stamina(25):
             acc_object = inventory.CustomAccessory(command_user.player_id)
             embed_msg = acc_object.create_citem_embed()
             gear_colours = inventory.get_gear_tier_colours(acc_object.item_base_tier)
@@ -335,7 +337,7 @@ def run_discord_bot():
             await ctx.send('Not enough !stamina')
 
     @pandora_bot.command(name='equip', help="**!equip [itemID]** to equip an item")
-    @commands.max_concurrency(1, per=commands.BucketType.default, wait=False)
+    @commands.max_concurrency(25, per=commands.BucketType.default, wait=False)
     async def equip(ctx, item_id):
         item_id = item_id.upper()
         item_identifier = item_id[0].upper()
@@ -356,9 +358,10 @@ def run_discord_bot():
     async def fort(ctx):
         player_name = ctx.author
         command_user = player.get_player_by_name(player_name)
-        if command_user.spend_stamina(10):
+        if command_user.spend_stamina(50):
             # initialize the boss post
             active_boss = bosses.spawn_boss(1)
+            active_boss.set_boss_lvl(command_user.player_lvl)
             img_link = "https://i.ibb.co/0ngNM7h/castle.png"
             hp_bar_location = active_boss.draw_boss_hp(active_boss.boss_cHP / active_boss.boss_mHP)
 
@@ -381,8 +384,8 @@ def run_discord_bot():
                     life_emoji = "❤️"
 
             boss_title = f'{active_boss.boss_name}'
-            boss_field = f'Tier {active_boss.boss_tier} {active_boss.boss_type}'
-            boss_hp = f'{life_emoji}({active_boss.boss_cHP} / {active_boss.boss_mHP})'
+            boss_field = f'Tier {active_boss.boss_tier} {active_boss.boss_type} - Level {active_boss.boss_lvl}'
+            boss_hp = f'{life_emoji} ({active_boss.boss_cHP} / {active_boss.boss_mHP})'
             boss_weakness = f'Weakness: {active_boss.boss_typeweak}'
             boss_weakness += f'{active_boss.boss_eleweak_a}{active_boss.boss_eleweak_b}'
             embed_msg = discord.Embed(colour=tier_colour,
@@ -401,7 +404,7 @@ def run_discord_bot():
                 await asyncio.sleep(60)
                 dps = user.get_player_damage(active_boss)
                 active_boss.boss_cHP -= dps
-                boss_hp = f'{life_emoji}({active_boss.boss_cHP} / {active_boss.boss_mHP})'
+                boss_hp = f'{life_emoji} ({active_boss.boss_cHP} / {active_boss.boss_mHP})'
                 if active_boss.calculate_hp():
                     embed_msg.remove_field(0)
                     embed_msg.insert_field_at(index=0, name=boss_field, value=boss_hp, inline=False)
@@ -418,13 +421,18 @@ def run_discord_bot():
                     embed_msg.add_field(name=boss_field, value=boss_hp, inline=False)
                     embed_msg.add_field(name=boss_weakness, value="", inline=False)
                     embed_msg.add_field(name="SLAIN", value="", inline=False)
-                    embed_msg.add_field(name="Damage Rankings", value="", inline=False)
-                    player_list = [ctx.author]
-                    loot_output = loot.award_loot(active_boss.boss_type, active_boss.boss_tier, player_list)
-                    embed_msg.add_field(name="Loot Awarded", value=loot_output, inline=False)
+                    player_list = [user.player_name]
+                    exp_amount = active_boss.boss_tier * (1 + active_boss.boss_lvl) * 100
+                    loot_output = loot.award_loot(active_boss.boss_type, active_boss.boss_tier, player_list, exp_amount)
+                    for counter, loot_section in enumerate(loot_output):
+                        temp_player = player.get_player_by_name(str(player_list[counter]))
+                        loot_msg = f'{temp_player.player_username} received:'
+                        embed_msg.add_field(name=loot_msg, value=loot_section, inline=False)
                     # embed_msg.set_image(url="slain image?")
                     await sent_message.edit(embed=embed_msg)
                     is_alive = False
+        else:
+            await ctx.send("Not enough stamina.")
 
     @pandora_bot.command(name='quest', help="**!quest** to start the story quest")
     @commands.max_concurrency(1, per=commands.BucketType.default, wait=False)
@@ -463,18 +471,20 @@ def run_discord_bot():
     async def gear(ctx):
         user = player.get_player_by_name(str(ctx.author))
         user.get_equipped()
-        equipped_w = inventory.read_custom_item(user.equipped_weapon)
-        equipped_a = inventory.read_custom_item(user.equipped_armour)
-        equipped_y = inventory.read_custom_item(user.equipped_acc)
+        gear_list = []
+        if user.equipped_weapon != "":
+            equipped_w = inventory.read_custom_item(user.equipped_weapon)
+            gear_list.append(equipped_w)
+        if user.equipped_armour != "":
+            equipped_a = inventory.read_custom_item(user.equipped_armour)
+            gear_list.append(equipped_a)
+        if user.equipped_acc != "":
+            equipped_y = inventory.read_custom_item(user.equipped_acc)
+            gear_list.append(equipped_y)
         # equipped_g = inventory.read_custom_item(user.equipped_wing)
         # equipped_c = inventory.read_custom_item(user.equipped_crest)
         # gear_list = [equipped_w, equipped_a, equipped_y, equipped_g, equipped_c]
-        gear_list = [equipped_w, equipped_a, equipped_y]
 
-        gear_title = f'{user.player_name}\'s Equipped Gear'
-        embed_msg = discord.Embed(colour=discord.Colour.red(),
-                                  title=gear_title,
-                                  description="")
         for x in gear_list:
             embed_msg = x.create_citem_embed()
             item_info = f'Item ID: {x.item_id}'
@@ -487,22 +497,41 @@ def run_discord_bot():
         user = ctx.author
 
         player_object = player.get_player_by_name(user)
-        player_inventory = f'{player_object.player_name}\'s Equipment:\n'
+        player_inventory = f'{player_object.player_username}\'s Equipment:\n'
         player_inventory += inventory.display_cinventory(player_object.player_id)
         await ctx.send(player_inventory)
 
         player_object = player.get_player_by_name(user)
-        player_inventory = f'{player_object.player_name}\'s Inventory:\n'
+        player_inventory = f'{player_object.player_username}\'s Inventory:\n'
         player_inventory += inventory.display_binventory(player_object.player_id)
         await ctx.send(player_inventory)
 
-    @pandora_bot.command(name='stamina', help="**!stam** to display your stamina total")
+    @pandora_bot.command(name='stamina', help="**!stamina** to display your stamina total")
     async def gear(ctx):
         user = ctx.author
         player_object = player.get_player_by_name(user)
-        output = f'<:estamina:1145534039684562994> {player_object.player_name}\'s stamina: '
+        output = f'<:estamina:1145534039684562994> {player_object.player_username}\'s stamina: '
         output += str(player_object.player_stamina)
         await ctx.send(output)
+
+    @pandora_bot.command(name='profile', help="**!profile** to display your profile")
+    async def profile(ctx):
+        user = ctx.author
+        player_object = player.get_player_by_name(user)
+
+        echelon_colour = inventory.get_gear_tier_colours(player_object.player_echelon)
+        stamina = f'<:estamina:1145534039684562994> {player_object.player_username}\'s stamina: '
+        stamina += str(player_object.player_stamina)
+        exp = f'Level: {player_object.player_lvl} Exp: ({player_object.player_exp} / '
+        exp += f'{player.get_max_exp(player_object.player_lvl)})'
+        id_msg = f'User ID: {player_object.player_id}'
+
+        embed_msg = discord.Embed(colour=echelon_colour[0],
+                                  title=player_object.player_username,
+                                  description=id_msg)
+        embed_msg.add_field(name=exp, value=stamina, inline=False)
+        # embed_msg.set_thumbnail(url="")
+        await ctx.send(embed=embed_msg)
 
     @pandora_bot.command(name='admin', help="**!admin** inputs")
     async def admin(ctx, backdoor, value):
@@ -510,6 +539,8 @@ def run_discord_bot():
         player_object = player.get_player_by_name(user)
         if backdoor == "stamina_hack":
             player_object.add_stamina(value)
+        if backdoor == "item_hack":
+            inventory.update_stock(player_object, value, 10)
 
     @pandora_bot.command(name='item', help="**!item** to display your item details")
     @commands.max_concurrency(1, per=commands.BucketType.default, wait=False)
@@ -549,7 +580,7 @@ def run_discord_bot():
         user = ctx.author
         player_object = player.get_player_by_name(user)
         player_object.get_equipped()
-        view = View(timeout=60)
+        view = View(timeout=600)
         match selected:
             case 1:
                 selected_item = inventory.read_custom_item(player_object.equipped_weapon)
@@ -588,100 +619,198 @@ def run_discord_bot():
         view.message = embed_msg
 
         # Assign response
-        async def button1_callback(interaction):
-            match forge_select.values[0]:
-                case "Enhance":
-                    result = inventory.enhance_item(player_object, selected_item)
-                case "Upgrade":
-                    item_id = ["I4", "I5", "I6"]
-                    result = inventory.enhance_item(player_object, selected_item)
-                case "Bestow":
-                    item_id = ["I7", "I8", "I9"]
-                    result = inventory.enhance_item(player_object, selected_item)
-                case "Open":
-                    item_id = ["I10", "I11", "I12"]
-                    result = inventory.enhance_item(player_object, selected_item)
-                case "Imbue":
-                    item_id = ["I13", "I14", "I15"]
-                    result = inventory.enhance_item(player_object, selected_item)
-                case "Tune":
-                    item_id = ["I16", "I17", "I18", "I19"]
-                    result = inventory.enhance_item(player_object, selected_item)
-                case "Implant":
-                    item_id = ["I20"]
-                    result = inventory.enhance_item(player_object, selected_item)
-                case _:
-                    item_id = ["I21"]
-                    result = inventory.enhance_item(player_object, selected_item)
-            if result:
-                outcome = "Success!"
-            else:
+        async def button_T1_single_callback(interaction):
+            method = forge_select.values[0]
+            condition = f"T1 {method}"
+            result = inventory.craft_item(player_object, selected_item, condition, method)
+            if result == "0":
                 outcome = "Failed!"
+            elif result == "1":
+                outcome = "Success!"
+            elif result == "3":
+                outcome = "Cannot upgrade further"
+            else:
+                outcome = f"Out of Stock: {loot.get_loot_emoji(result)}"
             new_embed_msg = selected_item.create_citem_embed()
             new_embed_msg.add_field(name=outcome, value="", inline=False)
             await interaction.response.edit_message(embed=new_embed_msg)
 
-        async def button2_callback(interaction):
+        async def button_T2_single_callback(interaction):
+            method = forge_select.values[0]
+            condition = f"T2 {method}"
+            result = inventory.craft_item(player_object, selected_item, condition, method)
+            if result == "0":
+                outcome = "Failed!"
+            elif result == "1":
+                outcome = "Success!"
+            elif result == "3":
+                outcome = "Cannot upgrade further"
+            else:
+                outcome = f"Out of Stock: {loot.get_loot_emoji(result)}"
+            new_embed_msg = selected_item.create_citem_embed()
+            new_embed_msg.add_field(name=outcome, value="", inline=False)
+            await interaction.response.edit_message(embed=new_embed_msg)
 
-            await interaction.response.edit_message(embed=embed_msg)
+        async def button_T3_single_callback(interaction):
+            method = forge_select.values[0]
+            condition = f"T3 {method}"
+            result = inventory.craft_item(player_object, selected_item, condition, method)
+            if result == "0":
+                outcome = "Failed!"
+            elif result == "1":
+                outcome = "Success!"
+            elif result == "3":
+                outcome = "Cannot upgrade further"
+            else:
+                outcome = f"Out of Stock: {loot.get_loot_emoji(result)}"
+            new_embed_msg = selected_item.create_citem_embed()
+            new_embed_msg.add_field(name=outcome, value="", inline=False)
+            await interaction.response.edit_message(embed=new_embed_msg)
 
-        async def button3_callback(interaction):
-            await interaction.response.edit_message(embed=embed_msg)
-            # view.timeout = True
+        async def button_all_callback(interaction):
+            result = "0"
+            overall = "All failed"
+            outcome = ""
+            method = forge_select.values[0]
+            condition = f"{method} All"
+            match condition:
+                case "Enhance All":
+                    item_id_list = ["I1", "I2", "I3"]
+                case "Upgrade All":
+                    item_id_list = ["I4", "I5", "I6"]
+                case "Bestow All":
+                    item_id_list = ["I7", "I8", "I9"]
+                case "Open All":
+                    item_id_list = ["I10", "I11", "I12"]
+                case "Imbue All":
+                    item_id_list = ["I13", "I14", "I15"]
+                case "Tune All":
+                    item_id_list = ["I16", "I17", "I18"]
+                case "Implant All":
+                    item_id_list = ["I20"]
+                case "Voidforge All":
+                    item_id_list = ["I21"]
+                case _:
+                    item_id_list = ["error"]
+            for x in item_id_list:
+                running = True
+                while running:
+                    result = inventory.craft_item(player_object, selected_item, x, method)
+                    if result != "0" and result != "1":
+                        running = False
+                    elif result == "1":
+                        if overall == "Success!":
+                            overall = "!!MULTI-SUCCESS!!"
+                        elif overall != "!!MULTI-SUCCESS!!":
+                            overall = "Success!"
+                if result == "3":
+                    outcome = "Cannot upgrade further"
+                    break
+                else:
+                    outcome = f"Out of Stock: {loot.get_loot_emoji(result)}"
+            new_embed_msg = selected_item.create_citem_embed()
+            new_embed_msg.add_field(name=overall, value=outcome, inline=False)
+            await interaction.response.edit_message(embed=new_embed_msg)
+
+        async def button_cancel_callback(interaction):
+            # cancel here
+            await interaction.response.edit_message(view=None)
 
         async def dropdown_callback(interaction):
             match forge_select.values[0]:
                 case "Enhance":
-                    button_1 = Button(label="Enhance",
-                                      style=discord.ButtonStyle.success, emoji="⬆️", custom_id='single')
-                    button_2 = Button(label="Enhance All",
-                                      style=discord.ButtonStyle.blurple, emoji="⏫", custom_id='all')
+                    button_1 = Button(label="T1 Enhance",
+                                      style=discord.ButtonStyle.success, emoji=loot.get_loot_emoji("I1"))
+                    button_2 = Button(label="T2 Enhance",
+                                      style=discord.ButtonStyle.success, emoji=loot.get_loot_emoji("I2"))
+                    button_3 = Button(label="T3 Enhance",
+                                      style=discord.ButtonStyle.success, emoji=loot.get_loot_emoji("I3"))
+                    button_all = Button(label="Enhance All",
+                                        style=discord.ButtonStyle.blurple, emoji="⬆️")
+                    num_buttons = 4
                 case "Upgrade":
-                    button_1 = Button(label="Upgrade",
-                                      style=discord.ButtonStyle.success, emoji="⬆️", custom_id='single')
-                    button_2 = Button(label="Upgrade All",
-                                      style=discord.ButtonStyle.blurple, emoji="⏫", custom_id='all')
+                    button_1 = Button(label="T1 Upgrade",
+                                      style=discord.ButtonStyle.success, emoji=loot.get_loot_emoji("I4"))
+                    button_2 = Button(label="T2 Upgrade",
+                                      style=discord.ButtonStyle.success, emoji=loot.get_loot_emoji("I5"))
+                    button_3 = Button(label="T3 Upgrade",
+                                      style=discord.ButtonStyle.success, emoji=loot.get_loot_emoji("I6"))
+                    button_all = Button(label="Upgrade All",
+                                        style=discord.ButtonStyle.blurple, emoji="⬆️")
+                    num_buttons = 4
                 case "Bestow":
-                    button_1 = Button(label="Bestow",
-                                      style=discord.ButtonStyle.success, emoji="⬆️", custom_id='single')
-                    button_2 = Button(label="Bestow All",
-                                      style=discord.ButtonStyle.blurple, emoji="⏫", custom_id='all')
-                case "Imbue":
-                    button_1 = Button(label="Imbue",
-                                      style=discord.ButtonStyle.success, emoji="⬆️", custom_id='single')
-                    button_2 = Button(label="Imbue All",
-                                      style=discord.ButtonStyle.blurple, emoji="⏫", custom_id='all')
+                    button_1 = Button(label="T1 Bestow",
+                                      style=discord.ButtonStyle.success, emoji=loot.get_loot_emoji("I7"))
+                    button_2 = Button(label="T2 Bestow",
+                                      style=discord.ButtonStyle.success, emoji=loot.get_loot_emoji("I8"))
+                    button_3 = Button(label="T3 Bestow",
+                                      style=discord.ButtonStyle.success, emoji=loot.get_loot_emoji("I9"))
+                    button_all = Button(label="Enhance All",
+                                        style=discord.ButtonStyle.blurple, emoji="⬆️")
+                    num_buttons = 4
                 case "Open":
-                    button_1 = Button(label="Open",
-                                      style=discord.ButtonStyle.success, emoji="⬆️", custom_id='single')
-                    button_2 = Button(label="Open All",
-                                      style=discord.ButtonStyle.blurple, emoji="⏫", custom_id='all')
+                    button_1 = Button(label="T1 Open",
+                                      style=discord.ButtonStyle.success, emoji=loot.get_loot_emoji("I10"))
+                    button_2 = Button(label="T2 Open",
+                                      style=discord.ButtonStyle.success, emoji=loot.get_loot_emoji("I11"))
+                    button_3 = Button(label="T3 Open",
+                                      style=discord.ButtonStyle.success, emoji=loot.get_loot_emoji("I12"))
+                    button_all = Button(label="Open All",
+                                        style=discord.ButtonStyle.blurple, emoji="⬆️")
+                    num_buttons = 4
+                case "Imbue":
+                    button_1 = Button(label="T1 Imbue",
+                                      style=discord.ButtonStyle.success, emoji=loot.get_loot_emoji("I13"))
+                    button_2 = Button(label="T2 Imbue",
+                                      style=discord.ButtonStyle.success, emoji=loot.get_loot_emoji("I14"))
+                    button_3 = Button(label="T3 Imbue",
+                                      style=discord.ButtonStyle.success, emoji=loot.get_loot_emoji("I15"))
+                    button_all = Button(label="Imbue All",
+                                        style=discord.ButtonStyle.blurple, emoji="⬆️")
+                    num_buttons = 4
                 case "Tune":
-                    button_1 = Button(label="Tune",
-                                      style=discord.ButtonStyle.success, emoji="⬆️", custom_id='single')
-                    button_2 = Button(label="Tune All",
-                                      style=discord.ButtonStyle.blurple, emoji="⏫", custom_id='all')
+                    button_1 = Button(label="T1 Tune",
+                                      style=discord.ButtonStyle.success, emoji=loot.get_loot_emoji("I16"))
+                    button_2 = Button(label="T2 Tune",
+                                      style=discord.ButtonStyle.success, emoji=loot.get_loot_emoji("I17"))
+                    button_3 = Button(label="T3 Tune",
+                                      style=discord.ButtonStyle.success, emoji=loot.get_loot_emoji("I18"))
+                    button_all = Button(label="Tune All",
+                                        style=discord.ButtonStyle.blurple, emoji="⬆️")
+                    num_buttons = 4
                 case "Implant":
                     button_1 = Button(label="Implant",
-                                      style=discord.ButtonStyle.success, emoji="⬆️", custom_id='single')
-                    button_2 = Button(label="Implant All",
-                                      style=discord.ButtonStyle.blurple, emoji="⏫", custom_id='all')
-                case _:
+                                      style=discord.ButtonStyle.success, emoji=loot.get_loot_emoji("I20"))
+                    button_all = Button(label="Implant All",
+                                        style=discord.ButtonStyle.blurple, emoji="⏫")
+                    num_buttons = 2
+                case "Voidforge":
                     button_1 = Button(label="Voidforge",
-                                      style=discord.ButtonStyle.success, emoji="⬆️", custom_id='single')
-                    button_2 = Button(label="Voidforge All",
-                                      style=discord.ButtonStyle.blurple, emoji="⏫", custom_id='all')
+                                      style=discord.ButtonStyle.success, emoji=loot.get_loot_emoji("I21"))
+                    button_all = Button(label="Voidforge All",
+                                        style=discord.ButtonStyle.blurple, emoji="⏫")
+                    num_buttons = 2
+                case _:
+                    button_1 = Button(label="")
+                    button_2 = Button(label="")
+                    button_3 = Button(label="")
+                    button_all = Button(label="")
+                    num_buttons = 0
 
-            button_3 = Button(label="Cancel",
-                              style=discord.ButtonStyle.red, emoji="✖️", custom_id='cancel')
+            button_cancel = Button(label="Cancel", style=discord.ButtonStyle.red, emoji="✖️")
             view.add_item(button_1)
-            view.add_item(button_2)
-            view.add_item(button_3)
-            button_1.callback = button1_callback
-            button_2.callback = button2_callback
-            button_3.callback = button3_callback
-            await interaction.response.edit_message(embed=embed_msg, view=view)
+            if num_buttons == 4:
+                view.add_item(button_2)
+                view.add_item(button_3)
+                button_2.callback = button_T2_single_callback
+                button_3.callback = button_T3_single_callback
+            view.add_item(button_all)
+            view.add_item(button_cancel)
+            button_1.callback = button_T1_single_callback
+            button_all.callback = button_all_callback
+            button_cancel.callback = button_cancel_callback
             forge_select.disabled = True
+            await interaction.response.edit_message(embed=embed_msg, view=view)
 
         forge_select.callback = dropdown_callback
 

@@ -13,15 +13,15 @@ def item_damage_calc(base_damage: int, item_enhancement: int, material_tier: str
 
 def get_item_tier_damage(material_tier: str) -> int:
     match material_tier:
-        case  "Steel" | "Sparkling" | "Essence" | "Metallic" | "Faint" | "Enchanted":
+        case  "Steel" | "Glittering" | "Essence" | "Metallic" | "Faint" | "Enchanted":
             damage_temp = 10
-        case "Silver" | "Glittering" | "Spirit" | "Gold" | "Luminous":
+        case "Silver" | "Dazzling" | "Spirit" | "Gold" | "Luminous":
             damage_temp = 50
-        case "Mithril" | "Lustrous" | "Soulbound" | "Jeweled":
+        case "Mithril" | "Lustrous" | "Soulbound" | "Jeweled" | "Shining":
             damage_temp = 100
-        case "Diamond" | "Radiant" | "Phantasmal":
+        case "Diamond" | "Radiant" | "Phantasmal" | "Prismatic":
             damage_temp = 200
-        case "Crystal" | "Divine" | "Spectral" | "Resplendant":
+        case "Crystal" | "Divine" | "Spectral" | "Resplendent":
             damage_temp = 400
         case _:
             damage_temp = 0

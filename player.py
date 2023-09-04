@@ -3,6 +3,7 @@ import csv
 from csv import DictReader
 import inventory
 import damagecalc
+import math
 
 
 class PlayerProfile:
@@ -39,6 +40,7 @@ class PlayerProfile:
         self.player_username = new_name
 
     def add_new_player(self) -> str:
+        item_id = []
         filename = "playerlist.csv"
         df = pd.read_csv(filename)
         if str(self.player_name) in df['player_name'].values:
@@ -47,8 +49,17 @@ class PlayerProfile:
             self.player_id = 10001 + df['player_id'].count()
             with open(filename, 'a', newline='') as file:
                 writer = csv.writer(file)
-                writer.writerow([self.player_id, self.player_name, self.player_username,
-                                 self.player_stamina, self.player_exp, self.player_lvl, self.player_echelon])
+                writer.writerow([self.player_id, self.player_name, self.player_name,
+                                 2000, self.player_exp, self.player_lvl, self.player_echelon])
+            filename = "itemlist.csv"
+            with (open(filename, 'r') as f):
+                for line in csv.DictReader(f):
+                    item_id.append(str(line['item_id']))
+            filename = "binventory.csv"
+            with open(filename, 'a', newline='') as file:
+                writer = csv.writer(file)
+                for x in item_id:
+                    writer.writerow([self.player_id, x, 0])
             return "Player added"
 
     def spend_stamina(self, cost) -> bool:
@@ -71,7 +82,16 @@ class PlayerProfile:
     def add_exp(self, amount):
         filename = "playerlist.csv"
         df = pd.read_csv(filename)
-        df.loc[df['player_id'] == self.player_id, 'player_exp'] = df['player_exp'] + int(amount)
+        new_exp = self.player_exp + int(amount)
+        levelling = True
+        while levelling:
+            if new_exp > get_max_exp(self.player_lvl):
+                new_exp -= get_max_exp(self.player_lvl)
+                self.player_lvl += 1
+                df.loc[df['player_id'] == self.player_id, 'player_lvl'] = self.player_lvl
+            else:
+                levelling = False
+        df.loc[df['player_id'] == self.player_id, 'player_exp'] = new_exp
         df.to_csv(filename, index=False)
 
     def add_level(self, amount):
@@ -107,6 +127,9 @@ class PlayerProfile:
         float_damage *= damagecalc.accessory_ability_damage(e_acc.item_bonus_stat,
                                                             boss_object.boss_cHP, boss_object.boss_mHP, self.player_hp)
 
+        # External increases
+        float_damage *= 1 + (self.player_lvl * 0.01)
+
         float_damage *= damagecalc.boss_weakness_multiplier(e_weapon,
                                                             boss_object.boss_typeweak,
                                                             boss_object.boss_eleweak_a,
@@ -121,15 +144,20 @@ class PlayerProfile:
         df = pd.read_csv(filename)
         if str(self.player_name) in df['player_name'].values:
             temp = df.loc[df['player_id'] == self.player_id, ['equip_wpn_id']].values[0]
-            self.equipped_weapon = temp[0]
+            if not checkNaN(temp):
+                self.equipped_weapon = temp[0]
             temp = df.loc[df['player_id'] == self.player_id, ['equip_armour_id']].values[0]
-            self.equipped_armour = temp[0]
+            if not checkNaN(temp):
+                self.equipped_armour = temp[0]
             temp = df.loc[df['player_id'] == self.player_id, ['equip_acc_id']].values[0]
-            self.equipped_acc = temp[0]
+            if not checkNaN(temp):
+                self.equipped_acc = temp[0]
             temp = df.loc[df['player_id'] == self.player_id, ['equip_wing_id']].values[0]
-            self.equipped_wing = temp[0]
+            if not checkNaN(temp):
+                self.equipped_wing = temp[0]
             temp = df.loc[df['player_id'] == self.player_id, ['equip_crest_id']].values[0]
-            self.equipped_crest = temp[0]
+            if not checkNaN(temp):
+                self.equipped_crest = temp[0]
 
     def equip(self, item_identifier, item_id) -> str:
         filename = "playerlist.csv"
@@ -206,3 +234,16 @@ def get_player_by_name(player_name: str) -> PlayerProfile:
 
         target_player.player_name = player_name
     return target_player
+
+
+def get_max_exp(player_lvl):
+    exp_required = int(1000 * (1.1 ** player_lvl))
+    return exp_required
+
+
+def checkNaN(str):
+    try:
+        result = math.isnan(float(str))
+        return result
+    except Exception as e:
+        return False

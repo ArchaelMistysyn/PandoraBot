@@ -7,6 +7,7 @@ import pandas as pd
 import os
 from PIL import Image, ImageFont, ImageDraw, ImageEnhance
 
+
 # Boss class
 class CurrentBoss:
     def __init__(self, boss_type, boss_name, boss_tier, boss_iteration,
@@ -15,13 +16,14 @@ class CurrentBoss:
         self.boss_type = boss_type
         self.boss_name = boss_name
         self.boss_tier = boss_tier
-        self.boss_mHP = int((1 + (boss_iteration * .5)) * boss_tier * get_base_hp(boss_type))
-        self.boss_cHP = self.boss_mHP
+        self.boss_mHP = 0
+        self.boss_cHP = 0
         self.boss_iteration = boss_iteration
         self.boss_typeweak = boss_typeweak
         self.boss_eleweak_a = boss_eleweak_a
         self.boss_eleweak_b = boss_eleweak_b
         self.boss_message_id = boss_message_id
+        self.boss_lvl = 0
         self.participating_players = []
         self.player_dmg_min = []
         self.player_dmg_max = []
@@ -47,6 +49,11 @@ class CurrentBoss:
         image_location = "boss_hp.jpg"
         out.save(image_location)
         return image_location
+
+    def set_boss_lvl(self, level):
+        self.boss_lvl = level
+        self.boss_mHP = int(get_base_hp(self.boss_type) * (1.2 ** self.boss_lvl) * self.boss_tier)
+        self.boss_cHP = self.boss_mHP
 
 
 def spawn_boss(boss_type_num: int) -> CurrentBoss:
@@ -139,26 +146,26 @@ def get_random_bosstier(boss_type_num: int) -> int:
 # generate ele weakness
 def get_element() -> str:
     # generate an element
-    random_number = random.randint(1, 8)
+    random_number = random.randint(1, 9)
     match random_number:
         case 1:
-            element_temp = "<:efire:1141653476816986193>"
+            element_temp = "<:ef:1141653475059572779>"
         case 2:
-            element_temp = "<:ewater:1141653475059572779>"
+            element_temp = "<:eg:1141653474480767016>"
         case 3:
-            element_temp = "<:ewind:1141653474480767016>"
+            element_temp = "<:eh:1141653473528664126>"
         case 4:
-            element_temp = "<:eearth:1141653473528664126>"
+            element_temp = "<:ei:1141653471154671698>"
         case 5:
-            element_temp = "<:elightning:1141653471154671698>"
+            element_temp = "<:ej:1141653469938339971>"
         case 6:
-            element_temp = "<:elight:1141653466343800883>"
+            element_temp = "<:ek:1141653468080242748>"
         case 7:
-            element_temp = "<:eshadow:1141653468080242748>"
+            element_temp = "<:el:1141653466343800883>"
         case 8:
-            element_temp = "<:ecelestial:1141653469938339971>"
+            element_temp = "<:em:1141647050342146118>"
         case _:
-            element_temp = "<a:eshadow2:1141653468965257216>"
+            element_temp = "<:ee:1141653476816986193>"
 
     return element_temp
 
@@ -169,13 +176,13 @@ def get_type() -> str:
     random_number = random.randint(1, 4)
     match random_number:
         case 1:
-            type_temp = '<:eranged:1141654478748135545>'
+            type_temp = '<:ea:1141654478748135545>'
         case 2:
-            type_temp = '<:emelee:1141654530619088906>'
+            type_temp = '<:ea:1141654530619088906>'
         case 3:
-            type_temp = "<:emagical:1143754281846059119>"
+            type_temp = "<:ea:1143754281846059119>"
         case _:
-           type_temp = "<:esummon:1143754335478616114>"
+            type_temp = "<:ea:1143754335478616114>"
 
     return type_temp
 
@@ -193,7 +200,7 @@ def store_channel_id(channel_id: int) -> str:
 def get_base_hp(base_type: str) -> int:
     match base_type:
         case "Fortress":
-            base_hp = 1000
+            base_hp = 500
         case "Dragon":
             base_hp = 50000
         case "Primordial":

@@ -44,8 +44,9 @@ class CustomItem:
         self.item_num_stars = 1
         self.item_suffix_values = ""
         self.item_prefix_values = ""
-        self.item_material_tier = "Iron"
-        self.item_blessing_tier = "Inert"
+        self.item_material_tier = ""
+        self.item_blessing_tier = ""
+        self.item_type = ""
         self.item_enhancement = 0
         self.item_elements = []
         self.item_bonus_stat = 0
@@ -61,21 +62,21 @@ class CustomItem:
 
         item_elements = ""
         for x in self.item_elements:
-            item_elements = str(x) + ";"
+            item_elements += str(x) + ";"
         if item_elements != "":
             item_elements = item_elements[:-1]
 
         dfn = pd.DataFrame(columns=["player_id", "item_id",	"item_name",
                                     "item_elements",	"item_damage_type",
                                     "item_enhancement",	"item_base_tier",
-                                    "item_blessing_tier", "item_material_tier",
+                                    "item_blessing_tier", "item_material_tier", "item_type",
                                     "item_num_stars", "item_prefix_values",	"item_suffix_values",
                                     "item_bonus_stat", "item_base_dmg_min",	"item_base_dmg_max",
                                     "item_num_sockets",	"item_inlaid_gem_id"],
                            data=[[self.player_owner, self.item_id, self.item_name,
                                   item_elements, self.item_damage_type,
                                   self.item_enhancement, self.item_base_tier,
-                                  self.item_blessing_tier, self.item_material_tier,
+                                  self.item_blessing_tier, self.item_material_tier, self.item_type,
                                   self.item_num_stars, self.item_prefix_values, self.item_suffix_values,
                                   self.item_bonus_stat, self.base_damage_min, self.base_damage_max,
                                   self.item_num_sockets, self.item_inlaid_gem_id]])
@@ -123,7 +124,8 @@ class CustomItem:
         item_types = f'{self.item_damage_type}'
         for x in self.item_elements:
             item_types += f'{x}'
-
+        if self.item_num_sockets == 1:
+            display_stars += " Socket: 1"
         embed_msg = discord.Embed(colour=tier_colour,
                                   title=item_title,
                                   description=display_stars)
@@ -157,6 +159,9 @@ class CustomWeapon(CustomItem):
         if self.item_damage_type == "<:esummon:1143754335478616114>":
             self.item_blessing_tier = "Standard"
             self.item_material_tier = "Illusion"
+        else:
+            self.item_material_tier = "Iron"
+            self.item_blessing_tier = "Basic"
 
         # set attack speed
         match self.item_base_tier:
@@ -193,6 +198,9 @@ class CustomArmour(CustomItem):
         self.item_damage_type = ""
         self.item_type = generate_armour_base(self.item_base_tier)
 
+        self.item_material_tier = "Iron"
+        self.item_blessing_tier = "Inert"
+
         # set damage mitigation
         match self.item_base_tier:
             case 4:
@@ -227,6 +235,7 @@ class CustomAccessory(CustomItem):
         self.item_type = generate_accessory_base()
 
         self.item_material_tier = "Crude"
+        self.item_blessing_tier = "Sparkling"
 
         random_num = random.randint(1,4)
         # set accessory unique skill
@@ -304,6 +313,7 @@ def read_custom_item(item_id: str):
                 target_item.item_id = item_id
                 target_item.item_name = str(line['item_name'])
                 target_item.item_elements = list(str(line['item_elements']).split(';'))
+                target_item.item_type = str(line['item_type'])
                 target_item.item_damage_type = str(line['item_damage_type'])
                 target_item.item_enhancement = int(line['item_enhancement'])
                 target_item.item_base_tier = int(line['item_base_tier'])
@@ -535,6 +545,7 @@ def inventory_add_custom_item(item) -> str:
     item_base_tier = item.item_base_tier
     item_blessing_tier = item.item_blessing_tier
     item_material_tier = item.item_material_tier
+    item_type = item.item_type
 
     # item rolls
     item_num_stars = item.item_num_stars
@@ -556,7 +567,7 @@ def inventory_add_custom_item(item) -> str:
 
         writer.writerow([player_id, item_id, item_name,
                          item_elements, item_damage_type,
-                         item_enhancement, item_base_tier, item_blessing_tier, item_material_tier,
+                         item_enhancement, item_base_tier, item_blessing_tier, item_material_tier, item_type,
                          item_num_stars, item_prefix_values, item_suffix_values,
                          item_bonus_stat, item_base_dmg_min, item_base_dmg_max,
                          item_num_sockets,item_inlaid_gem_id])
@@ -578,8 +589,8 @@ def display_cinventory(player_id: int) -> str:
     filename = 'cinventory.csv'
     df = pd.read_csv(filename)
     df = df[df['player_id'] == player_id][['item_id', 'item_name']]
-    # .ljust(10) can pad the text
-    player_inventory = df.to_string(index=False, header=False)
+    temp = df.style.set_properties(**{'text-align': 'left'}).hide(axis='index').hide(axis='columns')
+    player_inventory = temp.to_string()
     return player_inventory
 
 
@@ -590,7 +601,7 @@ def display_binventory(player_id: int):
     item_list = pd.read_csv(filename)
 
     merged_df = df.merge(item_list, left_on='item_id', right_on='item_id')
-    merged_df = merged_df[merged_df['player_id'] == player_id][['item_name', 'item_qty']]
+    merged_df = merged_df[merged_df['player_id'] == player_id][['item_emoji', 'item_name', 'item_qty']]
     temp = merged_df.style.set_properties(**{'text-align': 'left'}).hide(axis='index').hide(axis='columns')
     player_inventory = temp.to_string()
 
@@ -624,36 +635,168 @@ def get_gear_tier_colours(base_tier):
     return tier_colour, tier_emoji
 
 
-def enhance_item(player_object, selected_item):
-    # item_id = ["I1", "I2", "I3"]
-
-    # Get success rate
-    item_id = "I1"
+def craft_item(player_object, selected_item, condition, method):
     filename = 'itemlist.csv'
     item_list = pd.read_csv(filename)
-    base_rate = int(item_list[item_list['item_id'] == item_id][['item_base_rate']].values[0])
-    success_rate = base_rate - selected_item.item_enhancement
 
-    # Check and update the stock
-    filename = 'binventory.csv'
-    df = pd.read_csv(filename)
-    player_stock = int(df[(df['item_id'] == item_id) & (df['player_id'] == player_object.player_id)]
-                       [['item_qty']].values[0])
+    match condition:
+        case "T1 Enhance":
+            item_id = "I1"
+        case "T2 Enhance":
+            item_id = "I2"
+        case "T3 Enhance":
+            item_id = "I3"
+        case "T1 Upgrade":
+            item_id = "I4"
+        case "T2 Upgrade":
+            item_id = "I5"
+        case "T3 Upgrade":
+            item_id = "I6"
+        case "T1 Bestow":
+            item_id = "I7"
+        case "T2 Bestow":
+            item_id = "I8"
+        case "T3 Bestow":
+            item_id = "I9"
+        case "T1 Open":
+            item_id = "I10"
+        case "T2 Open":
+            item_id = "I11"
+        case "T3 Open":
+            item_id = "I12"
+        case "T1 Imbue":
+            item_id = "I13"
+        case "T2 Imbue":
+            item_id = "I14"
+        case "T3 Imbue":
+            item_id = "I15"
+        case "T1 Tune":
+            item_id = "I16"
+        case "T2 Tune":
+            item_id = "I17"
+        case "T3 Tune":
+            item_id = "I18"
+        case "T1 Implant":
+            item_id = "I20"
+        case "T1 Voidforge":
+            item_id = "I21"
+        case _:
+            item_id = condition
 
-    # Run the attempt
-    if player_stock > 0 and selected_item.item_enhancement < 100:
-        df.loc[(df['item_id'] == item_id) & (df['player_id'] == player_object.player_id), 'item_qty'] = player_stock - 1
-        df.to_csv(filename, index=False)
-        random_num = random.randint(1,100)
-        if random_num <= success_rate:
-            selected_item.item_enhancement += 1
-            selected_item.set_item_name()
-            selected_item.update_damage()
-            selected_item.update_stored_item()
-            is_success = True
-        else:
-            is_success = False
+    success_rate = int(item_list[item_list['item_id'] == item_id][['item_base_rate']].values[0])
+    player_stock = check_stock(player_object, item_id)
+    if player_stock > 0:
+        match method:
+            case "Enhance":
+                success_rate = success_rate - selected_item.item_enhancement
+                if selected_item.item_enhancement < 100:
+                    update_stock(player_object, item_id, -1)
+                    random_num = random.randint(1, 100)
+                    if random_num <= success_rate:
+                        selected_item.item_enhancement += 1
+                        selected_item.set_item_name()
+                        is_success = "1"
+                    else:
+                        is_success = "0"
+                else:
+                    is_success = "3"
+            case "Upgrade":
+                if damagecalc.get_item_tier_damage(selected_item.item_material_tier) != 400:
+                    update_stock(player_object, item_id, -1)
+                    random_num = random.randint(1, 100)
+                    if random_num <= success_rate:
+                        material_tier_list = ["Iron", "Steel", "Silver", "Mithril", "Diamond", "Crystal",
+                                              "Illusion", "Essence", "Spirit", "Soulbound", "Phantasmal", "Spectral"
+                                              "Crude", "Metallic", "Gold", "Jewelled", "Diamond", "Crystal"]
+                        for idx, elem in enumerate(material_tier_list):
+                            if selected_item.item_material_tier == elem:
+                                selected_item.item_material_tier = material_tier_list[(idx + 1)]
+                                break
+                        selected_item.set_item_name()
+                        is_success = "1"
+                    else:
+                        is_success = "0"
+                else:
+                    is_success = "3"
+            case "Bestow":
+                if damagecalc.get_item_tier_damage(selected_item.item_blessing_tier) != 400:
+                    update_stock(player_object, item_id, -1)
+                    random_num = random.randint(1, 100)
+                    if random_num <= success_rate:
+                        blessing_tier_list = ["Inert", "Faint", "Luminous", "Lustrous", "Radiant", "Divine",
+                                              "Basic", "Enchanted", "Luminous", "Lustrous", "Radiant", "Divine",
+                                              "Sparkling", "Glittering", "Dazzling", "Shining", "Prismatic", "Resplendent"]
+                        for idx, elem in enumerate(blessing_tier_list):
+                            if selected_item.item_blessing_tier == elem:
+                                selected_item.item_blessing_tier = blessing_tier_list[(idx + 1)]
+                                break
+                        selected_item.set_item_name()
+                        is_success = "1"
+                    else:
+                        is_success = "0"
+                else:
+                    is_success = "3"
+            case "Open":
+                if selected_item.item_num_sockets < 1:
+                    update_stock(player_object, item_id, -1)
+                    random_num = random.randint(1, 100)
+                    if random_num <= success_rate:
+                        selected_item.item_num_sockets += 1
+                        is_success = "1"
+                    else:
+                        is_success = "0"
+                else:
+                    is_success = "3"
+            case "Imbue":
+                is_success = "Not Ready Yet"
+            case "Tune":
+                is_success = "Not Ready Yet"
+            case "Implant":
+                if len(selected_item.item_elements) < 8:
+                    update_stock(player_object, item_id, -1)
+                    random_num = random.randint(1, 100)
+                    if random_num <= success_rate:
+                        running = True
+                        new_element = ""
+                        while running:
+                            new_element = bosses.get_element()
+                            running = False
+                            for x in selected_item.item_elements:
+                                if str(x) == new_element:
+                                    running = True
+                        selected_item.item_elements.append(new_element)
+                        is_success = "1"
+                    else:
+                        is_success = "0"
+                else:
+                    is_success = "3"
+            case _:
+                is_success = "Not Ready Yet"
     else:
-        is_success = False
+        is_success = item_id
+
+    if is_success == "1":
+        selected_item.update_damage()
+        selected_item.update_stored_item()
 
     return is_success
+
+
+def check_stock(player_object, item_id):
+    filename = 'binventory.csv'
+    df = pd.read_csv(filename)
+    df = df[(df['item_id'] == item_id) & (df['player_id'] == player_object.player_id)][['item_qty']]
+    if not df.empty:
+        player_stock = int(df.values[0])
+    else:
+        player_stock = 0
+    return player_stock
+
+
+def update_stock(player_object, item_id, change):
+    filename = 'binventory.csv'
+    df = pd.read_csv(filename)
+    player_stock = check_stock(player_object, item_id)
+    df.loc[(df['item_id'] == item_id) & (df['player_id'] == player_object.player_id),
+           'item_qty'] = player_stock + change
+    df.to_csv(filename, index=False)
