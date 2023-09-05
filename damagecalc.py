@@ -23,6 +23,8 @@ def get_item_tier_damage(material_tier: str) -> int:
             damage_temp = 200
         case "Crystal" | "Divine" | "Spectral" | "Resplendent":
             damage_temp = 400
+        case "Voidcrystal":
+            damage_temp = 1000
         case _:
             damage_temp = 0
 

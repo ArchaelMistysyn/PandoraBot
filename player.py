@@ -35,7 +35,7 @@ class PlayerProfile:
     def update_username(self, new_name: str):
         filename = "playerlist.csv"
         df = pd.read_csv(filename)
-        df['player_username'] = df['player_username'].replace(str(self.player_name), new_name)
+        df['player_username'] = df['player_username'].replace(str(self.player_username), new_name)
         df.to_csv(filename, index=False)
         self.player_username = new_name
 
@@ -85,7 +85,7 @@ class PlayerProfile:
         new_exp = self.player_exp + int(amount)
         levelling = True
         while levelling:
-            if new_exp > get_max_exp(self.player_lvl):
+            if new_exp >= get_max_exp(self.player_lvl):
                 new_exp -= get_max_exp(self.player_lvl)
                 self.player_lvl += 1
                 df.loc[df['player_id'] == self.player_id, 'player_lvl'] = self.player_lvl

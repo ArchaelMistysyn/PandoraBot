@@ -10,7 +10,8 @@ import loot
 import player
 import damagecalc
 import chatcommands
-from discord.ui import Button, View, Select
+from discord.ui import Button, View
+import csv
 
 
 # run the bot
@@ -418,8 +419,11 @@ def run_discord_bot():
                     boss_hp = f'{life_emoji}({active_boss.boss_cHP} / {active_boss.boss_mHP})'
                     embed_msg.remove_field(index=0)
                     embed_msg.remove_field(index=0)
+                    embed_msg.remove_field(index=0)
+                    dps_msg = str(dps) + " / min"
                     embed_msg.add_field(name=boss_field, value=boss_hp, inline=False)
                     embed_msg.add_field(name=boss_weakness, value="", inline=False)
+                    embed_msg.add_field(name="Current DPS: ", value=dps_msg)
                     embed_msg.add_field(name="SLAIN", value="", inline=False)
                     player_list = [user.player_name]
                     exp_amount = active_boss.boss_tier * (1 + active_boss.boss_lvl) * 100
@@ -541,6 +545,11 @@ def run_discord_bot():
             player_object.add_stamina(value)
         if backdoor == "item_hack":
             inventory.update_stock(player_object, value, 10)
+        if backdoor == "item_hack_all":
+            filename = "itemlist.csv"
+            with (open(filename, 'r') as f):
+                for line in csv.DictReader(f):
+                    inventory.update_stock(player_object, str(line['item_id']), int(value))
 
     @pandora_bot.command(name='item', help="**!item** to display your item details")
     @commands.max_concurrency(1, per=commands.BucketType.default, wait=False)
@@ -571,34 +580,20 @@ def run_discord_bot():
             message = f'Sorry that username is taken.'
         await ctx.send(message)
 
-    @pandora_bot.command(name='forge', help="**!forge** to enter the celestial forge")
-    @commands.max_concurrency(1, per=commands.BucketType.default, wait=False)
-    async def forge(ctx):
+    class ForgeView(discord.ui.View):
+        def __init__(self, player_object, selected_item):
+            super().__init__(timeout=600)
+            self.selected_item = selected_item
+            self.player_object = player_object
+            self.values = None
 
-        selected = 1
-
-        user = ctx.author
-        player_object = player.get_player_by_name(user)
-        player_object.get_equipped()
-        view = View(timeout=600)
-        match selected:
-            case 1:
-                selected_item = inventory.read_custom_item(player_object.equipped_weapon)
-            case 2:
-                selected_item = inventory.read_custom_item(player_object.equipped_armour)
-            case _:
-                selected_item = inventory.read_custom_item(player_object.equipped_acc)
-
-        embed_msg = selected_item.create_citem_embed()
-
-        # Build dropdown menu
-        forge_select = Select(
+        @discord.ui.select(
             placeholder="Select crafting method!",
             min_values=1,
             max_values=1,
             options=[
                 discord.SelectOption(
-                    emoji="<a:eenergy:1145534127349706772>", label="Enhance", description="Enhancement!",),
+                    emoji="<a:eenergy:1145534127349706772>", label="Enhance", description="Enhancement!"),
                 discord.SelectOption(
                     emoji="<:eore:1145534835507593236>", label="Upgrade", description="Upgrade!"),
                 discord.SelectOption(
@@ -608,115 +603,14 @@ def run_discord_bot():
                 discord.SelectOption(
                     emoji="<a:ematrix:1145520262268325919>", label="Tune", description="Tuning!"),
                 discord.SelectOption(
+                    emoji="<a:ematrix:1145520262268325919>", label="Imbue", description="Imbue!"),
+                discord.SelectOption(
                     emoji="<a:eorigin:1145520263954440313>", label="Implant", description="Implant Origin!"),
                 discord.SelectOption(
                     emoji="<a:evoid:1145520260573827134>",label="Voidforge", description="Voidforge!")
             ]
         )
-
-        # Build view
-        view.add_item(forge_select)
-        view.message = embed_msg
-
-        # Assign response
-        async def button_T1_single_callback(interaction):
-            method = forge_select.values[0]
-            condition = f"T1 {method}"
-            result = inventory.craft_item(player_object, selected_item, condition, method)
-            if result == "0":
-                outcome = "Failed!"
-            elif result == "1":
-                outcome = "Success!"
-            elif result == "3":
-                outcome = "Cannot upgrade further"
-            else:
-                outcome = f"Out of Stock: {loot.get_loot_emoji(result)}"
-            new_embed_msg = selected_item.create_citem_embed()
-            new_embed_msg.add_field(name=outcome, value="", inline=False)
-            await interaction.response.edit_message(embed=new_embed_msg)
-
-        async def button_T2_single_callback(interaction):
-            method = forge_select.values[0]
-            condition = f"T2 {method}"
-            result = inventory.craft_item(player_object, selected_item, condition, method)
-            if result == "0":
-                outcome = "Failed!"
-            elif result == "1":
-                outcome = "Success!"
-            elif result == "3":
-                outcome = "Cannot upgrade further"
-            else:
-                outcome = f"Out of Stock: {loot.get_loot_emoji(result)}"
-            new_embed_msg = selected_item.create_citem_embed()
-            new_embed_msg.add_field(name=outcome, value="", inline=False)
-            await interaction.response.edit_message(embed=new_embed_msg)
-
-        async def button_T3_single_callback(interaction):
-            method = forge_select.values[0]
-            condition = f"T3 {method}"
-            result = inventory.craft_item(player_object, selected_item, condition, method)
-            if result == "0":
-                outcome = "Failed!"
-            elif result == "1":
-                outcome = "Success!"
-            elif result == "3":
-                outcome = "Cannot upgrade further"
-            else:
-                outcome = f"Out of Stock: {loot.get_loot_emoji(result)}"
-            new_embed_msg = selected_item.create_citem_embed()
-            new_embed_msg.add_field(name=outcome, value="", inline=False)
-            await interaction.response.edit_message(embed=new_embed_msg)
-
-        async def button_all_callback(interaction):
-            result = "0"
-            overall = "All failed"
-            outcome = ""
-            method = forge_select.values[0]
-            condition = f"{method} All"
-            match condition:
-                case "Enhance All":
-                    item_id_list = ["I1", "I2", "I3"]
-                case "Upgrade All":
-                    item_id_list = ["I4", "I5", "I6"]
-                case "Bestow All":
-                    item_id_list = ["I7", "I8", "I9"]
-                case "Open All":
-                    item_id_list = ["I10", "I11", "I12"]
-                case "Imbue All":
-                    item_id_list = ["I13", "I14", "I15"]
-                case "Tune All":
-                    item_id_list = ["I16", "I17", "I18"]
-                case "Implant All":
-                    item_id_list = ["I20"]
-                case "Voidforge All":
-                    item_id_list = ["I21"]
-                case _:
-                    item_id_list = ["error"]
-            for x in item_id_list:
-                running = True
-                while running:
-                    result = inventory.craft_item(player_object, selected_item, x, method)
-                    if result != "0" and result != "1":
-                        running = False
-                    elif result == "1":
-                        if overall == "Success!":
-                            overall = "!!MULTI-SUCCESS!!"
-                        elif overall != "!!MULTI-SUCCESS!!":
-                            overall = "Success!"
-                if result == "3":
-                    outcome = "Cannot upgrade further"
-                    break
-                else:
-                    outcome = f"Out of Stock: {loot.get_loot_emoji(result)}"
-            new_embed_msg = selected_item.create_citem_embed()
-            new_embed_msg.add_field(name=overall, value=outcome, inline=False)
-            await interaction.response.edit_message(embed=new_embed_msg)
-
-        async def button_cancel_callback(interaction):
-            # cancel here
-            await interaction.response.edit_message(view=None)
-
-        async def dropdown_callback(interaction):
+        async def forge_callback(self, interaction: discord.Interaction, forge_select: discord.ui.Select):
             match forge_select.values[0]:
                 case "Enhance":
                     button_1 = Button(label="T1 Enhance",
@@ -745,7 +639,7 @@ def run_discord_bot():
                                       style=discord.ButtonStyle.success, emoji=loot.get_loot_emoji("I8"))
                     button_3 = Button(label="T3 Bestow",
                                       style=discord.ButtonStyle.success, emoji=loot.get_loot_emoji("I9"))
-                    button_all = Button(label="Enhance All",
+                    button_all = Button(label="Bestow All",
                                         style=discord.ButtonStyle.blurple, emoji="⬆️")
                     num_buttons = 4
                 case "Open":
@@ -797,24 +691,185 @@ def run_discord_bot():
                     button_all = Button(label="")
                     num_buttons = 0
 
+            # Assign response
+            async def button_T1_single_callback(button_interaction: discord.Interaction):
+                method = forge_select.values[0]
+                condition = f"T1 {method}"
+                result = inventory.craft_item(self.player_object, self.selected_item, condition, method)
+                if result == "0":
+                    outcome = "Failed!"
+                elif result == "1":
+                    outcome = "Success!"
+                elif result == "3":
+                    outcome = "Cannot upgrade further"
+                elif result == "4":
+                    outcome = "Item not ready for upgrade"
+                else:
+                    outcome = f"Out of Stock: {loot.get_loot_emoji(result)}"
+                new_embed_msg = self.selected_item.create_citem_embed()
+                new_embed_msg.add_field(name=outcome, value="", inline=False)
+                await button_interaction.response.edit_message(embed=new_embed_msg)
+
+            async def button_T2_single_callback(button_interaction: discord.Interaction):
+                method = forge_select.values[0]
+                condition = f"T2 {method}"
+                result = inventory.craft_item(self.player_object, self.selected_item, condition, method)
+                if result == "0":
+                    outcome = "Failed!"
+                elif result == "1":
+                    outcome = "Success!"
+                elif result == "3":
+                    outcome = "Cannot upgrade further"
+                elif result == "4":
+                    outcome = "Item not ready for upgrade"
+                else:
+                    outcome = f"Out of Stock: {loot.get_loot_emoji(result)}"
+                new_embed_msg = self.selected_item.create_citem_embed()
+                new_embed_msg.add_field(name=outcome, value="", inline=False)
+                await button_interaction.response.edit_message(embed=new_embed_msg)
+
+            async def button_T3_single_callback(button_interaction: discord.Interaction):
+                method = forge_select.values[0]
+                condition = f"T3 {method}"
+                result = inventory.craft_item(self.player_object, self.selected_item, condition, method)
+                if result == "0":
+                    outcome = "Failed!"
+                elif result == "1":
+                    outcome = "Success!"
+                elif result == "3":
+                    outcome = "Cannot upgrade further"
+                elif result == "4":
+                    outcome = "Item not ready for upgrade"
+                else:
+                    outcome = f"Out of Stock: {loot.get_loot_emoji(result)}"
+                new_embed_msg = self.selected_item.create_citem_embed()
+                new_embed_msg.add_field(name=outcome, value="", inline=False)
+                await button_interaction.response.edit_message(embed=new_embed_msg)
+
+            async def button_all_callback(button_interaction: discord.Interaction):
+                result = "0"
+                overall = "All failed"
+                outcome = ""
+                method = forge_select.values[0]
+                condition = f"{method} All"
+                match condition:
+                    case "Enhance All":
+                        item_id_list = ["I1", "I2", "I3"]
+                    case "Upgrade All":
+                        item_id_list = ["I4", "I5", "I6"]
+                    case "Bestow All":
+                        item_id_list = ["I7", "I8", "I9"]
+                    case "Open All":
+                        item_id_list = ["I10", "I11", "I12"]
+                    case "Imbue All":
+                        item_id_list = ["I13", "I14", "I15"]
+                    case "Tune All":
+                        item_id_list = ["I16", "I17", "I18"]
+                    case "Implant All":
+                        item_id_list = ["I20"]
+                    case "Voidforge All":
+                        item_id_list = ["I21"]
+                    case _:
+                        item_id_list = ["error"]
+                for x in item_id_list:
+                    running = True
+                    while running:
+                        result = inventory.craft_item(self.player_object, self.selected_item, x, method)
+                        if result != "0" and result != "1":
+                            running = False
+                        elif result == "1":
+                            if overall == "Success!":
+                                overall = "!!MULTI-SUCCESS!!"
+                            elif overall != "!!MULTI-SUCCESS!!":
+                                overall = "Success!"
+                    if result == "3":
+                        outcome = "Cannot upgrade further"
+                        break
+                    else:
+                        outcome = f"Out of Stock: {loot.get_loot_emoji(result)}"
+                new_embed_msg = self.selected_item.create_citem_embed()
+                new_embed_msg.add_field(name=overall, value=outcome, inline=False)
+                await button_interaction.response.edit_message(embed=new_embed_msg)
+
+            async def button_cancel_callback(interaction):
+                # cancel here
+                await interaction.response.edit_message(view=None)
+
             button_cancel = Button(label="Cancel", style=discord.ButtonStyle.red, emoji="✖️")
-            view.add_item(button_1)
+            self.add_item(button_1)
             if num_buttons == 4:
-                view.add_item(button_2)
-                view.add_item(button_3)
+                self.add_item(button_2)
+                self.add_item(button_3)
                 button_2.callback = button_T2_single_callback
                 button_3.callback = button_T3_single_callback
-            view.add_item(button_all)
-            view.add_item(button_cancel)
+            self.add_item(button_all)
+            self.add_item(button_cancel)
             button_1.callback = button_T1_single_callback
             button_all.callback = button_all_callback
             button_cancel.callback = button_cancel_callback
             forge_select.disabled = True
-            await interaction.response.edit_message(embed=embed_msg, view=view)
+            await interaction.response.edit_message(view=self)
 
-        forge_select.callback = dropdown_callback
+    class SelectView(discord.ui.View):
+        def __init__(self, player_object):
+            super().__init__(timeout=600)
+            self.player_object = player_object
+            self.value = None
 
-        # Display the view
+        @discord.ui.select(
+            placeholder="Select crafting base!",
+            min_values=1,
+            max_values=1,
+            options=[
+                discord.SelectOption(
+                    emoji="<a:eenergy:1145534127349706772>", label="Weapon", description="Equipped Weapon"),
+                discord.SelectOption(
+                    emoji="<a:eenergy:1145534127349706772>", label="Armour", description="Equipped Armour"),
+                discord.SelectOption(
+                    emoji="<a:eenergy:1145534127349706772>", label="Accessory", description="Equipped Accessory")
+                # discord.SelectOption(
+                    # emoji="<a:eenergy:1145534127349706772>", label="Wing", description="Equipped Wing"),
+                # discord.SelectOption(
+                    # emoji="<a:eenergy:1145534127349706772>", label="Crest", description="Equipped Paragon Crest")
+            ]
+        )
+        async def select_callback(self, interaction: discord.Interaction, item_select: discord.ui.Select):
+            error_msg = ""
+            match item_select.values[0]:
+                case "Weapon":
+                    if self.player_object.equipped_weapon != "":
+                        self.selected_item = inventory.read_custom_item(self.player_object.equipped_weapon)
+                    else:
+                        error_msg = "Not equipped"
+                case "Armour":
+                    if self.player_object.equipped_armour != "":
+                        self.selected_item = inventory.read_custom_item(self.player_object.equipped_armour)
+                    else:
+                        error_msg = "Not equipped"
+                case "Accessory":
+                    if self.player_object.equipped_acc != "":
+                        self.selected_item = inventory.read_custom_item(self.player_object.equipped_acc)
+                    else:
+                        error_msg = "Not equipped"
+                case _:
+                    error_msg = "Error"
+            if error_msg == "":
+                embed_msg = self.selected_item.create_citem_embed()
+                new_view = ForgeView(self.player_object, self.selected_item)
+                await interaction.response.edit_message(embed=embed_msg, view=new_view)
+            else:
+                await interaction.response.edit_message(view=None)
+
+    @pandora_bot.command(name='forge', help="**!forge** to enter the celestial forge")
+    @commands.max_concurrency(1, per=commands.BucketType.default, wait=False)
+    async def forge(ctx):
+        user = ctx.author
+        player_object = player.get_player_by_name(user)
+        player_object.get_equipped()
+        embed_msg = discord.Embed(colour=discord.Colour.blurple(),
+                                  title="Pandora's Celestial Forge",
+                                  description="Let me know what you'd like me to upgrade today!")
+        view = SelectView(player_object)
         view.embed = await ctx.send(embed=embed_msg, view=view)
 
     pandora_bot.run(TOKEN)
