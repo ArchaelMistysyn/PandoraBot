@@ -183,7 +183,7 @@ class CustomItem:
                 prefix_rolls += f'\n{get_roll_by_code(str(x))} '
                 for y in range(int(str(x)[1]) - 1):
                     prefix_rolls += "<:eprl:1148390531345432647>"
-        if self.item_prefix_values:
+        if self.item_suffix_values:
             for x in self.item_suffix_values:
                 suffix_rolls += f'\n{get_roll_by_code(str(x))} '
                 for y in range(int(str(x)[1]) - 1):

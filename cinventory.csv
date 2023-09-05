@@ -5,4 +5,4 @@ player_id,item_id,item_name,item_elements,item_damage_type,item_enhancement,item
 10001,W4,+24 Basic Iron Staff,<:ef:1141653475059572779>,<:ea:1143754335478616114>,24,1,Basic,Iron,Staff,1,,,1.1,1,25,0,
 10001,W5,+37 Enchanted Iron Torch,<:el:1141653466343800883>;<:eg:1141653474480767016>;<:eh:1141653473528664126>,<:emelee:1141654530619088906>,37,1,Enchanted,Iron,Torch,5,P22;P43,S43;S12,1.1,1,25,0,
 10001,Y6,+100 Resplendent Voidcrystal Bracelet,,,100,1,Resplendent,Voidcrystal,Bracelet,1,,,Defensive Stance,1,25,1,
-10001,A7,+100 Divine Voidcrystal Mail,,,100,3,Divine,Voidcrystal,Mail,1,,,15,10,35,1,
+10001,A7,+100 Divine Voidcrystal Mail,,,100,3,Divine,Voidcrystal,Mail,2,,S31,15,10,35,1,

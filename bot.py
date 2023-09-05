@@ -586,6 +586,9 @@ def run_discord_bot():
             self.selected_item = selected_item
             self.player_object = player_object
             self.values = None
+            self.button_label = []
+            self.button_emoji = []
+            self.num_buttons = 0
 
         @discord.ui.select(
             placeholder="Select crafting method!",
@@ -613,88 +616,60 @@ def run_discord_bot():
         async def forge_callback(self, interaction: discord.Interaction, forge_select: discord.ui.Select):
             match forge_select.values[0]:
                 case "Enhance":
-                    button_1 = Button(label="T1 Enhance",
-                                      style=discord.ButtonStyle.success, emoji=loot.get_loot_emoji("I1"))
-                    button_2 = Button(label="T2 Enhance",
-                                      style=discord.ButtonStyle.success, emoji=loot.get_loot_emoji("I2"))
-                    button_3 = Button(label="T3 Enhance",
-                                      style=discord.ButtonStyle.success, emoji=loot.get_loot_emoji("I3"))
-                    button_all = Button(label="Enhance All",
-                                        style=discord.ButtonStyle.blurple, emoji="⬆️")
-                    num_buttons = 4
+                    self.button_emoji.append(loot.get_loot_emoji("I1"))
+                    self.button_emoji.append(loot.get_loot_emoji("I2"))
+                    self.button_emoji.append(loot.get_loot_emoji("I3"))
+                    self.num_buttons = 4
                 case "Upgrade":
-                    button_1 = Button(label="T1 Upgrade",
-                                      style=discord.ButtonStyle.success, emoji=loot.get_loot_emoji("I4"))
-                    button_2 = Button(label="T2 Upgrade",
-                                      style=discord.ButtonStyle.success, emoji=loot.get_loot_emoji("I5"))
-                    button_3 = Button(label="T3 Upgrade",
-                                      style=discord.ButtonStyle.success, emoji=loot.get_loot_emoji("I6"))
-                    button_all = Button(label="Upgrade All",
-                                        style=discord.ButtonStyle.blurple, emoji="⬆️")
-                    num_buttons = 4
+                    self.button_emoji.append(loot.get_loot_emoji("I4"))
+                    self.button_emoji.append(loot.get_loot_emoji("I5"))
+                    self.button_emoji.append(loot.get_loot_emoji("I6"))
+                    self.num_buttons = 4
                 case "Bestow":
-                    button_1 = Button(label="T1 Bestow",
-                                      style=discord.ButtonStyle.success, emoji=loot.get_loot_emoji("I7"))
-                    button_2 = Button(label="T2 Bestow",
-                                      style=discord.ButtonStyle.success, emoji=loot.get_loot_emoji("I8"))
-                    button_3 = Button(label="T3 Bestow",
-                                      style=discord.ButtonStyle.success, emoji=loot.get_loot_emoji("I9"))
-                    button_all = Button(label="Bestow All",
-                                        style=discord.ButtonStyle.blurple, emoji="⬆️")
-                    num_buttons = 4
+                    self.button_emoji.append(loot.get_loot_emoji("I7"))
+                    self.button_emoji.append(loot.get_loot_emoji("I8"))
+                    self.button_emoji.append(loot.get_loot_emoji("I9"))
+                    self.num_buttons = 4
                 case "Open":
-                    button_1 = Button(label="T1 Open",
-                                      style=discord.ButtonStyle.success, emoji=loot.get_loot_emoji("I10"))
-                    button_2 = Button(label="T2 Open",
-                                      style=discord.ButtonStyle.success, emoji=loot.get_loot_emoji("I11"))
-                    button_3 = Button(label="T3 Open",
-                                      style=discord.ButtonStyle.success, emoji=loot.get_loot_emoji("I12"))
-                    button_all = Button(label="Open All",
-                                        style=discord.ButtonStyle.blurple, emoji="⬆️")
-                    num_buttons = 4
+                    self.button_emoji.append(loot.get_loot_emoji("I10"))
+                    self.button_emoji.append(loot.get_loot_emoji("I11"))
+                    self.button_emoji.append(loot.get_loot_emoji("I12"))
+                    self.num_buttons = 4
                 case "Imbue":
-                    button_1 = Button(label="T1 Imbue",
-                                      style=discord.ButtonStyle.success, emoji=loot.get_loot_emoji("I13"))
-                    button_2 = Button(label="T2 Imbue",
-                                      style=discord.ButtonStyle.success, emoji=loot.get_loot_emoji("I14"))
-                    button_3 = Button(label="T3 Imbue",
-                                      style=discord.ButtonStyle.success, emoji=loot.get_loot_emoji("I15"))
-                    button_all = Button(label="Imbue All",
-                                        style=discord.ButtonStyle.blurple, emoji="⬆️")
-                    num_buttons = 4
+                    self.button_emoji.append(loot.get_loot_emoji("I13"))
+                    self.button_emoji.append(loot.get_loot_emoji("I14"))
+                    self.button_emoji.append(loot.get_loot_emoji("I15"))
+                    self.num_buttons = 4
                 case "Tune":
-                    button_1 = Button(label="T1 Tune",
-                                      style=discord.ButtonStyle.success, emoji=loot.get_loot_emoji("I16"))
-                    button_2 = Button(label="T2 Tune",
-                                      style=discord.ButtonStyle.success, emoji=loot.get_loot_emoji("I17"))
-                    button_3 = Button(label="T3 Tune",
-                                      style=discord.ButtonStyle.success, emoji=loot.get_loot_emoji("I18"))
-                    button_all = Button(label="Tune All",
-                                        style=discord.ButtonStyle.blurple, emoji="⬆️")
-                    num_buttons = 4
+                    self.button_emoji.append(loot.get_loot_emoji("I16"))
+                    self.button_emoji.append(loot.get_loot_emoji("I17"))
+                    self.button_emoji.append(loot.get_loot_emoji("I18"))
+                    self.num_buttons = 4
                 case "Implant":
-                    button_1 = Button(label="Implant",
-                                      style=discord.ButtonStyle.success, emoji=loot.get_loot_emoji("I20"))
-                    button_all = Button(label="Implant All",
-                                        style=discord.ButtonStyle.blurple, emoji="⏫")
-                    num_buttons = 2
+                    self.button_emoji.append(loot.get_loot_emoji("I20"))
+                    self.num_buttons = 2
                 case "Voidforge":
-                    button_1 = Button(label="Voidforge",
-                                      style=discord.ButtonStyle.success, emoji=loot.get_loot_emoji("I21"))
-                    button_all = Button(label="Voidforge All",
-                                        style=discord.ButtonStyle.blurple, emoji="⏫")
-                    num_buttons = 2
+                    self.button_emoji.append(loot.get_loot_emoji("I21"))
+                    self.num_buttons = 2
                 case _:
-                    button_1 = Button(label="")
-                    button_2 = Button(label="")
-                    button_3 = Button(label="")
-                    button_all = Button(label="")
-                    num_buttons = 0
+                    self.num_buttons = 0
 
             # Assign response
-            async def button_T1_single_callback(button_interaction: discord.Interaction):
+            async def first_button_callback(button_interaction: discord.Interaction):
+                new_embed_msg = run_button(1)
+                await button_interaction.response.edit_message(embed=new_embed_msg)
+
+            async def second_button_callback(button_interaction: discord.Interaction):
+                new_embed_msg = run_button(2)
+                await button_interaction.response.edit_message(embed=new_embed_msg)
+
+            async def third_button_callback(button_interaction: discord.Interaction):
+                new_embed_msg = run_button(3)
+                await button_interaction.response.edit_message(embed=new_embed_msg)
+
+            def run_button(selected_button):
                 method = forge_select.values[0]
-                condition = f"T1 {method}"
+                condition = self.button_label[selected_button]
                 result = inventory.craft_item(self.player_object, self.selected_item, condition, method)
                 if result == "0":
                     outcome = "Failed!"
@@ -708,66 +683,29 @@ def run_discord_bot():
                     outcome = f"Out of Stock: {loot.get_loot_emoji(result)}"
                 new_embed_msg = self.selected_item.create_citem_embed()
                 new_embed_msg.add_field(name=outcome, value="", inline=False)
-                await button_interaction.response.edit_message(embed=new_embed_msg)
+                return new_embed_msg
 
-            async def button_T2_single_callback(button_interaction: discord.Interaction):
-                method = forge_select.values[0]
-                condition = f"T2 {method}"
-                result = inventory.craft_item(self.player_object, self.selected_item, condition, method)
-                if result == "0":
-                    outcome = "Failed!"
-                elif result == "1":
-                    outcome = "Success!"
-                elif result == "3":
-                    outcome = "Cannot upgrade further"
-                elif result == "4":
-                    outcome = "Item not ready for upgrade"
-                else:
-                    outcome = f"Out of Stock: {loot.get_loot_emoji(result)}"
-                new_embed_msg = self.selected_item.create_citem_embed()
-                new_embed_msg.add_field(name=outcome, value="", inline=False)
-                await button_interaction.response.edit_message(embed=new_embed_msg)
-
-            async def button_T3_single_callback(button_interaction: discord.Interaction):
-                method = forge_select.values[0]
-                condition = f"T3 {method}"
-                result = inventory.craft_item(self.player_object, self.selected_item, condition, method)
-                if result == "0":
-                    outcome = "Failed!"
-                elif result == "1":
-                    outcome = "Success!"
-                elif result == "3":
-                    outcome = "Cannot upgrade further"
-                elif result == "4":
-                    outcome = "Item not ready for upgrade"
-                else:
-                    outcome = f"Out of Stock: {loot.get_loot_emoji(result)}"
-                new_embed_msg = self.selected_item.create_citem_embed()
-                new_embed_msg.add_field(name=outcome, value="", inline=False)
-                await button_interaction.response.edit_message(embed=new_embed_msg)
-
-            async def button_all_callback(button_interaction: discord.Interaction):
+            async def button_multi_callback(button_interaction: discord.Interaction):
                 result = "0"
                 overall = "All failed"
                 outcome = ""
                 method = forge_select.values[0]
-                condition = f"{method} All"
-                match condition:
-                    case "Enhance All":
+                match method:
+                    case "Enhance":
                         item_id_list = ["I1", "I2", "I3"]
-                    case "Upgrade All":
+                    case "Upgrade":
                         item_id_list = ["I4", "I5", "I6"]
-                    case "Bestow All":
+                    case "Bestow":
                         item_id_list = ["I7", "I8", "I9"]
-                    case "Open All":
+                    case "Open":
                         item_id_list = ["I10", "I11", "I12"]
-                    case "Imbue All":
+                    case "Imbue":
                         item_id_list = ["I13", "I14", "I15"]
-                    case "Tune All":
+                    case "Tune":
                         item_id_list = ["I16", "I17", "I18"]
-                    case "Implant All":
+                    case "Implant":
                         item_id_list = ["I20"]
-                    case "Voidforge All":
+                    case "Voidforge":
                         item_id_list = ["I21"]
                     case _:
                         item_id_list = ["error"]
@@ -791,21 +729,33 @@ def run_discord_bot():
                 new_embed_msg.add_field(name=overall, value=outcome, inline=False)
                 await button_interaction.response.edit_message(embed=new_embed_msg)
 
-            async def button_cancel_callback(interaction):
+            async def button_cancel_callback(button_interaction: discord.Interaction):
                 # cancel here
-                await interaction.response.edit_message(view=None)
+                await button_interaction.response.edit_message(view=None)
 
+            self.button_label.append(f"T1 {forge_select.values[0]}")
+            self.button_label.append(f"T2 {forge_select.values[0]}")
+            self.button_label.append(f"T3 {forge_select.values[0]}")
+            self.button_label.append(f"Multi {forge_select.values[0]}")
+            button_1 = Button(label=self.button_label[0],
+                              style=discord.ButtonStyle.success, emoji=self.button_emoji[0], custom_id="1")
+            button_all = Button(label=self.button_label[3],
+                                style=discord.ButtonStyle.blurple, emoji="⬆️", custom_id="4")
             button_cancel = Button(label="Cancel", style=discord.ButtonStyle.red, emoji="✖️")
             self.add_item(button_1)
-            if num_buttons == 4:
+            if self.num_buttons == 4:
+                button_2 = Button(label=self.button_label[1],
+                                  style=discord.ButtonStyle.success, emoji=self.button_emoji[1], custom_id="2")
+                button_3 = Button(label=self.button_label[2],
+                                  style=discord.ButtonStyle.success, emoji=self.button_emoji[2], custom_id="3")
                 self.add_item(button_2)
                 self.add_item(button_3)
-                button_2.callback = button_T2_single_callback
-                button_3.callback = button_T3_single_callback
+                button_2.callback = second_button_callback
+                button_3.callback = third_button_callback
             self.add_item(button_all)
             self.add_item(button_cancel)
-            button_1.callback = button_T1_single_callback
-            button_all.callback = button_all_callback
+            button_1.callback = first_button_callback
+            button_all.callback = button_multi_callback
             button_cancel.callback = button_cancel_callback
             forge_select.disabled = True
             await interaction.response.edit_message(view=self)
@@ -869,6 +819,7 @@ def run_discord_bot():
         embed_msg = discord.Embed(colour=discord.Colour.blurple(),
                                   title="Pandora's Celestial Forge",
                                   description="Let me know what you'd like me to upgrade today!")
+        embed_msg.set_image(url="https://i.ibb.co/QjWDYG3/forge.jpg")
         view = SelectView(player_object)
         view.embed = await ctx.send(embed=embed_msg, view=view)
 
