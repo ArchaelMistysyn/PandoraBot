@@ -155,8 +155,8 @@ def get_player_damage(player_object, boss_object):
                 case _:
                     no_change = True
     if is_armour:
-        roll_tier = int(str(x)[1])
         for x in e_armour.item_prefix_values:
+            roll_tier = int(str(x)[1])
             match str(x)[2]:
                 case "1":
                     critical_chance += 0.25 * float(roll_tier)
@@ -184,6 +184,7 @@ def get_player_damage(player_object, boss_object):
                     no_change = True
     if is_acc:
         for x in e_acc.item_prefix_values:
+            roll_tier = int(str(x)[1])
             match str(x)[2]:
                 case "1":
                     critical_chance += 0.25 * float(roll_tier)

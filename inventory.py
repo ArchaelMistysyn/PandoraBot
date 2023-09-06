@@ -729,6 +729,7 @@ def display_binventory(player_id: int):
 
     merged_df = df.merge(item_list, left_on='item_id', right_on='item_id')
     merged_df = merged_df[merged_df['player_id'] == player_id][['item_emoji', 'item_name', 'item_qty']]
+    merged_df = merged_df[merged_df['item_qty'] != 0][['item_emoji', 'item_name', 'item_qty']]
     # merged_df = merged_df.sort_values(ascending=True)
     temp = merged_df.style.set_properties(**{'text-align': 'left'}).hide(axis='index').hide(axis='columns')
     player_inventory = temp.to_string()

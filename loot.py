@@ -34,7 +34,7 @@ def award_loot(boss_type, boss_tier, player_list, exp_amount):
     df_change = pd.DataFrame(columns=labels)
     with (open(filename, 'r') as f):
         for counter, x in enumerate(player_list):
-            temp_player = player.get_player_by_name(str(x))
+            temp_player = player.get_player_by_id(x)
             temp_player.add_exp(exp_amount)
             loot_msg.append(f"{exp_amount}x <:eexp:1148088187516891156>\n")
             for line in csv.DictReader(f):

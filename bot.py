@@ -61,135 +61,75 @@ def run_discord_bot():
             df.loc[df['stamina'] < 1998, 'stamina'] = df['stamina'] + 2
             df.to_csv(filename, index=False)
 
+    class RaidView(discord.ui.View):
+        def __init__(self):
+            super().__init__(timeout=None)
+
+        @discord.ui.button(label="Join the raid!", style=discord.ButtonStyle.success, emoji="⚔️")
+        async def raid_callback(self, interaction: discord.Interaction, raid_select: discord.ui.Select):
+            clicked_by = player.get_player_by_name(str(interaction.user))
+            outcome = clicked_by.player_username
+            outcome += bosses.add_participating_player(clicked_by.player_id)
+
+            await interaction.response.send_message(outcome)
+
     @pandora_bot.event
     async def timed_task(duration_seconds, channel_id, ctx):
 
         # initialize the boss post
         active_boss = bosses.spawn_boss(2)
         active_boss.set_boss_lvl(1)
-        img_link = "https://i.ibb.co/hyT1d8M/dragon.jpg"
-        hp_bar_location = active_boss.draw_boss_hp(active_boss.boss_cHP/active_boss.boss_mHP)
-
-        # build embedded message
-        match active_boss.boss_tier:
-            case 1:
-                tier_colour = discord.Colour.green()
-                life_emoji = "💚"
-            case 2:
-                tier_colour = discord.Colour.blue()
-                life_emoji = "💙"
-            case 3:
-                tier_colour = discord.Colour.purple()
-                life_emoji = "💜"
-            case 4:
-                tier_colour = discord.Colour.gold()
-                life_emoji = "💛"
-            case _:
-                tier_colour = discord.Colour.red()
-                life_emoji = "❤️"
-
-        boss_title = f'{active_boss.boss_name}'
-        boss_field = f'Tier {active_boss.boss_tier} {active_boss.boss_type} - Level: {active_boss.boss_lvl}'
-        boss_hp = f'{life_emoji} ({active_boss.boss_cHP:,} / {active_boss.boss_mHP:,})'
-        boss_weakness = f'Weakness: {active_boss.boss_typeweak}'
-        boss_weakness += f'{active_boss.boss_eleweak_a}{active_boss.boss_eleweak_b}'
-        embed_msg = discord.Embed(colour=tier_colour,
-                                  title=boss_title,
-                                  description="")
-        embed_msg.add_field(name=boss_field, value=boss_hp, inline=False)
-        embed_msg.add_field(name=boss_weakness, value="", inline=False)
-        embed_msg.set_image(url=img_link)
-        # file = discord.File("boss_hp.jpg", filename="image.jpg")
-        # embed_msg.set_thumbnail(url="attachment://image.jpg")
-        sent_message = await ctx.send(embed=embed_msg)
-
+        is_alive = True
+        embed_msg = active_boss.create_boss_embed(0, is_alive)
+        raid_button = RaidView()
+        sent_message = await ctx.send(embed=embed_msg, view=raid_button)
         active_boss.message_id = sent_message.id
-
-        # participate reaction
-        participate = '⚔️'
-        await sent_message.add_reaction(participate)
-
-        def battle(reaction, user):
-            return user == ctx.author and str(reaction.emoji) == participate
-
         while True:
-            total_player_damage = 1000
             await asyncio.sleep(duration_seconds)
-            """for x in active_boss.player_dmg_min:
-                total_player_damage += x
-            for y in active_boss.player_dmg_max:
-                total_player_damage += y"""
-            active_boss.boss_cHP -= total_player_damage/2
-
+            player_list = bosses.get_players()
+            dps = 0
+            for x in player_list:
+                temp_user = player.get_player_by_id(int(x))
+                player_dps, critical_type = damagecalc.get_player_damage(temp_user, active_boss)
+                bosses.update_player_damage(int(x), player_dps)
+                dps += player_dps
+            active_boss.boss_cHP -= dps
             if active_boss.calculate_hp():
-                # update boss info
-                boss_hp = f'{life_emoji} ({active_boss.boss_cHP:,} / {active_boss.boss_mHP:,})'
-                embed_msg.remove_field(index=0)
-                embed_msg.insert_field_at(index=0, name=boss_field, value=boss_hp, inline=False)
+                embed_msg = active_boss.create_boss_embed(dps, is_alive)
                 await sent_message.edit(embed=embed_msg)
             else:
                 # update dead boss info
-                active_boss.boss_cHP = 0
-                boss_hp = f'{life_emoji} ({active_boss.boss_cHP:,} / {active_boss.boss_mHP:,})'
-                embed_msg.remove_field(index=0)
-                embed_msg.remove_field(index=0)
-                embed_msg.add_field(name=boss_field, value=boss_hp, inline=False)
-                embed_msg.add_field(name=boss_weakness, value="", inline=False)
-                embed_msg.add_field(name="SLAIN", value="", inline=False)
-                embed_msg.add_field(name="Damage Rankings", value="", inline=False)
-                embed_msg.add_field(name="Loot Awarded", value="", inline=False)
+                is_alive = False
+                embed_msg = active_boss.create_boss_embed(dps, is_alive)
                 # embed_msg.set_image(url="slain image?")
+                damage_list = bosses.get_damage_list()
+                embed_msg.add_field(name="SLAIN", value=damage_list, inline=False)
+                exp_amount = active_boss.boss_tier * (1 + active_boss.boss_lvl) * 100
+                loot_output = loot.award_loot(active_boss.boss_type, active_boss.boss_tier, player_list, exp_amount)
+                for counter, loot_section in enumerate(loot_output):
+                    temp_player = player.get_player_by_name(str(player_list[counter]))
+                    loot_msg = f'{temp_player.player_username} received:'
+                    embed_msg.add_field(name=loot_msg, value=loot_section, inline=False)
                 await sent_message.edit(embed=embed_msg)
-
+                # spawn a new boss
                 random_number = random.randint(1, 2)
                 new_boss_type = 2
-                img_link = "https://i.ibb.co/hyT1d8M/dragon.jpg"
-                # spawn a new boss
                 match active_boss.boss_type:
                     case "Dragon":
                         if random_number == 2:
                             new_boss_type = 3
-                            img_link = "https://i.ibb.co/DMhCjpB/primordial.png"
                     case "Primordial":
                         new_boss_type = 2
                     case _:
                         error = "this boss should not be anything else"
 
                 active_boss = bosses.spawn_boss(new_boss_type)
-
-                # build embedded message
-                match active_boss.boss_tier:
-                    case 1:
-                        tier_colour = discord.Colour.green()
-                        life_emoji = "💚"
-                    case 2:
-                        tier_colour = discord.Colour.blue()
-                        life_emoji = "💙"
-                    case 3:
-                        tier_colour = discord.Colour.purple()
-                        life_emoji = "💜"
-                    case 4:
-                        tier_colour = discord.Colour.gold()
-                        life_emoji = "💛"
-                    case _:
-                        tier_colour = discord.Colour.red()
-                        life_emoji = "❤️"
-
-                boss_title = f'{active_boss.boss_name}'
-                boss_field = f'Tier {active_boss.boss_tier} {active_boss.boss_type} - Level: {active_boss.boss_lvl}'
-                boss_hp = f'{life_emoji} ({active_boss.boss_cHP:,} / {active_boss.boss_mHP:,})'
-                boss_weakness = f'Weakness: {active_boss.boss_typeweak}'
-                boss_weakness += f'{active_boss.boss_eleweak_a}{active_boss.boss_eleweak_b}'
-                embed_msg = discord.Embed(colour=tier_colour,
-                                          title=boss_title,
-                                          description="")
-                embed_msg.add_field(name=boss_field, value=boss_hp, inline=False)
-                embed_msg.add_field(name=boss_weakness, value="", inline=False)
-                embed_msg.set_image(url=img_link)
-                # file = discord.File("boss_hp.jpg", filename="image.jpg")
-                # embed_msg.set_thumbnail(url="attachment://image.jpg")
-
-                sent_message = await ctx.send(embed=embed_msg)
+                active_boss.set_boss_lvl(1)
+                bosses.clear_list()
+                player_list.clear()
+                is_alive = True
+                embed_msg = active_boss.create_boss_embed(0, is_alive)
+                sent_message = await ctx.send(embed=embed_msg, view=raid_button)
                 active_boss.message_id = sent_message.id
 
     @pandora_bot.event
@@ -363,68 +303,21 @@ def run_discord_bot():
             # initialize the boss post
             active_boss = bosses.spawn_boss(1)
             active_boss.set_boss_lvl(command_user.player_lvl)
-            img_link = "https://i.ibb.co/0ngNM7h/castle.png"
-            hp_bar_location = active_boss.draw_boss_hp(active_boss.boss_cHP / active_boss.boss_mHP)
-
-            # build embedded message
-            match active_boss.boss_tier:
-                case 1:
-                    tier_colour = discord.Colour.green()
-                    life_emoji = "💚"
-                case 2:
-                    tier_colour = discord.Colour.blue()
-                    life_emoji = "💙"
-                case 3:
-                    tier_colour = discord.Colour.purple()
-                    life_emoji = "💜"
-                case 4:
-                    tier_colour = discord.Colour.gold()
-                    life_emoji = "💛"
-                case _:
-                    tier_colour = discord.Colour.red()
-                    life_emoji = "❤️"
-
-            boss_title = f'{active_boss.boss_name}'
-            boss_field = f'Tier {active_boss.boss_tier} {active_boss.boss_type} - Level {active_boss.boss_lvl}'
-            boss_hp = f'{life_emoji} ({active_boss.boss_cHP:,} / {active_boss.boss_mHP:,})'
-            boss_weakness = f'Weakness: {active_boss.boss_typeweak}'
-            boss_weakness += f'{active_boss.boss_eleweak_a}{active_boss.boss_eleweak_b}'
-            embed_msg = discord.Embed(colour=tier_colour,
-                                      title=boss_title,
-                                      description="")
-            embed_msg.add_field(name=boss_field, value=boss_hp, inline=False)
-            embed_msg.add_field(name=boss_weakness, value="", inline=False)
-            embed_msg.add_field(name="Current DPS: ", value="0 / min")
-            embed_msg.set_image(url=img_link)
-            # file = discord.File("boss_hp.jpg", filename="image.jpg")
-            # embed_msg.set_thumbnail(url="attachment://image.jpg")
-            sent_message = await ctx.send(embed=embed_msg)
             is_alive = True
+            embed_msg = active_boss.create_boss_embed(0, is_alive)
+            sent_message = await ctx.send(embed=embed_msg)
             user = player.get_player_by_name(ctx.author)
             while is_alive:
                 await asyncio.sleep(60)
                 dps, critical_type = damagecalc.get_player_damage(user, active_boss)
-                active_boss.boss_cHP -= dps
-                dps_msg = f"{dps:,} / min"
-                if critical_type != "":
-                    dps_msg += critical_type
-                boss_hp = f'{life_emoji} ({active_boss.boss_cHP} / {active_boss.boss_mHP})'
                 if active_boss.calculate_hp():
-                    embed_msg.remove_field(0)
-                    embed_msg.insert_field_at(index=0, name=boss_field, value=boss_hp, inline=False)
-                    embed_msg.remove_field(2)
-                    embed_msg.add_field(name="Current DPS: ", value=dps_msg)
+                    embed_msg = active_boss.create_boss_embed(dps, is_alive)
                     await sent_message.edit(embed=embed_msg)
                 else:
                     # update dead boss info
-                    active_boss.boss_cHP = 0
-                    boss_hp = f'{life_emoji}({active_boss.boss_cHP:,} / {active_boss.boss_mHP:,})'
-                    embed_msg.remove_field(index=0)
-                    embed_msg.remove_field(index=0)
-                    embed_msg.remove_field(index=0)
-                    embed_msg.add_field(name=boss_field, value=boss_hp, inline=False)
-                    embed_msg.add_field(name=boss_weakness, value="", inline=False)
-                    embed_msg.add_field(name="Current DPS: ", value=dps_msg)
+                    is_alive = False
+                    embed_msg = active_boss.create_boss_embed(dps, is_alive)
+                    # embed_msg.set_image(url="slain image?")
                     embed_msg.add_field(name="SLAIN", value="", inline=False)
                     player_list = [user.player_name]
                     exp_amount = active_boss.boss_tier * (1 + active_boss.boss_lvl) * 100
@@ -433,9 +326,9 @@ def run_discord_bot():
                         temp_player = player.get_player_by_name(str(player_list[counter]))
                         loot_msg = f'{temp_player.player_username} received:'
                         embed_msg.add_field(name=loot_msg, value=loot_section, inline=False)
-                    # embed_msg.set_image(url="slain image?")
+
                     await sent_message.edit(embed=embed_msg)
-                    is_alive = False
+
         else:
             await ctx.send("Not enough stamina.")
 
@@ -496,23 +389,51 @@ def run_discord_bot():
             embed_msg.add_field(name=item_info, value="", inline=False)
             await ctx.send(embed=embed_msg)
 
+    class InventoryView(discord.ui.View):
+        def __init__(self, user):
+            super().__init__(timeout=None)
+            self.user = user
+
+        @discord.ui.select(
+            placeholder="Select crafting method!",
+            min_values=1,
+            max_values=1,
+            options=[
+                discord.SelectOption(
+                    emoji="<a:eenergy:1145534127349706772>", label="Equipment", description="Stored Equipment"),
+                discord.SelectOption(
+                    emoji="<a:eenergy:1145534127349706772>", label="Items", description="Regular Items")
+            ]
+        )
+        async def inventory_callback(self, interaction: discord.Interaction, inventory_select: discord.ui.Select):
+            if inventory_select.values[0] == "Equipment":
+                inventory_title = f'{self.user.player_username}\'s Equipment:\n'
+                player_inventory = inventory.display_cinventory(self.user.player_id)
+            else:
+                inventory_title = f'{self.user.player_username}\'s Inventory:\n'
+                player_inventory = inventory.display_binventory(self.user.player_id)
+
+            new_embed = discord.Embed(colour=discord.Colour.dark_orange(),
+                                      title=inventory_title,
+                                      description=player_inventory)
+            await interaction.response.edit_message(embed=new_embed)
+
     @pandora_bot.command(name='inv', help="**!inv** to display your gear and item inventory")
     @commands.max_concurrency(1, per=commands.BucketType.default, wait=False)
     async def inv(ctx):
-        user = ctx.author
+        user = player.get_player_by_name(str(ctx.author))
+        inventory_view = InventoryView(user)
 
-        player_object = player.get_player_by_name(user)
-        player_inventory = f'{player_object.player_username}\'s Equipment:\n'
-        player_inventory += inventory.display_cinventory(player_object.player_id)
-        await ctx.send(player_inventory)
+        inventory_title = f'{user.player_username}\'s Equipment:\n'
+        player_inventory = inventory.display_cinventory(user.player_id)
 
-        player_object = player.get_player_by_name(user)
-        player_inventory = f'{player_object.player_username}\'s Inventory:\n'
-        player_inventory += inventory.display_binventory(player_object.player_id)
-        await ctx.send(player_inventory)
+        embed_msg = discord.Embed(colour=discord.Colour.dark_orange(),
+                                  title=inventory_title,
+                                  description=player_inventory)
+        await ctx.send(embed=embed_msg, view=inventory_view)
 
     @pandora_bot.command(name='stamina', help="**!stamina** to display your stamina total")
-    async def gear(ctx):
+    async def stamina(ctx):
         user = ctx.author
         player_object = player.get_player_by_name(user)
         output = f'<:estamina:1145534039684562994> {player_object.player_username}\'s stamina: '

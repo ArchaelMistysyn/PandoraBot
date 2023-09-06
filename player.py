@@ -182,7 +182,7 @@ def get_player_by_id(player_id: int) -> PlayerProfile:
     with (open(filename, 'r') as f):
         for line in csv.DictReader(f):
             if str(line['player_id']) == str(player_id):
-                target_player.player_name = int(line["player_name"])
+                target_player.player_name = str(line["player_name"])
                 target_player.player_username = str(line["player_username"])
                 target_player.player_stamina = int(line["stamina"])
                 target_player.player_exp = int(line["player_exp"])

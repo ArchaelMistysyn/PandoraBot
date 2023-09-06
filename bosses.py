@@ -4,6 +4,7 @@ from discord.ext import commands
 import csv
 import random
 import pandas as pd
+import player
 import os
 from PIL import Image, ImageFont, ImageDraw, ImageEnhance
 
@@ -41,19 +42,58 @@ class CurrentBoss:
 
         return is_alive
 
-    def draw_boss_hp(self, percentage) -> str:
-        # draw the boss hp bar
-        out = Image.new("RGB", (150, 100), (255, 255, 255))
-        d = ImageDraw.Draw(out)
-        d = drawProgressBar(d, 10, 10, 100, 25, percentage)
-        image_location = "boss_hp.jpg"
-        out.save(image_location)
-        return image_location
-
     def set_boss_lvl(self, level):
         self.boss_lvl = level
         self.boss_mHP = int(get_base_hp(self.boss_type) * (1.2 ** self.boss_lvl) * self.boss_tier)
         self.boss_cHP = self.boss_mHP
+
+    def create_boss_embed(self, dps, is_alive):
+        match self.boss_type:
+            case "Fortress":
+                img_link = "https://i.ibb.co/0ngNM7h/castle.png"
+            case "Dragon":
+                img_link = "https://i.ibb.co/hyT1d8M/dragon.jpg"
+            case "Primordial":
+                img_link = "https://i.ibb.co/DMhCjpB/primordial.png"
+            case "Paragon":
+                img_link = "https://i.ibb.co/DMhCjpB/primordial.png"
+            case _:
+                img_link = "Error"
+
+        match self.boss_tier:
+            case 1:
+                tier_colour = discord.Colour.green()
+                life_emoji = "💚"
+            case 2:
+                tier_colour = discord.Colour.blue()
+                life_emoji = "💙"
+            case 3:
+                tier_colour = discord.Colour.purple()
+                life_emoji = "💜"
+            case 4:
+                tier_colour = discord.Colour.gold()
+                life_emoji = "💛"
+            case _:
+                tier_colour = discord.Colour.red()
+                life_emoji = "❤️"
+
+        dps_msg = f"{dps:,} / min"
+        boss_title = f'{self.boss_name}'
+        boss_field = f'Tier {self.boss_tier} {self.boss_type} - Level {self.boss_lvl}'
+        if not is_alive:
+            self.boss_cHP = 0
+        boss_hp = f'{life_emoji} ({self.boss_cHP:,} / {self.boss_mHP:,})'
+        boss_weakness = f'Weakness: {self.boss_typeweak}'
+        boss_weakness += f'{self.boss_eleweak_a}{self.boss_eleweak_b}'
+        embed_msg = discord.Embed(colour=tier_colour,
+                                  title=boss_title,
+                                  description="")
+        embed_msg.add_field(name=boss_field, value=boss_hp, inline=False)
+        embed_msg.add_field(name=boss_weakness, value="", inline=False)
+        embed_msg.add_field(name="Current DPS: ", value=dps_msg)
+        embed_msg.set_image(url=img_link)
+
+        return embed_msg
 
 
 def spawn_boss(boss_type_num: int) -> CurrentBoss:
@@ -105,21 +145,6 @@ def get_channel_id() -> int:
     else:
         channel_value = int(f.read())
     return channel_value
-
-
-def drawProgressBar(d, x, y, w, h, progress, bg="black", fg="red"):
-    # draw background
-    d.ellipse((x+w, y, x+h+w, y+h), fill=bg)
-    d.ellipse((x, y, x+h, y+h), fill=bg)
-    d.rectangle((x+(h/2), y, x+w+(h/2), y+h), fill=bg)
-
-    # draw progress bar
-    w *= progress
-    d.ellipse((x+w, y, x+h+w, y+h),fill=fg)
-    d.ellipse((x, y, x+h, y+h),fill=fg)
-    d.rectangle((x+(h/2), y, x+w+(h/2), y+h),fill=fg)
-
-    return d
 
 
 def get_random_bosstier(boss_type_num: int) -> int:
@@ -200,13 +225,13 @@ def store_channel_id(channel_id: int) -> str:
 def get_base_hp(base_type: str) -> int:
     match base_type:
         case "Fortress":
-            base_hp = 500
+            base_hp = 1000
         case "Dragon":
             base_hp = 50000
         case "Primordial":
-            base_hp = 100000
+            base_hp = 500000
         case "Paragon":
-            base_hp = 1000000
+            base_hp = 10000000
         case _:
             base_hp = 0
 
@@ -392,3 +417,54 @@ def get_boss_descriptor(boss_type: str) -> str:
 
     return boss_descriptor
 
+
+def add_participating_player(player_id):
+    filename = "raidplayers.csv"
+    df = pd.read_csv(filename)
+
+    if player_id in df['player_id'].values:
+        return " is already in the raid."
+    else:
+        with open(filename, 'a', newline='') as file:
+            dps = 0
+            writer = csv.writer(file)
+            writer.writerow([player_id, dps])
+            return " joined the raid"
+
+
+def update_player_damage(player_id, player_damage):
+    filename = "raidplayers.csv"
+    df = pd.read_csv(filename)
+    df.loc[df['player_id'] == player_id, 'dps_dealt'] = df['dps_dealt'] + player_damage
+    df.to_csv(filename, index=False)
+
+
+def get_players():
+    filename = "raidplayers.csv"
+    df = pd.read_csv(filename)
+    player_list = df['player_id']
+    return list(player_list)
+
+
+def get_damage_list():
+    filename = "raidplayers.csv"
+    output = ""
+    username = []
+    damage = []
+    with (open(filename, 'r') as f):
+        for line in csv.DictReader(f):
+            user_id = int(line['player_id'])
+            player_object = player.get_player_by_id(user_id)
+            username.append(player_object.player_username)
+            damage.append(int(line['dps_dealt']))
+    for idx, x in enumerate(username):
+        output = f'{str(x)}: {damage[idx]:,}'
+
+    return output
+
+
+def clear_list():
+    filename = "raidplayers.csv"
+    df = pd.read_csv(filename)
+    df = pd.DataFrame(columns=df.columns)
+    df.to_csv(filename, index=False)
