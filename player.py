@@ -4,6 +4,7 @@ from csv import DictReader
 import inventory
 import damagecalc
 import math
+import random
 
 
 class PlayerProfile:
@@ -111,33 +112,6 @@ class PlayerProfile:
         df = pd.read_csv(filename)
         df.loc[df['player_id'] == self.player_id, 'player_username'] = new_username
         df.to_csv(filename, index=False)
-
-    def get_player_damage(self, boss_object) -> int:
-        player_damage = 0
-        self.get_equipped()
-        e_weapon = inventory.read_custom_item(self.equipped_weapon)
-        player_damage += (e_weapon.item_damage_min + e_weapon.item_damage_max) / 2
-        e_armour = inventory.read_custom_item(self.equipped_armour)
-        player_damage += (e_armour.item_damage_min + e_armour.item_damage_max) / 2
-        e_acc = inventory.read_custom_item(self.equipped_acc)
-        player_damage += (e_acc.item_damage_min + e_acc.item_damage_max) / 2
-
-        # bonus stats
-        float_damage = float(player_damage) * float(e_weapon.item_bonus_stat)
-        float_damage *= damagecalc.accessory_ability_damage(e_acc.item_bonus_stat,
-                                                            boss_object.boss_cHP, boss_object.boss_mHP, self.player_hp)
-
-        # External increases
-        float_damage *= 1 + (self.player_lvl * 0.01)
-
-        float_damage *= damagecalc.boss_weakness_multiplier(e_weapon,
-                                                            boss_object.boss_typeweak,
-                                                            boss_object.boss_eleweak_a,
-                                                            boss_object.boss_eleweak_b)
-
-        player_damage = int(float_damage)
-
-        return player_damage
 
     def get_equipped(self):
         filename = "playerlist.csv"

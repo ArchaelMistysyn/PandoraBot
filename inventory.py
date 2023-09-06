@@ -17,20 +17,20 @@ class CustomItem:
         random_num = random.randint(1, 100)
         if random_num <= 1:
             temp_tier = 4
-            temp_min = 50
-            temp_max = 50
+            temp_min = 500
+            temp_max = 500
         elif random_num <= 6:
             temp_tier = 3
-            temp_min = 10
-            temp_max = 35
+            temp_min = 100
+            temp_max = 250
         elif random_num <= 21:
             temp_tier = 2
-            temp_min = 5
-            temp_max = 30
+            temp_min = 50
+            temp_max = 100
         else:
             temp_tier = 1
             temp_min = 1
-            temp_max = 25
+            temp_max = 50
 
         self.item_base_tier = temp_tier
         self.base_damage_min = temp_min
@@ -108,44 +108,54 @@ class CustomItem:
         elif len(self.item_suffix_values) == 2:
             self.item_prefix_values.append(self.generate_new_roll("P"))
         else:
-            random_num = random.randint(1,2)
+            random_num = random.randint(1, 2)
             if random_num == 1:
                 self.item_prefix_values.append(self.generate_new_roll("P"))
             else:
                 self.item_suffix_values.append(self.generate_new_roll("S"))
 
+    def remove_roll(self):
+        self.item_num_stars -= 1
+        random_num = random.randint(1, self.item_num_stars)
+        count = 1
+        for x in self.item_prefix_values:
+            if count == random_num:
+                self.item_prefix_values.remove(x)
+            count += 1
+        for y in self.item_suffix_values:
+            if count == random_num:
+                self.item_suffix_values.remove(y)
+            count += 1
+
     def generate_new_roll(self, roll_type):
         running = True
         new_roll = ""
+        tier = 1
         match roll_type:
             case "P":
                 if self.item_prefix_values:
                     while running:
                         running = False
                         for x in self.item_prefix_values:
-                            random_tier = random.randint(1, 4)
                             random_identifier = random.randint(1, 5)
-                            new_roll = f"{roll_type}{random_tier}{random_identifier}"
+                            new_roll = f"{roll_type}{tier}{random_identifier}"
                             if new_roll == x:
                                 running = True
                 else:
-                    random_tier = random.randint(1, 4)
                     random_identifier = random.randint(1, 5)
-                    new_roll = f"{roll_type}{random_tier}{random_identifier}"
+                    new_roll = f"{roll_type}{tier}{random_identifier}"
             case "S":
                 if self.item_suffix_values:
                     while running:
                         running = False
                         for x in self.item_suffix_values:
-                            random_tier = random.randint(1, 4)
                             random_identifier = random.randint(1, 4)
-                            new_roll = f"{roll_type}{random_tier}{random_identifier}"
+                            new_roll = f"{roll_type}{tier}{random_identifier}"
                             if new_roll[0] == str(x)[0] and new_roll[2] == str(x)[2]:
                                 running = True
                 else:
-                    random_tier = random.randint(1, 4)
                     random_identifier = random.randint(1, 4)
-                    new_roll = f"{roll_type}{random_tier}{random_identifier}"
+                    new_roll = f"{roll_type}{tier}{random_identifier}"
             case _:
                 new_roll = "Error"
         return new_roll
@@ -216,6 +226,44 @@ class CustomItem:
                                                            self.item_material_tier, self.item_blessing_tier)
         self.item_damage_max = damagecalc.item_damage_calc(self.base_damage_max, self.item_enhancement,
                                                            self.item_material_tier, self.item_blessing_tier)
+
+    def check_augment(self):
+        augment_total = 0
+        for x in self.item_prefix_values:
+            augment_total += int(str(x)[1]) - 1
+        for y in self.item_suffix_values:
+            augment_total += int(str(y)[1]) - 1
+        if len(self.item_prefix_values) + len(self.item_suffix_values) == 0:
+            augment_total = 15
+        return augment_total
+
+    def add_augment(self):
+        exclude_group = []
+        # Build Exclusions
+        check = self.item_prefix_values + self.item_suffix_values
+        length_prefix = len(self.item_prefix_values)
+        for idx, x in enumerate(check):
+            augment_total = int(str(x)[1])
+            if augment_total == 4:
+                exclude_group.append(idx)
+
+        # Apply a new augment
+        random_num = random.randint(1, (self.item_num_stars - 1))
+        random_num -= 1
+        while random_num in exclude_group:
+            random_num = random.randint(1, (self.item_num_stars - 1))
+            random_num -= 1
+        if random_num < length_prefix:
+            target_roll = self.item_prefix_values[random_num]
+            augment_total = int(str(target_roll)[1])
+            new_id = f'P{augment_total + 1}{str(target_roll[2])}'
+            self.item_prefix_values[random_num] = new_id
+        else:
+            random_num -= length_prefix
+            target_roll = self.item_suffix_values[random_num]
+            augment_total = int(str(target_roll)[1])
+            new_id = f'S{augment_total + 1}{str(target_roll[2])}'
+            self.item_suffix_values[random_num] = new_id
 
 
 class CustomWeapon(CustomItem):
@@ -628,8 +676,8 @@ def inventory_add_custom_item(item) -> str:
 
     # item rolls
     item_num_stars = item.item_num_stars
-    item_prefix_values = item.item_prefix_values
-    item_suffix_values = item.item_suffix_values
+    item_prefix_values = ""
+    item_suffix_values = ""
 
     # item base damage
     item_bonus_stat = item.item_bonus_stat
@@ -688,12 +736,6 @@ def display_binventory(player_id: int):
     return player_inventory
 
 
-def get_bitem(item_id: str) -> int:
-    item_qty = 0
-
-    return item_qty
-
-
 def get_gear_tier_colours(base_tier):
     match base_tier:
         case 1:
@@ -715,53 +757,9 @@ def get_gear_tier_colours(base_tier):
     return tier_colour, tier_emoji
 
 
-def craft_item(player_object, selected_item, condition, method):
+def craft_item(player_object, selected_item, item_id, method):
     filename = 'itemlist.csv'
     item_list = pd.read_csv(filename)
-
-    match condition:
-        case "T1 Enhance":
-            item_id = "I1"
-        case "T2 Enhance":
-            item_id = "I2"
-        case "T3 Enhance":
-            item_id = "I3"
-        case "T1 Upgrade":
-            item_id = "I4"
-        case "T2 Upgrade":
-            item_id = "I5"
-        case "T3 Upgrade":
-            item_id = "I6"
-        case "T1 Bestow":
-            item_id = "I7"
-        case "T2 Bestow":
-            item_id = "I8"
-        case "T3 Bestow":
-            item_id = "I9"
-        case "T1 Open":
-            item_id = "I10"
-        case "T2 Open":
-            item_id = "I11"
-        case "T3 Open":
-            item_id = "I12"
-        case "T1 Imbue":
-            item_id = "I13"
-        case "T2 Imbue":
-            item_id = "I14"
-        case "T3 Imbue":
-            item_id = "I15"
-        case "T1 Tune":
-            item_id = "I16"
-        case "T2 Tune":
-            item_id = "I17"
-        case "T3 Tune":
-            item_id = "I18"
-        case "T1 Implant":
-            item_id = "I20"
-        case "T1 Voidforge":
-            item_id = "I21"
-        case _:
-            item_id = condition
 
     success_rate = int(item_list[item_list['item_id'] == item_id][['item_base_rate']].values[0])
     player_stock = check_stock(player_object, item_id)
@@ -781,7 +779,7 @@ def craft_item(player_object, selected_item, condition, method):
                 else:
                     is_success = "3"
             case "Upgrade":
-                if damagecalc.get_item_tier_damage(selected_item.item_material_tier) != 400:
+                if damagecalc.get_item_tier_damage(selected_item.item_material_tier) != 2500:
                     update_stock(player_object, item_id, -1)
                     random_num = random.randint(1, 100)
                     if random_num <= success_rate:
@@ -799,7 +797,7 @@ def craft_item(player_object, selected_item, condition, method):
                 else:
                     is_success = "3"
             case "Bestow":
-                if damagecalc.get_item_tier_damage(selected_item.item_blessing_tier) < 400:
+                if damagecalc.get_item_tier_damage(selected_item.item_blessing_tier) < 2500:
                     update_stock(player_object, item_id, -1)
                     random_num = random.randint(1, 100)
                     if random_num <= success_rate:
@@ -838,8 +836,31 @@ def craft_item(player_object, selected_item, condition, method):
                         is_success = "0"
                 else:
                     is_success = "3"
-            case "Tune":
-                is_success = "Not Ready Yet"
+            case "Cleanse":
+                if selected_item.item_num_stars > 1:
+                    update_stock(player_object, item_id, -1)
+                    random_num = random.randint(1, 100)
+                    if random_num <= success_rate:
+                        selected_item.remove_roll()
+                        is_success = "5"
+                    else:
+                        is_success = "0"
+                else:
+                    is_success = "3"
+            case "Augment":
+                check_aug = selected_item.check_augment()
+                if check_aug < 12:
+                    update_stock(player_object, item_id, -1)
+                    random_num = random.randint(1, 100)
+                    if random_num <= success_rate:
+                        selected_item.add_augment()
+                        is_success = "1"
+                    else:
+                        is_success = "0"
+                elif check_aug == 15:
+                    is_success = 6
+                else:
+                    is_success = "3"
             case "Implant":
                 if len(selected_item.item_elements) < 9:
                     update_stock(player_object, item_id, -1)
@@ -861,7 +882,7 @@ def craft_item(player_object, selected_item, condition, method):
                     is_success = "3"
             case "Voidforge":
                 damage_check = damagecalc.get_item_tier_damage(selected_item.item_material_tier)
-                if damage_check == 400:
+                if damage_check == 2500:
                     update_stock(player_object, item_id, -1)
                     random_num = random.randint(1, 100)
                     if random_num <= success_rate:
@@ -870,7 +891,7 @@ def craft_item(player_object, selected_item, condition, method):
                         is_success = "1"
                     else:
                         is_success = "0"
-                elif damage_check == 1000:
+                elif damage_check == 9500:
                     is_success = "3"
                 else:
                     is_success = "4"
@@ -879,7 +900,7 @@ def craft_item(player_object, selected_item, condition, method):
     else:
         is_success = item_id
 
-    if is_success == "1":
+    if is_success == "1" or is_success == "5":
         selected_item.update_damage()
         selected_item.update_stored_item()
 
@@ -922,23 +943,13 @@ def get_roll_by_code(code):
                     new_roll = "Damage Mitigation:"
                 case _:
                     new_roll = "Error"
-            bonus = str(int(code[1]) * 20 + 20)
+            bonus = str(int(code[1]) * 25)
             new_roll += f' {bonus}%'
         case "S":
             match code[2]:
                 case "1":
-                    new_roll = "Critical Type: "
-                    match code[1]:
-                        case "1":
-                            new_roll += "Precise Critical: 2.5x"
-                        case "2":
-                            new_roll += "Power Critical: 5x"
-                        case "3":
-                            new_roll += "Hyper Critical: 7.5x"
-                        case "4":
-                            new_roll += "Omega Critical: 10x"
-                        case _:
-                            new_roll = "Error"
+                    bonus = str(int(code[1]) * 50)
+                    new_roll = f"Critical Damage Amplifier: {bonus}%"
                 case "2":
                     bonus = str(int(code[1])*0.25 + 1)
                     new_roll = f"Aura: {bonus}x Amplify"
