@@ -12,6 +12,7 @@ import damagecalc
 import chatcommands
 from discord.ui import Button, View
 import csv
+import menus
 
 
 # run the bot
@@ -107,7 +108,7 @@ def run_discord_bot():
                 exp_amount = active_boss.boss_tier * (1 + active_boss.boss_lvl) * 100
                 loot_output = loot.award_loot(active_boss.boss_type, active_boss.boss_tier, player_list, exp_amount)
                 for counter, loot_section in enumerate(loot_output):
-                    temp_player = player.get_player_by_name(str(player_list[counter]))
+                    temp_player = player.get_player_by_id(player_list[counter])
                     loot_msg = f'{temp_player.player_username} received:'
                     embed_msg.add_field(name=loot_msg, value=loot_section, inline=False)
                 await sent_message.edit(embed=embed_msg)
@@ -143,137 +144,103 @@ def run_discord_bot():
             await ctx.send('You are at your command limit for this command')
         raise error
 
+    class ExploreView(discord.ui.View):
+        def __init__(self, user, new_item, msg, item_type):
+            super().__init__(timeout=None)
+            self.user = user
+            self.new_item = new_item
+            self.msg = msg
+            self.item_type = item_type
+
+        @discord.ui.button(label="Keep", style=discord.ButtonStyle.success, emoji="✅")
+        async def keep_callback(self, interaction: discord.Interaction, choice_select: discord.ui.Select):
+            if not inventory.if_custom_exists(self.new_item.item_id):
+                message = inventory.inventory_add_custom_item(self.new_item)
+                self.msg.add_field(name="", value=message, inline=False)
+            await interaction.response.edit_message(embed=self.msg, view=None)
+
+        @discord.ui.button(label="Discard", style=discord.ButtonStyle.red, emoji="✖️")
+        async def discard_callback(self, interaction: discord.Interaction, choice_select: discord.ui.Select):
+            message = f'You have discarded the {self.item_type}'
+            self.msg.add_field(name="", value=message, inline=False)
+            await interaction.response.edit_message(embed=self.msg, view=None)
+
+        @discord.ui.button(label="Try Again", style=discord.ButtonStyle.blurple, emoji="↪️")
+        async def again_callback(self, interaction: discord.Interaction, choice_select: discord.ui.Select):
+            if self.user.spend_stamina(25):
+                match self.item_type:
+                    case "weapon":
+                        self.new_item = inventory.CustomWeapon(self.user.player_id)
+                    case "armour":
+                        self.new_item = inventory.CustomArmour(self.user.player_id)
+                    case "accessory":
+                        self.new_item = inventory.CustomAccessory(self.user.player_id)
+                    case _:
+                        self.new_item = inventory.CustomWeapon(self.user.player_id)
+                self.embed_msg = self.new_item.create_citem_embed()
+                inquiry = f"Would you like to keep or discard this {self.item_type}?"
+                gear_colours = inventory.get_gear_tier_colours(self.new_item.item_base_tier)
+                tier_emoji = gear_colours[1]
+                self.embed_msg.add_field(name=f'{tier_emoji} Tier {str(self.new_item.item_base_tier)} item found!',
+                                    value=inquiry, inline=False)
+                await interaction.response.edit_message(embed=self.embed_msg, view=self)
+            else:
+                await interaction.response.send_message('Not enough !stamina')
+
     @pandora_bot.command(name='lab', help="**!lab** to run a daily labyrinth")
     @commands.max_concurrency(1, per=commands.BucketType.default, wait=False)
-    # @commands.cooldown(1, 60 * 60 * 24, commands.BucketType.user)
     async def lab(ctx):
         player_name = str(ctx.author)
         command_user = player.get_player_by_name(player_name)
         if command_user.spend_stamina(25):
-            weapon_object = inventory.CustomWeapon(command_user.player_id)
-            embed_msg = weapon_object.create_citem_embed()
-
-            gear_colours = inventory.get_gear_tier_colours(weapon_object.item_base_tier)
+            item_object = inventory.CustomWeapon(command_user.player_id)
+            embed_msg = item_object.create_citem_embed()
+            gear_colours = inventory.get_gear_tier_colours(item_object.item_base_tier)
             tier_emoji = gear_colours[1]
-
-            inquiry = "Would you like to keep or discard this item?"
-            embed_msg.add_field(name=f'{tier_emoji} Tier {str(weapon_object.item_base_tier)} item found!', value=inquiry, inline=False)
-            message = await ctx.send(embed=embed_msg)
-
-            keep_weapon = '☑️'
-            discard_weapon = '🚫'
-
-            await message.add_reaction(keep_weapon)
-            await message.add_reaction(discard_weapon)
-
-
-            def check(reaction, user):
-                return user == ctx.author and str(reaction.emoji) in [keep_weapon, discard_weapon]
-
-            while True:
-                try:
-                    reaction, user = await pandora_bot.wait_for("reaction_add", timeout=60, check=check)
-
-                    if str(reaction.emoji) == keep_weapon:
-                        if not inventory.if_custom_exists(weapon_object.item_id):
-                            status = inventory.inventory_add_custom_item(weapon_object)
-                            await ctx.send(status)
-                            break
-
-                    if str(reaction.emoji) == discard_weapon:
-                        await ctx.send('You have discarded the item')
-                        break
-                except Exception as e:
-                    print(e)
+            inquiry = "Would you like to keep or discard this weapon?"
+            embed_msg.add_field(name=f'{tier_emoji} Tier {str(item_object.item_base_tier)} item found!',
+                                value=inquiry,
+                                inline=False)
+            lab_view = ExploreView(command_user, item_object, embed_msg, "weapon")
+            await ctx.send(embed=embed_msg, view=lab_view)
         else:
             await ctx.send('Not enough !stamina')
 
     @pandora_bot.command(name='dung', help="**!dung** to run a daily dungeon")
     @commands.max_concurrency(1, per=commands.BucketType.default, wait=False)
-    # @commands.cooldown(1, 60 * 60 * 24, commands.BucketType.user)
     async def dung(ctx):
         player_name = str(ctx.author)
         command_user = player.get_player_by_name(player_name)
         if command_user.spend_stamina(25):
-            armour_object = inventory.CustomArmour(command_user.player_id)
-            embed_msg = armour_object.create_citem_embed()
-
-            gear_colours = inventory.get_gear_tier_colours(armour_object.item_base_tier)
+            item_object = inventory.CustomArmour(command_user.player_id)
+            embed_msg = item_object.create_citem_embed()
+            gear_colours = inventory.get_gear_tier_colours(item_object.item_base_tier)
             tier_emoji = gear_colours[1]
-
-            inquiry = "Would you like to keep or discard this item?"
-            embed_msg.add_field(name=f'{tier_emoji} Tier {str(armour_object.item_base_tier)} item found!', value=inquiry,
+            inquiry = "Would you like to keep or discard this armour?"
+            embed_msg.add_field(name=f'{tier_emoji} Tier {str(item_object.item_base_tier)} item found!',
+                                value=inquiry,
                                 inline=False)
-            message = await ctx.send(embed=embed_msg)
-
-            keep_armour = '✅'
-            discard_armour = '❌'
-
-            await message.add_reaction(keep_armour)
-            await message.add_reaction(discard_armour)
-
-            def check(reaction, user):
-                return user == ctx.author and str(reaction.emoji) in [keep_armour, discard_armour]
-
-            while True:
-                try:
-                    reaction, user = await pandora_bot.wait_for("reaction_add", timeout=60, check=check)
-
-                    if str(reaction.emoji) == keep_armour:
-                        if not inventory.if_custom_exists(armour_object.item_id):
-                            status = inventory.inventory_add_custom_item(armour_object)
-                            await ctx.send(status)
-                            break
-
-                    if str(reaction.emoji) == discard_armour:
-                        await ctx.send('You have discarded the item')
-                        break
-                except Exception as e:
-                    print(e)
+            lab_view = ExploreView(command_user, item_object, embed_msg, "armour")
+            await ctx.send(embed=embed_msg, view=lab_view)
         else:
             await ctx.send('Not enough !stamina')
 
     @pandora_bot.command(name='tow', help="**!tow** to run a daily tower")
     @commands.max_concurrency(1, per=commands.BucketType.default, wait=False)
-    # @commands.cooldown(1, 60 * 60 * 24, commands.BucketType.user)
     async def tow(ctx):
         player_name = str(ctx.author)
         command_user = player.get_player_by_name(player_name)
         if command_user.spend_stamina(25):
-            acc_object = inventory.CustomAccessory(command_user.player_id)
-            embed_msg = acc_object.create_citem_embed()
-            gear_colours = inventory.get_gear_tier_colours(acc_object.item_base_tier)
+            item_object = inventory.CustomAccessory(command_user.player_id)
+            embed_msg = item_object.create_citem_embed()
+            gear_colours = inventory.get_gear_tier_colours(item_object.item_base_tier)
             tier_emoji = gear_colours[1]
-
-            inquiry = "Would you like to keep or discard this item?"
-            embed_msg.add_field(name=f'{tier_emoji} Tier {str(acc_object.item_base_tier)} item found!', value=inquiry,
+            inquiry = "Would you like to keep or discard this accessory?"
+            embed_msg.add_field(name=f'{tier_emoji} Tier {str(item_object.item_base_tier)} item found!',
+                                value=inquiry,
                                 inline=False)
-            message = await ctx.send(embed=embed_msg)
-
-            keep_accessory = '💍'
-            discard_accessory = '📵'
-
-            await message.add_reaction(keep_accessory)
-            await message.add_reaction(discard_accessory)
-
-            def check(reaction, user):
-                return user == ctx.author and str(reaction.emoji) in [keep_accessory, discard_accessory]
-
-            while True:
-                try:
-                    reaction, user = await pandora_bot.wait_for("reaction_add", timeout=60, check=check)
-
-                    if str(reaction.emoji) == keep_accessory:
-                        if not inventory.if_custom_exists(acc_object.item_id):
-                            status = inventory.inventory_add_custom_item(acc_object)
-                            await ctx.send(status)
-                            break
-
-                    if str(reaction.emoji) == discard_accessory:
-                        await ctx.send('You have discarded the item')
-                        break
-                except Exception as e:
-                    print(e)
+            lab_view = ExploreView(command_user, item_object, embed_msg, "accessory")
+            await ctx.send(embed=embed_msg, view=lab_view)
         else:
             await ctx.send('Not enough !stamina')
 
@@ -294,6 +261,28 @@ def run_discord_bot():
 
         await ctx.send(response)
 
+    @pandora_bot.command(name='inlay', help="**!equip [itemID]** to equip an item")
+    @commands.max_concurrency(1, per=commands.BucketType.default, wait=False)
+    async def equip(ctx, item_id):
+        item_id = item_id.upper()
+        if inventory.if_custom_exists(item_id):
+            selected_item = inventory.read_custom_item(item_id)
+            current_user = player.get_player_by_name(str(ctx.author))
+            if current_user.player_id == selected_item.player_owner:
+                embed_msg = discord.Embed(colour=discord.Colour.blurple(),
+                                          title="Inlay Gem",
+                                          description="Let me know what item you'd like to inlay this gem into!")
+                embed_msg.set_image(url="https://i.ibb.co/QjWDYG3/forge.jpg")
+                view = menus.InlaySelectView(current_user, selected_item.item_id)
+                view.embed = await ctx.send(embed=embed_msg, view=view)
+
+            else:
+                response = "wrong item id"
+                await ctx.send(response)
+        else:
+            response = "wrong item id"
+            await ctx.send(response)
+
     @pandora_bot.command(name='fort', help="**!fort** to challenge a fortress")
     @commands.max_concurrency(1, per=commands.BucketType.default, wait=False)
     async def fort(ctx):
@@ -310,20 +299,22 @@ def run_discord_bot():
             while is_alive:
                 await asyncio.sleep(60)
                 dps, critical_type = damagecalc.get_player_damage(user, active_boss)
+                active_boss.boss_cHP -= dps
                 if active_boss.calculate_hp():
                     embed_msg = active_boss.create_boss_embed(dps, is_alive)
                     await sent_message.edit(embed=embed_msg)
                 else:
                     # update dead boss info
                     is_alive = False
+                    active_boss.boss_cHP = 0
                     embed_msg = active_boss.create_boss_embed(dps, is_alive)
                     # embed_msg.set_image(url="slain image?")
                     embed_msg.add_field(name="SLAIN", value="", inline=False)
-                    player_list = [user.player_name]
+                    player_list = [user.player_id]
                     exp_amount = active_boss.boss_tier * (1 + active_boss.boss_lvl) * 100
                     loot_output = loot.award_loot(active_boss.boss_type, active_boss.boss_tier, player_list, exp_amount)
                     for counter, loot_section in enumerate(loot_output):
-                        temp_player = player.get_player_by_name(str(player_list[counter]))
+                        temp_player = player.get_player_by_id(player_list[counter])
                         loot_msg = f'{temp_player.player_username} received:'
                         embed_msg.add_field(name=loot_msg, value=loot_section, inline=False)
 
@@ -340,8 +331,8 @@ def run_discord_bot():
         story_response = chatcommands.get_command_text("!story1a")
         quest_title = "Story: A New Beginning!"
         embed_msg = discord.Embed(colour=discord.Colour.dark_teal(),
-                                      title=quest_title,
-                                      description=story_response)
+                                  title=quest_title,
+                                  description=story_response)
         sent_message = await ctx.send(embed = embed_msg)
         await sent_message.add_reaction(box)
 
@@ -379,9 +370,12 @@ def run_discord_bot():
         if user.equipped_acc != "":
             equipped_y = inventory.read_custom_item(user.equipped_acc)
             gear_list.append(equipped_y)
-        # equipped_g = inventory.read_custom_item(user.equipped_wing)
-        # equipped_c = inventory.read_custom_item(user.equipped_crest)
-        # gear_list = [equipped_w, equipped_a, equipped_y, equipped_g, equipped_c]
+        if user.equipped_wing != "":
+            equipped_g = inventory.read_custom_item(user.equipped_wing)
+            gear_list.append(equipped_g)
+        if user.equipped_crest != "":
+            equipped_c = inventory.read_custom_item(user.equipped_crest)
+            gear_list.append(equipped_c)
 
         for x in gear_list:
             embed_msg = x.create_citem_embed()
@@ -450,13 +444,28 @@ def run_discord_bot():
         stamina += str(player_object.player_stamina)
         exp = f'Level: {player_object.player_lvl} Exp: ({player_object.player_exp} / '
         exp += f'{player.get_max_exp(player_object.player_lvl)})'
-        id_msg = f'User ID: {player_object.player_id}'
+        id_msg = f'User ID: {player_object.player_id}\nClass: {player_object.player_class}'
+        player_object.get_player_multipliers()
+
+        stats = f"Player Item Base Damage: {int(player_object.player_damage):,}"
+        stats += f"\nPlayer HP: {player_object.player_hp:,}"
+        stats += f"\nAttack Speed: {player_object.attack_speed} / min"
+        stats += f"\nDamage Mitigation: +{player_object.damage_mitigation}%"
+        stats += f"\nCritical Chance: +{int(player_object.critical_chance)}%"
+        stats += f"\nCritical Damage: +{int(player_object.critical_multiplier * 100)}%"
+        stats += f"\nElemental Penetration: +{int(player_object.elemental_penetration * 100)}%"
+        stats += f"\nFinal Damage: +{int(player_object.final_damage * 100)}%"
+        stats += f"\nHit Count: {int(player_object.hit_multiplier)}x"
+        stats += f"\nTeam Aura: +{player_object.aura}x"
+        stats += f"\nCurse Aura: +{player_object.curse}x"
 
         embed_msg = discord.Embed(colour=echelon_colour[0],
                                   title=player_object.player_username,
                                   description=id_msg)
         embed_msg.add_field(name=exp, value=stamina, inline=False)
-        # embed_msg.set_thumbnail(url="")
+        embed_msg.add_field(name="Player Stats", value=stats, inline=False)
+        thumbnail_url = player.get_thumbnail_by_class(player_object.player_class)
+        embed_msg.set_thumbnail(url=thumbnail_url)
         await ctx.send(embed=embed_msg)
 
     @pandora_bot.command(name='admin', help="**!admin** inputs")
@@ -490,6 +499,18 @@ def run_discord_bot():
         else:
             message = "wrong item id"
             await ctx.send(message)
+
+    @pandora_bot.command(name='ref', help="**!ref** to go to the refinery")
+    @commands.max_concurrency(1, per=commands.BucketType.default, wait=False)
+    async def refinery(ctx):
+        player_name = str(ctx.author)
+        command_user = player.get_player_by_name(player_name)
+        embed_msg = discord.Embed(colour=discord.Colour.dark_orange(),
+                                  title='Welcome to the Refinery!',
+                                  description="Please select the item to refine")
+        embed_msg.set_image(url="https://i.ibb.co/QjWDYG3/forge.jpg")
+        ref_view = menus.RefSelectView(command_user)
+        await ctx.send(embed=embed_msg, view=ref_view)
 
     @pandora_bot.command(name='who', help="**!who [NewUsername]** to set your username")
     @commands.max_concurrency(1, per=commands.BucketType.default, wait=False)
@@ -546,45 +567,53 @@ def run_discord_bot():
                     self.letter = "a"
                     self.num_buttons = 5
                 case "Upgrade":
+                    self.letter = "b"
                     self.button_emoji.append(loot.get_loot_emoji("I1b"))
                     self.button_emoji.append(loot.get_loot_emoji("I2b"))
                     self.button_emoji.append(loot.get_loot_emoji("I3b"))
                     self.button_emoji.append(loot.get_loot_emoji("I4b"))
                     self.num_buttons = 5
                 case "Bestow":
+                    self.letter = "c"
                     self.button_emoji.append(loot.get_loot_emoji("I1c"))
                     self.button_emoji.append(loot.get_loot_emoji("I2c"))
                     self.button_emoji.append(loot.get_loot_emoji("I3c"))
                     self.button_emoji.append(loot.get_loot_emoji("I4c"))
                     self.num_buttons = 5
                 case "Open":
+                    self.letter = "d"
                     self.button_emoji.append(loot.get_loot_emoji("I1d"))
                     self.button_emoji.append(loot.get_loot_emoji("I2d"))
                     self.button_emoji.append(loot.get_loot_emoji("I3d"))
                     self.button_emoji.append(loot.get_loot_emoji("I4d"))
                     self.num_buttons = 5
                 case "Imbue":
+                    self.letter = "h"
                     self.button_emoji.append(loot.get_loot_emoji("I1h"))
                     self.button_emoji.append(loot.get_loot_emoji("I2h"))
                     self.button_emoji.append(loot.get_loot_emoji("I3h"))
                     self.button_emoji.append(loot.get_loot_emoji("I4h"))
                     self.num_buttons = 5
                 case "Cleanse":
+                    self.letter = "i"
                     self.button_emoji.append(loot.get_loot_emoji("I1i"))
                     self.button_emoji.append(loot.get_loot_emoji("I2i"))
                     self.button_emoji.append(loot.get_loot_emoji("I3i"))
                     self.button_emoji.append(loot.get_loot_emoji("I4i"))
                     self.num_buttons = 5
                 case "Augment":
+                    self.letter = "j"
                     self.button_emoji.append(loot.get_loot_emoji("I1j"))
                     self.button_emoji.append(loot.get_loot_emoji("I2j"))
                     self.button_emoji.append(loot.get_loot_emoji("I3j"))
                     self.button_emoji.append(loot.get_loot_emoji("I4j"))
                     self.num_buttons = 5
                 case "Implant":
+                    self.letter = "k"
                     self.button_emoji.append(loot.get_loot_emoji("I4k"))
                     self.num_buttons = 2
                 case "Voidforge":
+                    self.letter = "l"
                     self.button_emoji.append(loot.get_loot_emoji("I4l"))
                     self.num_buttons = 2
                 case _:
@@ -755,11 +784,11 @@ def run_discord_bot():
                 discord.SelectOption(
                     emoji="<a:eenergy:1145534127349706772>", label="Armour", description="Equipped Armour"),
                 discord.SelectOption(
-                    emoji="<a:eenergy:1145534127349706772>", label="Accessory", description="Equipped Accessory")
-                # discord.SelectOption(
-                    # emoji="<a:eenergy:1145534127349706772>", label="Wing", description="Equipped Wing"),
-                # discord.SelectOption(
-                    # emoji="<a:eenergy:1145534127349706772>", label="Crest", description="Equipped Paragon Crest")
+                    emoji="<a:eenergy:1145534127349706772>", label="Accessory", description="Equipped Accessory"),
+                discord.SelectOption(
+                    emoji="<a:eenergy:1145534127349706772>", label="Wing", description="Equipped Wing"),
+                discord.SelectOption(
+                    emoji="<a:eenergy:1145534127349706772>", label="Crest", description="Equipped Paragon Crest")
             ]
         )
         async def select_callback(self, interaction: discord.Interaction, item_select: discord.ui.Select):
@@ -778,6 +807,16 @@ def run_discord_bot():
                 case "Accessory":
                     if self.player_object.equipped_acc != "":
                         self.selected_item = inventory.read_custom_item(self.player_object.equipped_acc)
+                    else:
+                        error_msg = "Not equipped"
+                case "Wing":
+                    if self.player_object.equipped_wing != "":
+                        self.selected_item = inventory.read_custom_item(self.player_object.equipped_wing)
+                    else:
+                        error_msg = "Not equipped"
+                case "Crest":
+                    if self.player_object.equipped_crest != "":
+                        self.selected_item = inventory.read_custom_item(self.player_object.equipped_crest)
                     else:
                         error_msg = "Not equipped"
                 case _:

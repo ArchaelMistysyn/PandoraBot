@@ -2,6 +2,7 @@ import inventory
 import player
 import random
 
+
 def item_damage_calc(base_damage: int, item_enhancement: int, material_tier: str, blessing_tier: str) -> int:
     enhancement_multiplier = 1 + (float(item_enhancement) * 0.01)
     material_damage = get_item_tier_damage(material_tier)
@@ -13,15 +14,15 @@ def item_damage_calc(base_damage: int, item_enhancement: int, material_tier: str
 
 def get_item_tier_damage(material_tier: str) -> int:
     match material_tier:
-        case  "Steel" | "Glittering" | "Essence" | "Metallic" | "Faint" | "Enchanted":
+        case  "Steel" | "Glittering" | "Essence" | "Metallic" | "Faint" | "Enchanted" | "Shadow" | "Glowing":
             damage_temp = 125
-        case "Silver" | "Dazzling" | "Spirit" | "Gold" | "Luminous":
+        case "Silver" | "Dazzling" | "Spirit" | "Gold" | "Luminous" | "Inverted" | "Pure":
             damage_temp = 250
-        case "Mithril" | "Lustrous" | "Soulbound" | "Jeweled" | "Shining":
+        case "Mithril" | "Lustrous" | "Soulbound" | "Jeweled" | "Shining" | "Abyssal" | "Majestic":
             damage_temp = 500
-        case "Diamond" | "Radiant" | "Phantasmal" | "Prismatic":
+        case "Diamond" | "Radiant" | "Phantasmal" | "Prismatic" | "Calamitous":
             damage_temp = 1000
-        case "Crystal" | "Divine" | "Spectral" | "Resplendent":
+        case "Crystal" | "Divine" | "Spectral" | "Resplendent" | "Balefire":
             damage_temp = 2500
         case "Voidcrystal":
             damage_temp = 9500
@@ -92,154 +93,43 @@ def boss_weakness_multiplier(weapon, elemental_penetration, boss_typeweak, boss_
 
 
 def get_player_damage(player_object, boss_object):
-    player_damage = 0
-    is_weapon = False
-    is_armour = False
-    is_acc = False
+    player_object.get_player_multipliers()
+    float_damage = float(player_object.player_damage)
 
-    base_critical = 5.0
-    base_attack_speed = 1.0
-
-    elemental_penetration = 0.0
-    critical_chance = 0.0
-    attack_speed = 0.0
-    critical_multiplier = 2.0
-    hit_multiplier = 1.0
-    aura_multiplier = 1.0
-    curse_multiplier = 1.0
-    final_damage_multiplier = 1.0
-
-    player_object.get_equipped()
-    if player_object.equipped_weapon != "":
-        e_weapon = inventory.read_custom_item(player_object.equipped_weapon)
-        player_damage += (e_weapon.item_damage_min + e_weapon.item_damage_max) / 2
-        attack_speed = float(e_weapon.item_bonus_stat)
-        is_weapon = True
-    if player_object.equipped_armour != "":
-        e_armour = inventory.read_custom_item(player_object.equipped_armour)
-        player_damage += (e_armour.item_damage_min + e_armour.item_damage_max) / 2
-        is_armour = True
     if player_object.equipped_acc != "":
         e_acc = inventory.read_custom_item(player_object.equipped_acc)
-        player_damage += (e_acc.item_damage_min + e_acc.item_damage_max) / 2
-        is_acc = True
-
-    float_damage = float(player_damage)
-
-    # bonus stats
-    if is_weapon:
-        for x in e_weapon.item_prefix_values:
-            roll_tier = int(str(x)[1])
-            match str(x)[2]:
-                case "1":
-                    critical_chance += 0.25 * float(roll_tier)
-                case "2":
-                    attack_speed += 0.25 * float(roll_tier)
-                case "3":
-                    elemental_penetration += 0.25 * float(roll_tier)
-                case "4":
-                    final_damage_multiplier += 0.25 * float(roll_tier)
-                case _:
-                    no_change = True
-        for y in e_weapon.item_suffix_values:
-            roll_tier = int(str(y)[1])
-            match str(y)[2]:
-                case "1":
-                    critical_multiplier += 0.50 * float(roll_tier)
-                case "2":
-                    aura_multiplier += 0.25 * float(roll_tier)
-                case "3":
-                    curse_multiplier += 0.25 * float(roll_tier)
-                case "4":
-                    hit_multiplier += float(roll_tier)
-                case _:
-                    no_change = True
-    if is_armour:
-        for x in e_armour.item_prefix_values:
-            roll_tier = int(str(x)[1])
-            match str(x)[2]:
-                case "1":
-                    critical_chance += 0.25 * float(roll_tier)
-                case "2":
-                    attack_speed += 0.25 * float(roll_tier)
-                case "3":
-                    elemental_penetration += 0.25 * float(roll_tier)
-                case "4":
-                    final_damage_multiplier += 0.25 * float(roll_tier)
-                case _:
-                    no_change = True
-        for y in e_armour.item_suffix_values:
-            roll_tier = int(str(y)[1])
-            match str(y)[2]:
-                case "1":
-                    critical_multiplier += 0.50 * float(roll_tier)
-                case "2":
-                    aura_multiplier += 0.25 * float(roll_tier)
-                case "3":
-                    curse_multiplier += 0.25 * float(roll_tier)
-                case "4":
-                    # hit_multiplier += float(roll_tier)
-                    no_change = True
-                case _:
-                    no_change = True
-    if is_acc:
-        for x in e_acc.item_prefix_values:
-            roll_tier = int(str(x)[1])
-            match str(x)[2]:
-                case "1":
-                    critical_chance += 0.25 * float(roll_tier)
-                case "2":
-                    attack_speed += 0.25 * float(roll_tier)
-                case "3":
-                    elemental_penetration += 0.25 * float(roll_tier)
-                case "4":
-                    final_damage_multiplier += 0.25 * float(roll_tier)
-                case _:
-                    no_change = True
-        for y in e_acc.item_suffix_values:
-            roll_tier = int(str(y)[1])
-            match str(y)[2]:
-                case "1":
-                    critical_multiplier += 0.50 * float(roll_tier)
-                case "2":
-                    aura_multiplier += 0.25 * float(roll_tier)
-                case "3":
-                    curse_multiplier += 0.25 * float(roll_tier)
-                case "4":
-                    # hit_multiplier += float(roll_tier)
-                    no_change = True
-                case _:
-                    no_change = True
         float_damage *= accessory_ability_damage(e_acc.item_bonus_stat,
-                                                            boss_object.boss_cHP,
-                                                            boss_object.boss_mHP,
-                                                            player_object.player_hp)
+                                                 boss_object.boss_cHP,
+                                                 boss_object.boss_mHP,
+                                                 player_object.player_hp)
     # Critical hits
     random_num = random.randint(1, 100)
-    if random_num < int(base_critical * (1 + critical_chance)):
+    if random_num < player_object.critical_chance:
         critical_type = " CRITICAL HIT!"
-        float_damage *= critical_multiplier
+        float_damage *= player_object.critical_multiplier
     else:
         critical_type = ""
 
     # Attack Speed
-    float_damage *= (base_attack_speed * (1 + attack_speed))
+    float_damage *= player_object.attack_speed
 
     # Hit Multiplier
-    float_damage *= hit_multiplier
+    float_damage *= player_object.hit_multiplier
+
+    # Boss defences
+    if player_object.equipped_acc != "":
+        e_weapon = inventory.read_custom_item(player_object.equipped_weapon)
+        float_damage *= boss_weakness_multiplier(e_weapon, player_object.elemental_penetration,
+                                                 boss_object.boss_typeweak,
+                                                 boss_object.boss_eleweak_a,
+                                                 boss_object.boss_eleweak_b)
 
     # Additional increases
     additional_multiplier = 1 + (player_object.player_lvl * 0.01)
-    additional_multiplier *= (1 + aura_multiplier)
-    additional_multiplier *= (1 + curse_multiplier)
-    additional_multiplier *= (1 + final_damage_multiplier)
+    additional_multiplier *= (1 + player_object.aura)
+    additional_multiplier *= (1 + player_object.curse)
+    additional_multiplier *= (1 + player_object.final_damage)
     float_damage *= additional_multiplier
-
-    # Boss defences
-    float_damage *= boss_weakness_multiplier(e_weapon, elemental_penetration,
-                                                        boss_object.boss_typeweak,
-                                                        boss_object.boss_eleweak_a,
-                                                        boss_object.boss_eleweak_b)
 
     player_damage = int(float_damage)
 

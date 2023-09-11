@@ -163,60 +163,97 @@ class CustomItem:
     def create_citem_embed(self):
         gear_colours = get_gear_tier_colours(self.item_base_tier)
         tier_colour = gear_colours[0]
+        gem_min = 0
+        gem_max = 0
 
         item_title = f'{self.item_name}'
-        display_stars = ""
-        damage_bonus = f'Base Damage: {str(self.item_damage_min)}'
-        damage_bonus += f' - {str(self.item_damage_max)}'
-        match self.item_identifier:
-            case "W":
-                bonus_type = "Base Attack Speed "
-                aux_suffix = "/min"
-                thumb_img = "https://i.ibb.co/ygGCRnc/sworddefaulticon.png"
-            case "A":
-                bonus_type = "Base Damage Mitigation "
-                aux_suffix = "%"
-                thumb_img = "https://i.ibb.co/p2K2GFK/armouricon.png"
-            case "Y":
-                bonus_type = ""
-                aux_suffix = ""
-                thumb_img = "https://i.ibb.co/FbhP60F/ringicon.png"
-            case _:
-                bonus_type = "Error"
-                aux_suffix = "Error"
-                thumb_img = "https://i.ibb.co/FbhP60F/ringicon.png"
-        item_rolls = f'{bonus_type}{self.item_bonus_stat}{aux_suffix}'
-        prefix_rolls = ""
-        suffix_rolls = ""
-        if self.item_prefix_values:
+
+        if self.item_id[0] == "D":
+            damage_bonus = f'Base Damage: {self.item_damage_min:,}'
+            damage_bonus += f' - {self.item_damage_max:,}'
+            item_stats = ""
             for x in self.item_prefix_values:
-                prefix_rolls += f'\n{get_roll_by_code(str(x))} '
-                for y in range(int(str(x)[1]) - 1):
-                    prefix_rolls += "<:eprl:1148390531345432647>"
-        if self.item_suffix_values:
-            for x in self.item_suffix_values:
-                suffix_rolls += f'\n{get_roll_by_code(str(x))} '
-                for y in range(int(str(x)[1]) - 1):
-                    suffix_rolls += "<:eprl:1148390531345432647>"
+                buff_type, buff_amount = gem_stat_reader(str(x))
+                item_stats += f'{buff_type}: +{buff_amount}%\n'
+            for y in self.item_suffix_values:
+                buff_type, buff_amount = gem_stat_reader(str(y))
+                item_stats += f'{buff_type}: +{buff_amount}%\n'
+            gem_description = f'{damage_bonus}\nItem Rolls:\n{item_stats}'
+            embed_msg = discord.Embed(colour=tier_colour,
+                                      title=item_title,
+                                      description=gem_description)
+            thumb_img = "https://i.ibb.co/ygGCRnc/sworddefaulticon.png"
+        else:
+            self.update_damage()
+            display_stars = ""
+            match self.item_identifier:
+                case "W":
+                    bonus_type = "Base Attack Speed "
+                    aux_suffix = "/min"
+                    thumb_img = "https://i.ibb.co/ygGCRnc/sworddefaulticon.png"
+                case "A":
+                    bonus_type = "Base Damage Mitigation "
+                    aux_suffix = "%"
+                    thumb_img = "https://i.ibb.co/p2K2GFK/armouricon.png"
+                case "Y":
+                    bonus_type = ""
+                    aux_suffix = ""
+                    thumb_img = "https://i.ibb.co/FbhP60F/ringicon.png"
+                case "G":
+                    bonus_type = ""
+                    aux_suffix = ""
+                    thumb_img = "https://i.ibb.co/FbhP60F/ringicon.png"
+                case "C":
+                    bonus_type = ""
+                    aux_suffix = ""
+                    thumb_img = "https://i.ibb.co/FbhP60F/ringicon.png"
+                case _:
+                    bonus_type = "Error"
+                    aux_suffix = "Error"
+                    thumb_img = "https://i.ibb.co/FbhP60F/ringicon.png"
+            item_rolls = f'{bonus_type}{self.item_bonus_stat}{aux_suffix}'
+            prefix_rolls = ""
+            suffix_rolls = ""
+            if self.item_prefix_values:
+                for x in self.item_prefix_values:
+                    prefix_rolls += f'\n{get_roll_by_code(str(x), self.item_identifier)} '
+                    for y in range(int(str(x)[1]) - 1):
+                        prefix_rolls += "<:eprl:1148390531345432647>"
+            if self.item_suffix_values:
+                for x in self.item_suffix_values:
+                    suffix_rolls += f'\n{get_roll_by_code(str(x), self.item_identifier)} '
+                    for y in range(int(str(x)[1]) - 1):
+                        suffix_rolls += "<:eprl:1148390531345432647>"
 
-        for x in range(self.item_num_stars):
-            display_stars += "<:estar1:1143756443967819906>"
-        for y in range((5 - self.item_num_stars)):
-            display_stars += "<:ebstar2:1144826056222724106>"
+            for x in range(self.item_num_stars):
+                display_stars += "<:estar1:1143756443967819906>"
+            for y in range((5 - self.item_num_stars)):
+                display_stars += "<:ebstar2:1144826056222724106>"
 
-        item_types = f'{self.item_damage_type}'
-        for x in self.item_elements:
-            item_types += f'{x}'
-        if self.item_num_sockets == 1:
-            display_stars += " Socket: <:esocket:1148387477615300740>"
-        embed_msg = discord.Embed(colour=tier_colour,
-                                  title=item_title,
-                                  description=display_stars)
-        embed_msg.add_field(name=item_types, value=damage_bonus, inline=False)
-        embed_msg.add_field(name="Item Rolls", value=item_rolls, inline=False)
-        all_rolls = prefix_rolls + suffix_rolls
-        if all_rolls != "":
-            embed_msg.add_field(name="", value=all_rolls, inline=False)
+            item_types = f'{self.item_damage_type}'
+            for x in self.item_elements:
+                item_types += f'{x}'
+            if self.item_num_sockets == 1:
+                gem_id = self.item_inlaid_gem_id
+                if gem_id == "":
+                    display_stars += " Socket: <:esocket:1148387477615300740>"
+                else:
+                    display_stars += f" Socket: {gem_id} Equipped"
+                    e_gem = read_custom_item(gem_id)
+                    gem_min = e_gem.item_damage_min
+                    gem_max = e_gem.item_damage_max
+            damage_min = str(gem_min + self.item_damage_min)
+            damage_max = str(gem_max + self.item_damage_max)
+            damage_bonus = f'Base Damage: {int(damage_min):,}'
+            damage_bonus += f' - {int(damage_max):,}'
+            embed_msg = discord.Embed(colour=tier_colour,
+                                      title=item_title,
+                                      description=display_stars)
+            embed_msg.add_field(name=item_types, value=damage_bonus, inline=False)
+            embed_msg.add_field(name="Item Rolls", value=item_rolls, inline=False)
+            all_rolls = prefix_rolls + suffix_rolls
+            if all_rolls != "":
+                embed_msg.add_field(name="", value=all_rolls, inline=False)
         embed_msg.set_thumbnail(url=thumb_img)
         return embed_msg
 
@@ -276,11 +313,11 @@ class CustomWeapon(CustomItem):
         self.item_id = self.item_identifier + str(1 + df['item_id'].count())
 
         # generate weapon specifications
-        self.item_damage_type = generate_weapon_type()
+        self.item_damage_type = generate_item_type()
         self.item_type = generate_weapon_base(self.item_base_tier, self.item_damage_type)
 
         # generate the weapon name
-        if self.item_damage_type == "<:esummon:1143754335478616114>":
+        if self.item_damage_type == "<:cD:1150195280969478254>":
             self.item_blessing_tier = "Standard"
             self.item_material_tier = "Illusion"
         else:
@@ -319,7 +356,7 @@ class CustomArmour(CustomItem):
         self.item_id = self.item_identifier + str(1 + df['item_id'].count())
 
         # generate armour specifications
-        self.item_damage_type = ""
+        self.item_damage_type = generate_item_type()
         self.item_type = generate_armour_base(self.item_base_tier)
 
         self.item_material_tier = "Iron"
@@ -354,8 +391,8 @@ class CustomAccessory(CustomItem):
         self.item_identifier = "Y"
         self.item_id = self.item_identifier + str(1 + df['item_id'].count())
 
-        # generate armour specifications
-        self.item_damage_type = ""
+        # generate accessory specifications
+        self.item_damage_type = generate_item_type()
         self.item_type = generate_accessory_base()
 
         self.item_material_tier = "Crude"
@@ -411,6 +448,231 @@ class CustomAccessory(CustomItem):
         self.set_item_name()
 
 
+class CustomWing(CustomItem):
+    def __init__(self, player_owner, selected_tier):
+        CustomItem.__init__(self, player_owner)
+
+        # initialize item_id
+        df = pd.read_csv('cinventory.csv')
+        self.item_identifier = "G"
+        self.item_id = self.item_identifier + str(1 + df['item_id'].count())
+
+        # generate wing specifications
+        self.item_damage_type = generate_item_type()
+
+        self.item_material_tier = "Crude"
+        self.item_blessing_tier = "Sparkling"
+        self.item_elements.clear()
+        self.item_base_tier = selected_tier
+
+        # set wing bonus stat
+        match self.item_base_tier:
+            case 4:
+                self.item_type = "Dimensional Wings"
+                self.base_damage_min = 500
+                self.base_damage_max = 500
+                bonus_stat = ""
+            case 3:
+                self.item_type = "Wonderous Wings"
+                self.base_damage_min = 100
+                self.base_damage_max = 250
+                bonus_stat = ""
+            case 2:
+                self.item_type = "Lucent Wings"
+                self.base_damage_min = 50
+                self.base_damage_max = 100
+                bonus_stat = ""
+            case _:
+                self.item_type = "Feathered Wings"
+                self.base_damage_min = 1
+                self.base_damage_max = 50
+                bonus_stat = ""
+
+        self.item_bonus_stat = bonus_stat
+        # calculate item's damage per hit
+        self.update_damage()
+
+        # set the item name
+        self.set_item_name()
+
+
+class CustomCrest(CustomItem):
+    def __init__(self, player_owner, selected_tier):
+        CustomItem.__init__(self, player_owner)
+
+        # initialize item_id
+        df = pd.read_csv('cinventory.csv')
+        self.item_identifier = "C"
+        self.item_id = self.item_identifier + str(1 + df['item_id'].count())
+
+        # generate crest specifications
+        self.item_damage_type = generate_item_type()
+        self.item_type = generate_crest_base()
+
+        self.item_elements.clear()
+
+        self.item_material_tier = "Iron"
+        random_blessing = random.randint(1, 2)
+        if random_blessing == 1:
+            self.item_blessing_tier = "Light"
+        else:
+            self.item_blessing_tier = "Dark"
+        self.item_base_tier = selected_tier
+
+        random_num = random.randint(1, 2)
+        # set crest unique skill
+        match self.item_base_tier:
+            case 4:
+                self.base_damage_min = 500
+                self.base_damage_max = 500
+                match random_num:
+                    case 1:
+                        temp_unique_skill = "Elemental Fractal"
+                    case _:
+                        temp_unique_skill = "Omega Critical"
+            case 3:
+                self.base_damage_min = 100
+                self.base_damage_max = 250
+                match random_num:
+                    case 1:
+                        temp_unique_skill = "Specialized Mastery"
+                    case _:
+                        temp_unique_skill = "Ignore Protection"
+            case 2:
+                self.base_damage_min = 50
+                self.base_damage_max = 100
+                match random_num:
+                    case 1:
+                        temp_unique_skill = "Perfect Precision"
+                    case _:
+                        temp_unique_skill = "Resistance Bypass"
+            case _:
+                self.base_damage_min = 1
+                self.base_damage_max = 50
+                match random_num:
+                    case 1:
+                        temp_unique_skill = ""
+                    case _:
+                        temp_unique_skill = "Defence Bypass"
+
+        self.item_bonus_stat = temp_unique_skill
+        # calculate item's damage per hit
+        self.update_damage()
+
+        # set the item name
+        self.set_item_name()
+
+
+class CustomGem(CustomItem):
+    def __init__(self, player_owner, selected_tier):
+        CustomItem.__init__(self, player_owner)
+
+        # initialize item_id
+        df = pd.read_csv('cinventory.csv')
+        self.item_identifier = "D"
+        self.item_id = self.item_identifier + str(1 + df['item_id'].count())
+
+        # generate gem specifications
+        self.item_damage_type = ""
+        self.item_type = ""
+        self.item_material_tier = ""
+        self.item_blessing_tier = ""
+        self.item_bonus_stat = ""
+        self.item_base_tier = selected_tier
+        self.item_elements.clear()
+
+        random_num = random.randint(1, 2)
+        # set attack speed
+        match selected_tier:
+            case 4:
+                self.base_damage_min = 5000
+                self.base_damage_max = 5000
+                self.item_name = "Gem of Dimensions"
+                self.item_prefix_values.append("P4b")
+                self.item_prefix_values.append("P4c")
+                self.item_suffix_values.append("S4b")
+                self.item_suffix_values.append("S4c")
+            case 3:
+                self.base_damage_min = 2000
+                self.base_damage_max = 4000
+                if random_num == 1:
+                    self.item_name = "Gem of Chaos"
+                    self.item_prefix_values.append("P3a")
+                    self.item_prefix_values.append("P3b")
+                    self.item_suffix_values.append("S3b")
+                    self.item_suffix_values.append("S3c")
+                else:
+                    self.item_name = "Gem of Twilight"
+                    self.item_prefix_values.append("P3a")
+                    self.item_prefix_values.append("P3c")
+                    self.item_suffix_values.append("S3a")
+                    self.item_suffix_values.append("S3b")
+            case 2:
+                self.base_damage_min = 500
+                self.base_damage_max = 1500
+                if random_num == 1:
+                    self.item_name = "Gem of Clarity"
+                    self.item_prefix_values.append("P2a")
+                    self.item_prefix_values.append("P2b")
+                    self.item_suffix_values.append("S2b")
+                    self.item_suffix_values.append("S2c")
+                else:
+                    self.item_name = "Gem of Nature's Wrath"
+                    self.item_prefix_values.append("P2a")
+                    self.item_prefix_values.append("P2c")
+                    self.item_suffix_values.append("S2a")
+                    self.item_suffix_values.append("S2b")
+            case _:
+                self.base_damage_min = 100
+                self.base_damage_max = 500
+                if random_num == 1:
+                    self.item_name = "Gem of the Deep"
+                    self.item_prefix_values.append("P1a")
+                    self.item_prefix_values.append("P1b")
+                    self.item_suffix_values.append("S1b")
+                    self.item_suffix_values.append("S1c")
+                else:
+                    self.item_name = "Gem of Land and Sky"
+                    self.item_prefix_values.append("P1a")
+                    self.item_prefix_values.append("P1c")
+                    self.item_suffix_values.append("S1a")
+                    self.item_suffix_values.append("S1b")
+        self.item_damage_min = self.base_damage_min
+        self.item_damage_max = self.base_damage_max
+
+
+def gem_stat_reader(item_code):
+    buff_type = ""
+    buff_amount = 0
+    tier_code = int(item_code[1])
+    if item_code[0] == "P":
+        match item_code[2]:
+            case "a":
+                buff_type = "HP"
+                buff_amount = 5 * tier_code
+            case "b":
+                buff_type = "Critical Chance"
+                buff_amount = 25 * tier_code
+            case "c":
+                buff_type = "Final Damage"
+                buff_amount = 15 * tier_code
+            case _:
+                buff_type = "Error"
+    else:
+        match item_code[2]:
+            case "a":
+                buff_type = "Attack Speed"
+                buff_amount = 15 * tier_code
+            case "b":
+                buff_type = "Damage Mitigation"
+                buff_amount = 5 * tier_code
+            case "c":
+                buff_type = "Critical Damage"
+                buff_amount = 25 * tier_code
+            case _:
+                buff_type = "Error"
+    return buff_type, buff_amount
+
 def generate_item_name(item_enhancement, item_blessing_tier, item_material_tier, item_type) -> str:
     item_name = "+" + str(item_enhancement) + " " + item_blessing_tier + " " + item_material_tier
     item_name += " " + item_type
@@ -431,8 +693,12 @@ def read_custom_item(item_id: str):
                     target_item = CustomArmour(player_id)
                 elif identifier == "Y":
                     target_item = CustomAccessory(player_id)
+                elif identifier == "G":
+                    target_item = CustomWing(player_id, 0)
+                elif identifier == "C":
+                    target_item = CustomCrest(player_id, 0)
                 else:
-                    target_item = CustomWeapon(player_id)
+                    target_item = CustomGem(player_id, 0)
                 target_item.player_owner = player_id
                 target_item.item_id = item_id
                 target_item.item_name = str(line['item_name'])
@@ -454,23 +720,27 @@ def read_custom_item(item_id: str):
                 target_item.base_damage_max = int(line['item_base_dmg_max'])
                 target_item.item_num_sockets = int(line['item_num_sockets'])
                 target_item.item_inlaid_gem_id = str(line['item_inlaid_gem_id'])
-                target_item.update_damage()
+                if identifier != "D":
+                    target_item.update_damage()
+                else:
+                    target_item.item_damage_min = target_item.base_damage_min
+                    target_item.item_damage_max = target_item.base_damage_max
                 break
 
     return target_item
 
 
-def generate_weapon_type() -> str:
+def generate_item_type() -> str:
     random_num = random.randint(1, 9)
     match random_num:
         case 1 | 2 | 3:
-            damage_type = "<:emelee:1141654530619088906>"
+            damage_type = "<:cA:1150195102589931641>"
         case 3 | 4 | 5:
-            damage_type = "<:eranged:1141654478748135545>"
+            damage_type = "<:cB:1150516823524114432>"
         case 6 | 7 | 8:
-            damage_type = "<:emagical:1143754281846059119>"
+            damage_type = "<:cC:1150195246588764201>"
         case _:
-            damage_type = "<:esummon:1143754335478616114>"
+            damage_type = "<:cD:1150195280969478254>"
     return damage_type
 
 
@@ -483,7 +753,7 @@ def generate_weapon_base(item_tier, damage_type) -> str:
         random_num += (item_tier - 1) * 5
 
     match damage_type:
-        case "<:emelee:1141654530619088906>":
+        case "<:cB:1150516823524114432>":
             match random_num:
                 case 1:
                     item_base = "Axe"
@@ -515,7 +785,7 @@ def generate_weapon_base(item_tier, damage_type) -> str:
                     item_base = "Glaive"
                 case _:
                     item_base = "Energy Blade"
-        case "<:eranged:1141654478748135545>":
+        case "<:cA:1150195102589931641>":
             match random_num:
                 case 1:
                     item_base = "Slingshot"
@@ -547,7 +817,7 @@ def generate_weapon_base(item_tier, damage_type) -> str:
                     item_base = "Flamethrower"
                 case _:
                     item_base = "Blaster"
-        case "<:emagical:1143754281846059119>":
+        case "<:cC:1150195246588764201>":
             match random_num:
                 case 1:
                     item_base = "Wand"
@@ -649,6 +919,23 @@ def generate_accessory_base() -> str:
     return item_base
 
 
+def generate_crest_base() -> str:
+    random_number = random.randint(1, 9)
+    match random_number:
+        case 1 | 2:
+            item_base = "Halo"
+        case 3 | 4:
+            item_base = "Horns"
+        case 5 | 6:
+            item_base = "Crown"
+        case 7 | 8:
+            item_base = "Tiara"
+        case _:
+            item_base = "Diadem"
+
+    return item_base
+
+
 # write item to inventory
 def inventory_add_custom_item(item) -> str:
     # File specifications
@@ -675,9 +962,16 @@ def inventory_add_custom_item(item) -> str:
     item_type = item.item_type
 
     # item rolls
-    item_num_stars = item.item_num_stars
     item_prefix_values = ""
     item_suffix_values = ""
+    item_num_stars = item.item_num_stars
+    if item.item_id[0] == "D":
+        for x in item.item_prefix_values:
+            item_prefix_values += str(x) + ";"
+        item_prefix_values = item_prefix_values[:-1]
+        for y in item.item_suffix_values:
+            item_suffix_values += str(y) + ";"
+        item_suffix_values = item_suffix_values[:-1]
 
     # item base damage
     item_bonus_stat = item.item_bonus_stat
@@ -804,7 +1098,9 @@ def craft_item(player_object, selected_item, item_id, method):
                     if random_num <= success_rate:
                         blessing_tier_list = ["Inert", "Faint", "Luminous", "Lustrous", "Radiant", "Divine",
                                               "Basic", "Enchanted", "Luminous", "Lustrous", "Radiant", "Divine",
-                                              "Sparkling", "Glittering", "Dazzling", "Shining", "Prismatic", "Resplendent"]
+                                              "Sparkling", "Glittering", "Dazzling", "Shining", "Prismatic", "Resplendent",
+                                              "Dark", "Shadow", "Inverted", "Abyssal", "Calamitous", "Balefire",
+                                              "Light", "Glowing", "Pure", "Majestic", "Radiant", "Divine"]
                         for idx, elem in enumerate(blessing_tier_list):
                             if selected_item.item_blessing_tier == elem:
                                 selected_item.item_blessing_tier = blessing_tier_list[(idx + 1)]
@@ -928,40 +1224,64 @@ def update_stock(player_object, item_id, change):
     df.to_csv(filename, index=False)
 
 
-def get_roll_by_code(code):
+def get_roll_by_code(code, item_type):
+    roll_adjust = 25
+    roll_text = ""
     match code[0]:
         case "P":
             match code[2]:
                 case "1":
-                    new_roll = "Critical Chance:"
+                    roll = "Critical Chance"
                 case "2":
-                    new_roll = "Attack Speed Amplifier:"
+                    roll = "Attack Speed"
                 case "3":
-                    new_roll = "Elemental Penetration:"
+                    roll = "Elemental Penetration"
                 case "4":
-                    new_roll = "Final Damage Amplifier:"
+                    roll = "Final Damage"
                 case "5":
-                    new_roll = "Damage Mitigation:"
+                    roll = "Damage Mitigation"
+                    roll_adjust = 10
                 case _:
-                    new_roll = "Error"
-            bonus = str(int(code[1]) * 25)
-            new_roll += f' {bonus}%'
+                    roll = "Error"
+            bonus = str(int(code[1]) * roll_adjust)
+            roll_text += f'+{bonus}% {roll}'
         case "S":
             match code[2]:
                 case "1":
                     bonus = str(int(code[1]) * 50)
-                    new_roll = f"Critical Damage Amplifier: {bonus}%"
+                    roll_text = f"+{bonus}% Critical Damage"
                 case "2":
                     bonus = str(int(code[1])*0.25 + 1)
-                    new_roll = f"Aura: {bonus}x Amplify"
+                    roll_text = f"Aura: {bonus}x Team Damage"
                 case "3":
                     bonus = str(int(code[1])*0.25 + 1)
-                    new_roll = f"Curse: {bonus}x Damage Taken"
+                    roll_text = f"Curse: {bonus}x Boss Damage Received"
                 case "4":
                     bonus = str(int(code[1]) + 1)
-                    new_roll = f"Multi-Hit: {bonus}x Combo"
+                    if item_type == "W":
+                        roll_text = f"Multi-Hit: {bonus}x Combo"
+                    else:
+                        roll_text = f"Undecided Roll: {bonus}x Combo"
                 case _:
-                    new_roll = "Error"
+                    roll_text = "Error"
         case _:
-            new_roll = "Error"
-    return new_roll
+            roll_text = "Error"
+    return roll_text
+
+
+def try_refine(player_owner, item_type, selected_tier):
+    match item_type:
+        case "Dragon Heart Gems":
+            new_item = CustomGem(player_owner, selected_tier)
+        case "Wings":
+            new_item = CustomWing(player_owner, selected_tier)
+        case "Paragon Crests":
+            new_item = CustomCrest(player_owner, selected_tier)
+        case _:
+            new_item = CustomWing(player_owner, selected_tier)
+
+    random_num = random.randint(1, 100)
+    if random_num > 25:
+        new_item.item_id = ""
+
+    return new_item

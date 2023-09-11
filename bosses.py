@@ -201,13 +201,13 @@ def get_type() -> str:
     random_number = random.randint(1, 4)
     match random_number:
         case 1:
-            type_temp = '<:ea:1141654478748135545>'
+            type_temp = '<:cA:1150195102589931641>'
         case 2:
-            type_temp = '<:ea:1141654530619088906>'
+            type_temp = '<:cB:1150516823524114432>'
         case 3:
-            type_temp = "<:ea:1143754281846059119>"
+            type_temp = "<:cC:1150195246588764201>"
         case _:
-            type_temp = "<:ea:1143754335478616114>"
+            type_temp = "<:cD:1150195280969478254>"
 
     return type_temp
 
@@ -458,7 +458,7 @@ def get_damage_list():
             username.append(player_object.player_username)
             damage.append(int(line['dps_dealt']))
     for idx, x in enumerate(username):
-        output = f'{str(x)}: {damage[idx]:,}'
+        output += f'{str(x)}: {damage[idx]:,}\n'
 
     return output
 

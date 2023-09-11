@@ -29,11 +29,15 @@ I3j,Awakened Pearl,3,10,<:eprl:1148390531345432647>,10% chance to upgrade the ti
 I4j,Ascenion Pearl,4,100,<:eprl:1148390531345432647>,100% chance to upgrade the tier of a roll.
 I4k,Elemental Origin,4,10,<a:eorigin:1145520263954440313>,10% chance to add an elemental damage type to a weapon
 I4l,Void Traces,4,1,<a:evoid:1145520260573827134>,1% chance to upgrade a tier 5 material weapon into a void tier material weapon
-I1m,Feathered Wings,1,100,<a:elootitem:1144477550379274322>,Use to receive base tier 1 wings
-I2m,Lucent Wings,2,100,<a:elootitem:1144477550379274322>,Use to receive base tier 2 wings
-I3m,Wonderous Wings,3,100,<a:elootitem:1144477550379274322>,Use to receive base tier 3 wings
-I4m,Dimensional Wings,4,100,<a:elootitem:1144477550379274322>,Use to receive base tier 4 wings
+I1m,Unrefined Wings (T1),1,25,<a:elootitem:1144477550379274322>,Refine for 25% chance to receive base tier 1 wings
+I2m,Unrefined Wings (T2),2,25,<a:elootitem:1144477550379274322>,Refine for 25% chance to receive base tier 2 wings
+I3m,Unrefined Wings (T3),3,25,<a:elootitem:1144477550379274322>,Refine for 25% chance to receive base tier 3 wings
+I4m,Unrefined Wings (T4),4,25,<a:elootitem:1144477550379274322>,Refine for 25% chance to receive base tier 4 wings
 I1n,Unrefined Dragon Heart Gem (T1),1,25,<a:elootitem:1144477550379274322>,Refine for 25% chance to receive a tier 1 dragon heart gem
 I2n,Unrefined Dragon Heart Gem (T2),2,25,<a:elootitem:1144477550379274322>,Refine for 25% chance to receive a tier 2 dragon heart gem
 I3n,Unrefined Dragon Heart Gem (T3),3,25,<a:elootitem:1144477550379274322>,Refine for 25% chance to receive a tier 3 dragon heart gem
 I4n,Unrefined Dragon Heart Gem (T4),4,25,<a:elootitem:1144477550379274322>,Refine for 25% chance to receive a tier 4 dragon heart gem
+I1o,Unrefined Paragon Crest (T1),1,25,<a:elootitem:1144477550379274322>,Refine for 25% chance to receive a base tier 1 paragon crest
+I2o,Unrefined Paragon Crest (T2),2,25,<a:elootitem:1144477550379274322>,Refine for 25% chance to receive a base tier 2 paragon crest
+I3o,Unrefined Paragon Crest (T3),3,25,<a:elootitem:1144477550379274322>,Refine for 25% chance to receive a base tier 3 paragon crest
+I4o,Unrefined Paragon Crest (T4),4,25,<a:elootitem:1144477550379274322>,Refine for 25% chance to receive a base tier 4 paragon crest
