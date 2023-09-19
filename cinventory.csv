@@ -1,5 +1,5 @@
 player_id,item_id,item_name,item_elements,item_damage_type,item_enhancement,item_base_tier,item_blessing_tier,item_material_tier,item_type,item_num_stars,item_prefix_values,item_suffix_values,item_bonus_stat,item_base_dmg_min,item_base_dmg_max,item_num_sockets,item_inlaid_gem_id
-10001,W1,+100 Divine Voidcrystal Whale,<:ef:1141653475059572779>;<:eg:1141653474480767016>;<:ek:1141653468080242748>;<:em:1141647050342146118>;<:el:1141653466343800883>;<:ej:1141653469938339971>;<:eh:1141653473528664126>;<:ei:1141653471154671698>;<:ee:1141653476816986193>,<:cD:1150195280969478254>,100,4,Divine,Voidcrystal,Whale,5,P41;P43,S44;S41,1.5,500,500,1,D39
+10001,W1,+100 Divine Voidcrystal Whale,<:ef:1141653475059572779>;<:eg:1141653474480767016>;<:ek:1141653468080242748>;<:em:1141647050342146118>;<:el:1141653466343800883>;<:ej:1141653469938339971>;<:eh:1141653473528664126>;<:ei:1141653471154671698>;<:ee:1141653476816986193>,<:cD:1150195280969478254>,100,4,Divine,Voidcrystal,Whale,5,P41;P43,S44;S41,1.5,500,500,1,D63
 10001,Y2,+0 Sparkling Crude Bracelet,,<:cD:1150195280969478254>,0,4,Sparkling,Crude,Bracelet,1,,,Perfect Counter,500,500,0,
 10001,A3,+0 Inert Iron Mail,,<:cD:1150195280969478254>,0,3,Inert,Iron,Mail,1,,,15,100,250,0,
 10001,W4,+24 Basic Iron Staff,<:ef:1141653475059572779>,<:cD:1150195280969478254>,24,1,Basic,Iron,Staff,1,,,1.1,1,50,0,
@@ -9,7 +9,7 @@ player_id,item_id,item_name,item_elements,item_damage_type,item_enhancement,item
 10001,Y8,+0 Sparkling Crude Earring,,<:cD:1150195280969478254>,0,3,Sparkling,Crude,Earring,1,,,Final Stand,100,250,0,
 10001,Y9,+0 Sparkling Crude Necklace,,<:cD:1150195280969478254>,0,3,Sparkling,Crude,Necklace,1,,,Inferno's Will,100,250,0,
 10001,Y10,+0 Sparkling Voidcrystal Necklace,,<:cD:1150195280969478254>,0,4,Sparkling,Voidcrystal,Necklace,1,,,Curse of Immorality,500,500,0,
-10001,Y11,+100 Resplendent Voidcrystal Earring,,<:cD:1150195280969478254>,100,4,Resplendent,Voidcrystal,Earring,5,P43;P41,S41;S44,Perfect Counter,500,500,1,D37
+10001,Y11,+100 Resplendent Voidcrystal Earring,,<:cD:1150195280969478254>,100,4,Resplendent,Voidcrystal,Earring,5,P41;P43,S41;S42,Bahamut's Grace,500,500,1,D61
 10001,A12,+0 Inert Iron Mail,,<:cD:1150195280969478254>,0,3,Inert,Iron,Mail,1,,,15,100,250,0,
 10001,Y13,+0 Sparkling Crude Earring,,<:cD:1150195280969478254>,0,1,Sparkling,Crude,Earring,1,,,Hybrid Stance,1,50,0,
 10001,A14,+0 Inert Iron Shell,,<:cD:1150195280969478254>,0,2,Inert,Iron,Shell,1,,,10,50,100,0,
@@ -22,8 +22,8 @@ player_id,item_id,item_name,item_elements,item_damage_type,item_enhancement,item
 10006,Y21,+0 Sparkling Crude Earring,,<:cD:1150195280969478254>,0,1,Sparkling,Crude,Earring,1,,,Defensive Stance,1,50,0,
 10006,A22,+0 Inert Iron Armour,,<:cD:1150195280969478254>,0,1,Inert,Iron,Armour,1,,,5,1,50,0,
 10001,A23,+0 Inert Iron Armour,,<:cD:1150195280969478254>,0,1,Inert,Iron,Armour,1,,,5,1,50,0,
-10001,A24,+100 Divine Voidcrystal Plate,,<:cD:1150195280969478254>,100,4,Divine,Voidcrystal,Plate,5,P43;P41,S41;S42,25,500,500,1,D38
-10001,G25,+100 Resplendent Voidcrystal Dimensional Wings,,<:cD:1150195280969478254>,100,4,Resplendent,Voidcrystal,Dimensional Wings,5,P44;P41,S41;S42,,500,500,1,D43
+10001,A24,+100 Divine Voidcrystal Plate,,<:cD:1150195280969478254>,100,4,Divine,Voidcrystal,Plate,5,P43;P41,S41;S42,25,500,500,1,D62
+10001,G25,+100 Resplendent Voidcrystal Dimensional Wings,,<:cD:1150195280969478254>,100,4,Resplendent,Voidcrystal,Dimensional Wings,5,P43;P41,S43;S41,Bahamut's Grace,500,500,1,D60
 10001,G26,+0 Sparkling Crude Dimensional Wings,,<:cC:1150195246588764201>,0,4,Sparkling,Crude,Dimensional Wings,1,,,,500,500,0,
 10001,D1,Gem of Dimensions,,,0,4,,,,1,,,,5000,5000,0,
 10001,D2,Gem of Dimensions,,,0,4,,,,1,,,,5000,5000,0,
@@ -34,7 +34,7 @@ player_id,item_id,item_name,item_elements,item_damage_type,item_enhancement,item
 10001,C33,+0 Light Crude Diadem,,<:cA:1150195102589931641>,0,1,Light,Crude,Diadem,1,,,,1,50,0,
 10001,C34,+0 Dark Crude Diadem,,<:cB:1150516823524114432>,0,2,Dark,Crude,Diadem,1,,,Perfect Precision,50,100,0,
 10001,C35,+0 Dark Crude Diadem,,<:cC:1150195246588764201>,0,3,Dark,Crude,Diadem,1,,,Ignore Protection,100,250,0,
-10001,C36,+100 Divine Voidcrystal Halo,,<:cD:1150195280969478254>,100,4,Divine,Voidcrystal,Halo,5,P43;P41,S43;S41,Elemental Fractal,500,500,1,D42
+10001,C36,+100 Divine Voidcrystal Halo,,<:cD:1150195280969478254>,100,4,Divine,Voidcrystal,Halo,5,P43;P41,S43;S41,Elemental Fractal,500,500,1,D59
 10001,D37,Gem of Dimensions,,,0,4,,,,1,P4b;P4c,S4b;S4c,,5000,5000,0,
 10001,D38,Gem of Dimensions,,,0,4,,,,1,P4b;P4c,S4b;S4c,,5000,5000,0,
 10001,D39,Gem of Dimensions,,,0,4,,,,1,P4b;P4c,S4b;S4c,,5000,5000,0,
@@ -42,3 +42,42 @@ player_id,item_id,item_name,item_elements,item_damage_type,item_enhancement,item
 10001,D41,Gem of Dimensions,,,0,4,,,,1,P4b;P4c,S4b;S4c,,5000,5000,0,
 10001,D42,Gem of Dimensions,,,0,4,,,,1,P4b;P4c,S4b;S4c,,5000,5000,0,
 10001,D43,Gem of Dimensions,,,0,4,,,,1,P4b;P4c,S4b;S4c,,5000,5000,0,
+10001,D44,Gem of the Infinite,,,0,6,,,,1,P6b;P6c,S6b;S6c,,650,98806,0,
+10001,D45,Gem of the Infinite,,,0,6,,,,1,P6b;P6c,S6b;S6c,,20567,62960,0,
+10001,D46,Gem of the Infinite,,,0,6,,,,1,P6b;P6c,S6b;S6c,,34165,45791,0,
+10001,D47,Gem of the Infinite,,,0,6,,,,1,P6b;P6c,S6b;S6c,,70468,90511,0,
+10001,D48,Gem of the Infinite,,,0,6,,,,1,P6b;P6c,S6b;S6c,,59214,61752,0,
+10001,D49,Gem of the Infinite,,,0,6,,,,1,P6b;P6c,S6b;S6c,,90751,99265,0,
+10001,D50,Gem of the Infinite,,,0,6,,,,1,P6b;P6c,S6b;S6c,,43063,51485,0,
+10001,D51,Gem of the Infinite,,,0,6,,,,1,P6b;P6c,S6b;S6c,,22622,88275,0,
+10001,D52,Gem of the Infinite,,,0,6,,,,1,P6b;P6c,S6b;S6c,,69008,83484,0,
+10001,D53,Gem of the Infinite,,,0,6,,,,1,P6b;P6c,S6b;S6c,,3976,98095,0,
+10001,D54,Gem of the Infinite,,,0,6,,,,1,P6b;P6c,S6b;S6c,,50126,68998,0,
+10001,D55,Gem of the Infinite,,,0,6,,,,1,P6b;P6c,S6b;S6c,,59656,96361,0,
+10001,D56,Gem of the Infinite,,,0,6,,,,1,P6b;P6c,S6b;S6c,,2610,26884,0,
+10001,D57,Gem of the Infinite,,,0,6,,,,1,P6b;P6c,S6b;S6c,,38333,85964,0,
+10001,D58,Gem of the Infinite,,,0,6,,,,1,P6b;P6c,S6b;S6c,,49347,98935,0,
+10001,D59,Gem of the Infinite,,,0,6,,,,1,P6b;P6c,S6b;S6c,,99999,99999,0,
+10001,D60,Gem of the Infinite,,,0,6,,,,1,P6b;P6c,S6b;S6c,,99999,99999,0,
+10001,D61,Gem of the Infinite,,,0,6,,,,1,P6b;P6c,S6b;S6c,,99999,99999,0,
+10001,D62,Gem of the Infinite,,,0,6,,,,1,P6b;P6c,S6b;S6c,,99999,99999,0,
+10001,D63,Gem of the Infinite,,,0,6,,,,1,P6b;P6c,S6b;S6c,,99999,99999,0,
+10001,W64,+0 Basic Iron Axe,<:ej:1141653469938339971>,<:cB:1150516823524114432>,0,1,Basic,Iron,Axe,1,,,1.1,1,50,0,
+10001,W65,+0 Basic Iron Rift Staff,<:ee:1141653476816986193>,<:cC:1150195246588764201>,0,5,Basic,Iron,Rift Staff,1,,,1.1,25000,25000,0,
+10001,W66,+0 Basic Iron Rift Cannon,<:ee:1141653476816986193>,<:cA:1150195102589931641>,0,5,Basic,Iron,Rift Cannon,1,,,1.8,20000,25000,0,
+10001,W67,+0 Basic Iron Rift Staff,<:ee:1141653476816986193>,<:cC:1150195246588764201>,0,5,Basic,Iron,Rift Staff,1,,,1.8,20000,25000,0,
+10001,W68,+0 Basic Iron Rift Cannon,<:eh:1141653473528664126>,<:cA:1150195102589931641>,0,5,Basic,Iron,Rift Cannon,1,,,1.8,20000,25000,0,
+10001,W69,"???, +0 Basic Iron Relic Saber",<:eh:1141653473528664126>,<:cB:1150516823524114432>,0,6,Basic,Iron,Relic Saber,1,,,2.5,87945,38451,0,
+10001,W70,"???, +0 Basic Iron Relic Cannon",<:ee:1141653476816986193>,<:cA:1150195102589931641>,0,6,Basic,Iron,Relic Cannon,1,,,2.5,70454,52881,0,
+10001,W71,"???, +0 Basic Iron Relic Staff",<:eg:1141653474480767016>,<:cC:1150195246588764201>,0,6,Basic,Iron,Relic Staff,1,,,2.5,72064,21486,0,
+10001,W72,"???, +0 Basic Iron Relic Cannon",<:eh:1141653473528664126>,<:cA:1150195102589931641>,0,6,Basic,Iron,Relic Cannon,1,,,2.5,16404,99945,0,
+10001,W73,"???, +0 Basic Iron Relic Cannon",<:eg:1141653474480767016>,<:cA:1150195102589931641>,0,6,Basic,Iron,Relic Cannon,1,,,2.5,35866,95957,0,
+10001,W74,"???, +0 Basic Iron Relic Saber",<:el:1141653466343800883>,<:cB:1150516823524114432>,0,6,Basic,Iron,Relic Saber,1,,,2.5,3389,69738,0,
+10001,W75,"???, +0 Basic Iron Relic Cannon",<:ej:1141653469938339971>,<:cA:1150195102589931641>,0,6,Basic,Iron,Relic Cannon,1,,,2.5,20741,59634,0,
+10001,W76,"???, +0 Basic Iron Relic Cannon",<:em:1141647050342146118>,<:cA:1150195102589931641>,0,6,Basic,Iron,Relic Cannon,1,,,2.5,65039,94644,0,
+10001,W77,"???, +0 Basic Iron Relic Staff",<:ef:1141653475059572779>,<:cC:1150195246588764201>,0,6,Basic,Iron,Relic Staff,1,,,2.5,414,28075,0,
+10001,W78,"???, +0 Basic Iron Relic Saber",<:ek:1141653468080242748>,<:cB:1150516823524114432>,0,6,Basic,Iron,Relic Saber,1,,,2.5,51680,55367,0,
+10001,W79,"???, +0 Basic Iron Relic Cannon",<:ek:1141653468080242748>,<:cA:1150195102589931641>,0,6,Basic,Iron,Relic Cannon,1,,,2.5,1455,75011,0,
+10001,W80,"???, +0 Basic Iron Relic Cannon",<:el:1141653466343800883>,<:cA:1150195102589931641>,0,6,Basic,Iron,Relic Cannon,1,,,2.5,14504,63748,0,
+10001,W81,"???, +0 Basic Iron Relic Staff",<:ej:1141653469938339971>,<:cC:1150195246588764201>,0,6,Basic,Iron,Relic Staff,1,,,2.5,56305,74697,0,
+10001,W82,+100 Divine Voidcrystal Relic Anima,<:ek:1141653468080242748>;<:ei:1141653471154671698>;<:eh:1141653473528664126>;<:ej:1141653469938339971>;<:ee:1141653476816986193>;<:eg:1141653474480767016>;<:ef:1141653475059572779>;<:em:1141647050342146118>;<:el:1141653466343800883>,<:cD:1150195280969478254>,100,6,Divine,Voidcrystal,Relic Anima,5,P41;P42,S44;S41,2.5,99999,99999,1,D63

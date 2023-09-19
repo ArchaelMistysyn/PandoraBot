@@ -17,7 +17,7 @@ class CustomItem:
         random_num = random.randint(1, 100)
         if random_num <= 1:
             temp_tier = 4
-            temp_min = 500
+            temp_min = 250
             temp_max = 500
         elif random_num <= 6:
             temp_tier = 3
@@ -139,7 +139,7 @@ class CustomItem:
                         for x in self.item_prefix_values:
                             random_identifier = random.randint(1, 5)
                             new_roll = f"{roll_type}{tier}{random_identifier}"
-                            if new_roll == x:
+                            if new_roll[2] == str(x)[2]:
                                 running = True
                 else:
                     random_identifier = random.randint(1, 5)
@@ -148,10 +148,10 @@ class CustomItem:
                 if self.item_suffix_values:
                     while running:
                         running = False
-                        for x in self.item_suffix_values:
+                        for y in self.item_suffix_values:
                             random_identifier = random.randint(1, 4)
                             new_roll = f"{roll_type}{tier}{random_identifier}"
-                            if new_roll[0] == str(x)[0] and new_roll[2] == str(x)[2]:
+                            if new_roll[2] == str(y)[2]:
                                 running = True
                 else:
                     random_identifier = random.randint(1, 4)
@@ -360,7 +360,7 @@ class CustomArmour(CustomItem):
         self.item_type = generate_armour_base(self.item_base_tier)
 
         self.item_material_tier = "Iron"
-        self.item_blessing_tier = "Inert"
+        self.item_blessing_tier = "Standard"
 
         # set damage mitigation
         match self.item_base_tier:
@@ -397,50 +397,8 @@ class CustomAccessory(CustomItem):
 
         self.item_material_tier = "Crude"
         self.item_blessing_tier = "Sparkling"
+        self.item_bonus_stat = assign_bonus_stat(self.item_base_tier)
 
-        random_num = random.randint(1,4)
-        # set accessory unique skill
-        match self.item_base_tier:
-            case 4:
-                match random_num:
-                    case 1:
-                        temp_unique_skill = "Bahamut's Grace"
-                    case 2:
-                        temp_unique_skill = "Curse of Immorality"
-                    case _:
-                        temp_unique_skill = "Perfect Counter"
-            case 3:
-                match random_num:
-                    case 1:
-                        temp_unique_skill = "Coup de Grace"
-                    case 2:
-                        temp_unique_skill = "Final Stand"
-                    case 3:
-                        temp_unique_skill = "Mountain's Will"
-                    case _:
-                        temp_unique_skill = "Inferno's Will"
-            case 2:
-                match random_num:
-                    case 1:
-                        temp_unique_skill = "Breaker"
-                    case 2:
-                        temp_unique_skill = "Last Breath"
-                    case 3:
-                        temp_unique_skill = "Guardian Stance"
-                    case _:
-                        temp_unique_skill = "Onslaught Stance"
-            case _:
-                match random_num:
-                    case 1:
-                        temp_unique_skill = "First Blood"
-                    case 2:
-                        temp_unique_skill = "Hybrid Stance"
-                    case 3:
-                        temp_unique_skill = "Defensive Stance"
-                    case _:
-                        temp_unique_skill = "Offensive Stance"
-
-        self.item_bonus_stat = temp_unique_skill
         # calculate item's damage per hit
         self.update_damage()
 
@@ -471,24 +429,20 @@ class CustomWing(CustomItem):
                 self.item_type = "Dimensional Wings"
                 self.base_damage_min = 500
                 self.base_damage_max = 500
-                bonus_stat = ""
             case 3:
                 self.item_type = "Wonderous Wings"
                 self.base_damage_min = 100
                 self.base_damage_max = 250
-                bonus_stat = ""
             case 2:
                 self.item_type = "Lucent Wings"
                 self.base_damage_min = 50
                 self.base_damage_max = 100
-                bonus_stat = ""
             case _:
                 self.item_type = "Feathered Wings"
                 self.base_damage_min = 1
                 self.base_damage_max = 50
-                bonus_stat = ""
 
-        self.item_bonus_stat = bonus_stat
+        self.item_bonus_stat = assign_bonus_stat(self.item_base_tier)
         # calculate item's damage per hit
         self.update_damage()
 
@@ -551,7 +505,7 @@ class CustomCrest(CustomItem):
                 self.base_damage_max = 50
                 match random_num:
                     case 1:
-                        temp_unique_skill = ""
+                        temp_unique_skill = "Extreme Vitality"
                     case _:
                         temp_unique_skill = "Defence Bypass"
 
@@ -584,6 +538,20 @@ class CustomGem(CustomItem):
         random_num = random.randint(1, 2)
         # set attack speed
         match selected_tier:
+            case 6:
+                self.item_name = "Gem of the Infinite"
+                random_damage1 = random.randint(1, 99999)
+                random_damage2 = random.randint(1, 99999)
+                if random_damage1 < random_damage2:
+                    self.base_damage_min = random_damage1
+                    self.base_damage_max = random_damage2
+                else:
+                    self.base_damage_min = random_damage2
+                    self.base_damage_max = random_damage1
+                self.item_prefix_values.append("P6b")
+                self.item_prefix_values.append("P6c")
+                self.item_suffix_values.append("S6b")
+                self.item_suffix_values.append("S6c")
             case 4:
                 self.base_damage_min = 5000
                 self.base_damage_max = 5000
@@ -673,6 +641,7 @@ def gem_stat_reader(item_code):
                 buff_type = "Error"
     return buff_type, buff_amount
 
+
 def generate_item_name(item_enhancement, item_blessing_tier, item_material_tier, item_type) -> str:
     item_name = "+" + str(item_enhancement) + " " + item_blessing_tier + " " + item_material_tier
     item_name += " " + item_type
@@ -744,145 +713,50 @@ def generate_item_type() -> str:
     return damage_type
 
 
-def generate_weapon_base(item_tier, damage_type) -> str:
-
-    random_num = random.randint(1, 5)
-    if item_tier == 4:
-        random_num *= random.randint(1,3)
+def generate_special_weapon_base(damage_type, item_tier):
+    if item_tier == 5:
+        prefix = "Rift"
     else:
-        random_num += (item_tier - 1) * 5
-
+        prefix = "Relic"
     match damage_type:
         case "<:cB:1150516823524114432>":
-            match random_num:
-                case 1:
-                    item_base = "Axe"
-                case 2:
-                    item_base = "Halberd"
-                case 3:
-                    item_base = "Dagger"
-                case 4:
-                    item_base = "Torch"
-                case 5:
-                    item_base = "Spear"
-                case 6:
-                    item_base = "Longsword"
-                case 7:
-                    item_base = "Greatsword"
-                case 8:
-                    item_base = "Claws"
-                case 9:
-                    item_base = "Hammer"
-                case 10:
-                    item_base = "Trident"
-                case 11:
-                    item_base = "Tree"
-                case 12:
-                    item_base = "Chakram"
-                case 13:
-                    item_base = "Scythe"
-                case 14:
-                    item_base = "Glaive"
-                case _:
-                    item_base = "Energy Blade"
+            item_name = f"{prefix} Saber"
         case "<:cA:1150195102589931641>":
-            match random_num:
-                case 1:
-                    item_base = "Slingshot"
-                case 2:
-                    item_base = "Rock"
-                case 3:
-                    item_base = "Kunai"
-                case 4:
-                    item_base = "Darts"
-                case 5:
-                    item_base = "Crossbow"
-                case 6:
-                    item_base = "Longbow"
-                case 7:
-                    item_base = "Whip"
-                case 8:
-                    item_base = "Harpoon"
-                case 9:
-                    item_base = "Ballista"
-                case 10:
-                    item_base = "Greatbow"
-                case 11:
-                    item_base = "Cannon"
-                case 12:
-                    item_base = "Gun"
-                case 13:
-                    item_base = "Threads"
-                case 14:
-                    item_base = "Flamethrower"
-                case _:
-                    item_base = "Blaster"
+            item_name = f"{prefix} Cannon"
         case "<:cC:1150195246588764201>":
-            match random_num:
-                case 1:
-                    item_base = "Wand"
-                case 2:
-                    item_base = "Staff"
-                case 3:
-                    item_base = "Sceptre"
-                case 4:
-                    item_base = "Talisman"
-                case 5:
-                    item_base = "Lantern"
-                case 6:
-                    item_base = "Rod"
-                case 7:
-                    item_base = "Orb"
-                case 8:
-                    item_base = "Spellbook"
-                case 9:
-                    item_base = "Grimoire"
-                case 10:
-                    item_base = "Skull"
-                case 11:
-                    item_base = "Necronomicon"
-                case 12:
-                    item_base = "Jeweled Implement"
-                case 13:
-                    item_base = "Krosse"
-                case 14:
-                    item_base = "Chalice"
-                case _:
-                    item_base = "Mirror"
+            item_name = f"{prefix} Staff"
         case _:
-            match random_num:
-                case 1:
-                    item_base = "Skeleton"
-                case 2:
-                    item_base = "Wolf"
-                case 3:
-                    item_base = "Golem"
-                case 4:
-                    item_base = "Butterfly"
-                case 5:
-                    item_base = "Lynx"
-                case 6:
-                    item_base = "Wyvern"
-                case 7:
-                    item_base = "Basilisk"
-                case 8:
-                    item_base = "Shark"
-                case 9:
-                    item_base = "Whale"
-                case 10:
-                    item_base = "Wyrm"
-                case 11:
-                    item_base = "Unicorn"
-                case 12:
-                    item_base = "Dragon"
-                case 13:
-                    item_base = "Phoenix"
-                case 14:
-                    item_base = "Hydra"
-                case _:
-                    item_base = "Fish"
+            item_name = f"{prefix} Anima"
+    selected_name = item_name
+    return selected_name
 
-    return item_base
+
+def generate_weapon_base(item_tier, damage_type) -> str:
+    tier_location = item_tier - 1
+    random_num = random.randint(0, 4)
+    match damage_type:
+        case "<:cB:1150516823524114432>":
+            item_list_t1 = ["Shortsword", "Handaxe", "Dagger", "Spear", "Claws"]
+            item_list_t2 = ["Sword", "Axe", "Stiletto", "Halberd", "Tiger Claws"]
+            item_list_t3 = ["Longsword", "Battle Axe", "Kris", "Trident", "Dragon Claws"]
+            item_list_t4 = ["Greatsword", "Greataxe", "Sai", "Scythe", "Chakram"]
+        case "<:cA:1150195102589931641>":
+            item_list_t1 = ["Shortbow", "Slingshot", "Darts", "Garrote String", "Whip"]
+            item_list_t2 = ["Bow", "Ballista", "Kunai", "Scrag Rope", "Ball and Chain"]
+            item_list_t3 = ["Longbow", "Gun", "Tommahawk", "Cutting Wire", "Chain Mace"]
+            item_list_t4 = ["Greatbow", "Blaster", "Javelin", "Razor Threads", "Flail"]
+        case "<:cC:1150195246588764201>":
+            item_list_t1 = ["Lesser Wand", "Lesser Staff", "Lesser Tome", "Lesser Talisman", "Lesser Orb"]
+            item_list_t2 = ["Magic Wand", "Magic Staff", "Magic Tome", "Magic Talisman", "Crystal Ball"]
+            item_list_t3 = ["Sceptre", "Quarterstaff", "Grimoire", "Sigil", "Seer Sphere"]
+            item_list_t4 = ["Rod", "Crescent Staff", "Spellbook", "Krosse", "Orb"]
+        case _:
+            item_list_t1 = ["Hatchling", "Night Mare", "Zombie", "Viper", "Owl"]
+            item_list_t2 = ["Drake", "Pegasus", "Ghoul", "Basilisk", "Eagle"]
+            item_list_t3 = ["Wyvern", "Unicorn", "Skeleton", "Wyrm", "Roc"]
+            item_list_t4 = ["Dragon", "Pegacorn", "Lich", "Coatl", "Phoenix"]
+    item_namelist = [item_list_t1, item_list_t2, item_list_t3, item_list_t4]
+    return item_namelist[tier_location][random_num]
 
 
 def generate_armour_base(item_tier) -> str:
@@ -1045,9 +919,12 @@ def get_gear_tier_colours(base_tier):
         case 4:
             tier_colour = discord.Colour.gold()
             tier_emoji = "🟡"
-        case _:
+        case 5:
             tier_colour = discord.Colour.red()
             tier_emoji = "🔴"
+        case _:
+            tier_colour = discord.Colour.pink()
+            tier_emoji = "⚪"
 
     return tier_colour, tier_emoji
 
@@ -1096,7 +973,7 @@ def craft_item(player_object, selected_item, item_id, method):
                     update_stock(player_object, item_id, -1)
                     random_num = random.randint(1, 100)
                     if random_num <= success_rate:
-                        blessing_tier_list = ["Inert", "Faint", "Luminous", "Lustrous", "Radiant", "Divine",
+                        blessing_tier_list = ["Standard", "Faint", "Luminous", "Lustrous", "Radiant", "Divine",
                                               "Basic", "Enchanted", "Luminous", "Lustrous", "Radiant", "Divine",
                                               "Sparkling", "Glittering", "Dazzling", "Shining", "Prismatic", "Resplendent",
                                               "Dark", "Shadow", "Inverted", "Abyssal", "Calamitous", "Balefire",
@@ -1251,17 +1128,18 @@ def get_roll_by_code(code, item_type):
                     bonus = str(int(code[1]) * 50)
                     roll_text = f"+{bonus}% Critical Damage"
                 case "2":
-                    bonus = str(int(code[1])*0.25 + 1)
-                    roll_text = f"Aura: {bonus}x Team Damage"
+                    bonus = str(int(code[1])*0.25)
+                    roll_text = f"Aura: +{bonus}x Team Damage"
                 case "3":
-                    bonus = str(int(code[1])*0.25 + 1)
-                    roll_text = f"Curse: {bonus}x Boss Damage Received"
+                    bonus = str(int(code[1])*0.25)
+                    roll_text = f"Curse: +{bonus}x Boss Damage Received"
                 case "4":
                     bonus = str(int(code[1]) + 1)
                     if item_type == "W":
                         roll_text = f"Multi-Hit: {bonus}x Combo"
                     else:
-                        roll_text = f"Undecided Roll: {bonus}x Combo"
+                        bonus = str(int(code[1]) * 50)
+                        roll_text = f"+{bonus} HP%"
                 case _:
                     roll_text = "Error"
         case _:
@@ -1271,17 +1149,84 @@ def get_roll_by_code(code, item_type):
 
 def try_refine(player_owner, item_type, selected_tier):
     match item_type:
-        case "Dragon Heart Gems":
+        case "Dragon Heart Gem":
             new_item = CustomGem(player_owner, selected_tier)
-        case "Wings":
+        case "Dragon Wing":
             new_item = CustomWing(player_owner, selected_tier)
-        case "Paragon Crests":
+        case "Paragon Crest":
             new_item = CustomCrest(player_owner, selected_tier)
         case _:
-            new_item = CustomWing(player_owner, selected_tier)
+            new_item = CustomWeapon(player_owner)
+            new_item.item_base_tier = selected_tier
+            if selected_tier == 5:
+                new_item.base_damage_min = 20000
+                new_item.base_damage_max = 25000
+                bonus_roll = random.randint(16, 20)
+                new_item.item_bonus_stat = float(bonus_roll) * 0.1
+                new_item.item_type = generate_special_weapon_base(new_item.item_damage_type, selected_tier)
+                new_item.set_item_name()
+            else:
+                random_damage1 = random.randint(1, 99999)
+                random_damage2 = random.randint(1, 99999)
+                if random_damage1 < random_damage2:
+                    new_item.base_damage_min = random_damage1
+                    new_item.base_damage_max = random_damage2
+                else:
+                    new_item.base_damage_min = random_damage2
+                    new_item.base_damage_max= random_damage1
+                bonus_roll = random.randint(21, 29)
+                new_item.item_bonus_stat = float(bonus_roll) * 0.1
+                new_item.item_type = generate_special_weapon_base(new_item.item_damage_type, selected_tier)
+                new_item.set_item_name()
+                new_item.item_name = f'???, {new_item.item_name}'
 
     random_num = random.randint(1, 100)
     if random_num > 25:
         new_item.item_id = ""
 
     return new_item
+
+
+def assign_bonus_stat(base_tier):
+    random_num = random.randint(1, 4)
+    # set accessory unique skill
+    match base_tier:
+        case 4:
+            match random_num:
+                case 1:
+                    unique_skill = "Bahamut's Grace"
+                case 2:
+                    unique_skill = "Curse of Immorality"
+                case _:
+                    unique_skill = "Perfect Counter"
+        case 3:
+            match random_num:
+                case 1:
+                    unique_skill = "Coup de Grace"
+                case 2:
+                    unique_skill = "Final Stand"
+                case 3:
+                    unique_skill = "Mountain's Will"
+                case _:
+                    unique_skill = "Inferno's Will"
+        case 2:
+            match random_num:
+                case 1:
+                    unique_skill = "Breaker"
+                case 2:
+                    unique_skill = "Last Breath"
+                case 3:
+                    unique_skill = "Guardian Stance"
+                case _:
+                    unique_skill = "Onslaught Stance"
+        case _:
+            match random_num:
+                case 1:
+                    unique_skill = "First Blood"
+                case 2:
+                    unique_skill = "Hybrid Stance"
+                case 3:
+                    unique_skill = "Defensive Stance"
+                case _:
+                    unique_skill = "Offensive Stance"
+    return unique_skill

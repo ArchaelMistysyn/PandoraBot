@@ -29,6 +29,16 @@ class basicItem:
 
 def award_loot(boss_type, boss_tier, player_list, exp_amount):
     filename = "droptable.csv"
+    match boss_type:
+        case "Fortress":
+            reward_multiplier = 1
+        case "Dragon":
+            reward_multiplier = 2
+        case "Primordial":
+            reward_multiplier = 3
+        case _:
+            reward_multiplier = 4
+    coin_amount = reward_multiplier * boss_tier * 100
     loot_msg = []
     labels = ['player_id', 'item_id', 'item_qty']
     df_change = pd.DataFrame(columns=labels)
@@ -36,7 +46,8 @@ def award_loot(boss_type, boss_tier, player_list, exp_amount):
         with (open(filename, 'r') as f):
             temp_player = player.get_player_by_id(x)
             temp_player.add_exp(exp_amount)
-            loot_msg.append(f"{exp_amount}x <:eexp:1148088187516891156>\n")
+            temp_player.update_coins(coin_amount)
+            loot_msg.append(f"<:eexp:1148088187516891156> {exp_amount}x\n<:eexp:1148088187516891156> {coin_amount}x\n")
             for line in csv.DictReader(f):
                 if str(line['boss_type']) == str(boss_type) and int(line['boss_tier']) <= int(boss_tier):
                     dropped_item = str(line["item_id"])
@@ -50,7 +61,7 @@ def award_loot(boss_type, boss_tier, player_list, exp_amount):
                                 qty += 1
                     if qty != 0:
                         df_change.loc[len(df_change)] = [temp_player.player_id, dropped_item, qty]
-                        loot_msg[counter] += f'{str(qty)}x {item_emoji} {item_name}\n'
+                        loot_msg[counter] += f'{item_emoji} {str(qty)}x {item_name}\n'
     filename = 'binventory.csv'
     df_existing = pd.read_csv(filename)
     df_updated = pd.concat([df_existing, df_change]).groupby(['player_id', 'item_id']).sum().reset_index()
@@ -60,7 +71,6 @@ def award_loot(boss_type, boss_tier, player_list, exp_amount):
 
 def is_dropped(drop_rate) -> bool:
     random_num = random.randint(1, 100)
-
     if random_num <= int(drop_rate):
         return True
     else:

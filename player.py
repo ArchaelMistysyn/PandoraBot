@@ -17,7 +17,8 @@ class PlayerProfile:
         self.equipped_acc = ""
         self.equipped_wing = ""
         self.equipped_crest = ""
-        self.player_hp = 1000
+        self.player_mHP = 1000
+        self.player_cHP = self.player_mHP
         self.player_stamina = 0
         self.player_exp = 0
         self.player_lvl = 0
@@ -27,11 +28,16 @@ class PlayerProfile:
         self.attack_speed = 0.0
         self.damage_mitigation = 0.0
         self.elemental_penetration = 0.0
+        self.defence_penetration = 0.0
         self.final_damage = 0.0
         self.aura = 0.0
         self.curse = 0.0
         self.player_damage = 0.0
         self.hit_multiplier = 0.0
+        self.special_multipliers = 0.0
+        self.class_multiplier = 0.0
+        self.hp_multiplier = 0.0
+        self.player_coins = 0
         self.player_class = "Summoner"
 
     def __str__(self):
@@ -118,6 +124,12 @@ class PlayerProfile:
         df.loc[df['player_id'] == self.player_id, 'player_echelon'] = df['player_echelon'] + int(amount)
         df.to_csv(filename, index=False)
 
+    def update_coins(self, amount):
+        filename = "playerlist.csv"
+        df = pd.read_csv(filename)
+        df.loc[df['player_id'] == self.player_id, 'player_coins'] = df['player_coins'] + int(amount)
+        df.to_csv(filename, index=False)
+
     def set_username(self, new_username):
         filename = "playerlist.csv"
         df = pd.read_csv(filename)
@@ -144,16 +156,19 @@ class PlayerProfile:
             if not checkNaN(temp):
                 self.equipped_crest = temp[0]
 
-    def get_player_multipliers(self):
+    def get_player_multipliers(self, boss_cHP, boss_mHP):
         self.get_equipped()
 
         base_critical_chance = 10.0
         base_attack_speed = 1.0
         base_damage_mitigation = 0.0
         base_player_hp = 1000
+        sit_damage_multiplier = 0.0
+        damage_multiplier = 0.0
+        mitigation_multiplier = 0.0
         self.critical_chance = 0.0
         self.attack_speed = 0.0
-        self.critical_multiplier = 1.0
+        self.critical_multiplier = 0.0
         self.damage_mitigation = 0.0
         self.elemental_penetration = 0.0
         self.final_damage = 0.0
@@ -161,7 +176,13 @@ class PlayerProfile:
         self.curse = 0.0
         self.hit_multiplier = 1.0
         self.player_damage = 0.0
-        hp_multiplier = 0
+        self.special_multipliers = 0.0
+        self.class_multiplier = 0.0
+        class_bonus = 0.0
+        self.hp_multiplier = 0.0
+        fractal = 1
+        omega = 1
+        is_mastery = False
 
         if self.equipped_weapon != "":
             e_weapon = inventory.read_custom_item(self.equipped_weapon)
@@ -169,162 +190,108 @@ class PlayerProfile:
             self.player_damage += (e_weapon.item_damage_min + e_weapon.item_damage_max) / 2
             base_attack_speed = float(e_weapon.item_bonus_stat)
             self.assign_roll_values(e_weapon, "W")
-            gem_id = e_weapon.item_inlaid_gem_id
-            if gem_id != "":
-                w_gem = inventory.read_custom_item(gem_id)
-                self.player_damage += (w_gem.item_damage_min + w_gem.item_damage_max) / 2
-                for x in w_gem.item_prefix_values:
-                    buff_type, buff_value = inventory.gem_stat_reader(str(x))
-                    match buff_type:
-                        case "HP":
-                            hp_multiplier += buff_value
-                        case "Critical Chance":
-                            self.critical_chance += float(buff_value) * 0.01
-                        case "Final Damage":
-                            self.final_damage += float(buff_value) * 0.01
-                        case _:
-                            no_change = True
-                for y in w_gem.item_suffix_values:
-                    buff_type, buff_value = inventory.gem_stat_reader(str(y))
-                    match buff_type:
-                        case "Attack Speed":
-                            self.attack_speed += float(buff_value) * 0.01
-                        case "Damage Mitigation":
-                            self.damage_mitigation += float(buff_value) * 0.01
-                        case "Critical Damage":
-                            self.critical_multiplier += float(buff_value) * 0.01
-                        case _:
-                            no_change = True
+            self.assign_gem_values(e_weapon)
         if self.equipped_armour != "":
             e_armour = inventory.read_custom_item(self.equipped_armour)
             e_armour.update_damage()
             self.player_damage += (e_armour.item_damage_min + e_armour.item_damage_max) / 2
             self.assign_roll_values(e_armour, "A")
             base_damage_mitigation = float(e_armour.item_bonus_stat)
-            gem_id = e_armour.item_inlaid_gem_id
-            if gem_id != "":
-                a_gem = inventory.read_custom_item(gem_id)
-                self.player_damage += (a_gem.item_damage_min + a_gem.item_damage_max) / 2
-                for x in a_gem.item_prefix_values:
-                    buff_type, buff_value = inventory.gem_stat_reader(str(x))
-                    match buff_type:
-                        case "HP":
-                            hp_multiplier += buff_value
-                        case "Critical Chance":
-                            self.critical_chance += float(buff_value) * 0.01
-                        case "Final Damage":
-                            self.final_damage += float(buff_value) * 0.01
-                        case _:
-                            no_change = True
-                for y in a_gem.item_suffix_values:
-                    buff_type, buff_value = inventory.gem_stat_reader(str(y))
-                    match buff_type:
-                        case "Attack Speed":
-                            self.attack_speed += float(buff_value) * 0.01
-                        case "Damage Mitigation":
-                            self.damage_mitigation += float(buff_value) * 0.01
-                        case "Critical Damage":
-                            self.critical_multiplier += float(buff_value) * 0.01
-                        case _:
-                            no_change = True
+            self.assign_gem_values(e_armour)
         if self.equipped_acc != "":
             e_acc = inventory.read_custom_item(self.equipped_acc)
             e_acc.update_damage()
             self.player_damage += (e_acc.item_damage_min + e_acc.item_damage_max) / 2
             self.assign_roll_values(e_acc, "Y")
-            gem_id = e_acc.item_inlaid_gem_id
-            if gem_id != "":
-                y_gem = inventory.read_custom_item(gem_id)
-                self.player_damage += (y_gem.item_damage_min + y_gem.item_damage_max) / 2
-                for x in y_gem.item_prefix_values:
-                    buff_type, buff_value = inventory.gem_stat_reader(str(x))
-                    match buff_type:
-                        case "HP":
-                            hp_multiplier += buff_value
-                        case "Critical Chance":
-                            self.critical_chance += float(buff_value) * 0.01
-                        case "Final Damage":
-                            self.final_damage += float(buff_value) * 0.01
-                        case _:
-                            no_change = True
-                for y in y_gem.item_suffix_values:
-                    buff_type, buff_value = inventory.gem_stat_reader(str(y))
-                    match buff_type:
-                        case "Attack Speed":
-                            self.attack_speed += float(buff_value) * 0.01
-                        case "Damage Mitigation":
-                            self.damage_mitigation += float(buff_value) * 0.01
-                        case "Critical Damage":
-                            self.critical_multiplier += float(buff_value) * 0.01
-                        case _:
-                            no_change = True
+            self.assign_gem_values(e_acc)
+            x, y, z = damagecalc.accessory_ability_multipliers(
+                                                     e_acc.item_bonus_stat,
+                                                     boss_cHP,
+                                                     boss_mHP,
+                                                     self.player_cHP)
+            damage_multiplier += x
+            sit_damage_multiplier += y
+            mitigation_multiplier += z
         if self.equipped_wing != "":
             e_wing = inventory.read_custom_item(self.equipped_wing)
             e_wing.update_damage()
             self.player_damage += (e_wing.item_damage_min + e_wing.item_damage_max) / 2
             self.assign_roll_values(e_wing, "G")
-            gem_id = e_wing.item_inlaid_gem_id
-            if gem_id != "":
-                g_gem = inventory.read_custom_item(gem_id)
-                self.player_damage += (g_gem.item_damage_min + g_gem.item_damage_max) / 2
-                for x in g_gem.item_prefix_values:
-                    buff_type, buff_value = inventory.gem_stat_reader(str(x))
-                    match buff_type:
-                        case "HP":
-                            hp_multiplier += buff_value
-                        case "Critical Chance":
-                            self.critical_chance += float(buff_value) * 0.01
-                        case "Final Damage":
-                            self.final_damage += float(buff_value) * 0.01
-                        case _:
-                            no_change = True
-                for y in g_gem.item_suffix_values:
-                    buff_type, buff_value = inventory.gem_stat_reader(str(y))
-                    match buff_type:
-                        case "Attack Speed":
-                            self.attack_speed += float(buff_value) * 0.01
-                        case "Damage Mitigation":
-                            self.damage_mitigation += float(buff_value) * 0.01
-                        case "Critical Damage":
-                            self.critical_multiplier += float(buff_value) * 0.01
-                        case _:
-                            no_change = True
+            self.assign_gem_values(e_wing)
+            x, y, z = damagecalc.accessory_ability_multipliers(
+                e_wing.item_bonus_stat,
+                boss_cHP,
+                boss_mHP,
+                self.player_cHP)
+            damage_multiplier += x
+            sit_damage_multiplier += y
+            mitigation_multiplier += z
         if self.equipped_crest != "":
             e_crest = inventory.read_custom_item(self.equipped_crest)
             e_crest.update_damage()
+            match e_crest.item_bonus_stat:
+                case "Elemental Fractal":
+                    if self.equipped_weapon != "":
+                        fractal = len(e_weapon.item_elements)
+                case "Omega Critical":
+                    omega = 5
+                case "Specialized Mastery":
+                    is_mastery = True
+                case "Ignore Protection":
+                    self.defence_penetration += 0.3
+                    self.elemental_penetration += 0.4
+                case "Perfect Precision":
+                    base_critical_chance += 10
+                case "Resistance Bypass":
+                    self.elemental_penetration += 0.4
+                case "Extreme Vitality":
+                    self.hp_multiplier += 5
+                case "Defence Bypass":
+                    self.defence_penetration += 0.3
+                case _:
+                    nothing = 0
             self.player_damage += (e_crest.item_damage_min + e_crest.item_damage_max) / 2
             self.assign_roll_values(e_crest, "C")
-            gem_id = e_crest.item_inlaid_gem_id
-            if gem_id != "":
-                c_gem = inventory.read_custom_item(gem_id)
-                self.player_damage += (c_gem.item_damage_min + c_gem.item_damage_max) / 2
-                for x in c_gem.item_prefix_values:
-                    buff_type, buff_value = inventory.gem_stat_reader(str(x))
-                    match buff_type:
-                        case "HP":
-                            hp_multiplier += buff_value
-                        case "Critical Chance":
-                            self.critical_chance += float(buff_value) * 0.01
-                        case "Final Damage":
-                            self.final_damage += float(buff_value) * 0.01
-                        case _:
-                            no_change = True
-                for y in c_gem.item_suffix_values:
-                    buff_type, buff_value = inventory.gem_stat_reader(str(y))
-                    match buff_type:
-                        case "Attack Speed":
-                            self.attack_speed += float(buff_value) * 0.01
-                        case "Damage Mitigation":
-                            self.damage_mitigation += float(buff_value) * 0.01
-                        case "Critical Damage":
-                            self.critical_multiplier += float(buff_value) * 0.01
-                        case _:
-                            no_change = True
+            self.assign_gem_values(e_crest)
 
         self.critical_chance = (1 + self.critical_chance) * base_critical_chance
         self.attack_speed = (1 + self.attack_speed) * base_attack_speed
-        self.damage_mitigation = (1 + self.damage_mitigation) * base_damage_mitigation
-        self.player_hp = int(base_player_hp * (1 + hp_multiplier * 0.01))
+        self.damage_mitigation = (1 + (mitigation_multiplier + self.damage_mitigation)) * base_damage_mitigation
+        self.player_mHP = int(base_player_hp * (1 + self.hp_multiplier))
+        self.final_damage += damage_multiplier
+        if boss_cHP != -1:
+            self.final_damage += sit_damage_multiplier
+
+        match self.player_class:
+            case "Ranger":
+                class_icon = '<:cA:1150195102589931641>'
+            case "Knight":
+                class_icon = '<:cB:1150516823524114432>'
+            case "Mage":
+                class_icon = "<:cC:1150195246588764201>"
+            case _:
+                class_icon = "<:cD:1150195280969478254>"
+
+        if self.equipped_weapon != "":
+            if e_weapon.item_damage_type == class_icon:
+                class_bonus += 1
+        if self.equipped_armour != "":
+            if e_armour.item_damage_type == class_icon:
+                class_bonus += 1
+        if self.equipped_acc != "":
+            if e_acc.item_damage_type == class_icon:
+                class_bonus += 1
+        if self.equipped_wing != "":
+            if e_wing.item_damage_type == class_icon:
+                class_bonus += 1
+        if self.equipped_crest != "":
+            if e_crest.item_damage_type == class_icon:
+                class_bonus += 1
+        self.class_multiplier = class_bonus * 0.05
+        if is_mastery:
+            self.class_multiplier += class_bonus
+
+        self.special_multipliers = float(omega) * float(fractal)
 
     def assign_roll_values(self, equipped_item, item_type):
         for x in equipped_item.item_prefix_values:
@@ -354,8 +321,38 @@ class PlayerProfile:
                 case "4":
                     if item_type == "W":
                         self.hit_multiplier += float(roll_tier)
+                    else:
+                        self.hp_multiplier += 0.5 * float(roll_tier)
                 case _:
                     no_change = True
+
+    def assign_gem_values(self, e_item):
+        gem_id = e_item.item_inlaid_gem_id
+        if gem_id != "":
+            e_gem = inventory.read_custom_item(gem_id)
+            self.player_damage += (e_gem.item_damage_min + e_gem.item_damage_max) / 2
+            for x in e_gem.item_prefix_values:
+                buff_type, buff_value = inventory.gem_stat_reader(str(x))
+                match buff_type:
+                    case "HP":
+                        self.hp_multiplier += float(buff_value) * 0.01
+                    case "Critical Chance":
+                        self.critical_chance += float(buff_value) * 0.01
+                    case "Final Damage":
+                        self.final_damage += float(buff_value) * 0.01
+                    case _:
+                        no_change = True
+            for y in e_gem.item_suffix_values:
+                buff_type, buff_value = inventory.gem_stat_reader(str(y))
+                match buff_type:
+                    case "Attack Speed":
+                        self.attack_speed += float(buff_value) * 0.01
+                    case "Damage Mitigation":
+                        self.damage_mitigation += float(buff_value) * 0.01
+                    case "Critical Damage":
+                        self.critical_multiplier += float(buff_value) * 0.01
+                    case _:
+                        no_change = True
 
     def equip(self, item_identifier, item_id) -> str:
         filename = "playerlist.csv"
@@ -413,7 +410,7 @@ def get_player_by_id(player_id: int) -> PlayerProfile:
                 target_player.player_lvl = int(line["player_lvl"])
                 target_player.player_echelon = int(line["player_echelon"])
                 target_player.player_class = str(line["player_class"])
-
+                target_player.player_coins = int(line["player_coins"])
         target_player.player_id = player_id
     return target_player
 
@@ -431,7 +428,7 @@ def get_player_by_name(player_name: str) -> PlayerProfile:
                 target_player.player_lvl = int(line["player_lvl"])
                 target_player.player_echelon = int(line["player_echelon"])
                 target_player.player_class = str(line["player_class"])
-
+                target_player.player_coins = int(line["player_coins"])
         target_player.player_name = player_name
     return target_player
 

@@ -64,25 +64,39 @@ class CurrentBoss:
             case 1:
                 tier_colour = discord.Colour.green()
                 life_emoji = "💚"
+                life_bar_middle = "🟩"
             case 2:
                 tier_colour = discord.Colour.blue()
                 life_emoji = "💙"
+                life_bar_middle = "🟦"
             case 3:
                 tier_colour = discord.Colour.purple()
                 life_emoji = "💜"
+                life_bar_middle = "🟪"
             case 4:
                 tier_colour = discord.Colour.gold()
                 life_emoji = "💛"
+                life_bar_middle = "🟧"
             case _:
                 tier_colour = discord.Colour.red()
                 life_emoji = "❤️"
-
+                life_bar_middle = "🟥"
+        life_bar_left = "⬅️"
+        life_bar_right = "➡️"
         dps_msg = f"{dps:,} / min"
         boss_title = f'{self.boss_name}'
         boss_field = f'Tier {self.boss_tier} {self.boss_type} - Level {self.boss_lvl}'
         if not is_alive:
             self.boss_cHP = 0
         boss_hp = f'{life_emoji} ({self.boss_cHP:,} / {self.boss_mHP:,})'
+        bar_length = int(self.boss_cHP / self.boss_mHP * 10)
+        hp_bar = life_bar_left
+        for x in range(bar_length):
+            hp_bar += life_bar_middle
+        for y in range(10 - bar_length):
+            hp_bar += "⬛"
+        hp_bar += life_bar_right
+        boss_hp += f'\n{hp_bar}'
         boss_weakness = f'Weakness: {self.boss_typeweak}'
         boss_weakness += f'{self.boss_eleweak_a}{self.boss_eleweak_b}'
         embed_msg = discord.Embed(colour=tier_colour,
