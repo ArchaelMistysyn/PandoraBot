@@ -10,7 +10,7 @@ import explore
 # Forge menu
 class ForgeView(discord.ui.View):
     def __init__(self, player_object, selected_item):
-        super().__init__(timeout=600)
+        super().__init__(timeout=None)
         self.selected_item = selected_item
         self.selected_id = self.selected_item.item_id
         self.player_object = player_object
@@ -207,6 +207,10 @@ class ForgeView(discord.ui.View):
             new_embed_msg.add_field(name=overall, value=outcome, inline=False)
             await button_interaction.response.edit_message(embed=new_embed_msg)
 
+        async def reselect_callback(button_interaction: discord.Interaction):
+            new_view = SelectView(self.player_object)
+            await button_interaction.response.edit_message(view=new_view)
+
         async def button_cancel_callback(button_interaction: discord.Interaction):
             # cancel here
             await button_interaction.response.edit_message(view=None)
@@ -246,9 +250,12 @@ class ForgeView(discord.ui.View):
             button_4.callback = fourth_button_callback
 
         button_multi = Button(label=self.button_label[4], style=discord.ButtonStyle.blurple, emoji="⬆️", row=1)
+        button_reselect = Button(label="Reselect", style=discord.ButtonStyle.blurple, emoji="↩️")
         button_cancel = Button(label="Cancel", style=discord.ButtonStyle.red, emoji="✖️", row=1)
         self.add_item(button_multi)
         button_multi.callback = button_multi_callback
+        button_reselect.callback = reselect_callback
+        self.add_item(button_reselect)
         self.add_item(button_cancel)
         button_cancel.callback = button_cancel_callback
         await interaction.response.edit_message(view=self)
@@ -256,7 +263,7 @@ class ForgeView(discord.ui.View):
 
 class SelectView(discord.ui.View):
     def __init__(self, player_object):
-        super().__init__(timeout=600)
+        super().__init__(timeout=None)
         self.player_object = player_object
         self.value = None
 
@@ -419,6 +426,11 @@ class RefineryGemView(discord.ui.View):
         embed_msg = refine_item(self.player_user, self.selected_type, selected_tier)
         await interaction.response.edit_message(embed=embed_msg)
 
+    @discord.ui.button(label="Reselect", style=discord.ButtonStyle.blurple, emoji="↩️")
+    async def reselect_callback(self, interaction: discord.Interaction, button: discord.Button):
+        new_view = RefSelectView(self.player_user)
+        await interaction.response.edit_message(view=new_view)
+
     @discord.ui.button(label="Cancel", style=discord.ButtonStyle.red, emoji="✖️")
     async def cancel_callback(self, interaction: discord.Interaction, button: discord.Button):
         await interaction.response.edit_message(view=None)
@@ -454,6 +466,11 @@ class RefineryWingView(discord.ui.View):
         selected_tier = 4
         embed_msg = refine_item(self.player_user, self.selected_type, selected_tier)
         await interaction.response.edit_message(embed=embed_msg)
+
+    @discord.ui.button(label="Reselect", style=discord.ButtonStyle.blurple, emoji="↩️")
+    async def reselect_callback(self, interaction: discord.Interaction, button: discord.Button):
+        new_view = RefSelectView(self.player_user)
+        await interaction.response.edit_message(view=new_view)
 
     @discord.ui.button(label="Cancel", style=discord.ButtonStyle.red, emoji="✖️")
     async def cancel_callback(self, interaction: discord.Interaction, button: discord.Button):
@@ -491,6 +508,11 @@ class RefineryCrestView(discord.ui.View):
         embed_msg = refine_item(self.player_user, self.selected_type, selected_tier)
         await interaction.response.edit_message(embed=embed_msg)
 
+    @discord.ui.button(label="Reselect", style=discord.ButtonStyle.blurple, emoji="↩️")
+    async def reselect_callback(self, interaction: discord.Interaction, button: discord.Button):
+        new_view = RefSelectView(self.player_user)
+        await interaction.response.edit_message(view=new_view)
+
     @discord.ui.button(label="Cancel", style=discord.ButtonStyle.red, emoji="✖️")
     async def cancel_callback(self, interaction: discord.Interaction, button: discord.Button):
         await interaction.response.edit_message(view=None)
@@ -514,6 +536,11 @@ class RefineryWeaponView(discord.ui.View):
         selected_tier = 6
         embed_msg = refine_item(self.player_user, self.selected_type, selected_tier)
         await interaction.response.edit_message(embed=embed_msg)
+
+    @discord.ui.button(label="Reselect", style=discord.ButtonStyle.blurple, emoji="↩️")
+    async def reselect_callback(self, interaction: discord.Interaction, button: discord.Button):
+        new_view = RefSelectView(self.player_user)
+        await interaction.response.edit_message(view=new_view)
 
     @discord.ui.button(label="Cancel", style=discord.ButtonStyle.red, emoji="✖️")
     async def cancel_callback(self, interaction: discord.Interaction, button: discord.Button):
@@ -926,3 +953,381 @@ class TransitionRoomView(discord.ui.View):
     @discord.ui.button(label="Flee", style=discord.ButtonStyle.red, emoji="✖️")
     async def flee_callback(self, interaction: discord.Interaction, button: discord.Button):
         await interaction.response.edit_message(view=None)
+
+
+class StaminaView(discord.ui.View):
+    def __init__(self, player_user):
+        super().__init__(timeout=None)
+        self.player = player_user
+
+    @discord.ui.button(label="Drink Potion", style=discord.ButtonStyle.success, emoji="<:estamina:1145534039684562994>")
+    async def stamina_callback(self, interaction: discord.Interaction, button: discord.Button):
+        potion_stock = inventory.check_stock(self.player, "I1s")
+        if potion_stock > 0:
+            inventory.update_stock(self.player,"I1s", -1)
+            potion_msg = f"Potion Stock: {potion_stock}"
+            self.player.player_stamina += 50
+            self.player.add_stamina(50)
+        else:
+            potion_msg = f"{potion_stock} potions remaining"
+        output = f'<:estamina:1145534039684562994> {self.player.player_username}\'s stamina: '
+        output += str(self.player.player_stamina)
+        embed_msg = discord.Embed(colour=discord.Colour.green(), title="Stamina", description=output)
+
+        embed_msg.add_field(name="", value=potion_msg)
+        await interaction.response.edit_message(embed=embed_msg, view=self)
+
+
+class BindingTierView(discord.ui.View):
+    def __init__(self, player_user):
+        super().__init__(timeout=None)
+        self.player_user = player_user
+
+    @discord.ui.select(
+        placeholder="Select Essence Tier!",
+        min_values=1,
+        max_values=1,
+        options=[
+            discord.SelectOption(
+                emoji="<a:eenergy:1145534127349706772>", label="Tier 1", description="Tier 1 Essences"),
+            discord.SelectOption(
+                emoji="<a:eenergy:1145534127349706772>", label="Tier 2", description="Tier 2 Essences"),
+            discord.SelectOption(
+                emoji="<a:eenergy:1145534127349706772>", label="Tier 3", description="Tier 3 Essences"),
+            discord.SelectOption(
+                emoji="<a:eenergy:1145534127349706772>", label="Tier 4", description="Tier 4 Essences"),
+            discord.SelectOption(
+                emoji="<a:eenergy:1145534127349706772>", label="Tier 5+", description="Tier 5+ Essences")
+        ]
+    )
+    async def bind_tier_callback(self, interaction: discord.Interaction, bind_tier_select: discord.ui.Select):
+        match bind_tier_select.values[0]:
+            case "Tier 1":
+                new_view = BindingT1View(self.player_user)
+            case "Tier 2":
+                new_view = BindingT2View(self.player_user)
+            case "Tier 3":
+                new_view = BindingT3View(self.player_user)
+            case "Tier 4":
+                new_view = BindingT4View(self.player_user)
+            case _:
+                new_view = BindingT5View(self.player_user)
+        await interaction.response.edit_message(view=new_view)
+
+
+class BindingT1View(discord.ui.View):
+    def __init__(self, player_user):
+        super().__init__(timeout=None)
+        self.player_user = player_user
+
+    @discord.ui.select(
+        placeholder="Select Essence!",
+        min_values=1,
+        max_values=1,
+        options=[
+            discord.SelectOption(
+                emoji="<a:eenergy:1145534127349706772>", label="0", description="Essence of The Reflection"),
+            discord.SelectOption(
+                emoji="<a:eenergy:1145534127349706772>", label="I", description="Essence of The Magic"),
+            discord.SelectOption(
+                emoji="<a:eenergy:1145534127349706772>", label="VI", description="Essence of The Love"),
+            discord.SelectOption(
+                emoji="<a:eenergy:1145534127349706772>", label="IX", description="Essence of The Memory"),
+            discord.SelectOption(
+                emoji="<a:eenergy:1145534127349706772>", label="XIV", description="Essence of The Clarity")
+        ]
+    )
+    async def bind_select_callback(self, interaction: discord.Interaction, bind_select: discord.ui.Select):
+        new_view = PerformRitualView(self.player_user, bind_select.values[0])
+        await interaction.response.edit_message(view=new_view)
+
+    @discord.ui.button(label="Reselect", style=discord.ButtonStyle.blurple, emoji="↩️")
+    async def reselect_callback(self, interaction: discord.Interaction, button: discord.Button):
+        embed_msg = discord.Embed(colour=discord.Colour.magenta(),
+                                  title="Pandora's Binding Ritual",
+                                  description="Let me know if you've acquired any new essences!")
+        embed_msg.set_image(url="")
+        new_view = BindingTierView(self.player_user)
+        await interaction.response.edit_message(embed=embed_msg, view=new_view)
+
+
+class BindingT2View(discord.ui.View):
+    def __init__(self, player_user):
+        super().__init__(timeout=None)
+        self.player_user = player_user
+
+    @discord.ui.select(
+        placeholder="Select Essence!",
+        min_values=1,
+        max_values=1,
+        options=[
+            discord.SelectOption(
+                emoji="<a:eenergy:1145534127349706772>", label="XVI", description="Essence of The Star"),
+            discord.SelectOption(
+                emoji="<a:eenergy:1145534127349706772>", label="XVII", description="Essence of The Moon"),
+            discord.SelectOption(
+                emoji="<a:eenergy:1145534127349706772>", label="XIX", description="Essence of The Sun"),
+            discord.SelectOption(
+                emoji="<a:eenergy:1145534127349706772>", label="XX", description="Essence of The Requiem"),
+            discord.SelectOption(
+                emoji="<a:eenergy:1145534127349706772>", label="XXI", description="Essence of The Creation")
+        ]
+    )
+    async def bind_select_callback(self, interaction: discord.Interaction, bind_select: discord.ui.Select):
+        new_view = PerformRitualView(self.player_user, bind_select.values[0])
+        await interaction.response.edit_message(view=new_view)
+
+    @discord.ui.button(label="Reselect", style=discord.ButtonStyle.blurple, emoji="↩️")
+    async def reselect_callback(self, interaction: discord.Interaction, button: discord.Button):
+        embed_msg = discord.Embed(colour=discord.Colour.magenta(),
+                                  title="Pandora's Binding Ritual",
+                                  description="Let me know if you've acquired any new essences!")
+        embed_msg.set_image(url="")
+        new_view = BindingTierView(self.player_user)
+        await interaction.response.edit_message(embed=embed_msg, view=new_view)
+
+
+class BindingT3View(discord.ui.View):
+    def __init__(self, player_user):
+        super().__init__(timeout=None)
+        self.player_user = player_user
+
+    @discord.ui.select(
+        placeholder="Select Essence!",
+        min_values=1,
+        max_values=1,
+        options=[
+            discord.SelectOption(
+                emoji="<a:eenergy:1145534127349706772>", label="V", description="Essence of The Duality"),
+            discord.SelectOption(
+                emoji="<a:eenergy:1145534127349706772>", label="X", description="Essence of The Temporal"),
+            discord.SelectOption(
+                emoji="<a:eenergy:1145534127349706772>", label="XI", description="Essence of The Heavens"),
+            discord.SelectOption(
+                emoji="<a:eenergy:1145534127349706772>", label="XII", description="Essence of The Abyss"),
+            discord.SelectOption(
+                emoji="<a:eenergy:1145534127349706772>", label="XIII", description="Essence of The Death")
+        ]
+    )
+    async def bind_select_callback(self, interaction: discord.Interaction, bind_select: discord.ui.Select):
+        new_view = PerformRitualView(self.player_user, bind_select.values[0])
+        await interaction.response.edit_message(view=new_view)
+
+    @discord.ui.button(label="Reselect", style=discord.ButtonStyle.blurple, emoji="↩️")
+    async def reselect_callback(self, interaction: discord.Interaction, button: discord.Button):
+        embed_msg = discord.Embed(colour=discord.Colour.magenta(),
+                                  title="Pandora's Binding Ritual",
+                                  description="Let me know if you've acquired any new essences!")
+        embed_msg.set_image(url="")
+        new_view = BindingTierView(self.player_user)
+        await interaction.response.edit_message(embed=embed_msg, view=new_view)
+
+
+class BindingT4View(discord.ui.View):
+    def __init__(self, player_user):
+        super().__init__(timeout=None)
+        self.player_user = player_user
+
+    @discord.ui.select(
+        placeholder="Select Essence!",
+        min_values=1,
+        max_values=1,
+        options=[
+            discord.SelectOption(
+                emoji="<a:eenergy:1145534127349706772>", label="II", description="Essence of The Celestial"),
+            discord.SelectOption(
+                emoji="<a:eenergy:1145534127349706772>", label="VII", description="Essence of The Dragon"),
+            discord.SelectOption(
+                emoji="<a:eenergy:1145534127349706772>", label="VIII", description="Essence of The Behemoth"),
+            discord.SelectOption(
+                emoji="<a:eenergy:1145534127349706772>", label="XV", description="Essence of The Primordial"),
+            discord.SelectOption(
+                emoji="<a:eenergy:1145534127349706772>", label="XVI", description="Essence of The Fortress")
+        ]
+    )
+    async def bind_select_callback(self, interaction: discord.Interaction, bind_select: discord.ui.Select):
+        new_view = PerformRitualView(self.player_user, bind_select.values[0])
+        await interaction.response.edit_message(view=new_view)
+
+    @discord.ui.button(label="Reselect", style=discord.ButtonStyle.blurple, emoji="↩️")
+    async def reselect_callback(self, interaction: discord.Interaction, button: discord.Button):
+        embed_msg = discord.Embed(colour=discord.Colour.magenta(),
+                                  title="Pandora's Binding Ritual",
+                                  description="Let me know if you've acquired any new essences!")
+        embed_msg.set_image(url="")
+        new_view = BindingTierView(self.player_user)
+        await interaction.response.edit_message(embed=embed_msg, view=new_view)
+
+
+class BindingT5View(discord.ui.View):
+    def __init__(self, player_user):
+        super().__init__(timeout=None)
+        self.player_user = player_user
+
+    @discord.ui.select(
+        placeholder="Select Essence!",
+        min_values=1,
+        max_values=1,
+        options=[
+            discord.SelectOption(
+                emoji="<a:eenergy:1145534127349706772>", label="III", description="Essence of The Void"),
+            discord.SelectOption(
+                emoji="<a:eenergy:1145534127349706772>", label="IV", description="Essence of The Infinite")
+        ]
+    )
+    async def bind_select_callback(self, interaction: discord.Interaction, bind_select: discord.ui.Select):
+        new_view = PerformRitualView(self.player_user, bind_select.values[0])
+        await interaction.response.edit_message(view=new_view)
+
+    @discord.ui.button(label="Reselect", style=discord.ButtonStyle.blurple, emoji="↩️")
+    async def reselect_callback(self, interaction: discord.Interaction, button: discord.Button):
+        embed_msg = discord.Embed(colour=discord.Colour.magenta(),
+                                  title="Pandora's Binding Ritual",
+                                  description="Let me know if you've acquired any new essences!")
+        embed_msg.set_image(url="")
+        new_view = BindingTierView(self.player_user)
+        await interaction.response.edit_message(embed=embed_msg, view=new_view)
+
+
+class PerformRitualView(discord.ui.View):
+    def __init__(self, player_user, essence_type):
+        super().__init__(timeout=None)
+        self.player_user = player_user
+        self.essence_type = essence_type
+
+    @discord.ui.button(label="Bind Essence", style=discord.ButtonStyle.blurple, emoji="<a:eshadow2:1141653468965257216>")
+    async def attempt_bind(self, interaction: discord.Interaction, button: discord.Button):
+        embed_msg = binding_ritual(self.player_user, self.essence_type)
+        await interaction.response.edit_message(embed=embed_msg)
+
+    @discord.ui.button(label="Reselect", style=discord.ButtonStyle.blurple, emoji="↩️")
+    async def reselect_callback(self, interaction: discord.Interaction, button: discord.Button):
+        embed_msg = discord.Embed(colour=discord.Colour.magenta(),
+                                  title="Pandora's Binding Ritual",
+                                  description="Let me know if you've acquired any new essences!")
+        embed_msg.set_image(url="")
+        new_view = BindingTierView(self.player_user)
+        await interaction.response.edit_message(embed=embed_msg, view=new_view)
+
+def binding_ritual(player_object, essence_type):
+    filename = ""
+    essence_id = f't{essence_type}'
+    essence_stock = inventory.check_stock(player_object, essence_id)
+    if essence_stock > 0:
+        inventory.update_stock(player_object, essence_id, -1)
+        random_num = random.randint(1, 10)
+        match random_num:
+            case 1:
+                variant_num = 3
+            case 2 | 3:
+                variant_num = 2
+            case 4 | 5 | 6:
+                variant_num = 1
+            case _:
+                variant_num = 0
+        if variant_num == 0:
+            result = "Binding Failed!"
+            description_msg = "The essence is gone."
+        else:
+            card_file = f'{essence_type}variant{str(variant_num)}'
+            filename = f'https://kyleportfolio.ca/botimages/tarot/{card_file}.png'
+            result = "Binding Successful!"
+            inventory.update_tarot_inventory(player_object, card_file)
+            description_msg = "The sealed tarot card has been added to your collection."
+    else:
+        print(essence_id)
+        essence_emoji = loot.get_loot_emoji(essence_id)
+        result = "Ritual Failed!"
+        description_msg = f"{essence_emoji} Out of Stock!"
+
+    embed_msg = discord.Embed(colour=discord.Colour.magenta(),
+                              title=result,
+                              description=description_msg)
+    embed_msg.set_image(url=filename)
+    return embed_msg
+
+
+class CollectionView(discord.ui.View):
+    def __init__(self, player_user, embed_msg):
+        super().__init__(timeout=None)
+        self.player_user = player_user
+        self.embed_msg = embed_msg
+        self.current_position = 0
+        self.current_variant = 1
+
+    @discord.ui.button(label="View Collection", style=discord.ButtonStyle.blurple, emoji="✅")
+    async def view_collection(self, interaction: discord.Interaction, button: discord.Button):
+        new_msg, x, y = cycle_tarot(self.player_user,self.embed_msg, 0, 1, 0)
+        new_view = TarotView(self.player_user, self.embed_msg)
+        await interaction.response.edit_message(embed=new_msg, view=new_view)
+
+
+class TarotView(discord.ui.View):
+    def __init__(self, player_user, embed_msg):
+        super().__init__(timeout=None)
+        self.player_user = player_user
+        self.embed_msg = embed_msg
+        self.current_position = 0
+        self.current_variant = 1
+
+    @discord.ui.button(label="Previous", style=discord.ButtonStyle.blurple, emoji="⬅️")
+    async def previous_card(self, interaction: discord.Interaction, button: discord.Button):
+        direction = -1
+        current_message = self.embed_msg.clear_fields()
+        new_msg, self.current_position, self.current_variant = cycle_tarot(self.player_user,
+                                                                           current_message,
+                                                                           self.current_position,
+                                                                           self.current_variant,
+                                                                           direction)
+        await interaction.response.edit_message(embed=new_msg)
+
+    @discord.ui.button(label="Next", style=discord.ButtonStyle.blurple, emoji="➡️")
+    async def next_card(self, interaction: discord.Interaction, button: discord.Button):
+        direction = 1
+        current_message = self.embed_msg.clear_fields()
+        new_msg, self.current_position, self.current_variant = cycle_tarot(self.player_user,
+                                                                           current_message,
+                                                                           self.current_position,
+                                                                           self.current_variant,
+                                                                           direction)
+        await interaction.response.edit_message(embed=new_msg)
+
+
+def cycle_tarot(player_owner, current_msg, current_position, current_variant, direction):
+    card_num_list = ["0", "I", "II", "III", "IV", "V", "VI", "VII", "VIII", "IX", "X",
+                     "XI", "XII", "XIII", "XIV", "XV", "XVI", "XVII", "XVIII", "XIX", "XX", "XXI"]
+    card_name_list = ["Karma, The Reflection", "Runa, The Magic", "Pandora, The Celestial", "Oblivia, The Void",
+                      "Akasha, The Infinite", "Arkaya, The Duality", "Kama, The Love", "Astratha, The Dragon",
+                      "Tyra, The Behemoth", "Alaya, The Memory", "Chrona, The Temporal", "Nua, The Heavens",
+                      "Rua, The Abyss", "Thana, The Death", "Arcelia, The Clarity", "Diabla, The Primordial",
+                      "Aurora, The Fortress", "Nova, The Star", "Luna, The Moon", "Luma, The Sun",
+                      "Aria, The Requiem", "Ultima, The Creation"]
+    if current_variant == 1 and direction == -1:
+        new_variant = 3
+        new_position = current_position + direction
+        if new_position == -1:
+            new_position = 21
+    elif current_variant == 3 and direction == 1:
+        new_variant = 1
+        new_position = current_position + direction
+        if new_position == 22:
+            new_position = 0
+    else:
+        new_variant = current_variant + direction
+        new_position = current_position
+    card_file = f'{card_num_list[current_position]}variant{current_variant}'
+    current_msg.clear_fields()
+    new_msg = current_msg
+    card_qty = inventory.check_tarot(player_owner, card_file)
+    if card_qty > 0:
+        filename = f'https://kyleportfolio.ca/botimages/tarot/{card_file}.png'
+    else:
+        filename = ""
+    new_msg.add_field(name=f"Tarot Card: {card_num_list[current_position]} {card_name_list[current_position]}",
+                      value=f"Variant {current_variant}",
+                      inline=False)
+    new_msg.add_field(name=f"",
+                      value=f"Quantity: {card_qty}",
+                      inline=False)
+    new_msg.set_image(url=filename)
+    return new_msg, new_position, new_variant

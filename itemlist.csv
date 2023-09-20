@@ -44,3 +44,29 @@ I3o,Unrefined Paragon Crest (T3),3,25,<a:elootitem:1144477550379274322>,Refine f
 I4o,Unrefined Paragon Crest (T4),4,25,<a:elootitem:1144477550379274322>,Refine for 25% chance to receive a base tier 4 paragon crest
 I5x,Unrefined Rift Weapon,5,25,<a:elootitem:1144477550379274322>,Refine for 25% chance to receive a base tier 5 weapon
 I6x,Unrefined True Name,6,25,<a:elootitem:1144477550379274322>,Refine for 25% chance to receive a base tier 6 weapon
+I1s,Lesser Stamina Potion,1,100,<:estamina:1145534039684562994>,Consume to restore 50 stamina
+I2s,Stamina Potion,2,100,<:estamina:1145534039684562994>,Consume to restore 100 stamina
+I3s,Greater Stamina Potion,3,100,<:estamina:1145534039684562994>,Consume to restore 500 stamina
+I4s,Ultimate Stamina Potion,4,100,<:estamina:1145534039684562994>,Consume to restore 1000 stamina
+t0,Essence of The Reflection,1,1,<a:elootitem:1144477550379274322>,Perform a binding ritual to seal the essence into card form.
+tI,Essence of The Magic,1,1,<a:elootitem:1144477550379274322>,Perform a binding ritual to seal the essence into card form.
+tII,Essence of The Celestial,4,1,<a:elootitem:1144477550379274322>,Perform a binding ritual to seal the essence into card form.
+tIII,Essence Of The Void,5,1,<a:elootitem:1144477550379274322>,Perform a binding ritual to seal the essence into card form.
+tIV,Essence Of The Infinite,6,1,<a:elootitem:1144477550379274322>,Perform a binding ritual to seal the essence into card form.
+tV,Essence of The Duality,3,1,<a:elootitem:1144477550379274322>,Perform a binding ritual to seal the essence into card form.
+tVI,Essence of The Love,1,1,<a:elootitem:1144477550379274322>,Perform a binding ritual to seal the essence into card form.
+tVII,Essence of The Dragon,4,1,<a:elootitem:1144477550379274322>,Perform a binding ritual to seal the essence into card form.
+tVIII,Essence of The Behemoth,4,1,<a:elootitem:1144477550379274322>,Perform a binding ritual to seal the essence into card form.
+tIX,Essence of The Memory,1,1,<a:elootitem:1144477550379274322>,Perform a binding ritual to seal the essence into card form.
+tX,Essence of The Temporal,3,1,<a:elootitem:1144477550379274322>,Perform a binding ritual to seal the essence into card form.
+tXI,Essence of The Heavens,3,1,<a:elootitem:1144477550379274322>,Perform a binding ritual to seal the essence into card form.
+tXII,Essence of The Abyss,3,1,<a:elootitem:1144477550379274322>,Perform a binding ritual to seal the essence into card form.
+tXIII,Essence of The Death,3,1,<a:elootitem:1144477550379274322>,Perform a binding ritual to seal the essence into card form.
+tXIV,Essence of The Clarity,1,1,<a:elootitem:1144477550379274322>,Perform a binding ritual to seal the essence into card form.
+tXV,Essence of The Primordial,4,1,<a:elootitem:1144477550379274322>,Perform a binding ritual to seal the essence into card form.
+tXVI,Essence of The Fortress,4,1,<a:elootitem:1144477550379274322>,Perform a binding ritual to seal the essence into card form.
+tXVII,Essence of The Star,2,1,<a:elootitem:1144477550379274322>,Perform a binding ritual to seal the essence into card form.
+tXVIII,Essence of The Moon,2,1,<a:elootitem:1144477550379274322>,Perform a binding ritual to seal the essence into card form.
+tXIX,Essence of The Sun,2,1,<a:elootitem:1144477550379274322>,Perform a binding ritual to seal the essence into card form.
+tXX,Essence of The Requiem,2,1,<a:elootitem:1144477550379274322>,Perform a binding ritual to seal the essence into card form.
+tXXI,Essence of The Creation,2,1,<a:elootitem:1144477550379274322>,Perform a binding ritual to seal the essence into card form.

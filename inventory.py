@@ -1230,3 +1230,26 @@ def assign_bonus_stat(base_tier):
                 case _:
                     unique_skill = "Offensive Stance"
     return unique_skill
+
+
+def update_tarot_inventory(player_user, card_file):
+    filename = "tinventory.csv"
+    labels = ['player_id', 'card_type', 'card_qty']
+    df_change = pd.DataFrame(columns=labels)
+    df_change.loc[0] = [player_user.player_id, card_file, 1]
+    df_existing = pd.read_csv(filename)
+    df_updated = pd.concat([df_existing, df_change]).groupby(['player_id', 'card_type']).sum().reset_index()
+    df_updated.to_csv(filename, index=False)
+
+
+def check_tarot(player_owner, card_file):
+    filename = "tinventory.csv"
+    df = pd.read_csv(filename)
+    df = df[df['player_id'] == player_owner.player_id][['card_type', 'card_qty']]
+
+    if card_file in df['card_type'].values:
+        df = df[df['card_type'] == card_file][['card_qty']]
+        quantity = df['card_qty'].values[0]
+    else:
+        quantity = 0
+    return quantity

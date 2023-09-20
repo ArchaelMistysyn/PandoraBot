@@ -318,9 +318,14 @@ def run_discord_bot():
     async def stamina(ctx):
         user = ctx.author
         player_object = player.get_player_by_name(user)
+        potion_stock = inventory.check_stock(player_object, "I1s")
         output = f'<:estamina:1145534039684562994> {player_object.player_username}\'s stamina: '
         output += str(player_object.player_stamina)
-        await ctx.send(output)
+        embed_msg = discord.Embed(colour=discord.Colour.green(), title="Stamina", description=output)
+        potion_msg = f"Potion Stock: {potion_stock}"
+        embed_msg.add_field(name="", value=potion_msg)
+        stamina_view = menus.StaminaView(player_object)
+        await ctx.send(embed=embed_msg, view=stamina_view)
 
     @pandora_bot.command(name='profile', help="**!profile** to display your profile")
     async def profile(ctx):
@@ -393,6 +398,17 @@ def run_discord_bot():
             message = "wrong item id"
             await ctx.send(message)
 
+    @pandora_bot.command(name='who', help="**!who [NewUsername]** to set your username")
+    @commands.max_concurrency(1, per=commands.BucketType.default, wait=False)
+    async def who(ctx, new_username):
+        existing_user = player.get_player_by_name(ctx.author)
+        if player.check_username(new_username):
+            existing_user.update_username(new_username)
+            message = f'Got it! I\'ll call you {existing_user.player_username} from now on!'
+        else:
+            message = f'Sorry that username is taken.'
+        await ctx.send(message)
+
     @pandora_bot.command(name='refinery', help="**!refinery** to go to the refinery")
     @commands.max_concurrency(1, per=commands.BucketType.default, wait=False)
     async def refinery(ctx):
@@ -405,17 +421,6 @@ def run_discord_bot():
         ref_view = menus.RefSelectView(command_user)
         await ctx.send(embed=embed_msg, view=ref_view)
 
-    @pandora_bot.command(name='who', help="**!who [NewUsername]** to set your username")
-    @commands.max_concurrency(1, per=commands.BucketType.default, wait=False)
-    async def who(ctx, new_username):
-        existing_user = player.get_player_by_name(ctx.author)
-        if player.check_username(new_username):
-            existing_user.update_username(new_username)
-            message = f'Got it! I\'ll call you {existing_user.player_username} from now on!'
-        else:
-            message = f'Sorry that username is taken.'
-        await ctx.send(message)
-
     @pandora_bot.command(name='forge', help="**!forge** to enter the celestial forge")
     @commands.max_concurrency(1, per=commands.BucketType.default, wait=False)
     async def forge(ctx):
@@ -426,8 +431,41 @@ def run_discord_bot():
                                   title="Pandora's Celestial Forge",
                                   description="Let me know what you'd like me to upgrade today!")
         embed_msg.set_image(url="https://i.ibb.co/QjWDYG3/forge.jpg")
-        view = menus.SelectView(player_object)
-        view.embed = await ctx.send(embed=embed_msg, view=view)
+        forge_view = menus.SelectView(player_object)
+        await ctx.send(embed=embed_msg, view=forge_view)
+
+    @pandora_bot.command(name='bind', help="**!bind** to perform a binding ritual")
+    @commands.max_concurrency(1, per=commands.BucketType.default, wait=False)
+    async def bind_ritual(ctx):
+        user = ctx.author
+        player_object = player.get_player_by_name(user)
+        embed_msg = discord.Embed(colour=discord.Colour.magenta(),
+                                  title="Pandora's Binding Ritual",
+                                  description="Let me know if you've acquired any new essences!")
+        embed_msg.set_image(url="")
+        bind_view = menus.BindingTierView(player_object)
+        await ctx.send(embed=embed_msg, view=bind_view)
+
+    @pandora_bot.command(name='tarot', help="**!tarot** to check your tarot collection")
+    @commands.max_concurrency(1, per=commands.BucketType.default, wait=False)
+    async def tarot(ctx):
+        user = ctx.author
+        player_object = player.get_player_by_name(user)
+        completion_count = 0
+        card_num_list = ["0", "I", "II", "III", "IV", "V", "VI", "VII", "VIII", "IX", "X",
+                         "XI", "XII", "XIII", "XIV", "XV", "XVI", "XVII", "XVIII", "XIX", "XX", "XXI"]
+        for x in card_num_list:
+            for y in range(1, 4):
+                check = f'{x}variant{y}'
+                card_qty = inventory.check_tarot(player_object, check)
+                if card_qty > 0:
+                    completion_count += 1
+        embed_msg = discord.Embed(colour=discord.Colour.magenta(),
+                                  title=f"{player_object.player_username}'s Tarot Collection",
+                                  description=f"Completion Total: {completion_count} / 66")
+        embed_msg.set_image(url="")
+        tarot_view = menus.CollectionView(player_object, embed_msg)
+        await ctx.send(embed=embed_msg, view=tarot_view)
 
     @pandora_bot.command(name='credits', help="**!credits** to see the credits")
     @commands.max_concurrency(1, per=commands.BucketType.default, wait=False)
