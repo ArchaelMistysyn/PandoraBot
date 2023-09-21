@@ -80,10 +80,9 @@ def run_discord_bot():
     async def timed_task(duration_seconds, channel_id, ctx):
 
         # initialize the boss post
-        active_boss = bosses.spawn_boss(2)
-        active_boss.set_boss_lvl(1)
-        is_alive = True
-        embed_msg = active_boss.create_boss_embed(0, is_alive)
+        level = random.randint(1, 50)
+        active_boss = bosses.spawn_boss("Dragon", level)
+        embed_msg = active_boss.create_boss_msg(0, True)
         raid_button = RaidView()
         sent_message = await ctx.send(embed=embed_msg, view=raid_button)
         active_boss.message_id = sent_message.id
@@ -98,40 +97,25 @@ def run_discord_bot():
                 dps += player_dps
             active_boss.boss_cHP -= dps
             if active_boss.calculate_hp():
-                embed_msg = active_boss.create_boss_embed(dps, is_alive)
+                embed_msg = active_boss.create_boss_msg(dps, True)
                 await sent_message.edit(embed=embed_msg)
             else:
-                # update dead boss info
-                is_alive = False
-                embed_msg = active_boss.create_boss_embed(dps, is_alive)
-                # embed_msg.set_image(url="slain image?")
-                damage_list = bosses.get_damage_list()
-                embed_msg.add_field(name="SLAIN", value=damage_list, inline=False)
-                exp_amount = active_boss.boss_tier * (1 + active_boss.boss_lvl) * 100
-                loot_output = loot.award_loot(active_boss.boss_type, active_boss.boss_tier, player_list, exp_amount)
-                for counter, loot_section in enumerate(loot_output):
-                    temp_player = player.get_player_by_id(player_list[counter])
-                    loot_msg = f'{temp_player.player_username} received:'
-                    embed_msg.add_field(name=loot_msg, value=loot_section, inline=False)
-                await sent_message.edit(embed=embed_msg)
-                # spawn a new boss
-                random_number = random.randint(1, 2)
-                new_boss_type = 2
-                match active_boss.boss_type:
-                    case "Dragon":
-                        if random_number == 2:
-                            new_boss_type = 3
-                    case "Primordial":
-                        new_boss_type = 2
-                    case _:
-                        error = "this boss should not be anything else"
+                embed_msg = bosses.create_dead_boss_embed(active_boss, dps)
+                loot_embed = loot.create_loot_embed(embed_msg, active_boss, player_list)
+                await sent_message.edit(embed=loot_embed)
 
-                active_boss = bosses.spawn_boss(new_boss_type)
-                active_boss.set_boss_lvl(1)
+                # spawn a new boss
+                random_number = random.randint(0, 1)
+                if active_boss.boss_type_num == 3:
+                    new_boss_type = 2
+                else:
+                    new_boss_type = active_boss.boss_type_num + random_number
+
+                level = random.randint(1, 50)
+                active_boss = bosses.spawn_boss(new_boss_type, level)
                 bosses.clear_list()
                 player_list.clear()
-                is_alive = True
-                embed_msg = active_boss.create_boss_embed(0, is_alive)
+                embed_msg = active_boss.create_boss_msg(0, True)
                 sent_message = await ctx.send(embed=embed_msg, view=raid_button)
                 active_boss.message_id = sent_message.id
 
@@ -204,15 +188,13 @@ def run_discord_bot():
     @commands.max_concurrency(1, per=commands.BucketType.default, wait=False)
     async def fort(ctx):
         player_name = ctx.author
-        command_user = player.get_player_by_name(player_name)
-        if command_user.spend_stamina(50):
+        user = player.get_player_by_name(player_name)
+        if user.spend_stamina(50):
             # initialize the boss post
-            active_boss = bosses.spawn_boss(1)
-            active_boss.set_boss_lvl(command_user.player_lvl)
+            active_boss = bosses.spawn_boss("Fortress", user.player_lvl)
             is_alive = True
-            embed_msg = active_boss.create_boss_embed(0, is_alive)
+            embed_msg = active_boss.create_boss_msg(0, is_alive)
             sent_message = await ctx.send(embed=embed_msg)
-            user = player.get_player_by_name(ctx.author)
             while is_alive:
                 await asyncio.sleep(60)
                 dps, critical_type = damagecalc.get_player_damage(user, active_boss)
@@ -221,22 +203,11 @@ def run_discord_bot():
                     embed_msg = active_boss.create_boss_embed(dps, is_alive)
                     await sent_message.edit(embed=embed_msg)
                 else:
-                    # update dead boss info
                     is_alive = False
-                    active_boss.boss_cHP = 0
-                    embed_msg = active_boss.create_boss_embed(dps, is_alive)
-                    # embed_msg.set_image(url="slain image?")
-                    embed_msg.add_field(name="SLAIN", value="", inline=False)
+                    embed_msg = bosses.create_dead_boss_embed(active_boss, dps)
                     player_list = [user.player_id]
-                    exp_amount = active_boss.boss_tier * (1 + active_boss.boss_lvl) * 100
-                    loot_output = loot.award_loot(active_boss.boss_type, active_boss.boss_tier, player_list, exp_amount)
-                    for counter, loot_section in enumerate(loot_output):
-                        temp_player = player.get_player_by_id(player_list[counter])
-                        loot_msg = f'{temp_player.player_username} received:'
-                        embed_msg.add_field(name=loot_msg, value=loot_section, inline=False)
-
-                    await sent_message.edit(embed=embed_msg)
-
+                    loot_embed = loot.create_loot_embed(embed_msg, active_boss, player_list)
+                    await sent_message.edit(embed=loot_embed)
         else:
             await ctx.send("Not enough stamina.")
 
@@ -333,8 +304,9 @@ def run_discord_bot():
         player_object = player.get_player_by_name(user)
 
         echelon_colour = inventory.get_gear_tier_colours(player_object.player_echelon)
-        stamina = f'<:estamina:1145534039684562994> {player_object.player_username}\'s stamina: '
-        stamina += str(player_object.player_stamina)
+        resources = f'<:estamina:1145534039684562994> {player_object.player_username}\'s stamina: '
+        resources += str(player_object.player_stamina)
+        resources += f'\nLotus Coins: {player_object.player_coins}'
         exp = f'Level: {player_object.player_lvl} Exp: ({player_object.player_exp} / '
         exp += f'{player.get_max_exp(player_object.player_lvl)})'
         id_msg = f'User ID: {player_object.player_id}\nClass: {player_object.player_class}'
@@ -360,7 +332,7 @@ def run_discord_bot():
         embed_msg = discord.Embed(colour=echelon_colour[0],
                                   title=player_object.player_username,
                                   description=id_msg)
-        embed_msg.add_field(name=exp, value=stamina, inline=False)
+        embed_msg.add_field(name=exp, value=resources, inline=False)
         embed_msg.add_field(name="Player Stats", value=stats, inline=False)
         thumbnail_url = player.get_thumbnail_by_class(player_object.player_class)
         embed_msg.set_thumbnail(url=thumbnail_url)

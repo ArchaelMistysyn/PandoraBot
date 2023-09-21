@@ -266,7 +266,7 @@ class PlayerProfile:
             case "Ranger":
                 class_icon = '<:cA:1150195102589931641>'
             case "Knight":
-                class_icon = '<:cB:1150516823524114432>'
+                class_icon = '<:cB:1154266777396711424>'
             case "Mage":
                 class_icon = "<:cC:1150195246588764201>"
             case _:

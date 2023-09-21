@@ -27,29 +27,21 @@ class basicItem:
         return self.item_name
 
 
-def award_loot(boss_type, boss_tier, player_list, exp_amount):
+def award_loot(boss_object, player_list, exp_amount):
     filename = "droptable.csv"
-    match boss_type:
-        case "Fortress":
-            reward_multiplier = 1
-        case "Dragon":
-            reward_multiplier = 2
-        case "Primordial":
-            reward_multiplier = 3
-        case _:
-            reward_multiplier = 4
-    coin_amount = reward_multiplier * boss_tier * 100
+    boss_tier = boss_object.boss_tier
+    coin_amount = boss_object.boss_type_num * boss_tier * 100
     loot_msg = []
     labels = ['player_id', 'item_id', 'item_qty']
     df_change = pd.DataFrame(columns=labels)
     for counter, x in enumerate(player_list):
+        temp_player = player.get_player_by_id(x)
+        temp_player.add_exp(exp_amount)
+        temp_player.update_coins(coin_amount)
+        loot_msg.append(f"<:eexp:1148088187516891156> {exp_amount}x\n🤑 {coin_amount}x\n")
         with (open(filename, 'r') as f):
-            temp_player = player.get_player_by_id(x)
-            temp_player.add_exp(exp_amount)
-            temp_player.update_coins(coin_amount)
-            loot_msg.append(f"<:eexp:1148088187516891156> {exp_amount}x\n<:eexp:1148088187516891156> {coin_amount}x\n")
             for line in csv.DictReader(f):
-                if str(line['boss_type']) == str(boss_type) and int(line['boss_tier']) <= int(boss_tier):
+                if str(line['boss_type']) == str(boss_object.boss_type) and int(line['boss_tier']) <= int(boss_tier):
                     dropped_item = str(line["item_id"])
                     drop_rate = int(line["drop_rate"])
                     item_name = get_loot_name(dropped_item)
@@ -95,5 +87,15 @@ def get_loot_name(item_id) -> str:
         for line in csv.DictReader(f):
             if str(line["item_id"]) == str(item_id):
                 str_name = str(line["item_name"])
-
     return str_name
+
+
+def create_loot_embed(current_embed, active_boss, player_list):
+    loot_embed = current_embed
+    exp_amount = active_boss.boss_tier * (1 + active_boss.boss_lvl) * 100
+    loot_output = award_loot(active_boss, player_list, exp_amount)
+    for counter, loot_section in enumerate(loot_output):
+        temp_player = player.get_player_by_id(player_list[counter])
+        loot_msg = f'{temp_player.player_username} received:'
+        loot_embed.add_field(name=loot_msg, value=loot_section, inline=False)
+    return loot_embed

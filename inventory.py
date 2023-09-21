@@ -338,7 +338,7 @@ class CustomWeapon(CustomItem):
         self.item_bonus_stat = temp_attack_speed
 
         # set element
-        self.item_elements.append(bosses.get_element())
+        self.item_elements.append(bosses.get_element(0))
 
         # calculate item's damage per hit
         self.update_damage()
@@ -907,6 +907,9 @@ def display_binventory(player_id: int):
 
 def get_gear_tier_colours(base_tier):
     match base_tier:
+        case 0:
+            tier_colour = discord.Colour.dark_gray()
+            tier_emoji = "⚫"
         case 1:
             tier_colour = discord.Colour.green()
             tier_emoji = "🟢"
@@ -1043,7 +1046,7 @@ def craft_item(player_object, selected_item, item_id, method):
                         running = True
                         new_element = ""
                         while running:
-                            new_element = bosses.get_element()
+                            new_element = bosses.get_element(0)
                             running = False
                             for x in selected_item.item_elements:
                                 if str(x) == new_element:

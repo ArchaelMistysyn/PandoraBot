@@ -75,15 +75,17 @@ def accessory_ability_multipliers(acc_keyword, boss_cHP, boss_mHP, player_hp):
     return damage_multiplier, situational_damage_multiplier, damage_mitigation
 
 
-def boss_weakness_multiplier(weapon, elemental_penetration, boss_typeweak, boss_eleweak_a, boss_eleweak_b) -> float:
+def boss_weakness_multiplier(boss_object, weapon, elemental_penetration):
     resist_multiplier = 0.6
     type_multiplier = 0.7
     for x in weapon.item_elements:
-        if str(x) == boss_eleweak_a or str(x) == boss_eleweak_b:
-            resist_multiplier += 0.4
-            resist_multiplier += 1 + elemental_penetration
-    if weapon.item_damage_type == boss_typeweak:
-        type_multiplier += 0.5
+        for y in boss_object.boss_eleweak:
+            if str(x) == str(y):
+                resist_multiplier += 0.4
+                resist_multiplier += 1 + elemental_penetration
+    for z in boss_object.boss_typeweak:
+        if weapon.item_damage_type == str(z):
+            type_multiplier += 0.5
 
     defences_multiplier = resist_multiplier * type_multiplier
     return defences_multiplier
@@ -112,10 +114,7 @@ def get_player_damage(player_object, boss_object):
     # Boss defences
     if player_object.equipped_acc != "":
         e_weapon = inventory.read_custom_item(player_object.equipped_weapon)
-        float_damage *= boss_weakness_multiplier(e_weapon, player_object.elemental_penetration,
-                                                 boss_object.boss_typeweak,
-                                                 boss_object.boss_eleweak_a,
-                                                 boss_object.boss_eleweak_b)
+        float_damage *= boss_weakness_multiplier(boss_object, e_weapon, player_object.elemental_penetration)
 
     # Additional increases
     additional_multiplier = 1 + (player_object.player_lvl * 0.01)

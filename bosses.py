@@ -5,29 +5,27 @@ import csv
 import random
 import pandas as pd
 import player
+import bosses
 import os
 from PIL import Image, ImageFont, ImageDraw, ImageEnhance
 
 
 # Boss class
 class CurrentBoss:
-    def __init__(self, boss_type, boss_name, boss_tier, boss_iteration,
-                 boss_typeweak, boss_eleweak_a, boss_eleweak_b,
-                 boss_message_id):
+    def __init__(self, boss_type_num, boss_type, boss_tier, boss_level, boss_message_id):
+        self.boss_type_num = boss_type_num
         self.boss_type = boss_type
-        self.boss_name = boss_name
         self.boss_tier = boss_tier
+        self.boss_lvl = boss_level
+        self.boss_message_id = boss_message_id
+
+        self.boss_name = ""
+        self.boss_image = ""
         self.boss_mHP = 0
         self.boss_cHP = 0
-        self.boss_iteration = boss_iteration
-        self.boss_typeweak = boss_typeweak
-        self.boss_eleweak_a = boss_eleweak_a
-        self.boss_eleweak_b = boss_eleweak_b
-        self.boss_message_id = boss_message_id
-        self.boss_lvl = 0
+        self.boss_typeweak = []
+        self.boss_eleweak = []
         self.participating_players = []
-        self.player_dmg_min = []
-        self.player_dmg_max = []
 
     # return the boss display string
     def __str__(self):
@@ -42,24 +40,9 @@ class CurrentBoss:
 
         return is_alive
 
-    def set_boss_lvl(self, level):
-        self.boss_lvl = level
-        self.boss_mHP = int(get_base_hp(self.boss_type) * (1.2 ** self.boss_lvl) * self.boss_tier)
-        self.boss_cHP = self.boss_mHP
-
-    def create_boss_embed(self, dps, is_alive):
-        match self.boss_type:
-            case "Fortress":
-                img_link = "https://i.ibb.co/0ngNM7h/castle.png"
-            case "Dragon":
-                img_link = "https://i.ibb.co/hyT1d8M/dragon.jpg"
-            case "Primordial":
-                img_link = "https://i.ibb.co/DMhCjpB/primordial.png"
-            case "Paragon":
-                img_link = "https://i.ibb.co/DMhCjpB/primordial.png"
-            case _:
-                img_link = "Error"
-
+    def create_boss_msg(self, dps, is_alive):
+        # img_link = self.boss_image
+        img_link = "https://i.ibb.co/0ngNM7h/castle.png"
         match self.boss_tier:
             case 1:
                 tier_colour = discord.Colour.green()
@@ -88,7 +71,7 @@ class CurrentBoss:
         boss_field = f'Tier {self.boss_tier} {self.boss_type} - Level {self.boss_lvl}'
         if not is_alive:
             self.boss_cHP = 0
-        boss_hp = f'{life_emoji} ({self.boss_cHP:,} / {self.boss_mHP:,})'
+        boss_hp = f'{life_emoji} ({int(self.boss_cHP):,} / {int(self.boss_mHP):,})'
         bar_length = int(self.boss_cHP / self.boss_mHP * 10)
         hp_bar = life_bar_left
         for x in range(bar_length):
@@ -97,8 +80,11 @@ class CurrentBoss:
             hp_bar += "⬛"
         hp_bar += life_bar_right
         boss_hp += f'\n{hp_bar}'
-        boss_weakness = f'Weakness: {self.boss_typeweak}'
-        boss_weakness += f'{self.boss_eleweak_a}{self.boss_eleweak_b}'
+        boss_weakness = f'Weakness: '
+        for x in self.boss_typeweak:
+            boss_weakness += str(x)
+        for y in self.boss_eleweak:
+            boss_weakness += str(y)
         embed_msg = discord.Embed(colour=tier_colour,
                                   title=boss_title,
                                   description="")
@@ -109,36 +95,115 @@ class CurrentBoss:
 
         return embed_msg
 
+    def generate_boss_name_image(self, boss_type, boss_tier):
+        fortress_list_t1 = ["Ominous Keep", "Twisted Stronghold"]
+        fortress_list_t2 = ["Malignant Fortress", "Malevolant Castle"]
+        fortress_list_t3 = ["Sinful Spire", "Malefic Citadel"]
+        fortress_list_t4 = ["XVI - Aurora, The Fortress"]
+        fortress_names = [fortress_list_t1, fortress_list_t2, fortress_list_t3, fortress_list_t4]
 
-def spawn_boss(boss_type_num: int) -> CurrentBoss:
+        dragon_list_t1 = ["Zelphyros, Wind", "Sahjvadiir, Earth"]
+        dragon_list_t2 = ["Arkadrya, Lightning", "Phyyratha, Fire", "Elyssrya, Water"]
+        dragon_list_t3 = ["Y'thana, Light", "Rahk'vath, Shadow"]
+        dragon_list_t4 = ["VII - Astratha, The Dimensional"]
+        dragon_names = [dragon_list_t1, dragon_list_t2, dragon_list_t3, dragon_list_t4]
+
+        demon_list_t1 = ["Beelzebub", "Azazel", "Astaroth", "Belial"]
+        demon_list_t2 = ["Abbadon", "Asura", "Baphomet", "Charybdis"]
+        demon_list_t3 = ["Iblis", "Lilith", "Ifrit", "Scylla"]
+        demon_list_t4 = ["VIII - Tyra, The Behemoth"]
+        demon_names = [demon_list_t1, demon_list_t2, demon_list_t3, demon_list_t4]
+
+        paragon_list_t1 = ["0 - Karma, The Reflection", "I - Runa, The Magic", "VI - Kama, The Love",
+                           "IX - Alaya, The Memory", "XIV - Arcelia, The Clarity"]
+        paragon_list_t2 = ["XVII - Nova, The Star", "XVIII - Luna, The Moon", "XIX - Luma, The Sun",
+                           "XX - Aria, The Reqiuem", "XXI - Ultima, The Creation"]
+        paragon_list_t3 = ["V - Arkaya, The Duality", "X - Chrona, The Temporal", "XI - Nua, The Heavens",
+                           "XII - Rua, The Abyss", "XIII - Thana, The Death"]
+        paragon_list_t4 = ["II - Pandora, The Celestial", "XV - Diabla, The Primordial"]
+        paragon_list_t5 = ["III - Oblivia, The Void"]
+        paragon_list_t6 = ["IV - Akasha, The Infinite"]
+        paragon_names = [paragon_list_t1, paragon_list_t2, paragon_list_t3,
+                         paragon_list_t4, paragon_list_t5, paragon_list_t6]
+
+        boss_name = ""
+        boss_image = ""
+        match boss_type:
+            case "Fortress":
+                name_selector = random.randint(1, len(fortress_names[(boss_tier - 1)]))
+                boss_suffix = fortress_names[(boss_tier - 1)][(name_selector - 1)]
+                if boss_tier != 4:
+                    boss_name = get_boss_descriptor(boss_type) + "the " + boss_suffix
+                    boss_image = f'https://kyleportfolio.ca/botimages/tarot/{boss_type}{boss_tier}.png'
+                else:
+                    boss_image = ""
+            case "Dragon":
+                name_selector = random.randint(1, len(dragon_names[(boss_tier - 1)]))
+                boss_name = dragon_names[(boss_tier - 1)][(name_selector - 1)]
+                if boss_tier != 4:
+                    boss_name += " Dragon"
+                    boss_image = f'https://kyleportfolio.ca/botimages/tarot/{boss_type}{boss_tier}.png'
+                else:
+                    boss_image = ""
+            case "Demon":
+                name_selector = random.randint(1, len(demon_names[(boss_tier - 1)]))
+                boss_name = demon_names[(boss_tier - 1)][(name_selector - 1)]
+                if boss_tier != 4:
+                    boss_colour = get_boss_descriptor(boss_type)
+                    boss_name = f'{boss_colour} {boss_name}'
+                    boss_image = f'https://kyleportfolio.ca/botimages/tarot/{boss_type}{boss_colour}{boss_tier}.png'
+                else:
+                    boss_image = ""
+            case "Paragon":
+                name_selector = random.randint(1, len(paragon_names[(boss_tier - 1)]))
+                boss_name = paragon_names[(boss_tier - 1)][(name_selector - 1)]
+                boss_image = f'https://kyleportfolio.ca/botimages/tarot/{boss_type}{boss_tier}.png'
+            case _:
+                boss_name = "error"
+        self.boss_image = boss_image
+        return boss_name
+
+
+def spawn_boss(boss_type, boss_level):
     # initialize boss information
-    new_boss_tier = get_random_bosstier(boss_type_num)
-    match boss_type_num:
-        case 1:
-            boss_type = "Fortress"
-        case 2:
-            boss_type = "Dragon"
-        case 3:
-            boss_type = "Primordial"
-        case 4:
-            boss_type = "Paragon"
-        case _:
-            boss_type = "error"
-
-    new_boss_name = get_boss_name(boss_type, new_boss_tier)
-
-    boss_iteration = 0
-    boss_typeweak = get_type()
-    boss_eleweak_a = get_element()
-    boss_eleweak_b = boss_eleweak_a
-    while boss_eleweak_a == boss_eleweak_b:
-        boss_eleweak_b = get_element()
+    new_boss_tier = get_random_bosstier(boss_type)
 
     message_id = 0
+    match boss_type:
+        case "Fortress":
+            boss_type_num = 1
+        case "Dragon":
+            boss_type_num = 2
+        case "Demon":
+            boss_type_num = 3
+        case _:
+            boss_type_num = 4
 
     # create the boss object
-    boss_object = CurrentBoss(boss_type, new_boss_name, new_boss_tier, boss_iteration,
-                                       boss_typeweak, boss_eleweak_a, boss_eleweak_b, message_id)
+    boss_object = CurrentBoss(boss_type_num, boss_type, new_boss_tier, boss_level, message_id)
+    boss_object.generate_boss_name_image(boss_type, new_boss_tier)
+
+    num_eleweak = 3
+    eleweak_list = random.sample(range(1, 10), num_eleweak)
+    for x in eleweak_list:
+        new_weakness = get_element(int(x))
+        boss_object.boss_eleweak.append(new_weakness)
+    num_typeweak = 2
+    typeweak_list = random.sample(range(1, 5), num_typeweak)
+    for y in typeweak_list:
+        new_weakness = get_type(int(y))
+        boss_object.boss_typeweak.append(new_weakness)
+
+    if new_boss_tier <= 4:
+        total_hp = get_base_hp(boss_type)
+        total_hp *= new_boss_tier * (boss_level * 1.25)
+    elif new_boss_tier == 5:
+        total_hp = 10000000000000
+    else:
+        total_hp = 999999999999999
+    boss_object.boss_mHP = total_hp
+    boss_object.boss_cHP = boss_object.boss_mHP
+
     return boss_object
 
 
@@ -161,31 +226,36 @@ def get_channel_id() -> int:
     return channel_value
 
 
-def get_random_bosstier(boss_type_num: int) -> int:
-        random_number = random.randint(1, 100)
-        if random_number <= 1:
-            if boss_type_num == 4:
-                boss_tier = 5
-            else:
-                boss_tier = 4
-        elif random_number <= 5:
-            boss_tier = 4
-        elif random_number <= 30:
-            boss_tier = 3
-        elif random_number <= 60:
-            boss_tier = 2
-        elif random_number <= 100:
-            boss_tier = 1
-        else:
-            boss_tier = 0
+def get_random_bosstier(boss_type):
+    random_number = random.randint(1, 100)
+    if random_number <= 1:
+        boss_tier = 6
+    elif random_number <= 3:
+        boss_tier = 5
+    elif random_number <= 8:
+        boss_tier = 4
+    elif random_number <= 35:
+        boss_tier = 3
+    elif random_number <= 65:
+        boss_tier = 2
+    elif random_number <= 100:
+        boss_tier = 1
+    else:
+        boss_tier = 0
 
-        return boss_tier
+    if boss_tier > 4:
+        if boss_type != "Paragon":
+            boss_tier = 4
+
+    return boss_tier
 
 
 # generate ele weakness
-def get_element() -> str:
-    # generate an element
-    random_number = random.randint(1, 9)
+def get_element(chosen_weakness):
+    if chosen_weakness == 0:
+        random_number = random.randint(1, 9)
+    else:
+        random_number = chosen_weakness
     match random_number:
         case 1:
             element_temp = "<:ef:1141653475059572779>"
@@ -210,14 +280,16 @@ def get_element() -> str:
 
 
 # generate type weakness
-def get_type() -> str:
-    # generate a type
-    random_number = random.randint(1, 4)
+def get_type(chosen_weakness):
+    if chosen_weakness == 0:
+        random_number = random.randint(1, 4)
+    else:
+        random_number = chosen_weakness
     match random_number:
         case 1:
             type_temp = '<:cA:1150195102589931641>'
         case 2:
-            type_temp = '<:cB:1150516823524114432>'
+            type_temp = '<:cB:1154266777396711424>'
         case 3:
             type_temp = "<:cC:1150195246588764201>"
         case _:
@@ -236,161 +308,23 @@ def store_channel_id(channel_id: int) -> str:
     return 'success'
 
 
-def get_base_hp(base_type: str) -> int:
+def get_base_hp(base_type):
     match base_type:
         case "Fortress":
             base_hp = 1000
         case "Dragon":
-            base_hp = 50000
-        case "Primordial":
             base_hp = 500000
+        case "Demon":
+            base_hp = 5000000
         case "Paragon":
-            base_hp = 10000000
+            base_hp = 1000000000
         case _:
             base_hp = 0
 
     return base_hp
 
 
-def get_boss_name(boss_type: str, boss_tier: int) -> str:
-    boss_name = ""
-
-    match boss_type:
-        case "Fortress":
-            name_selector= random.randint(1,2)
-            match boss_tier:
-                case 1:
-                    if name_selector == 1:
-                        boss_suffix = "Ominous Keep"
-                    else:
-                        boss_suffix = "Twisted Stronghold"
-                case 2:
-                    if name_selector == 1:
-                        boss_suffix = "Malignant Fortress"
-                    else:
-                        boss_suffix = "Malevolant Castle"
-                case 3:
-                    if name_selector == 1:
-                        boss_suffix = "Sinful Spire"
-                    else:
-                        boss_suffix = "Malefic Citadel"
-                case 4:
-                    if name_selector == 1:
-                        boss_suffix = "Heavenly Treasure Trove"
-                    else:
-                        boss_suffix = "Starlit Fortune"
-                case _:
-                    boss_suffix = "error"
-            boss_name = get_boss_descriptor(boss_type) + "the " + boss_suffix
-        case "Dragon":
-            match boss_tier:
-                case 1:
-                    name_selector = random.randint(1, 2)
-                    if name_selector == 1:
-                        boss_name = "Zelphyros, Wind"
-                    else:
-                        boss_name = "Sahjvadiir, Earth"
-                case 2:
-                    name_selector = random.randint(1, 3)
-                    if name_selector == 1:
-                        boss_name = "Arkadrya, Lightning"
-                    elif name_selector == 2:
-                        boss_name = "Phyyratha, Fire"
-                    else:
-                        boss_name = "Elyssrya, Water"
-                case 3:
-                    name_selector = random.randint(1, 2)
-                    if name_selector == 1:
-                        boss_name = "Y'thana, Light"
-                    else:
-                        boss_name = "Rahk'vath, Shadow"
-                case 4:
-                    boss_name = "Astratha, Celestial"
-                case _:
-                    boss_name = "error"
-            boss_name += " Dragon"
-        case "Primordial":
-            match boss_tier:
-                case 1:
-                    name_selector = random.randint(1, 5)
-                    if name_selector == 1:
-                        boss_name = "Beelzebub"
-                    elif name_selector == 2:
-                        boss_name = "Azazel"
-                    elif name_selector == 3:
-                        boss_name = "Astaroth"
-                    elif name_selector == 4:
-                        boss_name = "Iblis"
-                    else:
-                        boss_name = "Belial"
-                case 2:
-                    name_selector = random.randint(1, 5)
-                    if name_selector == 1:
-                        boss_name = "Abbadon"
-                    elif name_selector == 2:
-                        boss_name = "Asura"
-                    elif name_selector == 3:
-                        boss_name = "Ifrit"
-                    elif name_selector == 4:
-                        boss_name = "Lilith"
-                    else:
-                        boss_name = "Baphomet"
-                case 3:
-                    name_selector = random.randint(1, 2)
-                    if name_selector == 1:
-                        boss_name = "Diablo"
-                    else:
-                        boss_name = "Diabla"
-                case 4:
-                    boss_name = "Behemoth"
-                case _:
-                    boss_name = "error"
-            boss_name = get_boss_descriptor(boss_type) + boss_name
-        case "Paragon":
-            match boss_tier:
-                case 1:
-                    name_selector = random.randint(1, 6)
-                    if name_selector == 1:
-                        boss_name = "Akasha, The Fool"
-                    elif name_selector == 2:
-                        boss_name = "Alaya, The Memory"
-                    elif name_selector == 3:
-                        boss_name = "Kama, The Love"
-                    elif name_selector == 4:
-                        boss_name = "Luna, The Moon"
-                    elif name_selector == 5:
-                        boss_name = "Luma, The Sun"
-                    else:
-                        boss_name = "Runa, The Magic"
-                case 2:
-                    name_selector = random.randint(1, 3)
-                    if name_selector == 1:
-                        boss_name = "Rua, The Abyss"
-                    elif name_selector == 2:
-                        boss_name = "Nua, The Heavens"
-                    else:
-                        boss_name = "Nova, the Star"
-                case 3:
-                    name_selector = random.randint(1, 3)
-                    if name_selector == 1:
-                        boss_name = "Ultima, The Creation"
-                    elif name_selector == 2:
-                        boss_name = "Thana, The Death"
-                    else:
-                        boss_name = "Chrona, The Time"
-                case 4:
-                    boss_name = "Pandora, The Celestial"
-                case 5:
-                    boss_name = "Oblivia, The Void"
-                case _:
-                    boss_name = "error"
-        case _:
-            boss_name = "error"
-
-    return boss_name
-
-
-def get_boss_descriptor(boss_type: str) -> str:
+def get_boss_descriptor(boss_type):
     boss_descriptor = ""
 
     match boss_type:
@@ -403,29 +337,29 @@ def get_boss_descriptor(boss_type: str) -> str:
             random_number = random.randint(0, (boss_data['fortress_name_b'].count()-1))
             boss_descriptor += " " + boss_data.fortress_name_b[random_number] + ", "
 
-        case "Primordial":
-            random_number = random.randint(1,10)
+        case "Demon":
+            random_number = random.randint(1,9)
             match random_number:
                 case 1:
-                    boss_descriptor = "Crimson "
+                    boss_descriptor = "Crimson"
                 case 2:
-                    boss_descriptor = "Azure "
+                    boss_descriptor = "Azure"
                 case 3:
-                    boss_descriptor = "Jade "
+                    boss_descriptor = "Jade"
                 case 4:
-                    boss_descriptor = "Violet "
+                    boss_descriptor = "Violet"
                 case 5:
-                    boss_descriptor = "Ivory "
+                    boss_descriptor = "Ivory"
                 case 6:
-                    boss_descriptor = "Rose "
+                    boss_descriptor = "Rose"
                 case 7:
-                    boss_descriptor = "Gold "
+                    boss_descriptor = "Gold"
                 case 8:
-                    boss_descriptor = "Silver "
+                    boss_descriptor = "Silver"
                 case 9:
-                    boss_descriptor = "Stygian "
+                    boss_descriptor = "Stygian"
                 case _:
-                    boss_descriptor = "Void "
+                    boss_descriptor = "Error"
         case _:
             boss_descriptor = "error"
 
@@ -482,3 +416,11 @@ def clear_list():
     df = pd.read_csv(filename)
     df = pd.DataFrame(columns=df.columns)
     df.to_csv(filename, index=False)
+
+
+def create_dead_boss_embed(active_boss, dps):
+    active_boss.boss_cHP = 0
+    dead_embed = active_boss.create_boss_msg(dps, False)
+    damage_list = bosses.get_damage_list()
+    dead_embed.add_field(name="SLAIN", value=damage_list, inline=False)
+    return dead_embed
