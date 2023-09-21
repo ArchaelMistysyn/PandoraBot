@@ -1315,7 +1315,7 @@ def cycle_tarot(player_owner, current_msg, current_position, current_variant, di
     else:
         new_variant = current_variant + direction
         new_position = current_position
-    card_file = f'{card_num_list[current_position]}variant{current_variant}'
+    card_file = f'{card_num_list[new_position]}variant{new_variant}'
     current_msg.clear_fields()
     new_msg = current_msg
     card_qty = inventory.check_tarot(player_owner, card_file)
@@ -1323,8 +1323,8 @@ def cycle_tarot(player_owner, current_msg, current_position, current_variant, di
         filename = f'https://kyleportfolio.ca/botimages/tarot/{card_file}.png'
     else:
         filename = ""
-    new_msg.add_field(name=f"Tarot Card: {card_num_list[current_position]} {card_name_list[current_position]}",
-                      value=f"Variant {current_variant}",
+    new_msg.add_field(name=f"Tarot Card: {card_num_list[new_position]} {card_name_list[new_position]}",
+                      value=f"Variant {new_variant}",
                       inline=False)
     new_msg.add_field(name=f"",
                       value=f"Quantity: {card_qty}",
