@@ -161,13 +161,10 @@ class CurrentBoss:
             case _:
                 boss_name = "error"
         self.boss_image = boss_image
-        return boss_name
+        self.boss_name = boss_name
 
 
-def spawn_boss(boss_type, boss_level):
-    # initialize boss information
-    new_boss_tier = get_random_bosstier(boss_type)
-
+def spawn_boss(new_boss_tier, boss_type, boss_level):
     message_id = 0
     match boss_type:
         case "Fortress":
@@ -179,7 +176,6 @@ def spawn_boss(boss_type, boss_level):
         case _:
             boss_type_num = 4
 
-    # create the boss object
     boss_object = CurrentBoss(boss_type_num, boss_type, new_boss_tier, boss_level, message_id)
     boss_object.generate_boss_name_image(boss_type, new_boss_tier)
 
@@ -325,8 +321,6 @@ def get_base_hp(base_type):
 
 
 def get_boss_descriptor(boss_type):
-    boss_descriptor = ""
-
     match boss_type:
         case "Fortress":
             boss_data = pd.read_csv("fortressname.csv")
@@ -338,7 +332,7 @@ def get_boss_descriptor(boss_type):
             boss_descriptor += " " + boss_data.fortress_name_b[random_number] + ", "
 
         case "Demon":
-            random_number = random.randint(1,9)
+            random_number = random.randint(1, 9)
             match random_number:
                 case 1:
                     boss_descriptor = "Crimson"

@@ -45,7 +45,7 @@ I4o,Unrefined Paragon Crest (T4),4,25,<a:elootitem:1144477550379274322>,Refine f
 I5x,Unrefined Rift Weapon,5,25,<a:elootitem:1144477550379274322>,Refine for 25% chance to receive a base tier 5 weapon
 I6x,Unrefined True Name,6,25,<a:elootitem:1144477550379274322>,Refine for 25% chance to receive a base tier 6 weapon
 I1s,Lesser Stamina Potion,1,100,<:estamina:1145534039684562994>,Consume to restore 50 stamina
-I2s,Stamina Potion,2,100,<:estamina:1145534039684562994>,Consume to restore 100 stamina
+I2s,Stamina Potion,2,100,<:estamina:1145534039684562994>,Consume to restore 250 stamina
 I3s,Greater Stamina Potion,3,100,<:estamina:1145534039684562994>,Consume to restore 500 stamina
 I4s,Ultimate Stamina Potion,4,100,<:estamina:1145534039684562994>,Consume to restore 1000 stamina
 t0,Essence of The Reflection,1,1,<a:elootitem:1144477550379274322>,Perform a binding ritual to seal the essence into card form.

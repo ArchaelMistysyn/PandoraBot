@@ -264,6 +264,7 @@ class ForgeView(discord.ui.View):
 class SelectView(discord.ui.View):
     def __init__(self, player_object):
         super().__init__(timeout=None)
+        self.selected_item = None
         self.player_object = player_object
         self.value = None
 
@@ -329,7 +330,7 @@ class InventoryView(discord.ui.View):
         self.user = user
 
     @discord.ui.select(
-        placeholder="Select crafting method!",
+        placeholder="Select Inventory Type!",
         min_values=1,
         max_values=1,
         options=[
@@ -718,13 +719,13 @@ class TreasureView(discord.ui.View):
                     self.new_item = inventory.CustomAccessory(self.user.player_id)
                 case _:
                     self.new_item = inventory.CustomWeapon(self.user.player_id)
-            self.embed_msg = self.new_item.create_citem_embed()
+            embed_msg = self.new_item.create_citem_embed()
             inquiry = f"Would you like to keep or discard this {self.item_type}?"
             gear_colours = inventory.get_gear_tier_colours(self.new_item.item_base_tier)
             tier_emoji = gear_colours[1]
-            self.embed_msg.add_field(name=f'{tier_emoji} Tier {str(self.new_item.item_base_tier)} item found!',
+            embed_msg.add_field(name=f'{tier_emoji} Tier {str(self.new_item.item_base_tier)} item found!',
                                 value=inquiry, inline=False)
-            await interaction.response.edit_message(embed=self.embed_msg, view=self)
+            await interaction.response.edit_message(embed=embed_msg, view=self)
         else:
             await interaction.response.send_message('Not enough !stamina')
 
@@ -960,22 +961,35 @@ class StaminaView(discord.ui.View):
         super().__init__(timeout=None)
         self.player = player_user
 
-    @discord.ui.button(label="Drink Potion", style=discord.ButtonStyle.success, emoji="<:estamina:1145534039684562994>")
-    async def stamina_callback(self, interaction: discord.Interaction, button: discord.Button):
-        potion_stock = inventory.check_stock(self.player, "I1s")
-        if potion_stock > 0:
-            inventory.update_stock(self.player,"I1s", -1)
-            potion_msg = f"Potion Stock: {potion_stock}"
-            self.player.player_stamina += 50
-            self.player.add_stamina(50)
-        else:
-            potion_msg = f"{potion_stock} potions remaining"
-        output = f'<:estamina:1145534039684562994> {self.player.player_username}\'s stamina: '
-        output += str(self.player.player_stamina)
-        embed_msg = discord.Embed(colour=discord.Colour.green(), title="Stamina", description=output)
-
-        embed_msg.add_field(name="", value=potion_msg)
+    @discord.ui.button(label="Lesser Potion", style=discord.ButtonStyle.success, emoji="<:estamina:1145534039684562994>")
+    async def t1_stamina_callback(self, interaction: discord.Interaction, button: discord.Button):
+        embed_msg = use_stamina_potion(self.player, "I1s", 50)
         await interaction.response.edit_message(embed=embed_msg, view=self)
+
+    @discord.ui.button(label="Stamina Potion", style=discord.ButtonStyle.success, emoji="<:estamina:1145534039684562994>")
+    async def t2_stamina_callback(self, interaction: discord.Interaction, button: discord.Button):
+        embed_msg = use_stamina_potion(self.player, "I2s", 250)
+        await interaction.response.edit_message(embed=embed_msg, view=self)
+
+    @discord.ui.button(label="Greater Potion", style=discord.ButtonStyle.success, emoji="<:estamina:1145534039684562994>")
+    async def t3_stamina_callback(self, interaction: discord.Interaction, button: discord.Button):
+        embed_msg = use_stamina_potion(self.player, "I3s", 500)
+        await interaction.response.edit_message(embed=embed_msg, view=self)
+
+    @discord.ui.button(label="Ultimate Potion", style=discord.ButtonStyle.success, emoji="<:estamina:1145534039684562994>")
+    async def t4_stamina_callback(self, interaction: discord.Interaction, button: discord.Button):
+        embed_msg = use_stamina_potion(self.player, "I4s", 1000)
+        await interaction.response.edit_message(embed=embed_msg, view=self)
+
+
+def use_stamina_potion(player_object, item_id, restore_amount):
+    potion_stock = inventory.check_stock(player_object, item_id)
+    if potion_stock > 0:
+        inventory.update_stock(player_object, item_id, -1)
+        player_object.player_stamina += restore_amount
+        player_object.add_stamina(restore_amount)
+    embed_msg = player_object.create_stamina_embed()
+    return embed_msg
 
 
 class BindingTierView(discord.ui.View):
@@ -1209,6 +1223,7 @@ class PerformRitualView(discord.ui.View):
         new_view = BindingTierView(self.player_user)
         await interaction.response.edit_message(embed=embed_msg, view=new_view)
 
+
 def binding_ritual(player_object, essence_type):
     filename = ""
     essence_id = f't{essence_type}'
@@ -1257,7 +1272,7 @@ class CollectionView(discord.ui.View):
 
     @discord.ui.button(label="View Collection", style=discord.ButtonStyle.blurple, emoji="✅")
     async def view_collection(self, interaction: discord.Interaction, button: discord.Button):
-        new_msg, x, y = cycle_tarot(self.player_user,self.embed_msg, 0, 1, 0)
+        new_msg, x, y = cycle_tarot(self.player_user, self.embed_msg, 0, 1, 0)
         new_view = TarotView(self.player_user, self.embed_msg)
         await interaction.response.edit_message(embed=new_msg, view=new_view)
 
@@ -1331,3 +1346,97 @@ def cycle_tarot(player_owner, current_msg, current_position, current_variant, di
                       inline=False)
     new_msg.set_image(url=filename)
     return new_msg, new_position, new_variant
+
+
+class GearView(discord.ui.View):
+    def __init__(self, player_user):
+        super().__init__(timeout=None)
+        self.player_user = player_user
+        self.current_position = 0
+
+    @discord.ui.button(label="Previous", style=discord.ButtonStyle.blurple, emoji="⬅️")
+    async def previous_gear(self, interaction: discord.Interaction, button: discord.Button):
+        direction = -1
+        new_msg, self.current_position = cycle_gear(self.player_user, self.current_position, direction)
+        await interaction.response.edit_message(embed=new_msg)
+
+    @discord.ui.button(label="Next", style=discord.ButtonStyle.blurple, emoji="➡️")
+    async def next_gear(self, interaction: discord.Interaction, button: discord.Button):
+        direction = 1
+        new_msg, self.current_position = cycle_gear(self.player_user, self.current_position, direction)
+        await interaction.response.edit_message(embed=new_msg)
+
+
+def cycle_gear(user, current_position, direction):
+    no_item = ""
+    if current_position == 0 and direction == -1:
+        new_position = 4
+    elif current_position == 4 and direction == 1:
+        new_position = 0
+    else:
+        new_position = current_position + direction
+
+    match new_position:
+        case 0:
+            item_type = "Weapon"
+            if user.equipped_weapon != "":
+                equipped_item = inventory.read_custom_item(user.equipped_weapon)
+            else:
+                no_item = item_type.lower()
+        case 1:
+            item_type = "Armour"
+            if user.equipped_armour != "":
+                equipped_item = inventory.read_custom_item(user.equipped_armour)
+            else:
+                no_item = item_type.lower()
+        case 2:
+            item_type = "Accessory"
+            if user.equipped_acc != "":
+                equipped_item = inventory.read_custom_item(user.equipped_acc)
+            else:
+                no_item = item_type.lower()
+        case 3:
+            item_type = "Wing"
+            if user.equipped_wing != "":
+                equipped_item = inventory.read_custom_item(user.equipped_wing)
+            else:
+                no_item = item_type.lower()
+        case _:
+            item_type = "Crest"
+            if user.equipped_crest != "":
+                equipped_item = inventory.read_custom_item(user.equipped_crest)
+            else:
+                no_item = item_type.lower()
+    if no_item == "":
+        new_msg = equipped_item.create_citem_embed()
+    else:
+        new_msg = discord.Embed(colour=discord.Colour.dark_gray(),
+                                title=f"Equipped {item_type}",
+                                description=f"No {no_item} is equipped")
+    return new_msg, new_position
+
+
+class ManageCustomItemView(discord.ui.View):
+    def __init__(self, player_user, item_id):
+        super().__init__(timeout=None)
+        self.player_user = player_user
+        self.item_id = item_id
+
+    @discord.ui.button(label="Equip", style=discord.ButtonStyle.blurple, emoji="⚔️")
+    async def equip_item(self, interaction: discord.Interaction, button: discord.Button):
+        selected_item = inventory.read_custom_item(self.item_id)
+        new_msg = selected_item.create_citem_embed()
+        response = self.player_user.equip(self.item_id)
+        new_msg.add_field(name=response, value="", inline=False)
+        await interaction.response.edit_message(embed=new_msg, view=None)
+
+    @discord.ui.button(label="Sell", style=discord.ButtonStyle.success, emoji="💲")
+    async def sell_item(self, interaction: discord.Interaction, button: discord.Button):
+        selected_item = inventory.read_custom_item(self.item_id)
+        embed_msg = selected_item.create_citem_embed()
+        response_embed = inventory.sell(self.player_user, selected_item, embed_msg)
+        await interaction.response.edit_message(embed=response_embed, view=None)
+
+    @discord.ui.button(label="Cancel", style=discord.ButtonStyle.red, emoji="✖️")
+    async def cancel(self, interaction: discord.Interaction, button: discord.Button):
+        await interaction.response.edit_message(view=None)

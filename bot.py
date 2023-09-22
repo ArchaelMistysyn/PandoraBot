@@ -2,7 +2,6 @@ import discord
 from discord.ext import commands
 from discord.ext.commands import Bot
 import asyncio
-
 import explore
 import inventory
 import bosses
@@ -15,6 +14,14 @@ import chatcommands
 from discord.ui import Button, View
 import csv
 import menus
+import mysql.connector
+from mysql.connector.errors import Error
+
+# Initialize database
+db_info = None
+with open("bot_db_login.txt", 'r') as data_file:
+    for line in data_file:
+        db_info = line.split(";")
 
 
 # run the bot
@@ -80,8 +87,11 @@ def run_discord_bot():
     async def timed_task(duration_seconds, channel_id, ctx):
 
         # initialize the boss post
-        level = random.randint(1, 50)
-        active_boss = bosses.spawn_boss("Dragon", level)
+        boss_type = "Dragon"
+        new_boss_tier = bosses.get_random_bosstier(boss_type)
+        level = random.randint(0, 9)
+        level += new_boss_tier * 10
+        active_boss = bosses.spawn_boss(new_boss_tier, boss_type, level)
         embed_msg = active_boss.create_boss_msg(0, True)
         raid_button = RaidView()
         sent_message = await ctx.send(embed=embed_msg, view=raid_button)
@@ -106,13 +116,14 @@ def run_discord_bot():
 
                 # spawn a new boss
                 random_number = random.randint(0, 1)
-                if active_boss.boss_type_num == 3:
-                    new_boss_type = 2
+                if active_boss.boss_type_num == 3 or random_number == 0:
+                    boss_type = "Dragon"
                 else:
-                    new_boss_type = active_boss.boss_type_num + random_number
-
-                level = random.randint(1, 50)
-                active_boss = bosses.spawn_boss(new_boss_type, level)
+                    boss_type = "Demon"
+                new_boss_tier = bosses.get_random_bosstier(boss_type)
+                level = random.randint(0, 9)
+                level += new_boss_tier * 10
+                active_boss = bosses.spawn_boss(new_boss_tier, boss_type, level)
                 bosses.clear_list()
                 player_list.clear()
                 embed_msg = active_boss.create_boss_msg(0, True)
@@ -145,23 +156,6 @@ def run_discord_bot():
         else:
             await ctx.send('Not enough !stamina')
 
-    @pandora_bot.command(name='equip', help="**!equip [itemID]** to equip an item")
-    @commands.max_concurrency(1, per=commands.BucketType.default, wait=False)
-    async def equip(ctx, item_id):
-        item_id = item_id.upper()
-        item_identifier = item_id[0].upper()
-        if inventory.if_custom_exists(item_id):
-            selected_item = inventory.read_custom_item(item_id)
-            current_user = player.get_player_by_name(str(ctx.author))
-            if current_user.player_id == selected_item.player_owner:
-                response = current_user.equip(item_identifier, selected_item.item_id)
-            else:
-                response = "wrong item id"
-        else:
-            response = "wrong item id"
-
-        await ctx.send(response)
-
     @pandora_bot.command(name='inlay', help="**!equip [itemID]** to equip an item")
     @commands.max_concurrency(1, per=commands.BucketType.default, wait=False)
     async def equip(ctx, item_id):
@@ -191,7 +185,9 @@ def run_discord_bot():
         user = player.get_player_by_name(player_name)
         if user.spend_stamina(50):
             # initialize the boss post
-            active_boss = bosses.spawn_boss("Fortress", user.player_lvl)
+            boss_type = "Fortress"
+            new_boss_tier = bosses.get_random_bosstier(boss_type)
+            active_boss = bosses.spawn_boss(new_boss_tier, boss_type, user.player_lvl)
             is_alive = True
             embed_msg = active_boss.create_boss_msg(0, is_alive)
             sent_message = await ctx.send(embed=embed_msg)
@@ -248,28 +244,15 @@ def run_discord_bot():
     async def gear(ctx):
         user = player.get_player_by_name(str(ctx.author))
         user.get_equipped()
-        gear_list = []
         if user.equipped_weapon != "":
-            equipped_w = inventory.read_custom_item(user.equipped_weapon)
-            gear_list.append(equipped_w)
-        if user.equipped_armour != "":
-            equipped_a = inventory.read_custom_item(user.equipped_armour)
-            gear_list.append(equipped_a)
-        if user.equipped_acc != "":
-            equipped_y = inventory.read_custom_item(user.equipped_acc)
-            gear_list.append(equipped_y)
-        if user.equipped_wing != "":
-            equipped_g = inventory.read_custom_item(user.equipped_wing)
-            gear_list.append(equipped_g)
-        if user.equipped_crest != "":
-            equipped_c = inventory.read_custom_item(user.equipped_crest)
-            gear_list.append(equipped_c)
-
-        for x in gear_list:
-            embed_msg = x.create_citem_embed()
-            item_info = f'Item ID: {x.item_id}'
-            embed_msg.add_field(name=item_info, value="", inline=False)
-            await ctx.send(embed=embed_msg)
+            equipped_item = inventory.read_custom_item(user.equipped_weapon)
+            embed_msg = equipped_item.create_citem_embed()
+            gear_view = menus.GearView(user)
+        else:
+            embed_msg = discord.Embed(colour=discord.Colour.dark_gray(),
+                                      title="Equipped weapon",
+                                      description="No weapon is equipped")
+        await ctx.send(embed=embed_msg, view=gear_view)
 
     @pandora_bot.command(name='inv', help="**!inv** to display your gear and item inventory")
     @commands.max_concurrency(1, per=commands.BucketType.default, wait=False)
@@ -289,12 +272,7 @@ def run_discord_bot():
     async def stamina(ctx):
         user = ctx.author
         player_object = player.get_player_by_name(user)
-        potion_stock = inventory.check_stock(player_object, "I1s")
-        output = f'<:estamina:1145534039684562994> {player_object.player_username}\'s stamina: '
-        output += str(player_object.player_stamina)
-        embed_msg = discord.Embed(colour=discord.Colour.green(), title="Stamina", description=output)
-        potion_msg = f"Potion Stock: {potion_stock}"
-        embed_msg.add_field(name="", value=potion_msg)
+        embed_msg = player_object.create_stamina_embed()
         stamina_view = menus.StaminaView(player_object)
         await ctx.send(embed=embed_msg, view=stamina_view)
 
@@ -355,20 +333,24 @@ def run_discord_bot():
     @pandora_bot.command(name='item', help="**!item** to display your item details")
     @commands.max_concurrency(1, per=commands.BucketType.default, wait=False)
     async def item(ctx, item_id):
-        user = ctx.author
-        player_object = player.get_player_by_name(user)
+        user = player.get_player_by_name(str(ctx.author))
         item_identifier = item_id.upper()
         if inventory.if_custom_exists(item_identifier):
             selected_item = inventory.read_custom_item(item_identifier)
-            if player_object.player_id == selected_item.player_owner:
+            if user.player_id == selected_item.player_owner:
                 embed_msg = selected_item.create_citem_embed()
-                await ctx.send(embed=embed_msg)
+                manage_item_view = menus.ManageCustomItemView(user, item_identifier)
+                await ctx.send(embed=embed_msg, view=manage_item_view)
             else:
-                message = "wrong item id"
-                await ctx.send(message)
+                embed_msg = discord.Embed(colour=discord.Colour.dark_orange(),
+                                          title="You do not own an item with this ID.",
+                                          description=f"Inputted ID: {item_id}")
+                await ctx.send(embed=embed_msg)
         else:
-            message = "wrong item id"
-            await ctx.send(message)
+            embed_msg = discord.Embed(colour=discord.Colour.dark_orange(),
+                                      title="An item with this ID does not exist.",
+                                      description=f"Inputted ID: {item_id}")
+            await ctx.send(embed=embed_msg)
 
     @pandora_bot.command(name='who', help="**!who [NewUsername]** to set your username")
     @commands.max_concurrency(1, per=commands.BucketType.default, wait=False)
@@ -453,6 +435,14 @@ def run_discord_bot():
                                   title="Credits",
                                   description=credit_list)
         embed_msg.set_image(url="https://i.ibb.co/QjWDYG3/forge.jpg")
+        await ctx.send(embed=embed_msg)
+
+    @pandora_bot.command(name='sell', help="**!sell [item_id]** to sell an unequipped item")
+    @commands.max_concurrency(1, per=commands.BucketType.default, wait=False)
+    async def sell(ctx, item_id):
+        embed_msg = discord.Embed(colour=discord.Colour.dark_orange(),
+                                  title="An item with this ID does not exist.",
+                                  description=f"Inputted ID: {item_id}")
         await ctx.send(embed=embed_msg)
 
     pandora_bot.run(TOKEN)

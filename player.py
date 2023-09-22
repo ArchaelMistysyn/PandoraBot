@@ -4,6 +4,8 @@ from csv import DictReader
 import inventory
 import damagecalc
 import math
+import loot
+import discord
 import random
 
 
@@ -354,10 +356,10 @@ class PlayerProfile:
                     case _:
                         no_change = True
 
-    def equip(self, item_identifier, item_id) -> str:
+    def equip(self, item_id) -> str:
         filename = "playerlist.csv"
         df = pd.read_csv(filename)
-        match item_identifier:
+        match item_id:
             case 'W':
                 self.equipped_weapon = item_id
                 response = f"Weapon {item_id} is now equipped."
@@ -379,11 +381,61 @@ class PlayerProfile:
                 response = f"Crest {item_id} is now equipped."
                 df.loc[df["player_name"] == str(self.player_name), "equip_crest_id"] = item_id
             case _:
-                response = "error"
+                response = "Item is not equipable."
 
         df.to_csv(filename, index=False)
 
         return response
+
+    def check_equipped(self, user, item_id):
+        response = ""
+        user.get_equipped()
+
+        match item_id[0]:
+            case 'W':
+                check = self.equipped_weapon
+            case 'A':
+                check = self.equipped_armour
+            case 'Y':
+                check = self.equipped_acc
+            case 'G':
+                check = self.equipped_wing
+            case 'C':
+                check = self.equipped_crest
+            case 'D':
+                item_list = []
+                if self.equipped_weapon != "":
+                    item_list.append(inventory.read_custom_item(self.equipped_weapon))
+                if self.equipped_armour != "":
+                    item_list.append(inventory.read_custom_item(self.equipped_armour))
+                if self.equipped_acc != "":
+                    item_list.append(inventory.read_custom_item(self.equipped_acc))
+                if self.equipped_wing != "":
+                    item_list.append(inventory.read_custom_item(self.equipped_wing))
+                if self.equipped_crest != "":
+                    item_list.append(inventory.read_custom_item(self.equipped_crest))
+
+                for x in item_list:
+                    check = x.item_inlaid_gem_id
+                    if item_id == check:
+                        response = f"Dragon Heart Gem {item_id} is already inlaid."
+            case _:
+                response = f"Item {item_id} is not recognized."
+        if item_id == check:
+            response = f"Item {item_id} is equipped."
+        return response
+
+    def create_stamina_embed(self):
+        potion_list = ["I1s", "I2s", "I3s", "I4s"]
+        potion_msg = ""
+        for x in potion_list:
+            potion_stock = inventory.check_stock(self, str(x))
+            potion_msg += f"\n{loot.get_loot_emoji(str(x))} {potion_stock}x {loot.get_loot_name(str(x))}"
+        output = f'<:estamina:1145534039684562994> {self.player_username}\'s stamina: '
+        output += str(self.player_stamina)
+        embed_msg = discord.Embed(colour=discord.Colour.green(), title="Stamina", description=output)
+        embed_msg.add_field(name="", value=potion_msg)
+        return embed_msg
 
 
 def check_username(new_name: str):
@@ -438,9 +490,9 @@ def get_max_exp(player_lvl):
     return exp_required
 
 
-def checkNaN(str):
+def checkNaN(test_string):
     try:
-        result = math.isnan(float(str))
+        result = math.isnan(float(test_string))
         return result
     except Exception as e:
         return False

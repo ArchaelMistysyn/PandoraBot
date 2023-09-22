@@ -3,10 +3,15 @@ import random
 import bosses
 import damagecalc
 import pandas as pd
+import loot
 import player
 import discord
 import jinja2
 from IPython.display import display
+import sqlite3
+import mysql.connector
+from mysql.connector.errors import Error
+import bot
 
 
 class CustomItem:
@@ -166,7 +171,8 @@ class CustomItem:
         gem_min = 0
         gem_max = 0
 
-        item_title = f'{self.item_name}'
+        item_title = f'{self.item_name} '
+        item_title = item_title.ljust(46, "᲼")
 
         if self.item_id[0] == "D":
             damage_bonus = f'Base Damage: {self.item_damage_min:,}'
@@ -238,7 +244,8 @@ class CustomItem:
                 if gem_id == "":
                     display_stars += " Socket: <:esocket:1148387477615300740>"
                 else:
-                    display_stars += f" Socket: {gem_id} Equipped"
+                    gem_emoji = "🔵"
+                    display_stars += f" Socket: {gem_emoji} {gem_id}"
                     e_gem = read_custom_item(gem_id)
                     gem_min = e_gem.item_damage_min
                     gem_max = e_gem.item_damage_max
@@ -254,6 +261,8 @@ class CustomItem:
             all_rolls = prefix_rolls + suffix_rolls
             if all_rolls != "":
                 embed_msg.add_field(name="", value=all_rolls, inline=False)
+        item_info = f'Item ID: {self.item_id}'
+        embed_msg.add_field(name=item_info, value="", inline=False)
         embed_msg.set_thumbnail(url=thumb_img)
         return embed_msg
 
@@ -610,7 +619,6 @@ class CustomGem(CustomItem):
 
 
 def gem_stat_reader(item_code):
-    buff_type = ""
     buff_amount = 0
     tier_code = int(item_code[1])
     if item_code[0] == "P":
@@ -777,7 +785,7 @@ def generate_armour_base(item_tier) -> str:
 
 
 def generate_accessory_base() -> str:
-    random_number = random.randint(1,5)
+    random_number = random.randint(1, 5)
     match random_number:
         case 1:
             item_base = "Amulet"
@@ -818,6 +826,7 @@ def inventory_add_custom_item(item) -> str:
     # item name and id
     player_id = item.player_owner
     item_id = item.item_id
+    item_type = item_id[0]
     item_name = item.item_name
 
     # item elements and damage type
@@ -833,7 +842,7 @@ def inventory_add_custom_item(item) -> str:
     item_base_tier = item.item_base_tier
     item_blessing_tier = item.item_blessing_tier
     item_material_tier = item.item_material_tier
-    item_type = item.item_type
+    item_base_type = item.item_type
 
     # item rolls
     item_prefix_values = ""
@@ -854,7 +863,6 @@ def inventory_add_custom_item(item) -> str:
 
     # sockets
     item_num_sockets = item.item_num_sockets
-    item_inlaid_gem_id = item.item_inlaid_gem_id
 
     # insert item into csv file
     with open(filename, 'a', newline='') as file:
@@ -862,10 +870,36 @@ def inventory_add_custom_item(item) -> str:
 
         writer.writerow([player_id, item_id, item_name,
                          item_elements, item_damage_type,
-                         item_enhancement, item_base_tier, item_blessing_tier, item_material_tier, item_type,
+                         item_enhancement, item_base_tier, item_blessing_tier, item_material_tier, item_base_type,
                          item_num_stars, item_prefix_values, item_suffix_values,
                          item_bonus_stat, item_base_dmg_min, item_base_dmg_max,
-                         item_num_sockets,item_inlaid_gem_id])
+                         item_num_sockets, item_inlaid_gem_id])
+    try:
+        pandora_db = mysql.connector.connect(
+            host=bot.db_info[0],
+            database=bot.db_info[1],
+            user=bot.db_info[2],
+            password=bot.db_info[3]
+        )
+        cursor = pandora_db.cursor()
+        query = """
+            INSERT INTO CustomInventory
+            (player_id, item_type, item_name, item_damage_type, item_elements, item_enhancement, item_tier,
+            item_blessing_tier, item_material_tier, item_base_type, item_num_stars, 
+            item_prefix_values, item_suffix_values, item_bonus_stat, item_base_dmg_min, item_base_dmg_max,
+            item_num_sockets)
+            VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        """
+        values = (player_id, item_type, item_name, item_damage_type, item_elements, item_enhancement, item_base_tier,
+                  item_blessing_tier, item_material_tier, item_base_type, item_num_stars,
+                  item_prefix_values, item_suffix_values, item_bonus_stat, item_base_dmg_min, item_base_dmg_max,
+                  item_num_sockets)
+        print(values)
+        cursor.execute(query, values)
+
+        pandora_db.close()
+    except mysql.connector.Error as err:
+        print("Database Error: {}".format(err))
 
     return 'You have placed the item in your inventory'
 
@@ -909,25 +943,25 @@ def get_gear_tier_colours(base_tier):
     match base_tier:
         case 0:
             tier_colour = discord.Colour.dark_gray()
-            tier_emoji = "⚫"
+            tier_emoji = '⚫'
         case 1:
             tier_colour = discord.Colour.green()
-            tier_emoji = "🟢"
+            tier_emoji = '🟢'
         case 2:
             tier_colour = discord.Colour.blue()
-            tier_emoji = "🔵"
+            tier_emoji = '🔵'
         case 3:
             tier_colour = discord.Colour.purple()
-            tier_emoji = "🟣"
+            tier_emoji = '🟣'
         case 4:
             tier_colour = discord.Colour.gold()
-            tier_emoji = "🟡"
+            tier_emoji = '🟡'
         case 5:
             tier_colour = discord.Colour.red()
-            tier_emoji = "🔴"
+            tier_emoji = '🔴'
         case _:
             tier_colour = discord.Colour.pink()
-            tier_emoji = "⚪"
+            tier_emoji = '⚪'
 
     return tier_colour, tier_emoji
 
@@ -1176,7 +1210,7 @@ def try_refine(player_owner, item_type, selected_tier):
                     new_item.base_damage_max = random_damage2
                 else:
                     new_item.base_damage_min = random_damage2
-                    new_item.base_damage_max= random_damage1
+                    new_item.base_damage_max = random_damage1
                 bonus_roll = random.randint(21, 29)
                 new_item.item_bonus_stat = float(bonus_roll) * 0.1
                 new_item.item_type = generate_special_weapon_base(new_item.item_damage_type, selected_tier)
@@ -1256,3 +1290,20 @@ def check_tarot(player_owner, card_file):
     else:
         quantity = 0
     return quantity
+
+
+def sell(user, item, embed_msg):
+    response_embed = embed_msg
+    response = user.check_equipped(user, item.item_id)
+    sell_value = item.item_base_tier * 100
+    if response == "":
+        user.player_coins += sell_value
+        user.update_coins(sell_value)
+        filename = "cinventory.csv"
+        df = pd.read_csv(filename)
+        df = df.loc[df['item_id'] != item.item_id]
+        df.to_csv(filename, index=False)
+        response_embed.add_field(name="Item Sold!", value=f"{sell_value} lotus coins acquired.", inline=False)
+    else:
+        response_embed.add_field(name="Item Not Sold!", value=response, inline=False)
+    return response_embed

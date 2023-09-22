@@ -4,7 +4,7 @@ import random
 import player
 
 
-class basicItem:
+class BasicItem:
     def __init__(self, item_id):
         self.item_id = item_id
         self.item_name = ""
@@ -28,7 +28,6 @@ class basicItem:
 
 
 def award_loot(boss_object, player_list, exp_amount):
-    filename = "droptable.csv"
     boss_tier = boss_object.boss_tier
     coin_amount = boss_object.boss_type_num * boss_tier * 100
     loot_msg = []
@@ -39,6 +38,16 @@ def award_loot(boss_object, player_list, exp_amount):
         temp_player.add_exp(exp_amount)
         temp_player.update_coins(coin_amount)
         loot_msg.append(f"<:eexp:1148088187516891156> {exp_amount}x\n🤑 {coin_amount}x\n")
+        if ' - ' in boss_object.boss_name:
+            temp = boss_object.boss_name.split(" ", 1)
+            tarot_id = f"t{temp[0]}"
+            filename = "itemlist.csv"
+            with (open(filename, 'r') as f):
+                for line in csv.DictReader(f):
+                    if str(line['item_id']) == tarot_id:
+                        loot_msg[counter] += f"{str(line['item_emoji'])} 1x {str(line['item_name'])}\n"
+                        df_change.loc[len(df_change)] = [temp_player.player_id, tarot_id, 1]
+        filename = "droptable.csv"
         with (open(filename, 'r') as f):
             for line in csv.DictReader(f):
                 if str(line['boss_type']) == str(boss_object.boss_type) and int(line['boss_tier']) <= int(boss_tier):
