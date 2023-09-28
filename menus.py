@@ -5,6 +5,9 @@ import loot
 import random
 import player
 import explore
+import tarot
+import mydb
+import pandorabot
 
 
 # Forge menu
@@ -286,41 +289,28 @@ class SelectView(discord.ui.View):
         ]
     )
     async def select_callback(self, interaction: discord.Interaction, item_select: discord.ui.Select):
-        error_msg = ""
         match item_select.values[0]:
             case "Weapon":
-                if self.player_object.equipped_weapon != "":
-                    self.selected_item = inventory.read_custom_item(self.player_object.equipped_weapon)
-                else:
-                    error_msg = "Not equipped"
+                selected_item = self.player_object.equipped_weapon
             case "Armour":
-                if self.player_object.equipped_armour != "":
-                    self.selected_item = inventory.read_custom_item(self.player_object.equipped_armour)
-                else:
-                    error_msg = "Not equipped"
+                selected_item = self.player_object.equipped_armour
             case "Accessory":
-                if self.player_object.equipped_acc != "":
-                    self.selected_item = inventory.read_custom_item(self.player_object.equipped_acc)
-                else:
-                    error_msg = "Not equipped"
+                selected_item = self.player_object.equipped_acc
             case "Wing":
-                if self.player_object.equipped_wing != "":
-                    self.selected_item = inventory.read_custom_item(self.player_object.equipped_wing)
-                else:
-                    error_msg = "Not equipped"
+                selected_item = self.player_object.equipped_wing
             case "Crest":
-                if self.player_object.equipped_crest != "":
-                    self.selected_item = inventory.read_custom_item(self.player_object.equipped_crest)
-                else:
-                    error_msg = "Not equipped"
+                selected_item = self.player_object.equipped_crest
             case _:
-                error_msg = "Error"
-        if error_msg == "":
+                selected_item = 0
+        if selected_item != 0:
+            self.selected_item = inventory.read_custom_item(selected_item)
             embed_msg = self.selected_item.create_citem_embed()
             new_view = ForgeView(self.player_object, self.selected_item)
             await interaction.response.edit_message(embed=embed_msg, view=new_view)
         else:
-            await interaction.response.edit_message(view=None)
+            error_msg = "Not equipped"
+            error_embed = create_error_embed(error_msg)
+            await interaction.response.edit_message(embed=error_embed, view=None)
 
 
 # Inventory menu
@@ -552,11 +542,11 @@ def refine_item(player_user, selected_type, selected_tier):
     item_id = f"I{str(selected_tier)}"
 
     match selected_type:
-        case "Dragon Heart Gems":
+        case "Dragon Heart Gem":
             item_id += "n"
-        case "Wings":
+        case "Dragon Wing":
             item_id += "m"
-        case "Paragon Crests":
+        case "Paragon Crest":
             item_id += "o"
         case _:
             item_id += "x"
@@ -564,7 +554,7 @@ def refine_item(player_user, selected_type, selected_tier):
     if inventory.check_stock(player_user, item_id) > 0:
         inventory.update_stock(player_user, item_id, -1)
         new_item = inventory.try_refine(player_user.player_id, selected_type, selected_tier)
-        if new_item.item_id != "":
+        if new_item.item_id != 0:
             inventory.inventory_add_custom_item(new_item)
             embed_msg = new_item.create_citem_embed()
         else:
@@ -607,57 +597,31 @@ class InlaySelectView(discord.ui.View):
     )
     async def inlay_select_callback(self, interaction: discord.Interaction, inlay_select: discord.ui.Select):
         selected_type = inlay_select.values[0]
-        not_equipped = True
         no_socket = True
         self.player_user.get_equipped()
         match selected_type:
             case "Weapon":
-                if self.player_user.equipped_weapon != "":
-                    not_equipped = False
-                    e_item = inventory.read_custom_item(self.player_user.equipped_weapon)
-                    if e_item.item_num_sockets == 1:
-                        no_socket = False
-                        embed_msg = e_item.create_citem_embed()
-                        confirm_view = ConfirmInlayView(self.player_user, e_item, self.gem_id)
+                selected_item = self.player_user.equipped_weapon
             case "Armour":
-                if self.player_user.equipped_armour != "":
-                    not_equipped = False
-                    e_item = inventory.read_custom_item(self.player_user.equipped_armour)
-                    if e_item.item_num_sockets == 1:
-                        no_socket = False
-                        embed_msg = e_item.create_citem_embed()
-                        confirm_view = ConfirmInlayView(self.player_user, e_item, self.gem_id)
+                selected_item = self.player_user.equipped_armour
             case "Accessory":
-                if self.player_user.equipped_acc != "":
-                    not_equipped = False
-                    e_item = inventory.read_custom_item(self.player_user.equipped_acc)
-                    if e_item.item_num_sockets == 1:
-                        no_socket = False
-                        embed_msg = e_item.create_citem_embed()
-                        confirm_view = ConfirmInlayView(self.player_user, e_item, self.gem_id)
+                selected_item = self.player_user.equipped_acc
             case "Wings":
-                if self.player_user.equipped_wing != "":
-                    not_equipped = False
-                    e_item = inventory.read_custom_item(self.player_user.equipped_wing)
-                    if e_item.item_num_sockets == 1:
-                        no_socket = False
-                        embed_msg = e_item.create_citem_embed()
-                        confirm_view = ConfirmInlayView(self.player_user, e_item, self.gem_id)
+                selected_item = self.player_user.equipped_wing
             case _:
-                if self.player_user.equipped_crest != "":
-                    not_equipped = False
-                    e_item = inventory.read_custom_item(self.player_user.equipped_crest)
-                    if e_item.item_num_sockets == 1:
-                        no_socket = False
-                        embed_msg = e_item.create_citem_embed()
-                        confirm_view = ConfirmInlayView(self.player_user, e_item, self.gem_id)
-
-        if not_equipped:
+                selected_item = self.player_user.equipped_crest
+        if self.player_user.equipped_weapon != 0:
+            e_item = inventory.read_custom_item(selected_item)
+            if e_item.item_num_sockets == 1:
+                no_socket = False
+                embed_msg = e_item.create_citem_embed()
+                confirm_view = ConfirmInlayView(self.player_user, e_item, self.gem_id)
+        else:
             embed_msg = discord.Embed(colour=discord.Colour.dark_orange(),
                                       title="Inlay Failed.",
                                       description="No item equipped in this slot")
             await interaction.response.edit_message(embed=embed_msg)
-        elif no_socket:
+        if no_socket:
             embed_msg = discord.Embed(colour=discord.Colour.dark_orange(),
                                       title="Inlay Failed.",
                                       description="This equipped item has no socket")
@@ -712,18 +676,19 @@ class TreasureView(discord.ui.View):
         if self.user.spend_stamina(25):
             match self.item_type:
                 case "weapon":
-                    self.new_item = inventory.CustomWeapon(self.user.player_id)
+                    item_type = "W"
                 case "armour":
-                    self.new_item = inventory.CustomArmour(self.user.player_id)
+                    item_type = "A"
                 case "accessory":
-                    self.new_item = inventory.CustomAccessory(self.user.player_id)
+                    item_type = "Y"
                 case _:
-                    self.new_item = inventory.CustomWeapon(self.user.player_id)
+                    item_type = "W"
+            inventory.CustomItem(self.user.player_id, item_type, 1)
             embed_msg = self.new_item.create_citem_embed()
             inquiry = f"Would you like to keep or discard this {self.item_type}?"
-            gear_colours = inventory.get_gear_tier_colours(self.new_item.item_base_tier)
+            gear_colours = inventory.get_gear_tier_colours(self.new_item.item_tier)
             tier_emoji = gear_colours[1]
-            embed_msg.add_field(name=f'{tier_emoji} Tier {str(self.new_item.item_base_tier)} item found!',
+            embed_msg.add_field(name=f'{tier_emoji} Tier {str(self.new_item.item_tier)} item found!',
                                 value=inquiry, inline=False)
             await interaction.response.edit_message(embed=embed_msg, view=self)
         else:
@@ -853,30 +818,24 @@ class TreasureRoomView(discord.ui.View):
             random_type = random.randint(1, 5)
             match random_type:
                 case 1 | 2:
-                    item_object = inventory.CustomWeapon(self.player.player_id)
-                    for x in range(self.room.room_tier - 1):
-                        new_object = inventory.CustomWeapon(self.player.player_id)
-                        if new_object.item_base_tier > item_object.item_base_tier:
-                            item_object = new_object
+                    item_type = "W"
                 case 3 | 4:
-                    item_object = inventory.CustomArmour(self.player.player_id)
-                    for x in range(self.room.room_tier - 1):
-                        new_object = inventory.CustomArmour(self.player.player_id)
-                        if new_object.item_base_tier > item_object.item_base_tier:
-                            item_object = new_object
+                    item_type = "A"
                 case _:
-                    item_object = inventory.CustomAccessory(self.player.player_id)
-                    for x in range(self.room.room_tier - 1):
-                        new_object = inventory.CustomAccessory(self.player.player_id)
-                        if new_object.item_base_tier > item_object.item_base_tier:
-                            item_object = new_object
-            embed_msg = item_object.create_citem_embed()
-            gear_colours = inventory.get_gear_tier_colours(item_object.item_base_tier)
+                    item_type = "Y"
+            new_tier = inventory.generate_random_tier()
+            for x in range(self.room.room_tier - 1):
+                check_tier = inventory.generate_random_tier()
+                if check_tier > new_tier:
+                    new_tier = check_tier
+            new_object = inventory.CustomItem(self.player.player_id, item_type, new_tier)
+            embed_msg = new_object.create_citem_embed()
+            gear_colours = inventory.get_gear_tier_colours(new_object.item_tier)
             tier_emoji = gear_colours[1]
-            embed_msg.add_field(name=f'{tier_emoji} Tier {str(item_object.item_base_tier)} item found!',
+            embed_msg.add_field(name=f'{tier_emoji} Tier {str(new_object.item_tier)} item found!',
                                 value="",
                                 inline=False)
-            new_view = ItemRoomView(self.player, self.room, item_object)
+            new_view = ItemRoomView(self.player, self.room, new_object)
         await interaction.response.edit_message(embed=embed_msg, view=new_view)
 
     @discord.ui.button(label="Move on", style=discord.ButtonStyle.blurple, emoji="⬆️")
@@ -1244,8 +1203,16 @@ def binding_ritual(player_object, essence_type):
             result = "Binding Failed!"
             description_msg = "The essence is gone."
         else:
-            card_file = f'{essence_type}variant{str(variant_num)}'
-            filename = f'https://kyleportfolio.ca/botimages/tarot/{card_file}.png'
+            name_position = tarot.get_numeral_by_number(essence_type)
+            card_name = tarot.tarot_card_list(name_position)
+            tarot_check = tarot.check_tarot(player_object.player_id, card_name)
+            if tarot_check:
+                new_qty = tarot_check.card_qty + 1
+                tarot_check.set_tarot_field("card_qty", new_qty)
+            else:
+                new_tarot = tarot.TarotCard(player_object.player_id, essence_type, variant_num, card_name,
+                                            1, 0, 0, 0)
+                new_tarot.add_tarot_card()
             result = "Binding Successful!"
             inventory.update_tarot_inventory(player_object, card_file)
             description_msg = "The sealed tarot card has been added to your collection."
@@ -1330,13 +1297,14 @@ def cycle_tarot(player_owner, current_msg, current_position, current_variant, di
     else:
         new_variant = current_variant + direction
         new_position = current_position
-    card_file = f'{card_num_list[new_position]}variant{new_variant}'
     current_msg.clear_fields()
     new_msg = current_msg
-    card_qty = inventory.check_tarot(player_owner, card_file)
-    if card_qty > 0:
-        filename = f'https://kyleportfolio.ca/botimages/tarot/{card_file}.png'
+    card_checker = tarot.check_tarot(player_owner.player_id, card_name_list[new_position], new_variant)
+    if card_checker:
+        card_qty = card_checker.card_qty
+        filename = card_checker.card_image_link
     else:
+        card_qty = 0
         filename = ""
     new_msg.add_field(name=f"Tarot Card: {card_num_list[new_position]} {card_name_list[new_position]}",
                       value=f"Variant {new_variant}",
@@ -1379,37 +1347,24 @@ def cycle_gear(user, current_position, direction):
     match new_position:
         case 0:
             item_type = "Weapon"
-            if user.equipped_weapon != "":
-                equipped_item = inventory.read_custom_item(user.equipped_weapon)
-            else:
-                no_item = item_type.lower()
+            selected_item = user.equipped_weapon
         case 1:
             item_type = "Armour"
-            if user.equipped_armour != "":
-                equipped_item = inventory.read_custom_item(user.equipped_armour)
-            else:
-                no_item = item_type.lower()
+            selected_item = user.equipped_armour
         case 2:
             item_type = "Accessory"
-            if user.equipped_acc != "":
-                equipped_item = inventory.read_custom_item(user.equipped_acc)
-            else:
-                no_item = item_type.lower()
+            selected_item = user.equipped_acc
         case 3:
             item_type = "Wing"
-            if user.equipped_wing != "":
-                equipped_item = inventory.read_custom_item(user.equipped_wing)
-            else:
-                no_item = item_type.lower()
+            selected_item = user.equipped_wing
         case _:
             item_type = "Crest"
-            if user.equipped_crest != "":
-                equipped_item = inventory.read_custom_item(user.equipped_crest)
-            else:
-                no_item = item_type.lower()
-    if no_item == "":
+            selected_item = user.equipped_crest
+    if selected_item != 0:
+        equipped_item = inventory.read_custom_item(selected_item)
         new_msg = equipped_item.create_citem_embed()
     else:
+        no_item = item_type.lower()
         new_msg = discord.Embed(colour=discord.Colour.dark_gray(),
                                 title=f"Equipped {item_type}",
                                 description=f"No {no_item} is equipped")
@@ -1426,7 +1381,7 @@ class ManageCustomItemView(discord.ui.View):
     async def equip_item(self, interaction: discord.Interaction, button: discord.Button):
         selected_item = inventory.read_custom_item(self.item_id)
         new_msg = selected_item.create_citem_embed()
-        response = self.player_user.equip(self.item_id)
+        response = self.player_user.equip(selected_item)
         new_msg.add_field(name=response, value="", inline=False)
         await interaction.response.edit_message(embed=new_msg, view=None)
 
@@ -1440,3 +1395,105 @@ class ManageCustomItemView(discord.ui.View):
     @discord.ui.button(label="Cancel", style=discord.ButtonStyle.red, emoji="✖️")
     async def cancel(self, interaction: discord.Interaction, button: discord.Button):
         await interaction.response.edit_message(view=None)
+
+
+def create_error_embed(error_msg):
+    embed_msg = discord.Embed(colour=discord.Colour.dark_orange(),
+                              title="Error",
+                              description=error_msg)
+    return embed_msg
+
+
+class QuestView(discord.ui.View):
+    def __init__(self, player_user, quest_object):
+        super().__init__(timeout=None)
+        self.player_object = player_user
+        self.quest_object = quest_object
+
+    @discord.ui.button(label="Hand In", style=discord.ButtonStyle.blurple, emoji="⚔️")
+    async def hand_in(self, interaction: discord.Interaction, button: discord.Button):
+        embed_msg, is_completed = self.quest_object.hand_in(self.player_object)
+        if is_completed:
+            reward_view = RewardView(self.player_object)
+            if self.quest_object.award_role != "":
+                add_role = discord.utils.get(user.server.roles, name=self.quest_object.award_role)
+                await interaction.user.add_roles(add_role)
+                if self.player_object.player_echelon != 1:
+                    previous_role = role_list[(self.player_object.player_echelon - 2)]
+                    remove_role = discord.utils.get(user.server.roles, name=previous_role)
+                    await interaction.user.remove_roles(remove_role)
+            await interaction.response.edit_message(embed=embed_msg, view=reward_view)
+        else:
+            embed_msg.add_field(name="", value="Quest is not yet completed!", inline=False)
+            await interaction.response.edit_message(embed=embed_msg, view=None)
+
+    @discord.ui.button(label="Cancel", style=discord.ButtonStyle.red, emoji="✖️")
+    async def cancel(self, interaction: discord.Interaction, button: discord.Button):
+        await interaction.response.edit_message(view=None)
+
+
+class RewardView(discord.ui.View):
+    def __init__(self, player_user):
+        super().__init__(timeout=None)
+        self.player_object = player_user
+
+    @discord.ui.button(label="Next Quest", style=discord.ButtonStyle.blurple, emoji="⚔️")
+    async def next_quest(self, interaction: discord.Interaction, button: discord.Button):
+        end_quest = 50
+        if self.player_object.player_quest <= end_quest:
+            current_quest = self.player_object.player_quest
+            quest_object = get_quest(current_quest, self.player_object)
+            token_count = self.player_object.check_tokens(current_quest)
+            quest_object.set_quest_output(token_count)
+            embed_msg = discord.Embed(colour=discord.Colour.dark_teal(),
+                                      title=quest_object.quest_title,
+                                      description=quest_object.story_message)
+            embed_msg.add_field(name=f"Quest", value=quest_object.quest_output, inline=False)
+            quest_view = menus.QuestView(user, quest_object)
+            await ctx.send(embed=embed_msg, view=quest_view)
+        else:
+            embed_msg.add_field(name="", value="Quest is not yet completed!", inline=False)
+            await interaction.response.edit_message(embed=embed_msg, view=None)
+
+    @discord.ui.button(label="Cancel", style=discord.ButtonStyle.red, emoji="✖️")
+    async def cancel(self, interaction: discord.Interaction, button: discord.Button):
+        await interaction.response.edit_message(view=None)
+
+
+class ClassSelect(discord.ui.View):
+    def __init__(self, player_name, username):
+        super().__init__(timeout=None)
+        self.username = username
+        self.player_name = player_name
+
+    @discord.ui.select(
+        placeholder="Select a class!",
+        min_values=1,
+        max_values=1,
+        options=[
+            discord.SelectOption(
+                emoji="<:cB:1154266777396711424>", label="Knight", description="The Valiant Knight"),
+            discord.SelectOption(
+                emoji="<:cA:1150195102589931641>", label="Ranger", description="The Precise Ranger"),
+            discord.SelectOption(
+                emoji="<:cC:1150195246588764201>", label="Mage", description="The Arcane Mage"),
+            discord.SelectOption(
+                emoji="❌", label="Assassin", description="The Stealthy Assassin"),
+            discord.SelectOption(
+                emoji="❌", label="Weaver", description="The Mysterious Weaver"),
+            discord.SelectOption(
+                emoji="❌", label="Rider", description="The Mounted Rider"),
+            discord.SelectOption(
+                emoji="<:cD:1150195280969478254>", label="Summoner", description="The Trusted Summoner")
+        ]
+    )
+    async def class_callback(self, interaction: discord.Interaction, class_select: discord.ui.Select):
+        new_player = player.PlayerProfile()
+        new_player.player_name = self.player_name
+        new_player.player_username = self.username
+        chosen_class = pandorabot.class_icon_dict[class_select.values[0]]
+        response = new_player.add_new_player(chosen_class)
+        embed_msg = discord.Embed(colour=discord.Colour.dark_teal(),
+                                  title="Register",
+                                  description=response)
+        await interaction.response.edit_message(embed=embed_msg, view=None)

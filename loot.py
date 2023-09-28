@@ -2,6 +2,14 @@ import pandas as pd
 import csv
 import random
 import player
+import mysql.connector
+from mysql.connector.errors import Error
+import sqlalchemy
+from sqlalchemy import text
+import mysql
+import pymysql
+from sqlalchemy import exc
+import mydb
 
 
 class BasicItem:
@@ -35,9 +43,11 @@ def award_loot(boss_object, player_list, exp_amount):
     df_change = pd.DataFrame(columns=labels)
     for counter, x in enumerate(player_list):
         temp_player = player.get_player_by_id(x)
-        temp_player.add_exp(exp_amount)
-        temp_player.update_coins(coin_amount)
-        loot_msg.append(f"<:eexp:1148088187516891156> {exp_amount}x\n🤑 {coin_amount}x\n")
+        temp_player.player_exp += exp_amount
+        temp_player.player_coins += coin_amount
+        temp_player.set_player_field("player_exp", temp_player.player_exp)
+        temp_player.set_player_field("player_coins", temp_player.player_coins)
+        loot_msg.append(f"{pandorabot.exp_icon} {exp_amount}x\n{pandorabot.coin_icon} {coin_amount}x\n")
         if ' - ' in boss_object.boss_name:
             temp = boss_object.boss_name.split(" ", 1)
             tarot_id = f"t{temp[0]}"
@@ -63,10 +73,19 @@ def award_loot(boss_object, player_list, exp_amount):
                     if qty != 0:
                         df_change.loc[len(df_change)] = [temp_player.player_id, dropped_item, qty]
                         loot_msg[counter] += f'{item_emoji} {str(qty)}x {item_name}\n'
-    filename = 'binventory.csv'
-    df_existing = pd.read_csv(filename)
-    df_updated = pd.concat([df_existing, df_change]).groupby(['player_id', 'item_id']).sum().reset_index()
-    df_updated.to_csv(filename, index=False)
+    try:
+        engine_url = mydb.get_engine_url()
+        engine = sqlalchemy.create_engine(engine_url)
+        pandora_db = engine.connect()
+        query = text(f"SELECT * FROM BasicInventory")
+        df_existing = pd.read_sql(query, pandora_db)
+        df_updated = pd.concat([df_existing, df_change]).groupby(['player_id', 'item_id']).sum().reset_index()
+        df_updated.to_sql("BasicInventory", pandora_db, index=False)
+        pandora_db.close()
+        engine.dispose()
+    except exc.SQLAlchemyError as error:
+        print(error)
+
     return loot_msg
 
 
@@ -80,7 +99,6 @@ def is_dropped(drop_rate) -> bool:
 
 def get_loot_emoji(item_id) -> str:
     filename = "itemlist.csv"
-
     with (open(filename, 'r') as f):
         for line in csv.DictReader(f):
             if str(line["item_id"]) == str(item_id):
@@ -91,7 +109,6 @@ def get_loot_emoji(item_id) -> str:
 
 def get_loot_name(item_id) -> str:
     filename = "itemlist.csv"
-
     with (open(filename, 'r') as f):
         for line in csv.DictReader(f):
             if str(line["item_id"]) == str(item_id):

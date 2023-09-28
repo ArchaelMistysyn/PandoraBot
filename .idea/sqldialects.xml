@@ -2,5 +2,10 @@
 <project version="4">
   <component name="SqlDialectMappings">
     <file url="file://$PROJECT_DIR$/inventory.py" dialect="GenericSQL" />
+    <file url="file://$PROJECT_DIR$/loot.py" dialect="GenericSQL" />
+    <file url="file://$PROJECT_DIR$/pandorabot.py" dialect="GenericSQL" />
+    <file url="file://$PROJECT_DIR$/player.py" dialect="GenericSQL" />
+    <file url="file://$PROJECT_DIR$/quest.py" dialect="GenericSQL" />
+    <file url="file://$PROJECT_DIR$/tarot.py" dialect="GenericSQL" />
   </component>
 </project>

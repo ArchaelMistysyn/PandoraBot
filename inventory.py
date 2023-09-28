@@ -8,63 +8,223 @@ import player
 import discord
 import jinja2
 from IPython.display import display
-import sqlite3
 import mysql.connector
 from mysql.connector.errors import Error
-import bot
+import sqlalchemy
+from sqlalchemy import text
+import mysql
+import pymysql
+from sqlalchemy import exc
+import mydb
+import pandorabot
 
 
 class CustomItem:
-    def __init__(self, player_owner):
+    def __init__(self, player_owner, item_type, item_tier):
         # initialize owner id
         self.player_owner = player_owner
-        # generate item_tier
-        random_num = random.randint(1, 100)
-        if random_num <= 1:
-            temp_tier = 4
-            temp_min = 250
-            temp_max = 500
-        elif random_num <= 6:
-            temp_tier = 3
-            temp_min = 100
-            temp_max = 250
-        elif random_num <= 21:
-            temp_tier = 2
-            temp_min = 50
-            temp_max = 100
-        else:
-            temp_tier = 1
-            temp_min = 1
-            temp_max = 50
-
-        self.item_base_tier = temp_tier
-        self.base_damage_min = temp_min
-        self.base_damage_max = temp_max
+        self.item_type = item_type
+        self.item_tier = item_tier
+        self.item_damage_type = generate_item_type()
+        self.generate_base()
 
         # initialize default values
-        self.item_id = ""
+        self.item_id = 0
         self.item_name = ""
-        self.item_num_sockets = 0
-        self.item_inlaid_gem_id = ""
+        self.item_elements = []
+        self.item_enhancement = 0
         self.item_num_stars = 1
         self.item_suffix_values = []
         self.item_prefix_values = []
-        self.item_material_tier = ""
-        self.item_blessing_tier = ""
-        self.item_type = ""
-        self.item_enhancement = 0
-        self.item_elements = []
-        self.item_bonus_stat = 0
+        self.item_bonus_stat = ""
         self.item_damage_min = 0
         self.item_damage_max = 0
-        self.item_damage_type = ""
-        self.item_type = ""
-        self.item_identifier = ""
+        self.item_num_sockets = 0
+        self.item_inlaid_gem_id = 0
+        special_name = ""
+        prefix = ""
+
+        random_damage1, random_damage2 = get_tier_damage(item_tier)
+        match self.item_type:
+            case "W":
+                if self.item_damage_type == class_summoner:
+                    self.item_blessing_tier = "Standard"
+                    self.item_material_tier = "Illusion"
+                else:
+                    self.item_material_tier = "Iron"
+                    self.item_blessing_tier = "Basic"
+                match self.item_tier:
+                    case 6:
+                        bonus_roll = random.randint(21, 30)
+                        self.item_bonus_stat = str(float(bonus_roll) * 0.1)
+                        prefix = "Relic"
+                        self.item_material_tier = "Special"
+                        self.item_blessing_tier = "Special"
+                    case 5:
+                        prefix = "Rift"
+                        self.item_material_tier = "Special"
+                        self.item_blessing_tier = "Special"
+                        bonus_roll = random.randint(16, 20)
+                        self.item_bonus_stat = str(float(bonus_roll) * 0.1)
+                    case 4:
+                        self.item_bonus_stat = "1.5"
+                    case 3:
+                        self.item_bonus_stat = "1.3"
+                    case 2:
+                        self.item_bonus_stat = "1.2"
+                    case _:
+                        self.item_bonus_stat = "1.1"
+                self.item_elements.append(bosses.get_element(0))
+                if prefix != "":
+                    class_matcher = pandorabot.class_icon_list.index(self.item_damage_type)
+                    item_variant = random.randint(0, 1)
+                    match class_matcher:
+                        case 0:
+                            if item_variant == 0:
+                                suffix = "Saber"
+                            else:
+                                suffix = "Scythe"
+                        case 1:
+                            if item_variant == 0:
+                                suffix = "Cannon"
+                            else:
+                                suffix = "Bow"
+                        case 2:
+                            if item_variant == 0:
+                                suffix = "Staff"
+                            else:
+                                suffix = "Spellbook"
+                        case 3:
+                            if item_variant == 0:
+                                suffix = "Dagger"
+                            else:
+                                suffix = "Claws"
+                        case 4:
+                            suffix = "Threads"
+                        case 5:
+                            if item_variant == 0:
+                                suffix = "Dragon"
+                            else:
+                                suffix = "Cerberus"
+                        case _:
+                            if item_variant == 0:
+                                suffix = "Anima"
+                            else:
+                                suffix = "Golem"
+                    special_name = f"+{self.item_enhancement} {prefix} {suffix}"
+            case "A":
+                self.item_material_tier = "Iron"
+                self.item_blessing_tier = "Standard"
+                match self.item_tier:
+                    case 4:
+                        self.item_bonus_stat = "25"
+                    case 3:
+                        self.item_bonus_stat = "15"
+                    case 2:
+                        self.item_bonus_stat = "10"
+                    case _:
+                        self.item_bonus_stat = "5"
+            case "Y":
+                self.item_material_tier = "Crude"
+                self.item_blessing_tier = "Sparkling"
+                self.item_bonus_stat = assign_bonus_stat(self.item_tier)
+            case "G":
+                self.item_material_tier = "Crude"
+                self.item_blessing_tier = "Sparkling"
+                match self.item_tier:
+                    case 4:
+                        self.item_base_type = "Dimensional Wings"
+                    case 3:
+                        self.item_base_type = "Wonderous Wings"
+                    case 2:
+                        self.item_base_type = "Lucent Wings"
+                    case _:
+                        self.item_base_type = "Feathered Wings"
+                self.item_bonus_stat = assign_bonus_stat(self.item_tier)
+            case "C":
+                self.item_material_tier = "Iron"
+                random_blessing = random.randint(1, 2)
+                if random_blessing == 1:
+                    self.item_blessing_tier = "Light"
+                else:
+                    self.item_blessing_tier = "Dark"
+                random_num = random.randint(1, 2)
+                # set crest unique skill
+                match self.item_tier:
+                    case 4:
+                        match random_num:
+                            case 1:
+                                self.item_bonus_stat = "Elemental Fractal"
+                            case _:
+                                self.item_bonus_stat = "Omega Critical"
+                    case 3:
+                        match random_num:
+                            case 1:
+                                self.item_bonus_stat = "Specialized Mastery"
+                            case _:
+                                self.item_bonus_stat = "Ignore Protection"
+                    case 2:
+                        match random_num:
+                            case 1:
+                                self.item_bonus_stat = "Perfect Precision"
+                            case _:
+                                self.item_bonus_stat = "Resistance Bypass"
+                    case _:
+                        match random_num:
+                            case 1:
+                                self.item_bonus_stat = "Extreme Vitality"
+                            case _:
+                                self.item_bonus_stat = "Defence Bypass"
+            case _:
+                random_variant = random.randint(1, 2)
+                match self.item_tier:
+                    case 6:
+                        self.item_name = "Gem of the Infinite"
+                        self.item_prefix_values += ["P6b", "P6c"]
+                        self.item_suffix_values += ["S6b", "S6c"]
+                    case 4:
+                        self.item_name = "Gem of Dimensions"
+                        self.item_prefix_values += ["P4b", "P4c"]
+                        self.item_suffix_values += ["S4b", "S4c"]
+                    case 3:
+                        if random_variant == 1:
+                            self.item_name = "Gem of Chaos"
+                            self.item_prefix_values += ["P3a", "P3b"]
+                            self.item_suffix_values += ["S3b", "S3c"]
+                        else:
+                            self.item_name = "Gem of Twilight"
+                            self.item_prefix_values += ["P3a", "P3c"]
+                            self.item_suffix_values += ["S3a", "S3b"]
+                    case 2:
+                        if random_variant == 1:
+                            self.item_name = "Gem of Clarity"
+                            self.item_prefix_values += ["P2a", "P2b"]
+                            self.item_suffix_values += ["S2b", "S2c"]
+                        else:
+                            self.item_name = "Gem of Nature's Wrath"
+                            self.item_prefix_values += ["P2a", "P2c"]
+                            self.item_suffix_values += ["S2a", "S2b"]
+                    case _:
+                        if random_variant == 1:
+                            self.item_name = "Gem of the Deep"
+                            self.item_prefix_values += ["P1a", "P1b"]
+                            self.item_suffix_values += ["S1b", "S1c"]
+                        else:
+                            self.item_name = "Gem of Land and Sky"
+                            self.item_prefix_values += ["P1a", "P1c"]
+                            self.item_suffix_values += ["S1a", "S1b"]
+        if random_damage1 < random_damage2:
+            self.base_damage_min = random_damage1
+            self.base_damage_max = random_damage2
+        else:
+            self.base_damage_min = random_damage2
+            self.base_damage_max = random_damage1
+        self.update_damage()
+        self.set_item_name()
+        if special_name != "":
+            self.item_name = special_name
 
     def update_stored_item(self):
-        filename = "cinventory.csv"
-        df = pd.read_csv(filename)
-
         item_elements = ""
         for x in self.item_elements:
             item_elements += str(x) + ";"
@@ -83,28 +243,133 @@ class CustomItem:
         if item_suffix_values != "":
             item_suffix_values = item_suffix_values[:-1]
 
-        dfn = pd.DataFrame(columns=["player_id", "item_id",	"item_name",
-                                    "item_elements",	"item_damage_type",
-                                    "item_enhancement",	"item_base_tier",
-                                    "item_blessing_tier", "item_material_tier", "item_type",
-                                    "item_num_stars", "item_prefix_values",	"item_suffix_values",
-                                    "item_bonus_stat", "item_base_dmg_min",	"item_base_dmg_max",
-                                    "item_num_sockets",	"item_inlaid_gem_id"],
-                           data=[[self.player_owner, self.item_id, self.item_name,
-                                  item_elements, self.item_damage_type,
-                                  self.item_enhancement, self.item_base_tier,
-                                  self.item_blessing_tier, self.item_material_tier, self.item_type,
-                                  self.item_num_stars, item_prefix_values, item_suffix_values,
-                                  self.item_bonus_stat, self.base_damage_min, self.base_damage_max,
-                                  self.item_num_sockets, self.item_inlaid_gem_id]])
+        try:
+            engine_url = mydb.get_engine_url()
+            engine = sqlalchemy.create_engine(engine_url)
+            pandora_db = engine.connect()
+            query = text("UPDATE CustomInventory"
+                         "SET player_id = :input_1,"
+                         "item_type = :input_2, item_name = :input_3,"
+                         "item_damage_type = :input_4, item_elements = :input_5,"
+                         "item_enhancement = :input_6, item_tier = :input_7,"
+                         "item_blessing_tier = :input_8, item_material_tier = :input_9,"
+                         "item_base_type = :input_10, item_num_stars = :input_11,"
+                         "item_prefix_values = :input_12, item_suffix_values = input_13,"
+                         "item_bonus_stat = :input_14,"
+                         "item_base_dmg_min = :input_15, item_base_dmg_max = :input_16,"
+                         "item_num_sockets = :input_17, item_inlaid_gem_id = :input_18"
+                         "WHERE item_id = :id_check")
+            query = query.bindparams(id_check=int(item_id), input_1=int(self.player_owner),
+                                     input_2=int(self.item_type), input_3=str(self.item_name),
+                                     input_4=str(self.item_damage_type), input_5=str(item_elements),
+                                     input_6=int(self.item_enhancement), input_7=int(self.item_tier),
+                                     input_8=str(self.item_blessing_tier), input_9=str(self.item_material_tier),
+                                     input_10=str(self.item_base_type), input_11=int(self.item_num_stars),
+                                     input_12=str(item_prefix_values), input_13=str(item_suffix_values),
+                                     input_14=str(self.item_bonus_stat),
+                                     input_15=int(self.base_damage_min), input_16=int(self.base_damage_max),
+                                     input_17=int(self.item_num_sockets), input_18=int(self.item_inlaid_gem_id))
 
-        df.update(df[['item_id']].merge(dfn, 'left'))
-        df.to_csv(filename, index=False)
+            pandora_db.execute(query)
+            pandora_db.close()
+            engine.dispose()
+        except exc.SQLAlchemyError as error:
+            print(error)
 
     def set_item_name(self):
-        # set the item name
-        self.item_name = generate_item_name(self.item_enhancement, self.item_blessing_tier, self.item_material_tier,
-                                            self.item_type)
+        item_name = "+" + str(self.item_enhancement) + " " + self.item_blessing_tier + " " + self.item_material_tier
+        item_name += " " + self.item_base_type
+        self.item_name = item_name
+
+    def generate_base(self):
+        match self.item_type:
+            case "W":
+                special_item_list = None
+                tier_location = self.item_tier - 1
+                random_num = random.randint(0, 6)
+                class_checker = pandorabot.class_icon_list.index(self.item_damage_type)
+                match class_checker:
+                    case 0:
+                        item_list_t1 = ["Shortsword", "Handaxe", "Javelin"]
+                        item_list_t2 = ["Sword", "Axe", "Spear"]
+                        item_list_t3 = ["Longsword", "Battle Axe", "Longspear"]
+                        item_list_t4 = ["Greatsword", "Greataxe", "Trident"]
+                    case 1:
+                        item_list_t1 = ["Shortbow", "Ballista"]
+                        item_list_t2 = ["Longbow", "Arbalest"]
+                        item_list_t3 = ["Recurve Bow", "Gun"]
+                        item_list_t4 = ["Greatbow", "Blaster"]
+                    case 2:
+                        item_list_t1 = ["Lesser Wand", "Lesser Staff", "Lesser Tome", "Lesser Orb"]
+                        item_list_t2 = ["Magic Wand", "Magic Staff", "Magic Tome", "Crystal Ball"]
+                        item_list_t3 = ["Sceptre", "Quarterstaff", "Grimoire", "Seer Sphere"]
+                        item_list_t4 = ["Rod", "Crescent Staff", "Spellbook", "Orb"]
+                    case 3:
+                        item_list_t1 = ["Dagger", "Claws", "Darts"]
+                        item_list_t2 = ["Stiletto", "Tiger Claws", "Tomahawk"]
+                        item_list_t3 = ["Kris", "Eagle Claws", "Kunai"]
+                        item_list_t4 = ["Sai", "Dragon Talons", "Shuriken"]
+                    case 4:
+                        item_list_t1 = ["Steel String"]
+                        item_list_t2 = ["Cutting Wire"]
+                        item_list_t3 = ["Razor Threads"]
+                        item_list_t4 = ["Infused Threads"]
+                    case 5:
+                        special_item_list = ["Pegacorn", "Night Mare", "Unicorn", "Pegasus",
+                                             "Wyvern", "Roc", "Gryphon", "Manta Ray",
+                                             "Liger", "Bear", "Elephant", "Wolf"]
+                    case _:
+                        special_item_list = ["Zombie", "Ghoul", "Skeleton", "Specter"
+                                             "Fox", "Spider", "Crocodile", "Basilisk"
+                                             "Wyrm", "Salamander", "Coatl", "Phoenix"]
+                if not special_item_list.empty:
+                    random_position = random.randint(0, 11)
+                    item_base = special_item_list[random_position]
+                else:
+                    item_namelist = [item_list_t1, item_list_t2, item_list_t3, item_list_t4]
+                    item_base = item_namelist[tier_location][random_num]
+            case "A":
+                match self.item_tier:
+                    case 1:
+                        item_base = "Armour"
+                    case 2:
+                        item_base = "Shell"
+                    case 3:
+                        item_base = "Mail"
+                    case 4:
+                        item_base = "Plate"
+                    case _:
+                        item_base = "error"
+            case "Y":
+                random_number = random.randint(1, 5)
+                match random_number:
+                    case 1:
+                        item_base = "Amulet"
+                    case 2:
+                        item_base = "Necklace"
+                    case 3:
+                        item_base = "Ring"
+                    case 4:
+                        item_base = "Earring"
+                    case _:
+                        item_base = "Bracelet"
+            case "C":
+                random_number = random.randint(1, 9)
+                match random_number:
+                    case 1 | 2:
+                        item_base = "Halo"
+                    case 3 | 4:
+                        item_base = "Horns"
+                    case 5 | 6:
+                        item_base = "Crown"
+                    case 7 | 8:
+                        item_base = "Tiara"
+                    case _:
+                        item_base = "Diadem"
+            case _:
+                item_base = ""
+
+        self.item_base_type = item_base
 
     def add_roll(self):
         self.item_num_stars += 1
@@ -166,7 +431,7 @@ class CustomItem:
         return new_roll
 
     def create_citem_embed(self):
-        gear_colours = get_gear_tier_colours(self.item_base_tier)
+        gear_colours = get_gear_tier_colours(self.item_tier)
         tier_colour = gear_colours[0]
         gem_min = 0
         gem_max = 0
@@ -174,7 +439,7 @@ class CustomItem:
         item_title = f'{self.item_name} '
         item_title = item_title.ljust(46, "᲼")
 
-        if self.item_id[0] == "D":
+        if self.item_type == "D":
             damage_bonus = f'Base Damage: {self.item_damage_min:,}'
             damage_bonus += f' - {self.item_damage_max:,}'
             item_stats = ""
@@ -192,7 +457,7 @@ class CustomItem:
         else:
             self.update_damage()
             display_stars = ""
-            match self.item_identifier:
+            match self.item_type:
                 case "W":
                     bonus_type = "Base Attack Speed "
                     aux_suffix = "/min"
@@ -222,12 +487,12 @@ class CustomItem:
             suffix_rolls = ""
             if self.item_prefix_values:
                 for x in self.item_prefix_values:
-                    prefix_rolls += f'\n{get_roll_by_code(str(x), self.item_identifier)} '
+                    prefix_rolls += f'\n{get_roll_by_code(str(x), self.item_type)} '
                     for y in range(int(str(x)[1]) - 1):
                         prefix_rolls += "<:eprl:1148390531345432647>"
             if self.item_suffix_values:
                 for x in self.item_suffix_values:
-                    suffix_rolls += f'\n{get_roll_by_code(str(x), self.item_identifier)} '
+                    suffix_rolls += f'\n{get_roll_by_code(str(x), self.item_type)} '
                     for y in range(int(str(x)[1]) - 1):
                         suffix_rolls += "<:eprl:1148390531345432647>"
 
@@ -312,312 +577,6 @@ class CustomItem:
             self.item_suffix_values[random_num] = new_id
 
 
-class CustomWeapon(CustomItem):
-    def __init__(self, player_owner):
-        CustomItem.__init__(self, player_owner)
-
-        # initialize item_id
-        df = pd.read_csv('cinventory.csv')
-        self.item_identifier = "W"
-        self.item_id = self.item_identifier + str(1 + df['item_id'].count())
-
-        # generate weapon specifications
-        self.item_damage_type = generate_item_type()
-        self.item_type = generate_weapon_base(self.item_base_tier, self.item_damage_type)
-
-        # generate the weapon name
-        if self.item_damage_type == "<:cD:1150195280969478254>":
-            self.item_blessing_tier = "Standard"
-            self.item_material_tier = "Illusion"
-        else:
-            self.item_material_tier = "Iron"
-            self.item_blessing_tier = "Basic"
-
-        # set attack speed
-        match self.item_base_tier:
-            case 4:
-                temp_attack_speed = 1.5
-            case 3:
-                temp_attack_speed = 1.3
-            case 2:
-                temp_attack_speed = 1.2
-            case _:
-                temp_attack_speed = 1.1
-
-        self.item_bonus_stat = temp_attack_speed
-
-        # set element
-        self.item_elements.append(bosses.get_element(0))
-
-        # calculate item's damage per hit
-        self.update_damage()
-        # set item name
-        self.set_item_name()
-
-
-class CustomArmour(CustomItem):
-    def __init__(self, player_owner):
-        CustomItem.__init__(self, player_owner)
-
-        # initialize item_id
-        df = pd.read_csv('cinventory.csv')
-        self.item_identifier = "A"
-        self.item_id = self.item_identifier + str(1 + df['item_id'].count())
-
-        # generate armour specifications
-        self.item_damage_type = generate_item_type()
-        self.item_type = generate_armour_base(self.item_base_tier)
-
-        self.item_material_tier = "Iron"
-        self.item_blessing_tier = "Standard"
-
-        # set damage mitigation
-        match self.item_base_tier:
-            case 4:
-                temp_mitigation = 25
-            case 3:
-                temp_mitigation = 15
-            case 2:
-                temp_mitigation = 10
-            case _:
-                temp_mitigation = 5
-
-        self.item_bonus_stat = temp_mitigation
-
-        # calculate item's damage per hit
-        self.update_damage()
-
-        # set the item name
-        self.set_item_name()
-
-
-class CustomAccessory(CustomItem):
-    def __init__(self, player_owner):
-        CustomItem.__init__(self, player_owner)
-
-        # initialize item_id
-        df = pd.read_csv('cinventory.csv')
-        self.item_identifier = "Y"
-        self.item_id = self.item_identifier + str(1 + df['item_id'].count())
-
-        # generate accessory specifications
-        self.item_damage_type = generate_item_type()
-        self.item_type = generate_accessory_base()
-
-        self.item_material_tier = "Crude"
-        self.item_blessing_tier = "Sparkling"
-        self.item_bonus_stat = assign_bonus_stat(self.item_base_tier)
-
-        # calculate item's damage per hit
-        self.update_damage()
-
-        # set the item name
-        self.set_item_name()
-
-
-class CustomWing(CustomItem):
-    def __init__(self, player_owner, selected_tier):
-        CustomItem.__init__(self, player_owner)
-
-        # initialize item_id
-        df = pd.read_csv('cinventory.csv')
-        self.item_identifier = "G"
-        self.item_id = self.item_identifier + str(1 + df['item_id'].count())
-
-        # generate wing specifications
-        self.item_damage_type = generate_item_type()
-
-        self.item_material_tier = "Crude"
-        self.item_blessing_tier = "Sparkling"
-        self.item_elements.clear()
-        self.item_base_tier = selected_tier
-
-        # set wing bonus stat
-        match self.item_base_tier:
-            case 4:
-                self.item_type = "Dimensional Wings"
-                self.base_damage_min = 500
-                self.base_damage_max = 500
-            case 3:
-                self.item_type = "Wonderous Wings"
-                self.base_damage_min = 100
-                self.base_damage_max = 250
-            case 2:
-                self.item_type = "Lucent Wings"
-                self.base_damage_min = 50
-                self.base_damage_max = 100
-            case _:
-                self.item_type = "Feathered Wings"
-                self.base_damage_min = 1
-                self.base_damage_max = 50
-
-        self.item_bonus_stat = assign_bonus_stat(self.item_base_tier)
-        # calculate item's damage per hit
-        self.update_damage()
-
-        # set the item name
-        self.set_item_name()
-
-
-class CustomCrest(CustomItem):
-    def __init__(self, player_owner, selected_tier):
-        CustomItem.__init__(self, player_owner)
-
-        # initialize item_id
-        df = pd.read_csv('cinventory.csv')
-        self.item_identifier = "C"
-        self.item_id = self.item_identifier + str(1 + df['item_id'].count())
-
-        # generate crest specifications
-        self.item_damage_type = generate_item_type()
-        self.item_type = generate_crest_base()
-
-        self.item_elements.clear()
-
-        self.item_material_tier = "Iron"
-        random_blessing = random.randint(1, 2)
-        if random_blessing == 1:
-            self.item_blessing_tier = "Light"
-        else:
-            self.item_blessing_tier = "Dark"
-        self.item_base_tier = selected_tier
-
-        random_num = random.randint(1, 2)
-        # set crest unique skill
-        match self.item_base_tier:
-            case 4:
-                self.base_damage_min = 500
-                self.base_damage_max = 500
-                match random_num:
-                    case 1:
-                        temp_unique_skill = "Elemental Fractal"
-                    case _:
-                        temp_unique_skill = "Omega Critical"
-            case 3:
-                self.base_damage_min = 100
-                self.base_damage_max = 250
-                match random_num:
-                    case 1:
-                        temp_unique_skill = "Specialized Mastery"
-                    case _:
-                        temp_unique_skill = "Ignore Protection"
-            case 2:
-                self.base_damage_min = 50
-                self.base_damage_max = 100
-                match random_num:
-                    case 1:
-                        temp_unique_skill = "Perfect Precision"
-                    case _:
-                        temp_unique_skill = "Resistance Bypass"
-            case _:
-                self.base_damage_min = 1
-                self.base_damage_max = 50
-                match random_num:
-                    case 1:
-                        temp_unique_skill = "Extreme Vitality"
-                    case _:
-                        temp_unique_skill = "Defence Bypass"
-
-        self.item_bonus_stat = temp_unique_skill
-        # calculate item's damage per hit
-        self.update_damage()
-
-        # set the item name
-        self.set_item_name()
-
-
-class CustomGem(CustomItem):
-    def __init__(self, player_owner, selected_tier):
-        CustomItem.__init__(self, player_owner)
-
-        # initialize item_id
-        df = pd.read_csv('cinventory.csv')
-        self.item_identifier = "D"
-        self.item_id = self.item_identifier + str(1 + df['item_id'].count())
-
-        # generate gem specifications
-        self.item_damage_type = ""
-        self.item_type = ""
-        self.item_material_tier = ""
-        self.item_blessing_tier = ""
-        self.item_bonus_stat = ""
-        self.item_base_tier = selected_tier
-        self.item_elements.clear()
-
-        random_num = random.randint(1, 2)
-        # set attack speed
-        match selected_tier:
-            case 6:
-                self.item_name = "Gem of the Infinite"
-                random_damage1 = random.randint(1, 99999)
-                random_damage2 = random.randint(1, 99999)
-                if random_damage1 < random_damage2:
-                    self.base_damage_min = random_damage1
-                    self.base_damage_max = random_damage2
-                else:
-                    self.base_damage_min = random_damage2
-                    self.base_damage_max = random_damage1
-                self.item_prefix_values.append("P6b")
-                self.item_prefix_values.append("P6c")
-                self.item_suffix_values.append("S6b")
-                self.item_suffix_values.append("S6c")
-            case 4:
-                self.base_damage_min = 5000
-                self.base_damage_max = 5000
-                self.item_name = "Gem of Dimensions"
-                self.item_prefix_values.append("P4b")
-                self.item_prefix_values.append("P4c")
-                self.item_suffix_values.append("S4b")
-                self.item_suffix_values.append("S4c")
-            case 3:
-                self.base_damage_min = 2000
-                self.base_damage_max = 4000
-                if random_num == 1:
-                    self.item_name = "Gem of Chaos"
-                    self.item_prefix_values.append("P3a")
-                    self.item_prefix_values.append("P3b")
-                    self.item_suffix_values.append("S3b")
-                    self.item_suffix_values.append("S3c")
-                else:
-                    self.item_name = "Gem of Twilight"
-                    self.item_prefix_values.append("P3a")
-                    self.item_prefix_values.append("P3c")
-                    self.item_suffix_values.append("S3a")
-                    self.item_suffix_values.append("S3b")
-            case 2:
-                self.base_damage_min = 500
-                self.base_damage_max = 1500
-                if random_num == 1:
-                    self.item_name = "Gem of Clarity"
-                    self.item_prefix_values.append("P2a")
-                    self.item_prefix_values.append("P2b")
-                    self.item_suffix_values.append("S2b")
-                    self.item_suffix_values.append("S2c")
-                else:
-                    self.item_name = "Gem of Nature's Wrath"
-                    self.item_prefix_values.append("P2a")
-                    self.item_prefix_values.append("P2c")
-                    self.item_suffix_values.append("S2a")
-                    self.item_suffix_values.append("S2b")
-            case _:
-                self.base_damage_min = 100
-                self.base_damage_max = 500
-                if random_num == 1:
-                    self.item_name = "Gem of the Deep"
-                    self.item_prefix_values.append("P1a")
-                    self.item_prefix_values.append("P1b")
-                    self.item_suffix_values.append("S1b")
-                    self.item_suffix_values.append("S1c")
-                else:
-                    self.item_name = "Gem of Land and Sky"
-                    self.item_prefix_values.append("P1a")
-                    self.item_prefix_values.append("P1c")
-                    self.item_suffix_values.append("S1a")
-                    self.item_suffix_values.append("S1b")
-        self.item_damage_min = self.base_damage_min
-        self.item_damage_max = self.base_damage_max
-
-
 def gem_stat_reader(item_code):
     buff_amount = 0
     tier_code = int(item_code[1])
@@ -650,61 +609,54 @@ def gem_stat_reader(item_code):
     return buff_type, buff_amount
 
 
-def generate_item_name(item_enhancement, item_blessing_tier, item_material_tier, item_type) -> str:
-    item_name = "+" + str(item_enhancement) + " " + item_blessing_tier + " " + item_material_tier
-    item_name += " " + item_type
-    return item_name
+def read_custom_item(item_id):
+    try:
+        engine_url = mydb.get_engine_url()
+        engine = sqlalchemy.create_engine(engine_url)
+        pandora_db = engine.connect()
+        query = text("SELECT * FROM CustomInventory WHERE item_id = :id_check")
+        query = query.bindparams(id_check=item_id)
+        df = pd.read_sql(query, pandora_db)
+        pandora_db.close()
+        engine.dispose()
 
-
-def read_custom_item(item_id: str):
-    filename = 'cinventory.csv'
-    with (open(filename, 'r') as f):
-        for line in csv.DictReader(f):
-            if str(line['item_id']) == str(item_id):
-                player_id = int(line['player_id'])
-                identifier = str(line['item_id'])
-                identifier = identifier[0]
-                if identifier == "W":
-                    target_item = CustomWeapon(player_id)
-                elif identifier == "A":
-                    target_item = CustomArmour(player_id)
-                elif identifier == "Y":
-                    target_item = CustomAccessory(player_id)
-                elif identifier == "G":
-                    target_item = CustomWing(player_id, 0)
-                elif identifier == "C":
-                    target_item = CustomCrest(player_id, 0)
-                else:
-                    target_item = CustomGem(player_id, 0)
-                target_item.player_owner = player_id
-                target_item.item_id = item_id
-                target_item.item_name = str(line['item_name'])
-                if str(line['item_elements']) != "":
-                    target_item.item_elements = list(str(line['item_elements']).split(';'))
-                target_item.item_type = str(line['item_type'])
-                target_item.item_damage_type = str(line['item_damage_type'])
-                target_item.item_enhancement = int(line['item_enhancement'])
-                target_item.item_base_tier = int(line['item_base_tier'])
-                target_item.item_blessing_tier = str(line['item_blessing_tier'])
-                target_item.item_material_tier = str(line['item_material_tier'])
-                target_item.item_num_stars = int(line['item_num_stars'])
-                if str(line['item_prefix_values']) != "":
-                    target_item.item_prefix_values = list(str(line['item_prefix_values']).split(';'))
-                if str(line['item_suffix_values']) != "":
-                    target_item.item_suffix_values = list(str(line['item_suffix_values']).split(';'))
-                target_item.item_bonus_stat = str(line['item_bonus_stat'])
-                target_item.base_damage_min = int(line['item_base_dmg_min'])
-                target_item.base_damage_max = int(line['item_base_dmg_max'])
-                target_item.item_num_sockets = int(line['item_num_sockets'])
-                target_item.item_inlaid_gem_id = str(line['item_inlaid_gem_id'])
-                if identifier != "D":
-                    target_item.update_damage()
-                else:
-                    target_item.item_damage_min = target_item.base_damage_min
-                    target_item.item_damage_max = target_item.base_damage_max
-                break
-
-    return target_item
+        if not df.empty:
+            player_id = int(df['player_id'].values[0])
+            item_id = int(df['item_id'].values[0])
+            item_type = str(df['item_type'].values[0])
+            target_item = CustomItem(player_id, item_type, 1)
+            target_item.player_owner = player_id
+            target_item.item_id = item_id
+            target_item.item_name = str(df['item_name'].values[0])
+            item_elements = str(df['item_elements'].values[0])
+            if str(df['item_elements'].values[0]) != "":
+                target_item.item_elements = list(df['item_elements'].values[0].split(';'))
+            target_item.item_damage_type = df['item_damage_type'].values[0]
+            target_item.item_enhancement = int(df['item_enhancement'].values[0])
+            target_item.item_tier = int(df['item_tier'].values[0])
+            target_item.item_blessing_tier = str(df['item_blessing_tier'].values[0])
+            target_item.item_material_tier = str(df['item_material_tier'].values[0])
+            target_item.item_num_stars = int(df['item_num_stars'].values[0])
+            if str(df['item_prefix_values'].values[0]) != "":
+                target_item.item_prefix_values = list(df['item_prefix_values'].values[0].split(';'))
+            if str(df['item_suffix_values'].values[0]) != "":
+                target_item.item_suffix_values = list(df['item_suffix_values'].values[0].split(';'))
+            target_item.item_bonus_stat = str(df['item_bonus_stat'].values[0])
+            target_item.base_damage_min = int(df['item_base_dmg_min'].values[0])
+            target_item.base_damage_max = int(df['item_base_dmg_max'].values[0])
+            target_item.item_num_sockets = int(df['item_num_sockets'].values[0])
+            target_item.item_inlaid_gem_id = int(df['item_inlaid_gem_id'].values[0])
+            if item_type != "D":
+                target_item.update_damage()
+            else:
+                target_item.item_damage_min = target_item.base_damage_min
+                target_item.item_damage_max = target_item.base_damage_max
+            return target_item
+        else:
+            return None
+    except exc.SQLAlchemyError as error:
+        print(error)
+        return None
 
 
 def generate_item_type() -> str:
@@ -713,7 +665,7 @@ def generate_item_type() -> str:
         case 1 | 2 | 3:
             damage_type = "<:cA:1150195102589931641>"
         case 3 | 4 | 5:
-            damage_type = "<:cB:1150516823524114432>"
+            damage_type = "<:cB:1154266777396711424>"
         case 6 | 7 | 8:
             damage_type = "<:cC:1150195246588764201>"
         case _:
@@ -721,134 +673,43 @@ def generate_item_type() -> str:
     return damage_type
 
 
-def generate_special_weapon_base(damage_type, item_tier):
-    if item_tier == 5:
-        prefix = "Rift"
-    else:
-        prefix = "Relic"
-    match damage_type:
-        case "<:cB:1150516823524114432>":
-            item_name = f"{prefix} Saber"
-        case "<:cA:1150195102589931641>":
-            item_name = f"{prefix} Cannon"
-        case "<:cC:1150195246588764201>":
-            item_name = f"{prefix} Staff"
-        case _:
-            item_name = f"{prefix} Anima"
-    selected_name = item_name
-    return selected_name
-
-
-def generate_weapon_base(item_tier, damage_type) -> str:
-    tier_location = item_tier - 1
-    random_num = random.randint(0, 4)
-    match damage_type:
-        case "<:cB:1150516823524114432>":
-            item_list_t1 = ["Shortsword", "Handaxe", "Dagger", "Spear", "Claws"]
-            item_list_t2 = ["Sword", "Axe", "Stiletto", "Halberd", "Tiger Claws"]
-            item_list_t3 = ["Longsword", "Battle Axe", "Kris", "Trident", "Dragon Claws"]
-            item_list_t4 = ["Greatsword", "Greataxe", "Sai", "Scythe", "Chakram"]
-        case "<:cA:1150195102589931641>":
-            item_list_t1 = ["Shortbow", "Slingshot", "Darts", "Garrote String", "Whip"]
-            item_list_t2 = ["Bow", "Ballista", "Kunai", "Scrag Rope", "Ball and Chain"]
-            item_list_t3 = ["Longbow", "Gun", "Tommahawk", "Cutting Wire", "Chain Mace"]
-            item_list_t4 = ["Greatbow", "Blaster", "Javelin", "Razor Threads", "Flail"]
-        case "<:cC:1150195246588764201>":
-            item_list_t1 = ["Lesser Wand", "Lesser Staff", "Lesser Tome", "Lesser Talisman", "Lesser Orb"]
-            item_list_t2 = ["Magic Wand", "Magic Staff", "Magic Tome", "Magic Talisman", "Crystal Ball"]
-            item_list_t3 = ["Sceptre", "Quarterstaff", "Grimoire", "Sigil", "Seer Sphere"]
-            item_list_t4 = ["Rod", "Crescent Staff", "Spellbook", "Krosse", "Orb"]
-        case _:
-            item_list_t1 = ["Hatchling", "Night Mare", "Zombie", "Viper", "Owl"]
-            item_list_t2 = ["Drake", "Pegasus", "Ghoul", "Basilisk", "Eagle"]
-            item_list_t3 = ["Wyvern", "Unicorn", "Skeleton", "Wyrm", "Roc"]
-            item_list_t4 = ["Dragon", "Pegacorn", "Lich", "Coatl", "Phoenix"]
-    item_namelist = [item_list_t1, item_list_t2, item_list_t3, item_list_t4]
-    return item_namelist[tier_location][random_num]
-
-
-def generate_armour_base(item_tier) -> str:
-
+def get_tier_damage(item_tier):
     match item_tier:
-        case 1:
-            item_base = "Armour"
-        case 2:
-            item_base = "Shell"
-        case 3:
-            item_base = "Mail"
+        case 6:
+            random_damage1 = random.randint(1, 100000)
+            random_damage2 = random.randint(1, 100000)
+        case 5:
+            random_damage1 = random.randint(1, 25000)
+            random_damage2 = random.randint(1, 25000)
         case 4:
-            item_base = "Plate"
-        case _:
-            item_base = "error"
-
-    return item_base
-
-
-def generate_accessory_base() -> str:
-    random_number = random.randint(1, 5)
-    match random_number:
-        case 1:
-            item_base = "Amulet"
-        case 2:
-            item_base = "Necklace"
+            random_damage1 = random.randint(2500, 10000)
+            random_damage2 = random.randint(2500, 10000)
         case 3:
-            item_base = "Ring"
-        case 4:
-            item_base = "Earring"
+            random_damage1 = random.randint(1000, 2500)
+            random_damage2 = random.randint(1000, 2500)
+        case 2:
+            random_damage1 = random.randint(500, 1000)
+            random_damage2 = random.randint(500, 1000)
         case _:
-            item_base = "Bracelet"
-
-    return item_base
-
-
-def generate_crest_base() -> str:
-    random_number = random.randint(1, 9)
-    match random_number:
-        case 1 | 2:
-            item_base = "Halo"
-        case 3 | 4:
-            item_base = "Horns"
-        case 5 | 6:
-            item_base = "Crown"
-        case 7 | 8:
-            item_base = "Tiara"
-        case _:
-            item_base = "Diadem"
-
-    return item_base
+            random_damage1 = random.randint(1, 500)
+            random_damage2 = random.randint(1, 500)
+    return random_damage1, random_damage2
 
 
 # write item to inventory
 def inventory_add_custom_item(item) -> str:
-    # File specifications
-    filename = 'cinventory.csv'
-
-    # item name and id
-    player_id = item.player_owner
-    item_id = item.item_id
-    item_type = item_id[0]
-    item_name = item.item_name
-
-    # item elements and damage type
+    # item elements
     item_elements = ""
     for x in item.item_elements:
         item_elements = str(x) + ";"
     if item_elements != "":
         item_elements = item_elements[:-1]
-    item_damage_type = item.item_damage_type
-
-    # item damage adjustments
-    item_enhancement = item.item_enhancement
-    item_base_tier = item.item_base_tier
-    item_blessing_tier = item.item_blessing_tier
-    item_material_tier = item.item_material_tier
-    item_base_type = item.item_type
 
     # item rolls
     item_prefix_values = ""
     item_suffix_values = ""
     item_num_stars = item.item_num_stars
-    if item.item_id[0] == "D":
+    if item.item_id == "D":
         for x in item.item_prefix_values:
             item_prefix_values += str(x) + ";"
         item_prefix_values = item_prefix_values[:-1]
@@ -856,86 +717,97 @@ def inventory_add_custom_item(item) -> str:
             item_suffix_values += str(y) + ";"
         item_suffix_values = item_suffix_values[:-1]
 
-    # item base damage
-    item_bonus_stat = item.item_bonus_stat
-    item_base_dmg_min = item.base_damage_min
-    item_base_dmg_max = item.base_damage_max
-
-    # sockets
-    item_num_sockets = item.item_num_sockets
-
-    # insert item into csv file
-    with open(filename, 'a', newline='') as file:
-        writer = csv.writer(file)
-
-        writer.writerow([player_id, item_id, item_name,
-                         item_elements, item_damage_type,
-                         item_enhancement, item_base_tier, item_blessing_tier, item_material_tier, item_base_type,
-                         item_num_stars, item_prefix_values, item_suffix_values,
-                         item_bonus_stat, item_base_dmg_min, item_base_dmg_max,
-                         item_num_sockets, item_inlaid_gem_id])
     try:
-        pandora_db = mysql.connector.connect(
-            host=bot.db_info[0],
-            database=bot.db_info[1],
-            user=bot.db_info[2],
-            password=bot.db_info[3]
-        )
-        cursor = pandora_db.cursor()
-        query = """
-            INSERT INTO CustomInventory
-            (player_id, item_type, item_name, item_damage_type, item_elements, item_enhancement, item_tier,
-            item_blessing_tier, item_material_tier, item_base_type, item_num_stars, 
-            item_prefix_values, item_suffix_values, item_bonus_stat, item_base_dmg_min, item_base_dmg_max,
-            item_num_sockets)
-            VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-        """
-        values = (player_id, item_type, item_name, item_damage_type, item_elements, item_enhancement, item_base_tier,
-                  item_blessing_tier, item_material_tier, item_base_type, item_num_stars,
-                  item_prefix_values, item_suffix_values, item_bonus_stat, item_base_dmg_min, item_base_dmg_max,
-                  item_num_sockets)
-        print(values)
-        cursor.execute(query, values)
-
+        engine_url = mydb.get_engine_url()
+        engine = sqlalchemy.create_engine(engine_url)
+        pandora_db = engine.connect()
+        query = text("INSERT INTO CustomInventory "
+                     "(player_id, item_type, item_name, item_damage_type, item_elements, item_enhancement,"
+                     "item_tier, item_blessing_tier, item_material_tier, item_base_type,"
+                     "item_num_stars, item_prefix_values, item_suffix_values, item_bonus_stat,"
+                     "item_base_dmg_min, item_base_dmg_max, item_num_sockets, item_inlaid_gem_id)"
+                     "VALUES(:input_1, :input_2, :input_3, :input_4, :input_5, :input_6, "
+                     ":input_7, :input_8, :input_9, :input_10, :input_11, :input_12, "
+                     ":input_13, :input_14, :input_15, :input_16, :input_17, :input_18)")
+        query = query.bindparams(input_1=item.player_owner, input_2=item.item_type, input_3=item.item_name,
+                                 input_4=item.item_damage_type, input_5=item_elements,
+                                 input_6=item.item_enhancement, input_7=item.item_tier,
+                                 input_8=item.item_blessing_tier, input_9=item.item_material_tier,
+                                 input_10=item.item_base_type, input_11=item_num_stars,
+                                 input_12=item_prefix_values, input_13=item_suffix_values,
+                                 input_14=item.item_bonus_stat,
+                                 input_15=item.base_damage_min, input_16=item.base_damage_max,
+                                 input_17=item.item_num_sockets, input_18=item.item_inlaid_gem_id)
+        pandora_db.execute(query)
         pandora_db.close()
-    except mysql.connector.Error as err:
-        print("Database Error: {}".format(err))
+        engine.dispose()
+    except exc.SQLAlchemyError as error:
+        print(error)
 
     return 'You have placed the item in your inventory'
 
 
 # check if item already exists. Prevent duplication
-def if_custom_exists(item_id: int) -> bool:
-    filename = 'cinventory.csv'
-    df = pd.read_csv(filename)
-    if str(item_id) in df['item_id'].values:
-        return True
-    else:
+def if_custom_exists(item_id) -> bool:
+    try:
+        engine_url = mydb.get_engine_url()
+        engine = sqlalchemy.create_engine(engine_url)
+        pandora_db = engine.connect()
+        query = text("SELECT * FROM CustomInventory WHERE item_id = :id_check")
+        query = query.bindparams(id_check=str(item_id))
+        df = pd.read_sql(query, pandora_db)
+        pandora_db.close()
+        engine.dispose()
+        if int(item_id) == int(df['item_id'].values[0]):
+            return True
+        else:
+            return False
+    except exc.SQLAlchemyError as error:
+        print(str(error))
         return False
 
 
-def display_cinventory(player_id: int) -> str:
-    filename = 'cinventory.csv'
-    df = pd.read_csv(filename)
-    df = df[df['player_id'] == player_id][['item_id', 'item_name']]
-    temp = df.style.set_properties(**{'text-align': 'left'}).hide(axis='index').hide(axis='columns')
-    player_inventory = temp.to_string()
+def display_cinventory(player_id) -> str:
+    try:
+        engine_url = mydb.get_engine_url()
+        engine = sqlalchemy.create_engine(engine_url)
+        pandora_db = engine.connect()
+        query = text("SELECT item_id, item_name FROM CustomInventory "
+                     "WHERE player_id = :id_check ORDER BY item_tier DESC")
+        query = query.bindparams(id_check=player_id)
+        df = pd.read_sql(query, pandora_db)
+        pandora_db.close()
+        engine.dispose()
+        temp = df.style.set_properties(**{'text-align': 'left'}).hide(axis='index').hide(axis='columns')
+        player_inventory = temp.to_string()
+    except exc.SQLAlchemyError as error:
+        print(error)
+        player_inventory = ""
     return player_inventory
 
 
-def display_binventory(player_id: int):
-    filename = 'binventory.csv'
-    df = pd.read_csv(filename)
+def display_binventory(player_id):
     filename = 'itemlist.csv'
     item_list = pd.read_csv(filename)
-
-    merged_df = df.merge(item_list, left_on='item_id', right_on='item_id')
-    merged_df = merged_df[merged_df['player_id'] == player_id][['item_emoji', 'item_name', 'item_qty']]
-    merged_df = merged_df[merged_df['item_qty'] != 0][['item_emoji', 'item_name', 'item_qty']]
-    # merged_df = merged_df.sort_values(ascending=True)
-    temp = merged_df.style.set_properties(**{'text-align': 'left'}).hide(axis='index').hide(axis='columns')
-    player_inventory = temp.to_string()
-
+    try:
+        engine_url = mydb.get_engine_url()
+        engine = sqlalchemy.create_engine(engine_url)
+        pandora_db = engine.connect()
+        query = text("SELECT item_id, item_qty FROM BasicInventory "
+                     "WHERE player_id = :id_check ORDER BY item_id DESC")
+        query = query.bindparams(id_check=player_id)
+        df = pd.read_sql(query, pandora_db)
+        pandora_db.close()
+        engine.dispose()
+        merged_df = df.merge(item_list, left_on='item_id', right_on='item_id')
+        merged_df = merged_df[merged_df['player_id'] == player_id][['item_emoji', 'item_name', 'item_qty']]
+        merged_df = merged_df[merged_df['item_qty'] != 0][['item_emoji', 'item_name', 'item_qty']]
+        # merged_df = merged_df.sort_values(ascending=True)
+        temp = merged_df.style.set_properties(**{'text-align': 'left'}).hide(axis='index').hide(axis='columns')
+        player_inventory = temp.to_string()
+    except exc.SQLAlchemyError as error:
+        print(error)
+        player_inventory = ""
     return player_inventory
 
 
@@ -1118,24 +990,69 @@ def craft_item(player_object, selected_item, item_id, method):
     return is_success
 
 
-def check_stock(player_object, item_id):
-    filename = 'binventory.csv'
-    df = pd.read_csv(filename)
-    df = df[(df['item_id'] == item_id) & (df['player_id'] == player_object.player_id)][['item_qty']]
-    if not df.empty:
-        player_stock = int(df.values[0])
+def generate_random_tier():
+    random_num = random.randint(1, 100)
+    if random_num <= 1:
+        temp_tier = 4
+    elif random_num <= 6:
+        temp_tier = 3
+    elif random_num <= 21:
+        temp_tier = 2
     else:
+        temp_tier = 1
+    return temp_tier
+
+
+def check_stock(player_object, item_id):
+    try:
+        engine_url = mydb.get_engine_url()
+        engine = sqlalchemy.create_engine(engine_url)
+        pandora_db = engine.connect()
+        query = text("SELECT item_qty FROM BasicInventory "
+                     "WHERE player_id = :id_check AND item_id = :item_check")
+        query = query.bindparams(id_check=player_object.player_id, item_check=item_id)
+        df = pd.read_sql(query, pandora_db)
+        pandora_db.close()
+        engine.dispose()
+        if not df.empty:
+            player_stock = int(df.values[0])
+        else:
+            player_stock = 0
+    except exc.SQLAlchemyError as error:
+        print(error)
         player_stock = 0
     return player_stock
 
 
 def update_stock(player_object, item_id, change):
-    filename = 'binventory.csv'
-    df = pd.read_csv(filename)
-    player_stock = check_stock(player_object, item_id)
-    df.loc[(df['item_id'] == item_id) & (df['player_id'] == player_object.player_id),
-           'item_qty'] = player_stock + change
-    df.to_csv(filename, index=False)
+    try:
+        engine_url = mydb.get_engine_url()
+        engine = sqlalchemy.create_engine(engine_url)
+        pandora_db = engine.connect()
+        query = text("SELECT item_qty FROM BasicInventory "
+                     "WHERE player_id = :id_check AND item_id = :item_check")
+        query = query.bindparams(id_check=player_object.player_id, item_check=item_id)
+        df = pd.read_sql(query, pandora_db)
+        if not df.empty:
+            player_stock = int(df.values[0])
+            player_stock += change
+            query = text("UPDATE BasicInventory SET item_qty = :new_qty "
+                         "WHERE player_id = :id_check AND item_id = :item_check")
+            query = query.bindparams(id_check=player_object.player_id, item_check=item_id, new_qty=player_stock)
+            pandora_db.execute(query)
+        else:
+            if change > 0:
+                player_stock = change
+            else:
+                player_stock = 0
+            query = text("INSERT INTO BasicInventory VALUES (:new_qty) "
+                         "WHERE player_id = :id_check AND item_id = :item_check")
+            query = query.bindparams(id_check=player_object.player_id, item_check=item_id, new_qty=player_stock)
+            pandora_db.execute(query)
+        pandora_db.close()
+        engine.dispose()
+    except exc.SQLAlchemyError as error:
+        print(error)
 
 
 def get_roll_by_code(code, item_type):
@@ -1187,39 +1104,17 @@ def get_roll_by_code(code, item_type):
 def try_refine(player_owner, item_type, selected_tier):
     match item_type:
         case "Dragon Heart Gem":
-            new_item = CustomGem(player_owner, selected_tier)
+            new_item = CustomItem(player_owner, "D", selected_tier)
         case "Dragon Wing":
-            new_item = CustomWing(player_owner, selected_tier)
+            new_item = CustomItem(player_owner, "G", selected_tier)
         case "Paragon Crest":
-            new_item = CustomCrest(player_owner, selected_tier)
+            new_item = CustomItem(player_owner, "C", selected_tier)
         case _:
-            new_item = CustomWeapon(player_owner)
-            new_item.item_base_tier = selected_tier
-            if selected_tier == 5:
-                new_item.base_damage_min = 20000
-                new_item.base_damage_max = 25000
-                bonus_roll = random.randint(16, 20)
-                new_item.item_bonus_stat = float(bonus_roll) * 0.1
-                new_item.item_type = generate_special_weapon_base(new_item.item_damage_type, selected_tier)
-                new_item.set_item_name()
-            else:
-                random_damage1 = random.randint(1, 99999)
-                random_damage2 = random.randint(1, 99999)
-                if random_damage1 < random_damage2:
-                    new_item.base_damage_min = random_damage1
-                    new_item.base_damage_max = random_damage2
-                else:
-                    new_item.base_damage_min = random_damage2
-                    new_item.base_damage_max = random_damage1
-                bonus_roll = random.randint(21, 29)
-                new_item.item_bonus_stat = float(bonus_roll) * 0.1
-                new_item.item_type = generate_special_weapon_base(new_item.item_damage_type, selected_tier)
-                new_item.set_item_name()
-                new_item.item_name = f'???, {new_item.item_name}'
+            new_item = CustomItem(player_owner, "W", selected_tier)
 
     random_num = random.randint(1, 100)
     if random_num > 25:
-        new_item.item_id = ""
+        new_item.item_id = 0
 
     return new_item
 
@@ -1269,41 +1164,31 @@ def assign_bonus_stat(base_tier):
     return unique_skill
 
 
-def update_tarot_inventory(player_user, card_file):
-    filename = "tinventory.csv"
-    labels = ['player_id', 'card_type', 'card_qty']
-    df_change = pd.DataFrame(columns=labels)
-    df_change.loc[0] = [player_user.player_id, card_file, 1]
-    df_existing = pd.read_csv(filename)
-    df_updated = pd.concat([df_existing, df_change]).groupby(['player_id', 'card_type']).sum().reset_index()
-    df_updated.to_csv(filename, index=False)
-
-
-def check_tarot(player_owner, card_file):
-    filename = "tinventory.csv"
-    df = pd.read_csv(filename)
-    df = df[df['player_id'] == player_owner.player_id][['card_type', 'card_qty']]
-
-    if card_file in df['card_type'].values:
-        df = df[df['card_type'] == card_file][['card_qty']]
-        quantity = df['card_qty'].values[0]
-    else:
-        quantity = 0
-    return quantity
-
-
 def sell(user, item, embed_msg):
+    reload_player = player.get_player_by_id(user.player_id)
     response_embed = embed_msg
-    response = user.check_equipped(user, item.item_id)
-    sell_value = item.item_base_tier * 100
+    response = user.check_equipped(user, item)
+    sell_value = item.item_tier * 100
     if response == "":
-        user.player_coins += sell_value
-        user.update_coins(sell_value)
-        filename = "cinventory.csv"
-        df = pd.read_csv(filename)
-        df = df.loc[df['item_id'] != item.item_id]
-        df.to_csv(filename, index=False)
-        response_embed.add_field(name="Item Sold!", value=f"{sell_value} lotus coins acquired.", inline=False)
+        reload_player.player_coins += sell_value
+        reload_player.set_player_field("player_coins", user.player_coins)
+        try:
+            engine_url = mydb.get_engine_url()
+            engine = sqlalchemy.create_engine(engine_url)
+            pandora_db = engine.connect()
+            query = text("DELETE FROM CustomInventory "
+                         "WHERE item_id = :item_check")
+            query = query.bindparams(item_check=item.item_id)
+            pandora_db.execute(query)
+            pandora_db.close()
+            engine.dispose()
+            currency_msg = f'You now have {reload_player.player_coins} lotus coins!'
+            response_embed.add_field(name=f"Item Sold! {sell_value} lotus coins acquired!",
+                                     value=currency_msg, inline=False)
+        except exc.SQLAlchemyError as error:
+            print(error)
+            response = "Database Error!"
+            response_embed.add_field(name="Item Not Sold!", value=response, inline=False)
     else:
         response_embed.add_field(name="Item Not Sold!", value=response, inline=False)
     return response_embed

@@ -1,5 +1,4 @@
 import discord
-import chatcommands
 from discord.ext import commands
 import csv
 import random
