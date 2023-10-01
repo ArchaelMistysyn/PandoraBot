@@ -72,7 +72,7 @@ def check_tarot(player_id, card_name, card_variant):
         df = pd.read_sql(query, pandora_db)
         pandora_db.close()
         engine.dispose()
-        if not df.empty:
+        if len(df.index) != 0:
             player_id = int(df['player_id'].values[0])
             card_numeral = str(df['card_numeral'].values[0])
             card_variant = int(df['card_variant'].values[0])
@@ -123,7 +123,7 @@ def collection_check(player_id):
         df = pd.read_sql(query, pandora_db)
         pandora_db.close()
         engine.dispose()
-        if not df.empty:
+        if len(df.index) != 0:
             collection_count = df.shape[0]
         else:
             collection_count = 0

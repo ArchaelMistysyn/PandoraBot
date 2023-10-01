@@ -946,7 +946,9 @@ def use_stamina_potion(player_object, item_id, restore_amount):
     if potion_stock > 0:
         inventory.update_stock(player_object, item_id, -1)
         player_object.player_stamina += restore_amount
-        player_object.add_stamina(restore_amount)
+        if player_object.player_stamina > 2000:
+            player_object.player_stamina = 2000
+        player_object.set_player_field("stamina", player_object.player_stamina)
     embed_msg = player_object.create_stamina_embed()
     return embed_msg
 
@@ -1416,11 +1418,12 @@ class QuestView(discord.ui.View):
         if is_completed:
             reward_view = RewardView(self.player_object)
             if self.quest_object.award_role != "":
-                add_role = discord.utils.get(user.server.roles, name=self.quest_object.award_role)
+                add_role = discord.utils.get(interaction.guild.roles, name=self.quest_object.award_role)
                 await interaction.user.add_roles(add_role)
                 if self.player_object.player_echelon != 1:
-                    previous_role = role_list[(self.player_object.player_echelon - 2)]
-                    remove_role = discord.utils.get(user.server.roles, name=previous_role)
+                    previous_role = discord.utils.get(interaction.guild.roles,
+                                                      name=role_list[(self.player_object.player_echelon - 2)])
+                    remove_role = discord.utils.get(interaction.guild.roles, name=previous_role)
                     await interaction.user.remove_roles(remove_role)
             await interaction.response.edit_message(embed=embed_msg, view=reward_view)
         else:
@@ -1442,14 +1445,14 @@ class RewardView(discord.ui.View):
         end_quest = 50
         if self.player_object.player_quest <= end_quest:
             current_quest = self.player_object.player_quest
-            quest_object = get_quest(current_quest, self.player_object)
+            quest_object = quest.get_quest(current_quest, self.player_object)
             token_count = self.player_object.check_tokens(current_quest)
             quest_object.set_quest_output(token_count)
             embed_msg = discord.Embed(colour=discord.Colour.dark_teal(),
                                       title=quest_object.quest_title,
                                       description=quest_object.story_message)
             embed_msg.add_field(name=f"Quest", value=quest_object.quest_output, inline=False)
-            quest_view = menus.QuestView(user, quest_object)
+            quest_view = menus.QuestView(self.player_object, quest_object)
             await ctx.send(embed=embed_msg, view=quest_view)
         else:
             embed_msg.add_field(name="", value="Quest is not yet completed!", inline=False)
@@ -1461,10 +1464,11 @@ class RewardView(discord.ui.View):
 
 
 class ClassSelect(discord.ui.View):
-    def __init__(self, player_name, username):
+    def __init__(self, player_name, username, ctx):
         super().__init__(timeout=None)
         self.username = username
         self.player_name = player_name
+        self.ctx = ctx
 
     @discord.ui.select(
         placeholder="Select a class!",
@@ -1493,6 +1497,11 @@ class ClassSelect(discord.ui.View):
         new_player.player_username = self.username
         chosen_class = pandorabot.class_icon_dict[class_select.values[0]]
         response = new_player.add_new_player(chosen_class)
+        chosen_class_role = f"Class Role - {class_select.values[0]}"
+        add_role = discord.utils.get(interaction.guild.roles, name=chosen_class_role)
+        remove_role = discord.utils.get(interaction.guild.roles, name="Class Role - Rat (No Class)")
+        await interaction.user.add_roles(add_role)
+        await interaction.user.remove_roles(remove_role)
         embed_msg = discord.Embed(colour=discord.Colour.dark_teal(),
                                   title="Register",
                                   description=response)

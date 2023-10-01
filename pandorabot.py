@@ -44,8 +44,8 @@ role_list = ["Player Echelon 1", "Player Echelon 2", "Player Echelon 3", "Player
 
 # Initialize server and channel list
 channel_list_wiki = [1140841088005976124, 1141256419161673739, 1148155007305273344]
-channel_list_2 = [1156308986065338448, 1156309099970048070, 1156318343180071014]
-global_server_channels = [channel_list_wiki, channel_list_2]
+channel_list = [1156308986065338448, 1156309099970048070, 1156318343180071014]
+global_server_channels = [channel_list]
 
 
 # run the bot
@@ -74,7 +74,7 @@ def run_discord_bot():
             raid_channel_id = server[1]
             raid_ctx = pandora_bot.get_channel(raid_channel_id)
             pandora_bot.loop.create_task(stamina_manager(600, cmd_ctx))
-            pandora_bot.loop.create_task(timed_task(60, raid_channel_id, raid_ctx))
+            pandora_bot.loop.create_task(timed_task(60, raid_channel_id, 1, 1, raid_ctx))
 
     @pandora_bot.event
     async def stamina_manager(duration_seconds, ctx):
@@ -95,55 +95,48 @@ def run_discord_bot():
         async def raid_callback(self, interaction: discord.Interaction, raid_select: discord.ui.Select):
             clicked_by = player.get_player_by_name(str(interaction.user))
             outcome = clicked_by.player_username
-            outcome += bosses.add_participating_player(clicked_by.player_id)
+            outcome += bosses.add_participating_player(interaction.channel.id, clicked_by.player_id)
 
             await interaction.response.send_message(outcome)
 
     @pandora_bot.event
-    async def timed_task(duration_seconds, channel_id, ctx):
-        # initialize the boss post
-        boss_type = "Dragon"
-        new_boss_tier = bosses.get_random_bosstier(boss_type)
-        level = random.randint(0, 9)
-        level += new_boss_tier * 10
-        active_boss = bosses.spawn_boss(new_boss_tier, boss_type, level)
+    async def timed_task(duration_seconds, channel_id, channel_base, boss_types, ctx):
+        level, boss_type, boss_tier = bosses.get_boss_details(boss_types, channel_base)
+        active_boss = bosses.spawn_boss(channel_id, boss_tier, boss_type, level)
         embed_msg = active_boss.create_boss_msg(0, True)
         raid_button = RaidView()
         sent_message = await ctx.send(embed=embed_msg, view=raid_button)
-        active_boss.message_id = sent_message.id
         while True:
             await asyncio.sleep(duration_seconds)
-            player_list = bosses.get_players()
+            player_list, damage_list = bosses.get_damage_list(channel_id)
             dps = 0
-            for x in player_list:
+            for idx, x in enumerate(player_list):
                 temp_user = player.get_player_by_id(int(x))
                 player_dps, critical_type = damagecalc.get_player_damage(temp_user, active_boss)
-                bosses.update_player_damage(int(x), player_dps)
                 dps += player_dps
+                new_player_dps = int(damage_list[idx]) + player_dps
+                bosses.update_player_damage(channel_id, int(x), new_player_dps)
             active_boss.boss_cHP -= dps
+            bosses.update_boss_cHP(channel_id, active_boss.boss_cHP)
             if active_boss.calculate_hp():
                 embed_msg = active_boss.create_boss_msg(dps, True)
                 await sent_message.edit(embed=embed_msg)
             else:
-                embed_msg = bosses.create_dead_boss_embed(active_boss, dps)
+                for x in player_list:
+                    temp_user = player.get_player_by_id(int(x))
+                    # Set tokens based on boss type will need to add case statement here
+                    if temp_user.player_quest <= 7:
+                        temp_user.check_and_update_tokens(6, 1)
+                embed_msg = bosses.create_dead_boss_embed(channel_id, active_boss, dps)
                 loot_embed = loot.create_loot_embed(embed_msg, active_boss, player_list)
                 await sent_message.edit(embed=loot_embed)
 
-                # spawn a new boss
-                random_number = random.randint(0, 1)
-                if active_boss.boss_type_num == 3 or random_number == 0:
-                    boss_type = "Dragon"
-                else:
-                    boss_type = "Demon"
-                new_boss_tier = bosses.get_random_bosstier(boss_type)
-                level = random.randint(0, 9)
-                level += new_boss_tier * 10
-                active_boss = bosses.spawn_boss(new_boss_tier, boss_type, level)
-                bosses.clear_list()
+                level, boss_type, boss_tier = bosses.get_boss_details(boss_types, channel_base)
+                active_boss = bosses.spawn_boss(channel_id, boss_tier, boss_type, level)
+                bosses.clear_boss_info(channel_id)
                 player_list.clear()
                 embed_msg = active_boss.create_boss_msg(0, True)
                 sent_message = await ctx.send(embed=embed_msg, view=raid_button)
-                active_boss.message_id = sent_message.id
 
     @pandora_bot.event
     async def on_command_error(ctx, error):
@@ -163,7 +156,8 @@ def run_discord_bot():
             embed_msg = discord.Embed(colour=discord.Colour.dark_teal(),
                                       title="Register",
                                       description="Starting story goes here - Select Class")
-            player_name = str(ctx.author)
+            user = ctx.author
+            player_name = str(user)
             class_view = menus.ClassSelect(player_name, username)
             await ctx.send(embed=embed_msg, view=class_view)
 
@@ -177,6 +171,7 @@ def run_discord_bot():
                 player_object.get_equipped()
                 player_object.get_player_multipliers(-1, -1)
                 if player_object.spend_stamina(25):
+                    player_object.check_and_update_tokens(2, 1)
                     starting_room = explore.generate_new_room(player_object)
                     embed_msg = starting_room.embed
                     starting_view = starting_room.room_view
@@ -216,31 +211,39 @@ def run_discord_bot():
     @pandora_bot.command(name='fort', help="**!fort** to challenge a fortress")
     @commands.max_concurrency(1, per=commands.BucketType.default, wait=False)
     async def fort(ctx):
-        if any(ctx.channel.id in sl for sl in global_server_channels):
+        channel_id = ctx.channel.id
+        if any(channel_id in sl for sl in global_server_channels):
             player_name = ctx.author
             player_object = player.get_player_by_name(player_name)
             if player_object.player_class != "":
-                if player_object.spend_stamina(50):
-                    # initialize the boss post
-                    boss_type = "Fortress"
-                    new_boss_tier = bosses.get_random_bosstier(boss_type)
-                    active_boss = bosses.spawn_boss(new_boss_tier, boss_type, player_object.player_lvl)
-                    is_alive = True
-                    embed_msg = active_boss.create_boss_msg(0, is_alive)
-                    sent_message = await ctx.send(embed=embed_msg)
-                    while is_alive:
-                        await asyncio.sleep(60)
-                        dps, critical_type = damagecalc.get_player_damage(player_object, active_boss)
-                        active_boss.boss_cHP -= dps
-                        if active_boss.calculate_hp():
-                            embed_msg = active_boss.create_boss_embed(dps, is_alive)
-                            await sent_message.edit(embed=embed_msg)
-                        else:
-                            is_alive = False
-                            embed_msg = bosses.create_dead_boss_embed(active_boss, dps)
-                            player_list = [player_object.player_id]
-                            loot_embed = loot.create_loot_embed(embed_msg, active_boss, player_list)
-                            await sent_message.edit(embed=loot_embed)
+                if player_object.equipped_weapon != 0:
+                    if player_object.spend_stamina(50):
+                        # initialize the boss post
+                        boss_type = "Fortress"
+                        new_boss_tier = bosses.get_random_bosstier(boss_type)
+                        active_boss = bosses.spawn_boss(channel_id, new_boss_tier, boss_type, player_object.player_lvl)
+                        is_alive = True
+                        embed_msg = active_boss.create_boss_msg(0, is_alive)
+                        sent_message = await ctx.send(embed=embed_msg)
+                        while is_alive:
+                            await asyncio.sleep(60)
+                            dps, critical_type = damagecalc.get_player_damage(player_object, active_boss)
+                            active_boss.boss_cHP -= dps
+                            if active_boss.calculate_hp():
+                                embed_msg = active_boss.create_boss_msg(dps, is_alive)
+                                await sent_message.edit(embed=embed_msg)
+                            else:
+                                if player_object.player_quest <= 4:
+                                    player_object.check_and_update_tokens(3, 1)
+                                if player_object.player_quest <= 9 and active_boss.boss_tier == 4:
+                                    player_object.check_and_update_tokens(9, 1)
+                                is_alive = False
+                                embed_msg = bosses.create_dead_boss_embed(channel_id, active_boss, dps)
+                                player_list = [player_object.player_id]
+                                loot_embed = loot.create_loot_embed(embed_msg, active_boss, player_list)
+                                await sent_message.edit(embed=loot_embed)
+                    else:
+                        await ctx.send("You must have a weapon equipped.")
                 else:
                     await ctx.send("Not enough stamina.")
             else:
@@ -251,20 +254,15 @@ def run_discord_bot():
     @commands.max_concurrency(1, per=commands.BucketType.default, wait=False)
     async def story_quest(ctx):
         if any(ctx.channel.id in sl for sl in global_server_channels):
-            # quest progression
-            player_object = player.get_player_by_name(str(ctx.author))
+            user = ctx.author
+            player_object = player.get_player_by_name(str(user))
             current_quest = player_object.player_quest
             if current_quest != 0:
                 current_quest = player_object.player_quest
                 quest_object = quest.get_quest(current_quest, player_object)
-                token_count = player_object.check_tokens(current_quest)
-                quest_object.set_quest_output(token_count)
-                embed_msg = discord.Embed(colour=discord.Colour.dark_teal(),
-                                          title=quest_object.quest_title,
-                                          description=quest_object.story_message)
-                embed_msg.add_field(name=f"Quest", value=quest_object.quest_output, inline=False)
+                quest_message = quest_object.get_quest_embed(player_object)
                 quest_view = menus.QuestView(player_object, quest_object)
-                await ctx.send(embed=embed_msg, view=quest_view)
+                await ctx.send(embed=quest_message, view=quest_view)
             elif current_quest >= 50:
                 embed_msg = discord.Embed(colour=discord.Colour.dark_teal(),
                                           title="Quests",
@@ -282,9 +280,9 @@ def run_discord_bot():
             if player_object.player_class != "":
                 player_object.get_equipped()
                 if player_object.equipped_weapon != 0:
-                    equipped_item = inventory.read_custom_item(user.equipped_weapon)
+                    equipped_item = inventory.read_custom_item(player_object.equipped_weapon)
                     embed_msg = equipped_item.create_citem_embed()
-                    gear_view = menus.GearView(user)
+                    gear_view = menus.GearView(player_object)
                 else:
                     embed_msg = discord.Embed(colour=discord.Colour.dark_gray(),
                                               title="Equipped weapon",
@@ -301,7 +299,7 @@ def run_discord_bot():
         if any(ctx.channel.id in sl for sl in global_server_channels):
             player_object = player.get_player_by_name(str(ctx.author))
             if player_object.player_class != "":
-                inventory_view = menus.InventoryView(user)
+                inventory_view = menus.InventoryView(player_object)
 
                 inventory_title = f'{player_object.player_username}\'s Equipment:\n'
                 player_inventory = inventory.display_cinventory(player_object.player_id)

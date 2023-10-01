@@ -47,7 +47,7 @@ class CustomItem:
         random_damage1, random_damage2 = get_tier_damage(item_tier)
         match self.item_type:
             case "W":
-                if self.item_damage_type == class_summoner:
+                if self.item_damage_type == pandorabot.class_summoner:
                     self.item_blessing_tier = "Standard"
                     self.item_material_tier = "Illusion"
                 else:
@@ -286,45 +286,50 @@ class CustomItem:
             case "W":
                 special_item_list = None
                 tier_location = self.item_tier - 1
-                random_num = random.randint(0, 6)
                 class_checker = pandorabot.class_icon_list.index(self.item_damage_type)
                 match class_checker:
                     case 0:
+                        random_num = random.randint(0, 2)
                         item_list_t1 = ["Shortsword", "Handaxe", "Javelin"]
                         item_list_t2 = ["Sword", "Axe", "Spear"]
                         item_list_t3 = ["Longsword", "Battle Axe", "Longspear"]
                         item_list_t4 = ["Greatsword", "Greataxe", "Trident"]
                     case 1:
+                        random_num = random.randint(0, 1)
                         item_list_t1 = ["Shortbow", "Ballista"]
                         item_list_t2 = ["Longbow", "Arbalest"]
                         item_list_t3 = ["Recurve Bow", "Gun"]
                         item_list_t4 = ["Greatbow", "Blaster"]
                     case 2:
+                        random_num = random.randint(0, 3)
                         item_list_t1 = ["Lesser Wand", "Lesser Staff", "Lesser Tome", "Lesser Orb"]
                         item_list_t2 = ["Magic Wand", "Magic Staff", "Magic Tome", "Crystal Ball"]
                         item_list_t3 = ["Sceptre", "Quarterstaff", "Grimoire", "Seer Sphere"]
                         item_list_t4 = ["Rod", "Crescent Staff", "Spellbook", "Orb"]
                     case 3:
+                        random_num = random.randint(0, 2)
                         item_list_t1 = ["Dagger", "Claws", "Darts"]
                         item_list_t2 = ["Stiletto", "Tiger Claws", "Tomahawk"]
                         item_list_t3 = ["Kris", "Eagle Claws", "Kunai"]
                         item_list_t4 = ["Sai", "Dragon Talons", "Shuriken"]
                     case 4:
+                        random_num = 0
                         item_list_t1 = ["Steel String"]
                         item_list_t2 = ["Cutting Wire"]
                         item_list_t3 = ["Razor Threads"]
                         item_list_t4 = ["Infused Threads"]
                     case 5:
+                        random_num = random.randint(0, 11)
                         special_item_list = ["Pegacorn", "Night Mare", "Unicorn", "Pegasus",
                                              "Wyvern", "Roc", "Gryphon", "Manta Ray",
                                              "Liger", "Bear", "Elephant", "Wolf"]
                     case _:
+                        random_num = random.randint(0, 11)
                         special_item_list = ["Zombie", "Ghoul", "Skeleton", "Specter"
-                                             "Fox", "Spider", "Crocodile", "Basilisk"
+                                             "Fox", "Spider", "Crocodile", "Basilisk",
                                              "Wyrm", "Salamander", "Coatl", "Phoenix"]
-                if not special_item_list.empty:
-                    random_position = random.randint(0, 11)
-                    item_base = special_item_list[random_position]
+                if special_item_list:
+                    item_base = special_item_list[random_num]
                 else:
                     item_namelist = [item_list_t1, item_list_t2, item_list_t3, item_list_t4]
                     item_base = item_namelist[tier_location][random_num]
@@ -620,7 +625,7 @@ def read_custom_item(item_id):
         pandora_db.close()
         engine.dispose()
 
-        if not df.empty:
+        if len(df.index) != 0:
             player_id = int(df['player_id'].values[0])
             item_id = int(df['item_id'].values[0])
             item_type = str(df['item_type'].values[0])
@@ -1014,7 +1019,7 @@ def check_stock(player_object, item_id):
         df = pd.read_sql(query, pandora_db)
         pandora_db.close()
         engine.dispose()
-        if not df.empty:
+        if len(df.index) != 0:
             player_stock = int(df.values[0])
         else:
             player_stock = 0
@@ -1033,7 +1038,7 @@ def update_stock(player_object, item_id, change):
                      "WHERE player_id = :id_check AND item_id = :item_check")
         query = query.bindparams(id_check=player_object.player_id, item_check=item_id)
         df = pd.read_sql(query, pandora_db)
-        if not df.empty:
+        if len(df.index) != 0:
             player_stock = int(df.values[0])
             player_stock += change
             query = text("UPDATE BasicInventory SET item_qty = :new_qty "
@@ -1045,9 +1050,8 @@ def update_stock(player_object, item_id, change):
                 player_stock = change
             else:
                 player_stock = 0
-            query = text("INSERT INTO BasicInventory VALUES (:new_qty) "
-                         "WHERE player_id = :id_check AND item_id = :item_check")
-            query = query.bindparams(id_check=player_object.player_id, item_check=item_id, new_qty=player_stock)
+            query = text("INSERT INTO BasicInventory VALUES (:item_id, :player_id, :new_qty) ")
+            query = query.bindparams(item_id=item_id, player_id=player_object.player_id, new_qty=player_stock)
             pandora_db.execute(query)
         pandora_db.close()
         engine.dispose()

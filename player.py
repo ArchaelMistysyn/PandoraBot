@@ -57,19 +57,20 @@ class PlayerProfile:
         return str(self.player_name)
 
     def set_player_field(self, field_name, field_value):
-        if field_name == "exp":
-            max_exp = get_max_exp(self.player_lvl)
-            while field_value > max_exp and self.player_lvl < 100:
-                field_value -= max_exp
-                self.player_exp = field_value
-                self.player_lvl += 1
-                query = text(f"UPDATE PlayerList SET player_lvl = :input_1 WHERE player_id = :player_check")
-                query = query.bindparams(player_check=int(self.player_id), input_1=self.player_lvl)
-                pandora_db.execute(query)
         try:
             engine_url = mydb.get_engine_url()
             engine = sqlalchemy.create_engine(engine_url)
             pandora_db = engine.connect()
+            if field_name == "player_exp":
+                max_exp = get_max_exp(self.player_lvl)
+                while field_value > max_exp and self.player_lvl < 100:
+                    field_value -= max_exp
+                    self.player_exp = field_value
+                    self.player_lvl += 1
+                    query = text(f"UPDATE PlayerList SET player_lvl = :input_1 WHERE player_id = :player_check")
+                    query = query.bindparams(player_check=int(self.player_id), input_1=self.player_lvl)
+                    pandora_db.execute(query)
+                    self.check_and_update_tokens(5, 1)
             query = text(f"UPDATE PlayerList SET {field_name} = :input_1 WHERE player_id = :player_check")
             query = query.bindparams(player_check=int(self.player_id), input_1=field_value)
             pandora_db.execute(query)
@@ -81,6 +82,7 @@ class PlayerProfile:
     def add_new_player(self, selected_class):
         self.player_class = selected_class
         self.player_quest = 1
+        self.player_lvl = 1
         try:
             engine_url = mydb.get_engine_url()
             engine = sqlalchemy.create_engine(engine_url)
@@ -89,14 +91,14 @@ class PlayerProfile:
             query = query.bindparams(player_check=self.player_name)
             df = pd.read_sql(query, pandora_db)
 
-            if not df.empty:
+            if len(df.index) != 0:
                 response = f"Player {self.player_name} is already registered."
             else:
                 query = text("SELECT * FROM PlayerList WHERE player_username = :username_check")
                 query = query.bindparams(username_check=self.player_username)
                 df = pd.read_sql(query, pandora_db)
 
-                if not df.empty:
+                if len(df.index) != 0:
                     response = f"Username {self.player_username} is taken. Please pick a new username."
                 else:
                     query = text("INSERT INTO PlayerList "
@@ -115,11 +117,11 @@ class PlayerProfile:
                     pandora_db.execute(query)
                     response = f"Player {self.player_name} has been registered to play. Welcome {self.player_username}!"
                     response += f"\nPlease use the !quest command to proceed."
-
                     registered_player = get_player_by_name(self.player_name)
-
-                    query = text("INSERT INTO QuestTokens (player_id, token_1) VALUES(:player_id, :input_1)")
-                    query = query.bindparams(player_id=registered_player.player_id, input_1=1)
+                    query = text("INSERT INTO QuestTokens (player_id, token_1, token_5, token_8, input_10) "
+                                 "VALUES(:player_id, :input_1, :input_5, :input_8, :input_10)")
+                    query = query.bindparams(player_id=registered_player.player_id, input_1=1, input_5=1,
+                                             input_8=10, input_10=20)
                     pandora_db.execute(query)
             pandora_db.close()
             engine.dispose()
@@ -127,6 +129,11 @@ class PlayerProfile:
             print("Database Error: {}".format(err))
             response = "Error!"
         return response
+
+    def check_and_update_tokens(self, quest_num, change):
+        current_tokens = self.check_tokens(quest_num)
+        new_tokens = current_tokens + change
+        self.update_tokens(quest_num, new_tokens)
 
     def update_tokens(self, quest_num, new_token_count):
         try:
@@ -493,7 +500,7 @@ def get_player_by_id(player_id: int) -> PlayerProfile:
         df = pd.read_sql(query, pandora_db)
         pandora_db.close()
         engine.dispose()
-        if not df.empty:
+        if len(df.index) != 0:
             target_player.player_id = int(df["player_id"].values[0])
             target_player.player_name = str(df["player_name"].values[0])
             target_player.player_username = str(df["player_username"].values[0])
@@ -522,7 +529,7 @@ def get_player_by_name(player_name: str) -> PlayerProfile:
         df = pd.read_sql(query, pandora_db)
         pandora_db.close()
         engine.dispose()
-        if not df.empty:
+        if len(df.index) != 0:
             target_player.player_name = str(df["player_name"].values[0])
             target_player.player_id = int(df["player_id"].values[0])
             target_player.player_username = str(df["player_username"].values[0])
@@ -550,20 +557,23 @@ def get_all_users():
         df = pd.read_sql(query, pandora_db)
         pandora_db.close()
         engine.dispose()
-        for row in df.iterrows():
-            target_player = PlayerProfile()
-            target_player.player_id = int(row["player_id"])
-            target_player.player_name = str(row["player_name"])
-            target_player.player_username = str(row["player_username"])
-            target_player.player_lvl = int(row["player_lvl"])
-            target_player.player_exp = int(row["player_exp"])
-            target_player.player_echelon = int(row["player_echelon"])
-            target_player.player_stamina = int(row["player_stamina"])
-            target_player.player_class = str(row["player_class"])
-            target_player.player_coins = int(row["player_coins"])
-            target_player.player_quest = int(df["player_quest"].values[0])
-            target_player.get_equipped()
-            user_list.append(target_player)
+        if len(df.index) != 0:
+            for index, row in df.iterrows():
+                target_player = PlayerProfile()
+                target_player.player_id = int(row["player_id"])
+                target_player.player_name = str(row["player_name"])
+                target_player.player_username = str(row["player_username"])
+                target_player.player_lvl = int(row["player_lvl"])
+                target_player.player_exp = int(row["player_exp"])
+                target_player.player_echelon = int(row["player_echelon"])
+                target_player.player_stamina = int(row["player_stamina"])
+                target_player.player_class = str(row["player_class"])
+                target_player.player_coins = int(row["player_coins"])
+                target_player.player_quest = int(df["player_quest"].values[0])
+                target_player.get_equipped()
+                user_list.append(target_player)
+        else:
+            user_list = None
     except mysql.connector.Error as err:
         print("Database Error: {}".format(err))
     return user_list

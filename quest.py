@@ -34,10 +34,11 @@ class Quest:
 
     def hand_in(self, current_player):
         player_object = player.get_player_by_id(current_player.player_id)
-        token_count = player_object.check_tokens(self.quest_num)
+        token_type = quest_exceptions(self.quest_num)
+        token_count = player_object.check_tokens(token_type)
         if token_count >= self.token_cost:
             new_token_count = token_count - self.token_cost
-            player_object.update_tokens(self.quest_num, new_token_count)
+            player_object.update_tokens(token_type, new_token_count)
             player_object.player_quest += 1
             player_object.set_player_field("player_quest", player_object.player_quest)
             is_completed = True
@@ -46,7 +47,7 @@ class Quest:
             player_object.set_player_field("player_exp", player_object.player_exp)
             player_object.set_player_field("player_coins", player_object.player_coins)
             reward_list = f"{pandorabot.exp_icon} {self.award_exp}x Exp\n"
-            reward_list += f"{pandorabot.coin_icon}x {self.award_coins}\n Lotus Coins"
+            reward_list += f"{pandorabot.coin_icon} {self.award_coins}x Lotus Coins\n"
             if self.award_item != "":
                 inventory.update_stock(player_object, self.award_item, self.award_qty)
                 item_emoji = loot.get_loot_emoji(self.award_item)
@@ -66,6 +67,19 @@ class Quest:
                                       title=self.quest_title,
                                       description=self.story_message)
         return embed_msg, is_completed
+
+    def get_quest_embed(self, player_object):
+        token_check = quest_exceptions(self.quest_num)
+        if token_check == 5 and self.quest_num != 5:
+            token_count = player_object.check_tokens(token_check) + player_object.check_tokens(self.quest_num)
+        else:
+            token_count = player_object.check_tokens(token_check)
+        self.set_quest_output(token_count)
+        quest_embed = discord.Embed(colour=discord.Colour.dark_teal(),
+                                    title=self.quest_title,
+                                    description=self.story_message)
+        quest_embed.add_field(name=f"Quest", value=self.quest_output, inline=False)
+        return quest_embed
 
 
 def get_quest(quest_num, player_user):
@@ -94,3 +108,14 @@ def get_quest(quest_num, player_user):
         print("Database Error: {}".format(err))
         quest = None
     return quest
+
+
+def quest_exceptions(quest_num):
+    match quest_num:
+        case 4:
+            token_check = 3
+        case 8 | 10:
+            token_check = 5
+        case _:
+            token_check = quest_num
+    return token_check

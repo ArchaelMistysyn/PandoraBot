@@ -10,6 +10,7 @@ import mysql
 import pymysql
 from sqlalchemy import exc
 import mydb
+import pandorabot
 
 
 class BasicItem:
@@ -80,7 +81,7 @@ def award_loot(boss_object, player_list, exp_amount):
         query = text(f"SELECT * FROM BasicInventory")
         df_existing = pd.read_sql(query, pandora_db)
         df_updated = pd.concat([df_existing, df_change]).groupby(['player_id', 'item_id']).sum().reset_index()
-        df_updated.to_sql("BasicInventory", pandora_db, index=False)
+        df_updated.to_sql("BasicInventory", pandora_db, index=False, if_exists='replace')
         pandora_db.close()
         engine.dispose()
     except exc.SQLAlchemyError as error:
@@ -118,7 +119,7 @@ def get_loot_name(item_id) -> str:
 
 def create_loot_embed(current_embed, active_boss, player_list):
     loot_embed = current_embed
-    exp_amount = active_boss.boss_tier * (1 + active_boss.boss_lvl) * 100
+    exp_amount = active_boss.boss_tier * active_boss.boss_type_num * active_boss.boss_lvl * 100
     loot_output = award_loot(active_boss, player_list, exp_amount)
     for counter, loot_section in enumerate(loot_output):
         temp_player = player.get_player_by_id(player_list[counter])
