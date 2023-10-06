@@ -5,6 +5,8 @@ import inventory
 import damagecalc
 import math
 import loot
+import bosses
+import damagecalc
 import discord
 import random
 import mysql.connector
@@ -15,6 +17,7 @@ import mysql
 import pymysql
 from sqlalchemy import exc
 import mydb
+import pandorabot
 
 
 class PlayerProfile:
@@ -38,23 +41,70 @@ class PlayerProfile:
         self.player_mHP = 1000
         self.player_cHP = self.player_mHP
 
+        self.player_damage = 0.0
+        self.player_total_damage = 0.0
+        self.elemental_damage = [0, 0, 0, 0, 0, 0, 0, 0, 0]
+        self.elemental_damage_multiplier = [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+        self.elemental_penetration = [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+        self.all_elemental_multiplier = 0.0
+        self.all_elemental_penetration = 0.0
+        self.defence_penetration = 0.0
+        self.class_multiplier = 0.0
+        self.final_damage = 0.0
+
         self.critical_chance = 0.0
         self.critical_multiplier = 0.0
+
         self.attack_speed = 0.0
-        self.damage_mitigation = 0.0
-        self.elemental_penetration = 0.0
-        self.defence_penetration = 0.0
-        self.final_damage = 0.0
+        self.bonus_hits = 0.0
+
         self.aura = 0.0
-        self.curse = 0.0
-        self.player_damage = 0.0
-        self.hit_multiplier = 0.0
-        self.special_multipliers = 0.0
-        self.class_multiplier = 0.0
+        self.elemental_curse = [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+        self.all_elemental_curse = 0.0
+
+        self.hp_bonus = 0.0
+        self.hp_regen = 0.0
         self.hp_multiplier = 0.0
+        self.damage_mitigation = 0.0
+        self.mitigation_multiplier = 0.0
+        self.elemental_resistance = [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+        self.all_elemental_resistance = 0.0
 
     def __str__(self):
         return str(self.player_name)
+
+    def reset_multipliers(self):
+        self.player_mHP = 1000
+        self.player_cHP = self.player_mHP
+
+        self.player_damage = 0.0
+        self.player_total_damage = 0.0
+        self.elemental_damage = [0, 0, 0, 0, 0, 0, 0, 0, 0]
+        self.elemental_damage_multiplier = [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+        self.elemental_penetration = [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+        self.all_elemental_multiplier = 0.0
+        self.all_elemental_penetration = 0.0
+        self.defence_penetration = 0.0
+        self.class_multiplier = 0.0
+        self.final_damage = 0.0
+
+        self.critical_chance = 0.0
+        self.critical_multiplier = 0.0
+
+        self.attack_speed = 0.0
+        self.bonus_hits = 0.0
+
+        self.aura = 0.0
+        self.elemental_curse = [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+        self.all_elemental_curse = 0.0
+
+        self.hp_bonus = 0.0
+        self.hp_regen = 0.0
+        self.hp_multiplier = 0.0
+        self.damage_mitigation = 0.0
+        self.mitigation_multiplier = 0.0
+        self.elemental_resistance = [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+        self.all_elemental_resistance = 0.0
 
     def set_player_field(self, field_name, field_value):
         try:
@@ -118,7 +168,7 @@ class PlayerProfile:
                     response = f"Player {self.player_name} has been registered to play. Welcome {self.player_username}!"
                     response += f"\nPlease use the !quest command to proceed."
                     registered_player = get_player_by_name(self.player_name)
-                    query = text("INSERT INTO QuestTokens (player_id, token_1, token_5, token_8, input_10) "
+                    query = text("INSERT INTO QuestTokens (player_id, token_1, token_5, token_8, token_10) "
                                  "VALUES(:player_id, :input_1, :input_5, :input_8, :input_10)")
                     query = query.bindparams(player_id=registered_player.player_id, input_1=1, input_5=1,
                                              input_8=10, input_10=20)
@@ -194,189 +244,180 @@ class PlayerProfile:
         except mysql.connector.Error as err:
             print("Database Error: {}".format(err))
 
-    def get_player_multipliers(self, boss_cHP, boss_mHP):
+    def get_player_multipliers(self):
+        self.reset_multipliers()
         self.get_equipped()
-
         base_critical_chance = 10.0
         base_attack_speed = 1.0
         base_damage_mitigation = 0.0
         base_player_hp = 1000
-        sit_damage_multiplier = 0.0
-        damage_multiplier = 0.0
-        mitigation_multiplier = 0.0
-        self.critical_chance = 0.0
-        self.attack_speed = 0.0
-        self.critical_multiplier = 0.0
-        self.damage_mitigation = 0.0
-        self.elemental_penetration = 0.0
-        self.final_damage = 0.0
-        self.aura = 0.0
-        self.curse = 0.0
-        self.hit_multiplier = 1.0
-        self.player_damage = 0.0
-        self.special_multipliers = 0.0
-        self.class_multiplier = 0.0
-        class_bonus = 0.0
-        self.hp_multiplier = 0.0
-        is_mastery = False
 
         if self.equipped_weapon != 0:
             e_weapon = inventory.read_custom_item(self.equipped_weapon)
             e_weapon.update_damage()
-            self.player_damage += (e_weapon.item_damage_min + e_weapon.item_damage_max) / 2
+            self.player_damage += random.randint(e_weapon.item_damage_min, e_weapon.item_damage_max)
             base_attack_speed = float(e_weapon.item_bonus_stat)
-            self.assign_roll_values(e_weapon, "W")
+            self.assign_roll_values(e_weapon)
             self.assign_gem_values(e_weapon)
         if self.equipped_armour != 0:
             e_armour = inventory.read_custom_item(self.equipped_armour)
             e_armour.update_damage()
-            self.player_damage += (e_armour.item_damage_min + e_armour.item_damage_max) / 2
-            self.assign_roll_values(e_armour, "A")
+            self.player_damage += random.randint(e_armour.item_damage_min, e_armour.item_damage_max)
+            self.assign_roll_values(e_armour)
             base_damage_mitigation = float(e_armour.item_bonus_stat)
             self.assign_gem_values(e_armour)
         if self.equipped_acc != 0:
             e_acc = inventory.read_custom_item(self.equipped_acc)
             e_acc.update_damage()
-            self.player_damage += (e_acc.item_damage_min + e_acc.item_damage_max) / 2
-            self.assign_roll_values(e_acc, "Y")
+            self.player_damage += random.randint(e_acc.item_damage_min, e_acc.item_damage_max)
+            self.assign_roll_values(e_acc)
             self.assign_gem_values(e_acc)
-            x, y, z = damagecalc.accessory_ability_multipliers(
-                                                     e_acc.item_bonus_stat,
-                                                     boss_cHP,
-                                                     boss_mHP,
-                                                     self.player_cHP)
-            damage_multiplier += x
-            sit_damage_multiplier += y
-            mitigation_multiplier += z
+            self.unique_ability_multipliers(e_acc.item_bonus_stat)
         if self.equipped_wing != 0:
             e_wing = inventory.read_custom_item(self.equipped_wing)
             e_wing.update_damage()
-            self.player_damage += (e_wing.item_damage_min + e_wing.item_damage_max) / 2
-            self.assign_roll_values(e_wing, "G")
+            self.player_damage += random.randint(e_wing.item_damage_min, e_wing.item_damage_max)
+            self.assign_roll_values(e_wing)
             self.assign_gem_values(e_wing)
-            x, y, z = damagecalc.accessory_ability_multipliers(
-                e_wing.item_bonus_stat,
-                boss_cHP,
-                boss_mHP,
-                self.player_cHP)
-            damage_multiplier += x
-            sit_damage_multiplier += y
-            mitigation_multiplier += z
+            self.unique_ability_multipliers(e_wing.item_bonus_stat)
         if self.equipped_crest != 0:
             e_crest = inventory.read_custom_item(self.equipped_crest)
             e_crest.update_damage()
-            match e_crest.item_bonus_stat:
-                case "Elemental Fractal":
-                    if self.equipped_weapon != 0:
-                        self.special_multipliers += len(e_weapon.item_elements)
-                case "Omega Critical":
-                    self.special_multipliers += 5
-                case "Specialized Mastery":
-                    is_mastery = True
-                case "Ignore Protection":
-                    self.defence_penetration += 0.3
-                    self.elemental_penetration += 0.4
-                case "Perfect Precision":
-                    base_critical_chance += 10
-                case "Resistance Bypass":
-                    self.elemental_penetration += 0.4
-                case "Extreme Vitality":
-                    self.hp_multiplier += 5
-                case "Defence Bypass":
-                    self.defence_penetration += 0.3
-                case _:
-                    nothing = 0
-            self.player_damage += (e_crest.item_damage_min + e_crest.item_damage_max) / 2
-            self.assign_roll_values(e_crest, "C")
+            self.player_damage += random.randint(e_crest.item_damage_min, e_crest.item_damage_max)
+            self.assign_roll_values(e_crest)
             self.assign_gem_values(e_crest)
+            self.unique_ability_multipliers(e_crest.item_bonus_stat)
 
         self.critical_chance = (1 + self.critical_chance) * base_critical_chance
         self.attack_speed = (1 + self.attack_speed) * base_attack_speed
-        self.damage_mitigation = (1 + (mitigation_multiplier + self.damage_mitigation)) * base_damage_mitigation
-        self.player_mHP = int(base_player_hp * (1 + self.hp_multiplier))
-        self.final_damage += damage_multiplier
-        if boss_cHP != -1:
-            self.final_damage += sit_damage_multiplier
+        self.damage_mitigation = (1 + (self.mitigation_multiplier + self.damage_mitigation)) * base_damage_mitigation
+        self.player_mHP = int((base_player_hp + self.hp_bonus) * (1 + self.hp_multiplier))
 
+        match_count = 0
         if self.equipped_weapon != 0:
             if e_weapon.item_damage_type == self.player_class:
-                class_bonus += 1
+                match_count += 1
         if self.equipped_armour != 0:
             if e_armour.item_damage_type == self.player_class:
-                class_bonus += 1
+                match_count += 1
         if self.equipped_acc != 0:
             if e_acc.item_damage_type == self.player_class:
-                class_bonus += 1
+                match_count += 1
         if self.equipped_wing != 0:
             if e_wing.item_damage_type == self.player_class:
-                class_bonus += 1
+                match_count += 1
         if self.equipped_crest != 0:
             if e_crest.item_damage_type == self.player_class:
-                class_bonus += 1
-        self.class_multiplier = class_bonus * 0.05
-        if is_mastery:
-            self.class_multiplier += class_bonus
+                match_count += 1
+        self.class_multiplier += 0.05
+        self.class_multiplier *= match_count
 
-    def assign_roll_values(self, equipped_item, item_type):
+    def get_player_damage(self, boss_object):
+        additional_multiplier = 1.0
+        self.get_player_multipliers()
+        e_weapon = inventory.read_custom_item(self.equipped_weapon)
+        # Critical hits
+        random_num = random.randint(1, 100)
+        if random_num < self.critical_chance:
+            self.player_damage *= (1 + self.critical_multiplier)
+        # Attack Speed
+        self.player_damage *= self.attack_speed
+        # Hit Multiplier
+        self.player_damage *= (1 + self.bonus_hits)
+        # Class Multiplier
+        self.player_damage *= (1 + self.class_multiplier)
+        # Additional multipliers
+        additional_multiplier *= (1 + self.aura)
+        additional_multiplier *= (1 + self.all_elemental_curse + sum(self.elemental_curse))
+        additional_multiplier *= (1 + self.final_damage)
+        self.player_damage *= additional_multiplier
+        # Type Defences
+        defences_multiplier = (damagecalc.boss_defences("", self, boss_object, "", e_weapon) + self.defence_penetration)
+        self.player_damage *= defences_multiplier
+        # Elemental Defences
+        for idx, x in enumerate(e_weapon.item_elements):
+            if x == 1:
+                temp_element = pandorabot.global_element_list[idx]
+                self.elemental_damage[idx] = self.player_damage * (1 + self.elemental_damage_multiplier[idx])
+                self.elemental_damage[idx] *= (1 + self.all_elemental_multiplier)
+                resist_multi = damagecalc.boss_defences("Element", self, boss_object, temp_element, e_weapon)
+                resist_multi += self.elemental_penetration[idx] + self.all_elemental_penetration
+                self.elemental_damage[idx] *= resist_multi
+        self.player_total_damage = int(sum(self.elemental_damage))
+        return self.player_total_damage
+
+    def assign_roll_values(self, equipped_item):
         for x in equipped_item.item_prefix_values:
+            roll_adjust = 5
             roll_tier = int(str(x)[1])
-            match str(x)[2]:
-                case "1":
-                    self.critical_chance += 0.25 * float(roll_tier)
-                case "2":
-                    self.attack_speed += 0.25 * float(roll_tier)
-                case "3":
-                    self.elemental_penetration += 0.25 * float(roll_tier)
-                case "4":
-                    self.final_damage += 0.25 * float(roll_tier)
-                case "5":
-                    self.damage_mitigation += 0.05 * float(roll_tier)
-                case _:
-                    no_change = True
+            check_roll = ord(str(x[2]))
+            bonus = 0.01 * roll_tier * roll_adjust * equipped_item.item_tier
+            if check_roll <= 106:
+                roll_num = check_roll - 97
+                if roll_num == 9:
+                    self.all_elemental_multiplier += bonus
+                else:
+                    self.elemental_damage_multiplier[roll_num] += bonus
+            elif check_roll <= 116:
+                roll_num = check_roll - 97 - 10
+                if roll_num == 9:
+                    self.all_elemental_penetration += bonus
+                else:
+                    self.elemental_penetration[roll_num] += bonus
+            else:
+                match check_roll:
+                    case "u":
+                        self.defence_penetration += bonus
+                    case "v":
+                        self.attack_speed += bonus
+                    case "w":
+                        self.critical_multiplier += bonus
+                    case "x":
+                        self.final_damage += bonus
+                    case "y":
+                        self.multi_hit += bonus
+                    case _:
+                        self.class_multiplier += bonus
         for y in equipped_item.item_suffix_values:
+            roll_adjust = 5
             roll_tier = int(str(y)[1])
-            match str(y)[2]:
-                case "1":
-                    self.critical_multiplier += 0.50 * float(roll_tier)
-                case "2":
-                    self.aura += 0.25 * float(roll_tier)
-                case "3":
-                    self.curse += 0.25 * float(roll_tier)
-                case "4":
-                    if item_type == "W":
-                        self.hit_multiplier += float(roll_tier)
-                    else:
-                        self.hp_multiplier += 0.5 * float(roll_tier)
-                case _:
-                    no_change = True
+            check_roll = ord(str(y[2]))
+            bonus = 0.01 * roll_tier * roll_adjust * equipped_item.item_tier
+            if check_roll <= 106:
+                roll_num = check_roll - 97
+                if roll_num == 9:
+                    self.all_elemental_resistance += bonus
+                else:
+                    self.elemental_resistance[roll_num] += bonus
+            elif check_roll <= 116:
+                roll_num = check_roll - 97 - 10
+                if roll_num == 9:
+                    self.all_elemental_curse += bonus
+                else:
+                    self.elemental_curse[roll_num] += bonus
+            else:
+                match check_roll:
+                    case "u":
+                        self.damage_mitigation += bonus
+                    case "v":
+                        self.hp_regen += bonus
+                    case "w":
+                        roll_adjust = 100
+                        bonus = roll_tier * roll_adjust * equipped_item.item_tier
+                        self.hp_bonus += bonus
+                    case "x":
+                        self.hp_multiplier += bonus
+                    case "y":
+                        self.critical_chance += bonus
+                    case _:
+                        self.aura += bonus
 
     def assign_gem_values(self, e_item):
         gem_id = e_item.item_inlaid_gem_id
         if gem_id != 0:
             e_gem = inventory.read_custom_item(gem_id)
             self.player_damage += (e_gem.item_damage_min + e_gem.item_damage_max) / 2
-            for x in e_gem.item_prefix_values:
-                buff_type, buff_value = inventory.gem_stat_reader(str(x))
-                match buff_type:
-                    case "HP":
-                        self.hp_multiplier += float(buff_value) * 0.01
-                    case "Critical Chance":
-                        self.critical_chance += float(buff_value) * 0.01
-                    case "Final Damage":
-                        self.final_damage += float(buff_value) * 0.01
-                    case _:
-                        no_change = True
-            for y in e_gem.item_suffix_values:
-                buff_type, buff_value = inventory.gem_stat_reader(str(y))
-                match buff_type:
-                    case "Attack Speed":
-                        self.attack_speed += float(buff_value) * 0.01
-                    case "Damage Mitigation":
-                        self.damage_mitigation += float(buff_value) * 0.01
-                    case "Critical Damage":
-                        self.critical_multiplier += float(buff_value) * 0.01
-                    case _:
-                        no_change = True
+            self.assign_roll_values(e_gem)
 
     def equip(self, selected_item) -> str:
         try:
@@ -468,6 +509,49 @@ class PlayerProfile:
         embed_msg = discord.Embed(colour=discord.Colour.green(), title="Stamina", description=output)
         embed_msg.add_field(name="", value=potion_msg)
         return embed_msg
+
+    def unique_ability_multipliers(self, unique_ability):
+        damage_multiplier = 0.0
+        damage_mitigation = 0.0
+        level_bonus = 0.01 * self.player_lvl
+        if unique_ability in pandorabot.global_unique_ability_list[3]:
+            match unique_ability:
+                case "Curse of Immortality":
+                    nothing = True
+                case "Elemental Fractal":
+                    self.all_elemental_multiplier += 2 * level_bonus
+                case "Bahamut's Trinity":
+                    self.mitigation_multiplier += level_bonus
+                    self.final_damage += level_bonus
+                    self.hp_multiplier += level_bonus
+                case "Omega Critical":
+                    self.critical_multiplier += 2 * level_bonus
+                case "Perfect Precision":
+                    self.critical_chance += level_bonus
+                case "Overflowing Vitality":
+                    self.hp_multiplier += 5 * level_bonus
+                case "Specialist's Mastery":
+                    self.class_multiplier += level_bonus
+                case "Shatter Barrier":
+                    self.all_elemental_penetration += level_bonus
+                case _:
+                    damage_multiplier = 0.0
+        else:
+            keywords = unique_ability.split()
+            buff_tier = pandorabot.global_descriptor_list.index(keywords[2])
+            buff_type_loc = pandorabot.global_unique_ability_list[buff_tier].index(keywords[0])
+            match keywords[1]:
+                case "Hero's":
+                    self.elemental_damage_multiplier[buff_type_loc] += round(level_bonus / 2, 2)
+                    self.elemental_resistance[buff_type_loc] += round(level_bonus / 2, 2)
+                case "Guardian's":
+                    self.elemental_resistance[buff_type_loc] += level_bonus
+                case "Aggressor's":
+                    self.elemental_damage_multiplier[buff_type_loc] += level_bonus
+                case "Breaker's":
+                    self.elemental_penetration[buff_type_loc] += level_bonus
+                case _:
+                    nothing = True
 
 
 def check_username(new_name: str):

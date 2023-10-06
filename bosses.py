@@ -21,6 +21,7 @@ import pandorabot
 # Boss class
 class CurrentBoss:
     def __init__(self, boss_type_num, boss_type, boss_tier, boss_level):
+        self.player_id = 0
         self.boss_type_num = boss_type_num
         self.boss_type = boss_type
         self.boss_tier = boss_tier
@@ -95,7 +96,11 @@ class CurrentBoss:
                                   description="")
         embed_msg.add_field(name=boss_field, value=boss_hp, inline=False)
         embed_msg.add_field(name=boss_weakness, value="", inline=False)
-        embed_msg.add_field(name="Current DPS: ", value=dps_msg)
+        embed_msg.add_field(name="Current DPS: ", value=dps_msg, inline=False)
+        if self.player_id != 0:
+            player_object = player.get_player_by_id(self.player_id)
+            battle_msg = f"{player_object.player_username} is engaged in combat!"
+            embed_msg.add_field(name="", value=battle_msg, inline=False)
         embed_msg.set_image(url=img_link)
 
         return embed_msg
@@ -141,6 +146,7 @@ class CurrentBoss:
                     boss_name = get_boss_descriptor(boss_type) + "the " + boss_suffix
                     boss_image = f'https://kyleportfolio.ca/botimages/bosses/{boss_type}{boss_tier}.png'
                 else:
+                    boss_name = boss_suffix
                     boss_image = ""
             case "Dragon":
                 name_selector = random.randint(1, len(dragon_names[(boss_tier - 1)]))
@@ -158,6 +164,7 @@ class CurrentBoss:
                     boss_name = f'{boss_colour} {boss_name}'
                     boss_image = f'https://kyleportfolio.ca/botimages/bosses/{boss_type}{boss_colour}{boss_tier}.png'
                 else:
+                    boss_name = demon_list_t4[0]
                     boss_image = ""
             case "Paragon":
                 name_selector = random.randint(1, len(paragon_names[(boss_tier - 1)]))
@@ -169,19 +176,66 @@ class CurrentBoss:
         self.boss_name = boss_name
 
 
-def get_boss_details(boss_types, channel_base):
+def get_boss_details(channel_num):
     boss_list = ["Fortress", "Dragon", "Demon", "Paragon"]
-    random_boss_type = random.randint(0, boss_types)
+    if channel_num < 4:
+        max_types = channel_num
+    else:
+        max_types = 3
+    random_boss_type = random.randint(0, max_types)
     selected_boss_type = boss_list[random_boss_type]
     boss_tier = get_random_bosstier(selected_boss_type)
     level = random.randint(1, 10)
     level += (boss_tier - 1) * 10
-    level += channel_base * 20
+    level += (channel_num - 1) * 20
     return level, selected_boss_type, boss_tier
 
 
-def spawn_boss(channel_id, new_boss_tier, selected_boss_type, boss_level):
-    raid_id = get_raid_id(channel_id)
+def restore_solo_bosses(channel_id):
+    raid_id_df = get_raid_id(channel_id, -1)
+    restore_raid_list = []
+    raid_id_list = []
+    try:
+        engine_url = mydb.get_engine_url()
+        engine = sqlalchemy.create_engine(engine_url)
+        pandora_db = engine.connect()
+        if len(raid_id_df.index) != 0:
+            for index, row in raid_id_df.iterrows():
+                raid_id = int(row["raid_id"])
+                query = text("SELECT * FROM BossList WHERE raid_id = :id_check")
+                query = query.bindparams(id_check=raid_id)
+                df = pd.read_sql(query, pandora_db)
+                raid_id_list.append(raid_id)
+                player_id = int(df["player_id"].values[0])
+                boss_name = str(df["boss_name"].values[0])
+                boss_tier = int(df["boss_tier"].values[0])
+                boss_level = int(df["boss_level"].values[0])
+                boss_type_num = int(df["boss_type_num"].values[0])
+                boss_type = str(df["boss_type"].values[0])
+                boss_mHP = int(df["boss_mHP"].values[0])
+                boss_cHP = int(df["boss_cHP"].values[0])
+                boss_typeweak = list(df['boss_typeweak'].values[0].split(';'))
+                boss_eleweak = list(df['boss_eleweak'].values[0].split(';'))
+                boss_image = str(df["boss_image"].values[0])
+                boss_object = CurrentBoss(boss_type_num, boss_type, boss_tier, boss_level)
+                boss_object.player_id=player_id
+                boss_object.boss_name = boss_name
+                boss_object.boss_mHP = boss_mHP
+                boss_object.boss_cHP = boss_cHP
+                boss_object.boss_typeweak = boss_typeweak
+                boss_object.boss_eleweak = boss_eleweak
+                boss_object.boss_image = boss_image
+                restore_raid_list.append(boss_object)
+        pandora_db.close()
+        engine.dispose()
+        return restore_raid_list, raid_id_list
+    except mysql.connector.Error as err:
+        print("Database Error: {}".format(err))
+        return restore_raid_list, raid_id_list
+
+
+def spawn_boss(channel_id, player_id, new_boss_tier, selected_boss_type, boss_level, channel_num):
+    raid_id = get_raid_id(channel_id, player_id)
     try:
         engine_url = mydb.get_engine_url()
         engine = sqlalchemy.create_engine(engine_url)
@@ -190,6 +244,7 @@ def spawn_boss(channel_id, new_boss_tier, selected_boss_type, boss_level):
             query = text("SELECT * FROM BossList WHERE raid_id = :id_check")
             query = query.bindparams(id_check=raid_id)
             df = pd.read_sql(query, pandora_db)
+            player_id = int(df["player_id"].values[0])
             boss_name = str(df["boss_name"].values[0])
             boss_tier = int(df["boss_tier"].values[0])
             boss_level = int(df["boss_level"].values[0])
@@ -223,13 +278,13 @@ def spawn_boss(channel_id, new_boss_tier, selected_boss_type, boss_level):
 
             num_eleweak = 3
             boss_eleweak = ""
-            eleweak_list = random.sample(range(1, 10), num_eleweak)
+            eleweak_list = random.sample(range(0, 8), num_eleweak)
             for x in eleweak_list:
                 new_weakness = get_element(int(x))
                 boss_object.boss_eleweak.append(new_weakness)
                 boss_eleweak += f"{new_weakness};"
             num_typeweak = 2
-            typeweak_list = random.sample(range(1, 5), num_typeweak)
+            typeweak_list = random.sample(range(0, 4), num_typeweak)
             boss_typeweak = ""
             for y in typeweak_list:
                 new_weakness = get_type(int(y))
@@ -239,7 +294,7 @@ def spawn_boss(channel_id, new_boss_tier, selected_boss_type, boss_level):
             boss_typeweak = boss_typeweak[:-1]
 
             if new_boss_tier <= 4:
-                total_hp = get_base_hp(selected_boss_type)
+                total_hp = get_base_hp(selected_boss_type, channel_num)
                 total_hp *= new_boss_tier * (boss_level * 1.25)
             elif new_boss_tier == 5:
                 total_hp = 10000000000000
@@ -247,16 +302,16 @@ def spawn_boss(channel_id, new_boss_tier, selected_boss_type, boss_level):
                 total_hp = 999999999999999
             boss_object.boss_mHP = total_hp
             boss_object.boss_cHP = boss_object.boss_mHP
-            query = text("INSERT INTO ActiveRaids (channel_id) VALUES (:input_1)")
-            query = query.bindparams(input_1=str(channel_id))
+            query = text("INSERT INTO ActiveRaids (channel_id, player_id) VALUES (:input_1, :player_id)")
+            query = query.bindparams(input_1=str(channel_id), player_id=player_id)
             pandora_db.execute(query)
-            raid_id = get_raid_id(channel_id)
+            raid_id = get_raid_id(channel_id, player_id)
             query = text("INSERT INTO BossList"
-                         "(raid_id, boss_name, boss_tier, boss_level, boss_type_num, boss_type, "
+                         "(raid_id, player_id, boss_name, boss_tier, boss_level, boss_type_num, boss_type, "
                          "boss_cHP, boss_mHP, boss_typeweak, boss_eleweak, boss_image) "
-                         "VALUES (:raid_id, :input_1, :input_2, :input_3, :input_4, :input_5,"
+                         "VALUES (:raid_id, :player_id, :input_1, :input_2, :input_3, :input_4, :input_5,"
                          ":input_6, :input_7, :input_8, :input_9, :input_10)")
-            query = query.bindparams(raid_id=raid_id, input_1=boss_object.boss_name,
+            query = query.bindparams(raid_id=raid_id, player_id=player_id, input_1=boss_object.boss_name,
                                      input_2=new_boss_tier, input_3=boss_level, input_4=boss_type_num,
                                      input_5=selected_boss_type, input_6=str(int(total_hp)), input_7=str(int(total_hp)),
                                      input_8=boss_typeweak, input_9=boss_eleweak, input_10=boss_object.boss_image)
@@ -297,28 +352,10 @@ def get_random_bosstier(boss_type):
 # generate ele weakness
 def get_element(chosen_weakness):
     if chosen_weakness == 0:
-        random_number = random.randint(1, 9)
+        random_number = random.randint(0, 8)
     else:
         random_number = chosen_weakness
-    match random_number:
-        case 1:
-            element_temp = "<:ef:1141653475059572779>"
-        case 2:
-            element_temp = "<:eg:1141653474480767016>"
-        case 3:
-            element_temp = "<:eh:1141653473528664126>"
-        case 4:
-            element_temp = "<:ei:1141653471154671698>"
-        case 5:
-            element_temp = "<:ej:1141653469938339971>"
-        case 6:
-            element_temp = "<:ek:1141653468080242748>"
-        case 7:
-            element_temp = "<:el:1141653466343800883>"
-        case 8:
-            element_temp = "<:em:1141647050342146118>"
-        case _:
-            element_temp = "<:ee:1141653476816986193>"
+    element_temp = pandorabot.global_element_list[random_number]
 
     return element_temp
 
@@ -342,18 +379,31 @@ def get_type(chosen_weakness):
     return type_temp
 
 
-def get_base_hp(base_type):
-    match base_type:
-        case "Fortress":
-            base_hp = 50000
-        case "Dragon":
-            base_hp = 1000000
-        case "Demon":
-            base_hp = 5000000
-        case "Paragon":
-            base_hp = 1000000000
-        case _:
-            base_hp = 0
+def get_base_hp(base_type, channel_num):
+    if channel_num < 4:
+        match base_type:
+            case "Fortress":
+                base_hp = 50000
+            case "Dragon":
+                base_hp = 1000000
+            case "Demon":
+                base_hp = 50000000
+            case "Paragon":
+                base_hp = 1000000000
+            case _:
+                base_hp = 0
+    else:
+        match base_type:
+            case "Fortress":
+                base_hp = 1000000000
+            case "Dragon":
+                base_hp = 2000000000
+            case "Demon":
+                base_hp = 3000000000
+            case "Paragon":
+                base_hp = 5000000000
+            case _:
+                base_hp = 0
 
     return base_hp
 
@@ -362,44 +412,19 @@ def get_boss_descriptor(boss_type):
     match boss_type:
         case "Fortress":
             boss_data = pd.read_csv("fortressname.csv")
-
-            # generate Fortress descriptor
             random_number = random.randint(0, (boss_data['fortress_name_a'].count()-1))
             boss_descriptor = boss_data.fortress_name_a[random_number]
             random_number = random.randint(0, (boss_data['fortress_name_b'].count()-1))
             boss_descriptor += " " + boss_data.fortress_name_b[random_number] + ", "
-
         case "Demon":
-            random_number = random.randint(1, 9)
-            match random_number:
-                case 1:
-                    boss_descriptor = "Crimson"
-                case 2:
-                    boss_descriptor = "Azure"
-                case 3:
-                    boss_descriptor = "Jade"
-                case 4:
-                    boss_descriptor = "Violet"
-                case 5:
-                    boss_descriptor = "Ivory"
-                case 6:
-                    boss_descriptor = "Rose"
-                case 7:
-                    boss_descriptor = "Gold"
-                case 8:
-                    boss_descriptor = "Silver"
-                case 9:
-                    boss_descriptor = "Stygian"
-                case _:
-                    boss_descriptor = "Error"
-        case _:
-            boss_descriptor = "error"
-
+            demon_colours = ["Crimson", "Azure", "Jade", "Violet", "Ivory", "Rose", "Gold", "Silver", "Stygian"]
+            random_number = random.randint(0, 8)
+            boss_descriptor = demon_colour[random_number]
     return boss_descriptor
 
 
 def add_participating_player(channel_id, player_id):
-    raid_id = get_raid_id(channel_id)
+    raid_id = get_raid_id(channel_id, 0)
     try:
         engine_url = mydb.get_engine_url()
         engine = sqlalchemy.create_engine(engine_url)
@@ -425,7 +450,7 @@ def add_participating_player(channel_id, player_id):
 
 
 def update_player_damage(channel_id, player_id, player_damage):
-    raid_id = get_raid_id(channel_id)
+    raid_id = get_raid_id(channel_id, player_id)
     try:
         engine_url = mydb.get_engine_url()
         engine = sqlalchemy.create_engine(engine_url)
@@ -440,8 +465,8 @@ def update_player_damage(channel_id, player_id, player_damage):
         print(error)
 
 
-def update_boss_cHP(channel_id, new_boss_cHP):
-    raid_id = get_raid_id(channel_id)
+def update_boss_cHP(channel_id, player_id, new_boss_cHP):
+    raid_id = get_raid_id(channel_id, player_id)
     try:
         engine_url = mydb.get_engine_url()
         engine = sqlalchemy.create_engine(engine_url)
@@ -457,7 +482,7 @@ def update_boss_cHP(channel_id, new_boss_cHP):
 
 
 def get_damage_list(channel_id):
-    raid_id = get_raid_id(channel_id)
+    raid_id = get_raid_id(channel_id, 0)
     try:
         engine_url = mydb.get_engine_url()
         engine = sqlalchemy.create_engine(engine_url)
@@ -476,15 +501,15 @@ def get_damage_list(channel_id):
     return username, damage
 
 
-def clear_boss_info(channel_id):
-    raid_id = get_raid_id(channel_id)
+def clear_boss_info(channel_id, player_id):
+    raid_id = get_raid_id(channel_id, player_id)
     try:
         engine_url = mydb.get_engine_url()
         engine = sqlalchemy.create_engine(engine_url)
         pandora_db = engine.connect()
         query = text("DELETE FROM ActiveRaids "
-                     "WHERE channel_id = :id_check")
-        query = query.bindparams(id_check=str(channel_id))
+                     "WHERE raid_id = :id_check")
+        query = query.bindparams(id_check=raid_id)
         pandora_db.execute(query)
         query = text("DELETE FROM BossList "
                      "WHERE raid_id = :id_check")
@@ -500,19 +525,26 @@ def clear_boss_info(channel_id):
         print(error)
 
 
-def get_raid_id(channel_id):
+def get_raid_id(channel_id, player_id):
     try:
         engine_url = mydb.get_engine_url()
         engine = sqlalchemy.create_engine(engine_url)
         pandora_db = engine.connect()
-        query = text("SELECT raid_id FROM ActiveRaids "
-                     "WHERE channel_id = :id_check")
-        query = query.bindparams(id_check=str(channel_id))
-        df_check = pd.read_sql(query, pandora_db)
-        if len(df_check.values) == 0:
-            raid_id = 0
+        if player_id == -1:
+            query = text("SELECT raid_id FROM ActiveRaids "
+                         "WHERE channel_id = :id_check")
+            query = query.bindparams(id_check=str(channel_id))
+            df_check = pd.read_sql(query, pandora_db)
+            raid_id = df_check
         else:
-            raid_id = df_check["raid_id"].values[0]
+            query = text("SELECT raid_id FROM ActiveRaids "
+                         "WHERE channel_id = :id_check AND player_id = :player_check")
+            query = query.bindparams(id_check=str(channel_id), player_check=player_id)
+            df_check = pd.read_sql(query, pandora_db)
+            if len(df_check.values) == 0:
+                raid_id = 0
+            else:
+                raid_id = df_check["raid_id"].values[0]
         pandora_db.close()
         engine.dispose()
     except exc.SQLAlchemyError as error:
@@ -527,6 +559,6 @@ def create_dead_boss_embed(channel_id, active_boss, dps):
     player_list, damage_list = bosses.get_damage_list(channel_id)
     output_list = ""
     for idx, x in enumerate(player_list):
-        output_list += f'{str(x)}: {damage_list[idx]:,}\n'
+        output_list += f'{str(x)}: {int(damage_list[idx]):,}\n'
     dead_embed.add_field(name="SLAIN", value=output_list, inline=False)
     return dead_embed

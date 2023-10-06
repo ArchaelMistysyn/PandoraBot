@@ -8,6 +8,8 @@ import explore
 import tarot
 import mydb
 import pandorabot
+import quest
+import asyncio
 
 
 # Forge menu
@@ -102,7 +104,7 @@ class ForgeView(discord.ui.View):
                 self.num_buttons = 2
             case "Voidforge":
                 self.letter = "l"
-                self.button_emoji.append(loot.get_loot_emoji("I4l"))
+                self.button_emoji.append(loot.get_loot_emoji("I5l"))
                 self.num_buttons = 2
             case _:
                 self.num_buttons = 0
@@ -175,7 +177,7 @@ class ForgeView(discord.ui.View):
                 case "Implant":
                     item_id_list = ["I4k"]
                 case "Voidforge":
-                    item_id_list = ["I4l"]
+                    item_id_list = ["I5l"]
                 case _:
                     item_id_list = ["error"]
             for x in item_id_list:
@@ -1207,7 +1209,7 @@ def binding_ritual(player_object, essence_type):
         else:
             name_position = tarot.get_numeral_by_number(essence_type)
             card_name = tarot.tarot_card_list(name_position)
-            tarot_check = tarot.check_tarot(player_object.player_id, card_name)
+            tarot_check = tarot.check_tarot(player_object.player_id, card_name, variant_num)
             if tarot_check:
                 new_qty = tarot_check.card_qty + 1
                 tarot_check.set_tarot_field("card_qty", new_qty)
@@ -1442,9 +1444,9 @@ class RewardView(discord.ui.View):
 
     @discord.ui.button(label="Next Quest", style=discord.ButtonStyle.blurple, emoji="⚔️")
     async def next_quest(self, interaction: discord.Interaction, button: discord.Button):
-        end_quest = 50
+        end_quest = 30
         if self.player_object.player_quest <= end_quest:
-            current_quest = self.player_object.player_quest
+            current_quest = self.player_object.player_quest + 1
             quest_object = quest.get_quest(current_quest, self.player_object)
             token_count = self.player_object.check_tokens(current_quest)
             quest_object.set_quest_output(token_count)
@@ -1452,8 +1454,8 @@ class RewardView(discord.ui.View):
                                       title=quest_object.quest_title,
                                       description=quest_object.story_message)
             embed_msg.add_field(name=f"Quest", value=quest_object.quest_output, inline=False)
-            quest_view = menus.QuestView(self.player_object, quest_object)
-            await ctx.send(embed=embed_msg, view=quest_view)
+            quest_view = QuestView(self.player_object, quest_object)
+            await interaction.response.edit_message(embed=embed_msg, view=quest_view)
         else:
             embed_msg.add_field(name="", value="Quest is not yet completed!", inline=False)
             await interaction.response.edit_message(embed=embed_msg, view=None)
@@ -1464,11 +1466,10 @@ class RewardView(discord.ui.View):
 
 
 class ClassSelect(discord.ui.View):
-    def __init__(self, player_name, username, ctx):
+    def __init__(self, player_name, username):
         super().__init__(timeout=None)
         self.username = username
         self.player_name = player_name
-        self.ctx = ctx
 
     @discord.ui.select(
         placeholder="Select a class!",
@@ -1499,8 +1500,11 @@ class ClassSelect(discord.ui.View):
         response = new_player.add_new_player(chosen_class)
         chosen_class_role = f"Class Role - {class_select.values[0]}"
         add_role = discord.utils.get(interaction.guild.roles, name=chosen_class_role)
-        remove_role = discord.utils.get(interaction.guild.roles, name="Class Role - Rat (No Class)")
+        remove_role = discord.utils.get(interaction.guild.roles, name="Class Role - Rat")
+        print(interaction.guild.roles)
+        print(remove_role)
         await interaction.user.add_roles(add_role)
+        await asyncio.sleep(1)
         await interaction.user.remove_roles(remove_role)
         embed_msg = discord.Embed(colour=discord.Colour.dark_teal(),
                                   title="Register",

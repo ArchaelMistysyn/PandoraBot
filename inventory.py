@@ -31,18 +31,24 @@ class CustomItem:
         # initialize default values
         self.item_id = 0
         self.item_name = ""
-        self.item_elements = []
+        self.item_elements = [0, 0, 0, 0, 0, 0, 0, 0, 0]
         self.item_enhancement = 0
-        self.item_num_stars = 1
+        self.item_num_stars = 0
         self.item_suffix_values = []
         self.item_prefix_values = []
         self.item_bonus_stat = ""
+        self.item_material_tier = ""
+        self.item_blessing_tier = ""
         self.item_damage_min = 0
         self.item_damage_max = 0
         self.item_num_sockets = 0
         self.item_inlaid_gem_id = 0
-        special_name = ""
-        prefix = ""
+
+        random_rolltype = random.randint(0, 1)
+        if random_rolltype == 0:
+            rolltype = "P"
+        else:
+            rolltype = "S"
 
         random_damage1, random_damage2 = get_tier_damage(item_tier)
         match self.item_type:
@@ -57,11 +63,9 @@ class CustomItem:
                     case 6:
                         bonus_roll = random.randint(21, 30)
                         self.item_bonus_stat = str(float(bonus_roll) * 0.1)
-                        prefix = "Relic"
-                        self.item_material_tier = "Special"
-                        self.item_blessing_tier = "Special"
+                        self.item_material_tier = "Key of ???"
+                        self.item_blessing_tier = "???"
                     case 5:
-                        prefix = "Rift"
                         self.item_material_tier = "Special"
                         self.item_blessing_tier = "Special"
                         bonus_roll = random.randint(16, 20)
@@ -74,44 +78,44 @@ class CustomItem:
                         self.item_bonus_stat = "1.2"
                     case _:
                         self.item_bonus_stat = "1.1"
-                self.item_elements.append(bosses.get_element(0))
-                if prefix != "":
+                self.item_elements = add_element(self.item_elements)
+                if self.item_tier >= 5:
                     class_matcher = pandorabot.class_icon_list.index(self.item_damage_type)
                     item_variant = random.randint(0, 1)
                     match class_matcher:
                         case 0:
                             if item_variant == 0:
-                                suffix = "Saber"
+                                self.item_base_type = "Saber"
                             else:
-                                suffix = "Scythe"
+                                self.item_base_type = "Scythe"
                         case 1:
                             if item_variant == 0:
-                                suffix = "Cannon"
+                                self.item_base_type = "Cannon"
                             else:
-                                suffix = "Bow"
+                                self.item_base_type = "Bow"
                         case 2:
                             if item_variant == 0:
-                                suffix = "Staff"
+                                self.item_base_type = "Staff"
                             else:
-                                suffix = "Spellbook"
+                                self.item_base_type = "Spellbook"
                         case 3:
                             if item_variant == 0:
-                                suffix = "Dagger"
+                                self.item_base_type = "Dagger"
                             else:
-                                suffix = "Claws"
+                                self.item_base_type = "Claws"
                         case 4:
-                            suffix = "Threads"
+                            self.item_base_type = "Threads"
                         case 5:
                             if item_variant == 0:
-                                suffix = "Dragon"
+                                self.item_base_type = "Dragon"
                             else:
-                                suffix = "Cerberus"
+                                self.item_base_type = "Cerberus"
                         case _:
                             if item_variant == 0:
-                                suffix = "Anima"
+                                self.item_base_type = "Anima"
                             else:
-                                suffix = "Golem"
-                    special_name = f"+{self.item_enhancement} {prefix} {suffix}"
+                                self.item_base_type = "Golem"
+                self.add_roll()
             case "A":
                 self.item_material_tier = "Iron"
                 self.item_blessing_tier = "Standard"
@@ -124,10 +128,12 @@ class CustomItem:
                         self.item_bonus_stat = "10"
                     case _:
                         self.item_bonus_stat = "5"
+                self.add_roll()
             case "Y":
                 self.item_material_tier = "Crude"
                 self.item_blessing_tier = "Sparkling"
                 self.item_bonus_stat = assign_bonus_stat(self.item_tier)
+                self.add_roll()
             case "G":
                 self.item_material_tier = "Crude"
                 self.item_blessing_tier = "Sparkling"
@@ -141,6 +147,7 @@ class CustomItem:
                     case _:
                         self.item_base_type = "Feathered Wings"
                 self.item_bonus_stat = assign_bonus_stat(self.item_tier)
+                self.add_roll()
             case "C":
                 self.item_material_tier = "Iron"
                 random_blessing = random.randint(1, 2)
@@ -150,79 +157,47 @@ class CustomItem:
                     self.item_blessing_tier = "Dark"
                 random_num = random.randint(1, 2)
                 # set crest unique skill
-                match self.item_tier:
-                    case 4:
-                        match random_num:
-                            case 1:
-                                self.item_bonus_stat = "Elemental Fractal"
-                            case _:
-                                self.item_bonus_stat = "Omega Critical"
-                    case 3:
-                        match random_num:
-                            case 1:
-                                self.item_bonus_stat = "Specialized Mastery"
-                            case _:
-                                self.item_bonus_stat = "Ignore Protection"
-                    case 2:
-                        match random_num:
-                            case 1:
-                                self.item_bonus_stat = "Perfect Precision"
-                            case _:
-                                self.item_bonus_stat = "Resistance Bypass"
-                    case _:
-                        match random_num:
-                            case 1:
-                                self.item_bonus_stat = "Extreme Vitality"
-                            case _:
-                                self.item_bonus_stat = "Defence Bypass"
+                self.item_bonus_stat = assign_bonus_stat(self.item_tier)
+                self.add_roll()
             case _:
                 random_variant = random.randint(1, 2)
                 match self.item_tier:
                     case 6:
                         self.item_name = "Gem of the Infinite"
-                        self.item_prefix_values += ["P6b", "P6c"]
-                        self.item_suffix_values += ["S6b", "S6c"]
                     case 4:
                         self.item_name = "Gem of Dimensions"
-                        self.item_prefix_values += ["P4b", "P4c"]
-                        self.item_suffix_values += ["S4b", "S4c"]
                     case 3:
                         if random_variant == 1:
                             self.item_name = "Gem of Chaos"
-                            self.item_prefix_values += ["P3a", "P3b"]
-                            self.item_suffix_values += ["S3b", "S3c"]
                         else:
                             self.item_name = "Gem of Twilight"
-                            self.item_prefix_values += ["P3a", "P3c"]
-                            self.item_suffix_values += ["S3a", "S3b"]
                     case 2:
                         if random_variant == 1:
                             self.item_name = "Gem of Clarity"
-                            self.item_prefix_values += ["P2a", "P2b"]
-                            self.item_suffix_values += ["S2b", "S2c"]
                         else:
                             self.item_name = "Gem of Nature's Wrath"
-                            self.item_prefix_values += ["P2a", "P2c"]
-                            self.item_suffix_values += ["S2a", "S2b"]
                     case _:
                         if random_variant == 1:
                             self.item_name = "Gem of the Deep"
-                            self.item_prefix_values += ["P1a", "P1b"]
-                            self.item_suffix_values += ["S1b", "S1c"]
                         else:
                             self.item_name = "Gem of Land and Sky"
-                            self.item_prefix_values += ["P1a", "P1c"]
-                            self.item_suffix_values += ["S1a", "S1b"]
+
+                for idx, x in enumerate(range(self.item_tier)):
+                    self.add_roll()
+                for idy, y in enumerate(self.item_prefix_values):
+                    self.item_prefix_values[idy] = f"{y[0]}{self.item_tier}{y[2]}"
+                for idz, z in enumerate(self.item_suffix_values):
+                    self.item_suffix_values[idz] = f"{z[0]}{self.item_tier}{z[2]}"
+
         if random_damage1 < random_damage2:
             self.base_damage_min = random_damage1
             self.base_damage_max = random_damage2
         else:
             self.base_damage_min = random_damage2
             self.base_damage_max = random_damage1
+        self.item_num_stars = 0
         self.update_damage()
         self.set_item_name()
-        if special_name != "":
-            self.item_name = special_name
 
     def update_stored_item(self):
         item_elements = ""
@@ -247,20 +222,20 @@ class CustomItem:
             engine_url = mydb.get_engine_url()
             engine = sqlalchemy.create_engine(engine_url)
             pandora_db = engine.connect()
-            query = text("UPDATE CustomInventory"
-                         "SET player_id = :input_1,"
-                         "item_type = :input_2, item_name = :input_3,"
-                         "item_damage_type = :input_4, item_elements = :input_5,"
-                         "item_enhancement = :input_6, item_tier = :input_7,"
-                         "item_blessing_tier = :input_8, item_material_tier = :input_9,"
-                         "item_base_type = :input_10, item_num_stars = :input_11,"
-                         "item_prefix_values = :input_12, item_suffix_values = input_13,"
-                         "item_bonus_stat = :input_14,"
-                         "item_base_dmg_min = :input_15, item_base_dmg_max = :input_16,"
-                         "item_num_sockets = :input_17, item_inlaid_gem_id = :input_18"
+            query = text("UPDATE CustomInventory "
+                         "SET player_id = :input_1, "
+                         "item_type = :input_2, item_name = :input_3, "
+                         "item_damage_type = :input_4, item_elements = :input_5, "
+                         "item_enhancement = :input_6, item_tier = :input_7, "
+                         "item_blessing_tier = :input_8, item_material_tier = :input_9, "
+                         "item_base_type = :input_10, item_num_stars = :input_11, "
+                         "item_prefix_values = :input_12, item_suffix_values = :input_13, "
+                         "item_bonus_stat = :input_14, "
+                         "item_base_dmg_min = :input_15, item_base_dmg_max = :input_16, "
+                         "item_num_sockets = :input_17, item_inlaid_gem_id = :input_18 "
                          "WHERE item_id = :id_check")
-            query = query.bindparams(id_check=int(item_id), input_1=int(self.player_owner),
-                                     input_2=int(self.item_type), input_3=str(self.item_name),
+            query = query.bindparams(id_check=int(self.item_id), input_1=int(self.player_owner),
+                                     input_2=str(self.item_type), input_3=str(self.item_name),
                                      input_4=str(self.item_damage_type), input_5=str(item_elements),
                                      input_6=int(self.item_enhancement), input_7=int(self.item_tier),
                                      input_8=str(self.item_blessing_tier), input_9=str(self.item_material_tier),
@@ -284,7 +259,6 @@ class CustomItem:
     def generate_base(self):
         match self.item_type:
             case "W":
-                special_item_list = None
                 tier_location = self.item_tier - 1
                 class_checker = pandorabot.class_icon_list.index(self.item_damage_type)
                 match class_checker:
@@ -325,10 +299,10 @@ class CustomItem:
                                              "Liger", "Bear", "Elephant", "Wolf"]
                     case _:
                         random_num = random.randint(0, 11)
-                        special_item_list = ["Zombie", "Ghoul", "Skeleton", "Specter"
+                        special_item_list = ["Zombie", "Ghoul", "Skeleton", "Specter",
                                              "Fox", "Spider", "Crocodile", "Basilisk",
                                              "Wyrm", "Salamander", "Coatl", "Phoenix"]
-                if special_item_list:
+                if class_checker >= 5:
                     item_base = special_item_list[random_num]
                 else:
                     item_namelist = [item_list_t1, item_list_t2, item_list_t3, item_list_t4]
@@ -378,9 +352,9 @@ class CustomItem:
 
     def add_roll(self):
         self.item_num_stars += 1
-        if len(self.item_prefix_values) == 2:
+        if len(self.item_prefix_values) == 3:
             self.item_suffix_values.append(self.generate_new_roll("S"))
-        elif len(self.item_suffix_values) == 2:
+        elif len(self.item_suffix_values) == 3:
             self.item_prefix_values.append(self.generate_new_roll("P"))
         else:
             random_num = random.randint(1, 2)
@@ -391,8 +365,8 @@ class CustomItem:
 
     def remove_roll(self):
         self.item_num_stars -= 1
-        random_num = random.randint(1, self.item_num_stars)
-        count = 1
+        random_num = random.randint(0, self.item_num_stars)
+        count = 0
         for x in self.item_prefix_values:
             if count == random_num:
                 self.item_prefix_values.remove(x)
@@ -406,31 +380,36 @@ class CustomItem:
         running = True
         new_roll = ""
         tier = 1
+        random_identifier = random.randint(97, 122)
         match roll_type:
             case "P":
                 if self.item_prefix_values:
                     while running:
                         running = False
                         for x in self.item_prefix_values:
-                            random_identifier = random.randint(1, 5)
-                            new_roll = f"{roll_type}{tier}{random_identifier}"
+                            new_roll = f"{roll_type}{tier}{chr(random_identifier)}"
                             if new_roll[2] == str(x)[2]:
                                 running = True
+                                if random_identifier < 122:
+                                    random_identifier += 1
+                                else:
+                                    random_identifier = 97
                 else:
-                    random_identifier = random.randint(1, 5)
-                    new_roll = f"{roll_type}{tier}{random_identifier}"
+                    new_roll = f"{roll_type}{tier}{chr(random_identifier)}"
             case "S":
                 if self.item_suffix_values:
                     while running:
                         running = False
                         for y in self.item_suffix_values:
-                            random_identifier = random.randint(1, 4)
-                            new_roll = f"{roll_type}{tier}{random_identifier}"
+                            new_roll = f"{roll_type}{tier}{chr(random_identifier)}"
                             if new_roll[2] == str(y)[2]:
                                 running = True
+                                if random_identifier < 122:
+                                    random_identifier += 1
+                                else:
+                                    random_identifier = 97
                 else:
-                    random_identifier = random.randint(1, 4)
-                    new_roll = f"{roll_type}{tier}{random_identifier}"
+                    new_roll = f"{roll_type}{tier}{chr(random_identifier)}"
             case _:
                 new_roll = "Error"
         return new_roll
@@ -462,6 +441,8 @@ class CustomItem:
         else:
             self.update_damage()
             display_stars = ""
+            bonus_type = ""
+            aux_suffix = ""
             match self.item_type:
                 case "W":
                     bonus_type = "Base Attack Speed "
@@ -472,32 +453,24 @@ class CustomItem:
                     aux_suffix = "%"
                     thumb_img = "https://i.ibb.co/p2K2GFK/armouricon.png"
                 case "Y":
-                    bonus_type = ""
-                    aux_suffix = ""
                     thumb_img = "https://i.ibb.co/FbhP60F/ringicon.png"
                 case "G":
-                    bonus_type = ""
-                    aux_suffix = ""
                     thumb_img = "https://i.ibb.co/FbhP60F/ringicon.png"
                 case "C":
-                    bonus_type = ""
-                    aux_suffix = ""
                     thumb_img = "https://i.ibb.co/FbhP60F/ringicon.png"
                 case _:
-                    bonus_type = "Error"
-                    aux_suffix = "Error"
                     thumb_img = "https://i.ibb.co/FbhP60F/ringicon.png"
             item_rolls = f'{bonus_type}{self.item_bonus_stat}{aux_suffix}'
             prefix_rolls = ""
             suffix_rolls = ""
             if self.item_prefix_values:
                 for x in self.item_prefix_values:
-                    prefix_rolls += f'\n{get_roll_by_code(str(x), self.item_type)} '
+                    prefix_rolls += f'\n{get_roll_by_code(self, str(x))} '
                     for y in range(int(str(x)[1]) - 1):
                         prefix_rolls += "<:eprl:1148390531345432647>"
             if self.item_suffix_values:
                 for x in self.item_suffix_values:
-                    suffix_rolls += f'\n{get_roll_by_code(str(x), self.item_type)} '
+                    suffix_rolls += f'\n{get_roll_by_code(self, str(x))} '
                     for y in range(int(str(x)[1]) - 1):
                         suffix_rolls += "<:eprl:1148390531345432647>"
 
@@ -507,8 +480,9 @@ class CustomItem:
                 display_stars += "<:ebstar2:1144826056222724106>"
 
             item_types = f'{self.item_damage_type}'
-            for x in self.item_elements:
-                item_types += f'{x}'
+            for idz, z in enumerate(self.item_elements):
+                if z == 1:
+                    item_types += f'{pandorabot.global_element_list[idz]}'
             if self.item_num_sockets == 1:
                 gem_id = self.item_inlaid_gem_id
                 if gem_id == "":
@@ -550,7 +524,7 @@ class CustomItem:
         for y in self.item_suffix_values:
             augment_total += int(str(y)[1]) - 1
         if len(self.item_prefix_values) + len(self.item_suffix_values) == 0:
-            augment_total = 15
+            augment_total = -1
         return augment_total
 
     def add_augment(self):
@@ -564,11 +538,9 @@ class CustomItem:
                 exclude_group.append(idx)
 
         # Apply a new augment
-        random_num = random.randint(1, (self.item_num_stars - 1))
-        random_num -= 1
+        random_num = random.randint(0, self.item_num_stars)
         while random_num in exclude_group:
-            random_num = random.randint(1, (self.item_num_stars - 1))
-            random_num -= 1
+            random_num = random.randint(0, self.item_num_stars)
         if random_num < length_prefix:
             target_roll = self.item_prefix_values[random_num]
             augment_total = int(str(target_roll)[1])
@@ -634,18 +606,23 @@ def read_custom_item(item_id):
             target_item.item_id = item_id
             target_item.item_name = str(df['item_name'].values[0])
             item_elements = str(df['item_elements'].values[0])
-            if str(df['item_elements'].values[0]) != "":
-                target_item.item_elements = list(df['item_elements'].values[0].split(';'))
+            temp_elements = list(df['item_elements'].values[0].split(';'))
+            target_item.item_elements = map(int, temp_elements)
             target_item.item_damage_type = df['item_damage_type'].values[0]
             target_item.item_enhancement = int(df['item_enhancement'].values[0])
             target_item.item_tier = int(df['item_tier'].values[0])
             target_item.item_blessing_tier = str(df['item_blessing_tier'].values[0])
             target_item.item_material_tier = str(df['item_material_tier'].values[0])
+            target_item.item_base_type = str(df['item_base_type'].values[0])
             target_item.item_num_stars = int(df['item_num_stars'].values[0])
             if str(df['item_prefix_values'].values[0]) != "":
                 target_item.item_prefix_values = list(df['item_prefix_values'].values[0].split(';'))
+            else:
+                target_item.item_prefix_values = []
             if str(df['item_suffix_values'].values[0]) != "":
                 target_item.item_suffix_values = list(df['item_suffix_values'].values[0].split(';'))
+            else:
+                target_item.item_suffix_values = []
             target_item.item_bonus_stat = str(df['item_bonus_stat'].values[0])
             target_item.base_damage_min = int(df['item_base_dmg_min'].values[0])
             target_item.base_damage_max = int(df['item_base_dmg_max'].values[0])
@@ -714,13 +691,12 @@ def inventory_add_custom_item(item) -> str:
     item_prefix_values = ""
     item_suffix_values = ""
     item_num_stars = item.item_num_stars
-    if item.item_id == "D":
-        for x in item.item_prefix_values:
-            item_prefix_values += str(x) + ";"
-        item_prefix_values = item_prefix_values[:-1]
-        for y in item.item_suffix_values:
-            item_suffix_values += str(y) + ";"
-        item_suffix_values = item_suffix_values[:-1]
+    for x in item.item_prefix_values:
+        item_prefix_values += str(x) + ";"
+    item_prefix_values = item_prefix_values[:-1]
+    for y in item.item_suffix_values:
+        item_suffix_values += str(y) + ";"
+    item_suffix_values = item_suffix_values[:-1]
 
     try:
         engine_url = mydb.get_engine_url()
@@ -799,15 +775,13 @@ def display_binventory(player_id):
         engine = sqlalchemy.create_engine(engine_url)
         pandora_db = engine.connect()
         query = text("SELECT item_id, item_qty FROM BasicInventory "
-                     "WHERE player_id = :id_check ORDER BY item_id DESC")
+                     "WHERE player_id = :id_check AND item_qty <> 0 ORDER BY item_id DESC")
         query = query.bindparams(id_check=player_id)
         df = pd.read_sql(query, pandora_db)
         pandora_db.close()
         engine.dispose()
         merged_df = df.merge(item_list, left_on='item_id', right_on='item_id')
-        merged_df = merged_df[merged_df['player_id'] == player_id][['item_emoji', 'item_name', 'item_qty']]
-        merged_df = merged_df[merged_df['item_qty'] != 0][['item_emoji', 'item_name', 'item_qty']]
-        # merged_df = merged_df.sort_values(ascending=True)
+        merged_df = merged_df[['item_emoji', 'item_name', 'item_qty']]
         temp = merged_df.style.set_properties(**{'text-align': 'left'}).hide(axis='index').hide(axis='columns')
         player_inventory = temp.to_string()
     except exc.SQLAlchemyError as error:
@@ -871,7 +845,9 @@ def craft_item(player_object, selected_item, item_id, method):
                     if random_num <= success_rate:
                         material_tier_list = ["Iron", "Steel", "Silver", "Mithril", "Diamond", "Crystal",
                                               "Illusion", "Essence", "Spirit", "Soulbound", "Phantasmal", "Spectral",
-                                              "Crude", "Metallic", "Gold", "Jewelled", "Diamond", "Crystal"]
+                                              "Crude", "Metallic", "Gold", "Jewelled", "Diamond", "Crystal",
+                                              "Key of ???", "Key of Freedoms", "Key of Desires", "Key of Hopes",
+                                              "Key of Dreams", "Key of Wishes"]
                         for idx, elem in enumerate(material_tier_list):
                             if selected_item.item_material_tier == elem:
                                 selected_item.item_material_tier = material_tier_list[(idx + 1)]
@@ -889,9 +865,10 @@ def craft_item(player_object, selected_item, item_id, method):
                     if random_num <= success_rate:
                         blessing_tier_list = ["Standard", "Faint", "Luminous", "Lustrous", "Radiant", "Divine",
                                               "Basic", "Enchanted", "Luminous", "Lustrous", "Radiant", "Divine",
-                                              "Sparkling", "Glittering", "Dazzling", "Shining", "Prismatic", "Resplendent",
+                                              "Sparkling", "Glittering", "Dazzling", "Shining", "Radiant", "Divine",
                                               "Dark", "Shadow", "Inverted", "Abyssal", "Calamitous", "Balefire",
-                                              "Light", "Glowing", "Pure", "Majestic", "Radiant", "Divine"]
+                                              "Light", "Glowing", "Pure", "Majestic", "Radiant", "Divine",
+                                              "???", "Chroma", "Chromatic", "Prisma", "Prismatic", "Iridescent"]
                         for idx, elem in enumerate(blessing_tier_list):
                             if selected_item.item_blessing_tier == elem:
                                 selected_item.item_blessing_tier = blessing_tier_list[(idx + 1)]
@@ -925,7 +902,7 @@ def craft_item(player_object, selected_item, item_id, method):
                 else:
                     is_success = "3"
             case "Cleanse":
-                if selected_item.item_num_stars > 1:
+                if selected_item.item_num_stars > 0:
                     update_stock(player_object, item_id, -1)
                     random_num = random.randint(1, 100)
                     if random_num <= success_rate:
@@ -937,7 +914,7 @@ def craft_item(player_object, selected_item, item_id, method):
                     is_success = "3"
             case "Augment":
                 check_aug = selected_item.check_augment()
-                if check_aug < 12:
+                if check_aug < 18:
                     update_stock(player_object, item_id, -1)
                     random_num = random.randint(1, 100)
                     if random_num <= success_rate:
@@ -945,24 +922,16 @@ def craft_item(player_object, selected_item, item_id, method):
                         is_success = "1"
                     else:
                         is_success = "0"
-                elif check_aug == 15:
+                elif check_aug == -1:
                     is_success = 6
                 else:
                     is_success = "3"
             case "Implant":
-                if len(selected_item.item_elements) < 9:
+                if 0 in selected_item.item_elements:
                     update_stock(player_object, item_id, -1)
                     random_num = random.randint(1, 100)
                     if random_num <= success_rate:
-                        running = True
-                        new_element = ""
-                        while running:
-                            new_element = bosses.get_element(0)
-                            running = False
-                            for x in selected_item.item_elements:
-                                if str(x) == new_element:
-                                    running = True
-                        selected_item.item_elements.append(new_element)
+                        selected_item.item_elements = add_element(selected_item.item_elements)
                         is_success = "1"
                     else:
                         is_success = "0"
@@ -970,7 +939,7 @@ def craft_item(player_object, selected_item, item_id, method):
                     is_success = "3"
             case "Voidforge":
                 damage_check = damagecalc.get_item_tier_damage(selected_item.item_material_tier)
-                if damage_check == 2500:
+                if damage_check == 5000:
                     update_stock(player_object, item_id, -1)
                     random_num = random.randint(1, 100)
                     if random_num <= success_rate:
@@ -979,7 +948,7 @@ def craft_item(player_object, selected_item, item_id, method):
                         is_success = "1"
                     else:
                         is_success = "0"
-                elif damage_check == 9500:
+                elif damage_check == 10000:
                     is_success = "3"
                 else:
                     is_success = "4"
@@ -1050,7 +1019,8 @@ def update_stock(player_object, item_id, change):
                 player_stock = change
             else:
                 player_stock = 0
-            query = text("INSERT INTO BasicInventory VALUES (:item_id, :player_id, :new_qty) ")
+            query = text("INSERT INTO BasicInventory (player_id, item_id, item_qty) "
+                         "VALUES(:player_id, :item_id, :new_qty)")
             query = query.bindparams(item_id=item_id, player_id=player_object.player_id, new_qty=player_stock)
             pandora_db.execute(query)
         pandora_db.close()
@@ -1059,47 +1029,80 @@ def update_stock(player_object, item_id, change):
         print(error)
 
 
-def get_roll_by_code(code, item_type):
-    roll_adjust = 25
+def get_roll_by_code(item_object, code):
+    roll_adjust = 5
     roll_text = ""
+    check_roll = ord(code[2])
+    text_method = 1
     match code[0]:
         case "P":
-            match code[2]:
-                case "1":
-                    roll = "Critical Chance"
-                case "2":
-                    roll = "Attack Speed"
-                case "3":
-                    roll = "Elemental Penetration"
-                case "4":
-                    roll = "Final Damage"
-                case "5":
-                    roll = "Damage Mitigation"
-                    roll_adjust = 10
-                case _:
-                    roll = "Error"
-            bonus = str(int(code[1]) * roll_adjust)
+            if check_roll <= 106:
+                roll_num = check_roll - 97
+                if roll_num == 9:
+                    roll_keyword = "Omni"
+                else:
+                    roll_keyword = pandorabot.element_names[roll_num]
+                roll = f"{roll_keyword} Damage"
+            elif check_roll <= 116:
+                roll_num = check_roll - 97 - 10
+                if roll_num == 9:
+                    roll_keyword = "Omni"
+                else:
+                    roll_keyword = pandorabot.element_names[roll_num]
+                roll = f"{roll_keyword} Penetration"
+            else:
+                match check_roll:
+                    case "u":
+                        roll = "Defence Penetration"
+                    case "v":
+                        roll = "Attack Speed"
+                    case "w":
+                        roll = "Critical Strike Multiplier"
+                    case "x":
+                        roll = "Final Damage"
+                    case "y":
+                        roll = "Multi-Hit"
+                    case _:
+                        roll = "Class Mastery"
+            bonus = str(int(code[1]) * roll_adjust * item_object.item_tier)
             roll_text += f'+{bonus}% {roll}'
         case "S":
-            match code[2]:
-                case "1":
-                    bonus = str(int(code[1]) * 50)
-                    roll_text = f"+{bonus}% Critical Damage"
-                case "2":
-                    bonus = str(int(code[1])*0.25)
-                    roll_text = f"Aura: +{bonus}x Team Damage"
-                case "3":
-                    bonus = str(int(code[1])*0.25)
-                    roll_text = f"Curse: +{bonus}x Boss Damage Received"
-                case "4":
-                    bonus = str(int(code[1]) + 1)
-                    if item_type == "W":
-                        roll_text = f"Multi-Hit: {bonus}x Combo"
-                    else:
-                        bonus = str(int(code[1]) * 50)
-                        roll_text = f"+{bonus} HP%"
-                case _:
-                    roll_text = "Error"
+            if check_roll <= 106:
+                roll_num = check_roll - 97
+                if roll_num == 9:
+                    roll_keyword = "Omni"
+                else:
+                    roll_keyword = pandorabot.element_names[roll_num]
+                roll = f"{roll_keyword} Resistance"
+            elif check_roll <= 116:
+                roll_num = check_roll - 97 - 10
+                if roll_num == 9:
+                    roll_keyword = "Omni"
+                else:
+                    roll_keyword = pandorabot.element_names[roll_num]
+                roll = f"{roll_keyword} Curse"
+            else:
+                match check_roll:
+                    case "u":
+                        roll = "Damage Mitigation"
+                    case "v":
+                        roll = "Health Regen"
+                        roll_adjust = 5
+                    case "w":
+                        roll = "Health Bonus"
+                        roll_adjust = 100
+                        text_method = 2
+                    case "x":
+                        roll = "Health Multiplier"
+                    case "y":
+                        roll = "Critical Strike Chance"
+                    case _:
+                        roll = "Omni Aura"
+            bonus = str(int(code[1]) * roll_adjust * (1 + item_object.item_tier))
+            if text_method == 1:
+                roll_text += f'+{bonus}% {roll}'
+            elif text_method == 2:
+                roll_text += f'+{bonus} {roll}'
         case _:
             roll_text = "Error"
     return roll_text
@@ -1124,47 +1127,16 @@ def try_refine(player_owner, item_type, selected_tier):
 
 
 def assign_bonus_stat(base_tier):
-    random_num = random.randint(1, 4)
-    # set accessory unique skill
-    match base_tier:
-        case 4:
-            match random_num:
-                case 1:
-                    unique_skill = "Bahamut's Grace"
-                case 2:
-                    unique_skill = "Curse of Immorality"
-                case _:
-                    unique_skill = "Perfect Counter"
-        case 3:
-            match random_num:
-                case 1:
-                    unique_skill = "Coup de Grace"
-                case 2:
-                    unique_skill = "Final Stand"
-                case 3:
-                    unique_skill = "Mountain's Will"
-                case _:
-                    unique_skill = "Inferno's Will"
-        case 2:
-            match random_num:
-                case 1:
-                    unique_skill = "Breaker"
-                case 2:
-                    unique_skill = "Last Breath"
-                case 3:
-                    unique_skill = "Guardian Stance"
-                case _:
-                    unique_skill = "Onslaught Stance"
-        case _:
-            match random_num:
-                case 1:
-                    unique_skill = "First Blood"
-                case 2:
-                    unique_skill = "Hybrid Stance"
-                case 3:
-                    unique_skill = "Defensive Stance"
-                case _:
-                    unique_skill = "Offensive Stance"
+    random_num = random.randint(0, 8)
+    ability_list = pandorabot.global_unique_ability_list[base_tier - 1]
+    keyword = ability_list[random_num]
+    if base_tier < 4:
+        descriptor = pandorabot.global_descriptor_list[(base_tier - 1)]
+        random_buff = random.randint(0, 3)
+        buff_type = pandorabot.global_buff_type_list[random_buff]
+        unique_skill = f"{keyword} {buff_type} {descriptor}"
+    else:
+        unique_skill = keyword
     return unique_skill
 
 
@@ -1196,3 +1168,19 @@ def sell(user, item, embed_msg):
     else:
         response_embed.add_field(name="Item Not Sold!", value=response, inline=False)
     return response_embed
+
+
+def add_element(element_list):
+    new_element_list = element_list
+    new_element = random.randint(0, 8)
+    running = True
+    while running:
+        if new_element_list[new_element] == 0:
+            new_element_list[new_element] = 1
+            running = False
+        else:
+            if new_element < 8:
+                new_element += 1
+            else:
+                new_element = 0
+    return new_element_list

@@ -49,28 +49,34 @@ def award_loot(boss_object, player_list, exp_amount):
         temp_player.set_player_field("player_exp", temp_player.player_exp)
         temp_player.set_player_field("player_coins", temp_player.player_coins)
         loot_msg.append(f"{pandorabot.exp_icon} {exp_amount}x\n{pandorabot.coin_icon} {coin_amount}x\n")
-        if ' - ' in boss_object.boss_name:
-            temp = boss_object.boss_name.split(" ", 1)
-            tarot_id = f"t{temp[0]}"
-            filename = "itemlist.csv"
-            with (open(filename, 'r') as f):
-                for line in csv.DictReader(f):
-                    if str(line['item_id']) == tarot_id:
-                        loot_msg[counter] += f"{str(line['item_emoji'])} 1x {str(line['item_name'])}\n"
-                        df_change.loc[len(df_change)] = [temp_player.player_id, tarot_id, 1]
+        tarot_check_num = random.randint(1, 10)
+        if tarot_check_num == 1:
+            if ' - ' in boss_object.boss_name:
+                temp = boss_object.boss_name.split(" ", 1)
+                tarot_id = f"t{temp[0]}"
+                filename = "itemlist.csv"
+                with (open(filename, 'r') as f):
+                    for line in csv.DictReader(f):
+                        if str(line['item_id']) == tarot_id:
+                            loot_msg[counter] += f"{str(line['item_emoji'])} 1x {str(line['item_name'])}\n"
+                            df_change.loc[len(df_change)] = [temp_player.player_id, tarot_id, 1]
         filename = "droptable.csv"
         with (open(filename, 'r') as f):
             for line in csv.DictReader(f):
-                if str(line['boss_type']) == str(boss_object.boss_type) and int(line['boss_tier']) <= int(boss_tier):
+                if str(line['boss_type']) == str(boss_object.boss_type) and int(line['boss_tier']) == int(boss_tier):
                     dropped_item = str(line["item_id"])
                     drop_rate = int(line["drop_rate"])
                     item_name = get_loot_name(dropped_item)
                     item_emoji = get_loot_emoji(dropped_item)
                     qty = 0
-                    if int(line['boss_tier']) <= 3:
-                        for y in range(boss_tier):
-                            if is_dropped(drop_rate):
-                                qty += 1
+                    item_tier = int(dropped_item[1])
+                    if item_tier < 4:
+                        num_attempts = 3
+                    else:
+                        num_attempts = 1
+                    for y in range(num_attempts):
+                        if is_dropped(drop_rate):
+                            qty += 1
                     if qty != 0:
                         df_change.loc[len(df_change)] = [temp_player.player_id, dropped_item, qty]
                         loot_msg[counter] += f'{item_emoji} {str(qty)}x {item_name}\n'
