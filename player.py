@@ -34,6 +34,7 @@ class PlayerProfile:
         self.equipped_acc = 0
         self.equipped_wing = 0
         self.equipped_crest = 0
+        self.equipped_tarot = 0
         self.player_coins = 0
         self.player_class = ""
         self.player_quest = 0
@@ -106,6 +107,53 @@ class PlayerProfile:
         self.elemental_resistance = [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
         self.all_elemental_resistance = 0.0
 
+    def get_player_stats(self, method):
+        echelon_colour = inventory.get_gear_tier_colours(self.player_echelon)
+        resources = f'<:estamina:1145534039684562994> {self.player_username}\'s stamina: '
+        resources += str(self.player_stamina)
+        resources += f'\nLotus Coins: {self.player_coins}'
+        exp = f'Level: {self.player_lvl} Exp: ({self.player_exp} / '
+        exp += f'{get_max_exp(self.player_lvl)})'
+        id_msg = f'User ID: {self.player_id}\nClass: {self.player_class}'
+        self.get_player_multipliers()
+        if method == 1:
+            stats = f"Item Base Damage: {int(self.player_damage):,}"
+            stats += f"\nAttack Speed: {self.attack_speed} / min"
+            stats += f"\nCritical Chance: {int(self.critical_chance)}%"
+            stats += f"\nCritical Damage: +{int(self.critical_multiplier * 100)}%"
+            for idw, w in enumerate(self.elemental_damage_multiplier):
+                stats += f"\n{pandorabot.global_element_list[idw]} Damage: {int(w * 100)}%"
+            stats += f"\nOmni Damage: {int(self.all_elemental_multiplier * 100)}%"
+            stats += f"\nBonus Hit Count: +{int(self.bonus_hits)}x"
+            stats += f"\nClass Multiplier: {int(self.class_multiplier * 100)}%"
+            stats += f"\nFinal Damage: {int(self.final_damage * 100)}%"
+        elif method == 2:
+            stats = f"Player HP: {self.player_mHP:,}"
+            for idy, y in enumerate(self.elemental_resistance):
+                stats += f"\n{pandorabot.global_element_list[idy]} Resistance: {int(y * 100)}%"
+            stats += f"\nOmni Resistance: {int(self.all_elemental_resistance * 100)}%"
+            stats += f"\nDamage Mitigation: {self.damage_mitigation}%"
+        elif method == 3:
+            stats = f"\nDefence Penetration: {int(self.defence_penetration * 100)}%"
+            for idx, x in enumerate(self.elemental_penetration):
+                stats += f"\n{pandorabot.global_element_list[idx]} Penetration: {int(x * 100)}%"
+            stats += f"\nOmni Penetration: {int(self.all_elemental_penetration * 100)}%"
+        else:
+            stats = f"Omni Aura: {int(self.aura)}%"
+            for idz, z in enumerate(self.elemental_curse):
+                stats += f"\n{pandorabot.global_element_list[idz]} Curse: {int(z * 100)}%"
+            stats += f"\nOmni Curse: {int(self.all_elemental_curse * 100)}%"
+
+
+        embed_msg = discord.Embed(colour=echelon_colour[0],
+                                  title=self.player_username,
+                                  description=id_msg)
+        embed_msg.add_field(name=exp, value=resources, inline=False)
+        embed_msg.add_field(name="Player Stats", value=stats, inline=False)
+        thumbnail_url = get_thumbnail_by_class(self.player_class)
+        embed_msg.set_thumbnail(url=thumbnail_url)
+        return embed_msg
+
     def set_player_field(self, field_name, field_value):
         try:
             engine_url = mydb.get_engine_url()
@@ -156,22 +204,23 @@ class PlayerProfile:
                                  "player_stamina, player_class, player_coins, player_equip_weapon, "
                                  "player_equip_armour, player_equip_acc, player_equip_wing, player_equip_crest) "
                                  "VALUES (:input_1, :input_2, :input_3, :input_4, :input_5, :input_6,"
-                                 ":input_7, :input_8, :input_9, :input_10, :input_11, :input_12, :input_13, :input_14)")
+                                 ":input_7, :input_8, :input_9, :input_10, :input_11, :input_12, :input_13, "
+                                 ":input_14, :input_15)")
                     query = query.bindparams(input_1=str(self.player_name), input_2=str(self.player_username),
                                              input_3=int(self.player_lvl), input_4=int(self.player_exp),
                                              input_5=int(self.player_echelon), input_6=int(self.player_quest),
                                              input_7=int(self.player_stamina), input_8=str(self.player_class),
                                              input_9=int(self.player_coins), input_10=int(self.equipped_weapon),
                                              input_11=int(self.equipped_armour), input_12=int(self.equipped_acc),
-                                             input_13=int(self.equipped_wing), input_14=int(self.equipped_crest))
+                                             input_13=int(self.equipped_wing), input_14=int(self.equipped_crest),
+                                             input_15=int(self.equipped_tarot))
                     pandora_db.execute(query)
                     response = f"Player {self.player_name} has been registered to play. Welcome {self.player_username}!"
                     response += f"\nPlease use the !quest command to proceed."
                     registered_player = get_player_by_name(self.player_name)
-                    query = text("INSERT INTO QuestTokens (player_id, token_1, token_5, token_8, token_10) "
-                                 "VALUES(:player_id, :input_1, :input_5, :input_8, :input_10)")
-                    query = query.bindparams(player_id=registered_player.player_id, input_1=1, input_5=1,
-                                             input_8=10, input_10=20)
+                    query = text("INSERT INTO QuestTokens (player_id, token_1, token_5) "
+                                 "VALUES(:player_id, :input_1, :input_5)")
+                    query = query.bindparams(player_id=registered_player.player_id, input_1=1, input_5=1)
                     pandora_db.execute(query)
             pandora_db.close()
             engine.dispose()
@@ -241,6 +290,7 @@ class PlayerProfile:
             self.equipped_acc = int(df['player_equip_acc'].values[0])
             self.equipped_wing = int(df['player_equip_wing'].values[0])
             self.equipped_crest = int(df['player_equip_crest'].values[0])
+            self.equipped_tarot = int(df['player_equip_tarot'].values[0])
         except mysql.connector.Error as err:
             print("Database Error: {}".format(err))
 
@@ -332,15 +382,15 @@ class PlayerProfile:
         additional_multiplier *= (1 + self.final_damage)
         self.player_damage *= additional_multiplier
         # Type Defences
-        defences_multiplier = (damagecalc.boss_defences("", self, boss_object, "", e_weapon) + self.defence_penetration)
+        defences_multiplier = (damagecalc.boss_defences("", self, boss_object, -1, e_weapon) + self.defence_penetration)
         self.player_damage *= defences_multiplier
         # Elemental Defences
         for idx, x in enumerate(e_weapon.item_elements):
             if x == 1:
-                temp_element = pandorabot.global_element_list[idx]
                 self.elemental_damage[idx] = self.player_damage * (1 + self.elemental_damage_multiplier[idx])
                 self.elemental_damage[idx] *= (1 + self.all_elemental_multiplier)
-                resist_multi = damagecalc.boss_defences("Element", self, boss_object, temp_element, e_weapon)
+                location = int(idx)
+                resist_multi = damagecalc.boss_defences("Element", self, boss_object, location, e_weapon)
                 resist_multi += self.elemental_penetration[idx] + self.all_elemental_penetration
                 self.elemental_damage[idx] *= resist_multi
         self.player_total_damage = int(sum(self.elemental_damage))
@@ -351,7 +401,7 @@ class PlayerProfile:
             roll_adjust = 5
             roll_tier = int(str(x)[1])
             check_roll = ord(str(x[2]))
-            bonus = 0.01 * roll_tier * roll_adjust * equipped_item.item_tier
+            bonus = 0.01 * roll_tier * roll_adjust * (1 + equipped_item.item_tier)
             if check_roll <= 106:
                 roll_num = check_roll - 97
                 if roll_num == 9:
@@ -382,7 +432,7 @@ class PlayerProfile:
             roll_adjust = 5
             roll_tier = int(str(y)[1])
             check_roll = ord(str(y[2]))
-            bonus = 0.01 * roll_tier * roll_adjust * equipped_item.item_tier
+            bonus = 0.01 * roll_tier * roll_adjust * (1 + equipped_item.item_tier)
             if check_roll <= 106:
                 roll_num = check_roll - 97
                 if roll_num == 9:
@@ -403,7 +453,7 @@ class PlayerProfile:
                         self.hp_regen += bonus
                     case "w":
                         roll_adjust = 100
-                        bonus = roll_tier * roll_adjust * equipped_item.item_tier
+                        bonus = roll_tier * roll_adjust * (1 + equipped_item.item_tier)
                         self.hp_bonus += bonus
                     case "x":
                         self.hp_multiplier += bonus
@@ -460,9 +510,9 @@ class PlayerProfile:
 
         return response
 
-    def check_equipped(self, user, item):
+    def check_equipped(self, item):
         response = ""
-        user.get_equipped()
+        self.get_equipped()
 
         match item.item_type:
             case 'W':

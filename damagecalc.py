@@ -46,11 +46,11 @@ def get_item_tier_damage(material_tier: str) -> int:
     return damage_temp
 
 
-def boss_defences(method, player_object, boss_object, element, weapon):
+def boss_defences(method, player_object, boss_object, location, weapon):
     type_multiplier = (1 - 0.01 * boss_object.boss_lvl)
     bonus_multiplier = 0.01 * player_object.player_lvl
     if method == "Element":
-        if element in boss_object.boss_eleweak:
+        if boss_object.boss_eleweak[location] == 1:
             type_multiplier += bonus_multiplier
     else:
         if weapon.item_damage_type in boss_object.boss_typeweak:

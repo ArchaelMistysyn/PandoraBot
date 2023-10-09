@@ -31,7 +31,7 @@ class CurrentBoss:
         self.boss_mHP = 0
         self.boss_cHP = 0
         self.boss_typeweak = []
-        self.boss_eleweak = []
+        self.boss_eleweak = [0, 0, 0, 0, 0, 0, 0, 0, 0]
 
     # return the boss display string
     def __str__(self):
@@ -89,8 +89,9 @@ class CurrentBoss:
         boss_weakness = f'Weakness: '
         for x in self.boss_typeweak:
             boss_weakness += str(x)
-        for y in self.boss_eleweak:
-            boss_weakness += str(y)
+        for idy, y in enumerate(self.boss_eleweak):
+            if y == 1:
+                boss_weakness += pandorabot.global_element_list[idy]
         embed_msg = discord.Embed(colour=tier_colour,
                                   title=boss_title,
                                   description="")
@@ -214,8 +215,10 @@ def restore_solo_bosses(channel_id):
                 boss_type = str(df["boss_type"].values[0])
                 boss_mHP = int(df["boss_mHP"].values[0])
                 boss_cHP = int(df["boss_cHP"].values[0])
-                boss_typeweak = list(df['boss_typeweak'].values[0].split(';'))
-                boss_eleweak = list(df['boss_eleweak'].values[0].split(';'))
+                temp_types = list(df['boss_typeweak'].values[0].split(';'))
+                boss_typeweak = temp_types
+                temp_elements = list(df['boss_eleweak'].values[0].split(';'))
+                boss_eleweak = list(map(int, temp_elements))
                 boss_image = str(df["boss_image"].values[0])
                 boss_object = CurrentBoss(boss_type_num, boss_type, boss_tier, boss_level)
                 boss_object.player_id=player_id
@@ -252,8 +255,10 @@ def spawn_boss(channel_id, player_id, new_boss_tier, selected_boss_type, boss_le
             boss_type = str(df["boss_type"].values[0])
             boss_mHP = int(df["boss_mHP"].values[0])
             boss_cHP = int(df["boss_cHP"].values[0])
-            boss_typeweak = list(df['boss_typeweak'].values[0].split(';'))
-            boss_eleweak = list(df['boss_eleweak'].values[0].split(';'))
+            temp_types = list(df['boss_typeweak'].values[0].split(';'))
+            boss_typeweak = temp_types
+            temp_elements = list(df['boss_eleweak'].values[0].split(';'))
+            boss_eleweak = list(map(int, temp_elements))
             boss_image = str(df["boss_image"].values[0])
             boss_object = CurrentBoss(boss_type_num, boss_type, boss_tier, boss_level)
             boss_object.boss_name = boss_name
@@ -276,13 +281,14 @@ def spawn_boss(channel_id, player_id, new_boss_tier, selected_boss_type, boss_le
             boss_object = CurrentBoss(boss_type_num, selected_boss_type, new_boss_tier, boss_level)
             boss_object.generate_boss_name_image(selected_boss_type, new_boss_tier)
 
-            num_eleweak = 3
             boss_eleweak = ""
-            eleweak_list = random.sample(range(0, 8), num_eleweak)
+            num_eleweak = 3
+            eleweak_list = random.sample(range(9), num_eleweak)
             for x in eleweak_list:
-                new_weakness = get_element(int(x))
-                boss_object.boss_eleweak.append(new_weakness)
-                boss_eleweak += f"{new_weakness};"
+                boss_object.boss_eleweak[x] = 1
+            for y in boss_object.boss_eleweak:
+                boss_eleweak += f"{str(y)};"
+
             num_typeweak = 2
             typeweak_list = random.sample(range(0, 4), num_typeweak)
             boss_typeweak = ""
@@ -450,7 +456,7 @@ def add_participating_player(channel_id, player_id):
 
 
 def update_player_damage(channel_id, player_id, player_damage):
-    raid_id = get_raid_id(channel_id, player_id)
+    raid_id = get_raid_id(channel_id, 0)
     try:
         engine_url = mydb.get_engine_url()
         engine = sqlalchemy.create_engine(engine_url)
@@ -559,6 +565,7 @@ def create_dead_boss_embed(channel_id, active_boss, dps):
     player_list, damage_list = bosses.get_damage_list(channel_id)
     output_list = ""
     for idx, x in enumerate(player_list):
-        output_list += f'{str(x)}: {int(damage_list[idx]):,}\n'
+        player_object = player.get_player_by_id(x)
+        output_list += f'{str(player_object.player_username)}: {int(damage_list[idx]):,}\n'
     dead_embed.add_field(name="SLAIN", value=output_list, inline=False)
     return dead_embed

@@ -30,7 +30,9 @@ class Quest:
         self.award_role = award_role
 
     def set_quest_output(self, token_count):
-        self.quest_output = f"{self.quest_message}: {token_count} / {self.token_cost}"
+        fake_level_tokens = get_fake_level_tokens(self.quest_num)
+        self.quest_output = (f"{self.quest_message}: "
+                             f"{token_count + fake_level_tokens} / {self.token_cost + fake_level_tokens}")
 
     def hand_in(self, current_player):
         player_object = player.get_player_by_id(current_player.player_id)
@@ -114,8 +116,65 @@ def quest_exceptions(quest_num):
     match quest_num:
         case 4:
             token_check = 3
-        case 8 | 10:
+        case 6 | 7:
+            token_check = 6
+        case 8 | 10 | 14 | 20 | 22 | 25 | 27 | 28 | 29:
             token_check = 5
         case _:
             token_check = quest_num
     return token_check
+
+
+def assign_tokens(player_object, boss_object):
+    if player_object.player_quest <= 4 and boss_object.boss_type == "Fortress":
+        player_object.check_and_update_tokens(3, 1)
+    elif player_object.player_quest <= 7 and boss_object.boss_type == "Dragon":
+        player_object.check_and_update_tokens(6, 1)
+    elif player_object.player_quest <= 11 and boss_object.boss_type == "Demon":
+        player_object.check_and_update_tokens(11, 1)
+    elif player_object.player_quest <= 16 and boss_object.boss_type == "Paragon":
+        player_object.check_and_update_tokens(16, 1)
+    elif player_object.player_quest <= 18 and boss_object.boss_type == "Paragon":
+        player_object.check_and_update_tokens(18, 1)
+    elif player_object.player_quest <= 19 and boss_object.boss_type == "Paragon":
+        player_object.check_and_update_tokens(19, 1)
+    elif player_object.player_quest <= 9 and boss_object.boss_name == "XVI - Aurora, the Fortress":
+        player_object.check_and_update_tokens(9, 1)
+    elif player_object.player_quest <= 12 and boss_object.boss_name == "VII - Astratha the Dimensional":
+        player_object.check_and_update_tokens(12, 1)
+    elif player_object.player_quest <= 13 and boss_object.boss_name == "VIII - Tyra, the Behemoth":
+        player_object.check_and_update_tokens(13, 1)
+    elif player_object.player_quest <= 21 and boss_object.boss_name == "II - Pandora, The Celestial":
+        player_object.check_and_update_tokens(21, 1)
+    elif player_object.player_quest <= 23 and boss_object.boss_name == "III - Oblivia, The Void":
+        player_object.check_and_update_tokens(23, 1)
+    elif player_object.player_quest <= 24 and boss_object.boss_name == "IV - Akasha, The Infinite":
+        player_object.check_and_update_tokens(24, 1)
+
+
+def get_fake_level_tokens(quest_num):
+    fake_tokens = 0
+    match quest_num:
+        case 8:
+            fake_tokens = 10
+        case 10:
+            fake_tokens = 20
+        case 14:
+            fake_tokens = 30
+        case 20:
+            fake_tokens = 50
+        case 22:
+            fake_tokens = 60
+        case 25:
+            fake_tokens = 70
+        case 27:
+            fake_tokens = 80
+        case 28:
+            fake_tokens = 90
+        case 29:
+            fake_tokens = 95
+        case _:
+            fake_tokens = 0
+    return fake_tokens
+
+

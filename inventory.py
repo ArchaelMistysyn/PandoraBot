@@ -607,7 +607,7 @@ def read_custom_item(item_id):
             target_item.item_name = str(df['item_name'].values[0])
             item_elements = str(df['item_elements'].values[0])
             temp_elements = list(df['item_elements'].values[0].split(';'))
-            target_item.item_elements = map(int, temp_elements)
+            target_item.item_elements = list(map(int, temp_elements))
             target_item.item_damage_type = df['item_damage_type'].values[0]
             target_item.item_enhancement = int(df['item_enhancement'].values[0])
             target_item.item_tier = int(df['item_tier'].values[0])
@@ -735,11 +735,11 @@ def if_custom_exists(item_id) -> bool:
         engine = sqlalchemy.create_engine(engine_url)
         pandora_db = engine.connect()
         query = text("SELECT * FROM CustomInventory WHERE item_id = :id_check")
-        query = query.bindparams(id_check=str(item_id))
+        query = query.bindparams(id_check=item_id)
         df = pd.read_sql(query, pandora_db)
         pandora_db.close()
         engine.dispose()
-        if int(item_id) == int(df['item_id'].values[0]):
+        if len(df.index) != 0:
             return True
         else:
             return False
@@ -1064,7 +1064,7 @@ def get_roll_by_code(item_object, code):
                         roll = "Multi-Hit"
                     case _:
                         roll = "Class Mastery"
-            bonus = str(int(code[1]) * roll_adjust * item_object.item_tier)
+            bonus = str(int(code[1]) * roll_adjust * (1 + item_object.item_tier))
             roll_text += f'+{bonus}% {roll}'
         case "S":
             if check_roll <= 106:
@@ -1143,11 +1143,11 @@ def assign_bonus_stat(base_tier):
 def sell(user, item, embed_msg):
     reload_player = player.get_player_by_id(user.player_id)
     response_embed = embed_msg
-    response = user.check_equipped(user, item)
+    response = user.check_equipped(item)
     sell_value = item.item_tier * 100
     if response == "":
         reload_player.player_coins += sell_value
-        reload_player.set_player_field("player_coins", user.player_coins)
+        reload_player.set_player_field("player_coins", reload_player.player_coins)
         try:
             engine_url = mydb.get_engine_url()
             engine = sqlalchemy.create_engine(engine_url)

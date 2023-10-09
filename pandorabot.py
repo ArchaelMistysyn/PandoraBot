@@ -1,22 +1,34 @@
 import discord
 from discord.ext import commands
 from discord.ext.commands import Bot
+from discord.ui import Button, View
+from discord import app_commands
 import asyncio
+import csv
+import pandas as pd
+import mysql.connector
+from mysql.connector.errors import Error
+import sys
+
 import explore
 import inventory
 import bosses
 import random
-import pandas as pd
 import loot
 import player
 import damagecalc
-from discord.ui import Button, View
-import csv
 import menus
-import mysql.connector
-from mysql.connector.errors import Error
-import tarot
 import quest
+import tarot
+import bazaar
+import pilengine
+
+# Get Bot Token
+token_info = None
+with open("bot_token.txt", 'r') as token_file:
+    for line in token_file:
+        token_info = line
+TOKEN = token_info
 
 # Initialize database
 db_info = None
@@ -71,23 +83,36 @@ global_buff_type_list = ["Hero's", "Guardian's", "Aggressor's", "Breaker's"]
 global_descriptor_list = ["Pose", "Stance", "Will", ""]
 global_unique_ability_list = [element_names, tier_2_abilities, tier_3_abilities, tier_4_abilities]
 
+not_owned_icon = "https://kyleportfolio.ca/botimages/profilecards/noachv.png"
+owned_icon = "https://kyleportfolio.ca/botimages/profilecards/owned.png"
+global_role_dict = {"Achv Role - ???": owned_icon,
+                    "Achv Role - Got Cake?": owned_icon,
+                    "Achv Role - The Milkman": owned_icon,
+                    "Achv Role - Knife Rat": owned_icon,
+                    "Achv Role - Try Again": owned_icon,
+                    "Achv Role - All Nighter": owned_icon,
+                    "Achv Role - Reactive": owned_icon,
+                    "Achv Role - Message Master": owned_icon,
+                    "Achv Role - Door Greeter": owned_icon,
+                    "Achv Role - Koin Kollektor": owned_icon,
+                    "Achv Role - Endless Gaming": owned_icon,
+                    "Achv Role - Max Activity": owned_icon,
+                    "Achv Role - Infinite Time": owned_icon,
+                    "Achv Role - Feng Hao Dou Luo": owned_icon}
 
-# run the bot
+
+class PandoraBot(commands.Bot):
+    def __init__(self):
+        super().__init__(command_prefix="!", intents=discord.Intents.all())
+
+    async def on_command_error(self, ctx, error):
+        await ctx.reply(error, ephemeral=True)
+
+
 def run_discord_bot():
-    TOKEN = 'MTE0MDUwNTY2NTk5NjA2Mjc4MA.GlwpR7.aEd1dBGZMpDNIFDgWG0DaClTUyCmg316EwGEZ0'
-    intents = discord.Intents.all()
-    intents.message_content = True
-    pandora_bot = Bot(command_prefix='!', intents=intents)
+    print(sys.version)
+    pandora_bot = PandoraBot()
 
-    # handle username changes
-    @pandora_bot.event
-    async def on_user_update(before, after):
-        if before.name != after.name:
-            temp_player = player.get_player_by_name(before.name)
-            temp_player.player_name = after.name
-            temp_player.set_player_field("player_name", after.name)
-
-    # bot startup actions
     @pandora_bot.event
     async def on_ready():
         print(f'{pandora_bot.user} Online!')
@@ -105,6 +130,39 @@ def run_discord_bot():
                 player_object = player.get_player_by_id(y.player_id)
                 pandora_bot.loop.create_task(restore_boss_task(timer, player_object, y,
                                                                raid_id_list[idy], command_channel_id, cmd_ctx))
+
+    @pandora_bot.command(name='sync', description='Owner only')
+    async def sync(ctx):
+        if ctx.message.author.id == 185530717638230016:
+            try:
+                synced = await pandora_bot.tree.sync(guild=discord.Object(id=1011375205999968427))
+                print(f"Synced! {len(synced)} command(s)")
+                await ctx.send('commands synced!')
+            except Exception as e:
+                print(e)
+        else:
+            await ctx.send('You must be the owner to use this command!')
+
+    @pandora_bot.command(name='reset_sync', description='Owner only')
+    async def reset_sync(ctx):
+        if ctx.message.author.id == 185530717638230016:
+            try:
+                global_sync = await pandora_bot.tree.sync(guild=None)
+                print(f"Synced! {len(global_sync)} global command(s)")
+                synced = await pandora_bot.tree.sync(guild=discord.Object(id=1011375205999968427))
+                print(f"Synced! {len(synced)} command(s)")
+                await ctx.send('commands synced!')
+            except Exception as e:
+                print(e)
+        else:
+            await ctx.send('You must be the owner to use this command!')
+
+    @pandora_bot.event
+    async def on_user_update(before, after):
+        if before.name != after.name:
+            temp_player = player.get_player_by_name(before.name)
+            temp_player.player_name = after.name
+            temp_player.set_player_field("player_name", after.name)
 
     @pandora_bot.event
     async def stamina_manager(duration_seconds, ctx):
@@ -126,7 +184,6 @@ def run_discord_bot():
             clicked_by = player.get_player_by_name(str(interaction.user))
             outcome = clicked_by.player_username
             outcome += bosses.add_participating_player(interaction.channel.id, clicked_by.player_id)
-
             await interaction.response.send_message(outcome)
 
     @pandora_bot.event
@@ -144,16 +201,14 @@ def run_discord_bot():
                 embed_msg = active_boss.create_boss_msg(dps, is_alive)
                 await sent_message.edit(embed=embed_msg)
             else:
-                if player_object.player_quest <= 4:
-                    player_object.check_and_update_tokens(3, 1)
-                if player_object.player_quest <= 9 and active_boss.boss_tier == 4:
-                    player_object.check_and_update_tokens(9, 1)
+                quest.assign_tokens(player_object, active_boss)
                 is_alive = False
                 embed_msg = bosses.create_dead_boss_embed(channel_id, active_boss, dps)
                 player_list = [player_object.player_id]
+                await sent_message.edit(embed=embed_msg)
                 loot_embed = loot.create_loot_embed(embed_msg, active_boss, player_list)
                 bosses.clear_boss_info(channel_id, player_object.player_id)
-                await sent_message.edit(embed=loot_embed)
+                await ctx.send(embed=loot_embed)
 
     @pandora_bot.event
     async def timed_task(duration_seconds, channel_id, channel_num, ctx):
@@ -181,15 +236,15 @@ def run_discord_bot():
                 for x in player_list:
                     temp_user = player.get_player_by_id(int(x))
                     # Set tokens based on boss type will need to add case statement here
-                    if temp_user.player_quest <= 7:
-                        temp_user.check_and_update_tokens(6, 1)
+                    quest.assign_tokens(temp_user, active_boss)
                 embed_msg = bosses.create_dead_boss_embed(channel_id, active_boss, dps)
+                await sent_message.edit(embed=embed_msg)
                 loot_embed = loot.create_loot_embed(embed_msg, active_boss, player_list)
-                await sent_message.edit(embed=loot_embed)
+                await ctx.send(embed=loot_embed)
 
                 level, boss_type, boss_tier = bosses.get_boss_details(channel_num)
-                active_boss = bosses.spawn_boss(channel_id, 0, boss_tier, boss_type, level, channel_num)
                 bosses.clear_boss_info(channel_id, 0)
+                active_boss = bosses.spawn_boss(channel_id, 0, boss_tier, boss_type, level, channel_num)
                 player_list.clear()
                 embed_msg = active_boss.create_boss_msg(0, True)
                 sent_message = await ctx.send(embed=embed_msg, view=raid_button)
@@ -205,9 +260,10 @@ def run_discord_bot():
             await ctx.send('You are at your command limit for this command')
         raise error
 
-    @pandora_bot.command(name='register', help="**!register [USERNAME]** Register a username to begin playing!")
-    @commands.max_concurrency(1, per=commands.BucketType.user, wait=False)
-    async def play(ctx, username):
+    @pandora_bot.hybrid_command(name='register',
+                                description="**/register [USERNAME]** Register a username to begin playing!")
+    @app_commands.guilds(discord.Object(id=1011375205999968427))
+    async def play(ctx, username: str = "Enter a new username!"):
         if any(ctx.channel.id in sl for sl in global_server_channels):
             embed_msg = discord.Embed(colour=discord.Colour.dark_teal(),
                                       title="Register",
@@ -217,8 +273,9 @@ def run_discord_bot():
             class_view = menus.ClassSelect(player_name, username)
             await ctx.send(embed=embed_msg, view=class_view)
 
-    @pandora_bot.command(name='explore', help="**!explore** to go on an an exploration")
-    @commands.max_concurrency(1, per=commands.BucketType.user, wait=False)
+    @pandora_bot.hybrid_command(name='explore',
+                                help="**/explore** Go on an exploration. Costs 25 stamina.")
+    @app_commands.guilds(discord.Object(id=1011375205999968427))
     async def adventure(ctx):
         if any(ctx.channel.id in sl for sl in global_server_channels):
             player_name = str(ctx.author)
@@ -238,9 +295,9 @@ def run_discord_bot():
                 embed_msg = unregistered_message()
                 await ctx.send(embed=embed_msg)
 
-    @pandora_bot.command(name='inlay', help="**!inlay [itemID]** to inlay a specific gem into an equipped item")
-    @commands.max_concurrency(1, per=commands.BucketType.user, wait=False)
-    async def inlay(ctx, item_id):
+    @pandora_bot.hybrid_command(name='inlay', help="**/inlay [itemID]** to inlay a specific gem into an equipped item")
+    @app_commands.guilds(discord.Object(id=1011375205999968427))
+    async def inlay(ctx, item_id: str = "Enter the item ID of the gem"):
         if any(ctx.channel.id in sl for sl in global_server_channels):
             if inventory.if_custom_exists(item_id):
                 selected_item = inventory.read_custom_item(item_id)
@@ -264,8 +321,8 @@ def run_discord_bot():
                 response = "wrong item id"
                 await ctx.send(response)
 
-    @pandora_bot.command(name='fort', help="**!fort** to challenge a fortress")
-    @commands.max_concurrency(1, per=commands.BucketType.user, wait=False)
+    @pandora_bot.hybrid_command(name='fort', help="**/fort** to challenge a fortress. Costs 50 stamina.")
+    @app_commands.guilds(discord.Object(id=1011375205999968427))
     async def fort(ctx):
         channel_id = ctx.channel.id
         if any(channel_id in sl for sl in global_server_channels):
@@ -286,37 +343,38 @@ def run_discord_bot():
                             embed_msg = active_boss.create_boss_msg(0, is_alive)
                             sent_message = await ctx.send(embed=embed_msg)
                             while is_alive:
-                                await asyncio.sleep(60)
-                                dps = player_object.get_player_damage(active_boss)
-                                active_boss.boss_cHP -= dps
-                                bosses.update_boss_cHP(channel_id, active_boss.player_id, active_boss.boss_cHP)
-                                if active_boss.calculate_hp():
-                                    embed_msg = active_boss.create_boss_msg(dps, is_alive)
-                                    await sent_message.edit(embed=embed_msg)
-                                else:
-                                    if player_object.player_quest <= 4:
-                                        player_object.check_and_update_tokens(3, 1)
-                                    if player_object.player_quest <= 9 and active_boss.boss_tier == 4:
-                                        player_object.check_and_update_tokens(9, 1)
-                                    is_alive = False
-                                    embed_msg = bosses.create_dead_boss_embed(channel_id, active_boss, dps)
-                                    player_list = [player_object.player_id]
-                                    loot_embed = loot.create_loot_embed(embed_msg, active_boss, player_list)
-                                    bosses.clear_boss_info(channel_id, player_object.player_id)
-                                    await sent_message.edit(embed=loot_embed)
+                                try:
+                                    await asyncio.sleep(60)
+                                    dps = player_object.get_player_damage(active_boss)
+                                    active_boss.boss_cHP -= dps
+                                    bosses.update_boss_cHP(channel_id, active_boss.player_id, active_boss.boss_cHP)
+                                    if active_boss.calculate_hp():
+                                        embed_msg = active_boss.create_boss_msg(dps, is_alive)
+                                        await sent_message.edit(embed=embed_msg)
+                                    else:
+                                        quest.assign_tokens(player_object, active_boss)
+                                        is_alive = False
+                                        embed_msg = bosses.create_dead_boss_embed(channel_id, active_boss, dps)
+                                        await sent_message.edit(embed=embed_msg)
+                                        player_list = [player_object.player_id]
+                                        loot_embed = loot.create_loot_embed(embed_msg, active_boss, player_list)
+                                        bosses.clear_boss_info(channel_id, player_object.player_id)
+                                        await ctx.send(embed=loot_embed)
+                                except Exception as e:
+                                    print(e)
                         else:
                             await ctx.send("Not enough stamina.")
                     else:
                         await ctx.send("You already have a fortress encounter running.")
-                        
+
                 else:
                     await ctx.send("You must have a weapon equipped.")
             else:
                 embed_msg = unregistered_message()
                 await ctx.send(embed=embed_msg)
 
-    @pandora_bot.command(name='quest', help="**!quest** to start the story quest")
-    @commands.max_concurrency(1, per=commands.BucketType.user, wait=False)
+    @pandora_bot.hybrid_command(name='quest', help="**/quest** to start the story quest")
+    @app_commands.guilds(discord.Object(id=1011375205999968427))
     async def story_quest(ctx):
         if any(ctx.channel.id in sl for sl in global_server_channels):
             user = ctx.author
@@ -337,8 +395,8 @@ def run_discord_bot():
                 embed_msg = unregistered_message()
                 await ctx.send(embed=embed_msg)
 
-    @pandora_bot.command(name='gear', help="**!inv** to display your equipped gear")
-    @commands.max_concurrency(1, per=commands.BucketType.user, wait=False)
+    @pandora_bot.hybrid_command(name='gear', help="**/gear** to display your equipped gear")
+    @app_commands.guilds(discord.Object(id=1011375205999968427))
     async def gear(ctx):
         if any(ctx.channel.id in sl for sl in global_server_channels):
             player_object = player.get_player_by_name(str(ctx.author))
@@ -358,8 +416,8 @@ def run_discord_bot():
                 embed_msg = unregistered_message()
                 await ctx.send(embed=embed_msg)
 
-    @pandora_bot.command(name='inv', help="**!inv** to display your gear and item inventory")
-    @commands.max_concurrency(1, per=commands.BucketType.user, wait=False)
+    @pandora_bot.hybrid_command(name='inv', help="**/inv** to display your gear and item inventory")
+    @app_commands.guilds(discord.Object(id=1011375205999968427))
     async def inv(ctx):
         if any(ctx.channel.id in sl for sl in global_server_channels):
             player_object = player.get_player_by_name(str(ctx.author))
@@ -377,7 +435,8 @@ def run_discord_bot():
                 embed_msg = unregistered_message()
                 await ctx.send(embed=embed_msg)
 
-    @pandora_bot.command(name='stamina', help="**!stamina** to display your stamina total")
+    @pandora_bot.hybrid_command(name='stamina', help="**/stamina** to display your stamina total")
+    @app_commands.guilds(discord.Object(id=1011375205999968427))
     async def stamina(ctx):
         if any(ctx.channel.id in sl for sl in global_server_channels):
             user = ctx.author
@@ -390,50 +449,22 @@ def run_discord_bot():
                 embed_msg = unregistered_message()
                 await ctx.send(embed=embed_msg)
 
-    @pandora_bot.command(name='profile', help="**!profile** to display your profile")
-    async def profile(ctx):
+    @pandora_bot.hybrid_command(name='stats', help="**/stats** to display your stats")
+    @app_commands.guilds(discord.Object(id=1011375205999968427))
+    async def stats(ctx):
         if any(ctx.channel.id in sl for sl in global_server_channels):
             user = ctx.author
             player_object = player.get_player_by_name(user)
             if player_object.player_class != "":
-                echelon_colour = inventory.get_gear_tier_colours(player_object.player_echelon)
-                resources = f'<:estamina:1145534039684562994> {player_object.player_username}\'s stamina: '
-                resources += str(player_object.player_stamina)
-                resources += f'\nLotus Coins: {player_object.player_coins}'
-                exp = f'Level: {player_object.player_lvl} Exp: ({player_object.player_exp} / '
-                exp += f'{player.get_max_exp(player_object.player_lvl)})'
-                id_msg = f'User ID: {player_object.player_id}\nClass: {player_object.player_class}'
-                player_object.get_player_multipliers()
-                stats = f"Player HP: {player_object.player_mHP:,}"
-                stats += f"\nDamage Mitigation: +{player_object.damage_mitigation}%"
-                stats += f"\nItem Base Damage: {int(player_object.player_damage):,}"
-                stats += f"\nAttack Speed: {player_object.attack_speed} / min"
-                stats += f"\nClass Multiplier: +{int(player_object.class_multiplier * 100)}%"
-
-                stats += f"\nCritical Chance: {int(player_object.critical_chance)}%"
-                stats += f"\nCritical Damage: +{int(player_object.critical_multiplier * 100)}%"
-                stats += f"\nHit Count: {int(player_object.hit_multiplier)}x"
-
-                stats += f"\nElemental Penetration: +{int(player_object.elemental_penetration * 100)}%"
-                stats += f"\nDefence Penetration: +{int(player_object.defence_penetration * 100)}%"
-                stats += f"\nFinal Damage: +{int(player_object.final_damage * 100)}%"
-
-                stats += f"\nTeam Aura: +{player_object.aura}x"
-                stats += f"\nCurse Aura: +{player_object.curse}x"
-
-                embed_msg = discord.Embed(colour=echelon_colour[0],
-                                          title=player_object.player_username,
-                                          description=id_msg)
-                embed_msg.add_field(name=exp, value=resources, inline=False)
-                embed_msg.add_field(name="Player Stats", value=stats, inline=False)
-                thumbnail_url = player.get_thumbnail_by_class(player_object.player_class)
-                embed_msg.set_thumbnail(url=thumbnail_url)
-                await ctx.send(embed=embed_msg)
+                embed_msg = player_object.get_player_stats(1)
+                stat_view = menus.StatView(player_object)
+                await ctx.send(embed=embed_msg, view=stat_view)
             else:
                 embed_msg = unregistered_message()
                 await ctx.send(embed=embed_msg)
 
-    @pandora_bot.command(name='admin', help="**!admin** inputs")
+    @pandora_bot.hybrid_command(name='admin', help="**/admin** inputs")
+    @app_commands.guilds(discord.Object(id=1011375205999968427))
     async def admin(ctx, backdoor, value):
         if any(ctx.channel.id in sl for sl in global_server_channels):
             user = ctx.author
@@ -448,8 +479,8 @@ def run_discord_bot():
                     for line in csv.DictReader(f):
                         inventory.update_stock(player_object, str(line['item_id']), int(value))
 
-    @pandora_bot.command(name='item', help="**!item** to display your item details")
-    @commands.max_concurrency(1, per=commands.BucketType.user, wait=False)
+    @pandora_bot.hybrid_command(name='item', help="**/item** to display your item details")
+    @app_commands.guilds(discord.Object(id=1011375205999968427))
     async def item(ctx, item_id):
         if any(ctx.channel.id in sl for sl in global_server_channels):
             player_object = player.get_player_by_name(str(ctx.author))
@@ -474,9 +505,9 @@ def run_discord_bot():
                 embed_msg = unregistered_message()
                 await ctx.send(embed=embed_msg)
 
-    @pandora_bot.command(name='who', help="**!who [NewUsername]** to set your username")
-    @commands.max_concurrency(1, per=commands.BucketType.user, wait=False)
-    async def who(ctx, new_username):
+    @pandora_bot.hybrid_command(name='who', help="**/who [NewUsername]** to set your username")
+    @app_commands.guilds(discord.Object(id=1011375205999968427))
+    async def who(ctx, new_username: str = "Enter a new username"):
         if any(ctx.channel.id in sl for sl in global_server_channels):
             existing_user = player.get_player_by_name(ctx.author)
             if player.check_username(new_username):
@@ -487,8 +518,8 @@ def run_discord_bot():
                 message = f'Sorry that username is taken.'
             await ctx.send(message)
 
-    @pandora_bot.command(name='refinery', help="**!refinery** to go to the refinery")
-    @commands.max_concurrency(1, per=commands.BucketType.user, wait=False)
+    @pandora_bot.hybrid_command(name='refinery', help="**/refinery** to go to the refinery")
+    @app_commands.guilds(discord.Object(id=1011375205999968427))
     async def refinery(ctx):
         if any(ctx.channel.id in sl for sl in global_server_channels):
             player_name = str(ctx.author)
@@ -504,8 +535,8 @@ def run_discord_bot():
                 embed_msg = unregistered_message()
                 await ctx.send(embed=embed_msg)
 
-    @pandora_bot.command(name='forge', help="**!forge** to enter the celestial forge")
-    @commands.max_concurrency(1, per=commands.BucketType.user, wait=False)
+    @pandora_bot.hybrid_command(name='forge', help="**/forge** to enter the celestial forge")
+    @app_commands.guilds(discord.Object(id=1011375205999968427))
     async def forge(ctx):
         if any(ctx.channel.id in sl for sl in global_server_channels):
             user = ctx.author
@@ -522,8 +553,8 @@ def run_discord_bot():
                 embed_msg = unregistered_message()
                 await ctx.send(embed=embed_msg)
 
-    @pandora_bot.command(name='bind', help="**!bind** to perform a binding ritual")
-    @commands.max_concurrency(1, per=commands.BucketType.user, wait=False)
+    @pandora_bot.hybrid_command(name='bind', help="**/bind** to perform a binding ritual")
+    @app_commands.guilds(discord.Object(id=1011375205999968427))
     async def bind_ritual(ctx):
         if any(ctx.channel.id in sl for sl in global_server_channels):
             user = ctx.author
@@ -539,8 +570,8 @@ def run_discord_bot():
                 embed_msg = unregistered_message()
                 await ctx.send(embed=embed_msg)
 
-    @pandora_bot.command(name='tarot', help="**!tarot** to check your tarot collection")
-    @commands.max_concurrency(1, per=commands.BucketType.user, wait=False)
+    @pandora_bot.hybrid_command(name='tarot', help="**/tarot** to check your tarot collection")
+    @app_commands.guilds(discord.Object(id=1011375205999968427))
     async def tarot_collection(ctx):
         if any(ctx.channel.id in sl for sl in global_server_channels):
             user = ctx.author
@@ -557,109 +588,71 @@ def run_discord_bot():
                 embed_msg = unregistered_message()
                 await ctx.send(embed=embed_msg)
 
-    @pandora_bot.command(name='credits', help="**!credits** to see the credits")
-    @commands.max_concurrency(1, per=commands.BucketType.user, wait=False)
+    @pandora_bot.hybrid_command(name='credits', help="**/credits** to see the credits")
+    @app_commands.guilds(discord.Object(id=1011375205999968427))
     async def forge(ctx):
         if any(ctx.channel.id in sl for sl in global_server_channels):
             credit_list = "Game created by: Kyle Mistysyn (Archael)"
             # Artists
             credit_list += "\n@labcornerr - Emoji Artist (Fiverr)"
-            credit_list += "\n@cactus21 - Tarot Artist (Fiverr)"
+            credit_list += "\n@Nong Dit - Artist (Fiverr)"
             # Programming
             credit_list += "\nBahamutt - Programming Assistance"
             credit_list += "\nPota - Programming Assistance"
+            # Testers
+            credit_list += "\nZweii - Alpha Tester"
+            credit_list += "\nSoulViper - Alpha Tester"
             embed_msg = discord.Embed(colour=discord.Colour.light_gray(),
                                       title="Credits",
                                       description=credit_list)
             embed_msg.set_image(url="https://i.ibb.co/QjWDYG3/forge.jpg")
             await ctx.send(embed=embed_msg)
 
-    @pandora_bot.command(name='sell', help="**!sell [item_id]** to sell an unequipped item")
-    @commands.max_concurrency(1, per=commands.BucketType.user, wait=False)
-    async def sell(ctx, item_id):
-        if any(ctx.channel.id in sl for sl in global_server_channels):
-            embed_msg = discord.Embed(colour=discord.Colour.dark_orange(),
-                                      title="An item with this ID does not exist.",
-                                      description=f"Inputted ID: {item_id}")
+    @pandora_bot.hybrid_command(name='profile', help="**/profile** to view profile rank card")
+    @app_commands.guilds(discord.Object(id=1011375205999968427))
+    async def profile(ctx):
+        user = ctx.author
+        achievement_list = []
+        roles_list = [r.name for r in user.roles]
+        for role in roles_list:
+            if "Achv" in role:
+                achievement_list.append(role)
+            if "Holder" in role:
+                achievement_list.append(role)
+        player_object = player.get_player_by_name(user)
+        if player_object.player_class != "":
+            filepath = pilengine.get_player_profile(player_object, achievement_list)
+            file_object = discord.File(filepath)
+            await ctx.send(file=file_object)
+        else:
+            embed_msg = unregistered_message()
             await ctx.send(embed=embed_msg)
+
+    @pandora_bot.hybrid_command(name='sell', help="**/sell [item id] [cost]** to list your item for sale at the bazaar")
+    @app_commands.guilds(discord.Object(id=1011375205999968427))
+    async def sell(ctx, item_id, cost):
+        if any(ctx.channel.id in sl for sl in global_server_channels):
+            user = ctx.author
+            player_object = player.get_player_by_name(user)
+            if player_object.player_class != "":
+                if inventory.if_custom_exists(item_id):
+                    selected_item = inventory.read_custom_item(item_id)
+                    response = player_object.check_equipped(selected_item)
+                    if response == "":
+                        bazaar.list_custom_item(selected_item, cost)
+                        await ctx.send(f"Item {item_id} has been listed for {cost} lotus coins.")
+                    else:
+                        await ctx.send(response)
+                else:
+                    await ctx.send(f"Item {item_id} could not be listed.")
+            else:
+                embed_msg = unregistered_message()
+                await ctx.send(embed=embed_msg)
 
     def unregistered_message():
         register_embed = discord.Embed(colour=discord.Colour.dark_teal(),
                                        title="Unregistered",
                                        description="Please register using !register to play.")
         return register_embed
-
-    # NOT PANDORA GAME RELATED
-
-    @pandora_bot.command(name='simulateCEOD', help="**!simulateCEOD [num +10s]: simulate gold cost to make a +10 ceod")
-    @commands.max_concurrency(1, per=commands.BucketType.user, wait=False)
-    async def simulateCEOD(ctx, num_eods):
-        if any(ctx.channel.id in sl for sl in global_server_channels):
-            gold_cost = 0
-            count = 0
-            lowest = 999999999999999999
-            highest = 0
-            total_eods = 0
-
-            def roll_ceod():
-                spent_gold = 0
-                total_nines = 0
-                go_again = 0
-                current_item = 0
-                item_1_enhancement = 0
-                item_2_enhancement = 0
-                items = [item_1_enhancement, item_2_enhancement]
-                while go_again == 0:
-                    attempt_outcome = try_enhance()
-                    spent_gold += 10000
-                    if attempt_outcome == 0:
-                        items[current_item] += 1
-                        if items[0] == 9:
-                            current_item = 1
-                            if items[1] == 9:
-                                for x in range(2):
-                                    outcome = 2
-                                    while outcome != 0 and outcome != 1:
-                                        spent_gold += 10000
-                                        outcome = try_enhance()
-                                        if outcome == 0:
-                                            go_again += 1
-                                        elif outcome == 1:
-                                            items[x] = 0
-                        else:
-                            current_item = 0
-                    elif attempt_outcome == 1:
-                        items[current_item] = 0
-                return spent_gold, go_again
-
-            def try_enhance():
-                random_result = random.randint(1, 1000)
-                if random_result <= 403:
-                    result = 0
-                elif random_result >= 500:
-                    result = 1
-                else:
-                    result = 2
-                return result
-
-            new_eod = True
-            while new_eod:
-                temp_gold, eod_count = roll_ceod()
-                total_eods += eod_count
-                gold_cost += temp_gold
-                if temp_gold > highest:
-                    highest = temp_gold
-                if temp_gold < lowest:
-                    lowest = temp_gold
-                if total_eods >= int(num_eods):
-                    new_eod = False
-            embed_msg = discord.Embed(colour=discord.Colour.dark_orange(),
-                                      title=f"{total_eods} Successes!",
-                                      description=f"The total cost was {gold_cost:,} gold!")
-            average_cost = int(gold_cost / int(total_eods))
-            embed_msg.add_field(name="Average", value=f"The average cost was {average_cost:,} gold!")
-            embed_msg.add_field(name="Lowest", value=f"The lowest cost was {lowest:,} gold!")
-            embed_msg.add_field(name="Highest", value=f"The highest cost was {highest:,} gold!")
-            await ctx.send(embed=embed_msg)
 
     pandora_bot.run(TOKEN)
