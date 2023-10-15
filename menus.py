@@ -4,7 +4,6 @@ import inventory
 import loot
 import random
 import player
-import explore
 import tarot
 import mydb
 import pandorabot
@@ -114,7 +113,7 @@ class ForgeView(discord.ui.View):
                 # Assign response
                 async def first_button_callback(button_interaction: discord.Interaction):
                     try:
-                        if button_interaction.user == self.player_object.player_name:
+                        if button_interaction.user.name == self.player_object.player_name:
                             item_code = f'I1{self.letter}'
                             new_embed_msg = run_button(item_code)
                             await button_interaction.response.edit_message(embed=new_embed_msg)
@@ -123,7 +122,7 @@ class ForgeView(discord.ui.View):
 
                 async def second_button_callback(button_interaction: discord.Interaction):
                     try:
-                        if button_interaction.user == self.player_object.player_name:
+                        if button_interaction.user.name == self.player_object.player_name:
                             item_code = f'I2{self.letter}'
                             new_embed_msg = run_button(item_code)
                             await button_interaction.response.edit_message(embed=new_embed_msg)
@@ -132,7 +131,7 @@ class ForgeView(discord.ui.View):
 
                 async def third_button_callback(button_interaction: discord.Interaction):
                     try:
-                        if button_interaction.user == self.player_object.player_name:
+                        if button_interaction.user.name == self.player_object.player_name:
                             item_code = f'I3{self.letter}'
                             new_embed_msg = run_button(item_code)
                             await button_interaction.response.edit_message(embed=new_embed_msg)
@@ -141,7 +140,7 @@ class ForgeView(discord.ui.View):
 
                 async def fourth_button_callback(button_interaction: discord.Interaction):
                     try:
-                        if button_interaction.user == self.player_object.player_name:
+                        if button_interaction.user.name == self.player_object.player_name:
                             item_code = f'I4{self.letter}'
                             new_embed_msg = run_button(item_code)
                             await button_interaction.response.edit_message(embed=new_embed_msg)
@@ -172,7 +171,7 @@ class ForgeView(discord.ui.View):
 
                 async def button_multi_callback(button_interaction: discord.Interaction):
                     try:
-                        if button_interaction.user == self.player_object.player_name:
+                        if button_interaction.user.name == self.player_object.player_name:
                             self.selected_item = inventory.read_custom_item(self.selected_id)
                             result = "0"
                             overall = ""
@@ -236,7 +235,7 @@ class ForgeView(discord.ui.View):
 
                 async def reselect_callback(button_interaction: discord.Interaction):
                     try:
-                        if button_interaction.user == self.player_object.player_name:
+                        if button_interaction.user.name == self.player_object.player_name:
                             new_view = SelectView(self.player_object)
                             await button_interaction.response.edit_message(view=new_view)
                     except Exception as e:
@@ -244,7 +243,7 @@ class ForgeView(discord.ui.View):
 
                 async def button_cancel_callback(button_interaction: discord.Interaction):
                     try:
-                        if button_interaction.user == self.player_object.player_name:
+                        if button_interaction.user.name == self.player_object.player_name:
                             await button_interaction.response.edit_message(view=None)
                     except Exception as e:
                         print(e)
@@ -404,7 +403,7 @@ class RefSelectView(discord.ui.View):
             discord.SelectOption(
                 emoji="<:esoul:1145520258241806466>", label="Paragon Crest", description="Refine equippable crests"),
             discord.SelectOption(
-                emoji="<:esoul:1145520258241806466>", label="Fabled Weapon", description="Refine equippable crests")
+                emoji="<:esoul:1145520258241806466>", label="Fabled Item", description="Refine fabled gear")
         ]
     )
     async def ref_select_callback(self, interaction: discord.Interaction, ref_select: discord.ui.Select):
@@ -418,6 +417,8 @@ class RefSelectView(discord.ui.View):
                         tier_view = RefineryWingView(self.player_user, selected_type)
                     case "Paragon Crest":
                         tier_view = RefineryCrestView(self.player_user, selected_type)
+                    case "Fabled Item":
+                        tier_view = RefineryFabledView(self.player_user, selected_type)
                     case _:
                         tier_view = RefineryWeaponView(self.player_user, selected_type)
 
@@ -631,28 +632,18 @@ class RefineryCrestView(discord.ui.View):
             print(e)
 
 
-class RefineryWeaponView(discord.ui.View):
+class RefineryFabledView(discord.ui.View):
     def __init__(self, player_user, selected_type):
         super().__init__(timeout=None)
         self.selected_type = selected_type
         self.player_user = player_user
         self.item_id = ""
 
-    @discord.ui.button(label="Rift Weapon", style=discord.ButtonStyle.success, emoji="✅")
+    @discord.ui.button(label="Fabled Item", style=discord.ButtonStyle.success, emoji="✅")
     async def rift_weapon_callback(self, interaction: discord.Interaction, button: discord.Button):
         try:
             if interaction.user.name == self.player_user.player_name:
                 selected_tier = 5
-                embed_msg = refine_item(self.player_user, self.selected_type, selected_tier)
-                await interaction.response.edit_message(embed=embed_msg)
-        except Exception as e:
-            print(e)
-
-    @discord.ui.button(label="True Name", style=discord.ButtonStyle.success, emoji="✅")
-    async def relic_weapon_callback(self, interaction: discord.Interaction, button: discord.Button):
-        try:
-            if interaction.user.name == self.player_user.player_name:
-                selected_tier = 6
                 embed_msg = refine_item(self.player_user, self.selected_type, selected_tier)
                 await interaction.response.edit_message(embed=embed_msg)
         except Exception as e:
@@ -686,14 +677,15 @@ def refine_item(player_user, selected_type, selected_tier):
             item_id += "m"
         case "Paragon Crest":
             item_id += "o"
+        case "Fabled Item":
+            item_id += "x"
         case _:
             item_id += "x"
-
     if inventory.check_stock(player_user, item_id) > 0:
         inventory.update_stock(player_user, item_id, -1)
         new_item = inventory.try_refine(player_user.player_id, selected_type, selected_tier)
-        if new_item.item_id != 0:
-            inventory.inventory_add_custom_item(new_item)
+        if new_item.item_id == 0:
+            result_id = inventory.inventory_add_custom_item(new_item)
             embed_msg = new_item.create_citem_embed()
         else:
             embed_msg = discord.Embed(colour=discord.Colour.red(),
@@ -705,7 +697,6 @@ def refine_item(player_user, selected_type, selected_tier):
         embed_msg = discord.Embed(colour=discord.Colour.red(),
                                   title=stock_message,
                                   description="")
-
     return embed_msg
 
 
@@ -799,272 +790,6 @@ class ConfirmInlayView(discord.ui.View):
             print(e)
 
 
-# Explore menus
-class TreasureView(discord.ui.View):
-    def __init__(self, user, new_item, msg, item_type):
-        super().__init__(timeout=None)
-        self.user = user
-        self.new_item = new_item
-        self.msg = msg
-        self.item_type = item_type
-
-    @discord.ui.button(label="Keep", style=discord.ButtonStyle.success, emoji="✅")
-    async def keep_callback(self, interaction: discord.Interaction, choice_select: discord.ui.Select):
-        if not inventory.if_custom_exists(self.new_item.item_id):
-            message = inventory.inventory_add_custom_item(self.new_item)
-            self.msg.add_field(name="", value=message, inline=False)
-        await interaction.response.edit_message(embed=self.msg, view=None)
-
-    @discord.ui.button(label="Discard", style=discord.ButtonStyle.red, emoji="✖️")
-    async def discard_callback(self, interaction: discord.Interaction, choice_select: discord.ui.Select):
-        message = f'You have discarded the {self.item_type}'
-        self.msg.add_field(name="", value=message, inline=False)
-        await interaction.response.edit_message(embed=self.msg, view=None)
-
-    @discord.ui.button(label="Try Again", style=discord.ButtonStyle.blurple, emoji="↪️")
-    async def again_callback(self, interaction: discord.Interaction, choice_select: discord.ui.Select):
-        if self.user.spend_stamina(25):
-            match self.item_type:
-                case "weapon":
-                    item_type = "W"
-                case "armour":
-                    item_type = "A"
-                case "accessory":
-                    item_type = "Y"
-                case _:
-                    item_type = "W"
-            inventory.CustomItem(self.user.player_id, item_type, 1)
-            embed_msg = self.new_item.create_citem_embed()
-            inquiry = f"Would you like to keep or discard this {self.item_type}?"
-            gear_colours = inventory.get_gear_tier_colours(self.new_item.item_tier)
-            tier_emoji = gear_colours[1]
-            embed_msg.add_field(name=f'{tier_emoji} Tier {str(self.new_item.item_tier)} item found!',
-                                value=inquiry, inline=False)
-            await interaction.response.edit_message(embed=embed_msg, view=self)
-        else:
-            await interaction.response.send_message('Not enough !stamina')
-
-
-class EmptyRoomView(discord.ui.View):
-    def __init__(self, player_user, room):
-        super().__init__(timeout=None)
-        self.player = player_user
-        self.room = room
-
-    @discord.ui.button(label="Stick Left", style=discord.ButtonStyle.blurple, emoji="⬅️")
-    async def left_callback(self, interaction: discord.Interaction, button: discord.Button):
-        if self.room.is_trap:
-            new_room = explore.generate_trap_room(self.player, self.room, "side")
-        else:
-            new_room = explore.generate_new_room(self.player)
-        new_view = new_room.room_view
-        embed_msg = new_room.embed
-        await interaction.response.edit_message(embed=embed_msg, view=new_view)
-
-    @discord.ui.button(label="Proceed Forward", style=discord.ButtonStyle.blurple, emoji="⬆️")
-    async def middle_callback(self, interaction: discord.Interaction, button: discord.Button):
-        if self.room.is_trap:
-            new_room = explore.generate_trap_room(self.player, self.room, "middle")
-        else:
-            new_room = explore.generate_new_room(self.player)
-        new_view = new_room.room_view
-        embed_msg = new_room.embed
-        await interaction.response.edit_message(embed=embed_msg, view=new_view)
-
-    @discord.ui.button(label="Stick Right", style=discord.ButtonStyle.blurple, emoji="➡️")
-    async def right_callback(self, interaction: discord.Interaction, button: discord.Button):
-        if self.room.is_trap:
-            new_room = explore.generate_trap_room(self.player, self.room, "side")
-        else:
-            new_room = explore.generate_new_room(self.player)
-        new_view = new_room.room_view
-        embed_msg = new_room.embed
-        await interaction.response.edit_message(embed=embed_msg, view=new_view)
-
-    @discord.ui.button(label="Flee", style=discord.ButtonStyle.red, emoji="✖️")
-    async def flee_callback(self, interaction: discord.Interaction, button: discord.Button):
-        await interaction.response.edit_message(view=None)
-
-
-class MonsterRoomView(discord.ui.View):
-    def __init__(self, player_user, room):
-        super().__init__(timeout=None)
-        self.player = player_user
-        self.room = room
-
-    @discord.ui.button(label="Fight", style=discord.ButtonStyle.blurple, emoji="⚔️")
-    async def fight_callback(self, interaction: discord.Interaction, button: discord.Button):
-        new_room = self.room
-        new_room.room_type = "Transition Room"
-        player_hp = f'{self.player.player_cHP} / {self.player.player_mHP} HP'
-        dmg_msg = f'You take {new_room.monster_damage} damage!'
-        new_room.embed = discord.Embed(title=player_hp, description=dmg_msg, colour=new_room.room_colour)
-        if self.player.player_cHP <= 0:
-            self.player.player_cHP = 0
-            over_msg = "EXPLORATION OVER"
-            over_description = "Having taken too much damage, you are forced to return from your exploration."
-            new_room.embed.add_field(name=over_msg, value=over_description, inline=False)
-        if self.player.player_cHP == 0:
-            new_view = None
-        else:
-            new_view = explore.generate_room_view(self.player, new_room)
-        await interaction.response.edit_message(embed=new_room.embed, view=new_view)
-
-    @discord.ui.button(label="Flee", style=discord.ButtonStyle.red, emoji="✖️")
-    async def flee_callback(self, interaction: discord.Interaction, button: discord.Button):
-        await interaction.response.edit_message(view=None)
-
-
-class SafeRoomView(discord.ui.View):
-    def __init__(self, player_user, room):
-        super().__init__(timeout=None)
-        self.player = player_user
-        self.room = room
-
-    @discord.ui.button(label="Rest", style=discord.ButtonStyle.blurple, emoji="➕")
-    async def rest_callback(self, interaction: discord.Interaction, button: discord.Button):
-        if self.room.is_trap:
-            new_room = explore.generate_trap_room(self.player, self.room, "")
-        else:
-            heal_amount = random.randint(25, 100) * self.room.room_tier
-            self.player.player_cHP += heal_amount
-            if self.player.player_cHP > self.player.player_mHP:
-                self.player.player_cHP = self.player.player_mHP
-            player_hp = f'{self.player.player_cHP} / {self.player.player_mHP} HP'
-            heal_msg = f"Resting restored {heal_amount} HP."
-            new_room = self.room
-            new_room.room_type = "Transition Room"
-            new_room.embed = discord.Embed(title=player_hp, description=heal_msg, colour=new_room.room_colour)
-            new_room.room_view = explore.generate_room_view(self.player, new_room)
-        new_view = new_room.room_view
-        embed_msg = new_room.embed
-        await interaction.response.edit_message(embed=embed_msg, view=new_view)
-
-    @discord.ui.button(label="Move on", style=discord.ButtonStyle.blurple, emoji="⬆️")
-    async def move_callback(self, interaction: discord.Interaction, button: discord.Button):
-        new_room = explore.generate_new_room(self.player)
-        new_view = new_room.room_view
-        embed_msg = new_room.embed
-        await interaction.response.edit_message(embed=embed_msg, view=new_view)
-
-    @discord.ui.button(label="Flee", style=discord.ButtonStyle.red, emoji="✖️")
-    async def flee_callback(self, interaction: discord.Interaction, button: discord.Button):
-        await interaction.response.edit_message(view=None)
-
-
-class TreasureRoomView(discord.ui.View):
-    def __init__(self, player_user, room):
-        super().__init__(timeout=None)
-        self.player = player_user
-        self.room = room
-
-    @discord.ui.button(label="Open Chest", style=discord.ButtonStyle.blurple, emoji="➕")
-    async def open_callback(self, interaction: discord.Interaction, button: discord.Button):
-        if self.room.is_trap:
-            new_room = explore.generate_trap_room(self.player, self.room, "")
-            new_view = new_room.room_view
-            embed_msg = new_room.embed
-        else:
-            random_type = random.randint(1, 5)
-            match random_type:
-                case 1 | 2:
-                    item_type = "W"
-                case 3 | 4:
-                    item_type = "A"
-                case _:
-                    item_type = "Y"
-            new_tier = inventory.generate_random_tier()
-            for x in range(self.room.room_tier - 1):
-                check_tier = inventory.generate_random_tier()
-                if check_tier > new_tier:
-                    new_tier = check_tier
-            new_object = inventory.CustomItem(self.player.player_id, item_type, new_tier)
-            embed_msg = new_object.create_citem_embed()
-            gear_colours = inventory.get_gear_tier_colours(new_object.item_tier)
-            tier_emoji = gear_colours[1]
-            embed_msg.add_field(name=f'{tier_emoji} Tier {str(new_object.item_tier)} item found!',
-                                value="",
-                                inline=False)
-            new_view = ItemRoomView(self.player, self.room, new_object)
-        await interaction.response.edit_message(embed=embed_msg, view=new_view)
-
-    @discord.ui.button(label="Move on", style=discord.ButtonStyle.blurple, emoji="⬆️")
-    async def move_callback(self, interaction: discord.Interaction, button: discord.Button):
-        new_room = explore.generate_new_room(self.player)
-        new_view = explore.generate_room_view(self.player, new_room)
-        embed_msg = discord.Embed(colour=new_room.room_colour,
-                                  title=new_room.room_type,
-                                  description=new_room.room_description)
-        await interaction.response.edit_message(embed=embed_msg, view=new_view)
-
-    @discord.ui.button(label="Flee", style=discord.ButtonStyle.red, emoji="✖️")
-    async def flee_callback(self, interaction: discord.Interaction, button: discord.Button):
-        await interaction.response.edit_message(view=None)
-
-
-class ItemRoomView(discord.ui.View):
-    def __init__(self, player_user, room, item):
-        super().__init__(timeout=None)
-        self.player = player_user
-        self.room = room
-        self.item = item
-
-    @discord.ui.button(label="Claim Item", style=discord.ButtonStyle.blurple, emoji="➕")
-    async def claim_callback(self, interaction: discord.Interaction, button: discord.Button):
-        inventory.inventory_add_custom_item(self.item)
-        new_room = explore.generate_new_room(self.player)
-        new_view = new_room.room_view
-        embed_msg = new_room.embed
-        await interaction.response.edit_message(embed=embed_msg, view=new_view)
-
-    @discord.ui.button(label="Leave Item", style=discord.ButtonStyle.blurple, emoji="⬆️")
-    async def move_callback(self, interaction: discord.Interaction, button: discord.Button):
-        new_room = explore.generate_new_room(self.player)
-        new_view = new_room.room_view
-        embed_msg = new_room.embed
-        await interaction.response.edit_message(embed=embed_msg, view=new_view)
-
-    @discord.ui.button(label="Flee", style=discord.ButtonStyle.red, emoji="✖️")
-    async def flee_callback(self, interaction: discord.Interaction, button: discord.Button):
-        await interaction.response.edit_message(view=None)
-
-
-class TrapRoomView(discord.ui.View):
-    def __init__(self, player_user, room):
-        super().__init__(timeout=None)
-        self.player = player_user
-        self.room = room
-
-    @discord.ui.button(label="Escape", style=discord.ButtonStyle.blurple, emoji="⬆️")
-    async def move_callback(self, interaction: discord.Interaction, button: discord.Button):
-        new_room = explore.generate_new_room(self.player)
-        new_view = new_room.room_view
-        embed_msg = new_room.embed
-        await interaction.response.edit_message(embed=embed_msg, view=new_view)
-
-    @discord.ui.button(label="Flee", style=discord.ButtonStyle.red, emoji="✖️")
-    async def flee_callback(self, interaction: discord.Interaction, button: discord.Button):
-        await interaction.response.edit_message(view=None)
-
-
-class TransitionRoomView(discord.ui.View):
-    def __init__(self, player_user, room):
-        super().__init__(timeout=None)
-        self.player = player_user
-        self.room = room
-
-    @discord.ui.button(label="Proceed", style=discord.ButtonStyle.blurple, emoji="⬆️")
-    async def move_callback(self, interaction: discord.Interaction, button: discord.Button):
-        new_room = explore.generate_new_room(self.player)
-        new_view = new_room.room_view
-        embed_msg = new_room.embed
-        await interaction.response.edit_message(embed=embed_msg, view=new_view)
-
-    @discord.ui.button(label="Flee", style=discord.ButtonStyle.red, emoji="✖️")
-    async def flee_callback(self, interaction: discord.Interaction, button: discord.Button):
-        await interaction.response.edit_message(view=None)
-
-
 class StaminaView(discord.ui.View):
     def __init__(self, player_user):
         super().__init__(timeout=None)
@@ -1074,7 +799,8 @@ class StaminaView(discord.ui.View):
     async def t1_stamina_callback(self, interaction: discord.Interaction, button: discord.Button):
         try:
             if interaction.user.name == self.player.player_name:
-                embed_msg = use_stamina_potion(self.player, "I1s", 50)
+                reload_player = player.get_player_by_id(self.player.player_id)
+                embed_msg = use_stamina_potion(reload_player, "I1s", 500)
                 await interaction.response.edit_message(embed=embed_msg, view=self)
         except Exception as e:
             print(e)
@@ -1083,7 +809,8 @@ class StaminaView(discord.ui.View):
     async def t2_stamina_callback(self, interaction: discord.Interaction, button: discord.Button):
         try:
             if interaction.user.name == self.player.player_name:
-                embed_msg = use_stamina_potion(self.player, "I2s", 250)
+                reload_player = player.get_player_by_id(self.player.player_id)
+                embed_msg = use_stamina_potion(reload_player, "I2s", 1000)
                 await interaction.response.edit_message(embed=embed_msg, view=self)
         except Exception as e:
             print(e)
@@ -1092,7 +819,8 @@ class StaminaView(discord.ui.View):
     async def t3_stamina_callback(self, interaction: discord.Interaction, button: discord.Button):
         try:
             if interaction.user.name == self.player.player_name:
-                embed_msg = use_stamina_potion(self.player, "I3s", 500)
+                reload_player = player.get_player_by_id(self.player.player_id)
+                embed_msg = use_stamina_potion(reload_player, "I3s", 2500)
                 await interaction.response.edit_message(embed=embed_msg, view=self)
         except Exception as e:
             print(e)
@@ -1101,7 +829,8 @@ class StaminaView(discord.ui.View):
     async def t4_stamina_callback(self, interaction: discord.Interaction, button: discord.Button):
         try:
             if interaction.user.name == self.player.player_name:
-                embed_msg = use_stamina_potion(self.player, "I4s", 1000)
+                reload_player = player.get_player_by_id(self.player.player_id)
+                embed_msg = use_stamina_potion(reload_player, "I4s", 5000)
                 await interaction.response.edit_message(embed=embed_msg, view=self)
         except Exception as e:
             print(e)
@@ -1112,9 +841,9 @@ def use_stamina_potion(player_object, item_id, restore_amount):
     if potion_stock > 0:
         inventory.update_stock(player_object, item_id, -1)
         player_object.player_stamina += restore_amount
-        if player_object.player_stamina > 2000:
-            player_object.player_stamina = 2000
-        player_object.set_player_field("stamina", player_object.player_stamina)
+        if player_object.player_stamina > 5000:
+            player_object.player_stamina = 5000
+        player_object.set_player_field("player_stamina", player_object.player_stamina)
     embed_msg = player_object.create_stamina_embed()
     return embed_msg
 
@@ -1423,7 +1152,7 @@ def binding_ritual(player_object, essence_type):
             result = "Binding Failed!"
             description_msg = "The essence is gone."
         else:
-            name_position = tarot.get_numeral_by_number(essence_type)
+            name_position = tarot.get_number_by_numeral(essence_type)
             card_name = tarot.tarot_card_list(name_position)
             tarot_check = tarot.check_tarot(player_object.player_id, card_name, variant_num)
             if tarot_check:
@@ -1434,7 +1163,6 @@ def binding_ritual(player_object, essence_type):
                                             1, 0, 0, 0)
                 new_tarot.add_tarot_card()
             result = "Binding Successful!"
-            inventory.update_tarot_inventory(player_object, card_file)
             description_msg = "The sealed tarot card has been added to your collection."
     else:
         print(essence_id)
@@ -1682,9 +1410,10 @@ class QuestView(discord.ui.View):
                     if self.quest_object.award_role != "":
                         add_role = discord.utils.get(interaction.guild.roles, name=self.quest_object.award_role)
                         await interaction.user.add_roles(add_role)
+                        self.player_object.player_echelon += 1
                         if self.player_object.player_echelon != 1:
-                            previous_role = discord.utils.get(interaction.guild.roles,
-                                                              name=role_list[(self.player_object.player_echelon - 2)])
+                            previous_rolename = pandorabot.role_list[(self.player_object.player_echelon - 2)]
+                            previous_role = discord.utils.get(interaction.guild.roles, name=previous_rolename)
                             remove_role = discord.utils.get(interaction.guild.roles, name=previous_role)
                             await interaction.user.remove_roles(remove_role)
                     await interaction.response.edit_message(embed=embed_msg, view=reward_view)
@@ -1777,8 +1506,6 @@ class ClassSelect(discord.ui.View):
                 chosen_class_role = f"Class Role - {class_select.values[0]}"
                 add_role = discord.utils.get(interaction.guild.roles, name=chosen_class_role)
                 remove_role = discord.utils.get(interaction.guild.roles, name="Class Role - Rat")
-                print(interaction.guild.roles)
-                print(remove_role)
                 await interaction.user.add_roles(add_role)
                 await asyncio.sleep(1)
                 await interaction.user.remove_roles(remove_role)
@@ -1838,3 +1565,33 @@ class StatView(discord.ui.View):
                 await interaction.response.edit_message(view=None)
         except Exception as e:
             print(e)
+
+
+class BuyView(discord.ui.View):
+    def __init__(self, player_user, selected_item):
+        super().__init__(timeout=None)
+        self.player_user = player_user
+        self.selected_item = selected_item
+
+    @discord.ui.button(label="Confirm Purchase", style=discord.ButtonStyle.success, emoji="⚔️")
+    async def confirm(self, interaction: discord.Interaction, button: discord.Button):
+        try:
+            if interaction.user.name == self.player_user.player_name:
+                if self.selected_item.player_owner == -1:
+                    bazaar.buy_item(self.selected_item.item_id)
+                    self.selected_item.player_owner = self.player_user.player_id
+                    self.selected_item.update_stored_item()
+                    embed_msg = self.selected_item.create_citem_embed()
+                embed_msg.add_field(name="PURCHASE COMPLETED!", value="", inline=False)
+                await interaction.response.edit_message(embed=embed_msg, view=None)
+        except Exception as e:
+            print(e)
+
+    @discord.ui.button(label="Cancel", style=discord.ButtonStyle.red, emoji="✖️")
+    async def cancel(self, interaction: discord.Interaction, button: discord.Button):
+        try:
+            if interaction.user.name == self.player_user.player_name:
+                await interaction.response.edit_message(view=None)
+        except Exception as e:
+            print(e)
+

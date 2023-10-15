@@ -18,6 +18,7 @@ import pymysql
 from sqlalchemy import exc
 import mydb
 import pandorabot
+from datetime import datetime as dt
 
 
 class PlayerProfile:
@@ -41,6 +42,7 @@ class PlayerProfile:
 
         self.player_mHP = 1000
         self.player_cHP = self.player_mHP
+        self.immortal = False
 
         self.player_damage = 0.0
         self.player_total_damage = 0.0
@@ -77,6 +79,7 @@ class PlayerProfile:
     def reset_multipliers(self):
         self.player_mHP = 1000
         self.player_cHP = self.player_mHP
+        self.immortal = False
 
         self.player_damage = 0.0
         self.player_total_damage = 0.0
@@ -181,6 +184,7 @@ class PlayerProfile:
         self.player_class = selected_class
         self.player_quest = 1
         self.player_lvl = 1
+        self.player_stamina = 5000
         try:
             engine_url = mydb.get_engine_url()
             engine = sqlalchemy.create_engine(engine_url)
@@ -202,7 +206,8 @@ class PlayerProfile:
                     query = text("INSERT INTO PlayerList "
                                  "(player_name, player_username, player_lvl, player_exp, player_echelon, player_quest, "
                                  "player_stamina, player_class, player_coins, player_equip_weapon, "
-                                 "player_equip_armour, player_equip_acc, player_equip_wing, player_equip_crest) "
+                                 "player_equip_armour, player_equip_acc, player_equip_wing, "
+                                 "player_equip_crest, player_equip_tarot) "
                                  "VALUES (:input_1, :input_2, :input_3, :input_4, :input_5, :input_6,"
                                  ":input_7, :input_8, :input_9, :input_10, :input_11, :input_12, :input_13, "
                                  ":input_14, :input_15)")
@@ -554,9 +559,9 @@ class PlayerProfile:
         for x in potion_list:
             potion_stock = inventory.check_stock(self, str(x))
             potion_msg += f"\n{loot.get_loot_emoji(str(x))} {potion_stock}x {loot.get_loot_name(str(x))}"
-        output = f'<:estamina:1145534039684562994> {self.player_username}\'s stamina: '
-        output += str(self.player_stamina)
-        embed_msg = discord.Embed(colour=discord.Colour.green(), title="Stamina", description=output)
+        stamina_title = f"{self.player_username}\'s Stamina: "
+        stamina_title += f"{str(self.player_stamina)} / 5000"
+        embed_msg = discord.Embed(colour=discord.Colour.green(), title=stamina_title, description="")
         embed_msg.add_field(name="", value=potion_msg)
         return embed_msg
 
@@ -564,10 +569,11 @@ class PlayerProfile:
         damage_multiplier = 0.0
         damage_mitigation = 0.0
         level_bonus = 0.01 * self.player_lvl
-        if unique_ability in pandorabot.global_unique_ability_list[3]:
+        if (unique_ability in pandorabot.global_unique_ability_list[3]
+                or unique_ability in pandorabot.global_unique_ability_list[4]):
             match unique_ability:
                 case "Curse of Immortality":
-                    nothing = True
+                    self.immortal = True
                 case "Elemental Fractal":
                     self.all_elemental_multiplier += 2 * level_bonus
                 case "Bahamut's Trinity":
@@ -602,6 +608,51 @@ class PlayerProfile:
                     self.elemental_penetration[buff_type_loc] += level_bonus
                 case _:
                     nothing = True
+
+    def check_cooldown(self, command_name):
+        difference = None
+        try:
+            engine_url = mydb.get_engine_url()
+            engine = sqlalchemy.create_engine(engine_url)
+            pandora_db = engine.connect()
+            query = text("SELECT * FROM CommandCooldowns WHERE player_id = :player_check AND command_name = :cmd_check")
+            query = query.bindparams(player_check=self.player_id, cmd_check=command_name)
+            df = pd.read_sql(query, pandora_db)
+            if len(df) != 0:
+                date_string = str(df["time_used"].values[0])
+                previous = dt.strptime(date_string, pandorabot.date_formatting)
+                now = dt.now()
+                difference = now - previous
+            pandora_db.close()
+            engine.dispose()
+        except mysql.connector.Error as err:
+            print("Database Error: {}".format(err))
+        return difference
+
+    def set_cooldown(self, command_name):
+        difference = None
+        try:
+            engine_url = mydb.get_engine_url()
+            engine = sqlalchemy.create_engine(engine_url)
+            pandora_db = engine.connect()
+            query = text("SELECT * FROM CommandCooldowns WHERE player_id = :player_check AND command_name = :cmd_check")
+            query = query.bindparams(player_check=self.player_id, cmd_check=command_name)
+            df = pd.read_sql(query, pandora_db)
+            if len(df) != 0:
+                query = text("UPDATE CommandCooldowns SET command_name = :cmd_check, time_used =:time_check "
+                             "WHERE player_id = :player_check")
+            else:
+                query = text("INSERT INTO CommandCooldowns (player_id, command_name, time_used) "
+                             "VALUES (:player_check, :cmd_check, :time_check)")
+            timestamp = dt.now()
+            current_time = timestamp.strftime(pandorabot.date_formatting)
+            query = query.bindparams(player_check=self.player_id, cmd_check=command_name, time_check=current_time)
+            pandora_db.execute(query)
+            pandora_db.close()
+            engine.dispose()
+        except mysql.connector.Error as err:
+            print("Database Error: {}".format(err))
+        return difference
 
 
 def check_username(new_name: str):
@@ -679,6 +730,24 @@ def get_player_by_name(player_name: str) -> PlayerProfile:
         print("Database Error: {}".format(err))
         target_player.player_name = player_name
     return target_player
+
+
+def check_user_exists(user_id):
+    user_exists = False
+    try:
+        engine_url = mydb.get_engine_url()
+        engine = sqlalchemy.create_engine(engine_url)
+        pandora_db = engine.connect()
+        query = text("SELECT * FROM PlayerList WHERE player_id = :player_check")
+        query = query.bindparams(player_check=user_id)
+        df = pd.read_sql(query, pandora_db)
+        pandora_db.close()
+        engine.dispose()
+        if len(df.index) != 0:
+            user_exists = True
+    except mysql.connector.Error as err:
+        print("Database Error: {}".format(err))
+    return user_exists
 
 
 def get_all_users():

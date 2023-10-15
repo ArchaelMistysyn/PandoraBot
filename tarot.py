@@ -9,6 +9,16 @@ import mydb
 import pandas as pd
 import pandorabot
 
+paragon_t1 = ["Karma, The Reflection", "Runa, The Magic",
+              "Arkaya, The Duality", "Alaya, The Memory", "Aria, The Requiem"]
+paragon_t2 = ["Nova, The Star", "Luna, The Moon", "Luma, The Sun", "Arcelia, The Clarity", "Kama, The Love"]
+paragon_t3 = ["Thana, The Death", "Chrona, The Temporal", "Rua, The Abyss", "Nua, The Heavens", "Ultima, The Creation"]
+paragon_t4 = ["Pandora, The Celestial", "Diabla, The Primordial",
+              "Tyra, The Behemoth", "Astratha, The Dragon", "Aurora, The Fortress"]
+paragon_t5 = ["Oblivia, The Void", "Akasha, The Infinite"]
+paragon_t6 = ["Eleuia, The Wish"]
+paragon_list = [paragon_t1, paragon_t2, paragon_t3, paragon_t4, paragon_t5, paragon_t6]
+
 
 class TarotCard:
     def __init__(self, player_id, card_numeral, card_variant, card_name, card_qty,
@@ -51,9 +61,9 @@ class TarotCard:
                 query = text("INSERT INTO TarotInventory "
                              "VALUES (:input_1, :input_2, :input_3, :input_4,"
                              ":input_5, :input_6, :input_7, :input_8)")
-                query = query.bindparams(input_1=player_id, input_2=card_numeral, input_3=card_variant,
-                                         input_4=card_name, input_5=card_qty, input_6=num_stars,
-                                         input_7=card_enhancement, input_8=card_bonus_stat)
+                query = query.bindparams(input_1=self.player_id, input_2=self.card_numeral, input_3=self.card_variant,
+                                         input_4=self.card_name, input_5=self.card_qty, input_6=self.num_stars,
+                                         input_7=self.card_enhancement, input_8=self.card_bonus_stat)
             pandora_db.execute(query)
             pandora_db.close()
             engine.dispose()
@@ -93,13 +103,13 @@ def check_tarot(player_id, card_name, card_variant):
 
 def tarot_numeral_list(position):
     card_num_list = ["0", "I", "II", "III", "IV", "V", "VI", "VII", "VIII", "IX", "X",
-                     "XI", "XII", "XIII", "XIV", "XV", "XVI", "XVII", "XVIII", "XIX", "XX", "XXI"]
+                     "XI", "XII", "XIII", "XIV", "XV", "XVI", "XVII", "XVIII", "XIX", "XX", "XXI", "XXX"]
     return card_num_list[position]
 
 
-def get_numeral_by_number(roman_numeral):
+def get_number_by_numeral(roman_numeral):
     card_num_list = ["0", "I", "II", "III", "IV", "V", "VI", "VII", "VIII", "IX", "X",
-                     "XI", "XII", "XIII", "XIV", "XV", "XVI", "XVII", "XVIII", "XIX", "XX", "XXI"]
+                     "XI", "XII", "XIII", "XIV", "XV", "XVI", "XVII", "XVIII", "XIX", "XX", "XXI", "XXX"]
     return card_num_list.index(roman_numeral)
 
 
@@ -109,8 +119,19 @@ def tarot_card_list(position):
                       "Tyra, The Behemoth", "Alaya, The Memory", "Chrona, The Temporal", "Nua, The Heavens",
                       "Rua, The Abyss", "Thana, The Death", "Arcelia, The Clarity", "Diabla, The Primordial",
                       "Aurora, The Fortress", "Nova, The Star", "Luna, The Moon", "Luma, The Sun",
-                      "Aria, The Requiem", "Ultima, The Creation"]
+                      "Aria, The Requiem", "Ultima, The Creation", "Eleuia, The Wish"]
     return card_name_list[position]
+
+
+def get_number_by_tarot(card_name):
+    card_name_list = ["Karma, The Reflection", "Runa, The Magic", "Pandora, The Celestial", "Oblivia, The Void",
+                      "Akasha, The Infinite", "Arkaya, The Duality", "Kama, The Love", "Astratha, The Dragon",
+                      "Tyra, The Behemoth", "Alaya, The Memory", "Chrona, The Temporal", "Nua, The Heavens",
+                      "Rua, The Abyss", "Thana, The Death", "Arcelia, The Clarity", "Diabla, The Primordial",
+                      "Aurora, The Fortress", "Nova, The Star", "Luna, The Moon", "Luma, The Sun",
+                      "Aria, The Requiem", "Ultima, The Creation", "Eleuia, The Wish"]
+    position = card_name_list.index(card_name)
+    return position
 
 
 def collection_check(player_id):

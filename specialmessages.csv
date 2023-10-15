@@ -1,0 +1,54 @@
+﻿message_type,message
+Wrath,"It is your right to take any action you choose, however it is divine right to make you bear the consequences."
+Wrath,I see somebody wants to help me test my new obliteration magic. How kind of you to offer.
+Wrath,"Why? How could you? I trusted you, but now I see you're no different from the rest. Since you will not stand by my side I will take your power for my own and save this world."
+Wrath,I praise you for being so bold as to draw my ire. As a reward I will personally see to it that your transgression does not go unpunished.
+Wrath,You have destroyed only a fraction of my statues. I will show you an equivelant fraction of my power. Let us see if you can bear the weight of your sins.
+Wrath,…
+Wrath,Heartless…
+Wrath,…
+Wrath,…
+Wrath,All things exist permenantly in the fabric of time. How about I show you.
+Wrath,"Unfathomable, to enact such sacrilege in my presence. Your actions will be judged in the eyes of our god."
+Wrath,…
+Wrath,…
+Wrath,"Do you think you can defeat me in a game staked with your life, mortal!? I will not permit you to live long enough to regret your actions!"
+Wrath,…
+Wrath,"You think I am beneath you, human!? You dare to lay your mundane hands upon my likeness? For this insult I will be repaid with your blood!"
+Wrath,…
+Wrath,…
+Wrath,…
+Wrath,…
+Wrath,…
+Wrath,…
+Wrath,"How cruel. I thought there could be a place for you in my world, but I see now that I was wrong. I wish you never existed."
+TrapV1,Magma streams out from jets hidden in the wall.
+TrapV1,A pit opens you plunging you into a whirling vortex. Despite minor injuries you pull yourself back up into the passageway.
+TrapV1,Lightning bolts and surges through you at full force before the room becomes silent once more.
+TrapV1,Boulders and debris roll through the passageway smashing you around as they pass by.
+TrapV1,The sharp winds cut and tear at your skin as you push forward.
+TrapV1,Icicles fall from the ceiling in great number. Injury is unavoidable.
+TrapV1,"Blinded by the darkness, you lose your way and arrive at another location."
+TrapV1,"Blinded by a flash of light, you lose your way and arrive at another location."
+TrapV1,"Feeling space itself shift around you, you find yourself in an entirely new location."
+TrapV2,The ground opens beneath you and the last thing you feel is lava melting your skin and bones.
+TrapV2,"The doors of the room slam closed and water floods the room. Unable to find an escape, your lungs fill with water."
+TrapV2,"Paralyzed by high voltage energy, you collapse. Never to stand again."
+TrapV2,Your movement slows and an uneasy feeling creeps up your leg. Within mere moments you are fully petrified.
+TrapV2,Winds howl from all directions and the strong gusts swiftly tear you apart.
+TrapV2,"The cold stops you in your tracks. Slowly you find yourself unable to move at all, fully entombed in ice."
+TrapV2,Dark clouds deprive you of breath while your mind is torn from your control. Madness consumes you until nothing is left.
+TrapV2,"Light particles in the surrounding area condense. After briefly charging, multiple lasers slash through your feeble armour and body from all directions."
+TrapV2,The room shakes and a celestial miasma permeates the room. Unable to prevent exposure it takes less then a minute to fully disintegrate you.
+TrapName,Warm Room
+TrapName,Damp Room
+TrapName,Charged Room
+TrapName,Unstable Room
+TrapName,Breezy Room
+TrapName,Cold Room
+TrapName,Dim Room
+TrapName,Bright Room
+TrapName,Disorienting Room
+SafeMsg,How fortunate! A young carbuncle is resting nearby. If it's not territorial you can recover just by being in proximity of it's aura. The risk it will attack you is low.
+SafeMsg,Before you is a magic fountain with a mysterious liquid. You can tell there are restorative properties. The risk it is unsafe to drink from is low.
+SafeMsg,"Protected by a barrier, this room provides an opportunity to care for your injuries. The risk of nearby monsters is low."

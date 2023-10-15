@@ -42,12 +42,12 @@ I1o,Unrefined Paragon Crest (T1),1,25,<a:elootitem:1144477550379274322>,Refine f
 I2o,Unrefined Paragon Crest (T2),2,25,<a:elootitem:1144477550379274322>,Refine for 25% chance to receive a base tier 2 paragon crest
 I3o,Unrefined Paragon Crest (T3),3,25,<a:elootitem:1144477550379274322>,Refine for 25% chance to receive a base tier 3 paragon crest
 I4o,Unrefined Paragon Crest (T4),4,25,<a:elootitem:1144477550379274322>,Refine for 25% chance to receive a base tier 4 paragon crest
-I5x,Unrefined Rift Weapon,5,25,<a:elootitem:1144477550379274322>,Refine for 25% chance to receive a base tier 5 weapon
+I5x,Unrefined Fabled Item,5,25,<a:elootitem:1144477550379274322>,Refine for 25% chance to receive a base tier 5 item
 I6x,Crystallized Wish,6,25,<a:elootitem:1144477550379274322>,Used to refine and upgrade a Key of Wishes Weapon
-I1s,Lesser Stamina Potion,1,100,<:estamina:1145534039684562994>,Consume to restore 50 stamina
-I2s,Standard Stamina Potion,2,100,<:estamina:1145534039684562994>,Consume to restore 250 stamina
-I3s,Greater Stamina Potion,3,100,<:estamina:1145534039684562994>,Consume to restore 500 stamina
-I4s,Ultimate Stamina Potion,4,100,<:estamina:1145534039684562994>,Consume to restore 1000 stamina
+I1s,Lesser Stamina Potion,1,100,<:estamina:1145534039684562994>,Consume to restore 500 stamina
+I2s,Standard Stamina Potion,2,100,<:estamina:1145534039684562994>,Consume to restore 1000 stamina
+I3s,Greater Stamina Potion,3,100,<:estamina:1145534039684562994>,Consume to restore 2500 stamina
+I4s,Ultimate Stamina Potion,4,100,<:estamina:1145534039684562994>,Consume to restore 5000 stamina
 t0,Essence of The Reflection,1,1,<a:elootitem:1144477550379274322>,Perform a binding ritual to seal the essence into card form.
 tI,Essence of The Magic,1,1,<a:elootitem:1144477550379274322>,Perform a binding ritual to seal the essence into card form.
 tII,Essence of The Celestial,4,1,<a:elootitem:1144477550379274322>,Perform a binding ritual to seal the essence into card form.
@@ -70,3 +70,10 @@ tXVIII,Essence of The Moon,2,1,<a:elootitem:1144477550379274322>,Perform a bindi
 tXIX,Essence of The Sun,2,1,<a:elootitem:1144477550379274322>,Perform a binding ritual to seal the essence into card form.
 tXX,Essence of The Requiem,2,1,<a:elootitem:1144477550379274322>,Perform a binding ritual to seal the essence into card form.
 tXXI,Essence of The Creation,2,1,<a:elootitem:1144477550379274322>,Perform a binding ritual to seal the essence into card form.
+tXXX,Essence of The Wish,6,1,<a:elootitem:1144477550379274322>,Perform a binding ritual to seal the essence into card form.
+I1t,Summoning Token (T1),1,100,<a:elootitem:1144477550379274322>,Perform a summoning ritual to summon a paragon solo boss.
+I2t,Summoning Token (T2),2,100,<a:elootitem:1144477550379274322>,Perform a summoning ritual to summon a paragon solo boss.
+I3t,Summoning Token (T3),3,100,<a:elootitem:1144477550379274322>,Perform a summoning ritual to summon a paragon solo boss.
+I4t,Summoning Token (T4),4,100,<a:elootitem:1144477550379274322>,Perform a summoning ritual to summon a paragon solo boss.
+I5t,Summoning Token (T5),5,100,<a:elootitem:1144477550379274322>,Perform a summoning ritual to summon a paragon solo boss.
+I6t,Summoning Token (T6),6,100,<a:elootitem:1144477550379274322>,Perform a summoning ritual to summon a paragon solo boss.

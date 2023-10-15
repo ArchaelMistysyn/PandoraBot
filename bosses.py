@@ -17,6 +17,8 @@ from sqlalchemy import exc
 import mydb
 import pandorabot
 
+boss_list = ["Fortress", "Dragon", "Demon", "Paragon"]
+
 
 # Boss class
 class CurrentBoss:
@@ -99,9 +101,10 @@ class CurrentBoss:
         embed_msg.add_field(name=boss_weakness, value="", inline=False)
         embed_msg.add_field(name="Current DPS: ", value=dps_msg, inline=False)
         if self.player_id != 0:
-            player_object = player.get_player_by_id(self.player_id)
-            battle_msg = f"{player_object.player_username} is engaged in combat!"
-            embed_msg.add_field(name="", value=battle_msg, inline=False)
+            if is_alive:
+                player_object = player.get_player_by_id(self.player_id)
+                battle_msg = f"{player_object.player_username} is engaged in combat!"
+                embed_msg.add_field(name="", value=battle_msg, inline=False)
         embed_msg.set_image(url=img_link)
 
         return embed_msg
@@ -132,8 +135,8 @@ class CurrentBoss:
         paragon_list_t3 = ["V - Arkaya, The Duality", "X - Chrona, The Temporal", "XI - Nua, The Heavens",
                            "XII - Rua, The Abyss", "XIII - Thana, The Death"]
         paragon_list_t4 = ["II - Pandora, The Celestial", "XV - Diabla, The Primordial"]
-        paragon_list_t5 = ["III - Oblivia, The Void"]
-        paragon_list_t6 = ["IV - Akasha, The Infinite"]
+        paragon_list_t5 = ["III - Oblivia, The Void", "IV - Akasha, The Infinite"]
+        paragon_list_t6 = ["XXX - Eleuia, The Wish"]
         paragon_names = [paragon_list_t1, paragon_list_t2, paragon_list_t3,
                          paragon_list_t4, paragon_list_t5, paragon_list_t6]
 
@@ -178,7 +181,6 @@ class CurrentBoss:
 
 
 def get_boss_details(channel_num):
-    boss_list = ["Fortress", "Dragon", "Demon", "Paragon"]
     if channel_num < 4:
         max_types = channel_num
     else:
@@ -186,16 +188,18 @@ def get_boss_details(channel_num):
     random_boss_type = random.randint(0, max_types)
     selected_boss_type = boss_list[random_boss_type]
     boss_tier = get_random_bosstier(selected_boss_type)
-    level = random.randint(1, 10)
-    level += (boss_tier - 1) * 10
-    level += (channel_num - 1) * 20
+    if boss_tier < 5:
+        level = random.randint(1, 10)
+        level += boss_tier * 10
+        level += channel_num * 10
+    else:
+        level = 99
     return level, selected_boss_type, boss_tier
 
 
 def restore_solo_bosses(channel_id):
     raid_id_df = get_raid_id(channel_id, -1)
     restore_raid_list = []
-    raid_id_list = []
     try:
         engine_url = mydb.get_engine_url()
         engine = sqlalchemy.create_engine(engine_url)
@@ -206,7 +210,6 @@ def restore_solo_bosses(channel_id):
                 query = text("SELECT * FROM BossList WHERE raid_id = :id_check")
                 query = query.bindparams(id_check=raid_id)
                 df = pd.read_sql(query, pandora_db)
-                raid_id_list.append(raid_id)
                 player_id = int(df["player_id"].values[0])
                 boss_name = str(df["boss_name"].values[0])
                 boss_tier = int(df["boss_tier"].values[0])
@@ -231,10 +234,10 @@ def restore_solo_bosses(channel_id):
                 restore_raid_list.append(boss_object)
         pandora_db.close()
         engine.dispose()
-        return restore_raid_list, raid_id_list
+        return restore_raid_list
     except mysql.connector.Error as err:
         print("Database Error: {}".format(err))
-        return restore_raid_list, raid_id_list
+        return restore_raid_list
 
 
 def spawn_boss(channel_id, player_id, new_boss_tier, selected_boss_type, boss_level, channel_num):

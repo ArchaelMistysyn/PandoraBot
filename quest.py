@@ -73,7 +73,7 @@ class Quest:
     def get_quest_embed(self, player_object):
         token_check = quest_exceptions(self.quest_num)
         if token_check == 5 and self.quest_num != 5:
-            token_count = player_object.check_tokens(token_check) + player_object.check_tokens(self.quest_num)
+            token_count = player_object.check_tokens(token_check)
         else:
             token_count = player_object.check_tokens(token_check)
         self.set_quest_output(token_count)
