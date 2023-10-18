@@ -34,12 +34,18 @@ class CurrentBoss:
         self.boss_cHP = 0
         self.boss_typeweak = []
         self.boss_eleweak = [0, 0, 0, 0, 0, 0, 0, 0, 0]
+        self.curse_debuffs = [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+        self.omni_curse = 0.0
+        self.active_player_auras = 0.0
 
-    # return the boss display string
     def __str__(self):
         return self.boss_name
 
-    # calculate the bosses new hp
+    def reset_modifiers(self):
+        self.curse_debuffs = [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+        self.active_player_auras = 0.0
+        self.omni_curse = 0.0
+
     def calculate_hp(self) -> bool:
         if self.boss_cHP <= 0:
             is_alive = False
@@ -428,7 +434,7 @@ def get_boss_descriptor(boss_type):
         case "Demon":
             demon_colours = ["Crimson", "Azure", "Jade", "Violet", "Ivory", "Rose", "Gold", "Silver", "Stygian"]
             random_number = random.randint(0, 8)
-            boss_descriptor = demon_colour[random_number]
+            boss_descriptor = demon_colours[random_number]
     return boss_descriptor
 
 

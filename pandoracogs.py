@@ -33,14 +33,17 @@ class RaidCog(commands.Cog):
         self.sent_message = sent_message
         self.channel_object = channel_object
         self.raid_manager.start()
+        print(f"Channel #{self.channel_num}: RaidCog Running")
 
     def cog_unload(self):
         self.raid_manager.cancel()
 
     @tasks.loop(seconds=60)
     async def raid_manager(self):
-        await self.bot.raid_boss(self.active_boss, self.channel_id, self.channel_num,
-                                 self.sent_message, self.channel_object)
+        is_alive = await self.bot.raid_boss(self.active_boss, self.channel_id, self.channel_num,
+                                            self.sent_message, self.channel_object)
+        if not is_alive:
+            self.cog_unload()
 
 
 class SoloCog(commands.Cog):
@@ -52,6 +55,7 @@ class SoloCog(commands.Cog):
         self.sent_message = sent_message
         self.channel_object = channel_object
         self.solo_manager.start()
+        print(f"{self.player_object.player_username}: SoloCog Running")
 
     def cog_unload(self):
         self.solo_manager.cancel()

@@ -21,6 +21,8 @@ import damagecalc
 import menus
 import quest
 import tarot
+import forge
+import market
 import bazaar
 import pilengine
 import pandoracogs
@@ -73,9 +75,9 @@ element_light = "<:el:1141653466343800883>"
 element_celestial = "<:ej:1141653469938339971>"
 global_element_list = [element_fire, element_water, element_lightning, element_earth, element_wind, element_ice,
                        element_dark, element_light, element_celestial]
-element_names = ["Fire", "Water", "Lightning", "Earth", "Wind", "Ice", "Dark", "Light", "Celestial"]
+element_names = ["Fire", "Water", "Lightning", "Earth", "Wind", "Ice", "Shadow", "Light", "Celestial"]
 
-tier_2_abilities = ["Molten", "Aquatic", "Electric", "Mountain", "Gust", "Frost", "Shadow", "Flash", "Star"]
+tier_2_abilities = ["Molten", "Aquatic", "Electric", "Mountain", "Gust", "Frost", "Dusk", "Flash", "Star"]
 tier_3_abilities = ["Blazing", "Drowning", "Bolting", "Crushing", "Whirling",
                     "Freezing", "Shrouding", "Shining", "Twinkling"]
 tier_4_abilities = ["Bahamut's Trinity", "Perfect Precision", "Overflowing Vitality",
@@ -150,7 +152,6 @@ def run_discord_bot():
                         player_object = player.get_player_by_id(y.player_id)
                         await solo_boss_task(player_object, y, command_channel_id, cmd_channel)
                 print("Initialized Bosses")
-                await ctx.send("Initialized Bosses")
             except Exception as e:
                 print(e)
         else:
@@ -240,17 +241,26 @@ def run_discord_bot():
     async def raid_boss(active_boss, channel_id, channel_num, sent_message, channel_object):
         player_list, damage_list = bosses.get_damage_list(channel_id)
         dps = 0
-        for idx, x in enumerate(player_list):
-            temp_user = player.get_player_by_id(int(x))
-            player_dps = temp_user.get_player_damage(active_boss)
+        active_boss.reset_modifiers()
+        temp_user = []
+        for idy, y in enumerate(player_list):
+            temp_user.append(player.get_player_by_id(int(y)))
+            temp_user[idy].get_player_multipliers()
+            active_boss.active_player_auras += temp_user[idy].aura
+            curse_lists = [active_boss.curse_debuffs, temp_user[idy].elemental_curse]
+            active_boss.curse_debuffs = [sum(z) for z in zip(*curse_lists)]
+            active_boss.omni_curse += temp_user[idy].all_elemental_curse
+        for idx, x in enumerate(temp_user):
+            player_dps = int(x.get_player_damage(active_boss) * (1 + active_boss.active_player_auras))
             dps += player_dps
             new_player_dps = int(damage_list[idx]) + player_dps
-            bosses.update_player_damage(channel_id, int(x), new_player_dps)
+            bosses.update_player_damage(channel_id, x.player_id, new_player_dps)
         active_boss.boss_cHP -= dps
         bosses.update_boss_cHP(channel_id, 0, active_boss.boss_cHP)
         if active_boss.calculate_hp():
             embed_msg = active_boss.create_boss_msg(dps, True)
             await sent_message.edit(embed=embed_msg)
+            return True
         else:
             for x in player_list:
                 temp_user = player.get_player_by_id(int(x))
@@ -260,18 +270,17 @@ def run_discord_bot():
             await sent_message.edit(embed=embed_msg)
             loot_embed = loot.create_loot_embed(embed_msg, active_boss, player_list)
             await channel_object.send(embed=loot_embed)
-
-            level, boss_type, boss_tier = bosses.get_boss_details(channel_num)
-            bosses.clear_boss_info(channel_id, 0)
-            active_boss = bosses.spawn_boss(channel_id, 0, boss_tier, boss_type, level, channel_num)
-            player_list.clear()
-            embed_msg = active_boss.create_boss_msg(0, True)
-            raid_button = RaidView()
+            await raid_task(channel_id, channel_num, channel_object)
             sent_message = await channel_object.send(embed=embed_msg, view=raid_button)
+            return False
 
     @pandora_bot.event
     async def solo_boss(player_object, active_boss, channel_id, sent_message, channel_object):
-        dps = player_object.get_player_damage(active_boss)
+        active_boss.reset_modifiers()
+        player_object.get_player_multipliers()
+        active_boss.curse_debuffs = player_object.elemental_curse
+        active_boss.omni_curse = player_object.all_elemental_curse
+        dps = int(player_object.get_player_damage(active_boss) * (1 + player_object.aura))
         active_boss.boss_cHP -= dps
         bosses.update_boss_cHP(channel_id, active_boss.player_id, active_boss.boss_cHP)
         if active_boss.calculate_hp():
@@ -340,7 +349,7 @@ def run_discord_bot():
             await ctx.send(embed=embed_msg, view=class_view)
 
     @pandora_bot.hybrid_command(name='bdsm',
-                                description="**/bdsm** Open your Boxed Daily Shipment!")
+                                description="**/bdsm** Claim your boxed daily shipment!")
     @app_commands.guilds(discord.Object(id=1011375205999968427))
     async def bdsm(ctx):
         if any(ctx.channel.id in sl for sl in global_server_channels):
@@ -355,7 +364,7 @@ def run_discord_bot():
                         cooldown_timer = int(cooldown.total_seconds() / 60 / 60)
                         embed_msg = discord.Embed(colour=discord.Colour.dark_teal(),
                                                   title="Boxed Daily Shipment!",
-                                                  description=f"Your supplies are on cooldown for {cooldown_timer} hours.")
+                                                  description=f"Your shipment is on cooldown for {cooldown_timer} hours.")
                         await ctx.send(embed=embed_msg)
                     else:
                         run_command = True
@@ -364,42 +373,38 @@ def run_discord_bot():
 
                 if run_command:
                     player_object.set_cooldown("bdsm")
+                    random_qty = random.randint(0, 10)
+                    if random_qty <= 7:
+                        quantity = 1
+                    elif random_qty <= 9:
+                        quantity = 2
+                    else:
+                        quantity = 3
+                    crate_id = "I1r"
+                    crate_icon = loot.get_loot_emoji(crate_id)
+                    inventory.update_stock(player_object, crate_id, quantity)
                     embed_msg = discord.Embed(colour=discord.Colour.dark_teal(),
                                               title=f"{player_object.player_username}: Boxed Daily Shipment!",
-                                              description="Your daily supplies are here. What could be inside?")
-                    opening_chest = 0
-                    opening_string = ""
-                    message = await ctx.send(embed=embed_msg)
-                    while opening_chest < 10:
-                        opening_chest += 1
-                        opening_string += "♦️"
-                        await asyncio.sleep(1)
-                        embed_msg.clear_fields()
-                        embed_msg.add_field(name="Opening", value=opening_string)
-                        await message.edit(embed=embed_msg)
-                    embed_msg.clear_fields()
-                    reward_id, quantity = loot.generate_random_item()
-                    loot_description = f"{loot.get_loot_emoji(reward_id)} {quantity}x {loot.get_loot_name(reward_id)}"
-                    inventory.update_stock(player_object, reward_id, quantity)
-                    embed_msg = discord.Embed(colour=discord.Colour.dark_teal(),
-                                              title=f"{player_object.player_username}: Supplies Opened!",
-                                              description=loot_description)
-                    await message.edit(embed=embed_msg)
+                                              description=f"{crate_icon} {quantity}x Daily crate acquired!")
+                    await ctx.send(embed=embed_msg)
             else:
                 embed_msg = unregistered_message()
                 await ctx.send(embed=embed_msg)
 
     @pandora_bot.hybrid_command(name='crate',
-                                description="**/crate** Spend 1000 stamina to open a random item crate!")
+                                description="**/crate** Open a crate!")
     @app_commands.guilds(discord.Object(id=1011375205999968427))
     async def crate(ctx):
         if any(ctx.channel.id in sl for sl in global_server_channels):
             player_object = player.get_player_by_name(str(ctx.author))
             if player_object.player_class != "":
-                if player_object.spend_stamina(1000):
+                crate_id = "I1r"
+                crate_stock = inventory.check_stock(player_object, crate_id)
+                if crate_stock >= 1:
+                    inventory.update_stock(player_object, crate_id, -1)
                     embed_msg = discord.Embed(colour=discord.Colour.dark_teal(),
-                                              title=f"{player_object.player_username}: Crate Uncovered!",
-                                              description="You have found an unopened crate. What could be inside?")
+                                              title=f"{player_object.player_username}: Opening Crate!",
+                                              description="What could be inside?")
                     opening_chest = 0
                     opening_string = ""
                     message = await ctx.send(embed=embed_msg)
@@ -408,7 +413,7 @@ def run_discord_bot():
                         opening_string += "♦️"
                         await asyncio.sleep(1)
                         embed_msg.clear_fields()
-                        embed_msg.add_field(name="Opening", value=opening_string)
+                        embed_msg.add_field(name="", value=opening_string)
                         await message.edit(embed=embed_msg)
                     embed_msg.clear_fields()
                     reward_id, quantity = loot.generate_random_item()
@@ -419,7 +424,7 @@ def run_discord_bot():
                                               description=loot_description)
                     await message.edit(embed=embed_msg)
                 else:
-                    await ctx.send("Not enough /stamina.")
+                    await ctx.send(f"Out of stock: {loot.get_loot_emoji(crate_id)}!")
             else:
                 embed_msg = unregistered_message()
                 await ctx.send(embed=embed_msg)
@@ -636,7 +641,7 @@ def run_discord_bot():
 
     @pandora_bot.hybrid_command(name='forge', help="**/forge** to enter the celestial forge")
     @app_commands.guilds(discord.Object(id=1011375205999968427))
-    async def forge(ctx):
+    async def celestial_forge(ctx):
         if any(ctx.channel.id in sl for sl in global_server_channels):
             user = ctx.author
             player_object = player.get_player_by_name(user)
@@ -646,7 +651,7 @@ def run_discord_bot():
                                           title="Pandora's Celestial Forge",
                                           description="Let me know what you'd like me to upgrade today!")
                 embed_msg.set_image(url="https://i.ibb.co/QjWDYG3/forge.jpg")
-                forge_view = menus.SelectView(player_object)
+                forge_view = forge.SelectView(player_object)
                 await ctx.send(embed=embed_msg, view=forge_view)
             else:
                 embed_msg = unregistered_message()
@@ -679,7 +684,7 @@ def run_discord_bot():
                 completion_count = tarot.collection_check(player_object.player_id)
                 embed_msg = discord.Embed(colour=discord.Colour.magenta(),
                                           title=f"{player_object.player_username}'s Tarot Collection",
-                                          description=f"Completion Total: {completion_count} / 66")
+                                          description=f"Completion Total: {completion_count} / 46")
                 embed_msg.set_image(url="")
                 tarot_view = menus.CollectionView(player_object, embed_msg)
                 await ctx.send(embed=embed_msg, view=tarot_view)
@@ -689,7 +694,7 @@ def run_discord_bot():
 
     @pandora_bot.hybrid_command(name='credits', help="**/credits** to see the credits")
     @app_commands.guilds(discord.Object(id=1011375205999968427))
-    async def forge(ctx):
+    async def credits_list(ctx):
         if any(ctx.channel.id in sl for sl in global_server_channels):
             credit_list = "Game created by: Kyle Mistysyn (Archael)"
             # Artists
@@ -803,6 +808,24 @@ def run_discord_bot():
                 embed_msg.set_image(url="")
                 map_select_view = adventure.MapSelectView(player_object, embed_msg)
                 await ctx.send(embed=embed_msg, view=map_select_view)
+            else:
+                embed_msg = unregistered_message()
+                await ctx.send(embed=embed_msg)
+
+    @pandora_bot.hybrid_command(name='market',
+                                help="**/market** To view the black market.")
+    @app_commands.guilds(discord.Object(id=1011375205999968427))
+    async def black_market(ctx):
+        if any(ctx.channel.id in sl for sl in global_server_channels):
+            player_name = str(ctx.author)
+            player_object = player.get_player_by_name(player_name)
+            if player_object.player_class != "":
+                embed_msg = discord.Embed(colour=discord.Colour.dark_orange(),
+                                          title="Black Market",
+                                          description="Everything has a price.")
+                embed_msg.set_image(url="")
+                market_select_view = market.TierSelectView(player_object)
+                await ctx.send(embed=embed_msg, view=market_select_view)
             else:
                 embed_msg = unregistered_message()
                 await ctx.send(embed=embed_msg)

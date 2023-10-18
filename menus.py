@@ -12,344 +12,6 @@ import asyncio
 import bazaar
 
 
-# Forge menu
-class ForgeView(discord.ui.View):
-    def __init__(self, player_object, selected_item):
-        super().__init__(timeout=None)
-        self.selected_item = selected_item
-        self.selected_id = self.selected_item.item_id
-        self.player_object = player_object
-        self.letter = "a"
-        self.values = None
-        self.button_label = []
-        self.button_emoji = []
-        self.num_buttons = 0
-
-    @discord.ui.select(
-        placeholder="Select crafting method!",
-        min_values=1,
-        max_values=1,
-        options=[
-            discord.SelectOption(
-                emoji="<a:eenergy:1145534127349706772>", label="Enhance", description="Enhance the item"),
-            discord.SelectOption(
-                emoji="<:eore:1145534835507593236>", label="Upgrade", description="Upgrade the item"),
-            discord.SelectOption(
-                emoji="<:esoul:1145520258241806466>", label="Bestow", description="Bless the item"),
-            discord.SelectOption(
-                emoji="<:ehammer:1145520259248427069>", label="Open", description="Open a socket"),
-            discord.SelectOption(
-                emoji="<a:ematrix:1145520262268325919>", label="Imbue", description="Add new rolls"),
-            discord.SelectOption(
-                emoji="<a:eshadow2:1141653468965257216>", label="Cleanse", description="Remove random rolls"),
-            discord.SelectOption(
-                emoji="<:eprl:1148390531345432647>", label="Augment", description="Augment existing rolls"),
-            discord.SelectOption(
-                emoji="<a:eorigin:1145520263954440313>", label="Implant", description="Gain new elements"),
-            discord.SelectOption(
-                emoji="<a:evoid:1145520260573827134>", label="Voidforge", description="Upgrade to a void weapon")
-        ]
-    )
-    async def forge_callback(self, interaction: discord.Interaction, forge_select: discord.ui.Select):
-        try:
-            if interaction.user.name == self.player_object.player_name:
-                match forge_select.values[0]:
-                    case "Enhance":
-                        self.letter = "a"
-                        self.num_buttons = 5
-                    case "Upgrade":
-                        self.letter = "b"
-                        self.button_emoji.append(loot.get_loot_emoji("I1b"))
-                        self.button_emoji.append(loot.get_loot_emoji("I2b"))
-                        self.button_emoji.append(loot.get_loot_emoji("I3b"))
-                        self.button_emoji.append(loot.get_loot_emoji("I4b"))
-                        self.num_buttons = 5
-                    case "Bestow":
-                        self.letter = "c"
-                        self.button_emoji.append(loot.get_loot_emoji("I1c"))
-                        self.button_emoji.append(loot.get_loot_emoji("I2c"))
-                        self.button_emoji.append(loot.get_loot_emoji("I3c"))
-                        self.button_emoji.append(loot.get_loot_emoji("I4c"))
-                        self.num_buttons = 5
-                    case "Open":
-                        self.letter = "d"
-                        self.button_emoji.append(loot.get_loot_emoji("I1d"))
-                        self.button_emoji.append(loot.get_loot_emoji("I2d"))
-                        self.button_emoji.append(loot.get_loot_emoji("I3d"))
-                        self.button_emoji.append(loot.get_loot_emoji("I4d"))
-                        self.num_buttons = 5
-                    case "Imbue":
-                        self.letter = "h"
-                        self.button_emoji.append(loot.get_loot_emoji("I1h"))
-                        self.button_emoji.append(loot.get_loot_emoji("I2h"))
-                        self.button_emoji.append(loot.get_loot_emoji("I3h"))
-                        self.button_emoji.append(loot.get_loot_emoji("I4h"))
-                        self.num_buttons = 5
-                    case "Cleanse":
-                        self.letter = "i"
-                        self.button_emoji.append(loot.get_loot_emoji("I1i"))
-                        self.button_emoji.append(loot.get_loot_emoji("I2i"))
-                        self.button_emoji.append(loot.get_loot_emoji("I3i"))
-                        self.button_emoji.append(loot.get_loot_emoji("I4i"))
-                        self.num_buttons = 5
-                    case "Augment":
-                        self.letter = "j"
-                        self.button_emoji.append(loot.get_loot_emoji("I1j"))
-                        self.button_emoji.append(loot.get_loot_emoji("I2j"))
-                        self.button_emoji.append(loot.get_loot_emoji("I3j"))
-                        self.button_emoji.append(loot.get_loot_emoji("I4j"))
-                        self.num_buttons = 5
-                    case "Implant":
-                        self.letter = "k"
-                        self.button_emoji.append(loot.get_loot_emoji("I4k"))
-                        self.num_buttons = 2
-                    case "Voidforge":
-                        self.letter = "l"
-                        self.button_emoji.append(loot.get_loot_emoji("I5l"))
-                        self.num_buttons = 2
-                    case _:
-                        self.num_buttons = 0
-
-                # Assign response
-                async def first_button_callback(button_interaction: discord.Interaction):
-                    try:
-                        if button_interaction.user.name == self.player_object.player_name:
-                            item_code = f'I1{self.letter}'
-                            new_embed_msg = run_button(item_code)
-                            await button_interaction.response.edit_message(embed=new_embed_msg)
-                    except Exception as e:
-                        print(e)
-
-                async def second_button_callback(button_interaction: discord.Interaction):
-                    try:
-                        if button_interaction.user.name == self.player_object.player_name:
-                            item_code = f'I2{self.letter}'
-                            new_embed_msg = run_button(item_code)
-                            await button_interaction.response.edit_message(embed=new_embed_msg)
-                    except Exception as e:
-                        print(e)
-
-                async def third_button_callback(button_interaction: discord.Interaction):
-                    try:
-                        if button_interaction.user.name == self.player_object.player_name:
-                            item_code = f'I3{self.letter}'
-                            new_embed_msg = run_button(item_code)
-                            await button_interaction.response.edit_message(embed=new_embed_msg)
-                    except Exception as e:
-                        print(e)
-
-                async def fourth_button_callback(button_interaction: discord.Interaction):
-                    try:
-                        if button_interaction.user.name == self.player_object.player_name:
-                            item_code = f'I4{self.letter}'
-                            new_embed_msg = run_button(item_code)
-                            await button_interaction.response.edit_message(embed=new_embed_msg)
-                    except Exception as e:
-                        print(e)
-
-                def run_button(item_code):
-                    method = forge_select.values[0]
-                    self.selected_item = inventory.read_custom_item(self.selected_id)
-                    result = inventory.craft_item(self.player_object, self.selected_item, item_code, method)
-                    if result == "0":
-                        outcome = "Failed!"
-                    elif result == "1":
-                        outcome = "Success!"
-                    elif result == "3":
-                        outcome = "Cannot upgrade further"
-                    elif result == "4":
-                        outcome = "Item not ready for upgrade"
-                    elif result == "5":
-                        outcome = "A roll has been successfully removed!"
-                    elif result == "6":
-                        outcome = "Item not eligible!"
-                    else:
-                        outcome = f"Out of Stock: {loot.get_loot_emoji(str(item_code))}"
-                    new_embed_msg = self.selected_item.create_citem_embed()
-                    new_embed_msg.add_field(name=outcome, value="", inline=False)
-                    return new_embed_msg
-
-                async def button_multi_callback(button_interaction: discord.Interaction):
-                    try:
-                        if button_interaction.user.name == self.player_object.player_name:
-                            self.selected_item = inventory.read_custom_item(self.selected_id)
-                            result = "0"
-                            overall = ""
-                            outcome = ""
-                            count = 0
-                            method = forge_select.values[0]
-                            match method:
-                                case "Enhance":
-                                    item_id_list = ["I1a", "I2a", "I3a"]
-                                case "Upgrade":
-                                    item_id_list = ["I1b", "I2b", "I3b"]
-                                case "Bestow":
-                                    item_id_list = ["I1c", "I2c", "I3c"]
-                                case "Open":
-                                    item_id_list = ["I1d", "I2d", "I3d"]
-                                case "Imbue":
-                                    item_id_list = ["I1h", "I2h", "I3h"]
-                                case "Cleanse":
-                                    item_id_list = ["I1i", "I2i", "I3i"]
-                                case "Augment":
-                                    item_id_list = ["I1j", "I2j", "I3j"]
-                                case "Implant":
-                                    item_id_list = ["I4k"]
-                                case "Voidforge":
-                                    item_id_list = ["I5l"]
-                                case _:
-                                    item_id_list = ["error"]
-                            for x in item_id_list:
-                                running = True
-                                while running and count < 50:
-                                    count += 1
-                                    result = inventory.craft_item(self.player_object, self.selected_item, x, method)
-                                    if result != "0" and result != "1":
-                                        running = False
-                                    elif result == "0" and overall == "":
-                                        overall = "All Failed"
-                                    elif result == "1":
-                                        if overall == "Success!":
-                                            overall = "!!MULTI-SUCCESS!!"
-                                        elif overall != "!!MULTI-SUCCESS!!":
-                                            overall = "Success!"
-                                if result == "3":
-                                    outcome = "Cannot upgrade further"
-                                    break
-                                elif result == "5":
-                                    overall = "Success!"
-                                    outcome = "A roll has been successfully removed!"
-                                    break
-                                elif result == "6":
-                                    overall = "Cannot Continue"
-                                    outcome = "Item not eligible!"
-                                elif count == 50:
-                                    outcome = f"Used: 50x{loot.get_loot_emoji(str(x))}"
-                                else:
-                                    outcome = f"Out of Stock: {loot.get_loot_emoji(str(x))}"
-                            new_embed_msg = self.selected_item.create_citem_embed()
-                            new_embed_msg.add_field(name=overall, value=outcome, inline=False)
-                            await button_interaction.response.edit_message(embed=new_embed_msg)
-                    except Exception as e:
-                        print(e)
-
-                async def reselect_callback(button_interaction: discord.Interaction):
-                    try:
-                        if button_interaction.user.name == self.player_object.player_name:
-                            new_view = SelectView(self.player_object)
-                            await button_interaction.response.edit_message(view=new_view)
-                    except Exception as e:
-                        print(e)
-
-                async def button_cancel_callback(button_interaction: discord.Interaction):
-                    try:
-                        if button_interaction.user.name == self.player_object.player_name:
-                            await button_interaction.response.edit_message(view=None)
-                    except Exception as e:
-                        print(e)
-
-                self.clear_items()
-                self.button_label.append(f"T1 {forge_select.values[0]}")
-                self.button_label.append(f"T2 {forge_select.values[0]}")
-                self.button_label.append(f"T3 {forge_select.values[0]}")
-                self.button_label.append(f"T4 {forge_select.values[0]}")
-                self.button_label.append(f"Multi {forge_select.values[0]}")
-
-                if self.num_buttons == 5:
-                    code = "I1" + self.letter
-                    self.button_emoji.append(loot.get_loot_emoji(code))
-                    code = "I2" + self.letter
-                    self.button_emoji.append(loot.get_loot_emoji(code))
-                    code = "I3" + self.letter
-                    self.button_emoji.append(loot.get_loot_emoji(code))
-                    code = "I4" + self.letter
-                    self.button_emoji.append(loot.get_loot_emoji(code))
-                    button_1 = Button(label=self.button_label[0], style=discord.ButtonStyle.success, emoji=self.button_emoji[0])
-                    button_2 = Button(label=self.button_label[1], style=discord.ButtonStyle.success, emoji=self.button_emoji[1])
-                    button_3 = Button(label=self.button_label[2], style=discord.ButtonStyle.success, emoji=self.button_emoji[2])
-                    button_4 = Button(label=self.button_label[3], style=discord.ButtonStyle.success, emoji=self.button_emoji[3])
-                    self.add_item(button_1)
-                    self.add_item(button_2)
-                    self.add_item(button_3)
-                    self.add_item(button_4)
-                    button_1.callback = first_button_callback
-                    button_2.callback = second_button_callback
-                    button_3.callback = third_button_callback
-                    button_4.callback = fourth_button_callback
-                else:
-                    code = "I4" + self.letter
-                    self.button_emoji.append(loot.get_loot_emoji(code))
-                    button_4 = Button(label=self.button_label[3], style=discord.ButtonStyle.success, emoji=self.button_emoji[0])
-                    self.add_item(button_4)
-                    button_4.callback = fourth_button_callback
-
-                button_multi = Button(label=self.button_label[4], style=discord.ButtonStyle.blurple, emoji="⬆️", row=1)
-                button_reselect = Button(label="Reselect", style=discord.ButtonStyle.blurple, emoji="↩️")
-                button_cancel = Button(label="Cancel", style=discord.ButtonStyle.red, emoji="✖️", row=1)
-                self.add_item(button_multi)
-                button_multi.callback = button_multi_callback
-                button_reselect.callback = reselect_callback
-                self.add_item(button_reselect)
-                self.add_item(button_cancel)
-                button_cancel.callback = button_cancel_callback
-                await interaction.response.edit_message(view=self)
-        except Exception as z:
-            print(z)
-
-
-class SelectView(discord.ui.View):
-    def __init__(self, player_object):
-        super().__init__(timeout=None)
-        self.selected_item = None
-        self.player_object = player_object
-        self.value = None
-
-    @discord.ui.select(
-        placeholder="Select crafting base!",
-        min_values=1,
-        max_values=1,
-        options=[
-            discord.SelectOption(
-                emoji="<a:eenergy:1145534127349706772>", label="Weapon", description="Equipped Weapon"),
-            discord.SelectOption(
-                emoji="<a:eenergy:1145534127349706772>", label="Armour", description="Equipped Armour"),
-            discord.SelectOption(
-                emoji="<a:eenergy:1145534127349706772>", label="Accessory", description="Equipped Accessory"),
-            discord.SelectOption(
-                emoji="<a:eenergy:1145534127349706772>", label="Wing", description="Equipped Wing"),
-            discord.SelectOption(
-                emoji="<a:eenergy:1145534127349706772>", label="Crest", description="Equipped Paragon Crest")
-        ]
-    )
-    async def select_callback(self, interaction: discord.Interaction, item_select: discord.ui.Select):
-        try:
-            if interaction.user.name == self.player_object.player_name:
-                match item_select.values[0]:
-                    case "Weapon":
-                        selected_item = self.player_object.equipped_weapon
-                    case "Armour":
-                        selected_item = self.player_object.equipped_armour
-                    case "Accessory":
-                        selected_item = self.player_object.equipped_acc
-                    case "Wing":
-                        selected_item = self.player_object.equipped_wing
-                    case "Crest":
-                        selected_item = self.player_object.equipped_crest
-                    case _:
-                        selected_item = 0
-                if selected_item != 0:
-                    self.selected_item = inventory.read_custom_item(selected_item)
-                    embed_msg = self.selected_item.create_citem_embed()
-                    new_view = ForgeView(self.player_object, self.selected_item)
-                    await interaction.response.edit_message(embed=embed_msg, view=new_view)
-                else:
-                    error_msg = "Not equipped"
-                    error_embed = create_error_embed(error_msg)
-                    await interaction.response.edit_message(embed=error_embed, view=None)
-        except Exception as e:
-            print(e)
-
-
 # Inventory menu
 class InventoryView(discord.ui.View):
     def __init__(self, user):
@@ -1078,7 +740,9 @@ class BindingT5View(discord.ui.View):
             discord.SelectOption(
                 emoji="<a:eenergy:1145534127349706772>", label="III", description="Essence of The Void"),
             discord.SelectOption(
-                emoji="<a:eenergy:1145534127349706772>", label="IV", description="Essence of The Infinite")
+                emoji="<a:eenergy:1145534127349706772>", label="IV", description="Essence of The Infinite"),
+            discord.SelectOption(
+                emoji="<a:eenergy:1145534127349706772>", label="XXX", description="Essence of The Wish")
         ]
     )
     async def bind_select_callback(self, interaction: discord.Interaction, bind_select: discord.ui.Select):
@@ -1138,16 +802,13 @@ def binding_ritual(player_object, essence_type):
     essence_stock = inventory.check_stock(player_object, essence_id)
     if essence_stock > 0:
         inventory.update_stock(player_object, essence_id, -1)
-        random_num = random.randint(1, 10)
-        match random_num:
-            case 1:
-                variant_num = 3
-            case 2 | 3:
-                variant_num = 2
-            case 4 | 5 | 6:
-                variant_num = 1
-            case _:
-                variant_num = 0
+        random_num = random.randint(1, 8)
+        if random_num == 1:
+            variant_num = 2
+        elif random_num <= 4:
+            variant_num = 1
+        else:
+            variant_num = 0
         if variant_num == 0:
             result = "Binding Failed!"
             description_msg = "The essence is gone."
@@ -1160,12 +821,11 @@ def binding_ritual(player_object, essence_type):
                 tarot_check.set_tarot_field("card_qty", new_qty)
             else:
                 new_tarot = tarot.TarotCard(player_object.player_id, essence_type, variant_num, card_name,
-                                            1, 0, 0, 0)
+                                            1, 1, 0)
                 new_tarot.add_tarot_card()
             result = "Binding Successful!"
             description_msg = "The sealed tarot card has been added to your collection."
     else:
-        print(essence_id)
         essence_emoji = loot.get_loot_emoji(essence_id)
         result = "Ritual Failed!"
         description_msg = f"{essence_emoji} Out of Stock!"
@@ -1203,6 +863,7 @@ class TarotView(discord.ui.View):
         self.embed_msg = embed_msg
         self.current_position = 0
         self.current_variant = 1
+        self.added_message = False
 
     @discord.ui.button(label="Previous", style=discord.ButtonStyle.blurple, emoji="⬅️")
     async def previous_card(self, interaction: discord.Interaction, button: discord.Button):
@@ -1215,6 +876,66 @@ class TarotView(discord.ui.View):
                                                                                    self.current_position,
                                                                                    self.current_variant,
                                                                                    direction)
+                await interaction.response.edit_message(embed=new_msg)
+        except Exception as e:
+            print(e)
+
+    @discord.ui.button(label="Equip", style=discord.ButtonStyle.success, emoji="⚔️")
+    async def equip(self, interaction: discord.Interaction, button: discord.Button):
+        try:
+            if interaction.user.name == self.player_user.player_name:
+                direction = 0
+                new_msg = self.embed_msg
+                active_card = tarot.check_tarot(self.player_user.player_id, tarot.tarot_card_list(self.current_position),
+                                                self.current_variant)
+                if active_card:
+                    reload_player = player.get_player_by_id(self.player_user.player_id)
+                    card_num = tarot.get_number_by_tarot(active_card.card_name)
+                    reload_player.equipped_tarot = f"{card_num};{active_card.card_variant}"
+                    reload_player.set_player_field("player_equip_tarot", reload_player.equipped_tarot)
+                    new_msg.add_field(name="Equipped!", value="", inline=False)
+                else:
+                    new_msg.add_field(name="Cannot Equip!", value="You do not own this card.", inline=False)
+                await interaction.response.edit_message(embed=new_msg)
+        except Exception as e:
+            print(e)
+
+    @discord.ui.button(label="Synthesize", style=discord.ButtonStyle.success, emoji="🔱")
+    async def synthesize(self, interaction: discord.Interaction, button: discord.Button):
+        try:
+            if interaction.user.name == self.player_user.player_name:
+                direction = 0
+                active_card = tarot.check_tarot(self.player_user.player_id,
+                                                tarot.tarot_card_list(self.current_position), self.current_variant)
+                if self.added_message:
+                    embed_total = len(self.embed_msg.fields)
+                    self.embed_msg.remove_field(embed_total - 1)
+                    self.added_message = False
+                if active_card:
+                    if active_card.card_qty > 1:
+                        if active_card.num_stars != 5:
+                            outcome = active_card.synthesize_tarot()
+                            current_message = self.embed_msg
+                            new_msg, self.current_position, self.current_variant = cycle_tarot(self.player_user,
+                                                                                               current_message,
+                                                                                               self.current_position,
+                                                                                               self.current_variant,
+                                                                                               direction)
+                            new_msg.add_field(name="", value=outcome,
+                                              inline=False)
+                            self.added_message = True
+                        else:
+                            new_msg = self.embed_msg
+                            new_msg.add_field(name="Cannot Synthesize!", value="Card cannot be upgraded further.", inline=False)
+                            self.added_message = True
+                    else:
+                        new_msg = self.embed_msg
+                        new_msg.add_field(name="Cannot Synthesize!", value="Not enough cards in possession.", inline=False)
+                        self.added_message = True
+                else:
+                    new_msg = self.embed_msg
+                    new_msg.add_field(name="Cannot Synthesize!", value="You do not own this card.", inline=False)
+                    self.added_message = True
                 await interaction.response.edit_message(embed=new_msg)
         except Exception as e:
             print(e)
@@ -1245,11 +966,11 @@ def cycle_tarot(player_owner, current_msg, current_position, current_variant, di
                       "Aurora, The Fortress", "Nova, The Star", "Luna, The Moon", "Luma, The Sun",
                       "Aria, The Requiem", "Ultima, The Creation", "Eleuia, The Wish"]
     if current_variant == 1 and direction == -1:
-        new_variant = 3
+        new_variant = 2
         new_position = current_position + direction
         if new_position == -1:
             new_position = 22
-    elif current_variant == 3 and direction == 1:
+    elif current_variant == 2 and direction == 1:
         new_variant = 1
         new_position = current_position + direction
         if new_position == 23:
@@ -1259,16 +980,36 @@ def cycle_tarot(player_owner, current_msg, current_position, current_variant, di
         new_position = current_position
     current_msg.clear_fields()
     new_msg = current_msg
-    card_checker = tarot.check_tarot(player_owner.player_id, card_name_list[new_position], new_variant)
-    if card_checker:
-        card_qty = card_checker.card_qty
-        filename = card_checker.card_image_link
+    tarot_card = tarot.check_tarot(player_owner.player_id, card_name_list[new_position], new_variant)
+    if tarot_card:
+        card_qty = tarot_card.card_qty
+        card_num_stars = tarot_card.num_stars
+        filename = tarot_card.card_image_link
     else:
+        card_num_stars = 0
         card_qty = 0
-        filename = ""
-    new_msg.add_field(name=f"Tarot Card: {card_num_list[new_position]} {card_name_list[new_position]}",
-                      value=f"Variant {new_variant}",
+        filename = "https://kyleportfolio.ca/botimages/tarot/cardback.png"
+    display_stars = ""
+    for x in range(card_num_stars):
+        display_stars += "<:estar1:1143756443967819906>"
+    for y in range((5 - card_num_stars)):
+        display_stars += "<:ebstar2:1144826056222724106>"
+    card_title = f"{card_num_list[new_position]} - {card_name_list[new_position]}"
+    if new_variant == 1:
+        card_title += " [Standard]"
+    else:
+        card_title += " [Premium]"
+    new_msg.add_field(name=card_title,
+                      value=display_stars,
                       inline=False)
+    if tarot_card:
+        base_damage = tarot_card.get_base_damage()
+        new_msg.add_field(name=f"",
+                          value=f"Base Damage: {base_damage:,} - {base_damage:,}",
+                          inline=False)
+        new_msg.add_field(name=f"",
+                          value=tarot_card.display_tarot_bonus_stat(),
+                          inline=False)
     new_msg.add_field(name=f"",
                       value=f"Quantity: {card_qty}",
                       inline=False)
@@ -1306,6 +1047,7 @@ class GearView(discord.ui.View):
 def cycle_gear(user, current_position, direction):
     selected_item = 0
     tarot_item = 0
+    reload_user = player.get_player_by_id(user.player_id)
 
     no_item = ""
     if current_position == 0 and direction == -1:
@@ -1318,29 +1060,29 @@ def cycle_gear(user, current_position, direction):
     match new_position:
         case 0:
             item_type = "Weapon"
-            selected_item = user.equipped_weapon
+            selected_item = reload_user.equipped_weapon
         case 1:
             item_type = "Armour"
-            selected_item = user.equipped_armour
+            selected_item = reload_user.equipped_armour
         case 2:
             item_type = "Accessory"
-            selected_item = user.equipped_acc
+            selected_item = reload_user.equipped_acc
         case 3:
             item_type = "Wing"
-            selected_item = user.equipped_wing
+            selected_item = reload_user.equipped_wing
         case 4:
             item_type = "Crest"
-            selected_item = user.equipped_crest
+            selected_item = reload_user.equipped_crest
         case _:
             item_type = "Tarot"
-            tarot_item = user.equipped_tarot
+            tarot_item = reload_user.equipped_tarot
     if selected_item != 0:
         equipped_item = inventory.read_custom_item(selected_item)
         new_msg = equipped_item.create_citem_embed()
-    elif tarot_item != 0:
-        # read player's tarot info, display tarot card equipped
-        tarot_card = 0
-        new_msg = None
+    elif tarot_item != "":
+        tarot_info = reload_user.equipped_tarot.split(";")
+        tarot_card = tarot.check_tarot(reload_user.player_id, tarot.tarot_card_list(int(tarot_info[0])), int(tarot_info[1]))
+        new_msg = tarot.create_tarot_embed(tarot_card)
     else:
         no_item = item_type.lower()
         new_msg = discord.Embed(colour=discord.Colour.dark_gray(),

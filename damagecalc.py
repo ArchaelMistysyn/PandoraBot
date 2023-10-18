@@ -47,11 +47,13 @@ def get_item_tier_damage(material_tier):
 
 
 def boss_defences(method, player_object, boss_object, location, weapon):
-    type_multiplier = (1 - 0.01 * boss_object.boss_lvl)
-    bonus_multiplier = 0.01 * player_object.player_lvl
+    type_multiplier = (1 - 0.01 * boss_object.boss_lvl / 1.5)
+    bonus_multiplier = 0.01 * player_object.player_lvl / 1.5
     if method == "Element":
         if boss_object.boss_eleweak[location] == 1:
-            type_multiplier += bonus_multiplier
+            curse_penalty = boss_object.curse_debuffs[location]
+            curse_omni_penalty = boss_object.omni_curse
+            type_multiplier += bonus_multiplier + curse_penalty + curse_omni_penalty
     else:
         if weapon.item_damage_type in boss_object.boss_typeweak:
             type_multiplier += bonus_multiplier

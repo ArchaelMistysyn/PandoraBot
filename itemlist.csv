@@ -1,79 +1,81 @@
-item_id,item_name,item_tier,item_base_rate,item_emoji,item_description
-I1a,Vibrant Condensed Energy,1,100,<a:eenergy:1145534127349706772>,100% base chance to upgrade enhancement. Reduced by 1% per enhancement.
-I2a,Vivid Condensed Energy,2,101,<a:eenergy:1145534127349706772>,101% base chance to upgrade enhancement. Reduced by 1% per enhancement.
-I3a,Viridescent Condensed Energy,3,102,<a:eenergy:1145534127349706772>,102% base chance to upgrade enhancement. Reduced by 1% per enhancement.
-I4a,Victorious Condensed Energy,4,105,<a:eenergy:1145534127349706772>,105% base chance to upgrade enhancement. Reduced by 1% per enhancement.
-I1b,Clouded Ore,1,1,<:eore:1145534835507593236>,1% chance to upgrade material tier.
-I2b,Clear Ore,2,5,<:eore:1145534835507593236>,5% chance to upgrade material tier.
-I3b,Crystal Ore,3,10,<:eore:1145534835507593236>,10% chance to upgrade material tier.
-I4b,Champion's Ore,4,100,<:eore:1145534835507593236>,100% chance to upgrade material tier.
-I1c,Light Soul,1,1,<:esoul:1145520258241806466>,1% chance to upgrade blessing tier.
-I2c,Luminous Soul,2,5,<:esoul:1145520258241806466>,5% chance to upgrade blessing tier.
-I3c,Lustrous Soul,3,10,<:esoul:1145520258241806466>,10% chance to upgrade blessing tier.
-I4c,Limitless Soul,4,100,<:esoul:1145520258241806466>,100% chance to upgrade blessing tier.
-I1d,Hard Socket Hammer,1,1,<:ehammer:1145520259248427069>,1% chance to add a socket to a gear item.
-I2d,Heavy Socket Hammer,2,2,<:ehammer:1145520259248427069>,2% chance to add a socket to a gear item.
-I3d,Hallowed Socket Hammer,3,3,<:ehammer:1145520259248427069>,3% chance to add a socket to a gear item.
-I4d,Heroic Socket Hammer,4,100,<:ehammer:1145520259248427069>,100% chance to add a socket to a gear item.
-I1h,Static Comet Powder,1,10,<a:elootitem:1144477550379274322>,10% chance to upgrade the star level of an item. Adding a roll if successful
-I2h,Sparking Comet Powder,2,15,<a:elootitem:1144477550379274322>,15% chance to upgrade the star level of an item. Adding a roll if successful
-I3h,Scintillating Comet Powder,3,25,<a:elootitem:1144477550379274322>,25% chance to upgrade the star level of an item. Adding a roll if successful
-I4h,Serene Comet Powder,4,100,<a:elootitem:1144477550379274322>,100% chance to upgrade the star level of an item. Adding a roll if successful
-I1i,Puzzling Cleansing Matrix,1,10,<a:eshadow2:1141653468965257216>,10% chance to reduce the star level of an item. Removing a roll if successful
-I2i,Perplexing Cleansing Matrix,2,15,<a:eshadow2:1141653468965257216>,15% chance to reduce the star level of an item. Removing a roll if successful
-I3i,Paradoxical Cleansing Matrix,3,25,<a:eshadow2:1141653468965257216>,25% chance to reduce the star level of an item. Removing a roll if successful
-I4i,Perfect Tuning Matrix,4,100,<a:eshadow2:1141653468965257216>,100% chance to reduce the star level of an item. Removing a roll if successful
-I1j,Ancient Pearl,1,1,<:eprl:1148390531345432647>,1% chance to upgrade the tier of a roll.
-I2j,Astral Pearl,2,5,<:eprl:1148390531345432647>,5% chance to upgrade the tier of a roll.
-I3j,Awakened Pearl,3,10,<:eprl:1148390531345432647>,10% chance to upgrade the tier of a roll.
-I4j,Ascension Pearl,4,100,<:eprl:1148390531345432647>,100% chance to upgrade the tier of a roll.
-I4k,Elemental Origin,4,10,<a:eorigin:1145520263954440313>,10% chance to add an elemental damage type to a weapon
-I5l,Void Traces,4,1,<a:evoid:1145520260573827134>,1% chance to upgrade a tier 5 material weapon into a void tier material weapon
-I1m,Unrefined Wings (T1),1,25,<a:elootitem:1144477550379274322>,Refine for 25% chance to receive base tier 1 wings
-I2m,Unrefined Wings (T2),2,25,<a:elootitem:1144477550379274322>,Refine for 25% chance to receive base tier 2 wings
-I3m,Unrefined Wings (T3),3,25,<a:elootitem:1144477550379274322>,Refine for 25% chance to receive base tier 3 wings
-I4m,Unrefined Wings (T4),4,25,<a:elootitem:1144477550379274322>,Refine for 25% chance to receive base tier 4 wings
-I1n,Unrefined Dragon Heart Gem (T1),1,25,<a:elootitem:1144477550379274322>,Refine for 25% chance to receive a tier 1 dragon heart gem
-I2n,Unrefined Dragon Heart Gem (T2),2,25,<a:elootitem:1144477550379274322>,Refine for 25% chance to receive a tier 2 dragon heart gem
-I3n,Unrefined Dragon Heart Gem (T3),3,25,<a:elootitem:1144477550379274322>,Refine for 25% chance to receive a tier 3 dragon heart gem
-I4n,Unrefined Dragon Heart Gem (T4),4,25,<a:elootitem:1144477550379274322>,Refine for 25% chance to receive a tier 4 dragon heart gem
-I6n,Unrefined Dragon Heart Gem (T6),6,25,<a:elootitem:1144477550379274322>,Refine for 25% chance to receive a tier 6 dragon heart gem
-I1o,Unrefined Paragon Crest (T1),1,25,<a:elootitem:1144477550379274322>,Refine for 25% chance to receive a base tier 1 paragon crest
-I2o,Unrefined Paragon Crest (T2),2,25,<a:elootitem:1144477550379274322>,Refine for 25% chance to receive a base tier 2 paragon crest
-I3o,Unrefined Paragon Crest (T3),3,25,<a:elootitem:1144477550379274322>,Refine for 25% chance to receive a base tier 3 paragon crest
-I4o,Unrefined Paragon Crest (T4),4,25,<a:elootitem:1144477550379274322>,Refine for 25% chance to receive a base tier 4 paragon crest
-I5x,Unrefined Fabled Item,5,25,<a:elootitem:1144477550379274322>,Refine for 25% chance to receive a base tier 5 item
-I6x,Crystallized Wish,6,25,<a:elootitem:1144477550379274322>,Used to refine and upgrade a Key of Wishes Weapon
-I1s,Lesser Stamina Potion,1,100,<:estamina:1145534039684562994>,Consume to restore 500 stamina
-I2s,Standard Stamina Potion,2,100,<:estamina:1145534039684562994>,Consume to restore 1000 stamina
-I3s,Greater Stamina Potion,3,100,<:estamina:1145534039684562994>,Consume to restore 2500 stamina
-I4s,Ultimate Stamina Potion,4,100,<:estamina:1145534039684562994>,Consume to restore 5000 stamina
-t0,Essence of The Reflection,1,1,<a:elootitem:1144477550379274322>,Perform a binding ritual to seal the essence into card form.
-tI,Essence of The Magic,1,1,<a:elootitem:1144477550379274322>,Perform a binding ritual to seal the essence into card form.
-tII,Essence of The Celestial,4,1,<a:elootitem:1144477550379274322>,Perform a binding ritual to seal the essence into card form.
-tIII,Essence Of The Void,5,1,<a:elootitem:1144477550379274322>,Perform a binding ritual to seal the essence into card form.
-tIV,Essence Of The Infinite,6,1,<a:elootitem:1144477550379274322>,Perform a binding ritual to seal the essence into card form.
-tV,Essence of The Duality,3,1,<a:elootitem:1144477550379274322>,Perform a binding ritual to seal the essence into card form.
-tVI,Essence of The Love,1,1,<a:elootitem:1144477550379274322>,Perform a binding ritual to seal the essence into card form.
-tVII,Essence of The Dragon,4,1,<a:elootitem:1144477550379274322>,Perform a binding ritual to seal the essence into card form.
-tVIII,Essence of The Behemoth,4,1,<a:elootitem:1144477550379274322>,Perform a binding ritual to seal the essence into card form.
-tIX,Essence of The Memory,1,1,<a:elootitem:1144477550379274322>,Perform a binding ritual to seal the essence into card form.
-tX,Essence of The Temporal,3,1,<a:elootitem:1144477550379274322>,Perform a binding ritual to seal the essence into card form.
-tXI,Essence of The Heavens,3,1,<a:elootitem:1144477550379274322>,Perform a binding ritual to seal the essence into card form.
-tXII,Essence of The Abyss,3,1,<a:elootitem:1144477550379274322>,Perform a binding ritual to seal the essence into card form.
-tXIII,Essence of The Death,3,1,<a:elootitem:1144477550379274322>,Perform a binding ritual to seal the essence into card form.
-tXIV,Essence of The Clarity,1,1,<a:elootitem:1144477550379274322>,Perform a binding ritual to seal the essence into card form.
-tXV,Essence of The Primordial,4,1,<a:elootitem:1144477550379274322>,Perform a binding ritual to seal the essence into card form.
-tXVI,Essence of The Fortress,4,1,<a:elootitem:1144477550379274322>,Perform a binding ritual to seal the essence into card form.
-tXVII,Essence of The Star,2,1,<a:elootitem:1144477550379274322>,Perform a binding ritual to seal the essence into card form.
-tXVIII,Essence of The Moon,2,1,<a:elootitem:1144477550379274322>,Perform a binding ritual to seal the essence into card form.
-tXIX,Essence of The Sun,2,1,<a:elootitem:1144477550379274322>,Perform a binding ritual to seal the essence into card form.
-tXX,Essence of The Requiem,2,1,<a:elootitem:1144477550379274322>,Perform a binding ritual to seal the essence into card form.
-tXXI,Essence of The Creation,2,1,<a:elootitem:1144477550379274322>,Perform a binding ritual to seal the essence into card form.
-tXXX,Essence of The Wish,6,1,<a:elootitem:1144477550379274322>,Perform a binding ritual to seal the essence into card form.
-I1t,Summoning Token (T1),1,100,<a:elootitem:1144477550379274322>,Perform a summoning ritual to summon a paragon solo boss.
-I2t,Summoning Token (T2),2,100,<a:elootitem:1144477550379274322>,Perform a summoning ritual to summon a paragon solo boss.
-I3t,Summoning Token (T3),3,100,<a:elootitem:1144477550379274322>,Perform a summoning ritual to summon a paragon solo boss.
-I4t,Summoning Token (T4),4,100,<a:elootitem:1144477550379274322>,Perform a summoning ritual to summon a paragon solo boss.
-I5t,Summoning Token (T5),5,100,<a:elootitem:1144477550379274322>,Perform a summoning ritual to summon a paragon solo boss.
-I6t,Summoning Token (T6),6,100,<a:elootitem:1144477550379274322>,Perform a summoning ritual to summon a paragon solo boss.
+item_id,item_name,item_tier,item_base_rate,item_emoji,item_description,item_cost,item_image
+I1a,Vibrant Condensed Energy,1,100,<a:eenergy:1145534127349706772>,100% base chance to upgrade enhancement. Reduced by 1% per enhancement.,1000,
+I2a,Vivid Condensed Energy,2,102,<a:eenergy:1145534127349706772>,102% base chance to upgrade enhancement. Reduced by 1% per enhancement.,1250,
+I3a,Viridescent Condensed Energy,3,105,<a:eenergy:1145534127349706772>,105% base chance to upgrade enhancement. Reduced by 1% per enhancement.,1500,
+I4a,Victorious Condensed Energy,4,125,<a:eenergy:1145534127349706772>,125% base chance to upgrade enhancement. Reduced by 1% per enhancement.,5000,
+I1b,Clouded Ore,1,1,<:eore:1145534835507593236>,1% chance to upgrade material tier.,1500,
+I2b,Clear Ore,2,5,<:eore:1145534835507593236>,5% chance to upgrade material tier.,6000,
+I3b,Crystal Ore,3,10,<:eore:1145534835507593236>,10% chance to upgrade material tier.,10000,
+I4b,Champion's Ore,4,100,<:eore:1145534835507593236>,100% chance to upgrade material tier.,75000,
+I1c,Light Soul,1,1,<:esoul:1145520258241806466>,1% chance to upgrade blessing tier.,1500,
+I2c,Luminous Soul,2,5,<:esoul:1145520258241806466>,5% chance to upgrade blessing tier.,6000,
+I3c,Lustrous Soul,3,10,<:esoul:1145520258241806466>,10% chance to upgrade blessing tier.,10000,
+I4c,Limitless Soul,4,100,<:esoul:1145520258241806466>,100% chance to upgrade blessing tier.,75000,
+I1d,Hard Socket Hammer,1,1,<:ehammer:1145520259248427069>,1% chance to add a socket to a gear item.,3000,
+I2d,Heavy Socket Hammer,2,2,<:ehammer:1145520259248427069>,2% chance to add a socket to a gear item.,5000,
+I3d,Hallowed Socket Hammer,3,3,<:ehammer:1145520259248427069>,3% chance to add a socket to a gear item.,7000,
+I4d,Heroic Socket Hammer,4,100,<:ehammer:1145520259248427069>,100% chance to add a socket to a gear item.,150000,
+I1h,Static Comet Powder,1,10,<a:elootitem:1144477550379274322>,10% chance to upgrade the star level of an item. Adding a roll if successful,5000,
+I2h,Sparking Comet Powder,2,15,<a:elootitem:1144477550379274322>,15% chance to upgrade the star level of an item. Adding a roll if successful,7000,
+I3h,Scintillating Comet Powder,3,25,<a:elootitem:1144477550379274322>,25% chance to upgrade the star level of an item. Adding a roll if successful,10000,
+I4h,Serene Comet Powder,4,100,<a:elootitem:1144477550379274322>,100% chance to upgrade the star level of an item. Adding a roll if successful,75000,
+I1i,Puzzling Cleansing Matrix,1,10,<a:eshadow2:1141653468965257216>,10% chance to reduce the star level of an item. Removing a roll if successful,1000,
+I2i,Perplexing Cleansing Matrix,2,15,<a:eshadow2:1141653468965257216>,15% chance to reduce the star level of an item. Removing a roll if successful,1500,
+I3i,Paradoxical Cleansing Matrix,3,25,<a:eshadow2:1141653468965257216>,25% chance to reduce the star level of an item. Removing a roll if successful,2500,
+I4i,Perfect Cleansing Matrix,4,100,<a:eshadow2:1141653468965257216>,100% chance to reduce the star level of an item. Removing a roll if successful,10000,
+I1j,Ancient Pearl,1,1,<:eprl:1148390531345432647>,1% chance to upgrade the tier of a roll.,2000,
+I2j,Astral Pearl,2,5,<:eprl:1148390531345432647>,5% chance to upgrade the tier of a roll.,10000,
+I3j,Awakened Pearl,3,10,<:eprl:1148390531345432647>,10% chance to upgrade the tier of a roll.,20000,
+I4j,Ascension Pearl,4,100,<:eprl:1148390531345432647>,100% chance to upgrade the tier of a roll.,75000,
+I4k,Elemental Origin,4,10,<a:eorigin:1145520263954440313>,10% chance to add an elemental damage type to a weapon,25000,
+I5l,Void Traces,5,1,<a:evoid:1145520260573827134>,1% chance to upgrade a tier 5 material weapon into a void tier material weapon,25000,
+I1m,Unrefined Wings (T1),1,25,<a:elootitem:1144477550379274322>,Refine for 25% chance to receive base tier 1 wings,0,
+I2m,Unrefined Wings (T2),2,25,<a:elootitem:1144477550379274322>,Refine for 25% chance to receive base tier 2 wings,0,
+I3m,Unrefined Wings (T3),3,25,<a:elootitem:1144477550379274322>,Refine for 25% chance to receive base tier 3 wings,0,
+I4m,Unrefined Wings (T4),4,25,<a:elootitem:1144477550379274322>,Refine for 25% chance to receive base tier 4 wings,25000,
+I1n,Unrefined Dragon Heart Gem (T1),1,25,<a:elootitem:1144477550379274322>,Refine for 25% chance to receive a tier 1 dragon heart gem,0,
+I2n,Unrefined Dragon Heart Gem (T2),2,25,<a:elootitem:1144477550379274322>,Refine for 25% chance to receive a tier 2 dragon heart gem,0,
+I3n,Unrefined Dragon Heart Gem (T3),3,25,<a:elootitem:1144477550379274322>,Refine for 25% chance to receive a tier 3 dragon heart gem,0,
+I4n,Unrefined Dragon Heart Gem (T4),4,25,<a:elootitem:1144477550379274322>,Refine for 25% chance to receive a tier 4 dragon heart gem,25000,
+I6n,Unrefined Dragon Heart Gem (T6),6,25,<a:elootitem:1144477550379274322>,Refine for 25% chance to receive a tier 6 dragon heart gem,100000,
+I1o,Unrefined Paragon Crest (T1),1,25,<a:elootitem:1144477550379274322>,Refine for 25% chance to receive a base tier 1 paragon crest,0,
+I2o,Unrefined Paragon Crest (T2),2,25,<a:elootitem:1144477550379274322>,Refine for 25% chance to receive a base tier 2 paragon crest,0,
+I3o,Unrefined Paragon Crest (T3),3,25,<a:elootitem:1144477550379274322>,Refine for 25% chance to receive a base tier 3 paragon crest,0,
+I4o,Unrefined Paragon Crest (T4),4,25,<a:elootitem:1144477550379274322>,Refine for 25% chance to receive a base tier 4 paragon crest,0,
+I5x,Unrefined Fabled Item,5,25,<a:elootitem:1144477550379274322>,Refine for 25% chance to receive a base tier 5 item,250000,
+I6x,Crystallized Wish,6,25,<a:elootitem:1144477550379274322>,Used to refine and upgrade a Key of Wishes Weapon,10000000,
+I1s,Lesser Stamina Potion,1,100,<:estamina:1145534039684562994>,Consume to restore 500 stamina,2500,
+I2s,Standard Stamina Potion,2,100,<:estamina:1145534039684562994>,Consume to restore 1000 stamina,5000,
+I3s,Greater Stamina Potion,3,100,<:estamina:1145534039684562994>,Consume to restore 2500 stamina,10000,
+I4s,Ultimate Stamina Potion,4,100,<:estamina:1145534039684562994>,Consume to restore 5000 stamina,20000,
+t0,Essence of The Reflection,1,1,<a:elootitem:1144477550379274322>,Perform a binding ritual to seal the essence into card form.,0,
+tI,Essence of The Magic,1,1,<a:elootitem:1144477550379274322>,Perform a binding ritual to seal the essence into card form.,0,
+tII,Essence of The Celestial,4,1,<a:elootitem:1144477550379274322>,Perform a binding ritual to seal the essence into card form.,0,
+tIII,Essence Of The Void,5,1,<a:elootitem:1144477550379274322>,Perform a binding ritual to seal the essence into card form.,0,
+tIV,Essence Of The Infinite,6,1,<a:elootitem:1144477550379274322>,Perform a binding ritual to seal the essence into card form.,0,
+tV,Essence of The Duality,3,1,<a:elootitem:1144477550379274322>,Perform a binding ritual to seal the essence into card form.,0,
+tVI,Essence of The Love,1,1,<a:elootitem:1144477550379274322>,Perform a binding ritual to seal the essence into card form.,0,
+tVII,Essence of The Dragon,4,1,<a:elootitem:1144477550379274322>,Perform a binding ritual to seal the essence into card form.,0,
+tVIII,Essence of The Behemoth,4,1,<a:elootitem:1144477550379274322>,Perform a binding ritual to seal the essence into card form.,0,
+tIX,Essence of The Memory,1,1,<a:elootitem:1144477550379274322>,Perform a binding ritual to seal the essence into card form.,0,
+tX,Essence of The Temporal,3,1,<a:elootitem:1144477550379274322>,Perform a binding ritual to seal the essence into card form.,0,
+tXI,Essence of The Heavens,3,1,<a:elootitem:1144477550379274322>,Perform a binding ritual to seal the essence into card form.,0,
+tXII,Essence of The Abyss,3,1,<a:elootitem:1144477550379274322>,Perform a binding ritual to seal the essence into card form.,0,
+tXIII,Essence of The Death,3,1,<a:elootitem:1144477550379274322>,Perform a binding ritual to seal the essence into card form.,0,
+tXIV,Essence of The Clarity,1,1,<a:elootitem:1144477550379274322>,Perform a binding ritual to seal the essence into card form.,0,
+tXV,Essence of The Primordial,4,1,<a:elootitem:1144477550379274322>,Perform a binding ritual to seal the essence into card form.,0,
+tXVI,Essence of The Fortress,4,1,<a:elootitem:1144477550379274322>,Perform a binding ritual to seal the essence into card form.,0,
+tXVII,Essence of The Star,2,1,<a:elootitem:1144477550379274322>,Perform a binding ritual to seal the essence into card form.,0,
+tXVIII,Essence of The Moon,2,1,<a:elootitem:1144477550379274322>,Perform a binding ritual to seal the essence into card form.,0,
+tXIX,Essence of The Sun,2,1,<a:elootitem:1144477550379274322>,Perform a binding ritual to seal the essence into card form.,0,
+tXX,Essence of The Requiem,2,1,<a:elootitem:1144477550379274322>,Perform a binding ritual to seal the essence into card form.,0,
+tXXI,Essence of The Creation,2,1,<a:elootitem:1144477550379274322>,Perform a binding ritual to seal the essence into card form.,0,
+tXXX,Essence of The Wish,6,1,<a:elootitem:1144477550379274322>,Perform a binding ritual to seal the essence into card form.,0,
+I1t,Summoning Token (T1),1,100,<a:elootitem:1144477550379274322>,Perform a summoning ritual to summon a paragon solo boss.,0,
+I2t,Summoning Token (T2),2,100,<a:elootitem:1144477550379274322>,Perform a summoning ritual to summon a paragon solo boss.,0,
+I3t,Summoning Token (T3),3,100,<a:elootitem:1144477550379274322>,Perform a summoning ritual to summon a paragon solo boss.,0,
+I4t,Summoning Token (T4),4,100,<a:elootitem:1144477550379274322>,Perform a summoning ritual to summon a paragon solo boss.,0,
+I5t,Summoning Token (T5),5,100,<a:elootitem:1144477550379274322>,Perform a summoning ritual to summon a paragon solo boss.,50000,
+I6t,Summoning Token (T6),6,100,<a:elootitem:1144477550379274322>,Perform a summoning ritual to summon a paragon solo boss.,100000,
+I7x,Crystallized Void,7,100,<a:elootitem:1144477550379274322>,Voidcraft a Tier 6 weapon into a Tier 7 weapon,99999999,
+I1r,Crate,1,100,<a:elootitem:1144477550379274322>,An item crate. What could be inside?,10000,

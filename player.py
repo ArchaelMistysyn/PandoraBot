@@ -20,6 +20,8 @@ import mydb
 import pandorabot
 from datetime import datetime as dt
 
+import tarot
+
 
 class PlayerProfile:
     def __init__(self):
@@ -35,7 +37,7 @@ class PlayerProfile:
         self.equipped_acc = 0
         self.equipped_wing = 0
         self.equipped_crest = 0
-        self.equipped_tarot = 0
+        self.equipped_tarot = ""
         self.player_coins = 0
         self.player_class = ""
         self.player_quest = 0
@@ -147,7 +149,6 @@ class PlayerProfile:
                 stats += f"\n{pandorabot.global_element_list[idz]} Curse: {int(z * 100)}%"
             stats += f"\nOmni Curse: {int(self.all_elemental_curse * 100)}%"
 
-
         embed_msg = discord.Embed(colour=echelon_colour[0],
                                   title=self.player_username,
                                   description=id_msg)
@@ -218,7 +219,7 @@ class PlayerProfile:
                                              input_9=int(self.player_coins), input_10=int(self.equipped_weapon),
                                              input_11=int(self.equipped_armour), input_12=int(self.equipped_acc),
                                              input_13=int(self.equipped_wing), input_14=int(self.equipped_crest),
-                                             input_15=int(self.equipped_tarot))
+                                             input_15=str(self.equipped_tarot))
                     pandora_db.execute(query)
                     response = f"Player {self.player_name} has been registered to play. Welcome {self.player_username}!"
                     response += f"\nPlease use the !quest command to proceed."
@@ -295,7 +296,7 @@ class PlayerProfile:
             self.equipped_acc = int(df['player_equip_acc'].values[0])
             self.equipped_wing = int(df['player_equip_wing'].values[0])
             self.equipped_crest = int(df['player_equip_crest'].values[0])
-            self.equipped_tarot = int(df['player_equip_tarot'].values[0])
+            self.equipped_tarot = str(df['player_equip_tarot'].values[0])
         except mysql.connector.Error as err:
             print("Database Error: {}".format(err))
 
@@ -342,6 +343,12 @@ class PlayerProfile:
             self.assign_roll_values(e_crest)
             self.assign_gem_values(e_crest)
             self.unique_ability_multipliers(e_crest.item_bonus_stat)
+        if self.equipped_tarot != "":
+            tarot_info = self.equipped_tarot.split(";")
+            e_tarot = tarot.check_tarot(self.player_id, tarot.tarot_card_list(int(tarot_info[0])), int(tarot_info[1]))
+            base_damage = e_tarot.get_base_damage()
+            self.player_damage += base_damage
+            self.assign_tarot_values(e_tarot)
 
         self.critical_chance = (1 + self.critical_chance) * base_critical_chance
         self.attack_speed = (1 + self.attack_speed) * base_attack_speed
@@ -369,7 +376,6 @@ class PlayerProfile:
 
     def get_player_damage(self, boss_object):
         additional_multiplier = 1.0
-        self.get_player_multipliers()
         e_weapon = inventory.read_custom_item(self.equipped_weapon)
         # Critical hits
         random_num = random.randint(1, 100)
@@ -382,8 +388,6 @@ class PlayerProfile:
         # Class Multiplier
         self.player_damage *= (1 + self.class_multiplier)
         # Additional multipliers
-        additional_multiplier *= (1 + self.aura)
-        additional_multiplier *= (1 + self.all_elemental_curse + sum(self.elemental_curse))
         additional_multiplier *= (1 + self.final_damage)
         self.player_damage *= additional_multiplier
         # Type Defences
@@ -396,75 +400,211 @@ class PlayerProfile:
                 self.elemental_damage[idx] *= (1 + self.all_elemental_multiplier)
                 location = int(idx)
                 resist_multi = damagecalc.boss_defences("Element", self, boss_object, location, e_weapon)
-                resist_multi += self.elemental_penetration[idx] + self.all_elemental_penetration
-                self.elemental_damage[idx] *= resist_multi
+                penetration_multi = 1 + self.elemental_penetration[idx] + self.all_elemental_penetration
+                self.elemental_damage[idx] *= resist_multi * penetration_multi
         self.player_total_damage = int(sum(self.elemental_damage))
         return self.player_total_damage
 
+    def assign_tarot_values(self, tarot_card):
+        card_num = tarot.get_number_by_tarot(tarot_card.card_name)
+        card_multiplier = tarot_card.num_stars * 0.01
+        match card_num:
+            case 0:
+                if tarot_card.card_variant == 1:
+                    self.elemental_resistance[5] += card_multiplier * 15
+                else:
+                    self.elemental_damage_multiplier[5] += card_multiplier * 20
+            case 1:
+                if tarot_card.card_variant == 1:
+                    self.elemental_resistance[0] += card_multiplier * 15
+                else:
+                    self.elemental_damage_multiplier[0] += card_multiplier * 20
+            case 2:
+                if tarot_card.card_variant == 1:
+                    self.elemental_penetration[8] += card_multiplier * 25
+                else:
+                    self.elemental_curse[8] += card_multiplier * 30
+            case 3:
+                if tarot_card.card_variant == 1:
+                    self.defence_penetration += card_multiplier * 25
+                else:
+                    self.class_mastery += card_multiplier * 8
+            case 4:
+                if tarot_card.card_variant == 1:
+                    self.critical_chance += card_multiplier * 25
+                else:
+                    self.critical_multiplier += card_multiplier * 40
+            case 5:
+                if tarot_card.card_variant == 1:
+                    self.elemental_penetration[2] += card_multiplier * 25
+                else:
+                    self.elemental_curse[2] += card_multiplier * 30
+            case 6:
+                if tarot_card.card_variant == 1:
+                    self.health_multiplier += card_multiplier * 25
+                else:
+                    self.all_elemental_resistance += card_multiplier * 10
+            case 7:
+                if tarot_card.card_variant == 1:
+                    notsureyet = True
+                else:
+                    notsureyet = True
+            case 8:
+                if tarot_card.card_variant == 1:
+                    self.health_bonus += 250 * tarot_card.num_stars
+                else:
+                    self.final_damage += card_multiplier * 15
+            case 9:
+                if tarot_card.card_variant == 1:
+                    self.elemental_resistance[2] += card_multiplier * 15
+                else:
+                    self.elemental_damage_multiplier[2] += card_multiplier * 20
+            case 10:
+                if tarot_card.card_variant == 1:
+                    self.elemental_penetration[4] += card_multiplier * 25
+                else:
+                    self.elemental_curse[4] += card_multiplier * 30
+            case 11:
+                if tarot_card.card_variant == 1:
+                    self.elemental_penetration[7] += card_multiplier * 25
+                else:
+                    self.elemental_curse[7] += card_multiplier * 30
+            case 12:
+                if tarot_card.card_variant == 1:
+                    self.elemental_penetration[6] += card_multiplier * 25
+                else:
+                    self.elemental_curse[6] += card_multiplier * 30
+            case 13:
+                if tarot_card.card_variant == 1:
+                    self.elemental_penetration[5] += card_multiplier * 25
+                else:
+                    self.elemental_curse[5] += card_multiplier * 30
+            case 14:
+                if tarot_card.card_variant == 1:
+                    self.elemental_resistance[1] += card_multiplier * 15
+                else:
+                    self.elemental_damage_multiplier[1] += card_multiplier * 20
+            case 15:
+                if tarot_card.card_variant == 1:
+                    self.elemental_penetration[0] += card_multiplier * 25
+                else:
+                    self.elemental_curse[0] += card_multiplier * 30
+            case 16:
+                if tarot_card.card_variant == 1:
+                    self.health_multiplier += card_multiplier * 25
+                else:
+                    self.damage_mitigation += card_multiplier * 15
+            case 17:
+                if tarot_card.card_variant == 1:
+                    self.health_regen += card_multiplier * 25
+                else:
+                    self.all_elemental_multiplier += card_multiplier * 20
+            case 18:
+                if tarot_card.card_variant == 1:
+                    self.elemental_resistance[6] += card_multiplier * 15
+                else:
+                    self.elemental_damage_multiplier[6] += card_multiplier * 20
+            case 19:
+                if tarot_card.card_variant == 1:
+                    self.elemental_resistance[7] += card_multiplier * 15
+                else:
+                    self.elemental_damage_multiplier[7] += card_multiplier * 20
+            case 20:
+                if tarot_card.card_variant == 1:
+                    self.elemental_resistance[4] += card_multiplier * 15
+                else:
+                    self.elemental_damage_multiplier[4] += card_multiplier * 20
+            case 21:
+                if tarot_card.card_variant == 1:
+                    self.elemental_resistance[3] += card_multiplier * 15
+                else:
+                    self.elemental_damage_multiplier[3] += card_multiplier * 20
+            case 22:
+                if tarot_card.card_variant == 1:
+                    self.aura += card_multiplier * 15
+                else:
+                    self.all_elemental_curse += card_multiplier * 20
+
     def assign_roll_values(self, equipped_item):
         for x in equipped_item.item_prefix_values:
-            roll_adjust = 5
             roll_tier = int(str(x)[1])
             check_roll = ord(str(x[2]))
-            bonus = 0.01 * roll_tier * roll_adjust * (1 + equipped_item.item_tier)
+            roll_adjust = 0.01 * roll_tier * (1 + equipped_item.item_tier)
             if check_roll <= 106:
                 roll_num = check_roll - 97
                 if roll_num == 9:
+                    bonus = roll_adjust * 5
                     self.all_elemental_multiplier += bonus
                 else:
+                    bonus = roll_adjust * 10
                     self.elemental_damage_multiplier[roll_num] += bonus
             elif check_roll <= 116:
                 roll_num = check_roll - 97 - 10
                 if roll_num == 9:
+                    bonus = roll_adjust * 4
                     self.all_elemental_penetration += bonus
                 else:
+                    bonus = roll_adjust * 8
                     self.elemental_penetration[roll_num] += bonus
             else:
                 match check_roll:
                     case "u":
+                        bonus = roll_adjust * 3
                         self.defence_penetration += bonus
                     case "v":
+                        bonus = roll_adjust * 3
                         self.attack_speed += bonus
                     case "w":
+                        bonus = roll_adjust * 5
                         self.critical_multiplier += bonus
                     case "x":
+                        bonus = roll_adjust * 3
                         self.final_damage += bonus
                     case "y":
+                        bonus = roll_adjust * 3
                         self.multi_hit += bonus
                     case _:
+                        bonus = roll_adjust * 3
                         self.class_multiplier += bonus
         for y in equipped_item.item_suffix_values:
-            roll_adjust = 5
             roll_tier = int(str(y)[1])
             check_roll = ord(str(y[2]))
-            bonus = 0.01 * roll_tier * roll_adjust * (1 + equipped_item.item_tier)
+            roll_adjust = 0.01 * roll_tier * (1 + equipped_item.item_tier)
             if check_roll <= 106:
                 roll_num = check_roll - 97
                 if roll_num == 9:
+                    bonus = roll_adjust * 5
                     self.all_elemental_resistance += bonus
                 else:
+                    bonus = roll_adjust * 10
                     self.elemental_resistance[roll_num] += bonus
             elif check_roll <= 116:
                 roll_num = check_roll - 97 - 10
                 if roll_num == 9:
+                    bonus = roll_adjust * 3
                     self.all_elemental_curse += bonus
                 else:
+                    bonus = roll_adjust * 5
                     self.elemental_curse[roll_num] += bonus
             else:
                 match check_roll:
                     case "u":
+                        bonus = roll_adjust * 5
                         self.damage_mitigation += bonus
                     case "v":
+                        bonus = roll_adjust * 5
                         self.hp_regen += bonus
                     case "w":
-                        roll_adjust = 100
-                        bonus = roll_tier * roll_adjust * (1 + equipped_item.item_tier)
+                        bonus = roll_tier * 100 * (1 + equipped_item.item_tier)
                         self.hp_bonus += bonus
                     case "x":
+                        bonus = roll_adjust * 10
                         self.hp_multiplier += bonus
                     case "y":
+                        bonus = roll_adjust * 5
                         self.critical_chance += bonus
                     case _:
+                        bonus = roll_adjust * 3
                         self.aura += bonus
 
     def assign_gem_values(self, e_item):
@@ -772,7 +912,7 @@ def get_all_users():
                 target_player.player_stamina = int(row["player_stamina"])
                 target_player.player_class = str(row["player_class"])
                 target_player.player_coins = int(row["player_coins"])
-                target_player.player_quest = int(df["player_quest"].values[0])
+                target_player.player_quest = int(row["player_quest"])
                 target_player.get_equipped()
                 user_list.append(target_player)
         else:

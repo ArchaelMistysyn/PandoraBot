@@ -136,21 +136,23 @@ def create_loot_embed(current_embed, active_boss, player_list):
 
 def generate_random_item():
     quantity = 1
-    random_reward = random.randint(1, 1000)
+    random_reward = random.randint(1, 1000000)
     reward_types = ["a", "b", "c", "d", "h", "i", "j", "m", "n", "s", "t"]
     if random_reward <= 1:
+        reward_id = "I7x"
+    elif random_reward <= 101:
         reward_id = "I6x"
-    elif random_reward <= 6:
+    elif random_reward <= 1101:
         reward_id = "I5x"
-    elif random_reward <= 106:
+    elif random_reward <= 51101:
         item_tier = 4
         item_type = reward_types[(random.randint(1, len(reward_types)) - 1)]
         reward_id = f"I{item_tier}{item_type}"
     else:
         quantity = random.randint(1, 3)
-        if random_reward <= 306:
+        if random_reward <= 301101:
             item_tier = 3
-        elif random_reward <= 606:
+        elif random_reward <= 601101:
             item_tier = 2
         else:
             item_tier = 1

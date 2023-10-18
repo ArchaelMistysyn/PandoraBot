@@ -144,6 +144,7 @@ class CustomItem:
                 if self.item_tier == 5:
                     self.item_material_tier = "Fabled"
                     self.item_blessing_tier = "Refined"
+                    self.item_base_type = "Amulet"
                 self.item_bonus_stat = assign_bonus_stat(self.item_tier)
                 self.add_roll()
             case "G":
@@ -340,10 +341,10 @@ class CustomItem:
                     case _:
                         item_base = "Lorica"
             case "Y":
-                random_number = random.randint(1, 5)
+                random_number = random.randint(1, 4)
                 match random_number:
                     case 1:
-                        item_base = "Amulet"
+                        item_base = "Bracelet"
                     case 2:
                         item_base = "Necklace"
                     case 3:
@@ -351,7 +352,7 @@ class CustomItem:
                     case 4:
                         item_base = "Earring"
                     case _:
-                        item_base = "Bracelet"
+                        item_base = "Error"
             case "C":
                 random_number = random.randint(1, 9)
                 match random_number:
@@ -566,6 +567,62 @@ class CustomItem:
     def give_item(self, new_owner):
         self.player_owner = new_owner
         self.update_stored_item()
+
+
+class BasicItem:
+    def __init__(self):
+        self.item_name = ""
+        self.item_id = ""
+        self.item_tier = 0
+        self.item_emoji = ""
+        self.item_image = ""
+        self.item_description = ""
+        self.item_cost = 0
+
+    def create_bitem_embed(self):
+        tier_colour, tier_emoji = get_gear_tier_colours(self.item_tier)
+        embed_msg = discord.Embed(colour=tier_colour,
+                                  title=self.item_name,
+                                  description=f"Item ID: {self.item_id} - Item Tier: {self.item_tier}")
+        embed_msg.add_field(name="", value=self.item_description, inline=False)
+        # embed_msg.set_thumbnail(url=self.item_image)
+        return embed_msg
+
+
+def get_item_shop_list(item_tier):
+    df = pd.read_csv("itemlist.csv")
+    df = df.loc[df['item_tier'] == item_tier]
+    item_list = []
+    if len(df.index) != 0:
+        for index, row in df.iterrows():
+            if int(row["item_cost"]) != 0:
+                target_item = BasicItem()
+                target_item.item_name = str(row["item_name"])
+                target_item.item_id = str(row["item_id"])
+                target_item.item_tier = int(row["item_tier"])
+                target_item.item_emoji = str(row["item_emoji"])
+                target_item.item_description = str(row["item_description"])
+                target_item.item_cost = int(row["item_cost"])
+                target_item.item_image = str(row["item_image"])
+                item_list.append(target_item)
+    return item_list
+
+
+def get_basic_item_by_id(item_id):
+    df = pd.read_csv("itemlist.csv")
+    df = df.loc[df['item_id'] == item_id]
+    target_item = None
+    if len(df.index) != 0:
+        target_item = BasicItem()
+        target_item.item_name = str(df["item_name"].values[0])
+        target_item.item_id = str(df["item_id"].values[0])
+        target_item.item_tier = int(df["item_tier"].values[0])
+        target_item.item_emoji = str(df["item_emoji"].values[0])
+        target_item.item_description = str(df["item_description"].values[0])
+        target_item.item_cost = int(df["item_cost"].values[0])
+        target_item.item_image = str(df["item_image"].values[0])
+    return target_item
+
 
 def read_custom_item(item_id):
     try:
@@ -970,6 +1027,7 @@ def generate_random_tier():
 
 
 def check_stock(player_object, item_id):
+    player_stock = 0
     try:
         engine_url = mydb.get_engine_url()
         engine = sqlalchemy.create_engine(engine_url)
@@ -982,11 +1040,8 @@ def check_stock(player_object, item_id):
         engine.dispose()
         if len(df.index) != 0:
             player_stock = int(df.values[0])
-        else:
-            player_stock = 0
     except exc.SQLAlchemyError as error:
         print(error)
-        player_stock = 0
     return player_stock
 
 
@@ -1022,7 +1077,6 @@ def update_stock(player_object, item_id, change):
 
 
 def get_roll_by_code(item_object, code):
-    roll_adjust = 5
     roll_text = ""
     check_roll = ord(code[2])
     text_method = 1
@@ -1031,31 +1085,41 @@ def get_roll_by_code(item_object, code):
             if check_roll <= 106:
                 roll_num = check_roll - 97
                 if roll_num == 9:
+                    roll_adjust = 5
                     roll_keyword = "Omni"
                 else:
+                    roll_adjust = 10
                     roll_keyword = pandorabot.element_names[roll_num]
                 roll = f"{roll_keyword} Damage"
             elif check_roll <= 116:
                 roll_num = check_roll - 97 - 10
                 if roll_num == 9:
+                    roll_adjust = 4
                     roll_keyword = "Omni"
                 else:
+                    roll_adjust = 8
                     roll_keyword = pandorabot.element_names[roll_num]
                 roll = f"{roll_keyword} Penetration"
             else:
                 match check_roll:
                     case "u":
                         roll = "Defence Penetration"
+                        roll_adjust = 3
                     case "v":
                         roll = "Attack Speed"
+                        roll_adjust = 3
                     case "w":
                         roll = "Critical Strike Multiplier"
+                        roll_adjust = 5
                     case "x":
                         roll = "Final Damage"
+                        roll_adjust = 3
                     case "y":
                         roll = "Multi-Hit"
+                        roll_adjust = 3
                     case _:
                         roll = "Class Mastery"
+                        roll_adjust = 3
             bonus = str(int(code[1]) * roll_adjust * (1 + item_object.item_tier))
             roll_text += f'+{bonus}% {roll}'
         case "S":
@@ -1063,19 +1127,24 @@ def get_roll_by_code(item_object, code):
                 roll_num = check_roll - 97
                 if roll_num == 9:
                     roll_keyword = "Omni"
+                    roll_adjust = 5
                 else:
                     roll_keyword = pandorabot.element_names[roll_num]
+                    roll_adjust = 10
                 roll = f"{roll_keyword} Resistance"
             elif check_roll <= 116:
                 roll_num = check_roll - 97 - 10
                 if roll_num == 9:
+                    roll_adjust = 3
                     roll_keyword = "Omni"
                 else:
+                    roll_adjust = 5
                     roll_keyword = pandorabot.element_names[roll_num]
                 roll = f"{roll_keyword} Curse"
             else:
                 match check_roll:
                     case "u":
+                        roll_adjust = 5
                         roll = "Damage Mitigation"
                     case "v":
                         roll = "Health Regen"
@@ -1086,9 +1155,12 @@ def get_roll_by_code(item_object, code):
                         text_method = 2
                     case "x":
                         roll = "Health Multiplier"
+                        roll_adjust = 10
                     case "y":
                         roll = "Critical Strike Chance"
+                        roll_adjust = 5
                     case _:
+                        roll_adjust = 3
                         roll = "Omni Aura"
             bonus = str(int(code[1]) * roll_adjust * (1 + item_object.item_tier))
             if text_method == 1:
