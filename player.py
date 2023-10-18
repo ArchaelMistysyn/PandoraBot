@@ -137,17 +137,18 @@ class PlayerProfile:
             for idy, y in enumerate(self.elemental_resistance):
                 stats += f"\n{pandorabot.global_element_list[idy]} Resistance: {int(y * 100)}%"
             stats += f"\nOmni Resistance: {int(self.all_elemental_resistance * 100)}%"
-            stats += f"\nDamage Mitigation: {self.damage_mitigation}%"
+            stats += f"\nDamage Mitigation: {int(self.damage_mitigation)}%"
         elif method == 3:
             stats = f"\nDefence Penetration: {int(self.defence_penetration * 100)}%"
             for idx, x in enumerate(self.elemental_penetration):
                 stats += f"\n{pandorabot.global_element_list[idx]} Penetration: {int(x * 100)}%"
             stats += f"\nOmni Penetration: {int(self.all_elemental_penetration * 100)}%"
         else:
-            stats = f"Omni Aura: {int(self.aura)}%"
+            stats = ""
             for idz, z in enumerate(self.elemental_curse):
-                stats += f"\n{pandorabot.global_element_list[idz]} Curse: {int(z * 100)}%"
-            stats += f"\nOmni Curse: {int(self.all_elemental_curse * 100)}%"
+                stats += f"{pandorabot.global_element_list[idz]} Curse: {int(z * 100)}%\n"
+            stats += f"Omni Aura: {int(self.aura)}%\n"
+            stats += f"Omni Curse: {int(self.all_elemental_curse * 100)}%"
 
         embed_msg = discord.Embed(colour=echelon_colour[0],
                                   title=self.player_username,

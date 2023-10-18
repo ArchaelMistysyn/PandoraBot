@@ -3,6 +3,7 @@ import player
 import discord
 from discord.ext.commands import Bot
 from discord.ext import commands, tasks
+import bosses
 
 
 class StaminaCog(commands.Cog):
@@ -43,7 +44,14 @@ class RaidCog(commands.Cog):
         is_alive = await self.bot.raid_boss(self.active_boss, self.channel_id, self.channel_num,
                                             self.sent_message, self.channel_object)
         if not is_alive:
-            self.cog_unload()
+            bosses.clear_boss_info(self.channel_id, 0)
+            level, boss_type, boss_tier = bosses.get_boss_details(self.channel_num)
+            active_boss = bosses.spawn_boss(self.channel_id, 0, boss_tier, boss_type, level, self.channel_num)
+            self.active_boss = active_boss
+            embed_msg = active_boss.create_boss_msg(0, True)
+            raid_button = RaidView()
+            sent_message = await channel_object.send(embed=embed_msg, view=raid_button)
+            self.sent_message = sent_message
 
 
 class SoloCog(commands.Cog):

@@ -1214,7 +1214,7 @@ def sell(user, item, embed_msg):
     reload_player = player.get_player_by_id(user.player_id)
     response_embed = embed_msg
     response = user.check_equipped(item)
-    sell_value = item.item_tier * 100
+    sell_value = item.item_tier * 250
     if response == "":
         reload_player.player_coins += sell_value
         reload_player.set_player_field("player_coins", reload_player.player_coins)

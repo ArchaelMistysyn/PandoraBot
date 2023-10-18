@@ -264,14 +264,11 @@ def run_discord_bot():
         else:
             for x in player_list:
                 temp_user = player.get_player_by_id(int(x))
-                # Set tokens based on boss type will need to add case statement here
                 quest.assign_tokens(temp_user, active_boss)
             embed_msg = bosses.create_dead_boss_embed(channel_id, active_boss, dps)
             await sent_message.edit(embed=embed_msg)
             loot_embed = loot.create_loot_embed(embed_msg, active_boss, player_list)
             await channel_object.send(embed=loot_embed)
-            await raid_task(channel_id, channel_num, channel_object)
-            sent_message = await channel_object.send(embed=embed_msg, view=raid_button)
             return False
 
     @pandora_bot.event
@@ -437,7 +434,7 @@ def run_discord_bot():
                 selected_item = inventory.read_custom_item(item_id)
                 player_object = player.get_player_by_name(str(ctx.author))
                 if player_object.player_class != "":
-                    if current_user.player_id == selected_item.player_owner:
+                    if player_object.player_id == selected_item.player_owner:
                         embed_msg = discord.Embed(colour=discord.Colour.blurple(),
                                                   title="Inlay Gem",
                                                   description="Let me know what item you'd like to inlay this gem into!")

@@ -20,7 +20,7 @@ class TierSelectView(discord.ui.View):
         self.player_user = player_user
 
     @discord.ui.select(
-        placeholder="Select crafting method!",
+        placeholder="Select a shop!",
         min_values=1,
         max_values=1,
         options=[
@@ -82,7 +82,7 @@ class ShopView1(discord.ui.View):
         self.tier_colour = tier_colour
 
     @discord.ui.select(
-        placeholder="Select crafting method!",
+        placeholder="Choose an item from the shop!",
         min_values=1,
         max_values=1,
         options=[
@@ -295,6 +295,7 @@ class PurchaseView(discord.ui.View):
                 if self.selected_item.item_cost <= reload_player.player_coins:
                     if not self.is_paid:
                         reload_player.player_coins -= self.selected_item.item_cost
+                        reload_player.set_player_field("player_coins", reload_player.player_coins)
                         inventory.update_stock(reload_player, self.selected_item.item_id, 1)
                         self.is_paid = True
                     embed_title = "Purchase Successful!"
@@ -319,14 +320,16 @@ class PurchaseView(discord.ui.View):
         try:
             if interaction.user.name == self.player_user.player_name:
                 reload_player = player.get_player_by_id(self.player_user.player_id)
-                if self.selected_item.item_cost <= reload_player.player_coins:
+                total_cost = self.selected_item.item_cost * 5
+                if total_cost <= reload_player.player_coins:
                     if not self.is_paid:
-                        reload_player.player_coins -= self.selected_item.item_cost
+                        reload_player.player_coins -= total_cost
+                        reload_player.set_player_field("player_coins", reload_player.player_coins)
                         inventory.update_stock(reload_player, self.selected_item.item_id, 5)
                         self.is_paid = True
                     embed_title = "Purchase Successful!"
                     embed_description = (f"Purchased {self.selected_item.item_emoji} {self.selected_item.item_name}"
-                                         f" 1x. Remaining lotus coins: {reload_player.player_coins}.")
+                                         f" 5x. Remaining lotus coins: {reload_player.player_coins}.")
                     embed_msg = discord.Embed(colour=discord.Colour.dark_orange(),
                                               title=embed_title,
                                               description=embed_description)
@@ -346,14 +349,16 @@ class PurchaseView(discord.ui.View):
         try:
             if interaction.user.name == self.player_user.player_name:
                 reload_player = player.get_player_by_id(self.player_user.player_id)
-                if self.selected_item.item_cost <= reload_player.player_coins:
+                total_cost = self.selected_item.item_cost * 10
+                if total_cost <= reload_player.player_coins:
                     if not self.is_paid:
-                        reload_player.player_coins -= self.selected_item.item_cost
+                        reload_player.player_coins -= total_cost
+                        reload_player.set_player_field("player_coins", reload_player.player_coins)
                         inventory.update_stock(reload_player, self.selected_item.item_id, 10)
                         self.is_paid = True
                     embed_title = "Purchase Successful!"
                     embed_description = (f"Purchased {self.selected_item.item_emoji} {self.selected_item.item_name}"
-                                         f" 1x. Remaining lotus coins: {reload_player.player_coins}.")
+                                         f" 10x. Remaining lotus coins: {reload_player.player_coins}.")
                     embed_msg = discord.Embed(colour=discord.Colour.dark_orange(),
                                               title=embed_title,
                                               description=embed_description)

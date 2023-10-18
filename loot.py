@@ -38,17 +38,18 @@ class BasicItem:
 
 def award_loot(boss_object, player_list, exp_amount):
     boss_tier = boss_object.boss_tier
-    coin_amount = boss_object.boss_type_num * boss_tier * 100
+    coin_amount = boss_object.boss_type_num * boss_tier * 250
     loot_msg = []
     labels = ['player_id', 'item_id', 'item_qty']
     df_change = pd.DataFrame(columns=labels)
     for counter, x in enumerate(player_list):
         temp_player = player.get_player_by_id(x)
         temp_player.player_exp += exp_amount
-        temp_player.player_coins += coin_amount
+        temp_coin_amount = coin_amount + temp_player.player_lvl
+        temp_player.player_coins += temp_coin_amount
         temp_player.set_player_field("player_exp", temp_player.player_exp)
         temp_player.set_player_field("player_coins", temp_player.player_coins)
-        loot_msg.append(f"{pandorabot.exp_icon} {exp_amount}x\n{pandorabot.coin_icon} {coin_amount}x\n")
+        loot_msg.append(f"{pandorabot.exp_icon} {exp_amount}x\n{pandorabot.coin_icon} {temp_coin_amount}x\n")
         tarot_check_num = random.randint(1, 10)
         if tarot_check_num == 1:
             if ' - ' in boss_object.boss_name:
