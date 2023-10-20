@@ -140,7 +140,7 @@ def assign_tokens(player_object, boss_object):
         player_object.check_and_update_tokens(19, 1)
     elif player_object.player_quest <= 9 and boss_object.boss_name == "XVI - Aurora, the Fortress":
         player_object.check_and_update_tokens(9, 1)
-    elif player_object.player_quest <= 12 and boss_object.boss_name == "VII - Astratha the Dimensional":
+    elif player_object.player_quest <= 12 and boss_object.boss_name == "VII - Astratha, The Dimensional":
         player_object.check_and_update_tokens(12, 1)
     elif player_object.player_quest <= 13 and boss_object.boss_name == "VIII - Tyra, the Behemoth":
         player_object.check_and_update_tokens(13, 1)

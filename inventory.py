@@ -1065,7 +1065,7 @@ def update_stock(player_object, item_id, change):
         df = pd.read_sql(query, pandora_db)
         if len(df.index) != 0:
             player_stock = int(df['item_qty'].values[0])
-            listing_id = int(df['listing_id'].values[0])
+            # listing_id = int(df['listing_id'].values[0])
             player_stock += change
             query = text("UPDATE BasicInventory SET item_qty = :new_qty "
                          "WHERE player_id = :id_check AND item_id = :item_check")

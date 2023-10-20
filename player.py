@@ -96,7 +96,7 @@ class PlayerProfile:
         self.final_damage = 0.0
 
         self.critical_chance = 0.0
-        self.critical_multiplier = 0.0
+        self.critical_multiplier = 1.0
 
         self.attack_speed = 0.0
         self.bonus_hits = 0.0
@@ -359,6 +359,7 @@ class PlayerProfile:
         self.attack_speed = (1 + self.attack_speed) * base_attack_speed
         self.damage_mitigation = (1 + (self.mitigation_multiplier + self.damage_mitigation)) * base_damage_mitigation
         self.player_mHP = int((base_player_hp + self.hp_bonus) * (1 + self.hp_multiplier))
+        self.player_cHP = self.player_mHP
 
         match_count = 0
         if self.equipped_weapon != 0:

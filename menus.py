@@ -1093,7 +1093,7 @@ def cycle_gear(user, current_position, direction):
             item_type = "Insignia"
             insignia_item = reload_user.insignia
     no_item = False
-    type_list_1 = ["Weapon", "Armour", "Accesory", "Wing", "Crest"]
+    type_list_1 = ["Weapon", "Armour", "Accessory", "Wing", "Crest"]
     if item_type in type_list_1:
         if selected_item == 0:
             no_item = True

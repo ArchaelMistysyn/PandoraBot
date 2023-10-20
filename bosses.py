@@ -319,7 +319,7 @@ def spawn_boss(channel_id, player_id, new_boss_tier, selected_boss_type, boss_le
                 hp_min = get_base_hp(selected_boss_type, channel_num)
                 hp_max = int(hp_min * (boss_level * 0.01 + 1))
                 subtotal_hp = random.randint(hp_min, hp_max)
-                subtotal_hp *= 5 ** int(boss_level / 10)
+                subtotal_hp *= 10 ** int(boss_level / 10)
                 subtotal_hp += (new_boss_tier * 0.1) * subtotal_hp
                 total_hp = int(subtotal_hp)
             elif new_boss_tier == 5:
