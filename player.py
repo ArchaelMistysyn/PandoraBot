@@ -418,9 +418,9 @@ class PlayerProfile:
         if num_elements != 9:
             selected_elements_list = [ind for ind, x in enumerate(element_list) if x == 1]
             for y in selected_elements_list:
-                self.elemental_penetration[y] += (150 / num_elements) * 0.01
+                self.elemental_penetration[y] += (150 / num_elements + 25 * self.player_echelon) * 0.01
         else:
-            self.all_elemental_penetration += 0.25
+            self.all_elemental_penetration += 0.25 + 0.05 * self.player_echelon
         self.hp_bonus += 500 * self.player_echelon
 
     def assign_tarot_values(self, tarot_card):

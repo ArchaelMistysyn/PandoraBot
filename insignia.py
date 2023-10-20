@@ -25,14 +25,14 @@ def display_insignia(player_object, insignia_code, output_type):
         case 9:
             insignia_name += "Refraction"
             icon_list = pandorabot.omni_icon
-            bonus = 25
+            bonus = 25 + 5 * player_echelon
             item_rolls += f"\n{int(bonus)}% Omni Penetration"
         case _:
             insignia_name = "ERROR"
     insignia_name += " Insignia"
     if num_elements != 9:
         selected_elements_list = [ind for ind, x in enumerate(element_list) if x == 1]
-        bonus = 150 / num_elements
+        bonus = 150 / num_elements + 25 * player_object.player_echelon
         for y in selected_elements_list:
             item_rolls += f"\n{int(bonus)}% {pandorabot.element_names[y]} Penetration"
     if output_type == "Embed":
@@ -190,7 +190,7 @@ class ConfirmSelectionView(discord.ui.View):
                 if not self.embed_msg:
                     reload_player = player.get_player_by_id(self.player_user.player_id)
                     cannot_afford_description = ""
-                    cost = self.num_selected * 5000
+                    cost = self.num_selected * 10000
                     enough_fae = True
                     selected_elements_list = [ind for ind, y in enumerate(self.current_selection) if y == 1]
                     for x in selected_elements_list:
