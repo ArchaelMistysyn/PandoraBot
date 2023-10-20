@@ -126,7 +126,8 @@ def get_loot_name(item_id) -> str:
 
 def create_loot_embed(current_embed, active_boss, player_list):
     loot_embed = current_embed
-    exp_amount = active_boss.boss_tier * active_boss.boss_type_num * active_boss.boss_lvl * 100
+    exp_amount = (active_boss.boss_tier * 100) + (active_boss.boss_type_num * 100)
+    exp_level_bonus = random.randint(active_boss.boss_lvl * 50, (active_boss.boss_lvl * 100))
     loot_output = award_loot(active_boss, player_list, exp_amount)
     for counter, loot_section in enumerate(loot_output):
         temp_player = player.get_player_by_id(player_list[counter])

@@ -215,10 +215,12 @@ class CustomItem:
         else:
             self.base_damage_min = random_damage2
             self.base_damage_max = random_damage1
-        self.item_num_stars = 0
         self.update_damage()
         if self.item_type != "D":
+            self.item_num_stars = 0
             self.set_item_name()
+        else:
+            self.item_num_stars = self.item_tier - 1
 
     def update_stored_item(self):
         item_elements = ""
@@ -591,7 +593,11 @@ class BasicItem:
 
 def get_item_shop_list(item_tier):
     df = pd.read_csv("itemlist.csv")
-    df = df.loc[df['item_tier'] == item_tier]
+    if item_tier != 0:
+        df = df.loc[df['item_tier'] == item_tier]
+        df = df.loc[df['item_id'].str.contains('I')]
+    else:
+        df = df.loc[df['item_id'].str.contains('Fae')]
     item_list = []
     if len(df.index) != 0:
         for index, row in df.iterrows():
@@ -882,7 +888,9 @@ def craft_item(player_object, selected_item, item_id, method):
                 else:
                     is_success = "3"
             case "Upgrade":
-                if damagecalc.get_item_tier_damage(selected_item.item_material_tier) != 2500:
+                damage_check = damagecalc.get_item_tier_damage(selected_item.item_material_tier)
+                maxed_values = [5000, 25000, 50000, 250000]
+                if damage_check not in maxed_values:
                     update_stock(player_object, item_id, -1)
                     random_num = random.randint(1, 100)
                     if random_num <= success_rate:
@@ -903,8 +911,9 @@ def craft_item(player_object, selected_item, item_id, method):
                 else:
                     is_success = "3"
             case "Bestow":
-                dmg_check = damagecalc.get_item_tier_damage(selected_item.item_blessing_tier)
-                if dmg_check < 2500:
+                damage_check = damagecalc.get_item_tier_damage(selected_item.item_blessing_tier)
+                maxed_values = [5000, 25000, 50000, 250000]
+                if damage_check not in maxed_values:
                     update_stock(player_object, item_id, -1)
                     random_num = random.randint(1, 100)
                     if random_num <= success_rate:
@@ -1050,12 +1059,13 @@ def update_stock(player_object, item_id, change):
         engine_url = mydb.get_engine_url()
         engine = sqlalchemy.create_engine(engine_url)
         pandora_db = engine.connect()
-        query = text("SELECT item_qty FROM BasicInventory "
+        query = text("SELECT listing_id, item_qty FROM BasicInventory "
                      "WHERE player_id = :id_check AND item_id = :item_check")
         query = query.bindparams(id_check=player_object.player_id, item_check=item_id)
         df = pd.read_sql(query, pandora_db)
         if len(df.index) != 0:
-            player_stock = int(df.values[0])
+            player_stock = int(df['item_qty'].values[0])
+            listing_id = int(df['listing_id'].values[0])
             player_stock += change
             query = text("UPDATE BasicInventory SET item_qty = :new_qty "
                          "WHERE player_id = :id_check AND item_id = :item_check")
@@ -1088,7 +1098,7 @@ def get_roll_by_code(item_object, code):
                     roll_adjust = 5
                     roll_keyword = "Omni"
                 else:
-                    roll_adjust = 10
+                    roll_adjust = 15
                     roll_keyword = pandorabot.element_names[roll_num]
                 roll = f"{roll_keyword} Damage"
             elif check_roll <= 116:
@@ -1097,7 +1107,7 @@ def get_roll_by_code(item_object, code):
                     roll_adjust = 4
                     roll_keyword = "Omni"
                 else:
-                    roll_adjust = 8
+                    roll_adjust = 12
                     roll_keyword = pandorabot.element_names[roll_num]
                 roll = f"{roll_keyword} Penetration"
             else:
@@ -1110,24 +1120,24 @@ def get_roll_by_code(item_object, code):
                         roll_adjust = 3
                     case "w":
                         roll = "Critical Strike Multiplier"
-                        roll_adjust = 5
+                        roll_adjust = 12
                     case "x":
                         roll = "Final Damage"
                         roll_adjust = 3
                     case "y":
                         roll = "Multi-Hit"
-                        roll_adjust = 3
+                        roll_adjust = 100
                     case _:
                         roll = "Class Mastery"
                         roll_adjust = 3
-            bonus = str(int(code[1]) * roll_adjust * (1 + item_object.item_tier))
+            bonus = str((1 + int(code[1])) * roll_adjust)
             roll_text += f'+{bonus}% {roll}'
         case "S":
             if check_roll <= 106:
                 roll_num = check_roll - 97
                 if roll_num == 9:
                     roll_keyword = "Omni"
-                    roll_adjust = 5
+                    roll_adjust = 2
                 else:
                     roll_keyword = pandorabot.element_names[roll_num]
                     roll_adjust = 10
@@ -1135,34 +1145,34 @@ def get_roll_by_code(item_object, code):
             elif check_roll <= 116:
                 roll_num = check_roll - 97 - 10
                 if roll_num == 9:
-                    roll_adjust = 3
+                    roll_adjust = 4
                     roll_keyword = "Omni"
                 else:
-                    roll_adjust = 5
+                    roll_adjust = 10
                     roll_keyword = pandorabot.element_names[roll_num]
                 roll = f"{roll_keyword} Curse"
             else:
                 match check_roll:
                     case "u":
-                        roll_adjust = 5
+                        roll_adjust = 10
                         roll = "Damage Mitigation"
                     case "v":
                         roll = "Health Regen"
-                        roll_adjust = 5
+                        roll_adjust = 1
                     case "w":
                         roll = "Health Bonus"
-                        roll_adjust = 100
+                        roll_adjust = 250
                         text_method = 2
                     case "x":
                         roll = "Health Multiplier"
-                        roll_adjust = 10
+                        roll_adjust = 15
                     case "y":
                         roll = "Critical Strike Chance"
-                        roll_adjust = 5
+                        roll_adjust = 10
                     case _:
                         roll_adjust = 3
                         roll = "Omni Aura"
-            bonus = str(int(code[1]) * roll_adjust * (1 + item_object.item_tier))
+            bonus = str((1 + int(code[1])) * roll_adjust)
             if text_method == 1:
                 roll_text += f'+{bonus}% {roll}'
             elif text_method == 2:

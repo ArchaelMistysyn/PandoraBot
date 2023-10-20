@@ -4,6 +4,7 @@ import discord
 from discord.ext.commands import Bot
 from discord.ext import commands, tasks
 import bosses
+import menus
 
 
 class StaminaCog(commands.Cog):
@@ -19,7 +20,7 @@ class StaminaCog(commands.Cog):
         print("Stamina Assignment Triggered!")
         player_list = player.get_all_users()
         for player_user in player_list:
-            new_stamina_value = player_user.player_stamina + 5
+            new_stamina_value = player_user.player_stamina + 10
             if new_stamina_value > 5000:
                 new_stamina_value = 5000
             player_user.set_player_field("player_stamina", new_stamina_value)
@@ -49,8 +50,8 @@ class RaidCog(commands.Cog):
             active_boss = bosses.spawn_boss(self.channel_id, 0, boss_tier, boss_type, level, self.channel_num)
             self.active_boss = active_boss
             embed_msg = active_boss.create_boss_msg(0, True)
-            raid_button = RaidView()
-            sent_message = await channel_object.send(embed=embed_msg, view=raid_button)
+            raid_button = menus.RaidView()
+            sent_message = await self.channel_object.send(embed=embed_msg, view=raid_button)
             self.sent_message = sent_message
 
 

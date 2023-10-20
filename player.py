@@ -38,6 +38,7 @@ class PlayerProfile:
         self.equipped_wing = 0
         self.equipped_crest = 0
         self.equipped_tarot = ""
+        self.insignia = ""
         self.player_coins = 0
         self.player_class = ""
         self.player_quest = 0
@@ -122,33 +123,33 @@ class PlayerProfile:
         id_msg = f'User ID: {self.player_id}\nClass: {self.player_class}'
         self.get_player_multipliers()
         if method == 1:
-            stats = f"Item Base Damage: {int(self.player_damage):,}"
+            stats = f"Item Base Damage: {int(round(self.player_damage)):,}"
             stats += f"\nAttack Speed: {self.attack_speed} / min"
-            stats += f"\nCritical Chance: {int(self.critical_chance)}%"
-            stats += f"\nCritical Damage: +{int(self.critical_multiplier * 100)}%"
+            stats += f"\nCritical Chance: {int(round(self.critical_chance))}%"
+            stats += f"\nCritical Damage: +{int(round(self.critical_multiplier * 100))}%"
             for idw, w in enumerate(self.elemental_damage_multiplier):
                 stats += f"\n{pandorabot.global_element_list[idw]} Damage: {int(w * 100)}%"
-            stats += f"\nOmni Damage: {int(self.all_elemental_multiplier * 100)}%"
-            stats += f"\nBonus Hit Count: +{int(self.bonus_hits)}x"
-            stats += f"\nClass Multiplier: {int(self.class_multiplier * 100)}%"
-            stats += f"\nFinal Damage: {int(self.final_damage * 100)}%"
+            stats += f"\nOmni Damage: {int(round(self.all_elemental_multiplier * 100))}%"
+            stats += f"\nBonus Hit Count: +{int(round(self.bonus_hits))}x"
+            stats += f"\nClass Multiplier: {int(round(self.class_multiplier * 100))}%"
+            stats += f"\nFinal Damage: {int(round(self.final_damage * 100))}%"
         elif method == 2:
             stats = f"Player HP: {self.player_mHP:,}"
             for idy, y in enumerate(self.elemental_resistance):
                 stats += f"\n{pandorabot.global_element_list[idy]} Resistance: {int(y * 100)}%"
-            stats += f"\nOmni Resistance: {int(self.all_elemental_resistance * 100)}%"
-            stats += f"\nDamage Mitigation: {int(self.damage_mitigation)}%"
+            stats += f"\nOmni Resistance: {int(round(self.all_elemental_resistance * 100))}%"
+            stats += f"\nDamage Mitigation: {int(round(self.damage_mitigation))}%"
         elif method == 3:
-            stats = f"\nDefence Penetration: {int(self.defence_penetration * 100)}%"
+            stats = f"\nDefence Penetration: {int(round(self.defence_penetration * 100))}%"
             for idx, x in enumerate(self.elemental_penetration):
                 stats += f"\n{pandorabot.global_element_list[idx]} Penetration: {int(x * 100)}%"
-            stats += f"\nOmni Penetration: {int(self.all_elemental_penetration * 100)}%"
+            stats += f"\nOmni Penetration: {int(round(self.all_elemental_penetration * 100))}%"
         else:
             stats = ""
             for idz, z in enumerate(self.elemental_curse):
                 stats += f"{pandorabot.global_element_list[idz]} Curse: {int(z * 100)}%\n"
-            stats += f"Omni Aura: {int(self.aura)}%\n"
-            stats += f"Omni Curse: {int(self.all_elemental_curse * 100)}%"
+            stats += f"Omni Aura: {int(round(self.aura))}%\n"
+            stats += f"Omni Curse: {int(round(self.all_elemental_curse * 100))}%"
 
         embed_msg = discord.Embed(colour=echelon_colour[0],
                                   title=self.player_username,
@@ -209,10 +210,10 @@ class PlayerProfile:
                                  "(player_name, player_username, player_lvl, player_exp, player_echelon, player_quest, "
                                  "player_stamina, player_class, player_coins, player_equip_weapon, "
                                  "player_equip_armour, player_equip_acc, player_equip_wing, "
-                                 "player_equip_crest, player_equip_tarot) "
+                                 "player_equip_crest, player_equip_tarot, player_equip_insignia) "
                                  "VALUES (:input_1, :input_2, :input_3, :input_4, :input_5, :input_6,"
                                  ":input_7, :input_8, :input_9, :input_10, :input_11, :input_12, :input_13, "
-                                 ":input_14, :input_15)")
+                                 ":input_14, :input_15, :input_16)")
                     query = query.bindparams(input_1=str(self.player_name), input_2=str(self.player_username),
                                              input_3=int(self.player_lvl), input_4=int(self.player_exp),
                                              input_5=int(self.player_echelon), input_6=int(self.player_quest),
@@ -220,7 +221,7 @@ class PlayerProfile:
                                              input_9=int(self.player_coins), input_10=int(self.equipped_weapon),
                                              input_11=int(self.equipped_armour), input_12=int(self.equipped_acc),
                                              input_13=int(self.equipped_wing), input_14=int(self.equipped_crest),
-                                             input_15=str(self.equipped_tarot))
+                                             input_15=str(self.equipped_tarot), input_16=str(self.insignia))
                     pandora_db.execute(query)
                     response = f"Player {self.player_name} has been registered to play. Welcome {self.player_username}!"
                     response += f"\nPlease use the !quest command to proceed."
@@ -298,6 +299,7 @@ class PlayerProfile:
             self.equipped_wing = int(df['player_equip_wing'].values[0])
             self.equipped_crest = int(df['player_equip_crest'].values[0])
             self.equipped_tarot = str(df['player_equip_tarot'].values[0])
+            self.insignia = str(df['player_equip_insignia'].values[0])
         except mysql.connector.Error as err:
             print("Database Error: {}".format(err))
 
@@ -350,6 +352,8 @@ class PlayerProfile:
             base_damage = e_tarot.get_base_damage()
             self.player_damage += base_damage
             self.assign_tarot_values(e_tarot)
+        if self.insignia != "":
+            self.assign_insignia_values(self.insignia)
 
         self.critical_chance = (1 + self.critical_chance) * base_critical_chance
         self.attack_speed = (1 + self.attack_speed) * base_attack_speed
@@ -405,6 +409,18 @@ class PlayerProfile:
                 self.elemental_damage[idx] *= resist_multi * penetration_multi
         self.player_total_damage = int(sum(self.elemental_damage))
         return self.player_total_damage
+
+    def assign_insignia_values(self, insignia_code):
+        temp_elements = insignia_code.split(";")
+        element_list = list(map(int, temp_elements))
+        num_elements = element_list.count(1)
+        if num_elements != 9:
+            selected_elements_list = [ind for ind, x in enumerate(element_list) if x == 1]
+            for y in selected_elements_list:
+                self.elemental_penetration[y] += (150 / num_elements) * 0.01
+        else:
+            self.all_elemental_penetration += 0.25
+        self.hp_bonus += 500 * self.player_echelon
 
     def assign_tarot_values(self, tarot_card):
         card_num = tarot.get_number_by_tarot(tarot_card.card_name)
@@ -530,14 +546,14 @@ class PlayerProfile:
         for x in equipped_item.item_prefix_values:
             roll_tier = int(str(x)[1])
             check_roll = ord(str(x[2]))
-            roll_adjust = 0.01 * roll_tier * (1 + equipped_item.item_tier)
+            roll_adjust = 0.01 * (1 + roll_tier)
             if check_roll <= 106:
                 roll_num = check_roll - 97
                 if roll_num == 9:
                     bonus = roll_adjust * 5
                     self.all_elemental_multiplier += bonus
                 else:
-                    bonus = roll_adjust * 10
+                    bonus = roll_adjust * 15
                     self.elemental_damage_multiplier[roll_num] += bonus
             elif check_roll <= 116:
                 roll_num = check_roll - 97 - 10
@@ -545,7 +561,7 @@ class PlayerProfile:
                     bonus = roll_adjust * 4
                     self.all_elemental_penetration += bonus
                 else:
-                    bonus = roll_adjust * 8
+                    bonus = roll_adjust * 12
                     self.elemental_penetration[roll_num] += bonus
             else:
                 match check_roll:
@@ -556,7 +572,7 @@ class PlayerProfile:
                         bonus = roll_adjust * 3
                         self.attack_speed += bonus
                     case "w":
-                        bonus = roll_adjust * 5
+                        bonus = roll_adjust * 12
                         self.critical_multiplier += bonus
                     case "x":
                         bonus = roll_adjust * 3
@@ -570,11 +586,11 @@ class PlayerProfile:
         for y in equipped_item.item_suffix_values:
             roll_tier = int(str(y)[1])
             check_roll = ord(str(y[2]))
-            roll_adjust = 0.01 * roll_tier * (1 + equipped_item.item_tier)
+            roll_adjust = 0.01 * roll_tier
             if check_roll <= 106:
                 roll_num = check_roll - 97
                 if roll_num == 9:
-                    bonus = roll_adjust * 5
+                    bonus = roll_adjust * 2
                     self.all_elemental_resistance += bonus
                 else:
                     bonus = roll_adjust * 10
@@ -582,27 +598,27 @@ class PlayerProfile:
             elif check_roll <= 116:
                 roll_num = check_roll - 97 - 10
                 if roll_num == 9:
-                    bonus = roll_adjust * 3
+                    bonus = roll_adjust * 4
                     self.all_elemental_curse += bonus
                 else:
-                    bonus = roll_adjust * 5
+                    bonus = roll_adjust * 10
                     self.elemental_curse[roll_num] += bonus
             else:
                 match check_roll:
                     case "u":
-                        bonus = roll_adjust * 5
+                        bonus = roll_adjust * 10
                         self.damage_mitigation += bonus
                     case "v":
-                        bonus = roll_adjust * 5
+                        bonus = roll_adjust * 1
                         self.hp_regen += bonus
                     case "w":
-                        bonus = roll_tier * 100 * (1 + equipped_item.item_tier)
+                        bonus = roll_tier * 100
                         self.hp_bonus += bonus
                     case "x":
-                        bonus = roll_adjust * 10
+                        bonus = roll_adjust * 15
                         self.hp_multiplier += bonus
                     case "y":
-                        bonus = roll_adjust * 5
+                        bonus = roll_adjust * 10
                         self.critical_chance += bonus
                     case _:
                         bonus = roll_adjust * 3
@@ -740,9 +756,9 @@ class PlayerProfile:
             match keywords[1]:
                 case "Hero's":
                     self.elemental_damage_multiplier[buff_type_loc] += round(level_bonus / 2, 2)
-                    self.elemental_resistance[buff_type_loc] += round(level_bonus / 2, 2)
+                    self.elemental_resistance[buff_type_loc] += round(level_bonus / 4, 2)
                 case "Guardian's":
-                    self.elemental_resistance[buff_type_loc] += level_bonus
+                    self.elemental_resistance[buff_type_loc] += round(level_bonus / 2, 2)
                 case "Aggressor's":
                     self.elemental_damage_multiplier[buff_type_loc] += level_bonus
                 case "Breaker's":

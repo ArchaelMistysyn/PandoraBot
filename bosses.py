@@ -195,9 +195,16 @@ def get_boss_details(channel_num):
     selected_boss_type = boss_list[random_boss_type]
     boss_tier = get_random_bosstier(selected_boss_type)
     if boss_tier < 5:
-        level = random.randint(1, 10)
-        level += boss_tier * 10
-        level += channel_num * 10
+        level = random.randint(1, 9)
+        if channel_num == 1:
+            channel_bonus = 30
+        elif channel_num == 2:
+            channel_bonus = 50
+        elif channel_num == 3:
+            channel_bonus = 60
+        elif channel_num == 4:
+            channel_bonus = 80
+        level += channel_bonus
     else:
         level = 99
     return level, selected_boss_type, boss_tier
@@ -309,8 +316,12 @@ def spawn_boss(channel_id, player_id, new_boss_tier, selected_boss_type, boss_le
             boss_typeweak = boss_typeweak[:-1]
 
             if new_boss_tier <= 4:
-                total_hp = get_base_hp(selected_boss_type, channel_num)
-                total_hp *= new_boss_tier * (boss_level * 1.25)
+                hp_min = get_base_hp(selected_boss_type, channel_num)
+                hp_max = int(hp_min * (boss_level * 0.01 + 1))
+                subtotal_hp = random.randint(hp_min, hp_max)
+                subtotal_hp *= 5 ** int(boss_level / 10)
+                subtotal_hp += (new_boss_tier * 0.1) * subtotal_hp
+                total_hp = int(subtotal_hp)
             elif new_boss_tier == 5:
                 total_hp = 10000000000000
             else:
@@ -400,23 +411,23 @@ def get_base_hp(base_type, channel_num):
             case "Fortress":
                 base_hp = 50000
             case "Dragon":
-                base_hp = 1000000
+                base_hp = 60000
             case "Demon":
-                base_hp = 50000000
+                base_hp = 75000
             case "Paragon":
-                base_hp = 1000000000
+                base_hp = 100000
             case _:
                 base_hp = 0
     else:
         match base_type:
             case "Fortress":
-                base_hp = 1000000000
+                base_hp = 1000000
             case "Dragon":
-                base_hp = 2000000000
+                base_hp = 2000000
             case "Demon":
-                base_hp = 3000000000
+                base_hp = 3000000
             case "Paragon":
-                base_hp = 5000000000
+                base_hp = 5000000
             case _:
                 base_hp = 0
 

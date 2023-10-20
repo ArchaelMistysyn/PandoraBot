@@ -10,6 +10,21 @@ import pandorabot
 import quest
 import asyncio
 import bazaar
+import bosses
+import insignia
+
+
+# Raid View
+class RaidView(discord.ui.View):
+    def __init__(self):
+        super().__init__(timeout=None)
+
+    @discord.ui.button(label="Join the raid!", style=discord.ButtonStyle.success, emoji="⚔️")
+    async def raid_callback(self, interaction: discord.Interaction, raid_select: discord.ui.Select):
+        clicked_by = player.get_player_by_name(str(interaction.user))
+        outcome = clicked_by.player_username
+        outcome += bosses.add_participating_player(interaction.channel.id, clicked_by.player_id)
+        await interaction.response.send_message(outcome)
 
 
 # Inventory menu
@@ -1045,14 +1060,12 @@ class GearView(discord.ui.View):
 
 
 def cycle_gear(user, current_position, direction):
-    selected_item = 0
-    tarot_item = 0
     reload_user = player.get_player_by_id(user.player_id)
 
     no_item = ""
     if current_position == 0 and direction == -1:
-        new_position = 5
-    elif current_position == 5 and direction == 1:
+        new_position = 6
+    elif current_position == 6 and direction == 1:
         new_position = 0
     else:
         new_position = current_position + direction
@@ -1073,17 +1086,33 @@ def cycle_gear(user, current_position, direction):
         case 4:
             item_type = "Crest"
             selected_item = reload_user.equipped_crest
-        case _:
+        case 5:
             item_type = "Tarot"
             tarot_item = reload_user.equipped_tarot
-    if selected_item != 0:
-        equipped_item = inventory.read_custom_item(selected_item)
-        new_msg = equipped_item.create_citem_embed()
-    elif tarot_item != "":
-        tarot_info = reload_user.equipped_tarot.split(";")
-        tarot_card = tarot.check_tarot(reload_user.player_id, tarot.tarot_card_list(int(tarot_info[0])), int(tarot_info[1]))
-        new_msg = tarot.create_tarot_embed(tarot_card)
+        case _:
+            item_type = "Insignia"
+            insignia_item = reload_user.insignia
+    no_item = False
+    type_list_1 = ["Weapon", "Armour", "Accesory", "Wing", "Crest"]
+    if item_type in type_list_1:
+        if selected_item == 0:
+            no_item = True
+        else:
+            equipped_item = inventory.read_custom_item(selected_item)
+            new_msg = equipped_item.create_citem_embed()
+    elif item_type == "Tarot":
+        if tarot_item == "":
+            no_item = True
+        else:
+            tarot_info = reload_user.equipped_tarot.split(";")
+            tarot_card = tarot.check_tarot(reload_user.player_id, tarot.tarot_card_list(int(tarot_info[0])), int(tarot_info[1]))
+            new_msg = tarot.create_tarot_embed(tarot_card)
     else:
+        if insignia_item == "":
+            no_item = True
+        else:
+            new_msg = insignia.display_insignia(reload_user, insignia_item, "Embed")
+    if no_item:
         no_item = item_type.lower()
         new_msg = discord.Embed(colour=discord.Colour.dark_gray(),
                                 title=f"Equipped {item_type}",
@@ -1148,6 +1177,7 @@ class QuestView(discord.ui.View):
             if interaction.user.name == self.player_object.player_name:
                 embed_msg, is_completed = self.quest_object.hand_in(self.player_object)
                 if is_completed:
+                    self.player_object.player_quest += 1
                     reward_view = RewardView(self.player_object)
                     if self.quest_object.award_role != "":
                         add_role = discord.utils.get(interaction.guild.roles, name=self.quest_object.award_role)
@@ -1185,7 +1215,7 @@ class RewardView(discord.ui.View):
             if interaction.user.name == self.player_object.player_name:
                 end_quest = 30
                 if self.player_object.player_quest <= end_quest:
-                    current_quest = self.player_object.player_quest + 1
+                    current_quest = self.player_object.player_quest
                     quest_object = quest.get_quest(current_quest, self.player_object)
                     token_count = self.player_object.check_tokens(current_quest)
                     quest_object.set_quest_output(token_count)

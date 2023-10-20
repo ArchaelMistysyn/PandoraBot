@@ -143,13 +143,9 @@ class Expedition:
         player_resist = 0
         if dmg_element != -1:
             player_resist = self.player_object.elemental_resistance[dmg_element]
-        print(damage)
-        damage -= damage * player_resist * 0.01
-        print(player_resist)
-        print(damage)
+            player_resist += self.player_object.all_elemental_resistance
+        damage -= damage * player_resist
         damage -= damage * player_mitigation * 0.01
-        print(player_mitigation)
-        print(damage)
         damage = int(damage)
         self.player_object.player_cHP -= damage
         return damage
@@ -320,7 +316,7 @@ class EmbarkView(discord.ui.View):
                     reload_player = player.get_player_by_id(self.player_user.player_id)
                     reload_player.get_equipped()
                     reload_player.get_player_multipliers()
-                    new_view = IntentRoomView(self.player_user, self.colour, self.selected_tier)
+                    new_view = IntentRoomView(reload_player, self.colour, self.selected_tier)
                     random_msg = random.randint(0, (len(intent_msg_list) - 1))
                     intent_msg = intent_msg_list[random_msg]
                     intent_embed = discord.Embed(colour=self.colour,
@@ -418,7 +414,7 @@ class HealRoomView(discord.ui.View):
                         self.new_view = TransitionView(self.expedition)
                     else:
                         self.embed.clear_fields()
-                        heal_amount = random.randint(self.expedition.expedition_tier, 10)
+                        heal_amount = random.randint(self.expedition.expedition_tier, 15)
                         heal_total = int(self.expedition.player_object.player_mHP * (heal_amount * 0.01))
                         self.expedition.player_object.player_cHP += heal_total
                         self.embed = discord.Embed(colour=self.expedition.expedition_colour,
@@ -489,7 +485,7 @@ class MonsterRoomView(discord.ui.View):
                             self.embed.add_field(name=death_header, value=death_msg, inline=False)
                             self.new_view = None
                         else:
-                            if self.expedition.player_object.immortal:
+                            if self.expedition.player_object.immortal and self.expedition.player_object.player_cHP < 1:
                                 self.expedition.player_object.player_cHP = 1
                             self.embed.add_field(name="Monster Defeated!", value=dmg_msg, inline=False)
                             hp_msg = f'{self.expedition.player_object.player_cHP} / {self.expedition.player_object.player_mHP} HP'
@@ -539,7 +535,7 @@ class MonsterRoomView(discord.ui.View):
                             self.embed.add_field(name=death_header, value=death_msg, inline=False)
                             self.new_view = None
                         else:
-                            if self.expedition.player_object.immortal:
+                            if self.expedition.player_object.immortal and self.expedition.player_object.player_cHP < 1:
                                 self.expedition.player_object.player_cHP = 1
                             self.embed.add_field(name="Stealth Failed", value=dmg_msg, inline=False)
                             self.new_view = MonsterRoomView(self.expedition)
@@ -563,6 +559,7 @@ class TrapRoomView(discord.ui.View):
                     active_room = self.expedition.expedition_rooms[self.expedition.current_room_num]
                     self.embed = active_room.embed
                     player_resist = self.expedition.player_object.elemental_resistance[active_room.room_element]
+                    player_resist += self.expedition.player_object.all_elemental_resistance
                     trap_trigger = random.randint(1, 100)
                     if trap_trigger <= player_resist:
                         self.embed = discord.Embed(colour=self.expedition.expedition_colour,
@@ -598,7 +595,7 @@ class TrapRoomView(discord.ui.View):
                                     self.embed.add_field(name=death_header, value=death_msg, inline=False)
                                     self.new_view = None
                                 else:
-                                    if self.expedition.player_object.immortal:
+                                    if self.expedition.player_object.immortal and self.expedition.player_object.player_cHP < 1:
                                         self.expedition.player_object.player_cHP = 1
                                     hp_msg = f'{self.expedition.player_object.player_cHP} / {self.expedition.player_object.player_mHP} HP'
                                     self.embed.add_field(name="", value=hp_msg, inline=False)
@@ -650,7 +647,7 @@ class TrapRoomView(discord.ui.View):
                                     self.embed.add_field(name=death_header, value=death_msg, inline=False)
                                     self.new_view = None
                                 else:
-                                    if self.expedition.player_object.immortal:
+                                    if self.expedition.player_object.immortal and self.expedition.player_object.player_cHP < 1:
                                         self.expedition.player_object.player_cHP = 1
                                     hp_msg = f'{self.expedition.player_object.player_cHP} / {self.expedition.player_object.player_mHP} HP'
                                     self.embed.add_field(name="", value=hp_msg, inline=False)
@@ -674,14 +671,7 @@ class StatueRoomView(discord.ui.View):
                 if not self.embed:
                     active_room = self.expedition.expedition_rooms[self.expedition.current_room_num]
                     self.embed = active_room.embed
-                    heal_amount = random.randint(self.expedition.expedition_tier, 10)
-                    heal_total = int(self.expedition.player_object.player_mHP * (heal_amount * 0.01))
-                    self.expedition.player_object.player_cHP += heal_total
-                    if self.expedition.player_object.player_cHP > self.expedition.player_object.player_mHP:
-                        self.expedition.player_object.player_cHP = self.expedition.player_object.player_mHP
                     self.embed.clear_fields()
-                    hp_msg = f'{self.expedition.player_object.player_cHP} / {self.expedition.player_object.player_mHP} HP'
-                    self.embed.add_field(name="", value=hp_msg, inline=False)
                     blessing_chance = random.randint(1, 1000)
                     num_reward = 1
                     reload_player = player.get_player_by_id(self.expedition.player_object.player_id)
@@ -695,7 +685,7 @@ class StatueRoomView(discord.ui.View):
                         reward_id = f"t{deity_numeral}"
                         item_msg = f"{loot.get_loot_emoji(reward_id)} 1x {loot.get_loot_name(reward_id)}"
                         self.embed.add_field(name=f"{active_room.room_deity}'s Blessing Received!",
-                                                    value="", inline=False)
+                                             value="", inline=False)
                         inventory.update_stock(reload_player, reward_id, num_reward)
                     elif blessing_chance <= 111:
                         reward_id = f"I{active_room.room_tier}t"
@@ -703,7 +693,13 @@ class StatueRoomView(discord.ui.View):
                         self.embed.add_field(name="Blessing Received!", value=item_msg, inline=False)
                         inventory.update_stock(reload_player, reward_id, num_reward)
                     else:
-                        self.embed.add_field(name="Nothing happens.", value="Better keep moving.", inline=False)
+                        heal_amount = random.randint(self.expedition.expedition_tier, 10)
+                        heal_total = int(self.expedition.player_object.player_mHP * (heal_amount * 0.01))
+                        self.expedition.player_object.player_cHP += heal_total
+                        if self.expedition.player_object.player_cHP > self.expedition.player_object.player_mHP:
+                            self.expedition.player_object.player_cHP = self.expedition.player_object.player_mHP
+                        hp_msg = f'{self.expedition.player_object.player_cHP} / {self.expedition.player_object.player_mHP} HP'
+                        self.embed.add_field(name="Health Restored", value=hp_msg, inline=False)
                     self.new_view = TransitionView(self.expedition)
                 await interaction.response.edit_message(embed=self.embed, view=self.new_view)
         except Exception as e:
@@ -776,7 +772,7 @@ class TreasureRoomView(discord.ui.View):
                                 self.embed.add_field(name=death_header, value=death_msg, inline=False)
                                 self.new_view = None
                             else:
-                                if self.expedition.player_object.immortal:
+                                if self.expedition.player_object.immortal and self.expedition.player_object.player_cHP < 1:
                                     self.expedition.player_object.player_cHP = 1
                                 dmg_msg = f'The mimic bites you dealing {damage:,} damage.'
                                 self.embed.add_field(name="", value=dmg_msg, inline=False)

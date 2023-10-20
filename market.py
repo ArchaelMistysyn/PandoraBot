@@ -25,6 +25,8 @@ class TierSelectView(discord.ui.View):
         max_values=1,
         options=[
             discord.SelectOption(
+                emoji="<a:eenergy:1145534127349706772>", label="Fae Cores", description="These are our best seller."),
+            discord.SelectOption(
                 emoji="<a:eenergy:1145534127349706772>", label="Tier 1 Items", description="Browse our common wares."),
             discord.SelectOption(
                 emoji="<:eore:1145534835507593236>", label="Tier 2 Items", description="Browse our rarer items."),
@@ -41,9 +43,15 @@ class TierSelectView(discord.ui.View):
         try:
             if interaction.user.name == self.player_user.player_name:
                 selected_type = tier_select.values[0]
-                selected_tier = int(selected_type[5])
-                if selected_tier <= self.player_user.player_echelon:
+                if selected_type == "Fae Cores":
+                    selected_tier = 0
+                    shop_msg = f"Black Market - Fae Cores."
+                    tier_colour = discord.Colour.dark_orange()
+                else:
+                    selected_tier = int(selected_type[5])
+                    shop_msg = f"Black Market - Tier {selected_tier} items."
                     tier_colour, tier_emoji = inventory.get_gear_tier_colours(selected_tier)
+                if selected_tier <= self.player_user.player_echelon:
                     match selected_tier:
                         case 1:
                             shop_view = ShopView1(self.player_user, tier_colour)
@@ -56,10 +64,10 @@ class TierSelectView(discord.ui.View):
                         case 5:
                             shop_view = ShopView5(self.player_user, tier_colour)
                         case _:
-                            shop_view = ShopView1(self.player_user, tier_colour)
+                            shop_view = ShopView0(self.player_user, tier_colour)
 
                     embed_msg = discord.Embed(colour=tier_colour,
-                                              title=f"Black Market - Tier {selected_tier} items.",
+                                              title=shop_msg,
                                               description="")
                     item_list = inventory.get_item_shop_list(selected_tier)
                     for x in item_list:
@@ -71,6 +79,46 @@ class TierSelectView(discord.ui.View):
                                               description="You're not a high enough echelon to buy these items.")
                     shop_view = self
                 await interaction.response.edit_message(embed=embed_msg, view=shop_view)
+        except Exception as e:
+            print(e)
+
+
+class ShopView0(discord.ui.View):
+    def __init__(self, player_user, tier_colour):
+        super().__init__(timeout=None)
+        self.player_user = player_user
+        self.tier_colour = tier_colour
+
+    @discord.ui.select(
+        placeholder="Choose an item from the shop!",
+        min_values=1,
+        max_values=1,
+        options=[
+            discord.SelectOption(
+                emoji="<:esoul:1145520258241806466>", label="Fae Core (Fire)", value="Fae0"),
+            discord.SelectOption(
+                emoji="<:esoul:1145520258241806466>", label="Fae Core (Water)", value="Fae1"),
+            discord.SelectOption(
+                emoji="<:esoul:1145520258241806466>", label="Fae Core (Lightning)", value="Fae2"),
+            discord.SelectOption(
+                emoji="<:esoul:1145520258241806466>", label="Fae Core (Earth)", value="Fae3"),
+            discord.SelectOption(
+                emoji="<:esoul:1145520258241806466>", label="Fae Core (Wind)", value="Fae4"),
+            discord.SelectOption(
+                emoji="<:esoul:1145520258241806466>", label="Fae Core (Ice)", value="Fae5"),
+            discord.SelectOption(
+                emoji="<:esoul:1145520258241806466>", label="Fae Core (Shadow)", value="Fae6"),
+            discord.SelectOption(
+                emoji="<:esoul:1145520258241806466>", label="Fae Core (Light)", value="Fae7"),
+            discord.SelectOption(
+                emoji="<:esoul:1145520258241806466>", label="Fae Core (Celestial)", value="Fae8")
+        ]
+    )
+    async def shop0_callback(self, interaction: discord.Interaction, item_select: discord.ui.Select):
+        try:
+            if interaction.user.name == self.player_user.player_name:
+                embed_msg, purchase_view = show_item(self.player_user, item_select.values[0])
+                await interaction.response.edit_message(embed=embed_msg, view=purchase_view)
         except Exception as e:
             print(e)
 

@@ -24,6 +24,7 @@ import tarot
 import forge
 import market
 import bazaar
+import insignia
 import pilengine
 import pandoracogs
 
@@ -73,6 +74,7 @@ element_ice = "<:em:1141647050342146118>"
 element_dark = "<:ek:1141653468080242748>"
 element_light = "<:el:1141653466343800883>"
 element_celestial = "<:ej:1141653469938339971>"
+omni_icon = "🌈"
 global_element_list = [element_fire, element_water, element_lightning, element_earth, element_wind, element_ice,
                        element_dark, element_light, element_celestial]
 element_names = ["Fire", "Water", "Lightning", "Earth", "Wind", "Ice", "Shadow", "Light", "Celestial"]
@@ -211,17 +213,6 @@ def run_discord_bot():
             temp_player.player_name = after.name
             temp_player.set_player_field("player_name", after.name)
 
-    class RaidView(discord.ui.View):
-        def __init__(self):
-            super().__init__(timeout=None)
-
-        @discord.ui.button(label="Join the raid!", style=discord.ButtonStyle.success, emoji="⚔️")
-        async def raid_callback(self, interaction: discord.Interaction, raid_select: discord.ui.Select):
-            clicked_by = player.get_player_by_name(str(interaction.user))
-            outcome = clicked_by.player_username
-            outcome += bosses.add_participating_player(interaction.channel.id, clicked_by.player_id)
-            await interaction.response.send_message(outcome)
-
     @pandora_bot.event
     async def solo_boss_task(player_object, active_boss, channel_id, channel_object):
         embed_msg = active_boss.create_boss_msg(0, True)
@@ -233,7 +224,7 @@ def run_discord_bot():
         level, boss_type, boss_tier = bosses.get_boss_details(channel_num)
         active_boss = bosses.spawn_boss(channel_id, 0, boss_tier, boss_type, level, channel_num)
         embed_msg = active_boss.create_boss_msg(0, True)
-        raid_button = RaidView()
+        raid_button = menus.RaidView()
         sent_message = await channel_object.send(embed=embed_msg, view=raid_button)
         pandoracogs.RaidCog(pandora_bot, active_boss, channel_id, channel_num, sent_message, channel_object)
 
@@ -685,6 +676,22 @@ def run_discord_bot():
                 embed_msg.set_image(url="")
                 tarot_view = menus.CollectionView(player_object, embed_msg)
                 await ctx.send(embed=embed_msg, view=tarot_view)
+            else:
+                embed_msg = unregistered_message()
+                await ctx.send(embed=embed_msg)
+
+    @pandora_bot.hybrid_command(name='engrave', help="**/engrave** to engrave an insignia on your soul.")
+    @app_commands.guilds(discord.Object(id=1011375205999968427))
+    async def engrave(ctx):
+        if any(ctx.channel.id in sl for sl in global_server_channels):
+            player_object = player.get_player_by_name(str(ctx.author))
+            if player_object.player_class != "":
+                engrave_msg = "You've come a long way from home child. Tell me, what kind of power do you seek?"
+                embed_msg = discord.Embed(colour=discord.Colour.dark_orange(),
+                                          title="Weaver Lord, Isabelle",
+                                          description=engrave_msg)
+                insignia_view = insignia.InsigniaView(player_object)
+                await ctx.send(embed=embed_msg, view=insignia_view)
             else:
                 embed_msg = unregistered_message()
                 await ctx.send(embed=embed_msg)

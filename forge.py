@@ -141,7 +141,10 @@ class ForgeView(discord.ui.View):
                 async def fourth_button_callback(button_interaction: discord.Interaction):
                     try:
                         if button_interaction.user.name == self.player_object.player_name:
-                            item_code = f'I4{self.letter}'
+                            if self.letter == "l":
+                                item_code = "I5l"
+                            else:
+                                item_code = f'I4{self.letter}'
                             new_embed_msg = run_button(item_code)
                             await button_interaction.response.edit_message(embed=new_embed_msg)
                     except Exception as e:
@@ -278,6 +281,8 @@ class ForgeView(discord.ui.View):
                     button_4.callback = fourth_button_callback
                 else:
                     code = "I4" + self.letter
+                    if self.letter == "l":
+                        code = "I5l"
                     self.button_emoji.append(loot.get_loot_emoji(code))
                     button_4 = Button(label=self.button_label[3], style=discord.ButtonStyle.success, emoji=self.button_emoji[0])
                     self.add_item(button_4)
