@@ -77,17 +77,9 @@ element_celestial = "<:ej:1141653469938339971>"
 omni_icon = "🌈"
 global_element_list = [element_fire, element_water, element_lightning, element_earth, element_wind, element_ice,
                        element_dark, element_light, element_celestial]
-element_names = ["Fire", "Water", "Lightning", "Earth", "Wind", "Ice", "Shadow", "Light", "Celestial"]
-
-tier_2_abilities = ["Molten", "Aquatic", "Electric", "Mountain", "Gust", "Frost", "Dusk", "Flash", "Star"]
-tier_3_abilities = ["Blazing", "Drowning", "Bolting", "Crushing", "Whirling",
-                    "Freezing", "Shrouding", "Shining", "Twinkling"]
-tier_4_abilities = ["Bahamut's Trinity", "Perfect Precision", "Overflowing Vitality",
-                    "Shatter Barrier", "Divine Protection"]
-tier_5_abilities = ["Elemental Fractal", "Specialist's Mastery", "Curse of Immortality", "Omega Critical"]
-global_buff_type_list = ["Hero's", "Guardian's", "Aggressor's", "Breaker's"]
-global_descriptor_list = ["Pose", "Stance", "Will", ""]
-global_unique_ability_list = [element_names, tier_2_abilities, tier_3_abilities, tier_4_abilities, tier_5_abilities]
+element_names = ["Fire", "Water", "Lightning", "Earth", "Wind", "Ice", "Chaotic", "Angelic", "Celestial"]
+element_special_names = ["Volcanic", "Aquatic", "Voltaic", "Seismic", "Sonic", "Arctic", "Aphotic", "Seraphic", "Cosmic"]
+tier_5_ability_list = ["Elemental Fractal", "Specialist's Mastery", "Curse of Immortality", "Omega Critical"]
 
 not_owned_icon = "https://kyleportfolio.ca/botimages/profilecards/noachv.png"
 owned_icon = "https://kyleportfolio.ca/botimages/profilecards/owned.png"
@@ -237,12 +229,11 @@ def run_discord_bot():
         for idy, y in enumerate(player_list):
             temp_user.append(player.get_player_by_id(int(y)))
             temp_user[idy].get_player_multipliers()
-            active_boss.active_player_auras += temp_user[idy].aura
+            active_boss.aura += temp_user[idy].aura
             curse_lists = [active_boss.curse_debuffs, temp_user[idy].elemental_curse]
             active_boss.curse_debuffs = [sum(z) for z in zip(*curse_lists)]
-            active_boss.omni_curse += temp_user[idy].all_elemental_curse
         for idx, x in enumerate(temp_user):
-            player_dps = int(x.get_player_damage(active_boss) * (1 + active_boss.active_player_auras))
+            player_dps = int(x.get_player_damage(active_boss) * (1 + active_boss.aura))
             dps += player_dps
             new_player_dps = int(damage_list[idx]) + player_dps
             bosses.update_player_damage(channel_id, x.player_id, new_player_dps)
@@ -267,8 +258,8 @@ def run_discord_bot():
         active_boss.reset_modifiers()
         player_object.get_player_multipliers()
         active_boss.curse_debuffs = player_object.elemental_curse
-        active_boss.omni_curse = player_object.all_elemental_curse
-        dps = int(player_object.get_player_damage(active_boss) * (1 + player_object.aura))
+        active_boss.aura = player_object.aura
+        dps = int(player_object.get_player_damage(active_boss))
         active_boss.boss_cHP -= dps
         bosses.update_boss_cHP(channel_id, active_boss.player_id, active_boss.boss_cHP)
         if active_boss.calculate_hp():

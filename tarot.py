@@ -106,19 +106,19 @@ class TarotCard:
                     buff_value = self.num_stars * 10
             case 7:
                 if self.card_variant == 1:
-                    buff_type = "Nothing yet"
-                    buff_value = 0
+                    buff_type = "Final Damage"
+                    buff_value = self.num_stars * 15
                 else:
-                    buff_type = "Nothing yet"
-                    buff_value = 0
+                    buff_type = "Dragon Bane"
+                    buff_value = self.num_stars * 40
             case 8:
                 if self.card_variant == 1:
                     display_method = 2
                     buff_type = "Health Bonus"
                     buff_value = 250 * self.num_stars
                 else:
-                    buff_type = "Final Damage"
-                    buff_value = self.num_stars * 15
+                    buff_type = "Demon Bane"
+                    buff_value = self.num_stars * 40
             case 9:
                 if self.card_variant == 1:
                     buff_type = "Lightning Resistance"
@@ -170,11 +170,11 @@ class TarotCard:
                     buff_value = self.num_stars * 30
             case 16:
                 if self.card_variant == 1:
-                    buff_type = "Health Multiplier"
-                    buff_value = self.num_stars * 25
-                else:
                     buff_type = "Damage Mitigation"
                     buff_value = self.num_stars * 15
+                else:
+                    buff_type = "Fortress Bane"
+                    buff_value = self.num_stars * 40
             case 17:
                 if self.card_variant == 1:
                     buff_type = "Health Regen"
@@ -212,10 +212,10 @@ class TarotCard:
                     buff_value = self.num_stars * 20
             case 22:
                 if self.card_variant == 1:
-                    buff_type = "Omni Aura"
+                    buff_type = "Omni Curse"
                     buff_value = self.num_stars * 15
                 else:
-                    buff_type = "Omni Curse"
+                    buff_type = "Omni Aura"
                     buff_value = self.num_stars * 20
         bonus_stat_string = f"{buff_type} +{buff_value}"
         if display_method == 1:

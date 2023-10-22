@@ -75,6 +75,8 @@ def award_loot(boss_object, player_list, exp_amount):
                         num_attempts = 3
                     else:
                         num_attempts = 1
+                    if boss_object.player_id == 0:
+                        num_attempts *= 2
                     for y in range(num_attempts):
                         if is_dropped(drop_rate):
                             qty += 1
@@ -126,8 +128,9 @@ def get_loot_name(item_id) -> str:
 
 def create_loot_embed(current_embed, active_boss, player_list):
     loot_embed = current_embed
-    exp_amount = (active_boss.boss_tier * 100) + (active_boss.boss_type_num * 100)
-    exp_level_bonus = random.randint(active_boss.boss_lvl * 50, (active_boss.boss_lvl * 100))
+    exp_amount = (active_boss.boss_tier * 250) + (active_boss.boss_type_num * 50)
+    exp_level_bonus = random.randint((active_boss.boss_lvl * 25), (active_boss.boss_lvl * 50))
+    exp_amount += exp_level_bonus
     loot_output = award_loot(active_boss, player_list, exp_amount)
     for counter, loot_section in enumerate(loot_output):
         temp_player = player.get_player_by_id(player_list[counter])

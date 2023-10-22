@@ -143,7 +143,6 @@ class Expedition:
         player_resist = 0
         if dmg_element != -1:
             player_resist = self.player_object.elemental_resistance[dmg_element]
-            player_resist += self.player_object.all_elemental_resistance
         damage -= damage * player_resist
         damage -= damage * player_mitigation * 0.01
         damage = int(damage)

@@ -11,9 +11,16 @@ def display_insignia(player_object, insignia_code, output_type):
     tier_colour, tier_icon = inventory.get_gear_tier_colours(player_object.player_echelon)
     hp_bonus = 500 * player_object.player_echelon
     item_rolls = f"+{hp_bonus} HP Bonus"
+    item_rolls += f"\n{player_object.player_lvl}% Final Damage"
     temp_elements = insignia_code.split(";")
     element_list = list(map(int, temp_elements))
     num_elements = element_list.count(1)
+    display_stars = ""
+    for x in range(player_object.player_echelon):
+        display_stars += "<:estar1:1143756443967819906>"
+    for y in range((5 - player_object.player_echelon)):
+        display_stars += "<:ebstar2:1144826056222724106>"
+        item_types = ""
     insignia_name = f"{insignia_prefix[player_object.player_echelon]} "
     match num_elements:
         case 1:
@@ -38,9 +45,11 @@ def display_insignia(player_object, insignia_code, output_type):
     if output_type == "Embed":
         insignia_output = discord.Embed(colour=tier_colour,
                                         title=insignia_name,
-                                        description=item_rolls)
+                                        description=display_stars)
+        insignia_output.add_field(name="", value=item_rolls, inline=False)
     else:
         insignia_output = insignia_name
+        insignia_output += f"\n{display_stars}"
         insignia_output += f"\n{item_rolls}"
 
     return insignia_output
@@ -160,7 +169,7 @@ class ElementSelectView(discord.ui.View):
                                                   title="Weaver Lord, Isabelle",
                                                   description="How entertaining. I am willing to engrave your soul, "
                                                               "but my services are as expensive as they are painful.")
-                        cost = num_selected * 5000
+                        cost = num_selected * 10000
                         cost_msg = f"{pandorabot.coin_icon} {cost}x Lotus Coins\n"
                         fae_cost = payment_embed(current_selection)
                         cost_msg += fae_cost

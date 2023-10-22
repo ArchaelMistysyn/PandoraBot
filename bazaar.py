@@ -69,10 +69,13 @@ def show_bazaar_items():
 
                 item_cost = f"Cost: {cost} Lotus Coins"
                 item_damage = f"Average Damage: {int((item_base_dmg_min + item_base_dmg_max) / 2)}"
-                if item_bonus_stat[0].isalpha():
-                    item_main_info = f"{item_damage} || Skill: {item_bonus_stat}"
+                if item_bonus_stat:
+                    if item_bonus_stat[0].isalpha():
+                        item_main_info = f"{item_damage} || Skill: {item_bonus_stat}"
+                    else:
+                        item_main_info = f"{item_damage} || Base Stat: {item_bonus_stat}"
                 else:
-                    item_main_info = f"{item_damage} || Base Stat: {item_bonus_stat}"
+                    item_main_info = f"{item_damage}"
 
                 display_stars = ""
                 for x in range(item_num_stars):

@@ -56,6 +56,8 @@ class CustomItem:
         else:
             rolltype = "S"
         random_damage1, random_damage2 = get_tier_damage(self.item_tier)
+        self.base_damage_min = random_damage1
+        self.base_damage_max = random_damage2
         match self.item_type:
             case "W":
                 if self.item_damage_type == pandorabot.class_summoner:
@@ -145,7 +147,7 @@ class CustomItem:
                     self.item_material_tier = "Fabled"
                     self.item_blessing_tier = "Refined"
                     self.item_base_type = "Amulet"
-                self.item_bonus_stat = assign_bonus_stat(self.item_tier)
+                self.assign_bonus_stat()
                 self.add_roll()
             case "G":
                 self.item_material_tier = "Crude"
@@ -163,7 +165,7 @@ class CustomItem:
                         self.item_base_type = "Lucent Wings"
                     case _:
                         self.item_base_type = "Feathered Wings"
-                self.item_bonus_stat = assign_bonus_stat(self.item_tier)
+                self.assign_bonus_stat()
                 self.add_roll()
             case "C":
                 self.item_material_tier = "Iron"
@@ -171,12 +173,12 @@ class CustomItem:
                     self.item_material_tier = "Fabled"
                 random_blessing = random.randint(1, 2)
                 if random_blessing == 1:
-                    self.item_blessing_tier = "Light"
+                    self.item_blessing_tier = "Clear"
                 else:
-                    self.item_blessing_tier = "Dark"
+                    self.item_blessing_tier = "Tainted"
                 random_num = random.randint(1, 2)
                 # set crest unique skill
-                self.item_bonus_stat = assign_bonus_stat(self.item_tier)
+                self.assign_bonus_stat()
                 self.add_roll()
             case _:
                 random_variant = random.randint(1, 2)
@@ -209,18 +211,29 @@ class CustomItem:
                     self.item_prefix_values[idy] = f"{y[0]}{self.item_tier}{y[2]}"
                 for idz, z in enumerate(self.item_suffix_values):
                     self.item_suffix_values[idz] = f"{z[0]}{self.item_tier}{z[2]}"
-        if random_damage1 < random_damage2:
-            self.base_damage_min = random_damage1
-            self.base_damage_max = random_damage2
-        else:
-            self.base_damage_min = random_damage2
-            self.base_damage_max = random_damage1
         self.update_damage()
         if self.item_type != "D":
             self.item_num_stars = 0
             self.set_item_name()
         else:
             self.item_num_stars = self.item_tier - 1
+
+    def assign_bonus_stat(self):
+        base_tier = self.item_tier
+        if base_tier < 5:
+            random_pos = random.randint(0, 8)
+            keyword = pandorabot.element_special_names[random_pos]
+            if self.item_type == "Y":
+                descriptor = "Bane"
+            elif self.item_type == "G":
+                descriptor = "Feathers"
+            else:
+                descriptor = "Authority"
+            unique_skill = f"{keyword} {descriptor}"
+        else:
+            random_pos = random.randint(0, 3)
+            unique_skill = pandorabot.tier_5_ability_list[random_pos]
+        self.item_bonus_stat = unique_skill
 
     def update_stored_item(self):
         item_elements = ""
@@ -684,7 +697,7 @@ def read_custom_item(item_id):
         return None
 
 
-def generate_item_type() -> str:
+def generate_item_type():
     random_num = random.randint(1, 9)
     match random_num:
         case 1 | 2 | 3:
@@ -718,6 +731,10 @@ def get_tier_damage(item_tier):
         case _:
             random_damage1 = random.randint(1, 500)
             random_damage2 = random.randint(1, 500)
+    if random_damage2 < random_damage1:
+        temp_damage = random_damage1
+        random_damage1 = random_damage2
+        random_damage2 = temp_damage
     return random_damage1, random_damage2
 
 
@@ -889,7 +906,7 @@ def craft_item(player_object, selected_item, item_id, method):
                     is_success = "3"
             case "Upgrade":
                 damage_check = damagecalc.get_item_tier_damage(selected_item.item_material_tier)
-                maxed_values = [5000, 25000, 50000, 250000]
+                maxed_values = [10000, 25000, 50000, 250000]
                 if damage_check not in maxed_values:
                     update_stock(player_object, item_id, -1)
                     random_num = random.randint(1, 100)
@@ -912,7 +929,7 @@ def craft_item(player_object, selected_item, item_id, method):
                     is_success = "3"
             case "Bestow":
                 damage_check = damagecalc.get_item_tier_damage(selected_item.item_blessing_tier)
-                maxed_values = [5000, 25000, 50000, 250000]
+                maxed_values = [10000, 25000, 50000, 250000]
                 if damage_check not in maxed_values:
                     update_stock(player_object, item_id, -1)
                     random_num = random.randint(1, 100)
@@ -920,8 +937,8 @@ def craft_item(player_object, selected_item, item_id, method):
                         blessing_tier_list = ["Standard", "Faint", "Luminous", "Lustrous", "Radiant", "Divine",
                                               "Basic", "Enchanted", "Luminous", "Lustrous", "Radiant", "Divine",
                                               "Sparkling", "Glittering", "Dazzling", "Shining", "Radiant", "Divine",
-                                              "Dark", "Shadow", "Inverted", "Abyssal", "Calamitous", "Balefire",
-                                              "Light", "Glowing", "Pure", "Majestic", "Radiant", "Divine",
+                                              "Tainted", "Corrupt", "Inverted", "Abyssal", "Calamitous", "Balefire",
+                                              "Clear", "Pure", "Pristine", "Majestic", "Radiant", "Divine",
                                               "???", "Chroma", "Chromatic", "Prisma", "Prismatic", "Iridescent",
                                               "Refined", "Tempered", "Empowered", "Unsealed", "Awakened", "Transcendent"]
                         for idx, elem in enumerate(blessing_tier_list):
@@ -1204,20 +1221,6 @@ def try_refine(player_owner, item_type, selected_tier):
         new_item.item_id = -1
 
     return new_item
-
-
-def assign_bonus_stat(base_tier):
-    ability_list = pandorabot.global_unique_ability_list[base_tier - 1]
-    random_num = random.randint(0, (len(ability_list) - 1))
-    keyword = ability_list[random_num]
-    if base_tier < 4:
-        descriptor = pandorabot.global_descriptor_list[(base_tier - 1)]
-        random_buff = random.randint(0, 3)
-        buff_type = pandorabot.global_buff_type_list[random_buff]
-        unique_skill = f"{keyword} {buff_type} {descriptor}"
-    else:
-        unique_skill = keyword
-    return unique_skill
 
 
 def sell(user, item, embed_msg):

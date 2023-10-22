@@ -57,6 +57,7 @@ class PlayerProfile:
         self.defence_penetration = 0.0
         self.class_multiplier = 0.0
         self.final_damage = 0.0
+        self.banes = [0.0, 0.0, 0.0, 0.0, 0.0]
 
         self.critical_chance = 0.0
         self.critical_multiplier = 0.0
@@ -94,6 +95,7 @@ class PlayerProfile:
         self.defence_penetration = 0.0
         self.class_multiplier = 0.0
         self.final_damage = 0.0
+        self.banes = [0.0, 0.0, 0.0, 0.0, 0.0]
 
         self.critical_chance = 0.0
         self.critical_multiplier = 1.0
@@ -129,27 +131,27 @@ class PlayerProfile:
             stats += f"\nCritical Damage: +{int(round(self.critical_multiplier * 100))}%"
             for idw, w in enumerate(self.elemental_damage_multiplier):
                 stats += f"\n{pandorabot.global_element_list[idw]} Damage: {int(w * 100)}%"
-            stats += f"\nOmni Damage: {int(round(self.all_elemental_multiplier * 100))}%"
             stats += f"\nBonus Hit Count: +{int(round(self.bonus_hits))}x"
             stats += f"\nClass Multiplier: {int(round(self.class_multiplier * 100))}%"
             stats += f"\nFinal Damage: {int(round(self.final_damage * 100))}%"
+            for idh, h in enumerate(self.banes):
+                if idh != 4:
+                    stats += f"\n{bosses.boss_list[idh]} Bane: {int(h * 100)}%"
         elif method == 2:
             stats = f"Player HP: {self.player_mHP:,}"
             for idy, y in enumerate(self.elemental_resistance):
                 stats += f"\n{pandorabot.global_element_list[idy]} Resistance: {int(y * 100)}%"
-            stats += f"\nOmni Resistance: {int(round(self.all_elemental_resistance * 100))}%"
             stats += f"\nDamage Mitigation: {int(round(self.damage_mitigation))}%"
         elif method == 3:
-            stats = f"\nDefence Penetration: {int(round(self.defence_penetration * 100))}%"
+            stats = ""
             for idx, x in enumerate(self.elemental_penetration):
                 stats += f"\n{pandorabot.global_element_list[idx]} Penetration: {int(x * 100)}%"
-            stats += f"\nOmni Penetration: {int(round(self.all_elemental_penetration * 100))}%"
+            stats += f"\nDefence Penetration: {int(round(self.defence_penetration * 100))}%"
         else:
             stats = ""
             for idz, z in enumerate(self.elemental_curse):
                 stats += f"{pandorabot.global_element_list[idz]} Curse: {int(z * 100)}%\n"
             stats += f"Omni Aura: {int(round(self.aura))}%\n"
-            stats += f"Omni Curse: {int(round(self.all_elemental_curse * 100))}%"
 
         embed_msg = discord.Embed(colour=echelon_colour[0],
                                   title=self.player_username,
@@ -331,21 +333,21 @@ class PlayerProfile:
             self.player_damage += random.randint(e_acc.item_damage_min, e_acc.item_damage_max)
             self.assign_roll_values(e_acc)
             self.assign_gem_values(e_acc)
-            self.unique_ability_multipliers(e_acc.item_bonus_stat)
+            self.unique_ability_multipliers(e_acc)
         if self.equipped_wing != 0:
             e_wing = inventory.read_custom_item(self.equipped_wing)
             e_wing.update_damage()
             self.player_damage += random.randint(e_wing.item_damage_min, e_wing.item_damage_max)
             self.assign_roll_values(e_wing)
             self.assign_gem_values(e_wing)
-            self.unique_ability_multipliers(e_wing.item_bonus_stat)
+            self.unique_ability_multipliers(e_wing)
         if self.equipped_crest != 0:
             e_crest = inventory.read_custom_item(self.equipped_crest)
             e_crest.update_damage()
             self.player_damage += random.randint(e_crest.item_damage_min, e_crest.item_damage_max)
             self.assign_roll_values(e_crest)
             self.assign_gem_values(e_crest)
-            self.unique_ability_multipliers(e_crest.item_bonus_stat)
+            self.unique_ability_multipliers(e_crest)
         if self.equipped_tarot != "":
             tarot_info = self.equipped_tarot.split(";")
             e_tarot = tarot.check_tarot(self.player_id, tarot.tarot_card_list(int(tarot_info[0])), int(tarot_info[1]))
@@ -358,6 +360,8 @@ class PlayerProfile:
         self.critical_chance = (1 + self.critical_chance) * base_critical_chance
         self.attack_speed = (1 + self.attack_speed) * base_attack_speed
         self.damage_mitigation = (1 + (self.mitigation_multiplier + self.damage_mitigation)) * base_damage_mitigation
+        if self.damage_mitigation >= 100:
+            self.damage_mitigation = 100
         self.player_mHP = int((base_player_hp + self.hp_bonus) * (1 + self.hp_multiplier))
         self.player_cHP = self.player_mHP
 
@@ -380,6 +384,16 @@ class PlayerProfile:
         self.class_multiplier += 0.05
         self.class_multiplier *= match_count
 
+        for x in range(9):
+            self.elemental_damage_multiplier[x] += self.all_elemental_multiplier
+            self.elemental_penetration[x] += self.all_elemental_penetration
+            self.elemental_resistance[x] += self.all_elemental_resistance
+            self.elemental_curse[x] += self.all_elemental_curse
+            if self.elemental_resistance[x] >= 100:
+                self.elemental_resistance[x] = 100
+        for y in range(4):
+            self.banes[y] += self.banes[4]
+
     def get_player_damage(self, boss_object):
         additional_multiplier = 1.0
         e_weapon = inventory.read_custom_item(self.equipped_weapon)
@@ -396,6 +410,8 @@ class PlayerProfile:
         # Additional multipliers
         additional_multiplier *= (1 + self.final_damage)
         self.player_damage *= additional_multiplier
+        boss_type = boss_object.boss_type_num - 1
+        self.player_damage *= (1 + self.banes[boss_type])
         # Type Defences
         defences_multiplier = (damagecalc.boss_defences("", self, boss_object, -1, e_weapon) + self.defence_penetration)
         self.player_damage *= defences_multiplier
@@ -403,10 +419,9 @@ class PlayerProfile:
         for idx, x in enumerate(e_weapon.item_elements):
             if x == 1:
                 self.elemental_damage[idx] = self.player_damage * (1 + self.elemental_damage_multiplier[idx])
-                self.elemental_damage[idx] *= (1 + self.all_elemental_multiplier)
                 location = int(idx)
                 resist_multi = damagecalc.boss_defences("Element", self, boss_object, location, e_weapon)
-                penetration_multi = 1 + self.elemental_penetration[idx] + self.all_elemental_penetration
+                penetration_multi = 1 + self.elemental_penetration[idx]
                 self.elemental_damage[idx] *= resist_multi * penetration_multi
         self.player_total_damage = int(sum(self.elemental_damage))
         return self.player_total_damage
@@ -415,6 +430,7 @@ class PlayerProfile:
         temp_elements = insignia_code.split(";")
         element_list = list(map(int, temp_elements))
         num_elements = element_list.count(1)
+        self.final_damage += self.player_lvl * 0.01
         if num_elements != 9:
             selected_elements_list = [ind for ind, x in enumerate(element_list) if x == 1]
             for y in selected_elements_list:
@@ -459,19 +475,19 @@ class PlayerProfile:
                     self.elemental_curse[2] += card_multiplier * 30
             case 6:
                 if tarot_card.card_variant == 1:
-                    self.health_multiplier += card_multiplier * 25
+                    self.hp_multiplier += card_multiplier * 25
                 else:
                     self.all_elemental_resistance += card_multiplier * 10
             case 7:
                 if tarot_card.card_variant == 1:
-                    notsureyet = True
+                    self.final_damage += card_multiplier * 5
                 else:
-                    notsureyet = True
+                    self.banes[1] += card_multiplier * 40
             case 8:
                 if tarot_card.card_variant == 1:
-                    self.health_bonus += 250 * tarot_card.num_stars
+                    self.hp_bonus += 250 * tarot_card.num_stars
                 else:
-                    self.final_damage += card_multiplier * 15
+                    self.banes[2] += card_multiplier * 40
             case 9:
                 if tarot_card.card_variant == 1:
                     self.elemental_resistance[2] += card_multiplier * 15
@@ -509,12 +525,12 @@ class PlayerProfile:
                     self.elemental_curse[0] += card_multiplier * 30
             case 16:
                 if tarot_card.card_variant == 1:
-                    self.health_multiplier += card_multiplier * 25
-                else:
                     self.damage_mitigation += card_multiplier * 15
+                else:
+                    self.banes[0] += card_multiplier * 40
             case 17:
                 if tarot_card.card_variant == 1:
-                    self.health_regen += card_multiplier * 25
+                    self.hp_regen += card_multiplier * 25
                 else:
                     self.all_elemental_multiplier += card_multiplier * 20
             case 18:
@@ -723,49 +739,40 @@ class PlayerProfile:
         embed_msg.add_field(name="", value=potion_msg)
         return embed_msg
 
-    def unique_ability_multipliers(self, unique_ability):
-        damage_multiplier = 0.0
-        damage_mitigation = 0.0
+    def unique_ability_multipliers(self, item):
+        unique_ability = item.item_bonus_stat
+        item_type = item.item_type
         level_bonus = 0.01 * self.player_lvl
-        if (unique_ability in pandorabot.global_unique_ability_list[3]
-                or unique_ability in pandorabot.global_unique_ability_list[4]):
+        if item.item_tier >= 5:
             match unique_ability:
                 case "Curse of Immortality":
                     self.immortal = True
                 case "Elemental Fractal":
-                    self.all_elemental_multiplier += 2 * level_bonus
-                case "Bahamut's Trinity":
-                    self.mitigation_multiplier += level_bonus
-                    self.final_damage += level_bonus
-                    self.hp_multiplier += level_bonus
+                    self.all_elemental_multiplier += level_bonus
                 case "Omega Critical":
-                    self.critical_multiplier += 2 * level_bonus
-                case "Perfect Precision":
-                    self.critical_chance += level_bonus
-                case "Overflowing Vitality":
-                    self.hp_multiplier += 5 * level_bonus
+                    self.critical_multiplier += level_bonus
                 case "Specialist's Mastery":
-                    self.class_multiplier += level_bonus
-                case "Shatter Barrier":
-                    self.all_elemental_penetration += level_bonus
+                    self.class_multiplier += round((level_bonus / 5), 2)
+                case "Perfect Precision":
+                    self.critical_chance += 2 * level_bonus
+                case "Overflowing Vitality":
+                    self.hp_multiplier += 3 * level_bonus
                 case _:
-                    damage_multiplier = 0.0
+                    nothing = False
         else:
             keywords = unique_ability.split()
-            buff_tier = pandorabot.global_descriptor_list.index(keywords[2])
-            buff_type_loc = pandorabot.global_unique_ability_list[buff_tier].index(keywords[0])
-            match keywords[1]:
-                case "Hero's":
-                    self.elemental_damage_multiplier[buff_type_loc] += round(level_bonus / 2, 2)
-                    self.elemental_resistance[buff_type_loc] += round(level_bonus / 4, 2)
-                case "Guardian's":
-                    self.elemental_resistance[buff_type_loc] += round(level_bonus / 2, 2)
-                case "Aggressor's":
+            match item_type:
+                case "Y":
+                    buff_type_loc = bosses.boss_list.index(keywords[0])
+                    self.banes[buff_type_loc] += level_bonus * 2
+                case "G":
+                    buff_type_loc = pandorabot.element_special_names.index(keywords[0])
                     self.elemental_damage_multiplier[buff_type_loc] += level_bonus
-                case "Breaker's":
+                case "C":
+                    buff_type_loc = pandorabot.element_special_names.index(keywords[0])
                     self.elemental_penetration[buff_type_loc] += level_bonus
                 case _:
-                    nothing = True
+                    nothing = False
 
     def check_cooldown(self, command_name):
         difference = None
