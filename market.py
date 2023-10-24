@@ -135,8 +135,6 @@ class ShopView1(discord.ui.View):
         max_values=1,
         options=[
             discord.SelectOption(
-                emoji="<a:eenergy:1145534127349706772>", label="Vibrant Condensed Energy", value="I1a"),
-            discord.SelectOption(
                 emoji="<:eore:1145534835507593236>", label="Clouded Ore", value="I1b"),
             discord.SelectOption(
                 emoji="<:esoul:1145520258241806466>", label="Light Soul", value="I1c"),
@@ -175,8 +173,6 @@ class ShopView2(discord.ui.View):
         max_values=1,
         options=[
             discord.SelectOption(
-                emoji="<a:eenergy:1145534127349706772>", label="Vivid Condensed Energy", value="I2a"),
-            discord.SelectOption(
                 emoji="<:eore:1145534835507593236>", label="Clear Ore", value="I2b"),
             discord.SelectOption(
                 emoji="<:esoul:1145520258241806466>", label="Luminous Soul", value="I2c"),
@@ -213,8 +209,6 @@ class ShopView3(discord.ui.View):
         max_values=1,
         options=[
             discord.SelectOption(
-                emoji="<a:eenergy:1145534127349706772>", label="Viridescent Condensed Energy", value="I3a"),
-            discord.SelectOption(
                 emoji="<:eore:1145534835507593236>", label="Crystal Ore", value="I3b"),
             discord.SelectOption(
                 emoji="<:esoul:1145520258241806466>", label="Lustrous Soul", value="I3c"),
@@ -250,8 +244,6 @@ class ShopView4(discord.ui.View):
         min_values=1,
         max_values=1,
         options=[
-            discord.SelectOption(
-                emoji="<a:eenergy:1145534127349706772>", label="Victorious Condensed Energy", value="I4a"),
             discord.SelectOption(
                 emoji="<:eore:1145534835507593236>", label="Champion's Ore", value="I4b"),
             discord.SelectOption(

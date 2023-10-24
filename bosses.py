@@ -18,6 +18,7 @@ import mydb
 import pandorabot
 
 boss_list = ["Fortress", "Dragon", "Demon", "Paragon"]
+fortress_data = pd.read_csv("fortressname.csv")
 
 
 # Boss class
@@ -36,6 +37,7 @@ class CurrentBoss:
         self.boss_eleweak = [0, 0, 0, 0, 0, 0, 0, 0, 0]
         self.curse_debuffs = [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
         self.aura = 0.0
+        self.boss_element = 0
 
     def __str__(self):
         return self.boss_name
@@ -151,33 +153,43 @@ class CurrentBoss:
                 name_selector = random.randint(1, len(fortress_names[(boss_tier - 1)]))
                 boss_suffix = fortress_names[(boss_tier - 1)][(name_selector - 1)]
                 if boss_tier != 4:
-                    boss_name = get_boss_descriptor(boss_type) + "the " + boss_suffix
+                    boss_prefix, boss_element = get_boss_descriptor(boss_type)
+                    boss_name = boss_prefix + "the " + boss_suffix
                     boss_image = f'https://kyleportfolio.ca/botimages/bosses/{boss_type}{boss_tier}.png'
+                    self.boss_element = boss_element
                 else:
                     boss_name = boss_suffix
                     boss_image = ""
+                    self.boss_element = 9
             case "Dragon":
                 name_selector = random.randint(1, len(dragon_names[(boss_tier - 1)]))
                 boss_name = dragon_names[(boss_tier - 1)][(name_selector - 1)]
+                temp_name_split = boss_name.split()
+                boss_element = temp_name_split[1]
                 if boss_tier != 4:
+                    self.boss_element = pandorabot.element_names.index(boss_element)
                     boss_name += " Dragon"
                     boss_image = f'https://kyleportfolio.ca/botimages/bosses/{boss_type}{boss_tier}.png'
                 else:
+                    self.boss_element = 8
                     boss_image = ""
             case "Demon":
                 name_selector = random.randint(1, len(demon_names[(boss_tier - 1)]))
                 boss_name = demon_names[(boss_tier - 1)][(name_selector - 1)]
                 if boss_tier != 4:
-                    boss_colour = get_boss_descriptor(boss_type)
+                    boss_colour, boss_element = get_boss_descriptor(boss_type)
                     boss_name = f'{boss_colour} {boss_name}'
+                    self.boss_element = boss_element
                     boss_image = f'https://kyleportfolio.ca/botimages/bosses/{boss_type}{boss_colour}{boss_tier}.png'
                 else:
                     boss_name = demon_list_t4[0]
                     boss_image = ""
+                    self.boss_element = 9
             case "Paragon":
                 name_selector = random.randint(1, len(paragon_names[(boss_tier - 1)]))
                 boss_name = paragon_names[(boss_tier - 1)][(name_selector - 1)]
                 boss_image = f'https://kyleportfolio.ca/botimages/bosses/{boss_type}{boss_tier}.png'
+                self.boss_element = 9
             case _:
                 boss_name = "error"
         self.boss_image = boss_image
@@ -435,16 +447,17 @@ def get_base_hp(base_type, channel_num):
 def get_boss_descriptor(boss_type):
     match boss_type:
         case "Fortress":
-            boss_data = pd.read_csv("fortressname.csv")
-            random_number = random.randint(0, (boss_data['fortress_name_a'].count()-1))
-            boss_descriptor = boss_data.fortress_name_a[random_number]
-            random_number = random.randint(0, (boss_data['fortress_name_b'].count()-1))
-            boss_descriptor += " " + boss_data.fortress_name_b[random_number] + ", "
+            random_number = random.randint(0, (fortress_data['fortress_name_a'].count()-1))
+            boss_info = fortress_data.fortress_name_a[random_number].split(";")
+            boss_descriptor = str(boss_info[0])
+            boss_element = int(boss_info[1])
+            random_number = random.randint(0, (fortress_data['fortress_name_b'].count()-1))
+            boss_descriptor += " " + fortress_data.fortress_name_b[random_number] + ", "
         case "Demon":
-            demon_colours = ["Crimson", "Azure", "Jade", "Violet", "Ivory", "Rose", "Gold", "Silver", "Stygian"]
-            random_number = random.randint(0, 8)
-            boss_descriptor = demon_colours[random_number]
-    return boss_descriptor
+            demon_colours = ["Crimson", "Azure", "Violet", "Bronze", "Jade", "Ivory", "Stygian", "Gold", "Rose"]
+            boss_element = random.randint(0, 8)
+            boss_descriptor = demon_colours[boss_element]
+    return boss_descriptor, boss_element
 
 
 def add_participating_player(channel_id, player_id):

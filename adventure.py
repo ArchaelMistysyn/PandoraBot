@@ -308,7 +308,7 @@ class EmbarkView(discord.ui.View):
                 if not self.paid:
                     reload_user = player.get_player_by_id(self.player_user.player_id)
                     if reload_user.spend_stamina((200 + self.selected_tier * 50)):
-                        reload_user.check_and_update_tokens(2, 1)
+                        reload_user.update_tokens(2, 1)
                         self.paid = True
 
                 if self.paid:
@@ -673,24 +673,18 @@ class StatueRoomView(discord.ui.View):
                     self.embed.clear_fields()
                     blessing_chance = random.randint(1, 1000)
                     num_reward = 1
+                    blessing_msg = ""
                     reload_player = player.get_player_by_id(self.expedition.player_object.player_id)
                     if blessing_chance <= 1 and active_room.deity_tier >= 5:
-                        reward_id = f"I{active_room.deity_tier}x"
-                        item_msg = f"{loot.get_loot_emoji(reward_id)} 1x {loot.get_loot_name(reward_id)}"
-                        self.embed.add_field(name="Ultimate Blessing Received!", value="", inline=False)
-                        inventory.update_stock(reload_player, reward_id, num_reward)
+                        reward_id = f"i{active_room.deity_tier}x"
+                        blessing_msg = "Ultimate Blessing Received"
                     elif blessing_chance <= 11:
                         deity_numeral = tarot.tarot_numeral_list(tarot.get_number_by_tarot(active_room.room_deity))
                         reward_id = f"t{deity_numeral}"
-                        item_msg = f"{loot.get_loot_emoji(reward_id)} 1x {loot.get_loot_name(reward_id)}"
-                        self.embed.add_field(name=f"{active_room.room_deity}'s Blessing Received!",
-                                             value="", inline=False)
-                        inventory.update_stock(reload_player, reward_id, num_reward)
+                        blessing_msg = f"{active_room.room_deity}'s Blessing Received!"
                     elif blessing_chance <= 111:
-                        reward_id = f"I{active_room.room_tier}t"
-                        item_msg = f"{loot.get_loot_emoji(reward_id)} 1x {loot.get_loot_name(reward_id)}"
-                        self.embed.add_field(name="Blessing Received!", value=item_msg, inline=False)
-                        inventory.update_stock(reload_player, reward_id, num_reward)
+                        reward_id = "i4t"
+                        blessing_msg = "Blessing Received!"
                     else:
                         heal_amount = random.randint(self.expedition.expedition_tier, 10)
                         heal_total = int(self.expedition.player_object.player_mHP * (heal_amount * 0.01))
@@ -699,6 +693,12 @@ class StatueRoomView(discord.ui.View):
                             self.expedition.player_object.player_cHP = self.expedition.player_object.player_mHP
                         hp_msg = f'{self.expedition.player_object.player_cHP} / {self.expedition.player_object.player_mHP} HP'
                         self.embed.add_field(name="Health Restored", value=hp_msg, inline=False)
+
+                    if blessing_msg != "":
+                        loot_item = loot.BasicItem(reward_id)
+                        item_msg = f"{loot_item.item_emoji} 1x {loot_item.item_name}"
+                        self.embed.add_field(name=blessing_msg, value=item_msg, inline=False)
+                        inventory.update_stock(reload_player, reward_id, num_reward)
                     self.new_view = TransitionView(self.expedition)
                 await interaction.response.edit_message(embed=self.embed, view=self.new_view)
         except Exception as e:
@@ -726,16 +726,18 @@ class StatueRoomView(discord.ui.View):
                             if event_chance <= 15:
                                 random_item = random.randint(0, 1)
                                 if random_item == 0:
-                                    reward_id = f"I{reward_tier}b"
+                                    reward_id = f"i{reward_tier}o"
                                     reward_type = "Ore"
                                 else:
-                                    reward_id = f"I{reward_tier}c"
+                                    reward_id = f"i{reward_tier}s"
                                     reward_type = "Soul"
                                 embed_title = f"Excavated {num_reward} {reward_type}s!"
                             else:
-                                embed_title = f"Excavated {num_reward} Energy!"
-                                reward_id = f"I{reward_tier}a"
-                            item_msg = f"{loot.get_loot_emoji(reward_id)} {num_reward} {loot.get_loot_name(reward_id)}"
+                                room_element = pandorabot.global_element_list[active_room.room_element]
+                                embed_title = f"Excavated {num_reward} Fae Energy ({room_element})!"
+                                reward_id = f"Fae{active_room.room_element}"
+                            loot_item = loot.BasicItem(reward_id)
+                            item_msg = f"{loot_item.item_emoji} {num_reward} {loot_item.item_name}"
                             self.embed.add_field(name=embed_title, value=item_msg, inline=False)
                             inventory.update_stock(reload_player, reward_id, num_reward)
                         else:

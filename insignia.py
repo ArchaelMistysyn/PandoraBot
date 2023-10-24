@@ -205,7 +205,7 @@ class ConfirmSelectionView(discord.ui.View):
                     for x in selected_elements_list:
                         fae_id = f"Fae{x}"
                         fae_check = inventory.check_stock(reload_player, fae_id)
-                        if fae_check < 10:
+                        if fae_check < 50:
                             enough_fae = False
                     if cost <= reload_player.player_coins:
                         if enough_fae:
@@ -213,7 +213,7 @@ class ConfirmSelectionView(discord.ui.View):
                             reload_player.set_player_field("player_coins", reload_player.player_coins)
                             for z in selected_elements_list:
                                 fae_id = fae_id = f"Fae{z}"
-                                inventory.update_stock(reload_player, fae_id, -10)
+                                inventory.update_stock(reload_player, fae_id, -50)
                             delim = ";"
                             insignia_code = reduce(lambda full, new: str(full) + delim + str(new), self.current_selection)
                             insignia_description = display_insignia(reload_player, insignia_code, "Description")
@@ -231,8 +231,8 @@ class ConfirmSelectionView(discord.ui.View):
                         cannot_afford_description = "I'm not going to work for free. Come back with more coins."
                     if cannot_afford_description != "":
                         self.embed_msg = discord.Embed(colour=discord.Colour.dark_orange(),
-                                                  title="Weaver Lord, Isabelle",
-                                                  description=cannot_afford_description)
+                                                       title="Weaver Lord, Isabelle",
+                                                       description=cannot_afford_description)
                 await interaction.response.edit_message(embed=self.embed_msg, view=None)
         except Exception as e:
             print(e)
@@ -256,6 +256,6 @@ def payment_embed(current_selection):
     for idx, x in enumerate(current_selection):
         if x != 0:
             fae_id = f"Fae{idx}"
-            fae_icon = loot.get_loot_emoji(fae_id)
-            cost_msg += f"{fae_icon} 10x Fae Cores ({pandorabot.element_names[idx]})\n"
+            loot_item = loot.BasicItem(fae_id)
+            cost_msg += f"{loot_item.item_emoji} 50x {loot_item.item_name}\n"
     return cost_msg

@@ -19,11 +19,12 @@ class StaminaCog(commands.Cog):
     async def stamina_manager(self):
         print("Stamina Assignment Triggered!")
         player_list = player.get_all_users()
-        for player_user in player_list:
-            new_stamina_value = player_user.player_stamina + 10
-            if new_stamina_value > 5000:
-                new_stamina_value = 5000
-            player_user.set_player_field("player_stamina", new_stamina_value)
+        if player_list:
+            for player_user in player_list:
+                new_stamina_value = player_user.player_stamina + 10
+                if new_stamina_value > 5000:
+                    new_stamina_value = 5000
+                player_user.set_player_field("player_stamina", new_stamina_value)
 
 
 class RaidCog(commands.Cog):
@@ -63,8 +64,10 @@ class SoloCog(commands.Cog):
         self.channel_id = channel_id
         self.sent_message = sent_message
         self.channel_object = channel_object
-        self.solo_manager.start()
         print(f"{self.player_object.player_username}: SoloCog Running")
+
+    def run(self):
+        self.solo_manager.start()
 
     def cog_unload(self):
         self.solo_manager.cancel()

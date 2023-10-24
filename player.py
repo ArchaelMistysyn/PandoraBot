@@ -19,7 +19,7 @@ from sqlalchemy import exc
 import mydb
 import pandorabot
 from datetime import datetime as dt
-
+import quest
 import tarot
 
 
@@ -75,7 +75,7 @@ class PlayerProfile:
         self.damage_mitigation = 0.0
         self.mitigation_multiplier = 0.0
         self.elemental_resistance = [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
-        self.all_elemental_resistance = 0.0
+        self.all_elemental_resistance = 0.1
 
     def __str__(self):
         return str(self.player_name)
@@ -113,7 +113,7 @@ class PlayerProfile:
         self.damage_mitigation = 0.0
         self.mitigation_multiplier = 0.0
         self.elemental_resistance = [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
-        self.all_elemental_resistance = 0.0
+        self.all_elemental_resistance = 0.1
 
     def get_player_stats(self, method):
         echelon_colour = inventory.get_gear_tier_colours(self.player_echelon)
@@ -176,7 +176,7 @@ class PlayerProfile:
                     query = text(f"UPDATE PlayerList SET player_lvl = :input_1 WHERE player_id = :player_check")
                     query = query.bindparams(player_check=int(self.player_id), input_1=self.player_lvl)
                     pandora_db.execute(query)
-                    self.check_and_update_tokens(5, 1)
+                    self.update_tokens(5, 1)
             query = text(f"UPDATE PlayerList SET {field_name} = :input_1 WHERE player_id = :player_check")
             query = query.bindparams(player_check=int(self.player_id), input_1=field_value)
             pandora_db.execute(query)
@@ -228,9 +228,9 @@ class PlayerProfile:
                     response = f"Player {self.player_name} has been registered to play. Welcome {self.player_username}!"
                     response += f"\nPlease use the !quest command to proceed."
                     registered_player = get_player_by_name(self.player_name)
-                    query = text("INSERT INTO QuestTokens (player_id, token_1, token_5) "
-                                 "VALUES(:player_id, :input_1, :input_5)")
-                    query = query.bindparams(player_id=registered_player.player_id, input_1=1, input_5=1)
+                    query = text("INSERT INTO QuestTokens (player_id, token_1, token_3) "
+                                 "VALUES(:player_id, :input_1, :input_2)")
+                    query = query.bindparams(player_id=registered_player.player_id, input_1=1, input_2=1)
                     pandora_db.execute(query)
             pandora_db.close()
             engine.dispose()
@@ -239,17 +239,16 @@ class PlayerProfile:
             response = "Error!"
         return response
 
-    def check_and_update_tokens(self, quest_num, change):
-        current_tokens = self.check_tokens(quest_num)
-        new_tokens = current_tokens + change
-        self.update_tokens(quest_num, new_tokens)
-
-    def update_tokens(self, quest_num, new_token_count):
+    def update_tokens(self, quest_num, change):
+        current_quest = quest.quest_list[quest_num - 1]
+        token_num = current_quest.quest_exceptions()
+        current_tokens = self.check_tokens(token_num)
+        new_token_count = current_tokens + change
         try:
             engine_url = mydb.get_engine_url()
             engine = sqlalchemy.create_engine(engine_url)
             pandora_db = engine.connect()
-            field_name = f"token_{quest_num}"
+            field_name = f"token_{token_num}"
             query = text(f"UPDATE QuestTokens SET {field_name} = :field_value WHERE player_id = :player_check")
             query = query.bindparams(field_value=int(new_token_count), player_check=self.player_id)
             pandora_db.execute(query)
@@ -259,13 +258,13 @@ class PlayerProfile:
             print("Database Error: {}".format(err))
             response = "Error!"
 
-    def check_tokens(self, quest_num):
+    def check_tokens(self, token_num):
         num_tokens = 0
         try:
             engine_url = mydb.get_engine_url()
             engine = sqlalchemy.create_engine(engine_url)
             pandora_db = engine.connect()
-            token_field = f"token_{quest_num}"
+            token_field = f"token_{token_num}"
             query = text(f"SELECT {token_field} FROM QuestTokens WHERE player_id = :player_check")
             query = query.bindparams(player_check=int(self.player_id))
             df = pd.read_sql(query, pandora_db)
@@ -567,39 +566,40 @@ class PlayerProfile:
             if check_roll <= 106:
                 roll_num = check_roll - 97
                 if roll_num == 9:
-                    bonus = roll_adjust * 5
+                    bonus = roll_adjust * 8
                     self.all_elemental_multiplier += bonus
                 else:
-                    bonus = roll_adjust * 15
+                    bonus = roll_adjust * 20
                     self.elemental_damage_multiplier[roll_num] += bonus
             elif check_roll <= 116:
                 roll_num = check_roll - 97 - 10
                 if roll_num == 9:
-                    bonus = roll_adjust * 4
+                    bonus = roll_adjust * 7
                     self.all_elemental_penetration += bonus
                 else:
-                    bonus = roll_adjust * 12
+                    bonus = roll_adjust * 15
                     self.elemental_penetration[roll_num] += bonus
             else:
                 match check_roll:
-                    case "u":
-                        bonus = roll_adjust * 3
-                        self.defence_penetration += bonus
-                    case "v":
-                        bonus = roll_adjust * 3
-                        self.attack_speed += bonus
-                    case "w":
-                        bonus = roll_adjust * 12
-                        self.critical_multiplier += bonus
-                    case "x":
-                        bonus = roll_adjust * 3
-                        self.final_damage += bonus
-                    case "y":
-                        bonus = roll_adjust * 3
-                        self.multi_hit += bonus
+                    case 117:
+                        bonus = roll_adjust * 15
+                        self.damage_mitigation += bonus
+                    case 118:
+                        bonus = roll_adjust * 1
+                        self.hp_regen += bonus
+                    case 119:
+                        bonus = roll_tier * 100
+                        self.hp_bonus += bonus
+                    case 120:
+                        bonus = roll_adjust * 15
+                        self.hp_multiplier += bonus
+                    case 121:
+                        bonus = roll_adjust * 5
+                        self.aura += bonus
                     case _:
                         bonus = roll_adjust * 3
                         self.class_multiplier += bonus
+
         for y in equipped_item.item_suffix_values:
             roll_tier = int(str(y)[1])
             check_roll = ord(str(y[2]))
@@ -607,39 +607,47 @@ class PlayerProfile:
             if check_roll <= 106:
                 roll_num = check_roll - 97
                 if roll_num == 9:
-                    bonus = roll_adjust * 2
+                    bonus = roll_adjust * 5
                     self.all_elemental_resistance += bonus
                 else:
-                    bonus = roll_adjust * 10
+                    bonus = roll_adjust * 15
                     self.elemental_resistance[roll_num] += bonus
             elif check_roll <= 116:
                 roll_num = check_roll - 97 - 10
                 if roll_num == 9:
-                    bonus = roll_adjust * 4
+                    bonus = roll_adjust * 5
                     self.all_elemental_curse += bonus
                 else:
-                    bonus = roll_adjust * 10
+                    bonus = roll_adjust * 12
                     self.elemental_curse[roll_num] += bonus
+            elif check_roll >= 119:
+                roll_num = check_roll - 119
+                bonus = roll_adjust * 20
+                self.banes[roll_num] += bonus
             else:
                 match check_roll:
-                    case "u":
-                        bonus = roll_adjust * 10
-                        self.damage_mitigation += bonus
-                    case "v":
-                        bonus = roll_adjust * 1
-                        self.hp_regen += bonus
-                    case "w":
-                        bonus = roll_tier * 100
-                        self.hp_bonus += bonus
-                    case "x":
-                        bonus = roll_adjust * 15
-                        self.hp_multiplier += bonus
-                    case "y":
-                        bonus = roll_adjust * 10
+                    case 117:
+                        bonus = roll_adjust * 20
                         self.critical_chance += bonus
+                    case 118:
+                        bonus = roll_adjust * 15
+                        self.critical_multiplier += bonus
                     case _:
-                        bonus = roll_adjust * 3
-                        self.aura += bonus
+                        no_change = True
+
+        for idz, z in enumerate(equipped_item.item_elements):
+            if z == 1:
+                match equipped_item.item_type:
+                    case "A":
+                        self.elemental_resistance[idz] += 0.15
+                    case "Y":
+                        self.elemental_damage[idz] += 0.25
+                    case "G":
+                        self.elemental_penetration[idz] += 0.15
+                    case "C":
+                        self.elemental_curse[idz] += 0.1
+                    case _:
+                        no_change = True
 
     def assign_gem_values(self, e_item):
         gem_id = e_item.item_inlaid_gem_id
@@ -728,11 +736,12 @@ class PlayerProfile:
         return response
 
     def create_stamina_embed(self):
-        potion_list = ["I1s", "I2s", "I3s", "I4s"]
+        potion_list = ["i1y", "i2y", "i3y", "i4y"]
         potion_msg = ""
         for x in potion_list:
-            potion_stock = inventory.check_stock(self, str(x))
-            potion_msg += f"\n{loot.get_loot_emoji(str(x))} {potion_stock}x {loot.get_loot_name(str(x))}"
+            loot_item = loot.BasicItem(str(x))
+            potion_stock = inventory.check_stock(self, loot_item.item_id)
+            potion_msg += f"\n{loot_item.item_emoji} {potion_stock}x {loot_item.item_name}"
         stamina_title = f"{self.player_username}\'s Stamina: "
         stamina_title += f"{str(self.player_stamina)} / 5000"
         embed_msg = discord.Embed(colour=discord.Colour.green(), title=stamina_title, description="")

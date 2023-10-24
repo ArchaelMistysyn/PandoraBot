@@ -1,0 +1,31 @@
+﻿quest_num,quest_title,story_message,cost_num,token_num,item_handin,quest_message,award_exp,award_coins,award_item,award_qty,award_role
+1,Who are you?,"You're a naughty boy going around opening chests and boxes that aren't yours. A lot of powerful beings were stored in there and you've just gone and let them all out. So let's make a deal. You help me seal the contents back inside my box where they belong and in exchange I will grant you the power of the stars.\nBut first, could you tell me your name little one?",1,1,,Use the /register command,500,500,i4y,1,
+2,Definitely Not Lost,"Pleasure doing business with you. I do hope you have a map of this labyrinth we're in, it really would be a shame if we got lost in here and met an unfortunate end.",1,2,,Use the /map command,1000,500,i4y,1,
+3,Crush The Castle,I'm so glad to see you're still here with me in one piece. Let's see. Our first order of business will be to procure you a weapon. Then let's have you show me what you're capable of.,1,-1,STONE1,Retrieve a Fortress Stone using /solo,1000,500,i2s,5,
+4,Fortress Mastery,It would seem my celestial energy has been scattered and is mutating your world. A shame about those unfortunate souls who were in that fortress. Bring me any stones you find that are infused with traces of my energy. This should help me to regain my power.,5,-1,STONE1,Retrieve 5 Fortress Stones using /solo,2500,500,i2o,5,
+5,Pursuit Of Power,"You've been very helpful, but I'll be honest. You're really not anywhere near strong enough yet. I can help you improve your equipment, but you need to show me that you are qualified to use it.",10,3,,Breakthrough to level 10,5000,2000,i5o,1,Player Echelon 1
+6,Out Of Reach,NOT YET IMPLEMENTED,1,-1,STONE2,Retrieve a Dragon Stone,2500,1000,i4w,2,
+7,Clear the Skies,NOT YET IMPLEMENTED,5,-1,STONE2,Retrieve 5 Dragon Stones,2500,1000,i4s,2,
+8,A Way Forward,NOT YET IMPLEMENTED,10,3,,Breakthrough to level 20,2500,1000,i4h,2,
+9,A Paragon Appears,NOT YET IMPLEMENTED,1,4,,Defeat the Fortress Paragon,2500,1000,i3k,10,
+10,Into The Depths,NOT YET IMPLEMENTED,10,3,,Breakthrough to level 30,10000,5000,i4z,1,Player Echelon 2
+11,Enter The Hellscape,NOT YET IMPLEMENTED,5,-1,STONE3,Retrieve 5 Demon Stones,5000,2000,i3f,5,
+12,A Chance Encounter,NOT YET IMPLEMENTED,1,5,,Defeat the Dragon Paragon,5000,2000,i4g,2,
+13,The First Monster,NOT YET IMPLEMENTED,1,6,,Defeat the Demon Paragon,5000,2000,i5l,1,
+14,A Firm Resolve,NOT YET IMPLEMENTED,20,3,,Breakthrough to level 50,5000,2000,i4z,1,
+15,Crossing Of Worlds,NOT YET IMPLEMENTED,1,7,,Equip a pair of Dimensional Wings,15000,10000,tVII,1,Player Echelon 3
+16,Encounter On Arrival,NOT YET IMPLEMENTED,1,-1,STONE4,Retreive a Paragon Stone,10000,5000,i4c,2,
+17,Harness Paragon Essence,NOT YET IMPLEMENTED,5,8,,Equip a Paragon Crest,10000,5000,i4p,1,
+18,Messenger Of Celestia,NOT YET IMPLEMENTED,1,-1,STONE4,Retreive 5 Paragon Stones,10000,5000,i4p,2,
+19,Shatter The Cycle,NOT YET IMPLEMENTED,20,-1,STONE4,Retreive 20 Paragon Stones,10000,5000,i4h,5,
+20,Into The Unknown,NOT YET IMPLEMENTED,10,3,,Breakthrough to level 60,20000,20000,i4z,1,Player Echelon 4
+21,Free From Possession,NOT YET IMPLEMENTED,1,9,,"Defeat II - Pandora, The Celestial",25000,10000,tII,1,
+22,Prepared To Die,NOT YET IMPLEMENTED,10,3,,Breakthrough to level 70,25000,10000,i4z,1,
+23,Charge Into Terminus,NOT YET IMPLEMENTED,1,10,,"Defeat III - Oblivia, The Void",25000,10000,tIII,1,
+24,Challenge The Omniscia,NOT YET IMPLEMENTED,1,11,,"Defeat IV - Akasha, The Infinite",25000,10000,tIV,1,
+25,The Endgame Beyond,NOT YET IMPLEMENTED,10,3,,Breakthrough to level 80,100000,50000,i5x,1,Player Echelon 5 (MAX)
+26,Ending A Wish,NOT YET IMPLEMENTED,1,12,,"Defeat XXX - Eleuia, The Wish",50000,200000,i6x,1,
+27,Through The Ether,NOT YET IMPLEMENTED,10,3,,Breakthrough to level 90,50000,50000,i6g,1,
+28,Face Your Limits,NOT YET IMPLEMENTED,5,3,,Breakthrough to level 95,50000,100000,i6g,1,
+29,Unshackled By Mortality,NOT YET IMPLEMENTED,5,3,,Breakthrough to level 100,50000,200000,i6x,1,
+30,Pandora's Box,NOT YET IMPLEMENTED,46,0,,Complete the full Tarot Collection,50000,500000,i6x,1,

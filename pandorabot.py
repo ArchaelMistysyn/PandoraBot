@@ -16,12 +16,12 @@ import inventory
 import bosses
 import random
 import loot
+import forge
 import player
 import damagecalc
 import menus
 import quest
 import tarot
-import forge
 import market
 import bazaar
 import insignia
@@ -77,8 +77,8 @@ element_celestial = "<:ej:1141653469938339971>"
 omni_icon = "🌈"
 global_element_list = [element_fire, element_water, element_lightning, element_earth, element_wind, element_ice,
                        element_dark, element_light, element_celestial]
-element_names = ["Fire", "Water", "Lightning", "Earth", "Wind", "Ice", "Chaotic", "Angelic", "Celestial"]
-element_special_names = ["Volcanic", "Aquatic", "Voltaic", "Seismic", "Sonic", "Arctic", "Aphotic", "Seraphic", "Cosmic"]
+element_names = ["Fire", "Water", "Lightning", "Earth", "Wind", "Ice", "Shadow", "Light", "Celestial"]
+element_special_names = ["Volcanic", "Aquatic", "Voltaic", "Seismic", "Sonic", "Arctic", "Lunar", "Solar", "Cosmic"]
 tier_5_ability_list = ["Elemental Fractal", "Specialist's Mastery", "Curse of Immortality", "Omega Critical"]
 
 not_owned_icon = "https://kyleportfolio.ca/botimages/profilecards/noachv.png"
@@ -209,7 +209,8 @@ def run_discord_bot():
     async def solo_boss_task(player_object, active_boss, channel_id, channel_object):
         embed_msg = active_boss.create_boss_msg(0, True)
         sent_message = await channel_object.send(embed=embed_msg)
-        pandoracogs.SoloCog(pandora_bot, player_object, active_boss, channel_id, sent_message, channel_object)
+        solo_cog = pandoracogs.SoloCog(pandora_bot, player_object, active_boss, channel_id, sent_message, channel_object)
+        solo_cog.run()
 
     @pandora_bot.event
     async def raid_task(channel_id, channel_num, channel_object):
@@ -244,9 +245,10 @@ def run_discord_bot():
             await sent_message.edit(embed=embed_msg)
             return True
         else:
-            for x in player_list:
-                temp_user = player.get_player_by_id(int(x))
-                quest.assign_tokens(temp_user, active_boss)
+            if active_boss.boss_tier >= 4:
+                for x in player_list:
+                    temp_user = player.get_player_by_id(int(x))
+                    quest.assign_tokens(temp_user, active_boss)
             embed_msg = bosses.create_dead_boss_embed(channel_id, active_boss, dps)
             await sent_message.edit(embed=embed_msg)
             loot_embed = loot.create_loot_embed(embed_msg, active_boss, player_list)
@@ -267,7 +269,8 @@ def run_discord_bot():
             await sent_message.edit(embed=embed_msg)
             return True
         else:
-            quest.assign_tokens(player_object, active_boss)
+            if active_boss.boss_tier >= 4:
+                quest.assign_tokens(player_object, active_boss)
             is_alive = False
             embed_msg = bosses.create_dead_boss_embed(channel_id, active_boss, dps)
             await sent_message.edit(embed=embed_msg)
@@ -301,8 +304,9 @@ def run_discord_bot():
                             embed_msg = active_boss.create_boss_msg(0, True)
                             channel_object = ctx.channel
                             sent_message = await channel_object.send(embed=embed_msg)
-                            pandoracogs.SoloCog(pandora_bot, player_object, active_boss,
-                                                channel_id, sent_message, channel_object)
+                            solo_cog = pandoracogs.SoloCog(pandora_bot, player_object, active_boss,
+                                                           channel_id, sent_message, channel_object)
+                            await solo_cog.run()
                         else:
                             await ctx.send("Not enough stamina.")
                     else:
@@ -317,7 +321,7 @@ def run_discord_bot():
     @pandora_bot.hybrid_command(name='register',
                                 description="**/register [USERNAME]** Register a username to begin playing!")
     @app_commands.guilds(discord.Object(id=1011375205999968427))
-    async def play(ctx, username: str = "Enter a new username!"):
+    async def play(ctx, username: str):
         if any(ctx.channel.id in sl for sl in global_server_channels):
             embed_msg = discord.Embed(colour=discord.Colour.dark_teal(),
                                       title="Register",
@@ -359,12 +363,12 @@ def run_discord_bot():
                         quantity = 2
                     else:
                         quantity = 3
-                    crate_id = "I1r"
-                    crate_icon = loot.get_loot_emoji(crate_id)
+                    crate_id = "i1r"
+                    loot_item = loot.BasicItem(crate_id)
                     inventory.update_stock(player_object, crate_id, quantity)
                     embed_msg = discord.Embed(colour=discord.Colour.dark_teal(),
                                               title=f"{player_object.player_username}: Boxed Daily Shipment!",
-                                              description=f"{crate_icon} {quantity}x Daily crate acquired!")
+                                              description=f"{loot_item.item_emoji} {quantity}x Daily crate acquired!")
                     await ctx.send(embed=embed_msg)
             else:
                 embed_msg = unregistered_message()
@@ -377,36 +381,79 @@ def run_discord_bot():
         if any(ctx.channel.id in sl for sl in global_server_channels):
             player_object = player.get_player_by_name(str(ctx.author))
             if player_object.player_class != "":
-                crate_id = "I1r"
+                crate_id = "i1r"
                 crate_stock = inventory.check_stock(player_object, crate_id)
                 if crate_stock >= 1:
                     inventory.update_stock(player_object, crate_id, -1)
                     embed_msg = discord.Embed(colour=discord.Colour.dark_teal(),
                                               title=f"{player_object.player_username}: Opening Crate!",
                                               description="What could be inside?")
-                    opening_chest = 0
-                    opening_string = ""
-                    message = await ctx.send(embed=embed_msg)
-                    while opening_chest < 10:
-                        opening_chest += 1
-                        opening_string += "♦️"
-                        await asyncio.sleep(1)
-                        embed_msg.clear_fields()
-                        embed_msg.add_field(name="", value=opening_string)
-                        await message.edit(embed=embed_msg)
-                    embed_msg.clear_fields()
                     reward_id, quantity = loot.generate_random_item()
-                    loot_description = f"{loot.get_loot_emoji(reward_id)} {quantity}x {loot.get_loot_name(reward_id)}"
+                    loot_item = loot.BasicItem(reward_id)
                     inventory.update_stock(player_object, reward_id, quantity)
+                    message = await open_lootbox(ctx, embed_msg, loot_item.item_tier)
+                    loot_description = f"{loot_item.item_emoji} {quantity}x {loot_item.item_name}"
                     embed_msg = discord.Embed(colour=discord.Colour.dark_teal(),
                                               title=f"{player_object.player_username}: Crate Opened!",
                                               description=loot_description)
                     await message.edit(embed=embed_msg)
                 else:
-                    await ctx.send(f"Out of stock: {loot.get_loot_emoji(crate_id)}!")
+                    loot_item = loot.BasicItem(crate_id)
+                    await ctx.send(f"Out of stock: {loot_item.item_emoji}!")
             else:
                 embed_msg = unregistered_message()
                 await ctx.send(embed=embed_msg)
+
+    @pandora_bot.hybrid_command(name='trove',
+                                description="**/trove** Open a crate!")
+    @app_commands.guilds(discord.Object(id=1011375205999968427))
+    async def trove(ctx, trove_tier):
+        if any(ctx.channel.id in sl for sl in global_server_channels):
+            player_object = player.get_player_by_name(str(ctx.author))
+            if player_object.player_class != "":
+                input_tier = int(trove_tier)
+                trove_id = f"i{trove_tier}j"
+                loot_item = loot.BasicItem(trove_id)
+                trove_stock = inventory.check_stock(player_object, trove_id)
+                if trove_stock >= 1:
+                    inventory.update_stock(player_object, trove_id, -1)
+                    embed_msg = discord.Embed(colour=discord.Colour.dark_teal(),
+                                              title=f"{player_object.player_username}: Opening {loot_item.item_name}!",
+                                              description="Feeling lucky today?")
+                    reward_coins = loot.generate_trove_reward(input_tier)
+                    player_object.player_coins += reward_coins
+                    player_object.set_player_field("player_coins", player_object.player_coins)
+                    message = await open_lootbox(ctx, embed_msg, input_tier)
+                    loot_description = f"{coin_icon} {reward_coins}x Lotus Coins!"
+                    embed_msg = discord.Embed(colour=discord.Colour.dark_teal(),
+                                              title=f"{player_object.player_username}: Trove Opened!",
+                                              description=loot_description)
+                    await message.edit(embed=embed_msg)
+                else:
+                    await ctx.send(f"Out of stock: {loot_item.item_emoji}!")
+            else:
+                embed_msg = unregistered_message()
+                await ctx.send(embed=embed_msg)
+
+    @pandora_bot.event
+    async def open_lootbox(ctx, embed_msg, item_tier):
+        message = await ctx.send(embed=embed_msg)
+        opening_chest = ""
+        for t in range(1, item_tier + 1):
+            opening_chest += "♦️"
+            tier_colour, tier_icon = inventory.get_gear_tier_colours(t)
+            embed_msg.add_field(name="", value=opening_chest)
+            await message.edit(embed=embed_msg)
+            await asyncio.sleep(1)
+            embed_msg.clear_fields()
+            opening_chest += tier_icon
+            embed_msg.add_field(name="", value=opening_chest)
+            await message.edit(embed=embed_msg)
+            await asyncio.sleep(1)
+            embed_msg.clear_fields()
+        await asyncio.sleep(1)
+        embed_msg.clear_fields()
+        return message
 
     @pandora_bot.hybrid_command(name='inlay', help="**/inlay [itemID]** to inlay a specific gem into an equipped item")
     @app_commands.guilds(discord.Object(id=1011375205999968427))
@@ -445,7 +492,7 @@ def run_discord_bot():
                 current_quest = player_object.player_quest
                 quest_object = quest.get_quest(current_quest, player_object)
                 quest_message = quest_object.get_quest_embed(player_object)
-                quest_view = menus.QuestView(player_object, quest_object)
+                quest_view = quest.QuestView(player_object, quest_object)
                 await ctx.send(embed=quest_message, view=quest_view)
             elif current_quest > 30:
                 embed_msg = discord.Embed(colour=discord.Colour.dark_teal(),
@@ -649,6 +696,23 @@ def run_discord_bot():
                 embed_msg.set_image(url="")
                 bind_view = menus.BindingTierView(player_object)
                 await ctx.send(embed=embed_msg, view=bind_view)
+            else:
+                embed_msg = unregistered_message()
+                await ctx.send(embed=embed_msg)
+
+    @pandora_bot.hybrid_command(name='infuse', help="**/infuse** to infuse items.")
+    @app_commands.guilds(discord.Object(id=1011375205999968427))
+    async def infuse(ctx):
+        if any(ctx.channel.id in sl for sl in global_server_channels):
+            user = ctx.author
+            player_object = player.get_player_by_name(user)
+            if player_object.player_class != "":
+                embed_msg = discord.Embed(colour=discord.Colour.magenta(),
+                                          title="Cloaked Alchemist, Sangam",
+                                          description="I can make anything, if you bring the right stuff.")
+                embed_msg.set_image(url="")
+                infuse_view = infusion.InfuseView(player_object)
+                await ctx.send(embed=embed_msg, view=infuse_view)
             else:
                 embed_msg = unregistered_message()
                 await ctx.send(embed=embed_msg)
