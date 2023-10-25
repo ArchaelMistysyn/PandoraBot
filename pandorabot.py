@@ -152,7 +152,7 @@ def run_discord_bot():
         embed_msg = active_boss.create_boss_msg(0, True)
         sent_message = await channel_object.send(embed=embed_msg)
         solo_cog = pandoracogs.SoloCog(pandora_bot, player_object, active_boss, channel_id, sent_message, channel_object)
-        solo_cog.run()
+        await solo_cog.run()
 
     @pandora_bot.event
     async def raid_task(channel_id, channel_num, channel_object):
@@ -245,6 +245,8 @@ def run_discord_bot():
                             active_boss.player_id = player_object.player_id
                             embed_msg = active_boss.create_boss_msg(0, True)
                             channel_object = ctx.channel
+                            spawn_msg = f"{player_object.player_username} has spawned a tier {active_boss.boss_tier} boss!"
+                            await ctx.send(spawn_msg)
                             sent_message = await channel_object.send(embed=embed_msg)
                             solo_cog = pandoracogs.SoloCog(pandora_bot, player_object, active_boss,
                                                            channel_id, sent_message, channel_object)
@@ -416,7 +418,7 @@ def run_discord_bot():
 
     @pandora_bot.hybrid_command(name='inlay', help="**/inlay [itemID]** to inlay a specific gem into an equipped item")
     @app_commands.guilds(discord.Object(id=1011375205999968427))
-    async def inlay(ctx, item_id: str = "Enter the item ID of the gem"):
+    async def inlay(ctx, item_id: str):
         if any(ctx.channel.id in sl for sl in globalitems.global_server_channels):
             if inventory.if_custom_exists(item_id):
                 selected_item = inventory.read_custom_item(item_id)
@@ -596,7 +598,7 @@ def run_discord_bot():
 
     @pandora_bot.hybrid_command(name='who', help="**/who [NewUsername]** to set your username")
     @app_commands.guilds(discord.Object(id=1011375205999968427))
-    async def who(ctx, new_username: str = "Enter a new username"):
+    async def who(ctx, new_username: str):
         if any(ctx.channel.id in sl for sl in globalitems.global_server_channels):
             existing_user = player.get_player_by_name(ctx.author)
             if player.check_username(new_username):
@@ -709,6 +711,19 @@ def run_discord_bot():
             else:
                 embed_msg = unregistered_message()
                 await ctx.send(embed=embed_msg)
+
+    @pandora_bot.hybrid_command(name='purge', help="Sells all unequipped gear items in or below a tier.")
+    @app_commands.guilds(discord.Object(id=1011375205999968427))
+    async def who(ctx, tier: int):
+        if any(ctx.channel.id in sl for sl in globalitems.global_server_channels):
+            existing_user = player.get_player_by_name(ctx.author)
+            if tier in range(1, 6):
+                await ctx.defer()
+                result, coin_total = inventory.purge(existing_user, tier)
+                message = f"{result} items sold.\n {globalitems.coin_icon} {coin_total}x lotus coins acquired."
+            else:
+                message = "The tier must be between 1 and 5."
+            await ctx.send(message)
 
     @pandora_bot.hybrid_command(name='credits', help="**/credits** to see the credits")
     @app_commands.guilds(discord.Object(id=1011375205999968427))

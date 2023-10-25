@@ -3,6 +3,8 @@ import random
 import bosses
 import damagecalc
 import pandas as pd
+
+import inventory
 import loot
 import player
 import discord
@@ -1007,7 +1009,7 @@ def get_roll_by_code(item_object, code):
             else:
                 match check_roll:
                     case 117:
-                        roll = "Defence Mitigation"
+                        roll = "Damage Mitigation"
                         roll_adjust = 15
                     case 118:
                         roll = "Health Regen"
@@ -1124,3 +1126,40 @@ def sell(user, item, embed_msg):
     else:
         response_embed.add_field(name="Item Not Sold!", value=response, inline=False)
     return response_embed
+
+
+def purge(player_object, tier):
+    try:
+        engine_url = mydb.get_engine_url()
+        engine = sqlalchemy.create_engine(engine_url)
+        pandora_db = engine.connect()
+        player_object.get_equipped()
+        exclusion_list = [player_object.equipped_weapon, player_object.equipped_armour, player_object.equipped_acc,
+                          player_object.equipped_wing, player_object.equipped_crest]
+        inlaid_gem_list = []
+        for x in exclusion_list:
+            if x != 0:
+                e_item = inventory.read_custom_item(x)
+                if e_item.item_inlaid_gem_id != 0:
+                    inlaid_gem_list.append(e_item.item_inlaid_gem_id)
+        exclusion_list += inlaid_gem_list
+        query = text("SELECT item_tier FROM CustomInventory "
+                     "WHERE player_id = :id_check AND item_tier <= :tier_check "
+                     "AND item_id NOT IN :excluded_ids")
+        query = query.bindparams(id_check=player_object.player_id, tier_check=tier, excluded_ids=exclusion_list)
+        df = pd.read_sql(query, pandora_db)
+        query = text("DELETE FROM CustomInventory "
+                     "WHERE player_id = :id_check AND item_tier <= :tier_check "
+                     "AND item_id NOT IN :excluded_ids")
+        query = query.bindparams(id_check=player_object.player_id, tier_check=tier, excluded_ids=exclusion_list)
+        pandora_db.execute(query)
+        pandora_db.close()
+        engine.dispose()
+        result = len(df)
+        total_tiers = df['item_tier'].sum()
+        coin_total = total_tiers * 250
+    except exc.SQLAlchemyError as error:
+        print(error)
+        result = 0
+        coin_total = 0
+    return result, coin_total

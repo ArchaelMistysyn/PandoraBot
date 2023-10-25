@@ -80,6 +80,7 @@ class RecipeObject:
         for x in range(num_crafts):
             random_attempt = random.randint(1, 100)
             if random_attempt <= self.success_rate:
+                inventory.update_stock(player_object, self.outcome_item.item_id, 1)
                 result += 1
         return result
 

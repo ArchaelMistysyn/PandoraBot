@@ -423,7 +423,9 @@ class PlayerProfile:
                 resist_multi = damagecalc.boss_defences("Element", self, boss_object, location, e_weapon)
                 penetration_multi = 1 + self.elemental_penetration[idx]
                 self.elemental_damage[idx] *= resist_multi * penetration_multi
-        self.player_total_damage = int(sum(self.elemental_damage))
+        subtotal_damage = sum(self.elemental_damage)
+        subtotal_damage *= damagecalc.boss_true_mitigation(boss_object)
+        self.player_total_damage = int(subtotal_damage)
         return self.player_total_damage
 
     def assign_insignia_values(self, insignia_code):

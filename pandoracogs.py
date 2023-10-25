@@ -66,7 +66,7 @@ class SoloCog(commands.Cog):
         self.channel_object = channel_object
         print(f"{self.player_object.player_username}: SoloCog Running")
 
-    def run(self):
+    async def run(self):
         self.solo_manager.start()
 
     def cog_unload(self):

@@ -187,7 +187,7 @@ def generate_random_item():
     if item_type == "Fae":
         random_element = random.randint(0, 8)
         reward_id = f"Fae{random_element}"
-
+    print(reward_id)
     return reward_id, quantity
 
 

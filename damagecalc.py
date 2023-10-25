@@ -57,3 +57,8 @@ def boss_defences(method, player_object, boss_object, location, weapon):
         if weapon.item_damage_type in boss_object.boss_typeweak:
             type_multiplier += bonus_multiplier
     return type_multiplier
+
+
+def boss_true_mitigation(boss_object):
+    mitigation_multiplier = 1 - (boss_object.boss_tier * 0.1)
+    return mitigation_multiplier
