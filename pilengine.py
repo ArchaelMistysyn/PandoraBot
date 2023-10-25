@@ -3,6 +3,7 @@ import requests
 import pandorabot
 import player
 import os
+import globalitems
 
 echelon_1 = "https://kyleportfolio.ca/botimages/roleicon/echelon1.png"
 echelon_2 = "https://kyleportfolio.ca/botimages/roleicon/echelon2.png"
@@ -44,11 +45,11 @@ def get_player_profile(player_object, achievement_list):
     profile_card.paste(exp_bar, (50, 250))
 
     # Achievements
-    for idr, role in enumerate(pandorabot.global_role_dict):
+    for idr, role in enumerate(globalitems.global_role_dict):
         if role in achievement_list:
-            achv_url = pandorabot.global_role_dict[role]
+            achv_url = globalitems.global_role_dict[role]
         else:
-            achv_url = pandorabot.not_owned_icon
+            achv_url = globalitems.not_owned_icon
         achv_icon = Image.open(requests.get(achv_url, stream=True).raw)
         new_size = (30, 30)
         wloc = 40

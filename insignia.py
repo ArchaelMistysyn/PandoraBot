@@ -3,6 +3,7 @@ import inventory
 import player
 import pandorabot
 import discord
+import globalitems
 from functools import reduce
 insignia_prefix = ["Dormant", "Awoken", "Evolved", "Infused", "Symbiotic"]
 
@@ -31,7 +32,7 @@ def display_insignia(player_object, insignia_code, output_type):
             insignia_name += "Trinity"
         case 9:
             insignia_name += "Refraction"
-            icon_list = pandorabot.omni_icon
+            icon_list = globalitems.omni_icon
             bonus = 25 + 5 * player_echelon
             item_rolls += f"\n{int(bonus)}% Omni Penetration"
         case _:
@@ -41,7 +42,7 @@ def display_insignia(player_object, insignia_code, output_type):
         selected_elements_list = [ind for ind, x in enumerate(element_list) if x == 1]
         bonus = 150 / num_elements + 25 * player_object.player_echelon
         for y in selected_elements_list:
-            item_rolls += f"\n{int(bonus)}% {pandorabot.element_names[y]} Penetration"
+            item_rolls += f"\n{int(bonus)}% {globalitems.element_names[y]} Penetration"
     if output_type == "Embed":
         insignia_output = discord.Embed(colour=tier_colour,
                                         title=insignia_name,
@@ -99,7 +100,7 @@ class InsigniaView(discord.ui.View):
                                               description="I applaud your greed. In addition to the payment "
                                                           "I hope your sanity can afford the cost.")
                     cost = num_selected * 5000
-                    cost_msg = f"{pandorabot.coin_icon} {cost}x Lotus Coins\n"
+                    cost_msg = f"{globalitems.coin_icon} {cost}x Lotus Coins\n"
                     fae_cost = payment_embed(current_selection)
                     cost_msg += fae_cost
                     embed_msg.add_field(name="Cost:", value=cost_msg, inline=False)
@@ -170,7 +171,7 @@ class ElementSelectView(discord.ui.View):
                                                   description="How entertaining. I am willing to engrave your soul, "
                                                               "but my services are as expensive as they are painful.")
                         cost = num_selected * 10000
-                        cost_msg = f"{pandorabot.coin_icon} {cost}x Lotus Coins\n"
+                        cost_msg = f"{globalitems.coin_icon} {cost}x Lotus Coins\n"
                         fae_cost = payment_embed(current_selection)
                         cost_msg += fae_cost
                         embed_msg.add_field(name="Cost:", value=cost_msg, inline=False)

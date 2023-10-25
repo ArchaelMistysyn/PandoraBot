@@ -2,6 +2,7 @@ import pandas as pd
 import csv
 import random
 
+import globalitems
 import loot
 import player
 import mysql.connector
@@ -51,7 +52,7 @@ def award_loot(boss_object, player_list, exp_amount, coin_amount):
         temp_player.player_coins += temp_coin_amount
         temp_player.set_player_field("player_exp", temp_player.player_exp)
         temp_player.set_player_field("player_coins", temp_player.player_coins)
-        loot_msg.append(f"{pandorabot.exp_icon} {exp_amount}x\n{pandorabot.coin_icon} {temp_coin_amount}x\n")
+        loot_msg.append(f"{globalitems.exp_icon} {exp_amount}x\n{globalitems.coin_icon} {temp_coin_amount}x\n")
         # Check fae core drops
         if boss_object.boss_element != 9:
             core_element = boss_object.boss_element

@@ -17,6 +17,7 @@ import pymysql
 from sqlalchemy import exc
 import mydb
 import pandorabot
+import globalitems
 import string
 
 custom_item_dict = {"W": "Weapon", "A": "Armour", "Y": "Accessory", "G": "Wing", "C": "Crest",
@@ -62,7 +63,7 @@ class CustomItem:
         match self.item_type:
             case "W":
                 self.set_base_attack_speed()
-                if self.item_damage_type == pandorabot.class_summoner:
+                if self.item_damage_type == globalitems.class_summoner:
                     self.item_blessing_tier = "Standard"
                     self.item_material_tier = "Illusion"
                 else:
@@ -75,7 +76,7 @@ class CustomItem:
                     else:
                         self.item_material_tier = "Fabled"
                         self.item_blessing_tier = "Refined"
-                    class_matcher = pandorabot.class_icon_list.index(self.item_damage_type)
+                    class_matcher = globalitems.class_icon_list.index(self.item_damage_type)
                     item_variant = random.randint(0, 1)
                     match class_matcher:
                         case 0:
@@ -243,7 +244,7 @@ class CustomItem:
         base_tier = self.item_tier
         if base_tier < 5:
             random_pos = random.randint(0, 8)
-            keyword = pandorabot.element_special_names[random_pos]
+            keyword = globalitems.element_special_names[random_pos]
             if self.item_type == "Y":
                 random_pos = random.randint(0, 3)
                 keyword = bosses.boss_list[random_pos]
@@ -255,7 +256,7 @@ class CustomItem:
             unique_skill = f"{keyword} {descriptor}"
         else:
             random_pos = random.randint(0, 3)
-            unique_skill = pandorabot.tier_5_ability_list[random_pos]
+            unique_skill = globalitems.tier_5_ability_list[random_pos]
         self.item_bonus_stat = unique_skill
 
     def update_stored_item(self):
@@ -317,7 +318,7 @@ class CustomItem:
         match self.item_type:
             case "W":
                 tier_location = self.item_tier - 1
-                class_checker = pandorabot.class_icon_list.index(self.item_damage_type)
+                class_checker = globalitems.class_icon_list.index(self.item_damage_type)
                 match class_checker:
                     case 0:
                         random_num = random.randint(0, 2)
@@ -543,7 +544,7 @@ class CustomItem:
             item_types = f'{self.item_damage_type}'
             for idz, z in enumerate(self.item_elements):
                 if z == 1:
-                    item_types += f'{pandorabot.global_element_list[idz]}'
+                    item_types += f'{globalitems.global_element_list[idz]}'
             if self.item_num_sockets == 1:
                 gem_id = self.item_inlaid_gem_id
                 if gem_id == 0:
@@ -641,7 +642,7 @@ def get_item_shop_list(item_tier):
     df = pd.read_csv("itemlist.csv")
     if item_tier != 0:
         df = df.loc[df['item_tier'] == item_tier]
-        df = df.loc[df['item_id'].str.contains('I')]
+        df = df.loc[df['item_id'].str.contains('i')]
     else:
         df = df.loc[df['item_id'].str.contains('Fae')]
     item_list = []
@@ -992,7 +993,7 @@ def get_roll_by_code(item_object, code):
                     roll_keyword = "Omni"
                 else:
                     roll_adjust = 20
-                    roll_keyword = pandorabot.element_names[roll_num]
+                    roll_keyword = globalitems.element_names[roll_num]
                 roll = f"{roll_keyword} Damage"
             elif check_roll <= 116:
                 roll_num = check_roll - 97 - 10
@@ -1001,7 +1002,7 @@ def get_roll_by_code(item_object, code):
                     roll_keyword = "Omni"
                 else:
                     roll_adjust = 15
-                    roll_keyword = pandorabot.element_names[roll_num]
+                    roll_keyword = globalitems.element_names[roll_num]
                 roll = f"{roll_keyword} Penetration"
             else:
                 match check_roll:
@@ -1033,7 +1034,7 @@ def get_roll_by_code(item_object, code):
                     roll_keyword = "Omni"
                     roll_adjust = 5
                 else:
-                    roll_keyword = pandorabot.element_names[roll_num]
+                    roll_keyword = globalitems.element_names[roll_num]
                     roll_adjust = 10
                 roll = f"{roll_keyword} Resistance"
             elif check_roll <= 116:
@@ -1043,7 +1044,7 @@ def get_roll_by_code(item_object, code):
                     roll_keyword = "Omni"
                 else:
                     roll_adjust = 12
-                    roll_keyword = pandorabot.element_names[roll_num]
+                    roll_keyword = globalitems.element_names[roll_num]
                 roll = f"{roll_keyword} Curse"
             elif check_roll >= 119:
                 roll_num = check_roll - 119

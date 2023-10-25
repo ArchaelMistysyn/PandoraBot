@@ -2,6 +2,7 @@ import pandorabot
 import discord
 import inventory
 import player
+import globalitems
 
 import pandas as pd
 import mydb
@@ -86,7 +87,7 @@ def show_bazaar_items():
                 item_types = f'{item_damage_type}'
                 for idz, z in enumerate(item_elements):
                     if z == 1:
-                        item_types += f'{pandorabot.global_element_list[idz]}'
+                        item_types += f'{globalitems.global_element_list[idz]}'
 
                 seller = player.get_player_by_id(seller_id)
                 bazaar_embed.add_field(name=f"{item_name}", value=f"{item_cost} || Item ID: {item_id}", inline=False)

@@ -13,6 +13,7 @@ import pandorabot
 import discord
 import player
 import tarot
+import globalitems
 
 
 class Quest:
@@ -25,6 +26,8 @@ class Quest:
         self.token_num = token_num
         self.item_handin = item_handin
         self.quest_message = quest_message
+        if ";" in self.quest_message:
+            self.quest_message.replace(";", "\n")
         self.quest_output = ""
         self.award_exp = award_exp
         self.award_coins = award_coins
@@ -74,8 +77,8 @@ class Quest:
             player_object.player_coins += self.award_coins
             player_object.set_player_field("player_exp", player_object.player_exp)
             player_object.set_player_field("player_coins", player_object.player_coins)
-            reward_list = f"{pandorabot.exp_icon} {self.award_exp}x Exp\n"
-            reward_list += f"{pandorabot.coin_icon} {self.award_coins}x Lotus Coins\n"
+            reward_list = f"{globalitems.exp_icon} {self.award_exp}x Exp\n"
+            reward_list += f"{globalitems.coin_icon} {self.award_coins}x Lotus Coins\n"
             if self.award_item != "":
                 inventory.update_stock(player_object, self.award_item, self.award_qty)
                 loot_item = loot.BasicItem(self.award_item)
@@ -230,21 +233,13 @@ class QuestView(discord.ui.View):
                             add_role = discord.utils.get(interaction.guild.roles, name=self.quest_object.award_role)
                             await interaction.user.add_roles(add_role)
                             if reload_player.player_echelon >= 2:
-                                previous_rolename = pandorabot.role_list[(reload_player.player_echelon - 2)]
+                                previous_rolename = globalitems.role_list[(reload_player.player_echelon - 2)]
                                 remove_role = discord.utils.get(interaction.guild.roles, name=previous_rolename)
                                 await interaction.user.remove_roles(remove_role)
                     else:
                         self.embed_msg.add_field(name="", value="Quest is not yet completed!", inline=False)
                         reward_view = None
                 await interaction.response.edit_message(embed=self.embed_msg, view=reward_view)
-        except Exception as e:
-            print(e)
-
-    @discord.ui.button(label="Cancel", style=discord.ButtonStyle.red, emoji="✖️")
-    async def cancel(self, interaction: discord.Interaction, button: discord.Button):
-        try:
-            if interaction.user.name == self.player_object.player_name:
-                await interaction.response.edit_message(view=None)
         except Exception as e:
             print(e)
 
@@ -270,14 +265,6 @@ class RewardView(discord.ui.View):
                                               description="")
                     quest_view = None
                 await interaction.response.edit_message(embed=embed_msg, view=quest_view)
-        except Exception as e:
-            print(e)
-
-    @discord.ui.button(label="Cancel", style=discord.ButtonStyle.red, emoji="✖️")
-    async def cancel(self, interaction: discord.Interaction, button: discord.Button):
-        try:
-            if interaction.user.name == self.player_object.player_name:
-                await interaction.response.edit_message(view=None)
         except Exception as e:
             print(e)
 

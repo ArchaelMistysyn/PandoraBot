@@ -16,6 +16,7 @@ import pymysql
 from sqlalchemy import exc
 import mydb
 import pandorabot
+import globalitems
 
 boss_list = ["Fortress", "Dragon", "Demon", "Paragon"]
 fortress_data = pd.read_csv("fortressname.csv")
@@ -99,7 +100,7 @@ class CurrentBoss:
             boss_weakness += str(x)
         for idy, y in enumerate(self.boss_eleweak):
             if y == 1:
-                boss_weakness += pandorabot.global_element_list[idy]
+                boss_weakness += globalitems.global_element_list[idy]
         embed_msg = discord.Embed(colour=tier_colour,
                                   title=boss_title,
                                   description="")
@@ -167,7 +168,7 @@ class CurrentBoss:
                 temp_name_split = boss_name.split()
                 boss_element = temp_name_split[1]
                 if boss_tier != 4:
-                    self.boss_element = pandorabot.element_names.index(boss_element)
+                    self.boss_element = globalitems.element_names.index(boss_element)
                     boss_name += " Dragon"
                     boss_image = f'https://kyleportfolio.ca/botimages/bosses/{boss_type}{boss_tier}.png'
                 else:
@@ -391,7 +392,7 @@ def get_element(chosen_weakness):
         random_number = random.randint(0, 8)
     else:
         random_number = chosen_weakness
-    element_temp = pandorabot.global_element_list[random_number]
+    element_temp = globalitems.global_element_list[random_number]
 
     return element_temp
 

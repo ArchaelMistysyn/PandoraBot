@@ -11,6 +11,7 @@ from mysql.connector.errors import Error
 import sys
 from datetime import datetime as dt, timedelta
 
+import globalitems
 import adventure
 import inventory
 import bosses
@@ -25,6 +26,7 @@ import tarot
 import market
 import bazaar
 import insignia
+import infuse
 import pilengine
 import pandoracogs
 
@@ -40,66 +42,6 @@ db_info = None
 with open("bot_db_login.txt", 'r') as data_file:
     for line in data_file:
         db_info = line.split(";")
-
-# Global emojis
-exp_icon = "<:eexp:1148088187516891156>"
-coin_icon = "🤑"
-class_knight = "<:cB:1154266777396711424>"
-class_ranger = "<:cA:1150195102589931641>"
-class_mage = "<:cC:1150195246588764201>"
-class_assassin = "❌"
-class_weaver = "❌"
-class_rider = "❌"
-class_summoner = "<:cD:1150195280969478254>"
-class_icon_list = [class_knight, class_ranger, class_mage, class_assassin, class_weaver, class_rider, class_summoner]
-class_icon_dict = {"Knight": class_knight, "Ranger": class_ranger, "Mage": class_mage,
-                   "Assassin": class_assassin, "Weaver": class_weaver,
-                   "Rider": class_rider, "Summoner": class_summoner}
-
-# Global role list
-role_list = ["Player Echelon 1", "Player Echelon 2", "Player Echelon 3", "Player Echelon 4", "Player Echelon 5 (MAX)"]
-
-# Initialize server and channel list
-channel_list_wiki = [1140841088005976124, 1141256419161673739, 1148155007305273344]
-channel_list = [1157937444931514408, 1157934010090131458, 1157935203394785291, 1157935449462013972, 1157935876853211186]
-global_server_channels = [channel_list]
-
-# Initialize damage_type lists
-element_fire = "<:ee:1141653476816986193>"
-element_water = "<:ef:1141653475059572779>"
-element_lightning = "<:ei:1141653471154671698>"
-element_earth = "<:eh:1141653473528664126>"
-element_wind = "<:eg:1141653474480767016>"
-element_ice = "<:em:1141647050342146118>"
-element_dark = "<:ek:1141653468080242748>"
-element_light = "<:el:1141653466343800883>"
-element_celestial = "<:ej:1141653469938339971>"
-omni_icon = "🌈"
-global_element_list = [element_fire, element_water, element_lightning, element_earth, element_wind, element_ice,
-                       element_dark, element_light, element_celestial]
-element_names = ["Fire", "Water", "Lightning", "Earth", "Wind", "Ice", "Shadow", "Light", "Celestial"]
-element_special_names = ["Volcanic", "Aquatic", "Voltaic", "Seismic", "Sonic", "Arctic", "Lunar", "Solar", "Cosmic"]
-tier_5_ability_list = ["Elemental Fractal", "Specialist's Mastery", "Curse of Immortality", "Omega Critical"]
-
-not_owned_icon = "https://kyleportfolio.ca/botimages/profilecards/noachv.png"
-owned_icon = "https://kyleportfolio.ca/botimages/profilecards/owned.png"
-global_role_dict = {"Achv Role - Knife Rat": owned_icon,
-                    "Achv Role - Koin Kollektor": owned_icon,
-                    "Notification Role - Movie Lover": owned_icon,
-                    "Notification Role - Signal Flare": owned_icon,
-                    "Achv Role - All Nighter": owned_icon,
-                    "Achv Role - Reactive": owned_icon,
-                    "Achv Role - Message Master": owned_icon,
-                    "Achv Role - Endless Gaming": owned_icon,
-                    "Achv Role - Infinite Time": owned_icon,
-                    "Achv Role - Feng Hao Dou Luo": owned_icon,
-                    "Achv Role - ": owned_icon,
-                    "Activity Echelon 5 (MAX)": pilengine.echelon_5,
-                    "Player Echelon 5 (MAX)": pilengine.echelon_5,
-                    "Achv Role - Exclusive Title Holder": pilengine.echelon_5flare}
-
-# Date formatting
-date_formatting = '%Y-%m-%d %H:%M:%S'
 
 
 class PandoraBot(commands.Bot):
@@ -134,7 +76,7 @@ def run_discord_bot():
         if ctx.message.author.id == 185530717638230016:
             try:
                 timer = 60
-                for server in global_server_channels:
+                for server in globalitems.global_server_channels:
                     command_channel_id = server[0]
                     cmd_channel = pandora_bot.get_channel(command_channel_id)
                     for x in range(1, 5):
@@ -180,7 +122,7 @@ def run_discord_bot():
     @pandora_bot.command(name='admin', help="Tester only")
     @app_commands.guilds(discord.Object(id=1011375205999968427))
     async def admin(ctx, backdoor, value):
-        if any(ctx.channel.id in sl for sl in global_server_channels):
+        if any(ctx.channel.id in sl for sl in globalitems.global_server_channels):
             user = ctx.author
             achievement_list = []
             roles_list = [r.name for r in user.roles]
@@ -284,7 +226,7 @@ def run_discord_bot():
     @app_commands.guilds(discord.Object(id=1011375205999968427))
     async def solo(ctx):
         channel_id = ctx.channel.id
-        if any(channel_id in sl for sl in global_server_channels):
+        if any(channel_id in sl for sl in globalitems.global_server_channels):
             player_name = ctx.author
             player_object = player.get_player_by_name(player_name)
             if player_object.player_class != "":
@@ -322,20 +264,37 @@ def run_discord_bot():
                                 description="**/register [USERNAME]** Register a username to begin playing!")
     @app_commands.guilds(discord.Object(id=1011375205999968427))
     async def play(ctx, username: str):
-        if any(ctx.channel.id in sl for sl in global_server_channels):
-            embed_msg = discord.Embed(colour=discord.Colour.dark_teal(),
-                                      title="Register",
-                                      description="Starting story goes here - Select Class")
+        if any(ctx.channel.id in sl for sl in globalitems.global_server_channels):
             user = ctx.author
-            player_name = str(user)
-            class_view = menus.ClassSelect(player_name, username)
-            await ctx.send(embed=embed_msg, view=class_view)
+            if username.isalpha():
+                if player.check_username(username):
+                    register_msg = ('You find yourself seperated from your companions in the labyrinth. Unarmed, you '
+                                    'are desperately searching every room and chest for something you can use.\n You'
+                                    'stumble into an empty room in which sits a peculiar box. You hesitate at first '
+                                    'and consider the possibility of a trap or mimic. However, hearing footsteps in '
+                                    'the distance extinguishes any doubt. There is no time. You open the box.\n'
+                                    'A flurry of souls rushes by, assuredly scaring away any nearby monsters. '
+                                    'Everything goes silent and all that remains is an otherworldly girl staring at '
+                                    'you in confusion. A soft voice coming not from the girl echoes through your mind, '
+                                    '"Everything begins and ends with a wish. What do you wish to be?" '
+                                    'You think it for only a second and the voice responds with a playful laugh, '
+                                    ' "Let it be so." Then the voice disappears without a trace.')
+                    embed_msg = discord.Embed(colour=discord.Colour.dark_teal(),
+                                              title="Register - Select Class",
+                                              description=register_msg)
+                    player_name = str(user)
+                    class_view = menus.ClassSelect(player_name, username)
+                    await ctx.send(embed=embed_msg, view=class_view)
+                else:
+                    ctx.send("Username already in use.")
+            else:
+                await ctx.send("Please enter a valid username.")
 
     @pandora_bot.hybrid_command(name='bdsm',
                                 description="**/bdsm** Claim your boxed daily shipment!")
     @app_commands.guilds(discord.Object(id=1011375205999968427))
     async def bdsm(ctx):
-        if any(ctx.channel.id in sl for sl in global_server_channels):
+        if any(ctx.channel.id in sl for sl in globalitems.global_server_channels):
             player_object = player.get_player_by_name(str(ctx.author))
             if player_object.player_class != "":
                 run_command = False
@@ -378,7 +337,7 @@ def run_discord_bot():
                                 description="**/crate** Open a crate!")
     @app_commands.guilds(discord.Object(id=1011375205999968427))
     async def crate(ctx):
-        if any(ctx.channel.id in sl for sl in global_server_channels):
+        if any(ctx.channel.id in sl for sl in globalitems.global_server_channels):
             player_object = player.get_player_by_name(str(ctx.author))
             if player_object.player_class != "":
                 crate_id = "i1r"
@@ -408,7 +367,7 @@ def run_discord_bot():
                                 description="**/trove** Open a crate!")
     @app_commands.guilds(discord.Object(id=1011375205999968427))
     async def trove(ctx, trove_tier):
-        if any(ctx.channel.id in sl for sl in global_server_channels):
+        if any(ctx.channel.id in sl for sl in globalitems.global_server_channels):
             player_object = player.get_player_by_name(str(ctx.author))
             if player_object.player_class != "":
                 input_tier = int(trove_tier)
@@ -424,7 +383,7 @@ def run_discord_bot():
                     player_object.player_coins += reward_coins
                     player_object.set_player_field("player_coins", player_object.player_coins)
                     message = await open_lootbox(ctx, embed_msg, input_tier)
-                    loot_description = f"{coin_icon} {reward_coins}x Lotus Coins!"
+                    loot_description = f"{globalitems.coin_icon} {reward_coins}x Lotus Coins!"
                     embed_msg = discord.Embed(colour=discord.Colour.dark_teal(),
                                               title=f"{player_object.player_username}: Trove Opened!",
                                               description=loot_description)
@@ -458,7 +417,7 @@ def run_discord_bot():
     @pandora_bot.hybrid_command(name='inlay', help="**/inlay [itemID]** to inlay a specific gem into an equipped item")
     @app_commands.guilds(discord.Object(id=1011375205999968427))
     async def inlay(ctx, item_id: str = "Enter the item ID of the gem"):
-        if any(ctx.channel.id in sl for sl in global_server_channels):
+        if any(ctx.channel.id in sl for sl in globalitems.global_server_channels):
             if inventory.if_custom_exists(item_id):
                 selected_item = inventory.read_custom_item(item_id)
                 player_object = player.get_player_by_name(str(ctx.author))
@@ -484,7 +443,7 @@ def run_discord_bot():
     @pandora_bot.hybrid_command(name='quest', help="**/quest** to start the story quest")
     @app_commands.guilds(discord.Object(id=1011375205999968427))
     async def story_quest(ctx):
-        if any(ctx.channel.id in sl for sl in global_server_channels):
+        if any(ctx.channel.id in sl for sl in globalitems.global_server_channels):
             user = ctx.author
             player_object = player.get_player_by_name(str(user))
             current_quest = player_object.player_quest
@@ -506,7 +465,7 @@ def run_discord_bot():
     @pandora_bot.hybrid_command(name='gear', help="**/gear** to display your equipped gear")
     @app_commands.guilds(discord.Object(id=1011375205999968427))
     async def gear(ctx):
-        if any(ctx.channel.id in sl for sl in global_server_channels):
+        if any(ctx.channel.id in sl for sl in globalitems.global_server_channels):
             player_object = player.get_player_by_name(str(ctx.author))
             if player_object.player_class != "":
                 player_object.get_equipped()
@@ -527,7 +486,7 @@ def run_discord_bot():
     @pandora_bot.hybrid_command(name='inv', help="**/inv** to display your gear and item inventory")
     @app_commands.guilds(discord.Object(id=1011375205999968427))
     async def inv(ctx):
-        if any(ctx.channel.id in sl for sl in global_server_channels):
+        if any(ctx.channel.id in sl for sl in globalitems.global_server_channels):
             player_object = player.get_player_by_name(str(ctx.author))
             if player_object.player_class != "":
                 inventory_view = menus.InventoryView(player_object)
@@ -546,7 +505,7 @@ def run_discord_bot():
     @pandora_bot.hybrid_command(name='stamina', help="**/stamina** to display your stamina total")
     @app_commands.guilds(discord.Object(id=1011375205999968427))
     async def stamina(ctx):
-        if any(ctx.channel.id in sl for sl in global_server_channels):
+        if any(ctx.channel.id in sl for sl in globalitems.global_server_channels):
             user = ctx.author
             player_object = player.get_player_by_name(user)
             if player_object.player_class != "":
@@ -560,7 +519,7 @@ def run_discord_bot():
     @pandora_bot.hybrid_command(name='stats', help="**/stats** to display your stats")
     @app_commands.guilds(discord.Object(id=1011375205999968427))
     async def stats(ctx):
-        if any(ctx.channel.id in sl for sl in global_server_channels):
+        if any(ctx.channel.id in sl for sl in globalitems.global_server_channels):
             user = ctx.author
             player_object = player.get_player_by_name(user)
             if player_object.player_class != "":
@@ -574,7 +533,7 @@ def run_discord_bot():
     @pandora_bot.hybrid_command(name='item', help="**/item [ITEM ID]** to display item details.")
     @app_commands.guilds(discord.Object(id=1011375205999968427))
     async def item(ctx, item_id):
-        if any(ctx.channel.id in sl for sl in global_server_channels):
+        if any(ctx.channel.id in sl for sl in globalitems.global_server_channels):
             player_object = player.get_player_by_name(str(ctx.author))
             if player_object.player_class != "":
                 if inventory.if_custom_exists(item_id):
@@ -605,7 +564,7 @@ def run_discord_bot():
     @pandora_bot.hybrid_command(name='give', help="**/give [ITEM ID] [PLAYER ID]** to display your item details")
     @app_commands.guilds(discord.Object(id=1011375205999968427))
     async def give(ctx, item_id, receiving_player_id):
-        if any(ctx.channel.id in sl for sl in global_server_channels):
+        if any(ctx.channel.id in sl for sl in globalitems.global_server_channels):
             player_object = player.get_player_by_name(str(ctx.author))
             if player_object.player_class != "":
                 if inventory.if_custom_exists(item_id):
@@ -638,7 +597,7 @@ def run_discord_bot():
     @pandora_bot.hybrid_command(name='who', help="**/who [NewUsername]** to set your username")
     @app_commands.guilds(discord.Object(id=1011375205999968427))
     async def who(ctx, new_username: str = "Enter a new username"):
-        if any(ctx.channel.id in sl for sl in global_server_channels):
+        if any(ctx.channel.id in sl for sl in globalitems.global_server_channels):
             existing_user = player.get_player_by_name(ctx.author)
             if player.check_username(new_username):
                 existing_user.player_username = new_username
@@ -651,7 +610,7 @@ def run_discord_bot():
     @pandora_bot.hybrid_command(name='refinery', help="**/refinery** to go to the refinery")
     @app_commands.guilds(discord.Object(id=1011375205999968427))
     async def refinery(ctx):
-        if any(ctx.channel.id in sl for sl in global_server_channels):
+        if any(ctx.channel.id in sl for sl in globalitems.global_server_channels):
             player_name = str(ctx.author)
             player_object = player.get_player_by_name(player_name)
             if player_object.player_class != "":
@@ -668,7 +627,7 @@ def run_discord_bot():
     @pandora_bot.hybrid_command(name='forge', help="**/forge** to enter the celestial forge")
     @app_commands.guilds(discord.Object(id=1011375205999968427))
     async def celestial_forge(ctx):
-        if any(ctx.channel.id in sl for sl in global_server_channels):
+        if any(ctx.channel.id in sl for sl in globalitems.global_server_channels):
             user = ctx.author
             player_object = player.get_player_by_name(user)
             if player_object.player_class != "":
@@ -686,7 +645,7 @@ def run_discord_bot():
     @pandora_bot.hybrid_command(name='bind', help="**/bind** to perform a binding ritual")
     @app_commands.guilds(discord.Object(id=1011375205999968427))
     async def bind_ritual(ctx):
-        if any(ctx.channel.id in sl for sl in global_server_channels):
+        if any(ctx.channel.id in sl for sl in globalitems.global_server_channels):
             user = ctx.author
             player_object = player.get_player_by_name(user)
             if player_object.player_class != "":
@@ -702,8 +661,8 @@ def run_discord_bot():
 
     @pandora_bot.hybrid_command(name='infuse', help="**/infuse** to infuse items.")
     @app_commands.guilds(discord.Object(id=1011375205999968427))
-    async def infuse(ctx):
-        if any(ctx.channel.id in sl for sl in global_server_channels):
+    async def infusion(ctx):
+        if any(ctx.channel.id in sl for sl in globalitems.global_server_channels):
             user = ctx.author
             player_object = player.get_player_by_name(user)
             if player_object.player_class != "":
@@ -711,7 +670,7 @@ def run_discord_bot():
                                           title="Cloaked Alchemist, Sangam",
                                           description="I can make anything, if you bring the right stuff.")
                 embed_msg.set_image(url="")
-                infuse_view = infusion.InfuseView(player_object)
+                infuse_view = infuse.InfuseView(player_object)
                 await ctx.send(embed=embed_msg, view=infuse_view)
             else:
                 embed_msg = unregistered_message()
@@ -720,7 +679,7 @@ def run_discord_bot():
     @pandora_bot.hybrid_command(name='tarot', help="**/tarot** to check your tarot collection")
     @app_commands.guilds(discord.Object(id=1011375205999968427))
     async def tarot_collection(ctx):
-        if any(ctx.channel.id in sl for sl in global_server_channels):
+        if any(ctx.channel.id in sl for sl in globalitems.global_server_channels):
             user = ctx.author
             player_object = player.get_player_by_name(user)
             if player_object.player_class != "":
@@ -738,7 +697,7 @@ def run_discord_bot():
     @pandora_bot.hybrid_command(name='engrave', help="**/engrave** to engrave an insignia on your soul.")
     @app_commands.guilds(discord.Object(id=1011375205999968427))
     async def engrave(ctx):
-        if any(ctx.channel.id in sl for sl in global_server_channels):
+        if any(ctx.channel.id in sl for sl in globalitems.global_server_channels):
             player_object = player.get_player_by_name(str(ctx.author))
             if player_object.player_class != "":
                 engrave_msg = "You've come a long way from home child. Tell me, what kind of power do you seek?"
@@ -754,7 +713,7 @@ def run_discord_bot():
     @pandora_bot.hybrid_command(name='credits', help="**/credits** to see the credits")
     @app_commands.guilds(discord.Object(id=1011375205999968427))
     async def credits_list(ctx):
-        if any(ctx.channel.id in sl for sl in global_server_channels):
+        if any(ctx.channel.id in sl for sl in globalitems.global_server_channels):
             credit_list = "Game created by: Kyle Mistysyn (Archael)"
             # Artists
             credit_list += "\n@labcornerr - Emoji Artist (Fiverr)"
@@ -798,7 +757,7 @@ def run_discord_bot():
     @pandora_bot.hybrid_command(name='sell', help="**/sell [item id] [cost]** to list your item for sale at the bazaar")
     @app_commands.guilds(discord.Object(id=1011375205999968427))
     async def sell(ctx, item_id, cost):
-        if any(ctx.channel.id in sl for sl in global_server_channels):
+        if any(ctx.channel.id in sl for sl in globalitems.global_server_channels):
             user = ctx.author
             player_object = player.get_player_by_name(user)
             if player_object.player_class != "":
@@ -822,7 +781,7 @@ def run_discord_bot():
     @pandora_bot.hybrid_command(name='buy', help="**/buy [item id] [cost]** to buy an item from the bazaar")
     @app_commands.guilds(discord.Object(id=1011375205999968427))
     async def buy(ctx, item_id):
-        if any(ctx.channel.id in sl for sl in global_server_channels):
+        if any(ctx.channel.id in sl for sl in globalitems.global_server_channels):
             user = ctx.author
             player_object = player.get_player_by_name(user)
             if player_object.player_class != "":
@@ -843,7 +802,7 @@ def run_discord_bot():
     @pandora_bot.hybrid_command(name='bazaar', help="**/bazaar** to view the open marketplace.")
     @app_commands.guilds(discord.Object(id=1011375205999968427))
     async def view_bazaar(ctx):
-        if any(ctx.channel.id in sl for sl in global_server_channels):
+        if any(ctx.channel.id in sl for sl in globalitems.global_server_channels):
             player_object = player.get_player_by_name(str(ctx.author))
             if player_object.player_class != "":
                 embed_msg = bazaar.show_bazaar_items()
@@ -857,7 +816,7 @@ def run_discord_bot():
                                 help="**/map** Go on an exploration. Costs 200 stamina + 50 per map tier.")
     @app_commands.guilds(discord.Object(id=1011375205999968427))
     async def expedition(ctx):
-        if any(ctx.channel.id in sl for sl in global_server_channels):
+        if any(ctx.channel.id in sl for sl in globalitems.global_server_channels):
             player_name = str(ctx.author)
             player_object = player.get_player_by_name(player_name)
             if player_object.player_class != "":
@@ -875,7 +834,7 @@ def run_discord_bot():
                                 help="**/market** To view the black market.")
     @app_commands.guilds(discord.Object(id=1011375205999968427))
     async def black_market(ctx):
-        if any(ctx.channel.id in sl for sl in global_server_channels):
+        if any(ctx.channel.id in sl for sl in globalitems.global_server_channels):
             player_name = str(ctx.author)
             player_object = player.get_player_by_name(player_name)
             if player_object.player_class != "":

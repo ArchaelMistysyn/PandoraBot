@@ -21,6 +21,7 @@ import pandorabot
 from datetime import datetime as dt
 import quest
 import tarot
+import globalitems
 
 
 class PlayerProfile:
@@ -130,7 +131,7 @@ class PlayerProfile:
             stats += f"\nCritical Chance: {int(round(self.critical_chance))}%"
             stats += f"\nCritical Damage: +{int(round(self.critical_multiplier * 100))}%"
             for idw, w in enumerate(self.elemental_damage_multiplier):
-                stats += f"\n{pandorabot.global_element_list[idw]} Damage: {int(w * 100)}%"
+                stats += f"\n{globalitems.global_element_list[idw]} Damage: {int(w * 100)}%"
             stats += f"\nBonus Hit Count: +{int(round(self.bonus_hits))}x"
             stats += f"\nClass Multiplier: {int(round(self.class_multiplier * 100))}%"
             stats += f"\nFinal Damage: {int(round(self.final_damage * 100))}%"
@@ -140,17 +141,17 @@ class PlayerProfile:
         elif method == 2:
             stats = f"Player HP: {self.player_mHP:,}"
             for idy, y in enumerate(self.elemental_resistance):
-                stats += f"\n{pandorabot.global_element_list[idy]} Resistance: {int(y * 100)}%"
+                stats += f"\n{globalitems.global_element_list[idy]} Resistance: {int(y * 100)}%"
             stats += f"\nDamage Mitigation: {int(round(self.damage_mitigation))}%"
         elif method == 3:
             stats = ""
             for idx, x in enumerate(self.elemental_penetration):
-                stats += f"\n{pandorabot.global_element_list[idx]} Penetration: {int(x * 100)}%"
+                stats += f"\n{globalitems.global_element_list[idx]} Penetration: {int(x * 100)}%"
             stats += f"\nDefence Penetration: {int(round(self.defence_penetration * 100))}%"
         else:
             stats = ""
             for idz, z in enumerate(self.elemental_curse):
-                stats += f"{pandorabot.global_element_list[idz]} Curse: {int(z * 100)}%\n"
+                stats += f"{globalitems.global_element_list[idz]} Curse: {int(z * 100)}%\n"
             stats += f"Omni Aura: {int(round(self.aura))}%\n"
 
         embed_msg = discord.Embed(colour=echelon_colour[0],
@@ -775,10 +776,10 @@ class PlayerProfile:
                     buff_type_loc = bosses.boss_list.index(keywords[0])
                     self.banes[buff_type_loc] += level_bonus * 2
                 case "G":
-                    buff_type_loc = pandorabot.element_special_names.index(keywords[0])
+                    buff_type_loc = globalitems.element_special_names.index(keywords[0])
                     self.elemental_damage_multiplier[buff_type_loc] += level_bonus
                 case "C":
-                    buff_type_loc = pandorabot.element_special_names.index(keywords[0])
+                    buff_type_loc = globalitems.element_special_names.index(keywords[0])
                     self.elemental_penetration[buff_type_loc] += level_bonus
                 case _:
                     nothing = False
@@ -794,7 +795,7 @@ class PlayerProfile:
             df = pd.read_sql(query, pandora_db)
             if len(df) != 0:
                 date_string = str(df["time_used"].values[0])
-                previous = dt.strptime(date_string, pandorabot.date_formatting)
+                previous = dt.strptime(date_string, globalitems.date_formatting)
                 now = dt.now()
                 difference = now - previous
             pandora_db.close()
@@ -819,7 +820,7 @@ class PlayerProfile:
                 query = text("INSERT INTO CommandCooldowns (player_id, command_name, time_used) "
                              "VALUES (:player_check, :cmd_check, :time_check)")
             timestamp = dt.now()
-            current_time = timestamp.strftime(pandorabot.date_formatting)
+            current_time = timestamp.strftime(globalitems.date_formatting)
             query = query.bindparams(player_check=self.player_id, cmd_check=command_name, time_check=current_time)
             pandora_db.execute(query)
             pandora_db.close()
@@ -841,7 +842,7 @@ def check_username(new_name: str):
         engine.dispose()
     except mysql.connector.Error as err:
         print("Database Error: {}".format(err))
-    if new_name in df['player_username'].values:
+    if len(df) != 0:
         can_proceed = False
     else:
         can_proceed = True

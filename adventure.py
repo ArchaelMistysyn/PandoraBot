@@ -3,6 +3,7 @@ import discord
 import pandas as pd
 import numpy
 
+import globalitems
 import inventory
 import loot
 import menus
@@ -493,7 +494,7 @@ class MonsterRoomView(discord.ui.View):
                             user = player.get_player_by_id(self.expedition.player_object.player_id)
                             user.player_exp += exp_reward
                             user.set_player_field("player_exp", user.player_exp)
-                            exp_msg = f"{pandorabot.exp_icon} {exp_reward}x Exp Acquired."
+                            exp_msg = f"{globalitems.exp_icon} {exp_reward}x Exp Acquired."
                             self.embed.add_field(name="", value=exp_msg, inline=False)
                 await interaction.response.edit_message(embed=self.embed, view=self.new_view)
         except Exception as e:
@@ -733,8 +734,8 @@ class StatueRoomView(discord.ui.View):
                                     reward_type = "Soul"
                                 embed_title = f"Excavated {num_reward} {reward_type}s!"
                             else:
-                                room_element = pandorabot.global_element_list[active_room.room_element]
-                                embed_title = f"Excavated {num_reward} Fae Energy ({room_element})!"
+                                room_element = globalitems.element_names[active_room.room_element]
+                                embed_title = f"Excavated {num_reward} Fae Energy!"
                                 reward_id = f"Fae{active_room.room_element}"
                             loot_item = loot.BasicItem(reward_id)
                             item_msg = f"{loot_item.item_emoji} {num_reward} {loot_item.item_name}"
@@ -850,7 +851,7 @@ class ItemView(discord.ui.View):
                     user.set_player_field("player_coins", user.player_coins)
                     self.embed = discord.Embed(colour=self.expedition.expedition_colour,
                                                title="Item Sold!",
-                                               description=f"{pandorabot.coin_icon} {sell_value}x Lotus coins acquired.")
+                                               description=f"{globalitems.coin_icon} {sell_value}x Lotus coins acquired.")
                 await interaction.response.edit_message(embed=self.embed, view=self.new_view)
         except Exception as e:
             print(e)
@@ -871,7 +872,7 @@ class GoldenRoomView(discord.ui.View):
                     active_room = self.expedition.expedition_rooms[self.expedition.current_room_num]
                     reward_coins = 10000 * self.expedition.expedition_tier
                     title_msg = "Treasures Obtained!"
-                    description_msg = f"You acquired {pandorabot.coin_icon} {reward_coins}x lotus coins!"
+                    description_msg = f"You acquired {globalitems.coin_icon} {reward_coins}x lotus coins!"
                     bonus_coins = 0
                     random_num = random.randint(1, 1000)
                     reward_title = ""
@@ -890,7 +891,7 @@ class GoldenRoomView(discord.ui.View):
                     self.embed = discord.Embed(colour=self.expedition.expedition_colour,
                                                title=title_msg, description=description_msg)
                     if reward_title != "":
-                        reward_msg = f"Acquired {pandorabot.coin_icon} {bonus_coins}x bonus lotus coins!"
+                        reward_msg = f"Acquired {globalitems.coin_icon} {bonus_coins}x bonus lotus coins!"
                         self.embed.add_field(name=reward_title, value=reward_msg, inline=False)
                         reward_coins += bonus_coins
                     reload_player = player.get_player_by_id(self.expedition.player_object.player_id)

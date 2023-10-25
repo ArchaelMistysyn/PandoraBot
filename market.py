@@ -2,6 +2,7 @@ import pandorabot
 import discord
 import inventory
 import player
+import globalitems
 
 import pandas as pd
 import mydb
@@ -25,18 +26,21 @@ class TierSelectView(discord.ui.View):
         max_values=1,
         options=[
             discord.SelectOption(
-                emoji="<a:eenergy:1145534127349706772>", label="Fae Cores", description="These are our best seller."),
+                emoji="<a:eenergy:1145534127349706772>", label="Fae Cores", description="These are our best sellers."),
             discord.SelectOption(
                 emoji="<a:eenergy:1145534127349706772>", label="Tier 1 Items", description="Browse our common wares."),
             discord.SelectOption(
-                emoji="<:eore:1145534835507593236>", label="Tier 2 Items", description="Browse our rarer items."),
+                emoji="<a:eenergy:1145534127349706772>", label="Tier 2 Items", description="Browse our rarer items."),
             discord.SelectOption(
-                emoji="<:esoul:1145520258241806466>", label="Tier 3 Items", description="Browse our special stock"),
+                emoji="<a:eenergy:1145534127349706772>", label="Tier 3 Items", description="Browse our special stock."),
             discord.SelectOption(
-                emoji="<:esoul:1145520258241806466>", label="Tier 4 Items", description="Browse our premium goods."),
+                emoji="<a:eenergy:1145534127349706772>", label="Tier 4 Items", description="Browse our premium goods."),
             discord.SelectOption(
-                emoji="<:esoul:1145520258241806466>", label="Tier 5+ Items",
-                description="There are too many prying eyes here. Let's discuss elsewhere.")
+                emoji="<a:eenergy:1145534127349706772>", label="Tier 5 Items",
+                description="There are too many prying eyes here."),
+            discord.SelectOption(
+                emoji="<a:eenergy:1145534127349706772>", label="Tier 6+ Items",
+                description="Do you even realize what you're asking for?")
         ]
     )
     async def tier_select_callback(self, interaction: discord.Interaction, tier_select: discord.ui.Select):
@@ -51,7 +55,7 @@ class TierSelectView(discord.ui.View):
                     selected_tier = int(selected_type[5])
                     shop_msg = f"Black Market - Tier {selected_tier} items."
                     tier_colour, tier_emoji = inventory.get_gear_tier_colours(selected_tier)
-                if selected_tier <= self.player_user.player_echelon:
+                if selected_tier <= self.player_user.player_echelon or self.player_user.player_echelon == 5:
                     match selected_tier:
                         case 1:
                             shop_view = ShopView1(self.player_user, tier_colour)
@@ -63,6 +67,8 @@ class TierSelectView(discord.ui.View):
                             shop_view = ShopView4(self.player_user, tier_colour)
                         case 5:
                             shop_view = ShopView5(self.player_user, tier_colour)
+                        case 6:
+                            shop_view = ShopView6(self.player_user, tier_colour)
                         case _:
                             shop_view = ShopView0(self.player_user, tier_colour)
 
@@ -95,23 +101,23 @@ class ShopView0(discord.ui.View):
         max_values=1,
         options=[
             discord.SelectOption(
-                emoji="<:esoul:1145520258241806466>", label="Fae Core (Fire)", value="Fae0"),
+                emoji=globalitems.global_element_list[0], label="Fae Core (Fire)", value="Fae0"),
             discord.SelectOption(
-                emoji="<:esoul:1145520258241806466>", label="Fae Core (Water)", value="Fae1"),
+                emoji=globalitems.global_element_list[1], label="Fae Core (Water)", value="Fae1"),
             discord.SelectOption(
-                emoji="<:esoul:1145520258241806466>", label="Fae Core (Lightning)", value="Fae2"),
+                emoji=globalitems.global_element_list[2], label="Fae Core (Lightning)", value="Fae2"),
             discord.SelectOption(
-                emoji="<:esoul:1145520258241806466>", label="Fae Core (Earth)", value="Fae3"),
+                emoji=globalitems.global_element_list[3], label="Fae Core (Earth)", value="Fae3"),
             discord.SelectOption(
-                emoji="<:esoul:1145520258241806466>", label="Fae Core (Wind)", value="Fae4"),
+                emoji=globalitems.global_element_list[4], label="Fae Core (Wind)", value="Fae4"),
             discord.SelectOption(
-                emoji="<:esoul:1145520258241806466>", label="Fae Core (Ice)", value="Fae5"),
+                emoji=globalitems.global_element_list[5], label="Fae Core (Ice)", value="Fae5"),
             discord.SelectOption(
-                emoji="<:esoul:1145520258241806466>", label="Fae Core (Shadow)", value="Fae6"),
+                emoji=globalitems.global_element_list[6], label="Fae Core (Shadow)", value="Fae6"),
             discord.SelectOption(
-                emoji="<:esoul:1145520258241806466>", label="Fae Core (Light)", value="Fae7"),
+                emoji=globalitems.global_element_list[7], label="Fae Core (Light)", value="Fae7"),
             discord.SelectOption(
-                emoji="<:esoul:1145520258241806466>", label="Fae Core (Celestial)", value="Fae8")
+                emoji=globalitems.global_element_list[8], label="Fae Core (Celestial)", value="Fae8")
         ]
     )
     async def shop0_callback(self, interaction: discord.Interaction, item_select: discord.ui.Select):
@@ -135,21 +141,13 @@ class ShopView1(discord.ui.View):
         max_values=1,
         options=[
             discord.SelectOption(
-                emoji="<:eore:1145534835507593236>", label="Clouded Ore", value="I1b"),
+                emoji="<:eore:1145534835507593236>", label="Crude Ore", value="i1o"),
             discord.SelectOption(
-                emoji="<:esoul:1145520258241806466>", label="Light Soul", value="I1c"),
+                emoji="<:esoul:1145520258241806466>", label="Light Soul", value="i1s"),
             discord.SelectOption(
-                emoji="<:esoul:1145520258241806466>", label="Hard Socket Hammer", value="I1d"),
+                emoji=globalitems.stamina_icon, label="Lesser Stamina Potion", value="iy1"),
             discord.SelectOption(
-                emoji="<:esoul:1145520258241806466>", label="Static Comet Powder", value="I1h"),
-            discord.SelectOption(
-                emoji="<:esoul:1145520258241806466>", label="Puzzling Cleansing Matrix", value="I1i"),
-            discord.SelectOption(
-                emoji="<:esoul:1145520258241806466>", label="Ancient Pearl", value="I1j"),
-            discord.SelectOption(
-                emoji="<:esoul:1145520258241806466>", label="Lesser Stamina Potion", value="I1s"),
-            discord.SelectOption(
-                emoji="<:esoul:1145520258241806466>", label="Crate", value="I1r")
+                emoji="<a:elootitem:1144477550379274322>", label="Crate", value="i1r")
         ]
     )
     async def shop1_callback(self, interaction: discord.Interaction, item_select: discord.ui.Select):
@@ -173,19 +171,11 @@ class ShopView2(discord.ui.View):
         max_values=1,
         options=[
             discord.SelectOption(
-                emoji="<:eore:1145534835507593236>", label="Clear Ore", value="I2b"),
+                emoji="<:eore:1145534835507593236>", label="Cosmite Ore", value="i2o"),
             discord.SelectOption(
-                emoji="<:esoul:1145520258241806466>", label="Luminous Soul", value="I2c"),
+                emoji="<:esoul:1145520258241806466>", label="Luminous Soul", value="i2s"),
             discord.SelectOption(
-                emoji="<:esoul:1145520258241806466>", label="Heavy Socket Hammer", value="I2d"),
-            discord.SelectOption(
-                emoji="<:esoul:1145520258241806466>", label="Sparking Comet Powder", value="I2h"),
-            discord.SelectOption(
-                emoji="<:esoul:1145520258241806466>", label="Perplexing Cleansing Matrix", value="I2i"),
-            discord.SelectOption(
-                emoji="<:esoul:1145520258241806466>", label="Astral Pearl", value="I2j"),
-            discord.SelectOption(
-                emoji="<:esoul:1145520258241806466>", label="Standard Stamina Potion", value="I2s")
+                emoji=globalitems.stamina_icon, label="Standard Stamina Potion", value="i2y")
         ]
     )
     async def shop2_callback(self, interaction: discord.Interaction, item_select: discord.ui.Select):
@@ -209,19 +199,15 @@ class ShopView3(discord.ui.View):
         max_values=1,
         options=[
             discord.SelectOption(
-                emoji="<:eore:1145534835507593236>", label="Crystal Ore", value="I3b"),
+                emoji="<:eore:1145534835507593236>", label="Celestite Ore", value="i3o"),
             discord.SelectOption(
-                emoji="<:esoul:1145520258241806466>", label="Lustrous Soul", value="I3c"),
+                emoji="<:esoul:1145520258241806466>", label="Lucent Soul", value="i3s"),
             discord.SelectOption(
-                emoji="<:esoul:1145520258241806466>", label="Hallowed Socket Hammer", value="I3d"),
+                emoji="<a:elootitem:1144477550379274322>", label="Socket Adder", value="i3k"),
             discord.SelectOption(
-                emoji="<:esoul:1145520258241806466>", label="Scintillating Comet Powder", value="I3h"),
+                emoji="<a:eshadow2:1141653468965257216>", label="Purgatorial Flame", value="I3f"),
             discord.SelectOption(
-                emoji="<:esoul:1145520258241806466>", label="Paradoxical Cleansing Matrix", value="I3i"),
-            discord.SelectOption(
-                emoji="<:esoul:1145520258241806466>", label="Awakened Pearl", value="I3j"),
-            discord.SelectOption(
-                emoji="<:esoul:1145520258241806466>", label="Greater Stamina Potion", value="I3s")
+                emoji=globalitems.stamina_icon, label="Greater Stamina Potion", value="i3y")
         ]
     )
     async def shop3_callback(self, interaction: discord.Interaction, item_select: discord.ui.Select):
@@ -245,25 +231,25 @@ class ShopView4(discord.ui.View):
         max_values=1,
         options=[
             discord.SelectOption(
-                emoji="<:eore:1145534835507593236>", label="Champion's Ore", value="I4b"),
+                emoji="<:eore:1145534835507593236>", label="Crystallite Ore", value="i4o"),
             discord.SelectOption(
-                emoji="<:esoul:1145520258241806466>", label="Limitless Soul", value="I4c"),
+                emoji="<:esoul:1145520258241806466>", label="Lustrous Soul", value="i4s"),
             discord.SelectOption(
-                emoji="<:esoul:1145520258241806466>", label="Heroic Socket Hammer", value="I4d"),
+                emoji="<:ehammer:1145520259248427069>", label="Star Hammer", value="i4h"),
             discord.SelectOption(
-                emoji="<:esoul:1145520258241806466>", label="Serene Comet Powder", value="I4h"),
+                emoji="<:eprl:1148390531345432647>", label="Stellar Pearl", value="i4p"),
             discord.SelectOption(
-                emoji="<:esoul:1145520258241806466>", label="Perfect Cleansing Matrix", value="I4i"),
+                emoji="<a:eorigin:1145520263954440313>", label="Origin Catalyst", value="i4z"),
             discord.SelectOption(
-                emoji="<:esoul:1145520258241806466>", label="Ascension Pearl", value="I4j"),
+                emoji=globalitems.stamina_icon, label="Ultimate Stamina Potion", value="i4y"),
             discord.SelectOption(
-                emoji="<:esoul:1145520258241806466>", label="Ultimate Stamina Potion", value="I4s"),
+                emoji="<a:elootitem:1144477550379274322>", label="Unrefined Dragon Wings", value="i4w"),
             discord.SelectOption(
-                emoji="<:esoul:1145520258241806466>", label="Elemental Origin", value="I4k"),
+                emoji="<a:elootitem:1144477550379274322>", label="Unrefined Dragon Jewel", value="i4g"),
             discord.SelectOption(
-                emoji="<:esoul:1145520258241806466>", label="Unrefined Dragon Heart Gem (T4)", value="I4n"),
+                emoji="<a:elootitem:1144477550379274322>", label="Unrefined Paragon Crest", value="i4c"),
             discord.SelectOption(
-                emoji="<:esoul:1145520258241806466>", label="Unrefined Wings (T4)", value="I4m")
+                emoji="<a:elootitem:1144477550379274322>", label="Summoning Token", value="i4t")
         ]
     )
     async def shop4_callback(self, interaction: discord.Interaction, item_select: discord.ui.Select):
@@ -287,22 +273,50 @@ class ShopView5(discord.ui.View):
         max_values=1,
         options=[
             discord.SelectOption(
-                emoji="<a:eenergy:1145534127349706772>", label="Summoning Token (T5)", value="I5t"),
+                emoji="<:eore:1145534835507593236>", label="Heavenly Ore", value="i5o"),
             discord.SelectOption(
-                emoji="<:esoul:1145520258241806466>", label="Summoning Token (T6)", value="I6t"),
+                emoji="<:esoul:1145520258241806466>", label="Heavenly Soul", value="i5s"),
             discord.SelectOption(
-                emoji="<:esoul:1145520258241806466>", label="Void Traces", value="I5l"),
+                emoji="<a:evoid:1145520260573827134>", label="Void Traces", value="i5v"),
             discord.SelectOption(
-                emoji="<:eore:1145534835507593236>", label="Unrefined Fabled Item", value="I5x"),
+                emoji="<a:elootitem:1144477550379274322>", label="Astral Heart", value="i5l"),
             discord.SelectOption(
-                emoji="<:esoul:1145520258241806466>", label="Unrefined Dragon Heart Gem (T6)", value="I6n"),
+                emoji="<a:eenergy:1145534127349706772>", label="Summoning Relic", value="i5t"),
             discord.SelectOption(
-                emoji="<a:eenergy:1145534127349706772>", label="Crystallized Wish", value="I6x"),
-            discord.SelectOption(
-                emoji="<:eore:1145534835507593236>", label="Crystallized Void", value="I7x")
+                emoji="<a:elootitem:1144477550379274322>", label="Unrefined Fabled Item", value="i5x"),
         ]
     )
     async def shop5_callback(self, interaction: discord.Interaction, item_select: discord.ui.Select):
+        try:
+            if interaction.user.name == self.player_user.player_name:
+                embed_msg, purchase_view = show_item(self.player_user, item_select.values[0])
+                await interaction.response.edit_message(embed=embed_msg, view=purchase_view)
+        except Exception as e:
+            print(e)
+
+
+class ShopView6(discord.ui.View):
+    def __init__(self, player_user, tier_colour):
+        super().__init__(timeout=None)
+        self.player_user = player_user
+        self.tier_colour = tier_colour
+
+    @discord.ui.select(
+        placeholder="Select crafting method!",
+        min_values=1,
+        max_values=1,
+        options=[
+            discord.SelectOption(
+                emoji="<:esoul:1145520258241806466>", label="Summoning Artifact", value="i6t"),
+            discord.SelectOption(
+                emoji="<a:elootitem:1144477550379274322>", label="Unrefined Dragon Heart Gem", value="i6g"),
+            discord.SelectOption(
+                emoji="<a:elootitem:1144477550379274322>", label="Crystallized Wish", value="i6x"),
+            discord.SelectOption(
+                emoji="<a:elootitem:1144477550379274322>", label="Crystallized Void", value="i7x")
+        ]
+    )
+    async def shop6_callback(self, interaction: discord.Interaction, item_select: discord.ui.Select):
         try:
             if interaction.user.name == self.player_user.player_name:
                 embed_msg, purchase_view = show_item(self.player_user, item_select.values[0])
