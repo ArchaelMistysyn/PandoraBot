@@ -762,16 +762,23 @@ def run_discord_bot():
             player_object = player.get_player_by_name(user)
             if player_object.player_class != "":
                 if not player.checkNaN(item_id) and not player.checkNaN(cost):
-                    if inventory.if_custom_exists(item_id):
-                        selected_item = inventory.read_custom_item(item_id)
-                        response = player_object.check_equipped(selected_item)
-                        if response == "":
-                            bazaar.list_custom_item(selected_item, cost)
-                            await ctx.send(f"Item {item_id} has been listed for {cost} lotus coins.")
+                    num_listings = bazaar.check_num_listings(player_object)
+                    if num_listings < 6:
+                        if inventory.if_custom_exists(item_id):
+                            selected_item = inventory.read_custom_item(item_id)
+                            if selected_item.item_tier > 4:
+                                response = player_object.check_equipped(selected_item)
+                                if response == "":
+                                    bazaar.list_custom_item(selected_item, cost)
+                                    await ctx.send(f"Item {item_id} has been listed for {cost} lotus coins.")
+                                else:
+                                    await ctx.send(response)
+                            else:
+                                await ctx.send(f"Only tier 5 or higher gear items can be listed at the bazaar.")
                         else:
-                            await ctx.send(response)
+                            await ctx.send(f"Item {item_id} could not be listed.")
                     else:
-                        await ctx.send(f"Item {item_id} could not be listed.")
+                        await ctx.send("Already at maximum allowed listings.")
                 else:
                     await ctx.send(f"Invalid inputs, please enter numeric values only.")
             else:

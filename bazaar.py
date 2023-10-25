@@ -15,6 +15,22 @@ import pymysql
 from sqlalchemy import exc
 
 
+def check_num_listings(player_object):
+    try:
+        engine_url = mydb.get_engine_url()
+        engine = sqlalchemy.create_engine(engine_url)
+        pandora_db = engine.connect()
+        query = text("SELECT * FROM CustomBazaar WHERE seller_id = :id_check")
+        query = query.bindparams(id_check=player_object.player_id)
+        df = pd.read_sql(query, pandora_db)
+        pandora_db.close()
+        engine.dispose()
+        return len(df)
+    except exc.SQLAlchemyError as error:
+        print(error)
+        return 0
+
+
 def list_custom_item(item, cost):
     try:
         engine_url = mydb.get_engine_url()
