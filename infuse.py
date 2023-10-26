@@ -16,14 +16,14 @@ import damagecalc
 import bazaar
 
 recipe_dict = {
-    "Heavenly Ore (Crude)": ["i1o", 100, "STONE1", 10, 100, "i5o"],
-    "Heavenly Soul (Light)": ["i1s", 100, "STONE1", 10, 100, "i5s"],
-    "Heavenly Ore (Cosmite)": ["i2o", 20, "STONE1", 20, 100, "i5o"],
-    "Heavenly Soul (Luminous)": ["i2s", 20, "STONE1", 20, 100, "i5s"],
-    "Heavenly Ore (Celestite)": ["i3o", 10, "STONE1", 30, 100, "i5o"],
-    "Heavenly Soul (Lucent)": ["i3s", 10, "STONE1", 30, 100, "i5s"],
-    "Heavenly Ore (Crystallite)": ["i4o", 2, "STONE1", 40, 100, "i5o"],
-    "Heavenly Soul (Lustrous)": ["i4s", 2, "STONE1", 40, 100, "i5s"],
+    "Heavenly Ore (Crude)": ["i1o", 100, "STONE1", 20, 100, "i5o"],
+    "Heavenly Soul (Light)": ["i1s", 100, "STONE1", 20, 100, "i5s"],
+    "Heavenly Ore (Cosmite)": ["i2o", 20, "STONE2", 20, 100, "i5o"],
+    "Heavenly Soul (Luminous)": ["i2s", 20, "STONE2", 20, 100, "i5s"],
+    "Heavenly Ore (Celestite)": ["i3o", 10, "STONE3", 20, 100, "i5o"],
+    "Heavenly Soul (Lucent)": ["i3s", 10, "STONE3", 20, 100, "i5s"],
+    "Heavenly Ore (Crystallite)": ["i4o", 2, "STONE4", 20, 100, "i5o"],
+    "Heavenly Soul (Lustrous)": ["i4s", 2, "STONE4", 20, 100, "i5s"],
     "Elemental Origin (Fire)": ["i4z", 1, "Fae0", 50, 100, "Origin0"],
     "Elemental Origin (Water)": ["i4z", 1, "Fae1", 50, 100, "Origin1"],
     "Elemental Origin (Lightning)": ["i4z", 1, "Fae2", 50, 100, "Origin2"],
@@ -207,7 +207,7 @@ class HeavenlySelectView(discord.ui.View):
             discord.SelectOption(
                 emoji="<:esoul:1145520258241806466>", label="Light Soul", description="Use light souls."),
             discord.SelectOption(
-                emoji="<:esoul:1145520258241806466>", label="Luminious Soul", description="Use luminous souls."),
+                emoji="<:esoul:1145520258241806466>", label="Luminous Soul", description="Use luminous souls."),
             discord.SelectOption(
                 emoji="<:esoul:1145520258241806466>", label="Lucent Soul", description="Use lucent souls."),
             discord.SelectOption(

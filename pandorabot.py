@@ -491,11 +491,9 @@ def run_discord_bot():
         if any(ctx.channel.id in sl for sl in globalitems.global_server_channels):
             player_object = player.get_player_by_name(str(ctx.author))
             if player_object.player_class != "":
-                inventory_view = menus.InventoryView(player_object)
-
-                inventory_title = f'{player_object.player_username}\'s Equipment:\n'
-                player_inventory = inventory.display_cinventory(player_object.player_id)
-
+                inventory_view = inventory.BInventoryView(player_object)
+                inventory_title = f'{player_object.player_username}\'s Inventory:\n'
+                player_inventory = inventory.display_binventory(player_object.player_id, "Crafting Items")
                 embed_msg = discord.Embed(colour=discord.Colour.dark_orange(),
                                           title=inventory_title,
                                           description=player_inventory)

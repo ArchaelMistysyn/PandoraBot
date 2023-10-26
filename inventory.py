@@ -3,6 +3,8 @@ import random
 import bosses
 import damagecalc
 import pandas as pd
+import discord
+from discord.ui import Button, View
 
 import inventory
 import loot
@@ -24,6 +26,104 @@ import string
 
 custom_item_dict = {"W": "Weapon", "A": "Armour", "Y": "Accessory", "G": "Wing", "C": "Crest",
                     "D": "Dragon Heart Gem", "T": "Tarot Card"}
+
+
+class BInventoryView(discord.ui.View):
+    def __init__(self, user):
+        super().__init__(timeout=None)
+        self.user = user
+
+    @discord.ui.select(
+        placeholder="Select Inventory Type!",
+        min_values=1,
+        max_values=1,
+        options=[
+            discord.SelectOption(
+                emoji="<a:eenergy:1145534127349706772>", label="Crafting Items", description="Crafting Items"),
+            discord.SelectOption(
+                emoji="<a:eenergy:1145534127349706772>", label="Fae Cores", description="Fae Cores"),
+            discord.SelectOption(
+                emoji="<a:eenergy:1145534127349706772>", label="Misc Items", description="Misc Items")
+        ]
+    )
+    async def inventory_callback(self, interaction: discord.Interaction, inventory_select: discord.ui.Select):
+        try:
+            if interaction.user.name == self.user.player_name:
+                inventory_title = f'{self.user.player_username}\'s Inventory:\n'
+                player_inventory = display_binventory(self.user.player_id, inventory_select.values[0])
+
+                new_embed = discord.Embed(colour=discord.Colour.dark_orange(),
+                                          title=inventory_title,
+                                          description=player_inventory)
+                await interaction.response.edit_message(embed=new_embed)
+        except Exception as e:
+            print(e)
+
+    @discord.ui.button(label="Gear", style=discord.ButtonStyle.blurple, emoji="✅")
+    async def toggle_callback(self, interaction: discord.Interaction, button: discord.Button):
+        try:
+            if interaction.user.name == self.user.player_name:
+                new_view = CInventoryView(self.user)
+                inventory_title = f'{self.user.player_username}\'s Equipment:\n'
+                player_inventory = display_cinventory(self.user.player_id, "W")
+                new_embed = discord.Embed(colour=discord.Colour.dark_orange(),
+                                          title=inventory_title,
+                                          description=player_inventory)
+                await interaction.response.edit_message(embed=new_embed, view=new_view)
+        except Exception as e:
+            print(e)
+
+
+class CInventoryView(discord.ui.View):
+    def __init__(self, user):
+        super().__init__(timeout=None)
+        self.user = user
+
+    @discord.ui.select(
+        placeholder="Select Inventory Type!",
+        min_values=1,
+        max_values=1,
+        options=[
+            discord.SelectOption(
+                emoji="<a:eenergy:1145534127349706772>", label="Weapon", value="W", description="Stored Weapons"),
+            discord.SelectOption(
+                emoji="<a:eenergy:1145534127349706772>", label="Armour", value="A", description="Stored Armour"),
+            discord.SelectOption(
+                emoji="<a:eenergy:1145534127349706772>", label="Accessory", value="Y", description="Stored Accessories"),
+            discord.SelectOption(
+                emoji="<a:eenergy:1145534127349706772>", label="Wing", value="G", description="Stored Wings"),
+            discord.SelectOption(
+                emoji="<a:eenergy:1145534127349706772>", label="Crest", value="C", description="Stored Crests"),
+            discord.SelectOption(
+                emoji="<a:eenergy:1145534127349706772>", label="Gem", value="D", description="Stored Gems")
+        ]
+    )
+    async def inventory_callback(self, interaction: discord.Interaction, inventory_select: discord.ui.Select):
+        try:
+            if interaction.user.name == self.user.player_name:
+                inventory_title = f'{self.user.player_username}\'s Inventory:\n'
+                player_inventory = display_cinventory(self.user.player_id, inventory_select.values[0])
+
+                new_embed = discord.Embed(colour=discord.Colour.dark_orange(),
+                                          title=inventory_title,
+                                          description=player_inventory)
+                await interaction.response.edit_message(embed=new_embed)
+        except Exception as e:
+            print(e)
+
+    @discord.ui.button(label="Items", style=discord.ButtonStyle.blurple, emoji="✅")
+    async def toggle_callback(self, interaction: discord.Interaction, button: discord.Button):
+        try:
+            if interaction.user.name == self.user.player_name:
+                new_view = BInventoryView(self.user)
+                inventory_title = f'{self.user.player_username}\'s Inventory:\n'
+                player_inventory = display_binventory(self.user.player_id, "Crafting Items")
+                new_embed = discord.Embed(colour=discord.Colour.dark_orange(),
+                                          title=inventory_title,
+                                          description=player_inventory)
+                await interaction.response.edit_message(embed=new_embed, view=new_view)
+        except Exception as e:
+            print(e)
 
 
 class CustomItem:
@@ -798,29 +898,35 @@ def inventory_add_custom_item(item):
         engine_url = mydb.get_engine_url()
         engine = sqlalchemy.create_engine(engine_url)
         pandora_db = engine.connect()
-        query = text("INSERT INTO CustomInventory "
-                     "(player_id, item_type, item_name, item_damage_type, item_elements, item_enhancement,"
-                     "item_tier, item_blessing_tier, item_material_tier, item_base_type,"
-                     "item_num_stars, item_prefix_values, item_suffix_values, item_bonus_stat,"
-                     "item_base_dmg_min, item_base_dmg_max, item_num_sockets, item_inlaid_gem_id)"
-                     "VALUES (:input_1, :input_2, :input_3, :input_4, :input_5, :input_6, "
-                     ":input_7, :input_8, :input_9, :input_10, :input_11, :input_12, "
-                     ":input_13, :input_14, :input_15, :input_16, :input_17, :input_18) ")
-        query = query.bindparams(input_1=item.player_owner, input_2=item.item_type, input_3=item.item_name,
-                                 input_4=item.item_damage_type, input_5=item_elements,
-                                 input_6=item.item_enhancement, input_7=item.item_tier,
-                                 input_8=item.item_blessing_tier, input_9=item.item_material_tier,
-                                 input_10=item.item_base_type, input_11=item_num_stars,
-                                 input_12=item_prefix_values, input_13=item_suffix_values,
-                                 input_14=item.item_bonus_stat,
-                                 input_15=item.base_damage_min, input_16=item.base_damage_max,
-                                 input_17=item.item_num_sockets, input_18=item.item_inlaid_gem_id)
-        pandora_db.execute(query)
-        query = text("SELECT MAX(item_id) AS item_id FROM CustomInventory "
-                     "WHERE player_id = :player_check AND item_name = :name_check")
-        query = query.bindparams(player_check=item.player_owner, name_check=item.item_name)
-        df = pd.read_sql(query, pandora_db)
-        result_id = int(df['item_id'].values[0])
+        query = text("SELECT * FROM CustomInventory WHERE player_id = :player_check AND item_type = :item_check")
+        query = query.bindparams(player_check=item.player_owner, item_check=item.item_type)
+        check_df = pd.read_sql(query, pandora_db)
+        if len(check_df) >= 30:
+            result_id = 0
+        else:
+            query = text("INSERT INTO CustomInventory "
+                         "(player_id, item_type, item_name, item_damage_type, item_elements, item_enhancement,"
+                         "item_tier, item_blessing_tier, item_material_tier, item_base_type,"
+                         "item_num_stars, item_prefix_values, item_suffix_values, item_bonus_stat,"
+                         "item_base_dmg_min, item_base_dmg_max, item_num_sockets, item_inlaid_gem_id)"
+                         "VALUES (:input_1, :input_2, :input_3, :input_4, :input_5, :input_6, "
+                         ":input_7, :input_8, :input_9, :input_10, :input_11, :input_12, "
+                         ":input_13, :input_14, :input_15, :input_16, :input_17, :input_18) ")
+            query = query.bindparams(input_1=item.player_owner, input_2=item.item_type, input_3=item.item_name,
+                                     input_4=item.item_damage_type, input_5=item_elements,
+                                     input_6=item.item_enhancement, input_7=item.item_tier,
+                                     input_8=item.item_blessing_tier, input_9=item.item_material_tier,
+                                     input_10=item.item_base_type, input_11=item_num_stars,
+                                     input_12=item_prefix_values, input_13=item_suffix_values,
+                                     input_14=item.item_bonus_stat,
+                                     input_15=item.base_damage_min, input_16=item.base_damage_max,
+                                     input_17=item.item_num_sockets, input_18=item.item_inlaid_gem_id)
+            pandora_db.execute(query)
+            query = text("SELECT MAX(item_id) AS item_id FROM CustomInventory "
+                         "WHERE player_id = :player_check AND item_name = :name_check")
+            query = query.bindparams(player_check=item.player_owner, name_check=item.item_name)
+            df = pd.read_sql(query, pandora_db)
+            result_id = int(df['item_id'].values[0])
         pandora_db.close()
         engine.dispose()
     except exc.SQLAlchemyError as error:
@@ -850,14 +956,15 @@ def if_custom_exists(item_id) -> bool:
         return False
 
 
-def display_cinventory(player_id) -> str:
+def display_cinventory(player_id, item_type) -> str:
     try:
         engine_url = mydb.get_engine_url()
         engine = sqlalchemy.create_engine(engine_url)
         pandora_db = engine.connect()
         query = text("SELECT item_id, item_name FROM CustomInventory "
-                     "WHERE player_id = :id_check ORDER BY item_tier DESC")
-        query = query.bindparams(id_check=player_id)
+                     "WHERE player_id = :id_check AND item_type = :type_check "
+                     "ORDER BY item_tier DESC")
+        query = query.bindparams(id_check=player_id, type_check=item_type)
         df = pd.read_sql(query, pandora_db)
         pandora_db.close()
         engine.dispose()
@@ -869,20 +976,35 @@ def display_cinventory(player_id) -> str:
     return player_inventory
 
 
-def display_binventory(player_id):
+def display_binventory(player_id, method):
     filename = 'itemlist.csv'
     item_list = pd.read_csv(filename)
     try:
         engine_url = mydb.get_engine_url()
         engine = sqlalchemy.create_engine(engine_url)
         pandora_db = engine.connect()
-        query = text("SELECT item_id, item_qty FROM BasicInventory "
-                     "WHERE player_id = :id_check AND item_qty <> 0 ORDER BY item_id DESC")
+        match method:
+            case "Fae Cores":
+                query = text("SELECT item_id, item_qty FROM BasicInventory "
+                             "WHERE player_id = :id_check AND item_qty <> 0 AND item_id REGEXP '^Fae' "
+                             "ORDER BY item_id ASC")
+            case "Misc Items":
+                query = text("SELECT item_id, item_qty FROM BasicInventory "
+                             "WHERE player_id = :id_check AND item_qty <> 0 AND item_id REGEXP '^STONE|j$|r$|^t|%v%' "
+                             "ORDER BY item_id ASC")
+            case _:
+                query = text("SELECT item_id, item_qty FROM BasicInventory "
+                             "WHERE player_id = :id_check AND item_qty <> 0 AND item_id REGEXP '^i|^v' "
+                             "AND item_id NOT REGEXP '^j|^r|v$' "
+                             "ORDER BY item_id ASC")
         query = query.bindparams(id_check=player_id)
         df = pd.read_sql(query, pandora_db)
         pandora_db.close()
         engine.dispose()
         merged_df = df.merge(item_list, left_on='item_id', right_on='item_id')
+        if method != "Fae Cores":
+            merged_df['sort_key'] = merged_df['item_id'].apply(custom_sort)
+            merged_df = merged_df.sort_values(by='sort_key').drop(columns='sort_key')
         merged_df = merged_df[['item_emoji', 'item_name', 'item_qty']]
         temp = merged_df.style.set_properties(**{'text-align': 'left'}).hide(axis='index').hide(axis='columns')
         player_inventory = temp.to_string()
@@ -890,6 +1012,10 @@ def display_binventory(player_id):
         print(error)
         player_inventory = ""
     return player_inventory
+
+
+def custom_sort(item_id):
+    return item_id[2]
 
 
 def get_gear_tier_colours(base_tier):
@@ -1163,3 +1289,11 @@ def purge(player_object, tier):
         result = 0
         coin_total = 0
     return result, coin_total
+
+
+def full_inventory_embed(lost_item, embed_colour):
+    item_type = custom_item_dict[lost_item.item_type]
+    embed_msg = discord.Embed(colour=embed_colour,
+                              title="Inventory Full!",
+                              description=f"Please make space in your {item_type} inventory.")
+    return embed_msg

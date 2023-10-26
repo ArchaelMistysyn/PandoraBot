@@ -370,9 +370,9 @@ def get_random_bosstier(boss_type):
         boss_tier = 5
     elif random_number <= 8:
         boss_tier = 4
-    elif random_number <= 35:
+    elif random_number <= 25:
         boss_tier = 3
-    elif random_number <= 65:
+    elif random_number <= 55:
         boss_tier = 2
     elif random_number <= 100:
         boss_tier = 1

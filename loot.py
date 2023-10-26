@@ -175,7 +175,7 @@ def generate_random_item():
         quantity = random.randint(1, 3)
         if random_reward <= 261101:
             item_tier = 3
-            reward_types = ["s", "o", "k", "f" "j", "y", "Fae", "Fae"]
+            reward_types = ["s", "o", "k", "f", "j", "y", "Fae", "Fae"]
         elif random_reward <= 611101:
             reward_types = ["s", "o", "j", "y", "Fae", "Fae", "Fae"]
             item_tier = 2
@@ -187,7 +187,6 @@ def generate_random_item():
     if item_type == "Fae":
         random_element = random.randint(0, 8)
         reward_id = f"Fae{random_element}"
-    print(reward_id)
     return reward_id, quantity
 
 

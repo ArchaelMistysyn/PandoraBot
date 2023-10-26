@@ -28,41 +28,6 @@ class RaidView(discord.ui.View):
         await interaction.response.send_message(outcome)
 
 
-# Inventory menu
-class InventoryView(discord.ui.View):
-    def __init__(self, user):
-        super().__init__(timeout=None)
-        self.user = user
-
-    @discord.ui.select(
-        placeholder="Select Inventory Type!",
-        min_values=1,
-        max_values=1,
-        options=[
-            discord.SelectOption(
-                emoji="<a:eenergy:1145534127349706772>", label="Equipment", description="Stored Equipment"),
-            discord.SelectOption(
-                emoji="<a:eenergy:1145534127349706772>", label="Items", description="Regular Items")
-        ]
-    )
-    async def inventory_callback(self, interaction: discord.Interaction, inventory_select: discord.ui.Select):
-        try:
-            if interaction.user.name == self.user.player_name:
-                if inventory_select.values[0] == "Equipment":
-                    inventory_title = f'{self.user.player_username}\'s Equipment:\n'
-                    player_inventory = inventory.display_cinventory(self.user.player_id)
-                else:
-                    inventory_title = f'{self.user.player_username}\'s Inventory:\n'
-                    player_inventory = inventory.display_binventory(self.user.player_id)
-
-                new_embed = discord.Embed(colour=discord.Colour.dark_orange(),
-                                          title=inventory_title,
-                                          description=player_inventory)
-                await interaction.response.edit_message(embed=new_embed)
-        except Exception as e:
-            print(e)
-
-
 # Refinery Menus
 class RefSelectView(discord.ui.View):
     def __init__(self, player_user):
@@ -274,7 +239,10 @@ def refine_item(player_user, selected_type, selected_tier):
         new_item = inventory.try_refine(player_user.player_id, selected_type, selected_tier)
         if new_item.item_id == 0:
             result_id = inventory.inventory_add_custom_item(new_item)
-            embed_msg = new_item.create_citem_embed()
+            if result_id == 0:
+                embed_msg = inventory.full_inventory_embed(new_item, discord.Colour.red())
+            else:
+                embed_msg = new_item.create_citem_embed()
         else:
             embed_msg = discord.Embed(colour=discord.Colour.red(),
                                       title="Refinement Failed! The item is destroyed",

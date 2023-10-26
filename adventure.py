@@ -832,9 +832,12 @@ class ItemView(discord.ui.View):
                         result_id = inventory.inventory_add_custom_item(self.item)
                         self.item.item_id = result_id
                         self.new_view = TransitionView(self.expedition)
-                        self.embed = discord.Embed(colour=self.expedition.expedition_colour,
-                                                   title="Item Claimed!",
-                                                   description=f"The item has been placed in your inventory.")
+                        if result_id == 0:
+                            self.embed = inventory.full_inventory_embed(self.item, self.expedition.expedition_colour)
+                        else:
+                            self.embed = discord.Embed(colour=self.expedition.expedition_colour,
+                                                       title="Item Claimed!",
+                                                       description=f"The item has been placed in your inventory.")
                 await interaction.response.edit_message(embed=self.embed, view=self.new_view)
         except Exception as e:
             print(e)
