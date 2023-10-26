@@ -16,14 +16,53 @@ import insignia
 
 
 class HelpView(discord.ui.View):
-    def __init__(self):
+    def __init__(self, category_dict):
         super().__init__(timeout=None)
+        self.category_dict = category_dict
 
-    @discord.ui.button(label="Admin", style=discord.ButtonStyle.success, emoji="⚔️")
+    @discord.ui.button(label="Game", style=discord.ButtonStyle.blurple, row=0, emoji="🐉")
+    async def game_help_callback(self, interaction: discord.Interaction, raid_select: discord.ui.Select):
+        embed_msg = build_help_embed(self.category_dict,'game')
+        await interaction.response.edit_message(embed=embed_msg)
+
+    @discord.ui.button(label="Gear", style=discord.ButtonStyle.blurple, row=0, emoji="⚔️")
+    async def gear_help_callback(self, interaction: discord.Interaction, raid_select: discord.ui.Select):
+        embed_msg = build_help_embed(self.category_dict,'gear')
+        await interaction.response.edit_message(embed=embed_msg)
+
+    @discord.ui.button(label="Craft", style=discord.ButtonStyle.blurple, row=0, emoji="<:ehammer:1145520259248427069>")
+    async def craft_help_callback(self, interaction: discord.Interaction, raid_select: discord.ui.Select):
+        embed_msg = build_help_embed(self.category_dict,'craft')
+        await interaction.response.edit_message(embed=embed_msg)
+
+    @discord.ui.button(label="Trade", style=discord.ButtonStyle.blurple, row=1, emoji="💲")
+    async def trade_help_callback(self, interaction: discord.Interaction, raid_select: discord.ui.Select):
+        embed_msg = build_help_embed(self.category_dict,'trade')
+        await interaction.response.edit_message(embed=embed_msg)
+
+    @discord.ui.button(label="Info", style=discord.ButtonStyle.blurple, row=1, emoji="ℹ️")
+    async def account_help_callback(self, interaction: discord.Interaction, raid_select: discord.ui.Select):
+        embed_msg = build_help_embed(self.category_dict, 'info')
+        await interaction.response.edit_message(embed=embed_msg)
+
+    @discord.ui.button(label="Admin", style=discord.ButtonStyle.red, row=1, emoji="⌨")
     async def admin_help_callback(self, interaction: discord.Interaction, raid_select: discord.ui.Select):
-        clicked_by = player.get_player_by_name(str(interaction.user))
+        embed_msg = build_help_embed(self.category_dict, 'admin')
+        await interaction.response.edit_message(embed=embed_msg)
 
-        await interaction.response.edit_message(outcome)
+
+def build_help_embed(category_dict, category_name):
+    display_category_name = category_name.capitalize()
+    embed = discord.Embed(title=f"{display_category_name} Commands:", color=discord.Colour.dark_orange())
+    commands = category_dict[category_name]
+    commands.sort(key=lambda x: x[2])
+    if category_name != 'admin':
+        command_prefix = '/'
+    else:
+        command_prefix = '!'
+    for command_name, description, _ in commands:
+        embed.add_field(name=f"{command_prefix}{command_name}", value=f"{description}", inline=False)
+    return embed
 
 
 # Raid View
