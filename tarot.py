@@ -24,6 +24,186 @@ paragon_t6 = ["Eleuia, The Wish"]
 paragon_list = [paragon_t1, paragon_t2, paragon_t3, paragon_t4, paragon_t5, paragon_t6]
 
 
+class CollectionView(discord.ui.View):
+    def __init__(self, player_user, embed_msg, start_location):
+        super().__init__(timeout=None)
+        self.player_user = player_user
+        self.embed_msg = embed_msg
+        self.current_position = start_location
+        self.current_variant = 1
+
+    @discord.ui.button(label="View Collection", style=discord.ButtonStyle.blurple, emoji="✅")
+    async def view_collection(self, interaction: discord.Interaction, button: discord.Button):
+        try:
+            if interaction.user.name == self.player_user.player_name:
+                new_msg, x, y = cycle_tarot(self.player_user, self.embed_msg, self.current_position, 1, 0)
+                new_view = TarotView(self.player_user, self.embed_msg, self.current_position)
+                await interaction.response.edit_message(embed=new_msg, view=new_view)
+        except Exception as e:
+            print(e)
+
+
+class TarotView(discord.ui.View):
+    def __init__(self, player_user, embed_msg, starting_location):
+        super().__init__(timeout=None)
+        self.player_user = player_user
+        self.embed_msg = embed_msg
+        self.current_position = starting_location
+        self.current_variant = 1
+        self.added_message = False
+
+    @discord.ui.button(label="Previous", style=discord.ButtonStyle.blurple, emoji="⬅️")
+    async def previous_card(self, interaction: discord.Interaction, button: discord.Button):
+        try:
+            if interaction.user.name == self.player_user.player_name:
+                direction = -1
+                current_message = self.embed_msg.clear_fields()
+                new_msg, self.current_position, self.current_variant = cycle_tarot(self.player_user,
+                                                                                   current_message,
+                                                                                   self.current_position,
+                                                                                   self.current_variant,
+                                                                                   direction)
+                await interaction.response.edit_message(embed=new_msg)
+        except Exception as e:
+            print(e)
+
+    @discord.ui.button(label="Equip", style=discord.ButtonStyle.success, emoji="⚔️")
+    async def equip(self, interaction: discord.Interaction, button: discord.Button):
+        try:
+            if interaction.user.name == self.player_user.player_name:
+                direction = 0
+                new_msg = self.embed_msg
+                active_card = check_tarot(self.player_user.player_id, tarot.tarot_card_list(self.current_position),
+                                                self.current_variant)
+                if active_card:
+                    reload_player = player.get_player_by_id(self.player_user.player_id)
+                    card_num = get_number_by_tarot(active_card.card_name)
+                    reload_player.equipped_tarot = f"{card_num};{active_card.card_variant}"
+                    reload_player.set_player_field("player_equip_tarot", reload_player.equipped_tarot)
+                    new_msg.add_field(name="Equipped!", value="", inline=False)
+                else:
+                    new_msg.add_field(name="Cannot Equip!", value="You do not own this card.", inline=False)
+                await interaction.response.edit_message(embed=new_msg)
+        except Exception as e:
+            print(e)
+
+    @discord.ui.button(label="Synthesize", style=discord.ButtonStyle.success, emoji="🔱")
+    async def synthesize(self, interaction: discord.Interaction, button: discord.Button):
+        try:
+            if interaction.user.name == self.player_user.player_name:
+                direction = 0
+                active_card = check_tarot(self.player_user.player_id,
+                                                tarot_card_list(self.current_position), self.current_variant)
+                if self.added_message:
+                    embed_total = len(self.embed_msg.fields)
+                    self.embed_msg.remove_field(embed_total - 1)
+                    self.added_message = False
+                if active_card:
+                    if active_card.card_qty > 1:
+                        if active_card.num_stars != 5:
+                            outcome = active_card.synthesize_tarot()
+                            current_message = self.embed_msg
+                            new_msg, self.current_position, self.current_variant = cycle_tarot(self.player_user,
+                                                                                               current_message,
+                                                                                               self.current_position,
+                                                                                               self.current_variant,
+                                                                                               direction)
+                            new_msg.add_field(name="", value=outcome,
+                                              inline=False)
+                            self.added_message = True
+                        else:
+                            new_msg = self.embed_msg
+                            new_msg.add_field(name="Cannot Synthesize!", value="Card cannot be upgraded further.", inline=False)
+                            self.added_message = True
+                    else:
+                        new_msg = self.embed_msg
+                        new_msg.add_field(name="Cannot Synthesize!", value="Not enough cards in possession.", inline=False)
+                        self.added_message = True
+                else:
+                    new_msg = self.embed_msg
+                    new_msg.add_field(name="Cannot Synthesize!", value="You do not own this card.", inline=False)
+                    self.added_message = True
+                await interaction.response.edit_message(embed=new_msg)
+        except Exception as e:
+            print(e)
+
+    @discord.ui.button(label="Next", style=discord.ButtonStyle.blurple, emoji="➡️")
+    async def next_card(self, interaction: discord.Interaction, button: discord.Button):
+        try:
+            if interaction.user.name == self.player_user.player_name:
+                direction = 1
+                current_message = self.embed_msg.clear_fields()
+                new_msg, self.current_position, self.current_variant = cycle_tarot(self.player_user,
+                                                                                   current_message,
+                                                                                   self.current_position,
+                                                                                   self.current_variant,
+                                                                                   direction)
+                await interaction.response.edit_message(embed=new_msg)
+        except Exception as e:
+            print(e)
+
+
+def cycle_tarot(player_owner, current_msg, current_position, current_variant, direction):
+    card_num_list = ["0", "I", "II", "III", "IV", "V", "VI", "VII", "VIII", "IX", "X",
+                     "XI", "XII", "XIII", "XIV", "XV", "XVI", "XVII", "XVIII", "XIX", "XX", "XXI", "XXX"]
+    card_name_list = ["Karma, The Reflection", "Runa, The Magic", "Pandora, The Celestial", "Oblivia, The Void",
+                      "Akasha, The Infinite", "Arkaya, The Duality", "Kama, The Love", "Astratha, The Dragon",
+                      "Tyra, The Behemoth", "Alaya, The Memory", "Chrona, The Temporal", "Nua, The Heavens",
+                      "Rua, The Abyss", "Thana, The Death", "Arcelia, The Clarity", "Diabla, The Primordial",
+                      "Aurora, The Fortress", "Nova, The Star", "Luna, The Moon", "Luma, The Sun",
+                      "Aria, The Requiem", "Ultima, The Creation", "Eleuia, The Wish"]
+    if current_variant == 1 and direction == -1:
+        new_variant = 2
+        new_position = current_position + direction
+        if new_position == -1:
+            new_position = 22
+    elif current_variant == 2 and direction == 1:
+        new_variant = 1
+        new_position = current_position + direction
+        if new_position == 23:
+            new_position = 0
+    else:
+        new_variant = current_variant + direction
+        new_position = current_position
+    current_msg.clear_fields()
+    new_msg = current_msg
+    tarot_card = check_tarot(player_owner.player_id, card_name_list[new_position], new_variant)
+    if tarot_card:
+        card_qty = tarot_card.card_qty
+        card_num_stars = tarot_card.num_stars
+        filename = tarot_card.card_image_link
+    else:
+        card_num_stars = 0
+        card_qty = 0
+        filename = "https://kyleportfolio.ca/botimages/tarot/cardback.png"
+    display_stars = ""
+    for x in range(card_num_stars):
+        display_stars += "<:estar1:1143756443967819906>"
+    for y in range((5 - card_num_stars)):
+        display_stars += "<:ebstar2:1144826056222724106>"
+    card_title = f"{card_num_list[new_position]} - {card_name_list[new_position]}"
+    if new_variant == 1:
+        card_title += " [Standard]"
+    else:
+        card_title += " [Premium]"
+    new_msg.add_field(name=card_title,
+                      value=display_stars,
+                      inline=False)
+    if tarot_card:
+        base_damage = tarot_card.get_base_damage()
+        new_msg.add_field(name=f"",
+                          value=f"Base Damage: {base_damage:,} - {base_damage:,}",
+                          inline=False)
+        new_msg.add_field(name=f"",
+                          value=tarot_card.display_tarot_bonus_stat(),
+                          inline=False)
+    new_msg.add_field(name=f"",
+                      value=f"Quantity: {card_qty}",
+                      inline=False)
+    new_msg.set_image(url=filename)
+    return new_msg, new_position, new_variant
+
+
 class TarotCard:
     def __init__(self, player_id, card_numeral, card_variant, card_name, card_qty,
                  num_stars, card_enhancement):
