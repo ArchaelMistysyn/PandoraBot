@@ -74,7 +74,7 @@ class Expedition:
         if room_type == "a":
             random_room = random.randint(0, 4)
             random_jackpot = random.randint(1, 1000)
-            if random_jackpot <= 5:
+            if random_jackpot <= 15:
                 room_type = "j"
             else:
                 room_type = random_room_list[random_room]
@@ -354,6 +354,15 @@ class TransitionView(discord.ui.View):
                 if not self.embed:
                     self.embed, self.new_view = self.expedition.display_next_room()
                     self.expedition.current_room_num += 1
+                    regen_bonus = self.expedition.player_object.hp_regen
+                    if regen_bonus > 0:
+                        regen_amount = int(self.expedition.player_object.player_cHP * regen_bonus)
+                        self.expedition.player_object.player_cHP += regen_amount
+                        if self.expedition.player_object.player_cHP > self.expedition.player_object.player_mHP:
+                            self.expedition.player_object.player_cHP = self.expedition.player_object.player_mHP
+                        hp_msg = (f'Regen: +{regen_amount}\n'
+                                  f'{self.expedition.player_object.player_cHP} / {self.expedition.player_object.player_mHP} HP')
+                        self.embed.add_field(name="", value=hp_msg, inline=False)
                 await interaction.response.edit_message(embed=self.embed, view=self.new_view)
         except Exception as e:
             print(e)

@@ -58,7 +58,7 @@ class PlayerProfile:
         self.defence_penetration = 0.0
         self.class_multiplier = 0.0
         self.final_damage = 0.0
-        self.banes = [0.0, 0.0, 0.0, 0.0, 0.0]
+        self.banes = [0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
 
         self.critical_chance = 0.0
         self.critical_multiplier = 0.0
@@ -96,7 +96,7 @@ class PlayerProfile:
         self.defence_penetration = 0.0
         self.class_multiplier = 0.0
         self.final_damage = 0.0
-        self.banes = [0.0, 0.0, 0.0, 0.0, 0.0]
+        self.banes = [0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
 
         self.critical_chance = 0.0
         self.critical_multiplier = 1.0
@@ -130,29 +130,29 @@ class PlayerProfile:
             stats += f"\nAttack Speed: {self.attack_speed} / min"
             stats += f"\nCritical Chance: {int(round(self.critical_chance))}%"
             stats += f"\nCritical Damage: +{int(round(self.critical_multiplier * 100))}%"
-            for idw, w in enumerate(self.elemental_damage_multiplier):
-                stats += f"\n{globalitems.global_element_list[idw]} Damage: {int(w * 100)}%"
-            stats += f"\nBonus Hit Count: +{int(round(self.bonus_hits))}x"
-            stats += f"\nClass Multiplier: {int(round(self.class_multiplier * 100))}%"
-            stats += f"\nFinal Damage: {int(round(self.final_damage * 100))}%"
-            for idh, h in enumerate(self.banes):
-                if idh != 4:
-                    stats += f"\n{bosses.boss_list[idh]} Bane: {int(h * 100)}%"
+            for x in range(9):
+                temp_icon = globalitems.global_element_list[x]
+                temp_dmg = int(round(self.elemental_damage[x] * 100))
+                temp_pen = int(round(self.elemental_penetration[x] * 100))
+                temp_curse = int(round(self.elemental_curse[x] * 100))
+                stats += f"\n{temp_icon} (Dmg: {temp_dmg}%) (Pen: {temp_pen}%) (Curse: {temp_curse}%)"
         elif method == 2:
             stats = f"Player HP: {self.player_mHP:,}"
             for idy, y in enumerate(self.elemental_resistance):
                 stats += f"\n{globalitems.global_element_list[idy]} Resistance: {int(y * 100)}%"
             stats += f"\nDamage Mitigation: {int(round(self.damage_mitigation))}%"
-        elif method == 3:
-            stats = ""
-            for idx, x in enumerate(self.elemental_penetration):
-                stats += f"\n{globalitems.global_element_list[idx]} Penetration: {int(x * 100)}%"
-            stats += f"\nDefence Penetration: {int(round(self.defence_penetration * 100))}%"
         else:
             stats = ""
-            for idz, z in enumerate(self.elemental_curse):
-                stats += f"{globalitems.global_element_list[idz]} Curse: {int(z * 100)}%\n"
-            stats += f"Omni Aura: {int(round(self.aura))}%\n"
+            for idh, h in enumerate(self.banes):
+                if idh < 4:
+                    stats += f"\n{bosses.boss_list[idh]} Bane: {int(h * 100)}%"
+                elif idh == 5:
+                    stats += f"\nHuman Bane: {int(h * 100)}%"
+            stats += f"\nOmni Aura: {int(round(self.aura))}%"
+            stats += f"\nDefence Penetration: {int(round(self.defence_penetration * 100))}%"
+            stats += f"\nBonus Hit Count: +{int(round(self.bonus_hits))}x"
+            stats += f"\nClass Multiplier: {int(round(self.class_multiplier * 100))}%"
+            stats += f"\nFinal Damage: {int(round(self.final_damage * 100))}%"
 
         embed_msg = discord.Embed(colour=echelon_colour[0],
                                   title=self.player_username,
@@ -393,6 +393,7 @@ class PlayerProfile:
                 self.elemental_resistance[x] = 100
         for y in range(4):
             self.banes[y] += self.banes[4]
+        self.banes[5] += self.banes[4]
 
     def get_player_damage(self, boss_object):
         additional_multiplier = 1.0
@@ -477,9 +478,9 @@ class PlayerProfile:
                     self.elemental_curse[2] += card_multiplier * 30
             case 6:
                 if tarot_card.card_variant == 1:
-                    self.hp_multiplier += card_multiplier * 25
-                else:
                     self.all_elemental_resistance += card_multiplier * 10
+                else:
+                    self.banes[5] += card_multiplier * 40
             case 7:
                 if tarot_card.card_variant == 1:
                     self.final_damage += card_multiplier * 5
@@ -588,11 +589,11 @@ class PlayerProfile:
                         bonus = roll_adjust * 15
                         self.damage_mitigation += bonus
                     case 118:
+                        bonus = roll_adjust * 20
+                        self.banes[5] += bonus
+                    case 119:
                         bonus = roll_adjust * 1
                         self.hp_regen += bonus
-                    case 119:
-                        bonus = roll_tier * 100
-                        self.hp_bonus += bonus
                     case 120:
                         bonus = roll_adjust * 15
                         self.hp_multiplier += bonus

@@ -348,8 +348,11 @@ class CustomItem:
             random_pos = random.randint(0, 8)
             keyword = globalitems.element_special_names[random_pos]
             if self.item_type == "Y":
-                random_pos = random.randint(0, 3)
-                keyword = bosses.boss_list[random_pos]
+                random_pos = random.randint(0, 4)
+                if random_pos != 4:
+                    keyword = bosses.boss_list[random_pos]
+                else:
+                    keyword = "Human"
                 descriptor = "Bane"
             elif self.item_type == "G":
                 descriptor = "Feathers"
@@ -990,11 +993,11 @@ def display_binventory(player_id, method):
                              "ORDER BY item_id ASC")
             case "Misc Items":
                 query = text("SELECT item_id, item_qty FROM BasicInventory "
-                             "WHERE player_id = :id_check AND item_qty <> 0 AND item_id REGEXP '^STONE|j$|r$|^t|%v%' "
+                             "WHERE player_id = :id_check AND item_qty <> 0 AND item_id REGEXP '^STONE|j$|r$|^t|v$' "
                              "ORDER BY item_id ASC")
             case _:
                 query = text("SELECT item_id, item_qty FROM BasicInventory "
-                             "WHERE player_id = :id_check AND item_qty <> 0 AND item_id REGEXP '^i|^v' "
+                             "WHERE player_id = :id_check AND item_qty <> 0 AND item_id REGEXP '^i|^v|^m|^v' "
                              "AND item_id NOT REGEXP '^j|^r|v$' "
                              "ORDER BY item_id ASC")
         query = query.bindparams(id_check=player_id)
@@ -1111,7 +1114,6 @@ def update_stock(player_object, item_id, change):
 def get_roll_by_code(item_object, code):
     roll_text = ""
     check_roll = ord(code[2])
-    text_method = 1
     match code[0]:
         case "P":
             if check_roll <= 106:
@@ -1138,12 +1140,11 @@ def get_roll_by_code(item_object, code):
                         roll = "Damage Mitigation"
                         roll_adjust = 15
                     case 118:
+                        roll = "Human Bane"
+                        roll_adjust = 20
+                    case 119:
                         roll = "Health Regen"
                         roll_adjust = 1
-                    case 119:
-                        roll = "Health Bonus"
-                        roll_adjust = 250
-                        text_method = 2
                     case 120:
                         roll = "Health Multiplier"
                         roll_adjust = 15
@@ -1189,10 +1190,7 @@ def get_roll_by_code(item_object, code):
                     case _:
                         nothing = True
             bonus = str((1 + int(code[1])) * roll_adjust)
-            if text_method == 1:
-                roll_text += f'+{bonus}% {roll}'
-            elif text_method == 2:
-                roll_text += f'+{bonus} {roll}'
+            roll_text += f'+{bonus}% {roll}'
         case _:
             roll_text = "Error"
     return roll_text

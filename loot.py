@@ -161,7 +161,7 @@ def generate_random_item():
     quantity = 1
     random_reward = random.randint(1, 1000000)
     if random_reward <= 1:
-        reward_id = "i7x"
+        reward_id = "v7x"
     elif random_reward <= 101:
         reward_id = "i6x"
     elif random_reward <= 1101:
@@ -186,6 +186,7 @@ def generate_random_item():
         reward_id = f"i{item_tier}{item_type}"
     if item_type == "Fae":
         random_element = random.randint(0, 8)
+        reward_id = f"Fae{random_element}"
         reward_id = f"Fae{random_element}"
     return reward_id, quantity
 

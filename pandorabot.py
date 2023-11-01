@@ -794,10 +794,10 @@ def run_discord_bot():
             player_object = player.get_player_by_name(player_name)
             if player_object.player_class != "":
                 embed_msg = discord.Embed(colour=discord.Colour.dark_orange(),
-                                          title='Welcome to the Refinery!',
+                                          title='',
                                           description="Please select the item to refine")
                 embed_msg.set_image(url="https://i.ibb.co/QjWDYG3/forge.jpg")
-                ref_view = menus.RefSelectView(player_object)
+                ref_view = forge.RefSelectView(player_object)
                 await ctx.send(embed=embed_msg, view=ref_view)
             else:
                 embed_msg = unregistered_message()
@@ -835,6 +835,37 @@ def run_discord_bot():
                 embed_msg.set_image(url="")
                 infuse_view = infuse.InfuseView(player_object)
                 await ctx.send(embed=embed_msg, view=infuse_view)
+            else:
+                embed_msg = unregistered_message()
+                await ctx.send(embed=embed_msg)
+
+    @set_command_category('craft', 4)
+    @pandora_bot.hybrid_command(name='fountain', help="Go to the ???")
+    @app_commands.guilds(discord.Object(id=1011375205999968427))
+    async def fountain(ctx):
+        if any(ctx.channel.id in sl for sl in globalitems.global_server_channels):
+            user = ctx.author
+            player_object = player.get_player_by_name(user)
+            if player_object.player_class != "":
+                player_object.get_equipped()
+                e_weapon = inventory.read_custom_item(player_object.equipped_weapon)
+                if player_object.player_quest >= 27 and e_weapon.item_tier == 6:
+                    entry_msg = ("You who has defiled my wish now seek to realize your own. You now have the key "
+                                 "which grants you the right to enter this place. Just ahead resides the fountain of "
+                                 "genesis, origin of all. The power you still covet can be acquired here. Go now, "
+                                 "I am no longer qualified to stand in your path.")
+                    embed_msg = discord.Embed(colour=discord.Colour.blurple(),
+                                              title="Echo of Eleuia",
+                                              description=entry_msg)
+                    embed_msg.set_image(url="https://i.ibb.co/QjWDYG3/forge.jpg")
+                    new_view = forge.GenesisView(player_object, e_weapon)
+
+                else:
+                    embed_msg = discord.Embed(colour=discord.Colour.blurple(),
+                                              title="???",
+                                              description="A powerful force emanates from within. Preventing entry.")
+                    new_view = None
+                await ctx.send(embed=embed_msg, view=new_view)
             else:
                 embed_msg = unregistered_message()
                 await ctx.send(embed=embed_msg)

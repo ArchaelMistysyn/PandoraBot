@@ -145,7 +145,7 @@ class ShopView1(discord.ui.View):
             discord.SelectOption(
                 emoji="<:esoul:1145520258241806466>", label="Light Soul", value="i1s"),
             discord.SelectOption(
-                emoji=globalitems.stamina_icon, label="Lesser Stamina Potion", value="iy1"),
+                emoji=globalitems.stamina_icon, label="Lesser Stamina Potion", value="i1y"),
             discord.SelectOption(
                 emoji="<a:elootitem:1144477550379274322>", label="Crate", value="i1r")
         ]
@@ -311,7 +311,7 @@ class ShopView6(discord.ui.View):
             discord.SelectOption(
                 emoji="<a:elootitem:1144477550379274322>", label="Unrefined Dragon Heart Gem", value="i6g"),
             discord.SelectOption(
-                emoji="<a:elootitem:1144477550379274322>", label="Crystallized Wish", value="i6x"),
+                emoji="<a:elootitem:1144477550379274322>", label="Fragmentized Wish", value="i6m"),
             discord.SelectOption(
                 emoji="<a:elootitem:1144477550379274322>", label="Crystallized Void", value="i7x")
         ]

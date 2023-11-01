@@ -136,30 +136,11 @@ def get_quest(quest_num, player_user):
 
 
 def assign_tokens(player_object, boss_object):
-    match player_object.player_quest:
-        case 9:
-            if boss_object.boss_name == "XVI - Aurora, The Fortress":
-                player_object.update_tokens(4, 1)
-        case 12:
-            if boss_object.boss_name == "VII - Astratha, The Dimensional":
-                player_object.update_tokens(5, 1)
-        case 13:
-            if boss_object.boss_name == "VIII - Tyra, The Behemoth":
-                player_object.update_tokens(6, 1)
-        case 21:
-            if boss_object.boss_name == "II - Pandora, The Celestial":
-                player_object.update_tokens(9, 1)
-        case 23:
-            if boss_object.boss_name == "III - Oblivia, The Void":
-                player_object.update_tokens(10, 1)
-        case 24:
-            if boss_object.boss_name == "IV - Akasha, The Infinite":
-                player_object.update_tokens(11, 1)
-        case 26:
-            if boss_object.boss_name == "XXX - Eleuia, The Wish":
-                player_object.update_tokens(12, 1)
-        case _:
-            nothing = True
+    boss_token_list = ["XVI - Aurora, The Fortress", "VII - Astratha, The Dimensional",
+                       "VIII - Tyra, The Behemoth", "II - Pandora, The Celestial",
+                       "III - Oblivia, The Void", "IV - Akasha, The Infinite", "XXX - Eleuia, The Wish"]
+    if boss_object.boss_name in boss_token_list:
+        player_object.update_tokens(player_object.player_quest, 1)
 
 
 def get_fake_level_tokens(quest_num):

@@ -38,7 +38,18 @@ recipe_dict = {
     "Void Hammer": ["i4h", 1, "i5v", 1, 100, "v6h"],
     "Void Pearl": ["i4p", 1, "i5v", 1, 100, "v6p"],
     "Unrefined Key Weapon": ["i6x", 5, "i5l", 10, 100, "i6u"],
-    "Crystallized Void": ["i6x", 1, "i5v", 1, 10, "i7x"]
+    "Crystallized Wish": ["m6e", 50, "STONE4", 10, 100, "16x"],
+    "Miracle Origin": ["i6x", 1, "i4z", 1, 100, "m6z"],
+    "Miracle Ore": ["i6x", 1, "i5o", 5, 100, "m6o"],
+    "Miracle Soul": ["i6x", 1, "i5s", 5, 100, "m6s"],
+    "Miracle Flame": ["m6e", 5, "i3f", 100, 100, "m6f"],
+    "Miracle Matrix": ["i6x", 1, "i3k", 100, 100, "m6k"],
+    "Miracle Pearl": ["m6e", 5, "i4p", 1, 100, "m6p"],
+    "Miracle Hammer": ["m6e", 10, "i4h", 1, 100, "m6h"],
+    "Miracle Heart": ["i6x", 1, "i5l", 1, 100, "m6l"],
+    "Genesis Hammer": ["m6h", 1, "m6l", 1, 100, "m6hP"],
+    "Terminus Hammer": ["m6h", 1, "m5l", 1, 100, "m6hS"],
+    "Crystallized Void": ["i6x", 1, "i5v", 1, 10, "v7x"]
 }
 
 
