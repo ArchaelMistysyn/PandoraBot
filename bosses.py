@@ -55,7 +55,7 @@ class CurrentBoss:
 
         return is_alive
 
-    def create_boss_msg(self, dps, is_alive):
+    def create_boss_embed(self, dps):
         # img_link = self.boss_image
         img_link = "https://i.ibb.co/0ngNM7h/castle.png"
         match self.boss_tier:
@@ -84,7 +84,7 @@ class CurrentBoss:
         dps_msg = f"{dps:,} / min"
         boss_title = f'{self.boss_name}'
         boss_field = f'Tier {self.boss_tier} {self.boss_type} - Level {self.boss_lvl}'
-        if not is_alive:
+        if not self.calculate_hp():
             self.boss_cHP = 0
         boss_hp = f'{life_emoji} ({int(self.boss_cHP):,} / {int(self.boss_mHP):,})'
         bar_length = int(int(self.boss_cHP) / int(self.boss_mHP) * 10)
@@ -104,16 +104,10 @@ class CurrentBoss:
         embed_msg = discord.Embed(colour=tier_colour,
                                   title=boss_title,
                                   description="")
+        embed_msg.set_image(url=img_link)
         embed_msg.add_field(name=boss_field, value=boss_hp, inline=False)
         embed_msg.add_field(name=boss_weakness, value="", inline=False)
         embed_msg.add_field(name="Current DPS: ", value=dps_msg, inline=False)
-        if self.player_id != 0:
-            if is_alive:
-                player_object = player.get_player_by_id(self.player_id)
-                battle_msg = f"{player_object.player_username} is engaged in combat!"
-                embed_msg.add_field(name="", value=battle_msg, inline=False)
-        embed_msg.set_image(url=img_link)
-
         return embed_msg
 
     def generate_boss_name_image(self, boss_type, boss_tier):
@@ -593,7 +587,7 @@ def get_raid_id(channel_id, player_id):
 
 def create_dead_boss_embed(channel_id, active_boss, dps):
     active_boss.boss_cHP = 0
-    dead_embed = active_boss.create_boss_msg(dps, False)
+    dead_embed = active_boss.create_boss_embed(dps)
     player_list, damage_list = bosses.get_damage_list(channel_id)
     output_list = ""
     for idx, x in enumerate(player_list):

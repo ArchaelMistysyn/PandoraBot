@@ -719,9 +719,9 @@ class ClassSelect(discord.ui.View):
                 new_player = player.PlayerProfile()
                 new_player.player_name = self.player_name
                 new_player.player_username = self.username
-                chosen_class = globalitems.class_icon_dict[class_select.values[0]]
+                chosen_class = class_select.values[0]
                 response = new_player.add_new_player(chosen_class)
-                chosen_class_role = f"Class Role - {class_select.values[0]}"
+                chosen_class_role = f"Class Role - {chosen_class}"
                 add_role = discord.utils.get(interaction.guild.roles, name=chosen_class_role)
                 remove_role = discord.utils.get(interaction.guild.roles, name="Class Role - Rat")
                 await interaction.user.add_roles(add_role)

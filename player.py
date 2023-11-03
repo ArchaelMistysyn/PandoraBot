@@ -2,11 +2,11 @@ import pandas as pd
 import csv
 from csv import DictReader
 import inventory
-import damagecalc
+import combat
 import math
 import loot
 import bosses
-import damagecalc
+import combat
 import discord
 import random
 import mysql.connector
@@ -47,6 +47,7 @@ class PlayerProfile:
         self.player_mHP = 1000
         self.player_cHP = self.player_mHP
         self.immortal = False
+        self.can_bleed = False
 
         self.player_damage = 0.0
         self.player_total_damage = 0.0
@@ -58,6 +59,8 @@ class PlayerProfile:
         self.defence_penetration = 0.0
         self.class_multiplier = 0.0
         self.final_damage = 0.0
+        self.combo_multiplier = 0.0
+        self.ultimate_multiplier = 0.0
         self.banes = [0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
 
         self.critical_chance = 0.0
@@ -82,10 +85,6 @@ class PlayerProfile:
         return str(self.player_name)
 
     def reset_multipliers(self):
-        self.player_mHP = 1000
-        self.player_cHP = self.player_mHP
-        self.immortal = False
-
         self.player_damage = 0.0
         self.player_total_damage = 0.0
         self.elemental_damage = [0, 0, 0, 0, 0, 0, 0, 0, 0]
@@ -96,6 +95,8 @@ class PlayerProfile:
         self.defence_penetration = 0.0
         self.class_multiplier = 0.0
         self.final_damage = 0.0
+        self.combo_multiplier = 0.0
+        self.ultimate_multiplier = 0.0
         self.banes = [0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
 
         self.critical_chance = 0.0
@@ -123,7 +124,7 @@ class PlayerProfile:
         resources += f'\nLotus Coins: {self.player_coins}'
         exp = f'Level: {self.player_lvl} Exp: ({self.player_exp} / '
         exp += f'{get_max_exp(self.player_lvl)})'
-        id_msg = f'User ID: {self.player_id}\nClass: {self.player_class}'
+        id_msg = f'User ID: {self.player_id}\nClass: {globalitems.class_icon_dict[self.player_class]}'
         self.get_player_multipliers()
         if method == 1:
             stats = f"Item Base Damage: {int(round(self.player_damage)):,}"
@@ -313,11 +314,23 @@ class PlayerProfile:
         base_damage_mitigation = 0.0
         base_player_hp = 1000
 
+        match self.player_class:
+            case "Ranger":
+                base_critical_chance = 15.0
+            case "Weaver":
+                self.all_elemental_multiplier += 0.5
+            case "Rider":
+                base_attack_speed = 1.25
+            case "Assassin":
+                self.can_bleed = True
+            case _:
+                pass
+
         if self.equipped_weapon != 0:
             e_weapon = inventory.read_custom_item(self.equipped_weapon)
             e_weapon.update_damage()
             self.player_damage += random.randint(e_weapon.item_damage_min, e_weapon.item_damage_max)
-            base_attack_speed = float(e_weapon.item_bonus_stat)
+            base_attack_speed *= float(e_weapon.item_bonus_stat)
             self.assign_roll_values(e_weapon)
             self.assign_gem_values(e_weapon)
         if self.equipped_armour != 0:
@@ -367,20 +380,21 @@ class PlayerProfile:
 
         match_count = 0
         if self.equipped_weapon != 0:
-            if e_weapon.item_damage_type == self.player_class:
+            if e_weapon.item_damage_type == globalitems.class_icon_dict[self.player_class]:
                 match_count += 1
         if self.equipped_armour != 0:
-            if e_armour.item_damage_type == self.player_class:
+            if e_armour.item_damage_type == globalitems.class_icon_dict[self.player_class]:
                 match_count += 1
         if self.equipped_acc != 0:
-            if e_acc.item_damage_type == self.player_class:
+            if e_acc.item_damage_type == globalitems.class_icon_dict[self.player_class]:
                 match_count += 1
         if self.equipped_wing != 0:
-            if e_wing.item_damage_type == self.player_class:
+            if e_wing.item_damage_type == globalitems.class_icon_dict[self.player_class]:
                 match_count += 1
         if self.equipped_crest != 0:
-            if e_crest.item_damage_type == self.player_class:
+            if e_crest.item_damage_type == globalitems.class_icon_dict[self.player_class]:
                 match_count += 1
+        self.combo_multiplier = 0.05
         self.class_multiplier += 0.05
         self.class_multiplier *= match_count
 
@@ -395,39 +409,54 @@ class PlayerProfile:
             self.banes[y] += self.banes[4]
         self.banes[5] += self.banes[4]
 
-    def get_player_damage(self, boss_object):
+    def get_player_initial_damage(self):
+        initial_damage = self.player_damage
         additional_multiplier = 1.0
-        e_weapon = inventory.read_custom_item(self.equipped_weapon)
-        # Critical hits
-        random_num = random.randint(1, 100)
-        if random_num < self.critical_chance:
-            self.player_damage *= (1 + self.critical_multiplier)
-        # Attack Speed
-        self.player_damage *= self.attack_speed
-        # Hit Multiplier
-        self.player_damage *= (1 + self.bonus_hits)
         # Class Multiplier
-        self.player_damage *= (1 + self.class_multiplier)
+        initial_damage *= (1 + self.class_multiplier)
         # Additional multipliers
         additional_multiplier *= (1 + self.final_damage)
-        self.player_damage *= additional_multiplier
+        initial_damage *= additional_multiplier
+        return initial_damage
+
+    def boss_adjustments(self, player_damage, boss_object, e_weapon):
+        # Boss type multipliers
         boss_type = boss_object.boss_type_num - 1
-        self.player_damage *= (1 + self.banes[boss_type])
+        adjusted_damage = player_damage * (1 + self.banes[boss_type])
         # Type Defences
-        defences_multiplier = (damagecalc.boss_defences("", self, boss_object, -1, e_weapon) + self.defence_penetration)
-        self.player_damage *= defences_multiplier
+        defences_multiplier = (combat.boss_defences("", self, boss_object, -1, e_weapon) + self.defence_penetration)
+        adjusted_damage *= defences_multiplier
         # Elemental Defences
         for idx, x in enumerate(e_weapon.item_elements):
             if x == 1:
-                self.elemental_damage[idx] = self.player_damage * (1 + self.elemental_damage_multiplier[idx])
+                self.elemental_damage[idx] = adjusted_damage * (1 + self.elemental_damage_multiplier[idx])
                 location = int(idx)
-                resist_multi = damagecalc.boss_defences("Element", self, boss_object, location, e_weapon)
+                resist_multi = combat.boss_defences("Element", self, boss_object, location, e_weapon)
                 penetration_multi = 1 + self.elemental_penetration[idx]
                 self.elemental_damage[idx] *= resist_multi * penetration_multi
         subtotal_damage = sum(self.elemental_damage)
-        subtotal_damage *= damagecalc.boss_true_mitigation(boss_object)
-        self.player_total_damage = int(subtotal_damage)
+        subtotal_damage *= combat.boss_true_mitigation(boss_object)
+        adjusted_damage = int(subtotal_damage)
+        return adjusted_damage
+
+    def get_bleed_damage(self, boss_object):
+        e_weapon = inventory.read_custom_item(self.equipped_weapon)
+        player_damage = self.get_player_initial_damage()
+        self.player_total_damage = self.boss_adjustments(player_damage, boss_object, e_weapon)
         return self.player_total_damage
+
+    def get_player_damage(self, boss_object):
+        e_weapon = inventory.read_custom_item(self.equipped_weapon)
+        player_damage = self.get_player_initial_damage()
+        # Critical hits
+        random_num = random.randint(1, 100)
+        if random_num < self.critical_chance:
+            is_critical = True
+            player_damage *= (1 + self.critical_multiplier)
+        else:
+            is_critical = False
+        self.player_total_damage = self.boss_adjustments(player_damage, boss_object, e_weapon)
+        return self.player_total_damage, is_critical
 
     def assign_insignia_values(self, insignia_code):
         temp_elements = insignia_code.split(";")
@@ -974,16 +1003,5 @@ def checkNaN(test_string):
 
 
 def get_thumbnail_by_class(class_name):
-    match class_name:
-        case "<:cA:1150195102589931641>":
-            thumbnail_url = 'https://kyleportfolio.ca/botimages/Ranger.png'
-        case "<:cB:1154266777396711424>":
-            thumbnail_url = 'https://kyleportfolio.ca/botimages/Knight.png'
-        case "<:cC:1150195246588764201>":
-            thumbnail_url = 'https://kyleportfolio.ca/botimages/Mage.png'
-        case "<:cD:1150195280969478254>":
-            thumbnail_url = 'https://kyleportfolio.ca/botimages/Summoner.png'
-        case _:
-            thumbnail_url = "https://kyleportfolio.ca/botimages/Summoner.png"
-
+    thumbnail_url = f"https://kyleportfolio.ca/botimages/{class_name}.png"
     return thumbnail_url

@@ -19,7 +19,7 @@ import random
 import loot
 import forge
 import player
-import damagecalc
+import combat
 import menus
 import quest
 import tarot
@@ -183,8 +183,9 @@ def run_discord_bot():
 
     @pandora_bot.event
     async def solo_boss_task(player_object, active_boss, channel_id, channel_object):
-        embed_msg = active_boss.create_boss_msg(0, True)
+        embed_msg = active_boss.create_boss_embed(0)
         sent_message = await channel_object.send(embed=embed_msg)
+        player_object.get_player_multipliers()
         solo_cog = pandoracogs.SoloCog(pandora_bot, player_object, active_boss, channel_id, sent_message, channel_object)
         await solo_cog.run()
 
@@ -192,7 +193,7 @@ def run_discord_bot():
     async def raid_task(channel_id, channel_num, channel_object):
         level, boss_type, boss_tier = bosses.get_boss_details(channel_num)
         active_boss = bosses.spawn_boss(channel_id, 0, boss_tier, boss_type, level, channel_num)
-        embed_msg = active_boss.create_boss_msg(0, True)
+        embed_msg = active_boss.create_boss_embed(0)
         raid_button = menus.RaidView()
         sent_message = await channel_object.send(embed=embed_msg, view=raid_button)
         pandoracogs.RaidCog(pandora_bot, active_boss, channel_id, channel_num, sent_message, channel_object)
@@ -210,14 +211,15 @@ def run_discord_bot():
             curse_lists = [active_boss.curse_debuffs, temp_user[idy].elemental_curse]
             active_boss.curse_debuffs = [sum(z) for z in zip(*curse_lists)]
         for idx, x in enumerate(temp_user):
-            player_dps = int(x.get_player_damage(active_boss) * (1 + active_boss.aura))
+            hit_dps, is_critical = x.get_player_damage(active_boss)
+            player_dps = int(hit_dps * (1 + active_boss.aura))
             dps += player_dps
             new_player_dps = int(damage_list[idx]) + player_dps
             bosses.update_player_damage(channel_id, x.player_id, new_player_dps)
         active_boss.boss_cHP -= dps
         bosses.update_boss_cHP(channel_id, 0, active_boss.boss_cHP)
         if active_boss.calculate_hp():
-            embed_msg = active_boss.create_boss_msg(dps, True)
+            embed_msg = active_boss.create_boss_embed(dps)
             await sent_message.edit(embed=embed_msg)
             return True
         else:
@@ -232,23 +234,18 @@ def run_discord_bot():
             return False
 
     @pandora_bot.event
-    async def solo_boss(player_object, active_boss, channel_id, sent_message, channel_object):
+    async def solo_boss(combat_tracker, player_object, active_boss, channel_id, sent_message, channel_object):
         active_boss.reset_modifiers()
         player_object.get_player_multipliers()
         active_boss.curse_debuffs = player_object.elemental_curse
         active_boss.aura = player_object.aura
-        dps = int(player_object.get_player_damage(active_boss))
-        active_boss.boss_cHP -= dps
+        embed_msg = combat.run_solo_cycle(combat_tracker, active_boss, player_object)
         bosses.update_boss_cHP(channel_id, active_boss.player_id, active_boss.boss_cHP)
         if active_boss.calculate_hp():
-            embed_msg = active_boss.create_boss_msg(dps, True)
             await sent_message.edit(embed=embed_msg)
             return True
         else:
-            if active_boss.boss_tier >= 4:
-                quest.assign_tokens(player_object, active_boss)
             is_alive = False
-            embed_msg = bosses.create_dead_boss_embed(channel_id, active_boss, dps)
             await sent_message.edit(embed=embed_msg)
             player_list = [player_object.player_id]
             loot_embed = loot.create_loot_embed(embed_msg, active_boss, player_list)
@@ -279,7 +276,7 @@ def run_discord_bot():
                             active_boss = bosses.spawn_boss(channel_id, player_object.player_id, new_boss_tier,
                                                             boss_type, player_object.player_lvl, 0)
                             active_boss.player_id = player_object.player_id
-                            embed_msg = active_boss.create_boss_msg(0, True)
+                            embed_msg = active_boss.create_boss_embed(0)
                             channel_object = ctx.channel
                             spawn_msg = f"{player_object.player_username} has spawned a tier {active_boss.boss_tier} boss!"
                             await ctx.send(spawn_msg)
@@ -872,6 +869,15 @@ def run_discord_bot():
 
     # Info commands
     @set_command_category('info', 0)
+    @pandora_bot.hybrid_command(name='info', help="Display the help menu.")
+    @app_commands.guilds(discord.Object(id=1011375205999968427))
+    async def help_menu(ctx):
+        embed = discord.Embed(title="Help Command Menu")
+        embed_msg = menus.build_help_embed(category_dict, 'info')
+        help_view = menus.HelpView(category_dict)
+        await ctx.send(embed=embed_msg, view=help_view)
+
+    @set_command_category('info', 1)
     @pandora_bot.hybrid_command(name='register', help="Register a new user.")
     @app_commands.guilds(discord.Object(id=1011375205999968427))
     async def play(ctx, username: str):
@@ -901,7 +907,7 @@ def run_discord_bot():
             else:
                 await ctx.send("Please enter a valid username.")
 
-    @set_command_category('info', 1)
+    @set_command_category('info', 2)
     @pandora_bot.hybrid_command(name='stats', help="Display your stats page.")
     @app_commands.guilds(discord.Object(id=1011375205999968427))
     async def stats(ctx):
@@ -916,7 +922,7 @@ def run_discord_bot():
                 embed_msg = unregistered_message()
                 await ctx.send(embed=embed_msg)
 
-    @set_command_category('info', 2)
+    @set_command_category('info', 3)
     @pandora_bot.hybrid_command(name='profile', help="View profile rank card.")
     @app_commands.guilds(discord.Object(id=1011375205999968427))
     async def profile(ctx):
@@ -941,7 +947,7 @@ def run_discord_bot():
             embed_msg = unregistered_message()
             await ctx.send(embed=embed_msg)
 
-    @set_command_category('info', 3)
+    @set_command_category('info', 4)
     @pandora_bot.hybrid_command(name='who', help="Set a new username.")
     @app_commands.guilds(discord.Object(id=1011375205999968427))
     async def who(ctx, new_username: str):
@@ -958,7 +964,7 @@ def run_discord_bot():
                 message = "Please enter a valid username with no numeric or special characters."
             await ctx.send(message)
 
-    @set_command_category('info', 4)
+    @set_command_category('info', 5)
     @pandora_bot.command(name='credits', help="Displays the game credits.")
     @app_commands.guilds(discord.Object(id=1011375205999968427))
     async def credits_list(ctx):

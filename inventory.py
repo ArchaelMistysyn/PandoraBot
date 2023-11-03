@@ -1,7 +1,7 @@
 import csv
 import random
 import bosses
-import damagecalc
+import combat
 import pandas as pd
 import discord
 from discord.ui import Button, View
@@ -684,8 +684,8 @@ class CustomItem:
     def update_damage(self):
         # calculate item's damage per hit
         enh_multiplier = 1 + (float(self.item_enhancement) * 0.01)
-        blessing_damage = damagecalc.get_item_tier_damage(self.item_blessing_tier)
-        material_damage = damagecalc.get_item_tier_damage(self.item_material_tier)
+        blessing_damage = combat.get_item_tier_damage(self.item_blessing_tier)
+        material_damage = combat.get_item_tier_damage(self.item_material_tier)
         self.item_damage_min = int(float(self.base_damage_min + material_damage + blessing_damage) * enh_multiplier)
         self.item_damage_max = int(float(self.base_damage_max + material_damage + blessing_damage) * enh_multiplier)
 
@@ -993,12 +993,12 @@ def display_binventory(player_id, method):
                              "ORDER BY item_id ASC")
             case "Misc Items":
                 query = text("SELECT item_id, item_qty FROM BasicInventory "
-                             "WHERE player_id = :id_check AND item_qty <> 0 AND item_id REGEXP '^STONE|j$|r$|^t|v$' "
+                             "WHERE player_id = :id_check AND item_qty <> 0 AND item_id REGEXP '^STONE|j$|r$|^t|v$|y$' "
                              "ORDER BY item_id ASC")
             case _:
                 query = text("SELECT item_id, item_qty FROM BasicInventory "
                              "WHERE player_id = :id_check AND item_qty <> 0 AND item_id REGEXP '^i|^v|^m|^v' "
-                             "AND item_id NOT REGEXP '^j|^r|v$' "
+                             "AND item_id NOT REGEXP '^j|^r|v$|y$' "
                              "ORDER BY item_id ASC")
         query = query.bindparams(id_check=player_id)
         df = pd.read_sql(query, pandora_db)

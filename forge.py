@@ -11,7 +11,7 @@ import mydb
 import pandorabot
 import quest
 import asyncio
-import damagecalc
+import combat
 import bazaar
 
 element_fire = "<:ee:1141653476816986193>"
@@ -412,7 +412,7 @@ class CosmicAugmentView(discord.ui.View):
         try:
             if button_interaction.user.name == self.player_object.player_name:
                 material_id = "i4h"
-                embed_msg = run_button(self.player_object, self.selected_item, material_id, "Star Fusion")
+                embed_msg = run_button(self.player_object, self.selected_item, material_id, "All Fusion")
                 new_view = self
                 await button_interaction.response.edit_message(embed=embed_msg, view=new_view)
         except Exception as e:
@@ -890,7 +890,7 @@ def enhance_item(player_object, selected_item, material_item, success_rate, succ
 
 
 def reinforce_item(player_object, selected_item, material_item, success_rate, success_check):
-    damage_check = damagecalc.get_item_tier_damage(selected_item.item_material_tier)
+    damage_check = combat.get_item_tier_damage(selected_item.item_material_tier)
     maxed_values = [10000, 25000, 50000, 250000]
     if damage_check not in maxed_values:
         inventory.update_stock(player_object, material_item.item_id, -1)
@@ -914,7 +914,7 @@ def reinforce_item(player_object, selected_item, material_item, success_rate, su
 
 
 def bestow_item(player_object, selected_item, material_item, success_rate, success_check):
-    damage_check = damagecalc.get_item_tier_damage(selected_item.item_blessing_tier)
+    damage_check = combat.get_item_tier_damage(selected_item.item_blessing_tier)
     maxed_values = [10000, 25000, 50000, 250000]
     if damage_check not in maxed_values:
         inventory.update_stock(player_object, material_item.item_id, -1)
@@ -1200,7 +1200,7 @@ class RefineryWeaponView(discord.ui.View):
     async def key_weapon_callback(self, interaction: discord.Interaction, button: discord.Button):
         try:
             if interaction.user.name == self.player_user.player_name:
-                if not self.self.embed:
+                if not self.embed:
                     selected_tier = 6
                     self.embed = refine_item(self.player_user, self.selected_type, selected_tier)
                 new_view = OutcomeView(self.player_user, self.selected_type)
@@ -1231,15 +1231,15 @@ class OutcomeView(discord.ui.View):
             if interaction.user.name == self.player_user.player_name:
                 match self.method:
                     case "Dragon Heart Gem":
-                        new_view = RefineryGemView(self.player_user, selected_type)
+                        new_view = RefineryGemView(self.player_user, self.method)
                     case "Dragon Wing":
-                        new_view = RefineryWingView(self.player_user, selected_type)
+                        new_view = RefineryWingView(self.player_user, self.method)
                     case "Paragon Crest":
-                        new_view = RefineryCrestView(self.player_user, selected_type)
+                        new_view = RefineryCrestView(self.player_user, self.method)
                     case "Fabled Item":
-                        new_view = RefineryFabledView(self.player_user, selected_type)
+                        new_view = RefineryFabledView(self.player_user, self.method)
                     case _:
-                        new_view = RefineryWeaponView(self.player_user, selected_type)
+                        new_view = RefineryWeaponView(self.player_user, self.method)
                 await interaction.response.edit_message(view=new_view)
         except Exception as e:
             print(e)

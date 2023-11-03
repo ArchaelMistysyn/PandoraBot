@@ -12,7 +12,7 @@ import pandorabot
 import globalitems
 import quest
 import asyncio
-import damagecalc
+import combat
 import bazaar
 
 recipe_dict = {
