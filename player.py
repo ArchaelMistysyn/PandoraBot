@@ -128,6 +128,7 @@ class PlayerProfile:
         id_msg = f'User ID: {self.player_id}\nClass: {globalitems.class_icon_dict[self.player_class]}'
         self.get_player_multipliers()
         spread_string = ""
+        element_multipliers = []
         spread = []
         if method == 1:
             title_msg = "Offensive Stats"
@@ -136,21 +137,22 @@ class PlayerProfile:
             stats += f"\nCritical Ratio: {int(round(self.critical_chance))}% : "
             stats += f"{int(round(self.critical_multiplier * 100))}%"
             for x in range(9):
-                temp_icon = globalitems.global_element_list[x]
                 total_multi = (1 + self.elemental_damage[x]) * (1 + self.elemental_penetration[x])
                 total_multi *= (1 + self.elemental_curse[x]) * (1 + self.aura)
-                stats += f"\n{temp_icon} Total Damage: {int(round(total_multi * 100))}%"
-                spread.append(total_multi)
+                element_multipliers.append((x, total_multi * 100))
+            spread = sorted(element_multipliers, key=lambda z: z[1], reverse=True)
+            for y, total_multi in spread:
+                temp_icon = globalitems.global_element_list[y]
+                stats += f"\n{temp_icon} Total Damage: {int(round(total_multi))}%"
             if self.equipped_weapon != 0:
                 spread_string = "Damage Spread: "
                 e_weapon = inventory.read_custom_item(self.equipped_weapon)
                 used_elements = []
                 used_multipliers = []
-                for i, (multiplier, is_used) in enumerate(zip(spread, e_weapon.item_elements)):
-                    temp_icon = globalitems.global_element_list[i]
+                for i, is_used in enumerate(e_weapon.item_elements):
                     if is_used:
-                        used_elements.append(temp_icon)
-                        used_multipliers.append(multiplier / 100)
+                        used_elements.append(globalitems.global_element_list[i])
+                        used_multipliers.append(spread[i][1] / 100)
                 if used_multipliers:
                     total_contribution = sum(used_multipliers)
                     for element, multiplier in zip(used_elements, used_multipliers):
@@ -159,13 +161,19 @@ class PlayerProfile:
         elif method == 2:
             title_msg = "Elemental Breakdown"
             stats = ""
+            element_breakdown = []
             for x in range(9):
-                temp_icon = globalitems.global_element_list[x]
-                temp_dmg_str = f"(Dmg: {int(round(self.elemental_damage[x] * 100))}%)"
-                temp_pen_str = f"(Pen: {int(round(self.elemental_penetration[x] * 100))}%)"
-                temp_curse_str = f"(Curse: {int(round(self.elemental_curse[x] * 100))}%)"
-                stats += f"\n{temp_icon} {temp_dmg_str} - {temp_pen_str} - {temp_curse_str}"
-                stats += f"\nOmni Aura: {int(round(self.aura))}%"
+                total_multi = (1 + self.elemental_damage[x]) * (1 + self.elemental_penetration[x])
+                total_multi *= (1 + self.elemental_curse[x])
+                element_breakdown.append((x, total_multi * 100))
+            sorted_element_breakdown = sorted(element_breakdown, key=lambda v: v[1], reverse=True)
+            for z, total_multi in sorted_element_breakdown:
+                temp_icon = globalitems.global_element_list[z]
+                temp_dmg_str = f"(Dmg: {int(round(self.elemental_damage[z] * 100))}%)"
+                temp_pen_str = f"(Pen: {int(round(self.elemental_penetration[z] * 100))}%)"
+                temp_curse_str = f"(Curse: {int(round(self.elemental_curse[z] * 100))}%)"
+                stats += f"{temp_icon} {temp_dmg_str} - {temp_pen_str} - {temp_curse_str}\n"
+            stats += f"Omni Aura: {int(round(self.aura))}%"
         elif method == 3:
             title_msg = "Defensive Stats"
             stats = f"Player HP: {self.player_mHP:,}"
