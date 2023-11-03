@@ -5,13 +5,13 @@ import bosses
 import pandorabot
 
 skill_names_dict = {
-    "Knight": ["Destructive Cleave", "Ruinous Slash", "Destiny Divider"],
-    "Ranger": ["Precise Shot", "Comet Arrow", "Blitz Barrage"],
-    "Assassin": ["Exploit Injury", "Eternal Laceration", "Blood Recursion"],
-    "Mage": ["Aether Bolt", "Mystic Maelstrom", "Primal Convergence"],
-    "Weaver": ["Infused Slice", "Multithreading", "Reality Fabricator"],
-    "Rider": ["Valiant Charge", "Mounted Onslaught", "Chaos Rampage"],
-    "Summoner": ["Savage Blow", "Relentless Frenzy", "Conqueror's Wrath"]
+    "Knight": ["Destructive Cleave", "Merciless Blade", "Ruinous Slash", "Destiny Divider"],
+    "Ranger": ["Viper Shot", "Comet Arrow", "Meteor Volley", "Blitz Barrage"],
+    "Assassin": ["Wound Carver", "Exploit Injury", "Eternal Laceration", "Blood Recursion"],
+    "Mage": ["Magical Bolt", "Aether Blast", "Mystic Maelstrom", "Astral Convergence"],
+    "Weaver": ["Power Stitch", "Infused Slice", "Multithreading", "Reality Fabricator"],
+    "Rider": ["Valiant Charge", "Surge Dash", "Mounted Onslaught", "Chaos Rampage"],
+    "Summoner": ["Savage Blows", "Moonlit Hunt", "Berserk Frenzy", "Synchronized Wrath"]
 }
 
 
@@ -29,6 +29,7 @@ class CombatTracker:
 def run_solo_cycle(combat_tracker, active_boss, player_object):
     class_skill_list = skill_names_dict[player_object.player_class]
     is_alive = True
+    hit_list = []
     if combat_tracker.stun_cycles <= 0:
         combo_count = 0
         combo_adjuster = 1
@@ -48,6 +49,7 @@ def run_solo_cycle(combat_tracker, active_boss, player_object):
                 boss_damage_element = random.randint(0, 8)
             boss_damage = random.randint(50 * active_boss.boss_tier, 200 * active_boss.boss_tier)
             boss_damage -= int(boss_damage * player_object.elemental_resistance[boss_damage_element])
+            boss_damage -= int(boss_damage * player_object.damage_mitigation * 0.01)
             combat_tracker.player_cHP -= boss_damage
             hp_adjust_msg = f"{active_boss.boss_name} attacks dealing {boss_damage:,} damage!\n"
             if combat_tracker.player_cHP <= 0:
@@ -64,7 +66,6 @@ def run_solo_cycle(combat_tracker, active_boss, player_object):
                         combat_tracker.player_cHP = player_object.player_mHP
                     hp_adjust_msg += f"{player_object.player_username} regenerated {regen_value:,} HP!\n"
 
-        hit_list = []
         hits_per_cycle = int(player_object.attack_speed)
         combat_tracker.remaining_hits += player_object.attack_speed - hits_per_cycle
         while combat_tracker.remaining_hits >= 1:
@@ -74,20 +75,24 @@ def run_solo_cycle(combat_tracker, active_boss, player_object):
             combo_count += combo_adjuster
             hit_damage, is_critical = player_object.get_player_damage(active_boss)
             combo_multiplier = (1 + (player_object.combo_multiplier * combo_count))
-            if combo_count < 5:
+            if combo_count < 3:
                 damage = int(hit_damage * 0.5 * combo_multiplier)
                 skill_name = class_skill_list[0]
                 charges_gained = 1 + (1 * charge_adjuster)
-            else:
+            elif combo_count < 5:
                 damage = int(hit_damage * 0.75 * combo_multiplier)
                 skill_name = class_skill_list[1]
+                charges_gained = 1 + (1 * charge_adjuster)
+            else:
+                damage = int(hit_damage * combo_multiplier)
+                skill_name = class_skill_list[2]
                 charges_gained = 1 + (2 * charge_adjuster)
             if player_object.can_bleed:
                 combat_tracker.bleed_tracker += 0.05
                 if combat_tracker.bleed_tracker >= 1.5:
                     combat_tracker.bleed_tracker = 1.5
             combat_tracker.charges += charges_gained
-            hit_msg = f"{combo_count}x Combo: {skill_name} {damage}"
+            hit_msg = f"{combo_count}x Combo: {skill_name} {damage:,}"
             if is_critical:
                 hit_msg += f" *CRITICAL*"
             hit_list.append([damage, is_critical, hit_msg])
@@ -99,8 +104,8 @@ def run_solo_cycle(combat_tracker, active_boss, player_object):
                 combo_multiplier = 1 + (player_object.combo_multiplier * combo_count)
                 ultimate_multiplier = 1 + player_object.ultimate_multiplier
                 damage = int(hit_damage * 2 * combo_multiplier * ultimate_multiplier)
-                skill_name = class_skill_list[2]
-                hit_msg = f"{combo_count}x Combo: {skill_name} {damage}"
+                skill_name = class_skill_list[3]
+                hit_msg = f"Ultimate: {skill_name} {damage:,}"
                 if is_critical:
                     hit_msg += f" *CRITICAL*"
                 hit_list.append([damage, is_critical, hit_msg])
@@ -124,7 +129,8 @@ def run_solo_cycle(combat_tracker, active_boss, player_object):
     else:
         combat_tracker.stun_cycles -= 1
         if combat_tracker.stun_cycles == 0:
-            f"{player_object.player_username} has recovered!"
+            battle_msg = f"{player_object.player_username} has recovered!"
+            combat_tracker.player_cHP = player_object.player_mHP
         else:
             battle_msg = f"{player_object.player_username} is recovering!"
     combat_tracker.total_cycles += 1

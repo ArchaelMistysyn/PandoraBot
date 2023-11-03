@@ -147,7 +147,11 @@ class ShopView1(discord.ui.View):
             discord.SelectOption(
                 emoji=globalitems.stamina_icon, label="Lesser Stamina Potion", value="i1y"),
             discord.SelectOption(
-                emoji="<a:elootitem:1144477550379274322>", label="Crate", value="i1r")
+                emoji="<a:elootitem:1144477550379274322>", label="Crate", value="i1r"),
+            discord.SelectOption(
+                emoji="<a:elootitem:1144477550379274322>", label="Namechanger Token", value="cNAME"),
+            discord.SelectOption(
+                emoji="<a:elootitem:1144477550379274322>", label="Pathchanger Token", value="cCLASS")
         ]
     )
     async def shop1_callback(self, interaction: discord.Interaction, item_select: discord.ui.Select):

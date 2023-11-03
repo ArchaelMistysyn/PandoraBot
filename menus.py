@@ -737,6 +737,62 @@ class ClassSelect(discord.ui.View):
             print(f"Exception message: {e}")
 
 
+class ClassChangeView(discord.ui.View):
+    def __init__(self, player_object):
+        super().__init__(timeout=None)
+        self.player_object = player_object
+        self.embed = False
+
+    @discord.ui.select(
+        placeholder="Select a new class!",
+        min_values=1,
+        max_values=1,
+        options=[
+            discord.SelectOption(
+                emoji="<:cB:1154266777396711424>", label="Knight", description="The Valiant Knight"),
+            discord.SelectOption(
+                emoji="<:cA:1150195102589931641>", label="Ranger", description="The Precise Ranger"),
+            discord.SelectOption(
+                emoji="<:cC:1150195246588764201>", label="Mage", description="The Arcane Mage"),
+            discord.SelectOption(
+                emoji="❌", label="Assassin", description="The Stealthy Assassin"),
+            discord.SelectOption(
+                emoji="❌", label="Weaver", description="The Mysterious Weaver"),
+            discord.SelectOption(
+                emoji="❌", label="Rider", description="The Mounted Rider"),
+            discord.SelectOption(
+                emoji="<:cD:1150195280969478254>", label="Summoner", description="The Trusted Summoner")
+        ]
+    )
+    async def change_callback(self, interaction: discord.Interaction, class_select: discord.ui.Select):
+        try:
+            if interaction.user.name == self.player_name:
+                if not self.embed:
+                    reload_player = player.get_player_by_id(self.player_object.player_id)
+                    current_class = reload_player.player_class
+                    chosen_class = class_select.values[0]
+                    token_stock = inventory.check_stock(reload_player, "cCLASS")
+                    if token_stock >= 1:
+                        token_stock = inventory.update_stock(reload_player, "cCLASS", -1)
+                        reload_player.set_player_field("player_class", chosen_class)
+                        add_role = discord.utils.get(interaction.guild.roles, name=f"Class Role - {chosen_class}")
+                        remove_role = discord.utils.get(interaction.guild.roles, name=f"Class Role - {current_class}")
+                        await interaction.user.add_roles(add_role)
+                        await asyncio.sleep(1)
+                        await interaction.user.remove_roles(remove_role)
+                        response = f"{reload_player.player_username} you are a {chosen_class} now."
+                    else:
+                        response = "It seems you are not prepared. You must bring me a pathchanger token."
+                    self.embed = discord.Embed(colour=discord.Colour.dark_teal(),
+                                               title="Mysmiria, The Changer",
+                                               description=response)
+                await interaction.response.edit_message(embed=self.embed, view=None)
+        except Exception as e:
+            print("An exception occurred in change_callback:")
+            print(f"Exception type: {type(e).__name__}")
+            print(f"Exception message: {e}")
+
+
 class StatView(discord.ui.View):
     def __init__(self, player_user):
         super().__init__(timeout=None)

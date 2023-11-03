@@ -747,7 +747,10 @@ def get_item_shop_list(item_tier):
     df = pd.read_csv("itemlist.csv")
     if item_tier != 0:
         df = df.loc[df['item_tier'] == item_tier]
-        df = df.loc[df['item_id'].str.contains('i')]
+        if item_tier == 1:
+            df = df.loc[df['item_id'].str.contains('i|c', regex=True)]
+        else:
+            df = df.loc[df['item_id'].str.contains('i')]
     else:
         df = df.loc[df['item_id'].str.contains('Fae')]
     item_list = []
@@ -993,7 +996,8 @@ def display_binventory(player_id, method):
                              "ORDER BY item_id ASC")
             case "Misc Items":
                 query = text("SELECT item_id, item_qty FROM BasicInventory "
-                             "WHERE player_id = :id_check AND item_qty <> 0 AND item_id REGEXP '^STONE|j$|r$|^t|v$|y$' "
+                             "WHERE player_id = :id_check AND item_qty <> 0 "
+                             "AND item_id REGEXP '^STONE|j$|r$|^t|v$|y$|^c' "
                              "ORDER BY item_id ASC")
             case _:
                 query = text("SELECT item_id, item_qty FROM BasicInventory "

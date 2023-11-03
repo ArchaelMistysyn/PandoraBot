@@ -8,6 +8,7 @@ import loot
 import bosses
 import combat
 import discord
+import math
 import random
 import mysql.connector
 from mysql.connector.errors import Error
@@ -128,7 +129,7 @@ class PlayerProfile:
         self.get_player_multipliers()
         if method == 1:
             stats = f"Item Base Damage: {int(round(self.player_damage)):,}"
-            stats += f"\nAttack Speed: {self.attack_speed} / min"
+            stats += f"\nAttack Speed: {round(math.floor(self.attack_speed * 10) / 10, 1)} / min"
             stats += f"\nCritical Chance: {int(round(self.critical_chance))}%"
             stats += f"\nCritical Damage: +{int(round(self.critical_multiplier * 100))}%"
             for x in range(9):
@@ -463,6 +464,7 @@ class PlayerProfile:
         element_list = list(map(int, temp_elements))
         num_elements = element_list.count(1)
         self.final_damage += self.player_lvl * 0.01
+        self.attack_speed += self.player_echelon * 0.1
         if num_elements != 9:
             selected_elements_list = [ind for ind, x in enumerate(element_list) if x == 1]
             for y in selected_elements_list:

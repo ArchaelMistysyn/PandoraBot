@@ -13,6 +13,7 @@ def display_insignia(player_object, insignia_code, output_type):
     hp_bonus = 500 * player_object.player_echelon
     item_rolls = f"+{hp_bonus} HP Bonus"
     item_rolls += f"\n{player_object.player_lvl}% Final Damage"
+    item_rolls += f"\n{player_object.player_echelon * 10}% Attack Speed"
     temp_elements = insignia_code.split(";")
     element_list = list(map(int, temp_elements))
     num_elements = element_list.count(1)

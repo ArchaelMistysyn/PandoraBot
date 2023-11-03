@@ -458,6 +458,50 @@ def run_discord_bot():
                 embed_msg = unregistered_message()
                 await ctx.send(embed=embed_msg)
 
+    @set_command_category('game', 7)
+    @pandora_bot.hybrid_command(name='changer', help="Change your class.")
+    @app_commands.guilds(discord.Object(id=1011375205999968427))
+    async def changer(ctx):
+        channel_id = ctx.channel.id
+        if any(channel_id in sl for sl in globalitems.global_server_channels):
+            player_name = ctx.author
+            player_object = player.get_player_by_name(player_name)
+            if player_object.player_class != "":
+                existing_id = bosses.get_raid_id(channel_id, player_object.player_id)
+                if existing_id == 0:
+                    embed_msg = discord.Embed(colour=discord.Colour.dark_orange(),
+                                              title="Mysmiria, The Changer",
+                                              description="With the right payment even you can be rewritten.")
+                    new_view = menus.ClassChangeView(player_object)
+                    await ctx.send(embed=embed_msg, view=new_view)
+                else:
+                    await ctx.send("You cannot speak to the changer while in combat.")
+            else:
+                embed_msg = unregistered_message()
+                await ctx.send(embed=embed_msg)
+
+    @set_command_category('game', 8)
+    @pandora_bot.hybrid_command(name='who', help="Set a new username.")
+    @app_commands.guilds(discord.Object(id=1011375205999968427))
+    async def who(ctx, new_username: str):
+        if any(ctx.channel.id in sl for sl in globalitems.global_server_channels):
+            existing_user = player.get_player_by_name(ctx.author)
+            if new_username.isalpha():
+                if player.check_username(new_username):
+                    token_stock = inventory.check_stock(existing_user, "cNAME")
+                    if token_stock >= 1:
+                        inventory.update_stock(existing_user, "cNAME", -1)
+                        existing_user.player_username = new_username
+                        existing_user.set_player_field("player_username", new_username)
+                        message = f'Got it! I\'ll call you {existing_user.player_username} from now on!'
+                    else:
+                        message = f"It's not that easy to change your name. Bring me a token to prove you are serious."
+                else:
+                    message = f'Sorry that username is taken.'
+            else:
+                message = "Please enter a valid username with no numeric or special characters."
+            await ctx.send(message)
+
     @pandora_bot.event
     async def open_lootbox(ctx, embed_msg, item_tier):
         message = await ctx.send(embed=embed_msg)
@@ -522,12 +566,12 @@ def run_discord_bot():
     @set_command_category('gear', 2)
     @pandora_bot.hybrid_command(name='display', help="Display a specific gear item.")
     @app_commands.guilds(discord.Object(id=1011375205999968427))
-    async def display_item(ctx, unchecked_id: str):
+    async def display_item(ctx, gear_id: str):
         if any(ctx.channel.id in sl for sl in globalitems.global_server_channels):
             player_object = player.get_player_by_name(str(ctx.author))
             if player_object.player_class != "":
-                if unchecked_id.isnumeric():
-                    item_id = int(unchecked_id)
+                if gear_id.isnumeric():
+                    item_id = int(gear_id)
                     if inventory.if_custom_exists(item_id):
                         selected_item = inventory.read_custom_item(item_id)
                         embed_msg = selected_item.create_citem_embed()
@@ -549,8 +593,8 @@ def run_discord_bot():
                                                   title="An item with this ID does not exist.",
                                                   description=f"Inputted ID: {item_id}")
                         await ctx.send(embed=embed_msg)
-                elif unchecked_id.isalnum():
-                    checked_id = unchecked_id
+                elif gear_id.isalnum():
+                    checked_id = gear_id
                     player_stock = inventory.check_stock(player_object, checked_id)
                     item_object = inventory.get_basic_item_by_id(checked_id)
                     item_embed = item_object.create_bitem_embed()
@@ -948,23 +992,6 @@ def run_discord_bot():
             await ctx.send(embed=embed_msg)
 
     @set_command_category('info', 4)
-    @pandora_bot.hybrid_command(name='who', help="Set a new username.")
-    @app_commands.guilds(discord.Object(id=1011375205999968427))
-    async def who(ctx, new_username: str):
-        if any(ctx.channel.id in sl for sl in globalitems.global_server_channels):
-            existing_user = player.get_player_by_name(ctx.author)
-            if new_username.isalpha():
-                if player.check_username(new_username):
-                    existing_user.player_username = new_username
-                    existing_user.set_player_field("player_username", new_username)
-                    message = f'Got it! I\'ll call you {existing_user.player_username} from now on!'
-                else:
-                    message = f'Sorry that username is taken.'
-            else:
-                message = "Please enter a valid username with no numeric or special characters."
-            await ctx.send(message)
-
-    @set_command_category('info', 5)
     @pandora_bot.command(name='credits', help="Displays the game credits.")
     @app_commands.guilds(discord.Object(id=1011375205999968427))
     async def credits_list(ctx):
