@@ -39,6 +39,7 @@ class RaidCog(commands.Cog):
         self.channel_num = channel_num
         self.sent_message = sent_message
         self.channel_object = channel_object
+        self.combat_tracker_list = []
         self.lock = asyncio.Lock()
         self.raid_manager.start()
         print(f"Channel #{self.channel_num}: RaidCog Running")
@@ -49,13 +50,14 @@ class RaidCog(commands.Cog):
     @tasks.loop(seconds=60)
     async def raid_manager(self):
         async with self.lock:
-            is_alive = await self.bot.raid_boss(self.active_boss, self.channel_id, self.channel_num,
+            is_alive = await self.bot.raid_boss(self.combat_tracker_list, self.active_boss, self.channel_id, self.channel_num,
                                                 self.sent_message, self.channel_object)
             if not is_alive:
                 bosses.clear_boss_info(self.channel_id, 0)
                 level, boss_type, boss_tier = bosses.get_boss_details(self.channel_num)
                 active_boss = bosses.spawn_boss(self.channel_id, 0, boss_tier, boss_type, level, self.channel_num)
                 self.active_boss = active_boss
+                self.combat_tracker_list = []
                 embed_msg = active_boss.create_boss_embed(0)
                 raid_button = menus.RaidView()
                 sent_message = await self.channel_object.send(embed=embed_msg, view=raid_button)

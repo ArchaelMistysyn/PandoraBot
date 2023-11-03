@@ -36,13 +36,13 @@ def get_player_profile(player_object, achievement_list):
     frame_bar = Image.open(requests.get(frame_url, stream=True).raw)
     new_size = (420, 35)
     frame_bar = frame_bar.resize(new_size)
-    profile_card.paste(frame_bar, (40, 240), mask=frame_bar)
+    # profile_card.paste(frame_bar, (40, 240), mask=frame_bar)
 
     exp_url = "https://kyleportfolio.ca/botimages/profilecards/expbar.png"
     exp_bar = Image.open(requests.get(exp_url, stream=True).raw)
     new_size = (400, 20)
     exp_bar = exp_bar.resize(new_size)
-    profile_card.paste(exp_bar, (50, 250))
+    # profile_card.paste(exp_bar, (50, 250))
 
     # Achievements
     for idr, role in enumerate(globalitems.global_role_dict):
@@ -56,29 +56,29 @@ def get_player_profile(player_object, achievement_list):
         hloc = 40
         row = int(idr / 7)
         achv_icon = achv_icon.resize(new_size)
-        profile_card.paste(achv_icon, ((30 + (wloc * idr) - (wloc * 7 * row)), (140 + hloc * row)), mask=achv_icon)
+        # profile_card.paste(achv_icon, ((30 + (wloc * idr) - (wloc * 7 * row)), (140 + hloc * row)), mask=achv_icon)
 
     # Main Card
-    title_font = ImageFont.truetype(font_file, 50)
+    title_font = ImageFont.truetype(font_file, 30)
     title_text = player_object.player_username
     image_editable = ImageDraw.Draw(profile_card)
     fill_colour = rank_colour[player_object.player_echelon - 1]
-    image_editable.text((20, 20), title_text, fill=fill_colour, font=title_font)
+    image_editable.text((122, 125), title_text, fill=fill_colour, font=title_font)
 
     # Class icon
     class_name = player_object.player_class
     class_url = player.get_thumbnail_by_class(class_name)
     class_icon = Image.open(requests.get(class_url, stream=True).raw)
-    new_size = (40, 40)
+    new_size = (34, 34)
     class_icon = class_icon.resize(new_size)
-    profile_card.paste(class_icon, (180, 22), mask=class_icon)
+    profile_card.paste(class_icon, (80, 122), mask=class_icon)
 
     # Rank icon
     rank_url = rank_url_list[player_object.player_echelon - 1]
     rank_icon = Image.open(requests.get(rank_url, stream=True).raw)
-    new_size = (130, 130)
+    new_size = (65, 65)
     rank_icon = rank_icon.resize(new_size)
-    profile_card.paste(rank_icon, (335, 65), mask=rank_icon)
+    profile_card.paste(rank_icon, (280, 115), mask=rank_icon)
 
     # Finalize
     filepath = f"{image_path}\\ProfileCard{player_object.player_id}.png"

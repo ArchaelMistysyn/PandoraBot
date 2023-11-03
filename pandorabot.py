@@ -199,35 +199,38 @@ def run_discord_bot():
         pandoracogs.RaidCog(pandora_bot, active_boss, channel_id, channel_num, sent_message, channel_object)
 
     @pandora_bot.event
-    async def raid_boss(active_boss, channel_id, channel_num, sent_message, channel_object):
+    async def raid_boss(combat_tracker_list, active_boss, channel_id, channel_num, sent_message, channel_object):
         player_list, damage_list = bosses.get_damage_list(channel_id)
-        dps = 0
         active_boss.reset_modifiers()
         temp_user = []
+        dps = 0
         for idy, y in enumerate(player_list):
             temp_user.append(player.get_player_by_id(int(y)))
             temp_user[idy].get_player_multipliers()
             active_boss.aura += temp_user[idy].aura
             curse_lists = [active_boss.curse_debuffs, temp_user[idy].elemental_curse]
             active_boss.curse_debuffs = [sum(z) for z in zip(*curse_lists)]
+            if idy >= len(combat_tracker_list):
+                combat_tracker_list.append(combat.CombatTracker())
+                combat_tracker_list[idy].player_cHP = temp_user[idy].player_mHP
+        player_msg_list = []
         for idx, x in enumerate(temp_user):
-            hit_dps, is_critical = x.get_player_damage(active_boss)
-            player_dps = int(hit_dps * (1 + active_boss.aura))
-            dps += player_dps
-            new_player_dps = int(damage_list[idx]) + player_dps
+            player_msg, player_damage = combat.run_raid_cycle(combat_tracker_list[idx], active_boss, x)
+            new_player_dps = int(damage_list[idx]) + player_damage
+            dps += int(combat_tracker_list[idx].total_dps / combat_tracker_list[idx].total_cycles)
             bosses.update_player_damage(channel_id, x.player_id, new_player_dps)
-        active_boss.boss_cHP -= dps
+            player_msg_list.append(player_msg)
         bosses.update_boss_cHP(channel_id, 0, active_boss.boss_cHP)
         if active_boss.calculate_hp():
             embed_msg = active_boss.create_boss_embed(dps)
+            for m in player_msg_list:
+                embed_msg.add_field(name="", value=m, inline=False)
             await sent_message.edit(embed=embed_msg)
             return True
         else:
-            if active_boss.boss_tier >= 4:
-                for x in player_list:
-                    temp_user = player.get_player_by_id(int(x))
-                    quest.assign_tokens(temp_user, active_boss)
             embed_msg = bosses.create_dead_boss_embed(channel_id, active_boss, dps)
+            for m in player_msg_list:
+                embed_msg.add_field(name="", value=m, inline=False)
             await sent_message.edit(embed=embed_msg)
             loot_embed = loot.create_loot_embed(embed_msg, active_boss, player_list)
             await channel_object.send(embed=loot_embed)

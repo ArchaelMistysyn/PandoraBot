@@ -3,6 +3,7 @@ import player
 import random
 import bosses
 import pandorabot
+import quest
 
 skill_names_dict = {
     "Knight": ["Destructive Cleave", "Merciless Blade", "Ruinous Slash", "Destiny Divider"],
@@ -26,7 +27,7 @@ class CombatTracker:
         self.bleed_tracker = 0.0
 
 
-def run_solo_cycle(combat_tracker, active_boss, player_object):
+def run_cycle(combat_tracker, active_boss, player_object, method):
     class_skill_list = skill_names_dict[player_object.player_class]
     is_alive = True
     hit_list = []
@@ -125,7 +126,8 @@ def run_solo_cycle(combat_tracker, active_boss, player_object):
         damage_values = [hit[0] for hit in hit_list]
         combat_tracker.total_dps += sum(damage_values)
         battle_msg = f"{player_object.player_username} - HP: {combat_tracker.player_cHP} / {player_object.player_mHP}"
-        battle_msg = f"{hp_adjust_msg}{battle_msg}"
+        if method == "Solo":
+            battle_msg = f"{hp_adjust_msg}{battle_msg}"
     else:
         combat_tracker.stun_cycles -= 1
         if combat_tracker.stun_cycles == 0:
@@ -133,6 +135,11 @@ def run_solo_cycle(combat_tracker, active_boss, player_object):
             combat_tracker.player_cHP = player_object.player_mHP
         else:
             battle_msg = f"{player_object.player_username} is recovering!"
+    return hit_list, battle_msg, is_alive
+
+
+def run_solo_cycle(combat_tracker, active_boss, player_object):
+    hit_list, battle_msg, is_alive = run_cycle(combat_tracker, active_boss, player_object, "Solo")
     combat_tracker.total_cycles += 1
     total_dps = int(combat_tracker.total_dps / combat_tracker.total_cycles)
     if is_alive:
@@ -147,6 +154,16 @@ def run_solo_cycle(combat_tracker, active_boss, player_object):
         hit_field += f"{hit[2]}\n"
     embed_msg.add_field(name="", value=hit_field, inline=False)
     return embed_msg
+
+
+def run_raid_cycle(combat_tracker, active_boss, player_object):
+    hit_list, battle_msg, is_alive = run_cycle(combat_tracker, active_boss, player_object, "Raid")
+    combat_tracker.total_cycles += 1
+    total_damage = combat_tracker.total_dps
+    if not is_alive and active_boss.boss_tier >= 4:
+        quest.assign_tokens(player_object, active_boss)
+    player_msg = f"{battle_msg} - dealt {total_damage:,} damage"
+    return player_msg, total_damage
 
 
 def get_item_tier_damage(material_tier):
