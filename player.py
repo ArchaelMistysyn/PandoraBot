@@ -127,40 +127,72 @@ class PlayerProfile:
         exp += f'{get_max_exp(self.player_lvl)})'
         id_msg = f'User ID: {self.player_id}\nClass: {globalitems.class_icon_dict[self.player_class]}'
         self.get_player_multipliers()
+        spread_string = ""
+        spread = []
         if method == 1:
+            title_msg = "Offensive Stats"
             stats = f"Item Base Damage: {int(round(self.player_damage)):,}"
             stats += f"\nAttack Speed: {round(math.floor(self.attack_speed * 10) / 10, 1)} / min"
-            stats += f"\nCritical Chance: {int(round(self.critical_chance))}%"
-            stats += f"\nCritical Damage: +{int(round(self.critical_multiplier * 100))}%"
+            stats += f"\nCritical Ratio: {int(round(self.critical_chance))}% : "
+            stats += f"{int(round(self.critical_multiplier * 100))}%"
             for x in range(9):
                 temp_icon = globalitems.global_element_list[x]
-                temp_dmg = int(round(self.elemental_damage[x] * 100))
-                temp_pen = int(round(self.elemental_penetration[x] * 100))
-                temp_curse = int(round(self.elemental_curse[x] * 100))
-                stats += f"\n{temp_icon} (Dmg: {temp_dmg}%) (Pen: {temp_pen}%) (Curse: {temp_curse}%)"
+                total_multi = (1 + self.elemental_damage[x]) * (1 + self.elemental_penetration[x])
+                total_multi *= (1 + self.elemental_curse[x]) * (1 + self.aura)
+                stats += f"\n{temp_icon} Total Damage: {int(round(total_multi * 100))}%"
+                spread.append(total_multi)
+            if self.equipped_weapon != 0:
+                spread_string = "Damage Spread: "
+                e_weapon = inventory.read_custom_item(self.equipped_weapon)
+                used_elements = []
+                used_multipliers = []
+                for i, (multiplier, is_used) in enumerate(zip(spread, e_weapon.item_elements)):
+                    temp_icon = globalitems.global_element_list[i]
+                    if is_used:
+                        used_elements.append(temp_icon)
+                        used_multipliers.append(multiplier / 100)
+                if used_multipliers:
+                    total_contribution = sum(used_multipliers)
+                    for element, multiplier in zip(used_elements, used_multipliers):
+                        contribution = (multiplier / total_contribution) * 100
+                        spread_string += f"{element} {int(contribution)}% "
         elif method == 2:
+            title_msg = "Elemental Breakdown"
+            stats = ""
+            for x in range(9):
+                temp_icon = globalitems.global_element_list[x]
+                temp_dmg_str = f"(Dmg: {int(round(self.elemental_damage[x] * 100))}%)"
+                temp_pen_str = f"(Pen: {int(round(self.elemental_penetration[x] * 100))}%)"
+                temp_curse_str = f"(Curse: {int(round(self.elemental_curse[x] * 100))}%)"
+                stats += f"\n{temp_icon} {temp_dmg_str} - {temp_pen_str} - {temp_curse_str}"
+                stats += f"\nOmni Aura: {int(round(self.aura))}%"
+        elif method == 3:
+            title_msg = "Defensive Stats"
             stats = f"Player HP: {self.player_mHP:,}"
             for idy, y in enumerate(self.elemental_resistance):
                 stats += f"\n{globalitems.global_element_list[idy]} Resistance: {int(y * 100)}%"
             stats += f"\nDamage Mitigation: {int(round(self.damage_mitigation))}%"
         else:
+            title_msg = "Multipliers"
             stats = ""
             for idh, h in enumerate(self.banes):
                 if idh < 4:
                     stats += f"\n{bosses.boss_list[idh]} Bane: {int(h * 100)}%"
                 elif idh == 5:
                     stats += f"\nHuman Bane: {int(h * 100)}%"
-            stats += f"\nOmni Aura: {int(round(self.aura))}%"
             stats += f"\nDefence Penetration: {int(round(self.defence_penetration * 100))}%"
-            stats += f"\nBonus Hit Count: +{int(round(self.bonus_hits))}x"
             stats += f"\nClass Multiplier: {int(round(self.class_multiplier * 100))}%"
+            stats += f"\nCombo Multiplier: {int(round(self.combo_multiplier * 100))}%"
+            stats += f"\nUltimate Multiplier: {int(round(self.ultimate_multiplier * 100))}%"
             stats += f"\nFinal Damage: {int(round(self.final_damage * 100))}%"
 
         embed_msg = discord.Embed(colour=echelon_colour[0],
                                   title=self.player_username,
                                   description=id_msg)
         embed_msg.add_field(name=exp, value=resources, inline=False)
-        embed_msg.add_field(name="Player Stats", value=stats, inline=False)
+        embed_msg.add_field(name=title_msg, value=stats, inline=False)
+        if spread_string != "":
+            embed_msg.add_field(name="", value=spread_string, inline=False)
         thumbnail_url = get_thumbnail_by_class(self.player_class)
         embed_msg.set_thumbnail(url=thumbnail_url)
         return embed_msg
@@ -420,6 +452,19 @@ class PlayerProfile:
         initial_damage *= additional_multiplier
         return initial_damage
 
+    def get_player_boss_damage(self, boss_object):
+        e_weapon = inventory.read_custom_item(self.equipped_weapon)
+        player_damage = self.get_player_initial_damage()
+        # Critical hits
+        random_num = random.randint(1, 100)
+        if random_num < self.critical_chance:
+            is_critical = True
+            player_damage *= (1 + self.critical_multiplier)
+        else:
+            is_critical = False
+        self.player_total_damage = self.boss_adjustments(player_damage, boss_object, e_weapon)
+        return self.player_total_damage, is_critical
+
     def boss_adjustments(self, player_damage, boss_object, e_weapon):
         # Boss type multipliers
         boss_type = boss_object.boss_type_num - 1
@@ -435,7 +480,7 @@ class PlayerProfile:
                 resist_multi = combat.boss_defences("Element", self, boss_object, location, e_weapon)
                 penetration_multi = 1 + self.elemental_penetration[idx]
                 self.elemental_damage[idx] *= resist_multi * penetration_multi
-        subtotal_damage = sum(self.elemental_damage)
+        subtotal_damage = sum(self.elemental_damage) * (1 + boss_object.aura)
         subtotal_damage *= combat.boss_true_mitigation(boss_object)
         adjusted_damage = int(subtotal_damage)
         return adjusted_damage
@@ -445,19 +490,6 @@ class PlayerProfile:
         player_damage = self.get_player_initial_damage()
         self.player_total_damage = self.boss_adjustments(player_damage, boss_object, e_weapon)
         return self.player_total_damage
-
-    def get_player_damage(self, boss_object):
-        e_weapon = inventory.read_custom_item(self.equipped_weapon)
-        player_damage = self.get_player_initial_damage()
-        # Critical hits
-        random_num = random.randint(1, 100)
-        if random_num < self.critical_chance:
-            is_critical = True
-            player_damage *= (1 + self.critical_multiplier)
-        else:
-            is_critical = False
-        self.player_total_damage = self.boss_adjustments(player_damage, boss_object, e_weapon)
-        return self.player_total_damage, is_critical
 
     def assign_insignia_values(self, insignia_code):
         temp_elements = insignia_code.split(";")

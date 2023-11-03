@@ -30,6 +30,7 @@ class CombatTracker:
 def run_cycle(combat_tracker, active_boss, player_object, method):
     class_skill_list = skill_names_dict[player_object.player_class]
     is_alive = True
+    total_damage = 0
     hit_list = []
     if combat_tracker.stun_cycles <= 0:
         combo_count = 0
@@ -74,7 +75,7 @@ def run_cycle(combat_tracker, active_boss, player_object, method):
             combat_tracker.remaining_hits -= 1
         for x in range(hits_per_cycle):
             combo_count += combo_adjuster
-            hit_damage, is_critical = player_object.get_player_damage(active_boss)
+            hit_damage, is_critical = player_object.get_player_boss_damage(active_boss)
             combo_multiplier = (1 + (player_object.combo_multiplier * combo_count))
             if combo_count < 3:
                 damage = int(hit_damage * 0.5 * combo_multiplier)
@@ -100,7 +101,7 @@ def run_cycle(combat_tracker, active_boss, player_object, method):
             active_boss.boss_cHP -= damage
             if combat_tracker.charges >= 10:
                 combo_count += combo_adjuster
-                hit_damage, is_critical = player_object.get_player_damage(active_boss)
+                hit_damage, is_critical = player_object.get_player_boss_damage(active_boss)
                 combat_tracker.charges -= 10
                 combo_multiplier = 1 + (player_object.combo_multiplier * combo_count)
                 ultimate_multiplier = 1 + player_object.ultimate_multiplier
@@ -124,7 +125,8 @@ def run_cycle(combat_tracker, active_boss, player_object, method):
             is_critical = False
             hit_list.append([bleed_damage, is_critical, hit_msg])
         damage_values = [hit[0] for hit in hit_list]
-        combat_tracker.total_dps += sum(damage_values)
+        total_damage = sum(damage_values)
+        combat_tracker.total_dps += total_damage
         battle_msg = f"{player_object.player_username} - HP: {combat_tracker.player_cHP} / {player_object.player_mHP}"
         if method == "Solo":
             battle_msg = f"{hp_adjust_msg}{battle_msg}"
@@ -135,11 +137,11 @@ def run_cycle(combat_tracker, active_boss, player_object, method):
             combat_tracker.player_cHP = player_object.player_mHP
         else:
             battle_msg = f"{player_object.player_username} is recovering!"
-    return hit_list, battle_msg, is_alive
+    return hit_list, battle_msg, is_alive, total_damage
 
 
 def run_solo_cycle(combat_tracker, active_boss, player_object):
-    hit_list, battle_msg, is_alive = run_cycle(combat_tracker, active_boss, player_object, "Solo")
+    hit_list, battle_msg, is_alive, total_damage = run_cycle(combat_tracker, active_boss, player_object, "Solo")
     combat_tracker.total_cycles += 1
     total_dps = int(combat_tracker.total_dps / combat_tracker.total_cycles)
     if is_alive:
@@ -157,9 +159,8 @@ def run_solo_cycle(combat_tracker, active_boss, player_object):
 
 
 def run_raid_cycle(combat_tracker, active_boss, player_object):
-    hit_list, battle_msg, is_alive = run_cycle(combat_tracker, active_boss, player_object, "Raid")
+    hit_list, battle_msg, is_alive, total_damage = run_cycle(combat_tracker, active_boss, player_object, "Raid")
     combat_tracker.total_cycles += 1
-    total_damage = combat_tracker.total_dps
     if not is_alive and active_boss.boss_tier >= 4:
         quest.assign_tokens(player_object, active_boss)
     player_msg = f"{battle_msg} - dealt {total_damage:,} damage"

@@ -216,9 +216,9 @@ def run_discord_bot():
         player_msg_list = []
         for idx, x in enumerate(temp_user):
             player_msg, player_damage = combat.run_raid_cycle(combat_tracker_list[idx], active_boss, x)
-            new_player_dps = int(damage_list[idx]) + player_damage
+            new_player_damage = int(damage_list[idx]) + player_damage
             dps += int(combat_tracker_list[idx].total_dps / combat_tracker_list[idx].total_cycles)
-            bosses.update_player_damage(channel_id, x.player_id, new_player_dps)
+            bosses.update_player_damage(channel_id, x.player_id, new_player_damage)
             player_msg_list.append(player_msg)
         bosses.update_boss_cHP(channel_id, 0, active_boss.boss_cHP)
         if active_boss.calculate_hp():
@@ -283,6 +283,7 @@ def run_discord_bot():
                             channel_object = ctx.channel
                             spawn_msg = f"{player_object.player_username} has spawned a tier {active_boss.boss_tier} boss!"
                             await ctx.send(spawn_msg)
+                            player_object.get_player_multipliers()
                             sent_message = await channel_object.send(embed=embed_msg)
                             solo_cog = pandoracogs.SoloCog(pandora_bot, player_object, active_boss,
                                                            channel_id, sent_message, channel_object)
