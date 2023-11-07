@@ -20,7 +20,6 @@ import mysql
 import pymysql
 from sqlalchemy import exc
 import mydb
-import pandorabot
 import globalitems
 import string
 

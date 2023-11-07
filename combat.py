@@ -163,7 +163,10 @@ def run_raid_cycle(combat_tracker, active_boss, player_object):
     combat_tracker.total_cycles += 1
     if not is_alive and active_boss.boss_tier >= 4:
         quest.assign_tokens(player_object, active_boss)
-    player_msg = f"{battle_msg} - dealt {total_damage:,} damage"
+    if total_damage != 0:
+        player_msg = f"{battle_msg} - dealt {total_damage:,} damage!"
+    else:
+        player_msg = battle_msg
     return player_msg, total_damage
 
 

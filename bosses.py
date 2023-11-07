@@ -15,7 +15,6 @@ import mysql
 import pymysql
 from sqlalchemy import exc
 import mydb
-import pandorabot
 import globalitems
 
 boss_list = ["Fortress", "Dragon", "Demon", "Paragon"]

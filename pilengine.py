@@ -1,6 +1,5 @@
 from PIL import Image, ImageFont, ImageDraw, ImageOps
 import requests
-import pandorabot
 import player
 import os
 import globalitems
@@ -22,7 +21,7 @@ def get_player_profile(player_object, achievement_list):
     font_url = "https://kyleportfolio.ca//botimages/profilecards/fonts/aerolite/Aerolite.otf"
     profile_url = "https://kyleportfolio.ca/botimages/profilecards/bg.png"
     profile_card = Image.open(requests.get(profile_url, stream=True).raw)
-    w, h = 500, 280
+    w, h = 542, 247
     new_size = (w, h)
     profile_card = profile_card.resize(new_size)
     font_file = requests.get(font_url, stream=True).raw
@@ -63,7 +62,7 @@ def get_player_profile(player_object, achievement_list):
     title_text = player_object.player_username
     image_editable = ImageDraw.Draw(profile_card)
     fill_colour = rank_colour[player_object.player_echelon - 1]
-    image_editable.text((122, 125), title_text, fill=fill_colour, font=title_font)
+    image_editable.text((102, 105), title_text, fill=fill_colour, font=title_font)
 
     # Class icon
     class_name = player_object.player_class
@@ -71,14 +70,15 @@ def get_player_profile(player_object, achievement_list):
     class_icon = Image.open(requests.get(class_url, stream=True).raw)
     new_size = (34, 34)
     class_icon = class_icon.resize(new_size)
-    profile_card.paste(class_icon, (80, 122), mask=class_icon)
+    profile_card.paste(class_icon, (60, 102), mask=class_icon)
 
     # Rank icon
-    rank_url = rank_url_list[player_object.player_echelon - 1]
+    # rank_url = rank_url_list[player_object.player_echelon - 1]
+    rank_url = rank_url_list[5]
     rank_icon = Image.open(requests.get(rank_url, stream=True).raw)
-    new_size = (65, 65)
+    new_size = (58, 58)
     rank_icon = rank_icon.resize(new_size)
-    profile_card.paste(rank_icon, (280, 115), mask=rank_icon)
+    profile_card.paste(rank_icon, (302, 103), mask=rank_icon)
 
     # Finalize
     filepath = f"{image_path}\\ProfileCard{player_object.player_id}.png"

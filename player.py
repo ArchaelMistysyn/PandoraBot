@@ -8,7 +8,6 @@ import loot
 import bosses
 import combat
 import discord
-import math
 import random
 import mysql.connector
 from mysql.connector.errors import Error
@@ -18,7 +17,6 @@ import mysql
 import pymysql
 from sqlalchemy import exc
 import mydb
-import pandorabot
 from datetime import datetime as dt
 import quest
 import tarot
@@ -44,6 +42,7 @@ class PlayerProfile:
         self.player_coins = 0
         self.player_class = ""
         self.player_quest = 0
+        self.vouch_points = 0
 
         self.player_mHP = 1000
         self.player_cHP = self.player_mHP
@@ -258,7 +257,7 @@ class PlayerProfile:
                                  "player_equip_crest, player_equip_tarot, player_equip_insignia) "
                                  "VALUES (:input_1, :input_2, :input_3, :input_4, :input_5, :input_6,"
                                  ":input_7, :input_8, :input_9, :input_10, :input_11, :input_12, :input_13, "
-                                 ":input_14, :input_15, :input_16)")
+                                 ":input_14, :input_15, :input_16, :input_17)")
                     query = query.bindparams(input_1=str(self.player_name), input_2=str(self.player_username),
                                              input_3=int(self.player_lvl), input_4=int(self.player_exp),
                                              input_5=int(self.player_echelon), input_6=int(self.player_quest),
@@ -266,7 +265,8 @@ class PlayerProfile:
                                              input_9=int(self.player_coins), input_10=int(self.equipped_weapon),
                                              input_11=int(self.equipped_armour), input_12=int(self.equipped_acc),
                                              input_13=int(self.equipped_wing), input_14=int(self.equipped_crest),
-                                             input_15=str(self.equipped_tarot), input_16=str(self.insignia))
+                                             input_15=str(self.equipped_tarot), input_16=str(self.insignia),
+                                             input_17=int(self.vouch_points))
                     pandora_db.execute(query)
                     response = f"Player {self.player_name} has been registered to play. Welcome {self.player_username}!"
                     response += f"\nPlease use the !quest command to proceed."
@@ -945,6 +945,7 @@ def get_player_by_id(player_id: int) -> PlayerProfile:
             target_player.player_class = str(df["player_class"].values[0])
             target_player.player_coins = int(df["player_coins"].values[0])
             target_player.player_quest = int(df["player_quest"].values[0])
+            target_player.vouch_points = int(df["vouch_points"].values[0])
             target_player.get_equipped()
     except mysql.connector.Error as err:
         print("Database Error: {}".format(err))
@@ -974,6 +975,7 @@ def get_player_by_name(player_name: str) -> PlayerProfile:
             target_player.player_class = str(df["player_class"].values[0])
             target_player.player_coins = int(df["player_coins"].values[0])
             target_player.player_quest = int(df["player_quest"].values[0])
+            target_player.vouch_points = int(df["vouch_points"].values[0])
             target_player.get_equipped()
     except mysql.connector.Error as err:
         print("Database Error: {}".format(err))
@@ -1022,6 +1024,7 @@ def get_all_users():
                 target_player.player_class = str(row["player_class"])
                 target_player.player_coins = int(row["player_coins"])
                 target_player.player_quest = int(row["player_quest"])
+                target_player.vouch_points = int(row["vouch_points"])
                 target_player.get_equipped()
                 user_list.append(target_player)
         else:

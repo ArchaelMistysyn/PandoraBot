@@ -9,7 +9,6 @@ import pandas as pd
 import inventory
 import loot
 import mydb
-import pandorabot
 import discord
 import player
 import tarot
