@@ -1,9 +1,14 @@
 import battleengine
 import bosses
+import globalitems
+import inventory
 import player
 import combat
 import discord
 import asyncio
+import random
+import loot
+import menus
 from discord.ext.commands import Bot
 from discord.ext import commands, tasks
 
@@ -28,7 +33,8 @@ class RaidCog(commands.Cog):
     async def raid_manager(self):
         print(f"Running channel {self.channel_num} raid cycle")
         async with self.lock:
-            is_alive = await self.bot.raid_boss(self.combat_tracker_list, self.active_boss, self.channel_id, self.channel_num,
+            is_alive = await self.bot.raid_boss(self.combat_tracker_list, self.active_boss,
+                                                self.channel_id, self.channel_num,
                                                 self.sent_message, self.channel_object)
             if not is_alive:
                 bosses.clear_boss_info(self.channel_id, 0)
@@ -69,3 +75,209 @@ class SoloCog(commands.Cog):
                                                 self.channel_id, self.sent_message, self.channel_object)
             if not is_alive:
                 self.cog_unload()
+
+
+class PvPCog(commands.Cog):
+    def __init__(self, bot, player1, player2, channel_id, sent_message, channel_object):
+        self.bot = bot
+        self.player1 = player1
+        self.player2 = player2
+        self.channel_id = channel_id
+        self.sent_message = sent_message
+        self.channel_object = channel_object
+        self.combat_tracker1 = combat.CombatTracker()
+        self.combat_tracker2 = combat.CombatTracker()
+        self.combat_tracker1.player_cHP = self.player1.player_mHP
+        self.combat_tracker2.player_cHP = self.player2.player_mHP
+        self.colour, icon = inventory.get_gear_tier_colours(self.player1.player_echelon)
+        self.hit_list = []
+        self.lock = asyncio.Lock()
+        print(f"Arena PvP: {self.player1.player_username} vs {self.player2.player_username}")
+
+    async def run(self):
+        self.pvp_manager.start()
+
+    def cog_unload(self):
+        self.pvp_manager.cancel()
+
+    @tasks.loop(seconds=30)
+    async def pvp_manager(self):
+        print(f"Arena PvP: {self.player1.player_username} vs {self.player2.player_username} cycle")
+        async with self.lock:
+            await self.run_pvp_cycle()
+
+    async def run_pvp_cycle(self):
+        hit_list, is_alive_player1, is_alive_player2 = await self.calculate_cycle()
+        if self.combat_tracker1.player_cHP <= 0:
+            self.combat_tracker1.player_cHP = 0
+        if self.combat_tracker2.player_cHP <= 0:
+            self.combat_tracker2.player_cHP = 0
+        pvp_embed = await self.update_combat_embed(hit_list)
+        result_message = ""
+        exp_msg = ""
+        ended = False
+        quantity = 2
+        loot_item = loot.BasicItem("i1r")
+        if (not is_alive_player1 and not is_alive_player2) or self.combat_tracker1.total_cycles >= 50:
+            result_message = "It's a draw!"
+            exp_amount = random.randint(self.player1.player_echelon * 250, self.player1.player_echelon * 500)
+            ended = True
+            quantity = 1
+            inventory.update_stock(self.player1, "i1r", quantity)
+            inventory.update_stock(self.player2, "i1r", quantity)
+            loot_msg = f"Both Players {loot_item.item_emoji} {quantity}x crates acquired!"
+        elif not is_alive_player1:
+            result_message = f"{self.player2.player_username} wins!"
+            exp_amount = random.randint(self.player1.player_echelon * 100, self.player1.player_echelon * 250)
+            ended = True
+            inventory.update_stock(self.player2, "i1r", quantity)
+            loot_msg = f"{self.player2.player_username} {loot_item.item_emoji} {quantity}x crates acquired!"
+        elif not is_alive_player2:
+            exp_amount = random.randint(self.player1.player_echelon * 500, self.player1.player_echelon * 1000)
+            result_message = f"{self.player1.player_username} wins!"
+            ended = True
+            inventory.update_stock(self.player1, "i1r", quantity)
+            loot_msg = f"{self.player1.player_username} {loot_item.item_emoji} {quantity}x crates acquired!"
+        if ended:
+            exp_msg = f"{globalitems.exp_icon} {exp_amount}x EXP acquired!"
+            self.player1.set_player_field("player_exp", exp_amount)
+            pvp_embed.add_field(name=result_message, value=exp_msg, inline=False)
+            pvp_embed.add_field(name="", value=loot_msg, inline=False)
+            await self.sent_message.edit(embed=pvp_embed)
+            self.cog_unload()
+        else:
+            await self.sent_message.edit(embed=pvp_embed)
+
+    async def update_combat_embed(self, hit_list):
+        pvp_embed = discord.Embed(
+            title="Arena PvP",
+            description="",
+            color=self.colour
+        )
+        # pvp_embed.set_thumbnail(url="")
+        player_1_hp_msg = f"{self.combat_tracker1.player_cHP:,} / {self.player1.player_mHP:,}"
+        player_2_hp_msg = f"{self.combat_tracker2.player_cHP:,} / {self.player2.player_mHP:,}"
+        pvp_embed.add_field(name=self.player1.player_username, value=player_1_hp_msg, inline=True)
+        pvp_embed.add_field(name=self.player2.player_username, value=player_2_hp_msg, inline=True)
+        battle_msg = f"Cycle Count: {self.combat_tracker1.total_cycles}"
+        pvp_embed.add_field(name="", value=battle_msg, inline=False)
+        hit_field = ""
+        for hit in hit_list:
+            hit_field += f"{hit[2]}\n"
+        pvp_embed.add_field(name="Hits", value=hit_field, inline=False)
+        return pvp_embed
+
+    async def calculate_cycle(self):
+        self.combat_tracker1.total_cycles += 1
+        hit_list = []
+        combo_count = [0, 0]
+        combo_adjuster = [1, 1]
+        charge_adjuster = [0, 0]
+        await self.adjust_class_attributes(charge_adjuster, combo_adjuster)
+        num_hits1, excess_hits1 = divmod(self.combat_tracker1.remaining_hits + self.player1.attack_speed, 1)
+        num_hits2, excess_hits2 = divmod(self.combat_tracker2.remaining_hits + self.player2.attack_speed, 1)
+        self.combat_tracker1.remaining_hits = excess_hits1
+        self.combat_tracker2.remaining_hits = excess_hits2
+        player_interval = [60 / num_hits1,
+                           60 / num_hits2]
+        attack_counter = player_interval
+        while attack_counter[0] <= 60 or attack_counter[1] <= 60:
+            await self.handle_pvp_attack(combo_count, combo_adjuster, charge_adjuster,
+                                         attack_counter, player_interval, hit_list)
+        combatants = [self.player1, self.player2]
+        trackers = [self.combat_tracker1, self.combat_tracker2]
+        if self.player1.can_bleed:
+            roles = [0, 1]
+            await self.handle_pvp_bleed(roles, combatants, trackers, hit_list, False)
+        if self.player1.can_bleed:
+            roles = [1, 0]
+            await self.handle_pvp_bleed(roles, combatants, trackers, hit_list, False)
+        is_alive_player1 = self.combat_tracker1.player_cHP > 0
+        is_alive_player2 = self.combat_tracker2.player_cHP > 0
+        return hit_list, is_alive_player1, is_alive_player2
+
+    async def adjust_class_attributes(self, charge_adjuster, combo_adjuster):
+        match self.player1.player_class:
+            case "Knight":
+                charge_adjuster[0] = 1
+            case "Summoner":
+                combo_adjuster[0] = 2
+
+        match self.player2.player_class:
+            case "Knight":
+                charge_adjuster[1] = 1
+            case "Summoner":
+                combo_adjuster[1] = 2
+
+    async def handle_pvp_attack(self, combo_count, combo_adjuster, charge_adjuster,
+                                attack_counter, player_interval, hit_list):
+        combatant = [self.player1, self.player2]
+        tracker = [self.combat_tracker1, self.combat_tracker2]
+        if attack_counter[0] <= attack_counter[1]:
+            attacker = 0
+            defender = 1
+        else:
+            attacker = 1
+            defender = 0
+        role = [attacker, defender]
+        hit_damage, is_critical = combat.pvp_attack(combatant[attacker], combatant[defender])
+        combo_count[attacker] += combo_adjuster[attacker]
+        hit_damage, skill_name = combat.skill_adjuster(combatant[attacker], tracker[attacker], hit_damage,
+                                                       combo_count[attacker], charge_adjuster[attacker], False)
+        scaled_damage = self.scale_damage(role, combatant, hit_damage)
+        hit_msg = f"{combatant[attacker].player_username} - {combo_count[attacker]}x Combo: {skill_name} {scaled_damage:,}"
+        if is_critical:
+            hit_msg += f" *CRITICAL*"
+        hit_list.append([scaled_damage, is_critical, hit_msg])
+        attack_counter[attacker] += player_interval[attacker]
+        tracker[defender].player_cHP -= scaled_damage
+        if combatant[attacker].can_bleed:
+            tracker[attacker].bleed_tracker += 2
+        await self.handle_pvp_ultimate(role, combatant, tracker,
+                                       charge_adjuster, combo_count, combo_adjuster, hit_list)
+
+    async def handle_pvp_ultimate(self, role, combatant, tracker, charge_adjuster, combo_count, combo_adjuster, hit_list):
+        attacker, defender = self.set_roles(role)
+        if tracker[attacker].charges >= 10:
+            hit_damage, is_critical = combat.pvp_attack(combatant[attacker], combatant[defender])
+            combo_count[attacker] += combo_adjuster[attacker]
+            hit_damage, skill_name = combat.skill_adjuster(combatant[attacker], tracker[attacker], hit_damage,
+                                                           combo_count[attacker], charge_adjuster[attacker], True)
+            scaled_damage = self.scale_damage(role, combatant, hit_damage)
+            hit_msg = f"{combatant[attacker].player_username} - Ultimate: {skill_name} {scaled_damage:,}"
+            if is_critical:
+                hit_msg += f" *CRITICAL*"
+            hit_list.append([scaled_damage, is_critical, hit_msg])
+            tracker[defender].player_cHP -= scaled_damage
+            if combatant[attacker].can_bleed:
+                await self.handle_pvp_bleed(role, combatant, tracker, hit_list, True)
+
+    async def handle_pvp_bleed(self, role, combatant, tracker, hit_list, is_ultimate):
+        attacker, defender = self.set_roles(role)
+        bleed_damage = combat.pvp_bleed_damage(combatant[attacker], combatant[defender])
+        bleed_damage *= ((tracker[attacker].bleed_tracker * 0.01) + 1)
+        if is_ultimate:
+            bleed_msg = "Sanguine Rupture"
+        else:
+            bleed_msg = "Blood Rupture"
+        is_critical = False
+        scaled_damage = self.scale_damage(role, combatant, bleed_damage)
+        hit_msg = f"{combatant[attacker].player_username} - {bleed_msg}: {scaled_damage} *BLEED*"
+        hit_list.append([scaled_damage, is_critical, hit_msg])
+        tracker[defender].player_cHP -= scaled_damage
+
+    def set_roles(self, role):
+        return role[0], role[1]
+
+    def scale_damage(self, role, combatants, hit_damage):
+        attacker, defender = self.set_roles(role)
+        reduction = (combatants[defender].player_mHP // 100) * 0.002
+        damage = (len(str(hit_damage)) - 1) * 0.02
+        string_damage = str(hit_damage)
+        first_number = int(string_damage[0])
+        damage += first_number * 0.001
+        damage -= reduction
+        if damage <= 0:
+            damage = 0.01
+        scaled_damage = int(combatants[defender].player_mHP * damage)
+        return scaled_damage

@@ -1,4 +1,4 @@
-from PIL import Image, ImageFont, ImageDraw, ImageOps
+from PIL import Image, ImageFont, ImageDraw, ImageOps, ImageFilter
 import requests
 import player
 import os
@@ -84,4 +84,3 @@ def get_player_profile(player_object, achievement_list):
     filepath = f"{image_path}\\ProfileCard{player_object.player_id}.png"
     profile_card.save(filepath)
     return filepath
-

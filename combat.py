@@ -4,6 +4,14 @@ import random
 import bosses
 import pandorabot
 import quest
+import mysql.connector
+from mysql.connector.errors import Error
+import sqlalchemy
+from sqlalchemy import text
+import mysql
+import pymysql
+from sqlalchemy import exc
+import mydb
 
 skill_names_dict = {
     "Knight": ["Destructive Cleave", "Merciless Blade", "Ruinous Slash", "Destiny Divider"],
@@ -222,3 +230,81 @@ def boss_defences(method, player_object, boss_object, location, weapon):
 def boss_true_mitigation(boss_object):
     mitigation_multiplier = 1 - (boss_object.boss_tier * 0.1)
     return mitigation_multiplier
+
+
+def critical_check(player_object, player_damage):
+    # Critical hits
+    random_num = random.randint(1, 100)
+    if random_num < player_object.critical_chance:
+        is_critical = True
+        player_damage *= (1 + player_object.critical_multiplier)
+    else:
+        is_critical = False
+    return player_damage, is_critical
+
+
+def skill_adjuster(player_object, combat_tracker, hit_damage,
+                   combo_count, charge_adjuster, is_ultimate):
+    class_skill_list = skill_names_dict[player_object.player_class]
+    combo_multiplier = 1 + (player_object.combo_multiplier * combo_count)
+    if is_ultimate:
+        ultimate_multiplier = 1 + player_object.ultimate_multiplier
+        damage = int(hit_damage * 2 * combo_multiplier * ultimate_multiplier)
+        skill_name = class_skill_list[3]
+        charges_gained = -10
+    elif combo_count < 3:
+        damage = int(hit_damage * 0.5 * combo_multiplier)
+        skill_name = class_skill_list[0]
+        charges_gained = 1 + (1 * charge_adjuster)
+    elif combo_count < 5:
+        damage = int(hit_damage * 0.75 * combo_multiplier)
+        skill_name = class_skill_list[1]
+        charges_gained = 1 + (1 * charge_adjuster)
+    else:
+        damage = int(hit_damage * combo_multiplier)
+        skill_name = class_skill_list[2]
+        charges_gained = 1 + (2 * charge_adjuster)
+    combat_tracker.charges += charges_gained
+
+    return damage, skill_name
+
+
+def pvp_defences(attacker, defender, player_damage, e_weapon):
+    # Type Defences
+    adjusted_damage = player_damage - defender.damage_mitigation * 0.01 * player_damage
+    # Elemental Defences
+    for idx, x in enumerate(e_weapon.item_elements):
+        if x == 1:
+            attacker.elemental_damage[idx] = adjusted_damage * (1 + attacker.elemental_damage_multiplier[idx])
+            resist_multi = 1 - defender.elemental_resistance[idx]
+            penetration_multi = 1 + attacker.elemental_penetration[idx]
+            attacker.elemental_damage[idx] *= resist_multi * penetration_multi
+    subtotal_damage = sum(attacker.elemental_damage) * (1 + attacker.aura) * (1 + attacker.banes[4])
+    adjusted_damage = int(subtotal_damage)
+    return adjusted_damage
+
+
+def pvp_attack(attacker, defender):
+    e_weapon = inventory.read_custom_item(attacker.player_equipped[0])
+    player_damage = attacker.get_player_initial_damage()
+    player_damage, is_critical = critical_check(attacker, player_damage)
+    player_damage = pvp_defences(attacker, defender, player_damage, e_weapon)
+    return player_damage, is_critical
+
+
+def pvp_bleed_damage(attacker, defender):
+    e_weapon = inventory.read_custom_item(attacker.player_equipped[0])
+    bleed_damage = attacker.get_player_initial_damage()
+    bleed_damage = pvp_defences(attacker, defender, bleed_damage, e_weapon)
+    return bleed_damage
+
+
+def get_random_opponent(player_echelon):
+    player_list = player.get_players_by_echelon(player_echelon)
+    if player_list:
+        opponent_object = random.choice(player_list)
+    else:
+        opponent_object = player.get_player_by_name("mistysyn")
+    opponent_object.get_equipped()
+    return opponent_object
+

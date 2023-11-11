@@ -78,9 +78,16 @@ def run_discord_bot():
         else:
             await ctx.reply(error, ephemeral=True)
 
+    async def on_shutdown():
+        print("Pandora Bot Off")
+        await asyncio.gather(
+            pandora_bot.close(),
+            pandora_bot.session.close(),
+        )
+
     @pandora_bot.event
     async def on_ready():
-        print(f'\n{pandora_bot.user} Online!')
+        print(f'{pandora_bot.user} Online!')
         pandoracogs.StaminaCog(pandora_bot)
         pandora_bot.help_command = CustomHelpCommand()
 
@@ -406,8 +413,8 @@ def run_discord_bot():
             player_object = player.get_player_by_name(str(ctx.author))
             if player_object.player_class != "":
                 player_object.get_equipped()
-                if player_object.equipped_weapon != 0:
-                    equipped_item = inventory.read_custom_item(player_object.equipped_weapon)
+                if player_object.player_equipped[0] != 0:
+                    equipped_item = inventory.read_custom_item(player_object.player_equipped[0])
                     embed_msg = equipped_item.create_citem_embed()
                     gear_view = menus.GearView(player_object)
                 else:
@@ -780,7 +787,7 @@ def run_discord_bot():
             player_object = player.get_player_by_name(user)
             if player_object.player_class != "":
                 player_object.get_equipped()
-                e_weapon = inventory.read_custom_item(player_object.equipped_weapon)
+                e_weapon = inventory.read_custom_item(player_object.player_equipped[0])
                 if player_object.player_quest >= 27 and e_weapon.item_tier == 6:
                     entry_msg = ("You who has defiled my wish now seek to realize your own. You now have the key "
                                  "which grants you the right to enter this place. Just ahead resides the fountain of "

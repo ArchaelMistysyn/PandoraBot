@@ -91,15 +91,20 @@ class InlaySelectView(discord.ui.View):
         max_values=1,
         options=[
             discord.SelectOption(
-                emoji="<a:eenergy:1145534127349706772>", label="Weapon", description="Inlay gem in your weapon"),
+                emoji="<a:eenergy:1145534127349706772>", label="Weapon",
+                description="Inlay gem in your weapon", value=0),
             discord.SelectOption(
-                emoji="<a:eenergy:1145534127349706772>", label="Armour", description="Inlay gem in your armour"),
+                emoji="<a:eenergy:1145534127349706772>", label="Armour",
+                description="Inlay gem in your armour", value=1),
             discord.SelectOption(
-                emoji="<a:eenergy:1145534127349706772>", label="Accessory", description="Inlay gem in your accessory"),
+                emoji="<a:eenergy:1145534127349706772>", label="Accessory",
+                description="Inlay gem in your accessory", value=2),
             discord.SelectOption(
-                emoji="<a:eenergy:1145534127349706772>", label="Wings", description="Inlay gem in your wing"),
+                emoji="<a:eenergy:1145534127349706772>", label="Wings",
+                description="Inlay gem in your wing", value=3),
             discord.SelectOption(
-                emoji="<a:eenergy:1145534127349706772>", label="Crest", description="Inlay gem in your crest")
+                emoji="<a:eenergy:1145534127349706772>", label="Crest",
+                description="Inlay gem in your crest", value=4)
         ]
     )
     async def inlay_select_callback(self, interaction: discord.Interaction, inlay_select: discord.ui.Select):
@@ -108,19 +113,8 @@ class InlaySelectView(discord.ui.View):
                 selected_type = inlay_select.values[0]
                 no_socket = True
                 self.player_user.get_equipped()
-                match selected_type:
-                    case "Weapon":
-                        selected_item = self.player_user.equipped_weapon
-                    case "Armour":
-                        selected_item = self.player_user.equipped_armour
-                    case "Accessory":
-                        selected_item = self.player_user.equipped_acc
-                    case "Wings":
-                        selected_item = self.player_user.equipped_wing
-                    case _:
-                        selected_item = self.player_user.equipped_crest
-                if self.player_user.equipped_weapon != 0:
-                    e_item = inventory.read_custom_item(selected_item)
+                if self.player_user.player_equipped[selected_type] != 0:
+                    e_item = inventory.read_custom_item(self.player_user.player_equipped[selected_type])
                     if e_item.item_num_sockets == 1:
                         no_socket = False
                         embed_msg = e_item.create_citem_embed()
@@ -582,46 +576,24 @@ class GearView(discord.ui.View):
 
 def cycle_gear(user, current_position, direction):
     reload_user = player.get_player_by_id(user.player_id)
-
-    no_item = ""
+    no_item = False
     if current_position == 0 and direction == -1:
         new_position = 6
     elif current_position == 6 and direction == 1:
         new_position = 0
     else:
         new_position = current_position + direction
-
-    match new_position:
-        case 0:
-            item_type = "Weapon"
-            selected_item = reload_user.equipped_weapon
-        case 1:
-            item_type = "Armour"
-            selected_item = reload_user.equipped_armour
-        case 2:
-            item_type = "Accessory"
-            selected_item = reload_user.equipped_acc
-        case 3:
-            item_type = "Wing"
-            selected_item = reload_user.equipped_wing
-        case 4:
-            item_type = "Crest"
-            selected_item = reload_user.equipped_crest
-        case 5:
-            item_type = "Tarot"
-            tarot_item = reload_user.equipped_tarot
-        case _:
-            item_type = "Insignia"
-            insignia_item = reload_user.insignia
-    no_item = False
-    type_list_1 = ["Weapon", "Armour", "Accessory", "Wing", "Crest"]
-    if item_type in type_list_1:
+    if new_position <= 4:
+        item_type = inventory.item_type_dict[new_position]
+        selected_item = reload_user.player_equipped[new_position]
         if selected_item == 0:
             no_item = True
         else:
             equipped_item = inventory.read_custom_item(selected_item)
             new_msg = equipped_item.create_citem_embed()
-    elif item_type == "Tarot":
+    elif new_position == 5:
+        item_type = "Tarot"
+        tarot_item = reload_user.equipped_tarot
         if tarot_item == "":
             no_item = True
         else:
@@ -629,6 +601,8 @@ def cycle_gear(user, current_position, direction):
             tarot_card = tarot.check_tarot(reload_user.player_id, tarot.tarot_card_list(int(tarot_info[0])), int(tarot_info[1]))
             new_msg = tarot.create_tarot_embed(tarot_card)
     else:
+        item_type = "Insignia"
+        insignia_item = reload_user.insignia
         if insignia_item == "":
             no_item = True
         else:

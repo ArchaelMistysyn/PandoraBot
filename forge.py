@@ -55,19 +55,8 @@ class SelectView(discord.ui.View):
     async def select_callback(self, interaction: discord.Interaction, item_select: discord.ui.Select):
         try:
             if interaction.user.name == self.player_object.player_name:
-                match item_select.values[0]:
-                    case "Weapon":
-                        selected_item = self.player_object.equipped_weapon
-                    case "Armour":
-                        selected_item = self.player_object.equipped_armour
-                    case "Accessory":
-                        selected_item = self.player_object.equipped_acc
-                    case "Wing":
-                        selected_item = self.player_object.equipped_wing
-                    case "Crest":
-                        selected_item = self.player_object.equipped_crest
-                    case _:
-                        selected_item = 0
+                location = inventory.reverse_item_dict[item_select.values[0]]
+                selected_item = self.player_object.player_equipped[location]
                 if selected_item != 0:
                     self.selected_item = inventory.read_custom_item(selected_item)
                     if self.selected_item.item_type == "W" and self.selected_item.item_tier == 6:
@@ -1214,7 +1203,7 @@ class RefineryWeaponView(discord.ui.View):
             if interaction.user.name == self.player_user.player_name:
                 new_view = RefSelectView(self.player_user)
                 new_view = OutcomeView(self.player_user, self.selected_type)
-                await interaction.response.edit_message(embed=embed_msg, view=new_view)
+                await interaction.response.edit_message(view=new_view)
         except Exception as e:
             print(e)
             

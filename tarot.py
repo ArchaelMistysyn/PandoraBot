@@ -8,10 +8,11 @@ from sqlalchemy import exc
 
 import discord
 import random
+import player
 import inventory
 import mydb
 import pandas as pd
-import pandorabot
+import pilengine
 
 paragon_t1 = ["Karma, The Reflection", "Runa, The Magic",
               "Arkaya, The Duality", "Alaya, The Memory", "Aria, The Requiem"]
@@ -73,8 +74,8 @@ class TarotView(discord.ui.View):
             if interaction.user.name == self.player_user.player_name:
                 direction = 0
                 new_msg = self.embed_msg
-                active_card = check_tarot(self.player_user.player_id, tarot.tarot_card_list(self.current_position),
-                                                self.current_variant)
+                active_card = check_tarot(self.player_user.player_id, tarot_card_list(self.current_position),
+                                          self.current_variant)
                 if active_card:
                     reload_player = player.get_player_by_id(self.player_user.player_id)
                     card_num = get_number_by_tarot(active_card.card_name)

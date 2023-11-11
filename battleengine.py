@@ -10,13 +10,16 @@ import mysql.connector
 from mysql.connector.errors import Error
 import sys
 import random
+from datetime import datetime as dt, timedelta
 
+import inventory
 import player
 import bosses
 import globalitems
 import menus
 import enginecogs
 import combat
+import loot
 
 
 # Get Bot Token
@@ -37,12 +40,19 @@ def run_discord_bot():
 
     @engine_bot.event
     async def on_ready():
-        print(f'\n{engine_bot.user} Online!')
+        print(f'{engine_bot.user} Online!')
         engine_bot.help_command = None
 
     async def on_command_error(ctx, error):
         if isinstance(error, commands.CommandNotFound):
             pass
+
+    async def on_shutdown():
+        print("Battle Engine Off")
+        await asyncio.gather(
+            engine_bot.close(),
+            engine_bot.session.close(),
+        )
 
     # Admin Commands
     @engine_bot.command(name='sync', help="Archael Only")
@@ -68,6 +78,14 @@ def run_discord_bot():
                 await ctx.send('commands synced!')
             except Exception as e:
                 print(e)
+        else:
+            await ctx.send('You must be the owner to use this command!')
+
+    @engine_bot.command(name='resetCD', help="Archael Only")
+    async def resetCD(ctx):
+        if ctx.message.author.id == 185530717638230016:
+            player.reset_all_cooldowns()
+            await ctx.send("All player cooldowns have been reset.")
         else:
             await ctx.send('You must be the owner to use this command!')
 
@@ -184,7 +202,7 @@ def run_discord_bot():
             player_name = ctx.author
             player_object = player.get_player_by_name(player_name)
             if player_object.player_class != "":
-                if player_object.equipped_weapon != 0:
+                if player_object.player_equipped[0] != 0:
                     existing_id = bosses.get_raid_id(channel_id, player_object.player_id)
                     if existing_id == 0:
                         if player_object.spend_stamina(200):
@@ -205,8 +223,8 @@ def run_discord_bot():
                             sent_message = await channel_object.send(embed=embed_msg)
 
                             async def run_solo_cog():
-                                return pandoracogs.SoloCog(pandora_bot, player_object, active_boss, channel_id,
-                                                           sent_message, channel_object)
+                                return enginecogs.SoloCog(engine_bot, player_object, active_boss, channel_id,
+                                                          sent_message, channel_object)
 
                             solo_cog = await run_solo_cog()
                             task = asyncio.create_task(solo_cog.run())
@@ -218,6 +236,70 @@ def run_discord_bot():
 
                 else:
                     await ctx.send("You must have a weapon equipped.")
+            else:
+                embed_msg = unregistered_message()
+                await ctx.send(embed=embed_msg)
+
+    @engine_bot.hybrid_command(name='arena', help="Enter pvp combat with another player.")
+    @app_commands.guilds(discord.Object(id=1011375205999968427))
+    async def arena(ctx):
+        channel_id = ctx.channel.id
+        if any(channel_id in sl for sl in globalitems.global_server_channels):
+            await ctx.defer()
+            player_name = ctx.author
+            player_object = player.get_player_by_name(player_name)
+            if player_object.player_class != "":
+                if player_object.player_echelon >= 1:
+                    opponent_player = combat.get_random_opponent(player_object.player_echelon)
+                    echelon_colour, colour_img = inventory.get_gear_tier_colours(player_object.player_echelon)
+                    if opponent_player.player_equipped[0] != 0:
+                        run_command = False
+                        difference = player_object.check_cooldown("arena")
+                        if difference:
+                            one_day = timedelta(days=1)
+                            cooldown = one_day - difference
+                            if difference <= one_day:
+                                cooldown_timer = int(cooldown.total_seconds() / 60 / 60)
+                                time_msg = f"Your next arena match is in {cooldown_timer} hours."
+                                embed_msg = discord.Embed(colour=discord.Colour.dark_teal(),
+                                                          title="Arena Closed!",
+                                                          description=time_msg)
+                                await ctx.send(embed=embed_msg)
+                            else:
+                                run_command = True
+                        else:
+                            run_command = True
+                        if run_command:
+                            player_object.set_cooldown("arena")
+                            if player_object.player_username == opponent_player.player_username:
+                                opponent_player.player_username = f"Shadow {opponent_player.player_username}"
+                            pvp_msg = f"{player_object.player_username} vs {opponent_player.player_username}!"
+                            pvp_embed = discord.Embed(
+                                title="Arena PvP",
+                                description="",
+                                color=echelon_colour
+                            )
+                            # pvp_embed.set_thumbnail(url="")
+                            pvp_embed.add_field(name="Challenger", value=player_object.player_username, inline=True)
+                            pvp_embed.add_field(name="Opponent", value=opponent_player.player_username, inline=True)
+                            # combat.run_initial_pvp_message(player_object, opponent_player)
+                            player_object.get_player_multipliers()
+                            opponent_player.get_player_multipliers()
+                            await ctx.send(pvp_msg)
+                            channel_object = ctx.channel
+                            sent_message = await channel_object.send(embed=pvp_embed)
+
+                            async def run_pvp_cog():
+                                return enginecogs.PvPCog(engine_bot, player_object, opponent_player, channel_id,
+                                                         sent_message, channel_object)
+
+                            pvp_cog = await run_pvp_cog()
+                            task = asyncio.create_task(pvp_cog.run())
+                            await task
+                    else:
+                        await ctx.send("No opponent found.")
+                else:
+                    await ctx.send("You must be Echelon 1 or higher to participate in the arena.")
             else:
                 embed_msg = unregistered_message()
                 await ctx.send(embed=embed_msg)

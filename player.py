@@ -32,11 +32,9 @@ class PlayerProfile:
         self.player_exp = 0
         self.player_lvl = 0
         self.player_echelon = 0
-        self.equipped_weapon = 0
-        self.equipped_armour = 0
-        self.equipped_acc = 0
-        self.equipped_wing = 0
-        self.equipped_crest = 0
+        self.player_stats = [0, 0, 0, 0]
+        self.player_glyphs = ""
+        self.player_equipped = [0, 0, 0, 0, 0]
         self.equipped_tarot = ""
         self.insignia = ""
         self.player_coins = 0
@@ -59,7 +57,7 @@ class PlayerProfile:
         self.defence_penetration = 0.0
         self.class_multiplier = 0.0
         self.final_damage = 0.0
-        self.combo_multiplier = 0.0
+        self.combo_multiplier = 0.05
         self.ultimate_multiplier = 0.0
         self.banes = [0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
 
@@ -95,7 +93,7 @@ class PlayerProfile:
         self.defence_penetration = 0.0
         self.class_multiplier = 0.0
         self.final_damage = 0.0
-        self.combo_multiplier = 0.0
+        self.combo_multiplier = 0.05
         self.ultimate_multiplier = 0.0
         self.banes = [0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
 
@@ -143,9 +141,9 @@ class PlayerProfile:
             for y, total_multi in spread:
                 temp_icon = globalitems.global_element_list[y]
                 stats += f"\n{temp_icon} Total Damage: {int(round(total_multi))}%"
-            if self.equipped_weapon != 0:
+            if self.player_equipped[0] != 0:
                 spread_string = "Damage Spread: "
-                e_weapon = inventory.read_custom_item(self.equipped_weapon)
+                e_weapon = inventory.read_custom_item(self.player_equipped[0])
                 used_elements = []
                 used_multipliers = []
                 for i, is_used in enumerate(e_weapon.item_elements):
@@ -185,7 +183,7 @@ class PlayerProfile:
             for idh, h in enumerate(self.banes):
                 if idh < 4:
                     stats += f"\n{bosses.boss_list[idh]} Bane: {int(h * 100)}%"
-                elif idh == 5:
+                elif idh == 4:
                     stats += f"\nHuman Bane: {int(h * 100)}%"
             stats += f"\nDefence Penetration: {int(round(self.defence_penetration * 100))}%"
             stats += f"\nClass Multiplier: {int(round(self.class_multiplier * 100))}%"
@@ -232,6 +230,8 @@ class PlayerProfile:
         self.player_quest = 1
         self.player_lvl = 1
         self.player_stamina = 5000
+        player_stats = "0;0;0;0"
+        equipped_gear = "0;0;0;0;0"
         try:
             engine_url = mydb.get_engine_url()
             engine = sqlalchemy.create_engine(engine_url)
@@ -252,21 +252,20 @@ class PlayerProfile:
                 else:
                     query = text("INSERT INTO PlayerList "
                                  "(player_name, player_username, player_lvl, player_exp, player_echelon, player_quest, "
-                                 "player_stamina, player_class, player_coins, player_equip_weapon, "
-                                 "player_equip_armour, player_equip_acc, player_equip_wing, "
-                                 "player_equip_crest, player_equip_tarot, player_equip_insignia) "
+                                 "player_stamina, player_class, player_coins, player_stats, "
+                                 "player_glyphs, player_equipped, player_equip_tarot, player_equip_insignia, "
+                                 "vouch_points) "
                                  "VALUES (:input_1, :input_2, :input_3, :input_4, :input_5, :input_6,"
                                  ":input_7, :input_8, :input_9, :input_10, :input_11, :input_12, :input_13, "
-                                 ":input_14, :input_15, :input_16, :input_17)")
+                                 ":input_14, :input_15)")
                     query = query.bindparams(input_1=str(self.player_name), input_2=str(self.player_username),
                                              input_3=int(self.player_lvl), input_4=int(self.player_exp),
                                              input_5=int(self.player_echelon), input_6=int(self.player_quest),
                                              input_7=int(self.player_stamina), input_8=str(self.player_class),
-                                             input_9=int(self.player_coins), input_10=int(self.equipped_weapon),
-                                             input_11=int(self.equipped_armour), input_12=int(self.equipped_acc),
-                                             input_13=int(self.equipped_wing), input_14=int(self.equipped_crest),
-                                             input_15=str(self.equipped_tarot), input_16=str(self.insignia),
-                                             input_17=int(self.vouch_points))
+                                             input_9=int(self.player_coins), input_10=str(player_stats),
+                                             input_11=str(self.player_glyphs), input_12=str(equipped_gear),
+                                             input_13=str(self.equipped_tarot), input_14=str(self.insignia),
+                                             input_15=int(self.vouch_points))
                     pandora_db.execute(query)
                     response = f"Player {self.player_name} has been registered to play. Welcome {self.player_username}!"
                     response += f"\nPlease use the !quest command to proceed."
@@ -337,11 +336,11 @@ class PlayerProfile:
             df = pd.read_sql(query, pandora_db)
             pandora_db.close()
             engine.dispose()
-            self.equipped_weapon = int(df['player_equip_weapon'].values[0])
-            self.equipped_armour = int(df['player_equip_armour'].values[0])
-            self.equipped_acc = int(df['player_equip_acc'].values[0])
-            self.equipped_wing = int(df['player_equip_wing'].values[0])
-            self.equipped_crest = int(df['player_equip_crest'].values[0])
+            temp_equipped = list(df['player_equipped'].values[0].split(';'))
+            self.player_equipped = list(map(int, temp_equipped))
+            temp_stats = list(df['player_stats'].values[0].split(';'))
+            self.player_stats = list(map(int, temp_stats))
+            self.player_glyphs = str(df['player_glyphs'].values[0])
             self.equipped_tarot = str(df['player_equip_tarot'].values[0])
             self.insignia = str(df['player_equip_insignia'].values[0])
         except mysql.connector.Error as err:
@@ -366,42 +365,23 @@ class PlayerProfile:
                 self.can_bleed = True
             case _:
                 pass
-
-        if self.equipped_weapon != 0:
-            e_weapon = inventory.read_custom_item(self.equipped_weapon)
-            e_weapon.update_damage()
-            self.player_damage += random.randint(e_weapon.item_damage_min, e_weapon.item_damage_max)
-            base_attack_speed *= float(e_weapon.item_bonus_stat)
-            self.assign_roll_values(e_weapon)
-            self.assign_gem_values(e_weapon)
-        if self.equipped_armour != 0:
-            e_armour = inventory.read_custom_item(self.equipped_armour)
-            e_armour.update_damage()
-            self.player_damage += random.randint(e_armour.item_damage_min, e_armour.item_damage_max)
-            self.assign_roll_values(e_armour)
-            base_damage_mitigation = float(e_armour.item_bonus_stat)
-            self.assign_gem_values(e_armour)
-        if self.equipped_acc != 0:
-            e_acc = inventory.read_custom_item(self.equipped_acc)
-            e_acc.update_damage()
-            self.player_damage += random.randint(e_acc.item_damage_min, e_acc.item_damage_max)
-            self.assign_roll_values(e_acc)
-            self.assign_gem_values(e_acc)
-            self.unique_ability_multipliers(e_acc)
-        if self.equipped_wing != 0:
-            e_wing = inventory.read_custom_item(self.equipped_wing)
-            e_wing.update_damage()
-            self.player_damage += random.randint(e_wing.item_damage_min, e_wing.item_damage_max)
-            self.assign_roll_values(e_wing)
-            self.assign_gem_values(e_wing)
-            self.unique_ability_multipliers(e_wing)
-        if self.equipped_crest != 0:
-            e_crest = inventory.read_custom_item(self.equipped_crest)
-            e_crest.update_damage()
-            self.player_damage += random.randint(e_crest.item_damage_min, e_crest.item_damage_max)
-            self.assign_roll_values(e_crest)
-            self.assign_gem_values(e_crest)
-            self.unique_ability_multipliers(e_crest)
+        e_item = []
+        for idx, x in enumerate(self.player_equipped):
+            if x != 0:
+                e_item.append(inventory.read_custom_item(x))
+                e_item[idx].update_damage()
+                self.player_damage += random.randint(e_item[idx].item_damage_min, e_item[idx].item_damage_max)
+                self.assign_roll_values(e_item[idx])
+                self.assign_gem_values(e_item[idx])
+            else:
+                e_item.append(None)
+        if e_item[0]:
+            base_attack_speed *= float(e_item[0].item_bonus_stat)
+        if e_item[1]:
+            base_damage_mitigation = float(e_item[1].item_bonus_stat)
+        for y in range(2, 5):
+            if e_item[y]:
+                self.unique_ability_multipliers(e_item[y])
         if self.equipped_tarot != "":
             tarot_info = self.equipped_tarot.split(";")
             e_tarot = tarot.check_tarot(self.player_id, tarot.tarot_card_list(int(tarot_info[0])), int(tarot_info[1]))
@@ -420,22 +400,10 @@ class PlayerProfile:
         self.player_cHP = self.player_mHP
 
         match_count = 0
-        if self.equipped_weapon != 0:
-            if e_weapon.item_damage_type == globalitems.class_icon_dict[self.player_class]:
-                match_count += 1
-        if self.equipped_armour != 0:
-            if e_armour.item_damage_type == globalitems.class_icon_dict[self.player_class]:
-                match_count += 1
-        if self.equipped_acc != 0:
-            if e_acc.item_damage_type == globalitems.class_icon_dict[self.player_class]:
-                match_count += 1
-        if self.equipped_wing != 0:
-            if e_wing.item_damage_type == globalitems.class_icon_dict[self.player_class]:
-                match_count += 1
-        if self.equipped_crest != 0:
-            if e_crest.item_damage_type == globalitems.class_icon_dict[self.player_class]:
-                match_count += 1
-        self.combo_multiplier = 0.05
+        for x in e_item:
+            if x:
+                if x.item_damage_type == globalitems.class_icon_dict[self.player_class]:
+                    match_count += 1
         self.class_multiplier += 0.05
         self.class_multiplier *= match_count
 
@@ -446,9 +414,8 @@ class PlayerProfile:
             self.elemental_curse[x] += self.all_elemental_curse
             if self.elemental_resistance[x] >= 100:
                 self.elemental_resistance[x] = 100
-        for y in range(4):
-            self.banes[y] += self.banes[4]
-        self.banes[5] += self.banes[4]
+        for y in range(5):
+            self.banes[y] += self.banes[5]
 
     def get_player_initial_damage(self):
         initial_damage = self.player_damage
@@ -461,15 +428,9 @@ class PlayerProfile:
         return initial_damage
 
     def get_player_boss_damage(self, boss_object):
-        e_weapon = inventory.read_custom_item(self.equipped_weapon)
+        e_weapon = inventory.read_custom_item(self.player_equipped[0])
         player_damage = self.get_player_initial_damage()
-        # Critical hits
-        random_num = random.randint(1, 100)
-        if random_num < self.critical_chance:
-            is_critical = True
-            player_damage *= (1 + self.critical_multiplier)
-        else:
-            is_critical = False
+        player_damage, is_critical = combat.critical_check(self, player_damage)
         self.player_total_damage = self.boss_adjustments(player_damage, boss_object, e_weapon)
         return self.player_total_damage, is_critical
 
@@ -484,8 +445,7 @@ class PlayerProfile:
         for idx, x in enumerate(e_weapon.item_elements):
             if x == 1:
                 self.elemental_damage[idx] = adjusted_damage * (1 + self.elemental_damage_multiplier[idx])
-                location = int(idx)
-                resist_multi = combat.boss_defences("Element", self, boss_object, location, e_weapon)
+                resist_multi = combat.boss_defences("Element", self, boss_object, idx, e_weapon)
                 penetration_multi = 1 + self.elemental_penetration[idx]
                 self.elemental_damage[idx] *= resist_multi * penetration_multi
         subtotal_damage = sum(self.elemental_damage) * (1 + boss_object.aura)
@@ -494,7 +454,7 @@ class PlayerProfile:
         return adjusted_damage
 
     def get_bleed_damage(self, boss_object):
-        e_weapon = inventory.read_custom_item(self.equipped_weapon)
+        e_weapon = inventory.read_custom_item(self.player_equipped[0])
         player_damage = self.get_player_initial_damage()
         self.player_total_damage = self.boss_adjustments(player_damage, boss_object, e_weapon)
         return self.player_total_damage
@@ -551,7 +511,7 @@ class PlayerProfile:
                 if tarot_card.card_variant == 1:
                     self.all_elemental_resistance += card_multiplier * 10
                 else:
-                    self.banes[5] += card_multiplier * 40
+                    self.banes[4] += card_multiplier * 40
             case 7:
                 if tarot_card.card_variant == 1:
                     self.final_damage += card_multiplier * 5
@@ -661,7 +621,7 @@ class PlayerProfile:
                         self.damage_mitigation += bonus
                     case 118:
                         bonus = roll_adjust * 20
-                        self.banes[5] += bonus
+                        self.banes[4] += bonus
                     case 119:
                         bonus = roll_adjust * 1
                         self.hp_regen += bonus
@@ -739,31 +699,29 @@ class PlayerProfile:
             run_query = True
             match selected_item.item_type:
                 case 'W':
-                    self.equipped_weapon = selected_item.item_id
-                    response = f"Weapon {selected_item.item_id} is now equipped."
-                    query_setter = "player_equip_weapon"
+                    location = 0
+                    item_type = "Weapon"
                 case 'A':
-                    self.equipped_armour = selected_item.item_id
-                    response = f"Armour {selected_item.item_id} is now equipped."
-                    query_setter = "player_equip_armour"
+                    location = 1
+                    item_type = "Armour"
                 case 'Y':
-                    self.equipped_acc = selected_item.item_id
-                    response = f"Accessory {selected_item.item_id} is now equipped."
-                    query_setter = "player_equip_acc"
+                    location = 2
+                    item_type = "Accessory"
                 case 'G':
-                    self.equipped_wing = selected_item.item_id
-                    response = f"Wing {selected_item.item_id} is now equipped."
-                    query_setter = "player_equip_wing"
+                    location = 3
+                    item_type = "Wing"
                 case 'C':
-                    self.equipped_crest = selected_item.item_id
-                    response = f"Crest {selected_item.item_id} is now equipped."
-                    query_setter = "player_equip_crest"
+                    location = 4
+                    item_type = "Crest"
                 case _:
                     run_query = False
                     response = "Item is not equipable."
             if run_query:
-                query = text(f"UPDATE PlayerList SET  {query_setter} = :input_1 WHERE player_id = :player_check")
-                query = query.bindparams(player_check=int(self.player_id), input_1=int(selected_item.item_id))
+                self.player_equipped[location] = selected_item.item_id
+                response = f"{item_type} {selected_item.item_id} is now equipped."
+                equipped_gear = ";".join(map(str, self.player_equipped))
+                query = text(f"UPDATE PlayerList SET player_equipped = :input_1 WHERE player_id = :player_check")
+                query = query.bindparams(player_check=int(self.player_id), input_1=equipped_gear)
                 pandora_db.execute(query)
             pandora_db.close()
             engine.dispose()
@@ -775,40 +733,18 @@ class PlayerProfile:
     def check_equipped(self, item):
         response = ""
         self.get_equipped()
-
-        match item.item_type:
-            case 'W':
-                check = self.equipped_weapon
-            case 'A':
-                check = self.equipped_armour
-            case 'Y':
-                check = self.equipped_acc
-            case 'G':
-                check = self.equipped_wing
-            case 'C':
-                check = self.equipped_crest
-            case 'D':
-                item_list = []
-                if self.equipped_weapon != 0:
-                    item_list.append(inventory.read_custom_item(self.equipped_weapon))
-                if self.equipped_armour != 0:
-                    item_list.append(inventory.read_custom_item(self.equipped_armour))
-                if self.equipped_acc != 0:
-                    item_list.append(inventory.read_custom_item(self.equipped_acc))
-                if self.equipped_wing != 0:
-                    item_list.append(inventory.read_custom_item(self.equipped_wing))
-                if self.equipped_crest != 0:
-                    item_list.append(inventory.read_custom_item(self.equipped_crest))
-
-                for x in item_list:
-                    check = x.item_inlaid_gem_id
+        if item.item_id in self.player_equipped:
+            return f"Item {item.item_id} is equipped."
+        elif item.item_type in inventory.item_loc_dict:
+            if item.item_type == "D":
+                for x in self.player_equipped:
+                    e_item = inventory.read_custom_item(self.player_equipped[x])
+                    check = e_item.item_inlaid_gem_id
                     if item.item_id == check:
-                        response = f"Dragon Heart Gem {item.item_id} is already inlaid."
-            case _:
-                response = f"Item {item.item_id} is not recognized."
-        if item.item_id == check:
-            response = f"Item {item.item_id} is equipped."
-        return response
+                        response = f"Dragon Heart Gem {item.item_id} is currently inlaid in item {e_item.item_id}."
+            return response
+        else:
+            return f"Item {item.item_id} is not recognized."
 
     def create_stamina_embed(self):
         potion_list = ["i1y", "i2y", "i3y", "i4y"]
@@ -904,6 +840,19 @@ class PlayerProfile:
         return difference
 
 
+def reset_all_cooldowns():
+    try:
+        engine_url = mydb.get_engine_url()
+        engine = sqlalchemy.create_engine(engine_url)
+        pandora_db = engine.connect()
+        query = text("DELETE FROM CommandCooldowns")
+        pandora_db.execute(query)
+        pandora_db.close()
+        engine.dispose()
+    except mysql.connector.Error as err:
+        print("Database Error: {}".format(err))
+
+
 def check_username(new_name: str):
     try:
         engine_url = mydb.get_engine_url()
@@ -981,6 +930,39 @@ def get_player_by_name(player_name: str) -> PlayerProfile:
         print("Database Error: {}".format(err))
         target_player.player_name = player_name
     return target_player
+
+
+def get_players_by_echelon(player_echelon):
+    user_list = []
+    try:
+        engine_url = mydb.get_engine_url()
+        engine = sqlalchemy.create_engine(engine_url)
+        pandora_db = engine.connect()
+        query = text("SELECT * FROM PlayerList WHERE player_echelon = :echelon_check")
+        query = query.bindparams(echelon_check=player_echelon)
+        player_df = pd.read_sql(query, pandora_db)
+        pandora_db.close()
+        engine.dispose()
+        if len(player_df.index) != 0:
+            for index, row in player_df.iterrows():
+                target_player = PlayerProfile()
+                target_player.player_id = int(row["player_id"])
+                target_player.player_name = str(row["player_name"])
+                target_player.player_username = str(row["player_username"])
+                target_player.player_lvl = int(row["player_lvl"])
+                target_player.player_exp = int(row["player_exp"])
+                target_player.player_echelon = int(row["player_echelon"])
+                target_player.player_stamina = int(row["player_stamina"])
+                target_player.player_class = str(row["player_class"])
+                target_player.player_coins = int(row["player_coins"])
+                target_player.player_quest = int(row["player_quest"])
+                target_player.vouch_points = int(row["vouch_points"])
+                user_list.append(target_player)
+        else:
+            user_list = None
+    except mysql.connector.Error as err:
+        print("Database Error: {}".format(err))
+    return user_list
 
 
 def check_user_exists(user_id):

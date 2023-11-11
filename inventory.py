@@ -25,6 +25,9 @@ import string
 
 custom_item_dict = {"W": "Weapon", "A": "Armour", "Y": "Accessory", "G": "Wing", "C": "Crest",
                     "D": "Dragon Heart Gem", "T": "Tarot Card"}
+item_loc_dict = {'W': 0, 'A': 1, 'Y': 2, 'G': 3, 'C': 4, 'D': 5}
+item_type_dict = {0: "Weapon", 1: "Armour", 2: "Accessory", 3: "Wing", 4: "Crest"}
+reverse_item_dict = {v: k for k, v in item_type_dict.items()}
 
 
 class BInventoryView(discord.ui.View):
@@ -1261,8 +1264,7 @@ def purge(player_object, tier):
         engine = sqlalchemy.create_engine(engine_url)
         pandora_db = engine.connect()
         player_object.get_equipped()
-        exclusion_list = [player_object.equipped_weapon, player_object.equipped_armour, player_object.equipped_acc,
-                          player_object.equipped_wing, player_object.equipped_crest]
+        exclusion_list = player_object.player_equipped
         inlaid_gem_list = []
         for x in exclusion_list:
             if x != 0:

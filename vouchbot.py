@@ -30,12 +30,19 @@ def run_discord_bot():
 
     @vouch_bot.event
     async def on_ready():
-        print(f'\n{vouch_bot.user} Online!')
+        print(f'{vouch_bot.user} Online!')
         vouch_bot.help_command = None
 
     async def on_command_error(ctx, error):
         if isinstance(error, commands.CommandNotFound):
             pass
+
+    async def on_shutdown():
+        print("Vouch Wyvern Off")
+        await asyncio.gather(
+            vouch_bot.close(),
+            vouch_bot.session.close(),
+        )
 
     # Admin Commands
     @vouch_bot.command(name='sync', help="Archael Only")
@@ -97,6 +104,7 @@ def run_discord_bot():
                     user_roles = [role.id for role in ctx.author.roles]
                     highest_role_id = max(user_roles, key=lambda role_id: role_points.get(role_id, default_points))
                     num_points = role_points.get(highest_role_id, default_points)
+                    num_points += player_object.vouch_points
                     player_object.set_player_field("vouch_points", num_points)
                     await ctx.send(f"{num_points} vouch points awarded to {user.name}.")
                 else:
