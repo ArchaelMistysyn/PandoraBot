@@ -69,12 +69,18 @@ class SoloCog(commands.Cog):
 
     @tasks.loop(seconds=60)
     async def solo_manager(self):
-        print(f"Running {self.player_object.player_username} solo cycle")
-        async with self.lock:
-            is_alive = await self.bot.solo_boss(self.combat_tracker, self.player_object, self.active_boss,
-                                                self.channel_id, self.sent_message, self.channel_object)
-            if not is_alive:
-                self.cog_unload()
+        if not combat.check_flag(self.player_object):
+            print(f"Running {self.player_object.player_username} solo cycle")
+            async with self.lock:
+                is_alive = await self.bot.solo_boss(self.combat_tracker, self.player_object, self.active_boss,
+                                                    self.channel_id, self.sent_message, self.channel_object)
+                if not is_alive:
+                    self.cog_unload()
+        else:
+            combat.toggle_flag(self.player_object)
+            bosses.clear_boss_info(self.channel_id, self.player_object.player_id)
+            self.cog_unload()
+            print(f"{self.player_object.player_username}: SoloCog Abandoned")
 
 
 class PvPCog(commands.Cog):

@@ -3,6 +3,7 @@
   <component name="SqlDialectMappings">
     <file url="file://$PROJECT_DIR$/bazaar.py" dialect="GenericSQL" />
     <file url="file://$PROJECT_DIR$/bosses.py" dialect="GenericSQL" />
+    <file url="file://$PROJECT_DIR$/combat.py" dialect="GenericSQL" />
     <file url="file://$PROJECT_DIR$/inventory.py" dialect="GenericSQL" />
     <file url="file://$PROJECT_DIR$/loot.py" dialect="GenericSQL" />
     <file url="file://$PROJECT_DIR$/pandorabot.py" dialect="GenericSQL" />

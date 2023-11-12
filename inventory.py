@@ -745,6 +745,22 @@ class BasicItem:
         return embed_msg
 
 
+def get_basic_item_by_id(item_id):
+    df = pd.read_csv("itemlist.csv")
+    df = df.loc[df['item_id'] == item_id]
+    target_item = None
+    if len(df.index) != 0:
+        target_item = BasicItem()
+        target_item.item_name = str(df["item_name"].values[0])
+        target_item.item_id = str(df["item_id"].values[0])
+        target_item.item_tier = int(df["item_tier"].values[0])
+        target_item.item_emoji = str(df["item_emoji"].values[0])
+        target_item.item_description = str(df["item_description"].values[0])
+        target_item.item_cost = int(df["item_cost"].values[0])
+        target_item.item_image = str(df["item_image"].values[0])
+    return target_item
+
+
 def get_item_shop_list(item_tier):
     df = pd.read_csv("itemlist.csv")
     if item_tier != 0:
@@ -769,22 +785,6 @@ def get_item_shop_list(item_tier):
                 target_item.item_image = str(row["item_image"])
                 item_list.append(target_item)
     return item_list
-
-
-def get_basic_item_by_id(item_id):
-    df = pd.read_csv("itemlist.csv")
-    df = df.loc[df['item_id'] == item_id]
-    target_item = None
-    if len(df.index) != 0:
-        target_item = BasicItem()
-        target_item.item_name = str(df["item_name"].values[0])
-        target_item.item_id = str(df["item_id"].values[0])
-        target_item.item_tier = int(df["item_tier"].values[0])
-        target_item.item_emoji = str(df["item_emoji"].values[0])
-        target_item.item_description = str(df["item_description"].values[0])
-        target_item.item_cost = int(df["item_cost"].values[0])
-        target_item.item_image = str(df["item_image"].values[0])
-    return target_item
 
 
 def read_custom_item(item_id):

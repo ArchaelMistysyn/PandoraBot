@@ -13,6 +13,7 @@ import bazaar
 import bosses
 import globalitems
 import insignia
+import combat
 
 
 class HelpView(discord.ui.View):
@@ -25,12 +26,17 @@ class HelpView(discord.ui.View):
         embed_msg = build_help_embed(self.category_dict,'game')
         await interaction.response.edit_message(embed=embed_msg)
 
+    @discord.ui.button(label="Combat", style=discord.ButtonStyle.blurple, row=0, emoji="⚔️")
+    async def combat_help_callback(self, interaction: discord.Interaction, raid_select: discord.ui.Select):
+        embed_msg = build_help_embed(self.category_dict, 'combat')
+        await interaction.response.edit_message(embed=embed_msg)
+
     @discord.ui.button(label="Gear", style=discord.ButtonStyle.blurple, row=0, emoji="⚔️")
     async def gear_help_callback(self, interaction: discord.Interaction, raid_select: discord.ui.Select):
         embed_msg = build_help_embed(self.category_dict,'gear')
         await interaction.response.edit_message(embed=embed_msg)
 
-    @discord.ui.button(label="Craft", style=discord.ButtonStyle.blurple, row=0, emoji="<:ehammer:1145520259248427069>")
+    @discord.ui.button(label="Craft", style=discord.ButtonStyle.blurple, row=1, emoji="<:ehammer:1145520259248427069>")
     async def craft_help_callback(self, interaction: discord.Interaction, raid_select: discord.ui.Select):
         embed_msg = build_help_embed(self.category_dict,'craft')
         await interaction.response.edit_message(embed=embed_msg)
@@ -45,7 +51,7 @@ class HelpView(discord.ui.View):
         embed_msg = build_help_embed(self.category_dict, 'info')
         await interaction.response.edit_message(embed=embed_msg)
 
-    @discord.ui.button(label="Admin", style=discord.ButtonStyle.red, row=1, emoji="⌨")
+    @discord.ui.button(label="Admin", style=discord.ButtonStyle.red, row=2, emoji="⌨")
     async def admin_help_callback(self, interaction: discord.Interaction, raid_select: discord.ui.Select):
         embed_msg = build_help_embed(self.category_dict, 'admin')
         await interaction.response.edit_message(embed=embed_msg)
@@ -54,7 +60,10 @@ class HelpView(discord.ui.View):
 def build_help_embed(category_dict, category_name):
     display_category_name = category_name.capitalize()
     embed = discord.Embed(title=f"{display_category_name} Commands:", color=discord.Colour.dark_orange())
-    commands = category_dict[category_name]
+    if category_name != "combat":
+        commands = category_dict[category_name]
+    else:
+        commands = combat.combat_command_list
     commands.sort(key=lambda x: x[2])
     if category_name != 'admin':
         command_prefix = '/'

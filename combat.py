@@ -4,6 +4,7 @@ import random
 import bosses
 import pandorabot
 import quest
+import pandas as pd
 import mysql.connector
 from mysql.connector.errors import Error
 import sqlalchemy
@@ -22,6 +23,10 @@ skill_names_dict = {
     "Rider": ["Valiant Charge", "Surge Dash", "Mounted Onslaught", "Chaos Rampage"],
     "Summoner": ["Savage Blows", "Moonlit Hunt", "Berserk Frenzy", "Synchronized Wrath"]
 }
+
+combat_command_list = [("solo", "Challenge a solo boss. Stamina Cost: 200", 0),
+                       ("arena", "Enter pvp combat with another player.", 1),
+                       ("abandon", "Abandon an active solo encounter.", 2)]
 
 
 class CombatTracker:
@@ -307,4 +312,44 @@ def get_random_opponent(player_echelon):
         opponent_object = player.get_player_by_name("mistysyn")
     opponent_object.get_equipped()
     return opponent_object
+
+
+def check_flag(player_object):
+    is_flagged = False
+    try:
+        engine_url = mydb.get_engine_url()
+        engine = sqlalchemy.create_engine(engine_url)
+        pandora_db = engine.connect()
+        query = text(f"SELECT * FROM AbandonEncounter WHERE player_id = :player_check")
+        query = query.bindparams(player_check=int(player_object.player_id))
+        df = pd.read_sql(query, pandora_db)
+        if len(df) != 0:
+            is_flagged = True
+        pandora_db.close()
+        engine.dispose()
+    except mysql.connector.Error as err:
+        print("Database Error: {}".format(err))
+    return is_flagged
+
+
+def toggle_flag(player_object):
+    try:
+        engine_url = mydb.get_engine_url()
+        engine = sqlalchemy.create_engine(engine_url)
+        pandora_db = engine.connect()
+        query = text(f"SELECT * FROM AbandonEncounter WHERE player_id = :player_check")
+        query = query.bindparams(player_check=int(player_object.player_id))
+        df = pd.read_sql(query, pandora_db)
+        if len(df) != 0:
+            query = text(f"DELETE FROM AbandonEncounter WHERE player_id = :player_check")
+            query = query.bindparams(player_check=int(player_object.player_id))
+            pandora_db.execute(query)
+        else:
+            query = text(f"INSERT INTO AbandonEncounter (player_id) VALUES (:player_check)")
+            query = query.bindparams(player_check=int(player_object.player_id))
+            pandora_db.execute(query)
+        pandora_db.close()
+        engine.dispose()
+    except mysql.connector.Error as err:
+        print("Database Error: {}".format(err))
 

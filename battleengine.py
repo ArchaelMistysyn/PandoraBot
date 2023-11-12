@@ -193,6 +193,28 @@ def run_discord_bot():
             await channel_object.send(embed=loot_embed)
             return False
 
+    @engine_bot.hybrid_command(name='abandon', help="Abandon an active solo encounter.")
+    @app_commands.guilds(discord.Object(id=1011375205999968427))
+    async def abandon(ctx):
+        channel_id = ctx.channel.id
+        if any(channel_id in sl for sl in globalitems.global_server_channels):
+            player_name = ctx.author
+            player_object = player.get_player_by_name(player_name)
+            await ctx.defer()
+            if player_object.player_class != "":
+                existing_id = bosses.get_raid_id(channel_id, player_object.player_id)
+                if existing_id != 0:
+                    if not combat.check_flag(player_object):
+                        combat.toggle_flag(player_object)
+                        await ctx.send("You have flagged to abandon the encounter.")
+                    else:
+                        await ctx.send("You are already flagged to abandon the encounter.")
+                else:
+                    await ctx.send("You are not in any solo encounter.")
+            else:
+                embed_msg = unregistered_message()
+                await ctx.send(embed=embed_msg)
+
     @engine_bot.hybrid_command(name='solo', help="Challenge a solo boss. Stamina Cost: 200")
     @app_commands.guilds(discord.Object(id=1011375205999968427))
     async def solo(ctx):
@@ -233,7 +255,6 @@ def run_discord_bot():
                             await ctx.send("Not enough stamina.")
                     else:
                         await ctx.send("You already have a solo boss encounter running.")
-
                 else:
                     await ctx.send("You must have a weapon equipped.")
             else:

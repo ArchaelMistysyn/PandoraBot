@@ -697,25 +697,12 @@ class PlayerProfile:
             engine = sqlalchemy.create_engine(engine_url)
             pandora_db = engine.connect()
             run_query = True
-            match selected_item.item_type:
-                case 'W':
-                    location = 0
-                    item_type = "Weapon"
-                case 'A':
-                    location = 1
-                    item_type = "Armour"
-                case 'Y':
-                    location = 2
-                    item_type = "Accessory"
-                case 'G':
-                    location = 3
-                    item_type = "Wing"
-                case 'C':
-                    location = 4
-                    item_type = "Crest"
-                case _:
-                    run_query = False
-                    response = "Item is not equipable."
+            if selected_item.item_type in ["W", "A", "Y", "G", "C"]:
+                location = inventory.item_loc_dict[selected_item.item_type]
+                item_type = inventory.item_type_dict[location]
+            else:
+                run_query = False
+                response = "Item is not equipable."
             if run_query:
                 self.player_equipped[location] = selected_item.item_id
                 response = f"{item_type} {selected_item.item_id} is now equipped."

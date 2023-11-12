@@ -1,8 +1,10 @@
+import discord
 import pandas as pd
 import csv
 import random
 
 import globalitems
+import inventory
 import loot
 import player
 import mysql.connector
@@ -18,26 +20,39 @@ import pandorabot
 
 class BasicItem:
     def __init__(self, item_id):
-        self.item_id = item_id
+        self.item_id = ""
         self.item_name = ""
         self.item_tier = ""
         self.item_base_rate = 0
         self.item_description = ""
         self.item_emoji = ""
-        self.get_bitem_by_id()
+        self.item_image = ""
+        self.get_bitem_by_id(item_id)
 
     def __str__(self):
         return self.item_name
 
-    def get_bitem_by_id(self):
+    def get_bitem_by_id(self, item_id):
         filename = "itemlist.csv"
         df = pd.read_csv(filename)
-        df = df.loc[df['item_id'] == self.item_id]
-        self.item_name = str(df["item_name"].values[0])
-        self.item_tier = int(df["item_tier"].values[0])
-        self.item_base_rate = int(df["item_base_rate"].values[0])
-        self.item_description = str(df["item_description"].values[0])
-        self.item_emoji = str(df["item_emoji"].values[0])
+        df = df.loc[df['item_id'] == item_id]
+        if len(df) != 0:
+            self.item_id = item_id
+            self.item_name = str(df["item_name"].values[0])
+            self.item_tier = int(df["item_tier"].values[0])
+            self.item_base_rate = int(df["item_base_rate"].values[0])
+            self.item_description = str(df["item_description"].values[0])
+            self.item_emoji = str(df["item_emoji"].values[0])
+
+    def create_loot_embed(self, player_object):
+        item_qty = inventory.check_stock(player_object, self.item_id)
+        item_msg = f"{self.item_description}\n{player_object.player_username}'s Stock: {item_qty}"
+        colour, emoji = inventory.get_gear_tier_colours(self.item_tier)
+        loot_embed = discord.Embed(colour=colour,
+                                   title=self.item_name,
+                                   description=item_msg)
+        # loot_embed.set_thumbnail(url=self.item_image)
+        return loot_embed
 
 
 def award_loot(boss_object, player_list, exp_amount, coin_amount):
@@ -172,7 +187,6 @@ def generate_random_item():
         item_type = reward_types[(random.randint(1, len(reward_types)) - 1)]
         reward_id = f"i{item_tier}{item_type}"
     else:
-        quantity = random.randint(1, 3)
         if random_reward <= 261101:
             item_tier = 3
             reward_types = ["s", "o", "k", "f", "j", "y", "Fae", "Fae"]
@@ -183,6 +197,8 @@ def generate_random_item():
             reward_types = ["s", "o", "j", "y", "Fae", "Fae", "Fae", "Fae"]
             item_tier = 1
         item_type = reward_types[(random.randint(1, len(reward_types)) - 1)]
+        if item_type != "j":
+            quantity = random.randint(1, 3)
         reward_id = f"i{item_tier}{item_type}"
     if item_type == "Fae":
         random_element = random.randint(0, 8)

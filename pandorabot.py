@@ -447,20 +447,24 @@ def run_discord_bot():
                 await ctx.send(embed=embed_msg)
 
     @set_command_category('gear', 2)
-    @pandora_bot.hybrid_command(name='display', help="Display a specific gear item.")
+    @pandora_bot.hybrid_command(name='display', help="Display a specific item.")
     @app_commands.guilds(discord.Object(id=1011375205999968427))
-    async def display_item(ctx, gear_id: str):
+    async def display_item(ctx, item_id: str):
         if any(ctx.channel.id in sl for sl in globalitems.global_server_channels):
             await ctx.defer()
+            item_view = None
+            embed_msg = discord.Embed(colour=discord.Colour.dark_orange(),
+                                      title="An item with this ID does not exist.",
+                                      description=f"Inputted ID: {item_id}")
             player_object = player.get_player_by_name(str(ctx.author))
             if player_object.player_class != "":
-                if gear_id.isnumeric():
-                    item_id = int(gear_id)
-                    if inventory.if_custom_exists(item_id):
-                        selected_item = inventory.read_custom_item(item_id)
+                if item_id.isnumeric():
+                    gear_id = int(item_id)
+                    if inventory.if_custom_exists(gear_id):
+                        selected_item = inventory.read_custom_item(gear_id)
                         embed_msg = selected_item.create_citem_embed()
                         if selected_item.player_owner == -1:
-                            seller_id = bazaar.get_seller_by_item(item_id)
+                            seller_id = bazaar.get_seller_by_item(gear_id)
                             seller_object = player.get_player_by_id(seller_id)
                             owner_msg = f"Listed for sale by: {seller_object.player_username}"
                         else:
@@ -468,26 +472,15 @@ def run_discord_bot():
                             owner_msg = f"Owned by: {item_owner.player_username}"
                         embed_msg.add_field(name="", value=owner_msg)
                         if player_object.player_id == selected_item.player_owner:
-                            manage_item_view = menus.ManageCustomItemView(player_object, item_id)
-                            await ctx.send(embed=embed_msg, view=manage_item_view)
-                        else:
-                            await ctx.send(embed=embed_msg)
-                    else:
-                        embed_msg = discord.Embed(colour=discord.Colour.dark_orange(),
-                                                  title="An item with this ID does not exist.",
-                                                  description=f"Inputted ID: {item_id}")
-                        await ctx.send(embed=embed_msg)
-                elif gear_id.isalnum():
-                    checked_id = gear_id
-                    player_stock = inventory.check_stock(player_object, checked_id)
-                    item_object = inventory.get_basic_item_by_id(checked_id)
-                    item_embed = item_object.create_bitem_embed()
-                    item_embed.add_field(name="", value=f"{player_object.player_username}'s Stock: {player_stock}")
-                else:
-                    await ctx.send("Please enter a valid id.")
+                            item_view = menus.ManageCustomItemView(player_object, gear_id)
+                elif item_id.isalnum():
+                    selected_item = loot.BasicItem(item_id)
+                    if selected_item:
+                        embed_msg = selected_item.create_loot_embed(player_object)
+                        # item_view = menus.ManageBasicItem(player_object, selected_item)
             else:
                 embed_msg = unregistered_message()
-                await ctx.send(embed=embed_msg)
+            await ctx.send(embed=embed_msg, view=item_view)
 
     @set_command_category('gear', 3)
     @pandora_bot.hybrid_command(name='tarot', help="View your tarot collection.")
@@ -692,7 +685,6 @@ def run_discord_bot():
             await ctx.defer()
             existing_user = player.get_player_by_name(ctx.author)
             if tier in range(1, 6):
-                await ctx.defer()
                 result, coin_total = inventory.purge(existing_user, tier)
                 message = f"{result} items sold.\n {globalitems.coin_icon} {coin_total}x lotus coins acquired."
             else:
@@ -876,11 +868,7 @@ def run_discord_bot():
         achievement_list = []
         roles_list = [r.name for r in user.roles]
         for role in roles_list:
-            if "Achv" in role:
-                achievement_list.append(role)
-            elif "Notification" in role:
-                achievement_list.append(role)
-            elif "Holder" in role:
+            if "Holder" in role:
                 achievement_list.append(role)
             elif "Echelon 5" in role:
                 achievement_list.append(role)
