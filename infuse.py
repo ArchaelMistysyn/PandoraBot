@@ -169,7 +169,7 @@ class ElementSelectView(discord.ui.View):
             discord.SelectOption(
                 emoji=globalitems.global_element_list[1], label="Water", description="Use water cores."),
             discord.SelectOption(
-                emoji=globalitems.global_element_list[2], label="Lighting", description="Use lightning cores."),
+                emoji=globalitems.global_element_list[2], label="Lightning", description="Use lightning cores."),
             discord.SelectOption(
                 emoji=globalitems.global_element_list[3], label="Earth", description="Use earth cores."),
             discord.SelectOption(

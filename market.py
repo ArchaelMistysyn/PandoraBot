@@ -151,7 +151,9 @@ class ShopView1(discord.ui.View):
             discord.SelectOption(
                 emoji="<a:elootitem:1144477550379274322>", label="Namechanger Token", value="cNAME"),
             discord.SelectOption(
-                emoji="<a:elootitem:1144477550379274322>", label="Pathchanger Token", value="cCLASS")
+                emoji="<a:elootitem:1144477550379274322>", label="Pathchanger Token", value="cCLASS"),
+            discord.SelectOption(
+                emoji="<a:elootitem:1144477550379274322>", label="Resetter Token", value="cSKILL")
         ]
     )
     async def shop1_callback(self, interaction: discord.Interaction, item_select: discord.ui.Select):

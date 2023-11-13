@@ -96,5 +96,6 @@ tXIX,Essence of The Sun,2,10,<a:elootitem:1144477550379274322>,Perform a binding
 tXX,Essence of The Requiem,2,10,<a:elootitem:1144477550379274322>,Perform a binding ritual to seal the essence into card form.,0,
 tXXI,Essence of The Creation,2,10,<a:elootitem:1144477550379274322>,Perform a binding ritual to seal the essence into card form.,0,
 tXXX,Essence of The Wish,6,10,<a:elootitem:1144477550379274322>,Perform a binding ritual to seal the essence into card form.,0,
-cNAME,Namechanger Token,1,100,<a:elootitem:1144477550379274322>,Can be used to change your username.,100000,
+cNAME,Namechanger Token,1,100,<a:elootitem:1144477550379274322>,Can be used to change your username.,200000,
 cCLASS,Pathchanger Token,1,100,<a:elootitem:1144477550379274322>,Can be used to change your class.,200000,
+cSKILL,Resetter Token,1,100,<a:elootitem:1144477550379274322>,Can be used to reset all skill points.,200000,

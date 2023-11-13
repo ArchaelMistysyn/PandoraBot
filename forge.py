@@ -202,7 +202,7 @@ class ElementSelectView(discord.ui.View):
                 emoji=fae_icon[1], label="Water",
                 value="1", description="Use water item."),
             discord.SelectOption(
-                emoji=fae_icon[2], label="Lighting",
+                emoji=fae_icon[2], label="Lightning",
                 value="2", description="Use lightning item."),
             discord.SelectOption(
                 emoji=fae_icon[3], label="Earth",

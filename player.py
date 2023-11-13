@@ -22,6 +22,8 @@ import quest
 import tarot
 import globalitems
 
+path_names = ["Storms", "Frostfire", "Horizon", "Eclipse", "Stars", "Confluence"]
+
 
 class PlayerProfile:
     def __init__(self):
@@ -32,7 +34,7 @@ class PlayerProfile:
         self.player_exp = 0
         self.player_lvl = 0
         self.player_echelon = 0
-        self.player_stats = [0, 0, 0, 0]
+        self.player_stats = [0, 0, 0, 0, 0, 0]
         self.player_glyphs = ""
         self.player_equipped = [0, 0, 0, 0, 0]
         self.equipped_tarot = ""
@@ -58,6 +60,7 @@ class PlayerProfile:
         self.class_multiplier = 0.0
         self.final_damage = 0.0
         self.combo_multiplier = 0.05
+        self.bleed_multiplier = 0.00
         self.ultimate_multiplier = 0.0
         self.banes = [0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
 
@@ -94,6 +97,7 @@ class PlayerProfile:
         self.class_multiplier = 0.0
         self.final_damage = 0.0
         self.combo_multiplier = 0.05
+        self.bleed_multiplier = 0.00
         self.ultimate_multiplier = 0.0
         self.banes = [0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
 
@@ -137,7 +141,7 @@ class PlayerProfile:
                 total_multi = (1 + self.elemental_damage[x]) * (1 + self.elemental_penetration[x])
                 total_multi *= (1 + self.elemental_curse[x]) * (1 + self.aura)
                 element_multipliers.append((x, total_multi * 100))
-            spread = sorted(element_multipliers, key=lambda z: z[1], reverse=True)
+            spread = sorted(element_multipliers, key=lambda k: k[1], reverse=True)
             for y, total_multi in spread:
                 temp_icon = globalitems.global_element_list[y]
                 stats += f"\n{temp_icon} Total Damage: {int(round(total_multi))}%"
@@ -149,11 +153,13 @@ class PlayerProfile:
                 for i, is_used in enumerate(e_weapon.item_elements):
                     if is_used:
                         used_elements.append(globalitems.global_element_list[i])
-                        used_multipliers.append(spread[i][1] / 100)
+                        used_multipliers.append(element_multipliers[i][1] / 100)
+                used_elements, used_multipliers = zip(*sorted(zip(used_elements, used_multipliers),
+                                                              key=lambda e: e[1], reverse=True))
                 if used_multipliers:
                     total_contribution = sum(used_multipliers)
                     for element, multiplier in zip(used_elements, used_multipliers):
-                        contribution = (multiplier / total_contribution) * 100
+                        contribution = round((multiplier / total_contribution) * 100)
                         spread_string += f"{element} {int(contribution)}% "
         elif method == 2:
             title_msg = "Elemental Breakdown"
@@ -230,7 +236,7 @@ class PlayerProfile:
         self.player_quest = 1
         self.player_lvl = 1
         self.player_stamina = 5000
-        player_stats = "0;0;0;0"
+        player_stats = "0;0;0;0;0;0"
         equipped_gear = "0;0;0;0;0"
         try:
             engine_url = mydb.get_engine_url()
@@ -283,14 +289,13 @@ class PlayerProfile:
 
     def update_tokens(self, quest_num, change):
         current_quest = quest.quest_list[quest_num - 1]
-        token_num = current_quest.quest_exceptions()
-        current_tokens = self.check_tokens(token_num)
+        current_tokens = self.check_tokens(current_quest.token_num)
         new_token_count = current_tokens + change
         try:
             engine_url = mydb.get_engine_url()
             engine = sqlalchemy.create_engine(engine_url)
             pandora_db = engine.connect()
-            field_name = f"token_{token_num}"
+            field_name = f"token_{current_quest.token_num}"
             query = text(f"UPDATE QuestTokens SET {field_name} = :field_value WHERE player_id = :player_check")
             query = query.bindparams(field_value=int(new_token_count), player_check=self.player_id)
             pandora_db.execute(query)
@@ -346,6 +351,59 @@ class PlayerProfile:
         except mysql.connector.Error as err:
             print("Database Error: {}".format(err))
 
+    def allocate_points(self, selected_path, num_change):
+        path_type = selected_path.split(" ")[-1]
+        path_location = path_names.index(path_type)
+        spent_points = sum(self.player_stats)
+        if spent_points < self.player_lvl:
+            self.player_stats[path_location] += num_change
+            condensed_stats = ';'.join(map(str, self.player_stats))
+            self.set_player_field("player_stats", condensed_stats)
+            response = "Skill point has been allocated!"
+        else:
+            response = "No remaining skill points to allocate!"
+        return response
+
+    def reset_skill_points(self):
+        reset_points = "0;0;0;0;0;0"
+        self.set_player_field("player_stats", reset_points)
+
+    def create_path_embed(self):
+        colour, icon = inventory.get_gear_tier_colours(self.player_echelon)
+        points_msg = "Your shiny toys are useless if you don't know how to use them."
+        embed = discord.Embed(color=colour, title="Lyra, Head Instructor", description=points_msg)
+        embed.add_field(name=f"{self.player_username}'s Skill Points", value="", inline=False)
+        for path_label, points in zip(path_names, self.player_stats):
+            embed.add_field(name=f"Path of {path_label}", value=f"Points: {points}", inline=True)
+        spent_points = sum(self.player_stats)
+        remaining_points = self.player_lvl - spent_points
+        embed.add_field(name=f"Unspent Points: {remaining_points}", value="", inline=False)
+        return embed
+
+    def build_points_embed(self, selected_path):
+        colour, icon = inventory.get_gear_tier_colours(self.player_echelon)
+        embed = discord.Embed(color=colour, title=f"{selected_path}", description="")
+        perks = {
+            "Storms": ["Water Damage: 1%", "Lightning Damage: 1%", "Water Resistance: 1%", "Lightning Resistance: 1%",
+                       "Critical Chance: 2%", "Critical Damage: 3%"],
+            "Frostfire": ["Ice Damage: 1%", "Fire Damage: 1%", "Ice Resistance: 1%", "Fire Resistance: 1%",
+                          "Class Mastery: 1%"],
+            "Horizon": ["Earth Damage: 1%", "Wind Damage: 1%", "Earth Resistance: 1%", "Wind Resistance: 1%",
+                        "Bleed Multiplier: 15%"],
+            "Eclipse": ["Dark Damage: 1%", "Light Damage: 1%", "Dark Resistance: 1%", "Light Resistance: 1%",
+                        "Ultimate Damage: 30%"],
+            "Stars": ["Celestial Damage: 1%", "Celestial Resistance: 1%", "Combo Damage: 3%"],
+            "Confluence": ["Omni Damage: 3%", "Omni Penetration: 2%", "Omni Curse: 1%"]
+        }
+        path_type = selected_path.split(" ")[-1]
+        embed.description = "Stats per point:\n" + '\n'.join(perks[path_type])
+        points_field = self.player_stats[path_names.index(path_type)]
+        embed.add_field(name="", value=f"{self.player_username}'s {selected_path} Points: {points_field}", inline=False)
+        spent_points = sum(self.player_stats)
+        remaining_points = self.player_lvl - spent_points
+        embed.add_field(name="", value=f"Remaining Points: {remaining_points}", inline=False)
+        return embed
+
     def get_player_multipliers(self):
         self.reset_multipliers()
         self.get_equipped()
@@ -354,6 +412,7 @@ class PlayerProfile:
         base_damage_mitigation = 0.0
         base_player_hp = 1000
 
+        # Class Multipliers
         match self.player_class:
             case "Ranger":
                 base_critical_chance = 15.0
@@ -363,8 +422,47 @@ class PlayerProfile:
                 base_attack_speed = 1.25
             case "Assassin":
                 self.can_bleed = True
+            case "Mage":
+                self.class_multiplier += 0.1
             case _:
                 pass
+
+        # Path Multipliers
+        storm_bonus = self.player_stats[0]
+        self.elemental_damage[1] += 0.01 * storm_bonus
+        self.elemental_damage[2] += 0.01 * storm_bonus
+        self.elemental_resistance[1] += 0.01 * storm_bonus
+        self.elemental_resistance[2] += 0.01 * storm_bonus
+        self.critical_chance += 0.02 * storm_bonus
+        self.critical_multiplier += 0.03 * storm_bonus
+        frostfire_bonus = self.player_stats[1]
+        self.elemental_damage[5] += 0.01 * frostfire_bonus
+        self.elemental_damage[0] += 0.01 * frostfire_bonus
+        self.elemental_resistance[5] += 0.01 * frostfire_bonus
+        self.elemental_resistance[0] += 0.01 * frostfire_bonus
+        self.class_multiplier += 0.01 * frostfire_bonus
+        horizon_bonus = self.player_stats[2]
+        self.elemental_damage[3] += 0.01 * horizon_bonus
+        self.elemental_damage[4] += 0.01 * horizon_bonus
+        self.elemental_resistance[3] += 0.01 * horizon_bonus
+        self.elemental_resistance[4] += 0.01 * horizon_bonus
+        self.bleed_multiplier += 0.15 * horizon_bonus
+        eclipse_bonus = self.player_stats[3]
+        self.elemental_damage[6] += 0.01 * eclipse_bonus
+        self.elemental_damage[7] += 0.01 * eclipse_bonus
+        self.elemental_resistance[6] += 0.01 * eclipse_bonus
+        self.elemental_resistance[7] += 0.01 * eclipse_bonus
+        self.ultimate_multiplier += 0.3 * eclipse_bonus
+        star_bonus = self.player_stats[4]
+        self.elemental_damage[8] += 0.01 * star_bonus
+        self.elemental_resistance[8] += 0.01 * star_bonus
+        self.combo_multiplier += 0.03 * star_bonus
+        confluence_bonus = self.player_stats[5]
+        self.all_elemental_multiplier += 0.03 * confluence_bonus
+        self.all_elemental_penetration += 0.02 * confluence_bonus
+        self.all_elemental_curse += 0.01 * confluence_bonus
+
+        # Item Multipliers
         e_item = []
         for idx, x in enumerate(self.player_equipped):
             if x != 0:
@@ -391,6 +489,7 @@ class PlayerProfile:
         if self.insignia != "":
             self.assign_insignia_values(self.insignia)
 
+        # General Calculations
         self.critical_chance = (1 + self.critical_chance) * base_critical_chance
         self.attack_speed = (1 + self.attack_speed) * base_attack_speed
         self.damage_mitigation = (1 + (self.mitigation_multiplier + self.damage_mitigation)) * base_damage_mitigation
@@ -407,6 +506,7 @@ class PlayerProfile:
         self.class_multiplier += 0.05
         self.class_multiplier *= match_count
 
+        # Elemental Calculations
         for x in range(9):
             self.elemental_damage_multiplier[x] += self.all_elemental_multiplier
             self.elemental_penetration[x] += self.all_elemental_penetration
@@ -770,8 +870,11 @@ class PlayerProfile:
             keywords = unique_ability.split()
             match item_type:
                 case "Y":
-                    buff_type_loc = bosses.boss_list.index(keywords[0])
-                    self.banes[buff_type_loc] += level_bonus * 2
+                    if keywords[0] in bosses.boss_list:
+                        buff_type_loc = bosses.boss_list.index(keywords[0])
+                        self.banes[buff_type_loc] += level_bonus * 2
+                    elif keywords[0] == "Human":
+                        self.banes[4] += level_bonus * 2
                 case "G":
                     buff_type_loc = globalitems.element_special_names.index(keywords[0])
                     self.elemental_damage_multiplier[buff_type_loc] += level_bonus

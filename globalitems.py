@@ -15,6 +15,8 @@ class_icon_list = [class_knight, class_ranger, class_mage, class_assassin, class
 class_icon_dict = {"Knight": class_knight, "Ranger": class_ranger, "Mage": class_mage,
                    "Assassin": class_assassin, "Weaver": class_weaver,
                    "Rider": class_rider, "Summoner": class_summoner}
+path_icon = ["<a:eenergy:1145534127349706772>", "<a:eenergy:1145534127349706772>", "<a:eenergy:1145534127349706772>",
+             "<a:eenergy:1145534127349706772>", "<a:eenergy:1145534127349706772>", "<a:eenergy:1145534127349706772>"]
 
 # Global role list
 role_list = ["Player Echelon 1", "Player Echelon 2", "Player Echelon 3", "Player Echelon 4", "Player Echelon 5 (MAX)"]

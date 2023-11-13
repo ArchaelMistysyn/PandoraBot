@@ -49,10 +49,11 @@ def run_discord_bot():
 
     async def on_shutdown():
         print("Battle Engine Off")
-        await asyncio.gather(
-            engine_bot.close(),
-            engine_bot.session.close(),
-        )
+        try:
+            await engine_bot.close()
+            await engine_bot.session.close()
+        except KeyboardInterrupt:
+            sys.exit(0)
 
     # Admin Commands
     @engine_bot.command(name='sync', help="Archael Only")

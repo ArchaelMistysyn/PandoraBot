@@ -35,4 +35,12 @@ def run_discord_bot():
         if isinstance(error, commands.CommandNotFound):
             pass
 
+    async def on_shutdown():
+        print("Eleuia Bot Off")
+        try:
+            await engine_bot.close()
+            await engine_bot.session.close()
+        except KeyboardInterrupt:
+            sys.exit(0)
+
     eleuia_bot.run(TOKEN)

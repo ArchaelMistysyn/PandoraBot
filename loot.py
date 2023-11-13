@@ -77,22 +77,22 @@ def award_loot(boss_object, player_list, exp_amount, coin_amount):
         loot_msg[counter] += f"{fae_item.item_emoji} {boss_tier}x {fae_item.item_name}\n"
         df_change.loc[len(df_change)] = [temp_player.player_id, fae_item.item_id, boss_tier]
         # Check essence drops
-        tarot_check_num = random.randint(1, 10)
-        if tarot_check_num <= 1:
-            tarot_qty = 1
+        tarot_qty = 0
+        if ' - ' in boss_object.boss_name:
             if boss_object.player_id == 0:
-                try_again = random.randint(1, 10)
-                if try_again <= 1:
-                    tarot_qty = 2
-            if ' - ' in boss_object.boss_name:
+                attempts = 2
+            else:
+                attempts = 1
+            for y in range(0, attempts):
+                tarot_check_num = random.randint(1, 100)
+                if tarot_check_num <= 20:
+                    tarot_qty += 1
+            if tarot_qty > 0:
                 temp = boss_object.boss_name.split(" ", 1)
                 tarot_id = f"t{temp[0]}"
-                filename = "itemlist.csv"
-                with (open(filename, 'r') as f):
-                    for line in csv.DictReader(f):
-                        if str(line['item_id']) == tarot_id:
-                            loot_msg[counter] += f"{str(line['item_emoji'])} {tarot_qty}x {str(line['item_name'])}\n"
-                            df_change.loc[len(df_change)] = [temp_player.player_id, tarot_id, tarot_qty]
+                tarot_item = loot.BasicItem(tarot_id)
+                loot_msg[counter] += f"{tarot_item.item_emoji} {tarot_qty}x {tarot_item.item_name}\n"
+                df_change.loc[len(df_change)] = [temp_player.player_id, tarot_id, tarot_qty]
         filename = "droptable.csv"
         with open(filename, 'r') as f:
             for line in csv.DictReader(f):

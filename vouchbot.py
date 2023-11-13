@@ -39,10 +39,11 @@ def run_discord_bot():
 
     async def on_shutdown():
         print("Vouch Wyvern Off")
-        await asyncio.gather(
-            vouch_bot.close(),
-            vouch_bot.session.close(),
-        )
+        try:
+            await engine_bot.close()
+            await engine_bot.session.close()
+        except KeyboardInterrupt:
+            sys.exit(0)
 
     # Admin Commands
     @vouch_bot.command(name='sync', help="Archael Only")

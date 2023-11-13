@@ -17,8 +17,15 @@ if __name__ == '__main__':
                  multiprocessing.Process(target=vouchbot.run_discord_bot),
                  multiprocessing.Process(target=battleengine.run_discord_bot)]
 
-    for p in processes:
-        p.start()
+    try:
+        for p in processes:
+            p.start()
 
-    for p in processes:
-        p.join()
+        for p in processes:
+            p.join()
+
+    except KeyboardInterrupt:
+        print("Received KeyboardInterrupt. Stopping processes.")
+        for p in processes:
+            p.terminate()
+            p.join()

@@ -101,25 +101,25 @@ class InlaySelectView(discord.ui.View):
         options=[
             discord.SelectOption(
                 emoji="<a:eenergy:1145534127349706772>", label="Weapon",
-                description="Inlay gem in your weapon", value=0),
+                description="Inlay gem in your weapon", value="0"),
             discord.SelectOption(
                 emoji="<a:eenergy:1145534127349706772>", label="Armour",
-                description="Inlay gem in your armour", value=1),
+                description="Inlay gem in your armour", value="1"),
             discord.SelectOption(
                 emoji="<a:eenergy:1145534127349706772>", label="Accessory",
-                description="Inlay gem in your accessory", value=2),
+                description="Inlay gem in your accessory", value="2"),
             discord.SelectOption(
                 emoji="<a:eenergy:1145534127349706772>", label="Wings",
-                description="Inlay gem in your wing", value=3),
+                description="Inlay gem in your wing", value="3"),
             discord.SelectOption(
                 emoji="<a:eenergy:1145534127349706772>", label="Crest",
-                description="Inlay gem in your crest", value=4)
+                description="Inlay gem in your crest", value="4")
         ]
     )
     async def inlay_select_callback(self, interaction: discord.Interaction, inlay_select: discord.ui.Select):
         try:
             if interaction.user.name == self.player_user.player_name:
-                selected_type = inlay_select.values[0]
+                selected_type = int(inlay_select.values[0])
                 no_socket = True
                 self.player_user.get_equipped()
                 if self.player_user.player_equipped[selected_type] != 0:
@@ -846,3 +846,104 @@ class BuyView(discord.ui.View):
         except Exception as e:
             print(e)
 
+
+class PointsView(discord.ui.View):
+    def __init__(self, player_object):
+        super().__init__()
+        self.path_names = player.path_names
+        self.player_object = player_object
+
+    @discord.ui.select(
+        placeholder="Select a Path",
+        min_values=1,
+        max_values=1,
+        options=[
+            discord.SelectOption(emoji=globalitems.path_icon[0], label="Path of Storms",
+                                 description="Water, Lightning, and Critical Specialist"),
+            discord.SelectOption(emoji=globalitems.path_icon[1], label="Path of Frostfire",
+                                 description="Ice, Fire, and Class Specialist"),
+            discord.SelectOption(emoji=globalitems.path_icon[2], label="Path of Horizon",
+                                 description="Earth, Wind, and Bleed Specialist"),
+            discord.SelectOption(emoji=globalitems.path_icon[3], label="Path of Eclipse",
+                                 description="Dark, Light, and Ultimate Specialist"),
+            discord.SelectOption(emoji=globalitems.path_icon[4], label="Path of Stars",
+                                 description="Celestial and Combo Specialist"),
+            discord.SelectOption(emoji=globalitems.path_icon[5], label="Path of Confluence",
+                                 description="Multi Elemental Specialist"),
+            discord.SelectOption(emoji="❌", label="Reset",
+                                 description="Reset all skill points")
+        ]
+    )
+    async def path_select_callback(self, interaction: discord.Interaction, select: discord.ui.Select):
+        if interaction.user.name == self.player_object.player_name:
+            selected_path = select.values[0]
+            if selected_path == "Reset":
+                response = "Starting over is no easy feat. You'll first need to bring me a resetter token."
+                embed_msg = discord.Embed(colour=discord.Colour.dark_orange(), title="Lyra, Head Instructor",
+                                          description=response)
+                new_view = ResetView(self.player_object)
+            else:
+                embed_msg = self.player_object.build_points_embed(selected_path)
+                new_view = PointsMenu(self.player_object, selected_path)
+            await interaction.response.edit_message(embed=embed_msg, view=new_view)
+
+
+class PointsMenu(discord.ui.View):
+    def __init__(self, player_object, selected_path):
+        super().__init__()
+        self.player_object = player_object
+        self.selected_path = selected_path
+        self.embed_msg = None
+        self.view = None
+
+    @discord.ui.button(label="Allocate", style=discord.ButtonStyle.primary)
+    async def add_points_button(self, interaction: discord.Interaction, button: discord.ui.Button):
+        if interaction.user.name == self.player_object.player_name:
+            if not self.embed_msg:
+                reload_player = player.get_player_by_id(self.player_object.player_id)
+                response = reload_player.allocate_points(self.selected_path, 1)
+                self.embed_msg = reload_player.build_points_embed(self.selected_path)
+                self.embed_msg.add_field(name="", value=response, inline=False)
+                self.view = PointsMenu(reload_player, self.selected_path)
+            await interaction.response.edit_message(embed=self.embed_msg, view=self.view)
+
+    @discord.ui.button(label="Reselect", style=discord.ButtonStyle.secondary)
+    async def reselect_path_button(self, interaction: discord.Interaction, button: discord.ui.Button):
+        if interaction.user.name == self.player_object.player_name:
+            reload_player = player.get_player_by_id(self.player_object.player_id)
+            embed_msg = reload_player.create_path_embed()
+            points_view = PointsView(reload_player)
+            await interaction.response.edit_message(embed=embed_msg, view=points_view)
+
+
+class ResetView(discord.ui.View):
+    def __init__(self, player_object):
+        super().__init__()
+        self.player_object = player_object
+        self.embed_msg = None
+
+    @discord.ui.button(label="Confirm Reset", style=discord.ButtonStyle.danger)
+    async def confirm_reset_button(self, interaction: discord.Interaction, button: discord.ui.Button):
+        if interaction.user.name == self.player_object.player_name:
+            if self.embed_msg:
+                reload_player = player.get_player_by_id(self.player_object.player_id)
+                num_tokens = inventory.check_stock(reload_player, "cSKILL")
+                if num_tokens >= 1:
+                    inventory.update_stock(reload_player, "cSKILL", -1)
+                    reload_player.reset_skill_points()
+                    result_msg = "ALL SKILL POINTS RESET!"
+                else:
+                    result_msg = "Come back when you have the resetter token."
+                self.embed_msg.add_field(name=result_msg, value="", inline=False)
+                points_view = PointsView(reload_player)
+            await interaction.response.edit_message(embed=embed_msg, view=points_view)
+
+    @discord.ui.button(label="Reselect", style=discord.ButtonStyle.secondary)
+    async def reselect_path_button(self, interaction: discord.Interaction, button: discord.ui.Button):
+        if interaction.user.name == self.player_object.player_name:
+            reload_player = player.get_player_by_id(self.player_object.player_id)
+            embed_msg = reload_player.create_path_embed()
+            points_view = PointsView(reload_player)
+            if self.embed_msg:
+                embed_msg.add_field(name="ALL SKILL POINTS RESET!", value="", inline=False)
+            await interaction.response.edit_message(embed=embed_msg, view=points_view)

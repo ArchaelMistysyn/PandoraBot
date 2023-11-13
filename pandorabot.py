@@ -80,10 +80,11 @@ def run_discord_bot():
 
     async def on_shutdown():
         print("Pandora Bot Off")
-        await asyncio.gather(
-            pandora_bot.close(),
-            pandora_bot.session.close(),
-        )
+        try:
+            await engine_bot.close()
+            await engine_bot.session.close()
+        except KeyboardInterrupt:
+            sys.exit(0)
 
     @pandora_bot.event
     async def on_ready():
@@ -228,6 +229,22 @@ def run_discord_bot():
                 await ctx.send(embed=embed_msg)
 
     @set_command_category('game', 3)
+    @pandora_bot.hybrid_command(name='points', help="Assign your skill points.")
+    @app_commands.guilds(discord.Object(id=1011375205999968427))
+    async def points(ctx):
+        if any(ctx.channel.id in sl for sl in globalitems.global_server_channels):
+            await ctx.defer()
+            user = ctx.author
+            player_object = player.get_player_by_name(user)
+            if player_object.player_class != "":
+                embed_msg = player_object.create_path_embed()
+                points_view = menus.PointsView(player_object)
+                await ctx.send(embed=embed_msg, view=points_view)
+            else:
+                embed_msg = unregistered_message()
+                await ctx.send(embed=embed_msg)
+
+    @set_command_category('game', 4)
     @pandora_bot.hybrid_command(name='bdsm', help="Claim daily reward.")
     @app_commands.guilds(discord.Object(id=1011375205999968427))
     async def bdsm(ctx):
@@ -272,7 +289,7 @@ def run_discord_bot():
                 embed_msg = unregistered_message()
                 await ctx.send(embed=embed_msg)
 
-    @set_command_category('game', 4)
+    @set_command_category('game', 5)
     @pandora_bot.hybrid_command(name='crate', help="Open a crate.")
     @app_commands.guilds(discord.Object(id=1011375205999968427))
     async def crate(ctx):
@@ -303,7 +320,7 @@ def run_discord_bot():
                 embed_msg = unregistered_message()
                 await ctx.send(embed=embed_msg)
 
-    @set_command_category('game', 5)
+    @set_command_category('game', 6)
     @pandora_bot.hybrid_command(name='trove', help="Open a trove!")
     @app_commands.guilds(discord.Object(id=1011375205999968427))
     async def trove(ctx, trove_tier: int):
@@ -337,7 +354,7 @@ def run_discord_bot():
                 embed_msg = unregistered_message()
                 await ctx.send(embed=embed_msg)
 
-    @set_command_category('game', 6)
+    @set_command_category('game', 7)
     @pandora_bot.hybrid_command(name='changer', help="Change your class.")
     @app_commands.guilds(discord.Object(id=1011375205999968427))
     async def changer(ctx):
@@ -360,7 +377,7 @@ def run_discord_bot():
                 embed_msg = unregistered_message()
                 await ctx.send(embed=embed_msg)
 
-    @set_command_category('game', 7)
+    @set_command_category('game', 8)
     @pandora_bot.hybrid_command(name='who', help="Set a new username.")
     @app_commands.guilds(discord.Object(id=1011375205999968427))
     async def who(ctx, new_username: str):
@@ -475,7 +492,7 @@ def run_discord_bot():
                             item_view = menus.ManageCustomItemView(player_object, gear_id)
                 elif item_id.isalnum():
                     selected_item = loot.BasicItem(item_id)
-                    if selected_item:
+                    if selected_item.item_id != "":
                         embed_msg = selected_item.create_loot_embed(player_object)
                         # item_view = menus.ManageBasicItem(player_object, selected_item)
             else:

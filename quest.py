@@ -26,7 +26,8 @@ class Quest:
         self.item_handin = item_handin
         self.quest_message = quest_message
         if ";" in self.quest_message:
-            self.quest_message.replace(";", "\n")
+            msg_split = self.quest_message.split(";")
+            self.quest_message = f"{msg_split[0]}\n{msg_split[1]}"
         self.quest_output = ""
         self.award_exp = award_exp
         self.award_coins = award_coins
@@ -64,8 +65,7 @@ class Quest:
                     is_completed = True
                     progress_count = 1
         else:
-            token_type = self.quest_exceptions()
-            progress_count = player_object.check_tokens(token_type)
+            progress_count = player_object.check_tokens(self.token_num)
             if progress_count >= self.cost:
                 player_object.update_tokens(self.quest_num, (0 - self.cost))
                 is_completed = True
@@ -113,8 +113,7 @@ class Quest:
                 if e_crest.item_tier == 4:
                     progress_count = 1
         else:
-            token_check = self.quest_exceptions()
-            progress_count = player_object.check_tokens(token_check)
+            progress_count = player_object.check_tokens(self.token_num)
         self.set_quest_output(progress_count)
         quest_embed = discord.Embed(colour=discord.Colour.dark_teal(),
                                     title=self.quest_title,
@@ -122,24 +121,17 @@ class Quest:
         quest_embed.add_field(name=f"Quest", value=self.quest_output, inline=False)
         return quest_embed
 
-    def quest_exceptions(self):
-        if self.quest_num in [5, 8, 10, 14, 20, 22, 25, 27, 28, 29]:
-            token_num = 3
-        else:
-            token_num = self.token_num
-        return token_num
-
 
 def get_quest(quest_num, player_user):
     return quest_list[quest_num - 1]
 
 
 def assign_tokens(player_object, boss_object):
-    boss_token_list = ["XVI - Aurora, The Fortress", "VII - Astratha, The Dimensional",
-                       "VIII - Tyra, The Behemoth", "II - Pandora, The Celestial",
-                       "III - Oblivia, The Void", "IV - Akasha, The Infinite", "XXX - Eleuia, The Wish"]
-    if boss_object.boss_name in boss_token_list:
-        player_object.update_tokens(player_object.player_quest, 1)
+    boss_quest_dict = {"XVI - Aurora, The Fortress": 9, "VII - Astratha, The Dimensional": 12,
+                       "VIII - Tyra, The Behemoth": 13, "II - Pandora, The Celestial": 21,
+                       "III - Oblivia, The Void": 23, "IV - Akasha, The Infinite": 24, "XXX - Eleuia, The Wish": 26}
+    if boss_object.boss_name in boss_quest_dict:
+        player_object.update_tokens(boss_quest_dict[boss_object.boss_name], 1)
 
 
 def get_fake_level_tokens(quest_num):
