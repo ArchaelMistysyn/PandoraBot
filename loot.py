@@ -181,16 +181,16 @@ def generate_random_item():
         reward_id = "i6x"
     elif random_reward <= 1101:
         reward_id = "i5x"
-    elif random_reward <= 11101:
+    elif random_reward <= 51101:
         item_tier = 4
         reward_types = ["h", "j", "z", "s", "o", "t", "g", "w", "c", "j", "y", "Fae"]
         item_type = reward_types[(random.randint(1, len(reward_types)) - 1)]
         reward_id = f"i{item_tier}{item_type}"
     else:
-        if random_reward <= 261101:
+        if random_reward <= 251101:
             item_tier = 3
             reward_types = ["s", "o", "k", "f", "j", "y", "Fae", "Fae"]
-        elif random_reward <= 611101:
+        elif random_reward <= 601101:
             reward_types = ["s", "o", "j", "y", "Fae", "Fae", "Fae"]
             item_tier = 2
         else:

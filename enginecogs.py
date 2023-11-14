@@ -192,10 +192,10 @@ class PvPCog(commands.Cog):
                                          attack_counter, player_interval, hit_list)
         combatants = [self.player1, self.player2]
         trackers = [self.combat_tracker1, self.combat_tracker2]
-        if self.player1.can_bleed:
+        if self.player1.bleed_application >= 1:
             roles = [0, 1]
             await self.handle_pvp_bleed(roles, combatants, trackers, hit_list, False)
-        if self.player1.can_bleed:
+        if self.player1.bleed_application >= 1:
             roles = [1, 0]
             await self.handle_pvp_bleed(roles, combatants, trackers, hit_list, False)
         is_alive_player1 = self.combat_tracker1.player_cHP > 0
@@ -237,8 +237,10 @@ class PvPCog(commands.Cog):
         hit_list.append([scaled_damage, is_critical, hit_msg])
         attack_counter[attacker] += player_interval[attacker]
         tracker[defender].player_cHP -= scaled_damage
-        if combatant[attacker].can_bleed:
-            tracker[attacker].bleed_tracker += 2
+        if combatant[attacker].bleed_application >= 1:
+            tracker[attacker].bleed_tracker += 0.05 * combatant[attacker].bleed_application
+            if tracker[attacker].bleed_tracker >= 1.5 * combatant[attacker].bleed_application:
+                tracker[attacker].bleed_tracker = 1.5 * combatant[attacker].bleed_application
         await self.handle_pvp_ultimate(role, combatant, tracker,
                                        charge_adjuster, combo_count, combo_adjuster, hit_list)
 
@@ -255,7 +257,7 @@ class PvPCog(commands.Cog):
                 hit_msg += f" *CRITICAL*"
             hit_list.append([scaled_damage, is_critical, hit_msg])
             tracker[defender].player_cHP -= scaled_damage
-            if combatant[attacker].can_bleed:
+            if combatant[attacker].bleed_application >= 1:
                 await self.handle_pvp_bleed(role, combatant, tracker, hit_list, True)
 
     async def handle_pvp_bleed(self, role, combatant, tracker, hit_list, is_ultimate):
@@ -264,6 +266,7 @@ class PvPCog(commands.Cog):
         bleed_damage *= ((tracker[attacker].bleed_tracker * 0.01) + 1)
         if is_ultimate:
             bleed_msg = "Sanguine Rupture"
+            bleed_damage *= 2
         else:
             bleed_msg = "Blood Rupture"
         is_critical = False

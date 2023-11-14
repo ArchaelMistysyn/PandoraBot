@@ -341,7 +341,7 @@ def run_discord_bot():
                         player_object.player_coins += reward_coins
                         player_object.set_player_field("player_coins", player_object.player_coins)
                         message = await open_lootbox(ctx, embed_msg, trove_tier)
-                        loot_description = f"{globalitems.coin_icon} {reward_coins}x Lotus Coins!"
+                        loot_description = f"{globalitems.coin_icon} {reward_coins:,}x Lotus Coins!"
                         embed_msg = discord.Embed(colour=discord.Colour.dark_teal(),
                                                   title=f"{player_object.player_username}: Trove Opened!",
                                                   description=loot_description)
@@ -583,7 +583,7 @@ def run_discord_bot():
                     if num_listings < 6:
                         if inventory.if_custom_exists(item_id):
                             selected_item = inventory.read_custom_item(item_id)
-                            if selected_item.item_tier > 4:
+                            if selected_item.item_tier > 3:
                                 response = player_object.check_equipped(selected_item)
                                 if response == "":
                                     bazaar.list_custom_item(selected_item, cost)
@@ -591,7 +591,7 @@ def run_discord_bot():
                                 else:
                                     await ctx.send(response)
                             else:
-                                await ctx.send(f"Only tier 5 or higher gear items can be listed at the Bazaar.")
+                                await ctx.send(f"Only tier 4 or higher gear items can be listed at the Bazaar.")
                         else:
                             await ctx.send(f"Item {item_id} could not be listed.")
                     else:

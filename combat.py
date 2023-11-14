@@ -90,23 +90,12 @@ def run_cycle(combat_tracker, active_boss, player_object, method):
             combo_count += combo_adjuster
             hit_damage, is_critical = player_object.get_player_boss_damage(active_boss)
             combo_multiplier = (1 + (player_object.combo_multiplier * combo_count))
-            if combo_count < 3:
-                damage = int(hit_damage * 0.5 * combo_multiplier)
-                skill_name = class_skill_list[0]
-                charges_gained = 1 + (1 * charge_adjuster)
-            elif combo_count < 5:
-                damage = int(hit_damage * 0.75 * combo_multiplier)
-                skill_name = class_skill_list[1]
-                charges_gained = 1 + (1 * charge_adjuster)
-            else:
-                damage = int(hit_damage * combo_multiplier)
-                skill_name = class_skill_list[2]
-                charges_gained = 1 + (2 * charge_adjuster)
-            if player_object.can_bleed:
-                combat_tracker.bleed_tracker += 0.05
-                if combat_tracker.bleed_tracker >= 1.5:
-                    combat_tracker.bleed_tracker = 1.5
-            combat_tracker.charges += charges_gained
+            damage, skill_name = skill_adjuster(player_object, combat_tracker, hit_damage,
+                                                combo_count, charge_adjuster, False)
+            if player_object.bleed_application >= 1:
+                combat_tracker.bleed_tracker += 0.05 * player_object.bleed_application
+                if combat_tracker.bleed_tracker >= 1.5 * player_object.bleed_application:
+                    combat_tracker.bleed_tracker = 1.5 * player_object.bleed_application
             hit_msg = f"{combo_count}x Combo: {skill_name} {damage:,}"
             if is_critical:
                 hit_msg += f" *CRITICAL*"
@@ -115,16 +104,13 @@ def run_cycle(combat_tracker, active_boss, player_object, method):
             if combat_tracker.charges >= 10:
                 combo_count += combo_adjuster
                 hit_damage, is_critical = player_object.get_player_boss_damage(active_boss)
-                combat_tracker.charges -= 10
-                combo_multiplier = 1 + (player_object.combo_multiplier * combo_count)
-                ultimate_multiplier = 1 + player_object.ultimate_multiplier
-                damage = int(hit_damage * 2 * combo_multiplier * ultimate_multiplier)
-                skill_name = class_skill_list[3]
+                damage, skill_name = skill_adjuster(player_object, combat_tracker, hit_damage,
+                                                    combo_count, charge_adjuster, True)
                 hit_msg = f"Ultimate: {skill_name} {damage:,}"
                 if is_critical:
                     hit_msg += f" *CRITICAL*"
                 hit_list.append([damage, is_critical, hit_msg])
-                if player_object.can_bleed:
+                if player_object.bleed_application >= 1:
                     bleed_damage = 2 * player_object.get_bleed_damage(active_boss)
                     hit_msg = f"Sanguine Rupture: {bleed_damage} *BLEED*"
                     is_critical = False
@@ -132,7 +118,7 @@ def run_cycle(combat_tracker, active_boss, player_object, method):
             if not active_boss.calculate_hp():
                 is_alive = False
                 break
-        if player_object.can_bleed:
+        if player_object.bleed_application >= 1:
             bleed_damage = player_object.get_bleed_damage(active_boss)
             hit_msg = f"Blood Rupture: {bleed_damage} *BLEED*"
             is_critical = False
@@ -254,19 +240,19 @@ def skill_adjuster(player_object, combat_tracker, hit_damage,
     combo_multiplier = 1 + (player_object.combo_multiplier * combo_count)
     if is_ultimate:
         ultimate_multiplier = 1 + player_object.ultimate_multiplier
-        damage = int(hit_damage * 2 * combo_multiplier * ultimate_multiplier)
+        damage = int(hit_damage * combo_multiplier * ultimate_multiplier * (2 + player_object.skill_base_damage_bonus[3]))
         skill_name = class_skill_list[3]
         charges_gained = -10
     elif combo_count < 3:
-        damage = int(hit_damage * 0.5 * combo_multiplier)
+        damage = int(hit_damage * combo_multiplier * (0.5 + player_object.skill_base_damage_bonus[0]))
         skill_name = class_skill_list[0]
         charges_gained = 1 + (1 * charge_adjuster)
     elif combo_count < 5:
-        damage = int(hit_damage * 0.75 * combo_multiplier)
+        damage = int(hit_damage * combo_multiplier * (0.75 + player_object.skill_base_damage_bonus[1]))
         skill_name = class_skill_list[1]
         charges_gained = 1 + (1 * charge_adjuster)
     else:
-        damage = int(hit_damage * combo_multiplier)
+        damage = int(hit_damage * combo_multiplier * (1 + player_object.skill_base_damage_bonus[2]))
         skill_name = class_skill_list[2]
         charges_gained = 1 + (2 * charge_adjuster)
     combat_tracker.charges += charges_gained
@@ -278,7 +264,11 @@ def pvp_defences(attacker, defender, player_damage, e_weapon):
     # Type Defences
     adjusted_damage = player_damage - defender.damage_mitigation * 0.01 * player_damage
     # Elemental Defences
-    for idx, x in enumerate(e_weapon.item_elements):
+    temp_element_list = e_weapon.item_elements
+    if attacker.damage_limitation:
+        for limit in self.damage_limitation:
+            temp_element_list[limit] = 0
+    for idx, x in enumerate(temp_element_list):
         if x == 1:
             attacker.elemental_damage[idx] = adjusted_damage * (1 + attacker.elemental_damage_multiplier[idx])
             resist_multi = 1 - defender.elemental_resistance[idx]
@@ -301,6 +291,7 @@ def pvp_bleed_damage(attacker, defender):
     e_weapon = inventory.read_custom_item(attacker.player_equipped[0])
     bleed_damage = attacker.get_player_initial_damage()
     bleed_damage = pvp_defences(attacker, defender, bleed_damage, e_weapon)
+    bleed_damage *= (1 + attacker.bleed_multiplier)
     return bleed_damage
 
 

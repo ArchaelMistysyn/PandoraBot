@@ -47,7 +47,7 @@ class PlayerProfile:
         self.player_mHP = 1000
         self.player_cHP = self.player_mHP
         self.immortal = False
-        self.can_bleed = False
+        self.bleed_application = 0
 
         self.player_damage = 0.0
         self.player_total_damage = 0.0
@@ -63,6 +63,8 @@ class PlayerProfile:
         self.bleed_multiplier = 0.00
         self.ultimate_multiplier = 0.0
         self.banes = [0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+        self.skill_base_damage_bonus = [0, 0, 0, 0]
+        self.damage_limitation = []
 
         self.critical_chance = 0.0
         self.critical_multiplier = 0.0
@@ -100,6 +102,9 @@ class PlayerProfile:
         self.bleed_multiplier = 0.00
         self.ultimate_multiplier = 0.0
         self.banes = [0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+        self.skill_base_damage_bonus = [0, 0, 0, 0]
+        self.damage_limitation = []
+        self.bleed_application = 0
 
         self.critical_chance = 0.0
         self.critical_multiplier = 1.0
@@ -150,7 +155,11 @@ class PlayerProfile:
                 e_weapon = inventory.read_custom_item(self.player_equipped[0])
                 used_elements = []
                 used_multipliers = []
-                for i, is_used in enumerate(e_weapon.item_elements):
+                temp_element_list = e_weapon.item_elements
+                if self.damage_limitation:
+                    for limit in self.damage_limitation:
+                        temp_element_list[limit] = 0
+                for i, is_used in enumerate(temp_element_list):
                     if is_used:
                         used_elements.append(globalitems.global_element_list[i])
                         used_multipliers.append(element_multipliers[i][1] / 100)
@@ -193,6 +202,7 @@ class PlayerProfile:
                     stats += f"\nHuman Bane: {int(h * 100)}%"
             stats += f"\nDefence Penetration: {int(round(self.defence_penetration * 100))}%"
             stats += f"\nClass Multiplier: {int(round(self.class_multiplier * 100))}%"
+            stats += f"\nBleed Multiplier: {int(round(self.bleed_multiplier * 100))}%"
             stats += f"\nCombo Multiplier: {int(round(self.combo_multiplier * 100))}%"
             stats += f"\nUltimate Multiplier: {int(round(self.ultimate_multiplier * 100))}%"
             stats += f"\nFinal Damage: {int(round(self.final_damage * 100))}%"
@@ -421,7 +431,7 @@ class PlayerProfile:
             case "Rider":
                 base_attack_speed = 1.25
             case "Assassin":
-                self.can_bleed = True
+                self.bleed_application += 1
             case "Mage":
                 self.class_multiplier += 0.1
             case _:
@@ -435,6 +445,14 @@ class PlayerProfile:
         self.elemental_resistance[2] += 0.01 * storm_bonus
         self.critical_chance += 0.02 * storm_bonus
         self.critical_multiplier += 0.03 * storm_bonus
+        if storm_bonus >= 20:
+            base_critical_chance += 5.0
+        if storm_bonus >= 40:
+            self.critical_multiplier += 4
+        if storm_bonus >= 60:
+            self.critical_multiplier += 6
+        if storm_bonus >= 80:
+            self.critical_multiplier += 10
         frostfire_bonus = self.player_stats[1]
         self.elemental_damage[5] += 0.05 * frostfire_bonus
         self.elemental_damage[0] += 0.05 * frostfire_bonus
@@ -447,16 +465,40 @@ class PlayerProfile:
         self.elemental_resistance[3] += 0.01 * horizon_bonus
         self.elemental_resistance[4] += 0.01 * horizon_bonus
         self.bleed_multiplier += 0.15 * horizon_bonus
+        if horizon_bonus >= 20:
+            self.bleed_application += 1
+        if horizon_bonus >= 40:
+            self.bleed_application += 2
+        if horizon_bonus >= 60:
+            self.bleed_application += 3
+        if horizon_bonus >= 80:
+            self.bleed_application += 5
         eclipse_bonus = self.player_stats[3]
         self.elemental_damage[6] += 0.05 * eclipse_bonus
         self.elemental_damage[7] += 0.05 * eclipse_bonus
         self.elemental_resistance[6] += 0.01 * eclipse_bonus
         self.elemental_resistance[7] += 0.01 * eclipse_bonus
         self.ultimate_multiplier += 0.3 * eclipse_bonus
+        if eclipse_bonus >= 20:
+            self.skill_base_damage_bonus[3] += 0.5
+        if eclipse_bonus >= 40:
+            self.skill_base_damage_bonus[3] += 1
+        if eclipse_bonus >= 60:
+            self.skill_base_damage_bonus[3] += 2
+        if eclipse_bonus >= 80:
+            self.skill_base_damage_bonus[3] += 4
         star_bonus = self.player_stats[4]
         self.elemental_damage[8] += 0.07 * star_bonus
         self.elemental_resistance[8] += 0.01 * star_bonus
         self.combo_multiplier += 0.03 * star_bonus
+        if star_bonus >= 20:
+            self.skill_base_damage_bonus[0] += 0.5
+        if star_bonus >= 40:
+            self.skill_base_damage_bonus[1] += 0.75
+        if star_bonus >= 60:
+            self.skill_base_damage_bonus[2] += 1
+        if star_bonus >= 80:
+            self.skill_base_damage_bonus[2] += 1.5
         confluence_bonus = self.player_stats[5]
         self.all_elemental_multiplier += 0.05 * confluence_bonus
         self.all_elemental_penetration += 0.03 * confluence_bonus
@@ -507,15 +549,55 @@ class PlayerProfile:
         self.class_multiplier *= match_count
 
         # Elemental Calculations
+        def check_cascade(input_list):
+            temp_list = input_list
+            temp_list[0] = 0
+            temp_list[4] = 0
+            highest_index = temp_list.index(max(temp_list))
+            return highest_index
+        if frostfire_bonus >= 80:
+            self.elemental_damage_multiplier[0] *= 3
+            self.elemental_damage_multiplier[4] *= 3
+            self.elemental_penetration[0] *= 3
+            self.elemental_penetration[4] *= 3
+            self.elemental_curse[0] *= 3
+            self.elemental_curse[4] *= 3
+        if frostfire_bonus >= 20:
+            location = check_cascade(self.elemental_damage_multiplier)
+            self.elemental_damage_multiplier[location] += self.elemental_damage_multiplier[0]
+            self.elemental_damage_multiplier[location] += self.elemental_damage_multiplier[4]
+        if frostfire_bonus >= 40:
+            location = check_cascade(self.elemental_penetration)
+            self.elemental_penetration[location] += self.elemental_penetration[0]
+            self.elemental_penetration[location] += self.elemental_penetration[4]
+        if frostfire_bonus >= 60:
+            location = check_cascade(self.elemental_curse)
+            self.elemental_curse[location] += self.elemental_curse[0]
+            self.elemental_curse[location] += self.elemental_curse[4]
+        if confluence_bonus >= 20:
+            lowest = min(self.elemental_damage_multiplier)
+            self.all_elemental_multiplier += lowest
+        if confluence_bonus >= 40:
+            lowest = min(self.elemental_penetration)
+            self.all_elemental_penetration += lowest
+        if confluence_bonus >= 60:
+            lowest = min(self.elemental_curse)
+            self.all_elemental_curse += lowest
+        if confluence_bonus >= 80:
+            self.all_elemental_multiplier *= 2
+            self.all_elemental_penetration *= 2
+            self.all_elemental_curse *= 2
         for x in range(9):
             self.elemental_damage_multiplier[x] += self.all_elemental_multiplier
             self.elemental_penetration[x] += self.all_elemental_penetration
             self.elemental_resistance[x] += self.all_elemental_resistance
             self.elemental_curse[x] += self.all_elemental_curse
-            if self.elemental_resistance[x] >= 100:
-                self.elemental_resistance[x] = 100
+            if self.elemental_resistance[x] >= 90:
+                self.elemental_resistance[x] = 90
         for y in range(5):
             self.banes[y] += self.banes[5]
+        if frostfire_bonus >= 80:
+            self.damage_limitation = [0, 4, location]
 
     def get_player_initial_damage(self):
         initial_damage = self.player_damage
@@ -542,7 +624,11 @@ class PlayerProfile:
         defences_multiplier = (combat.boss_defences("", self, boss_object, -1, e_weapon) + self.defence_penetration)
         adjusted_damage *= defences_multiplier
         # Elemental Defences
-        for idx, x in enumerate(e_weapon.item_elements):
+        temp_element_list = e_weapon.item_elements
+        if self.damage_limitation:
+            for limit in self.damage_limitation:
+                temp_element_list[limit] = 0
+        for idx, x in enumerate(temp_element_list):
             if x == 1:
                 self.elemental_damage[idx] = adjusted_damage * (1 + self.elemental_damage_multiplier[idx])
                 resist_multi = combat.boss_defences("Element", self, boss_object, idx, e_weapon)
@@ -557,6 +643,7 @@ class PlayerProfile:
         e_weapon = inventory.read_custom_item(self.player_equipped[0])
         player_damage = self.get_player_initial_damage()
         self.player_total_damage = self.boss_adjustments(player_damage, boss_object, e_weapon)
+        self.player_total_damage *= (1 + self.bleed_multiplier)
         return self.player_total_damage
 
     def assign_insignia_values(self, insignia_code):

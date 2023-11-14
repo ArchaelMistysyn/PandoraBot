@@ -1,8 +1,8 @@
 boss_type,boss_tier,item_id,drop_rate
-All,0,i1r,10
-All,0,i3k,10
-All,0,i4h,5
-All,0,i4p,3
+All,0,i1r,25
+All,0,i3k,15
+All,0,i4h,10
+All,0,i4p,5
 All,1,i1o,25
 All,2,i2o,25
 All,3,i3o,25
@@ -15,9 +15,9 @@ All,1,i1y,5
 All,2,i2y,5
 All,3,i3y,5
 All,4,i4y,5
-All,4,i4z,1
-All,5,i4z,2
-All,6,i4z,3
+All,4,i4z,5
+All,5,i4z,5
+All,6,i4z,5
 All,5,i5x,15
 All,5,i5v,5
 All,5,i4y,10
@@ -33,8 +33,8 @@ Fortress,2,i2j,1
 Fortress,3,i3j,0.1
 Fortress,4,i4j,0.01
 Fortress,0,STONE1,75
-Dragon,0,i4w,15
-Dragon,0,i4g,15
+Dragon,0,i4w,25
+Dragon,0,i4g,25
 Dragon,0,STONE2,75
 Demon,0,i3f,10
 Demon,0,STONE3,75
