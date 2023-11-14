@@ -159,8 +159,8 @@ def is_dropped(drop_rate):
 
 def create_loot_embed(current_embed, active_boss, player_list):
     loot_embed = current_embed
-    exp_amount = (active_boss.boss_tier * 250) + (active_boss.boss_type_num * 50)
-    level_bonus = random.randint((active_boss.boss_lvl * 25), (active_boss.boss_lvl * 50))
+    exp_amount = (active_boss.boss_tier * 250) + (active_boss.boss_type_num * 100)
+    level_bonus = random.randint((active_boss.boss_lvl * 25), (active_boss.boss_lvl * 100))
     exp_amount += level_bonus
     coin_amount = active_boss.boss_type_num * active_boss.boss_tier * 250
     coin_amount += int(level_bonus / 10)

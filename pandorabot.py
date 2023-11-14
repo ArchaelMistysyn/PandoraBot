@@ -424,16 +424,17 @@ def run_discord_bot():
     @set_command_category('gear', 0)
     @pandora_bot.hybrid_command(name='gear', help="Display your equipped gear items.")
     @app_commands.guilds(discord.Object(id=1011375205999968427))
-    async def gear(ctx):
+    async def gear(ctx, user: discord.User = None):
         await ctx.defer()
         if any(ctx.channel.id in sl for sl in globalitems.global_server_channels):
             player_object = player.get_player_by_name(str(ctx.author))
-            if player_object.player_class != "":
-                player_object.get_equipped()
-                if player_object.player_equipped[0] != 0:
-                    equipped_item = inventory.read_custom_item(player_object.player_equipped[0])
+            target_user = player.get_player_by_name(str(user.name))
+            if target_user.player_class != "":
+                target_user.get_equipped()
+                if target_user.player_equipped[0] != 0:
+                    equipped_item = inventory.read_custom_item(target_user.player_equipped[0])
                     embed_msg = equipped_item.create_citem_embed()
-                    gear_view = menus.GearView(player_object)
+                    gear_view = menus.GearView(player_object, target_user)
                 else:
                     embed_msg = discord.Embed(colour=discord.Colour.dark_gray(),
                                               title="Equipped weapon",
@@ -441,8 +442,7 @@ def run_discord_bot():
                     gear_view = None
                 await ctx.send(embed=embed_msg, view=gear_view)
             else:
-                embed_msg = unregistered_message()
-                await ctx.send(embed=embed_msg)
+                await ctx.send("Target user is not registered.")
 
     @set_command_category('gear', 1)
     @pandora_bot.hybrid_command(name='inv', help="Display your item and gear inventories.")
@@ -662,31 +662,34 @@ def run_discord_bot():
     @set_command_category('trade', 4)
     @pandora_bot.hybrid_command(name='give', help="Transfer ownership of a gear item.")
     @app_commands.guilds(discord.Object(id=1011375205999968427))
-    async def give(ctx, item_id: int, receiving_player_id: int):
+    async def give(ctx, item_id: int, receiving_player: discord.User):
         if any(ctx.channel.id in sl for sl in globalitems.global_server_channels):
             await ctx.defer()
             player_object = player.get_player_by_name(str(ctx.author))
             if player_object.player_class != "":
-                if inventory.if_custom_exists(item_id):
+                response = player_object.check_equipped(item_id)
+                if response == "":
                     selected_item = inventory.read_custom_item(item_id)
                     embed_msg = selected_item.create_citem_embed()
-                    if player.check_user_exists(receiving_player_id):
+                    target_player_object = player.get_player_by_name(receiving_player.name)
+                    if player.check_user_exists(target_player_object.player_id):
                         owner_check = selected_item.player_owner
                         if selected_item.player_owner == -1:
                             owner_check = bazaar.get_seller_by_item(item_id)
                         if player_object.player_id == owner_check:
-                            selected_item.give_item(receiving_player_id)
+
+                            selected_item.give_item(target_player_object.player_id)
                             embed_title = "Item Transfer Complete!"
-                            embed_description = f"User: {receiving_player_id} has received item: {item_id}"
+                            embed_description = f"User: {target_player_object.player_username} has received item: {item_id}"
                         else:
                             embed_title = "Cannot Transfer Item."
                             embed_description = f"You do not own item {item_id}"
                     else:
-                        embed_title = "A user with this ID does not exist."
-                        embed_description = f"Inputted ID: {receiving_player_id}"
+                        embed_title = "Target user is not registered."
+                        embed_description = f"Unregistered users cannot receive items."
                 else:
-                    embed_title = "An item with this ID does not exist."
-                    embed_description = f"Inputted ID: {item_id}"
+                    embed_title = "Item could not be transferred."
+                    embed_description = response
                 embed_msg = discord.Embed(colour=discord.Colour.dark_orange(),
                                           title=embed_title,
                                           description=embed_description)

@@ -384,16 +384,16 @@ class PlayerProfile:
         colour, icon = inventory.get_gear_tier_colours(self.player_echelon)
         embed = discord.Embed(color=colour, title=f"{selected_path}", description="")
         perks = {
-            "Storms": ["Water Damage: 1%", "Lightning Damage: 1%", "Water Resistance: 1%", "Lightning Resistance: 1%",
+            "Storms": ["Water Damage: 5%", "Lightning Damage: 5%", "Water Resistance: 1%", "Lightning Resistance: 1%",
                        "Critical Chance: 2%", "Critical Damage: 3%"],
-            "Frostfire": ["Ice Damage: 1%", "Fire Damage: 1%", "Ice Resistance: 1%", "Fire Resistance: 1%",
+            "Frostfire": ["Ice Damage: 5%", "Fire Damage: 5%", "Ice Resistance: 1%", "Fire Resistance: 1%",
                           "Class Mastery: 1%"],
-            "Horizon": ["Earth Damage: 1%", "Wind Damage: 1%", "Earth Resistance: 1%", "Wind Resistance: 1%",
+            "Horizon": ["Earth Damage: 5%", "Wind Damage: 5%", "Earth Resistance: 1%", "Wind Resistance: 1%",
                         "Bleed Multiplier: 15%"],
-            "Eclipse": ["Dark Damage: 1%", "Light Damage: 1%", "Dark Resistance: 1%", "Light Resistance: 1%",
+            "Eclipse": ["Dark Damage: 5%", "Light Damage: 5%", "Dark Resistance: 1%", "Light Resistance: 1%",
                         "Ultimate Damage: 30%"],
-            "Stars": ["Celestial Damage: 1%", "Celestial Resistance: 1%", "Combo Damage: 3%"],
-            "Confluence": ["Omni Damage: 3%", "Omni Penetration: 2%", "Omni Curse: 1%"]
+            "Stars": ["Celestial Damage: 7%", "Celestial Resistance: 1%", "Combo Damage: 3%"],
+            "Confluence": ["Omni Damage: 5%", "Omni Penetration: 3%", "Omni Curse: 1%"]
         }
         path_type = selected_path.split(" ")[-1]
         embed.description = "Stats per point:\n" + '\n'.join(perks[path_type])
@@ -429,37 +429,37 @@ class PlayerProfile:
 
         # Path Multipliers
         storm_bonus = self.player_stats[0]
-        self.elemental_damage[1] += 0.01 * storm_bonus
-        self.elemental_damage[2] += 0.01 * storm_bonus
+        self.elemental_damage[1] += 0.05 * storm_bonus
+        self.elemental_damage[2] += 0.05 * storm_bonus
         self.elemental_resistance[1] += 0.01 * storm_bonus
         self.elemental_resistance[2] += 0.01 * storm_bonus
         self.critical_chance += 0.02 * storm_bonus
         self.critical_multiplier += 0.03 * storm_bonus
         frostfire_bonus = self.player_stats[1]
-        self.elemental_damage[5] += 0.01 * frostfire_bonus
-        self.elemental_damage[0] += 0.01 * frostfire_bonus
+        self.elemental_damage[5] += 0.05 * frostfire_bonus
+        self.elemental_damage[0] += 0.05 * frostfire_bonus
         self.elemental_resistance[5] += 0.01 * frostfire_bonus
         self.elemental_resistance[0] += 0.01 * frostfire_bonus
         self.class_multiplier += 0.01 * frostfire_bonus
         horizon_bonus = self.player_stats[2]
-        self.elemental_damage[3] += 0.01 * horizon_bonus
-        self.elemental_damage[4] += 0.01 * horizon_bonus
+        self.elemental_damage[3] += 0.05 * horizon_bonus
+        self.elemental_damage[4] += 0.05 * horizon_bonus
         self.elemental_resistance[3] += 0.01 * horizon_bonus
         self.elemental_resistance[4] += 0.01 * horizon_bonus
         self.bleed_multiplier += 0.15 * horizon_bonus
         eclipse_bonus = self.player_stats[3]
-        self.elemental_damage[6] += 0.01 * eclipse_bonus
-        self.elemental_damage[7] += 0.01 * eclipse_bonus
+        self.elemental_damage[6] += 0.05 * eclipse_bonus
+        self.elemental_damage[7] += 0.05 * eclipse_bonus
         self.elemental_resistance[6] += 0.01 * eclipse_bonus
         self.elemental_resistance[7] += 0.01 * eclipse_bonus
         self.ultimate_multiplier += 0.3 * eclipse_bonus
         star_bonus = self.player_stats[4]
-        self.elemental_damage[8] += 0.01 * star_bonus
+        self.elemental_damage[8] += 0.07 * star_bonus
         self.elemental_resistance[8] += 0.01 * star_bonus
         self.combo_multiplier += 0.03 * star_bonus
         confluence_bonus = self.player_stats[5]
-        self.all_elemental_multiplier += 0.03 * confluence_bonus
-        self.all_elemental_penetration += 0.02 * confluence_bonus
+        self.all_elemental_multiplier += 0.05 * confluence_bonus
+        self.all_elemental_penetration += 0.03 * confluence_bonus
         self.all_elemental_curse += 0.01 * confluence_bonus
 
         # Item Multipliers

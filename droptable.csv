@@ -32,11 +32,11 @@ Fortress,1,i1j,5
 Fortress,2,i2j,1
 Fortress,3,i3j,0.1
 Fortress,4,i4j,0.01
-Fortress,0,STONE1,50
+Fortress,0,STONE1,75
 Dragon,0,i4w,15
 Dragon,0,i4g,15
-Dragon,0,STONE2,50
+Dragon,0,STONE2,75
 Demon,0,i3f,10
-Demon,0,STONE3,50
+Demon,0,STONE3,75
 Paragon,0,i4c,25
-Paragon,0,STONE4,50
+Paragon,0,STONE4,75

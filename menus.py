@@ -557,9 +557,10 @@ def binding_ritual(player_object, essence_type):
 
 
 class GearView(discord.ui.View):
-    def __init__(self, player_user):
+    def __init__(self, player_user, target_user):
         super().__init__(timeout=None)
         self.player_user = player_user
+        self.target_user = target_user
         self.current_position = 0
 
     @discord.ui.button(label="Previous", style=discord.ButtonStyle.blurple, emoji="⬅️")
@@ -567,7 +568,7 @@ class GearView(discord.ui.View):
         try:
             if interaction.user.name == self.player_user.player_name:
                 direction = -1
-                new_msg, self.current_position = cycle_gear(self.player_user, self.current_position, direction)
+                new_msg, self.current_position = cycle_gear(self.target_user, self.current_position, direction)
                 await interaction.response.edit_message(embed=new_msg)
         except Exception as e:
             print(e)
@@ -577,7 +578,7 @@ class GearView(discord.ui.View):
         try:
             if interaction.user.name == self.player_user.player_name:
                 direction = 1
-                new_msg, self.current_position = cycle_gear(self.player_user, self.current_position, direction)
+                new_msg, self.current_position = cycle_gear(self.target_user, self.current_position, direction)
                 await interaction.response.edit_message(embed=new_msg)
         except Exception as e:
             print(e)
