@@ -242,14 +242,14 @@ class TarotCard:
                     buff_value = self.num_stars * 15
                 else:
                     buff_type = "Ice Damage"
-                    buff_value = self.num_stars * 20
+                    buff_value = self.num_stars * 25
             case 1:
                 if self.card_variant == 1:
-                    buff_type = "Fire Resistance"
-                    buff_value = self.num_stars * 15
+                    buff_type = "Fire and Ice Resistance"
+                    buff_value = self.num_stars * 10
                 else:
-                    buff_type = "Fire Damage"
-                    buff_value = self.num_stars * 20
+                    buff_type = "Fire and Ice Damage"
+                    buff_value = self.num_stars * 15
             case 2:
                 if self.card_variant == 1:
                     buff_type = "Celestial Penetration"
@@ -262,14 +262,14 @@ class TarotCard:
                     buff_type = "Defence Penetration"
                     buff_value = self.num_stars * 25
                 else:
-                    buff_type = "Class Mastery"
-                    buff_value = self.num_stars * 8
+                    buff_type = "Attack Speed"
+                    buff_value = self.num_stars * 10
             case 4:
                 if self.card_variant == 1:
-                    buff_type = "Critical Chance"
-                    buff_value = self.num_stars * 25
+                    buff_type = "Critical Damage"
+                    buff_value = self.num_stars * 30
                 else:
-                    buff_type = "Critical Strike Multiplier"
+                    buff_type = "Critical Penetration"
                     buff_value = self.num_stars * 40
             case 5:
                 if self.card_variant == 1:
@@ -280,39 +280,39 @@ class TarotCard:
                     buff_value = self.num_stars * 30
             case 6:
                 if self.card_variant == 1:
-                    buff_type = "Health Multiplier"
-                    buff_value = self.num_stars * 25
-                else:
                     buff_type = "Omni Resistance"
                     buff_value = self.num_stars * 10
+                else:
+                    buff_type = "Human Bane"
+                    buff_value = self.num_stars * 40
             case 7:
                 if self.card_variant == 1:
-                    buff_type = "Final Damage"
-                    buff_value = self.num_stars * 15
+                    buff_type = "Ultimate Damage"
+                    buff_value = self.num_stars * 25
                 else:
-                    buff_type = "Dragon Bane"
-                    buff_value = self.num_stars * 40
+                    buff_type = "Ultimate Penetration"
+                    buff_value = self.num_stars * 30
             case 8:
                 if self.card_variant == 1:
                     display_method = 2
-                    buff_type = "Health Bonus"
-                    buff_value = 250 * self.num_stars
+                    buff_type = "Bleed Damage"
+                    buff_value = self.num_stars * 25
                 else:
-                    buff_type = "Demon Bane"
-                    buff_value = self.num_stars * 40
+                    buff_type = "Bleed Penetration"
+                    buff_value = self.num_stars * 30
             case 9:
                 if self.card_variant == 1:
                     buff_type = "Lightning Resistance"
                     buff_value = self.num_stars * 15
                 else:
                     buff_type = "Lightning Damage"
-                    buff_value = self.num_stars * 20
+                    buff_value = self.num_stars * 25
             case 10:
                 if self.card_variant == 1:
-                    buff_type = "Earth Penetration"
+                    buff_type = "Cobmo Damage"
                     buff_value = self.num_stars * 25
                 else:
-                    buff_type = "Earth Curse"
+                    buff_type = "Combo Penetration"
                     buff_value = self.num_stars * 30
             case 11:
                 if self.card_variant == 1:
@@ -338,66 +338,66 @@ class TarotCard:
             case 14:
                 if self.card_variant == 1:
                     buff_type = "Water Penetration"
-                    buff_value = self.num_stars * 15
-                else:
-                    buff_type = "Water Curse"
-                    buff_value = self.num_stars * 20
-            case 15:
-                if self.card_variant == 1:
-                    buff_type = "Fire Penetration"
                     buff_value = self.num_stars * 25
                 else:
-                    buff_type = "Fire Curse"
+                    buff_type = "Water Curse"
                     buff_value = self.num_stars * 30
+            case 15:
+                if self.card_variant == 1:
+                    buff_type = "Fire and Ice Penetration"
+                    buff_value = self.num_stars * 15
+                else:
+                    buff_type = "Fire and Ice Curse"
+                    buff_value = self.num_stars * 20
             case 16:
                 if self.card_variant == 1:
                     buff_type = "Damage Mitigation"
                     buff_value = self.num_stars * 15
                 else:
-                    buff_type = "Fortress Bane"
-                    buff_value = self.num_stars * 40
+                    buff_type = "Omni Bane"
+                    buff_value = self.num_stars * 10
             case 17:
                 if self.card_variant == 1:
-                    buff_type = "Health Regen"
-                    buff_value = self.num_stars * 25
+                    buff_type = "Celestial Resistance"
+                    buff_value = self.num_stars * 15
                 else:
-                    buff_type = "Omni Damage"
-                    buff_value = self.num_stars * 20
+                    buff_type = "Celestial Damage"
+                    buff_value = self.num_stars * 25
             case 18:
                 if self.card_variant == 1:
                     buff_type = "Shadow Resistance"
                     buff_value = self.num_stars * 15
                 else:
                     buff_type = "Shadow Damage"
-                    buff_value = self.num_stars * 20
+                    buff_value = self.num_stars * 25
             case 19:
                 if self.card_variant == 1:
                     buff_type = "Light Resistance"
                     buff_value = self.num_stars * 15
                 else:
                     buff_type = "Light Damage"
-                    buff_value = self.num_stars * 20
+                    buff_value = self.num_stars * 25
             case 20:
                 if self.card_variant == 1:
-                    buff_type = "Wind Resistance"
+                    buff_type = "Wind and Earth Penetration"
                     buff_value = self.num_stars * 15
                 else:
-                    buff_type = "Wind Damage"
-                    buff_value = self.num_stars * 20
+                    buff_type = "Wind and Earth Curse"
+                    buff_value = self.num_stars * 220
             case 21:
                 if self.card_variant == 1:
                     buff_type = "Earth Resistance"
                     buff_value = self.num_stars * 15
                 else:
                     buff_type = "Earth Damage"
-                    buff_value = self.num_stars * 20
+                    buff_value = self.num_stars * 25
             case 22:
                 if self.card_variant == 1:
                     buff_type = "Omni Curse"
-                    buff_value = self.num_stars * 15
+                    buff_value = self.num_stars * 30
                 else:
                     buff_type = "Omni Aura"
-                    buff_value = self.num_stars * 20
+                    buff_value = self.num_stars * 40
         bonus_stat_string = f"{buff_type} +{buff_value}"
         if display_method == 1:
             bonus_stat_string += "%"

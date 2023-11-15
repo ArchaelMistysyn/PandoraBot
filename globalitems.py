@@ -24,6 +24,7 @@ role_list = ["Player Echelon 1", "Player Echelon 2", "Player Echelon 3", "Player
 # Initialize server and channel list
 channel_list_wiki = [1140841088005976124, 1141256419161673739, 1148155007305273344]
 channel_list = [1157937444931514408, 1157934010090131458, 1157935203394785291, 1157935449462013972, 1157935876853211186]
+channel_echelon_dict = {1: 1, 2: 2, 3: 3, 4: 5}
 global_server_channels = [channel_list]
 
 # Initialize damage_type lists
@@ -41,24 +42,15 @@ global_element_list = [element_fire, element_water, element_lightning, element_e
                        element_dark, element_light, element_celestial]
 element_names = ["Fire", "Water", "Lightning", "Earth", "Wind", "Ice", "Shadow", "Light", "Celestial"]
 element_special_names = ["Volcanic", "Aquatic", "Voltaic", "Seismic", "Sonic", "Arctic", "Lunar", "Solar", "Cosmic"]
-tier_5_ability_list = ["Elemental Fractal", "Specialist's Mastery", "Curse of Immortality", "Omega Critical"]
+tier_5_ability_dict = {"Elemental Fractal": 200, "Specialist's Mastery": 10, "Curse of Immortality": True,
+                       "Omega Critical": 1, "Endless Combo": 1, "Crimson Reaper": 1, "Overflowing Vitality": 5,
+                       "Ultimate Overdrive": 1}
 
 not_owned_icon = "https://kyleportfolio.ca/botimages/profilecards/noachv.png"
 owned_icon = "https://kyleportfolio.ca/botimages/profilecards/owned.png"
-global_role_dict = {"Achv Role - Knife Rat": owned_icon,
-                    "Achv Role - Koin Kollektor": owned_icon,
-                    "Notification Role - Movie Lover": owned_icon,
-                    "Notification Role - Signal Flare": owned_icon,
-                    "Achv Role - All Nighter": owned_icon,
-                    "Achv Role - Reactive": owned_icon,
-                    "Achv Role - Message Master": owned_icon,
-                    "Achv Role - Endless Gaming": owned_icon,
-                    "Achv Role - Infinite Time": owned_icon,
-                    "Achv Role - Feng Hao Dou Luo": owned_icon,
-                    "Achv Role - ": owned_icon,
-                    "Activity Echelon 5 (MAX)": pilengine.echelon_5,
+global_role_dict = {"Activity Echelon 5 (MAX)": pilengine.echelon_5,
                     "Player Echelon 5 (MAX)": pilengine.echelon_5,
-                    "Achv Role - Exclusive Title Holder": pilengine.echelon_5flare}
+                    "Exclusive Title Holder": pilengine.echelon_5flare}
 
 # Date formatting
 date_formatting = '%Y-%m-%d %H:%M:%S'

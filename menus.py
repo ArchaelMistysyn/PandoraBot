@@ -74,19 +74,6 @@ def build_help_embed(category_dict, category_name):
     return embed
 
 
-# Raid View
-class RaidView(discord.ui.View):
-    def __init__(self):
-        super().__init__(timeout=None)
-
-    @discord.ui.button(label="Join the raid!", style=discord.ButtonStyle.success, emoji="⚔️")
-    async def raid_callback(self, interaction: discord.Interaction, raid_select: discord.ui.Select):
-        clicked_by = player.get_player_by_name(str(interaction.user))
-        outcome = clicked_by.player_username
-        outcome += bosses.add_participating_player(interaction.channel.id, clicked_by.player_id)
-        await interaction.response.send_message(outcome)
-
-
 # Gem inlay menus
 class InlaySelectView(discord.ui.View):
     def __init__(self, player_user, gem_id):
@@ -778,15 +765,16 @@ class ClassChangeView(discord.ui.View):
 
 
 class StatView(discord.ui.View):
-    def __init__(self, player_user):
+    def __init__(self, player_user, target_user):
         super().__init__(timeout=None)
         self.player_user = player_user
+        self.target_user = target_user
 
     @discord.ui.button(label="Offensive", style=discord.ButtonStyle.blurple, emoji="⚔️")
     async def offensive_stats(self, interaction: discord.Interaction, button: discord.Button):
         try:
             if interaction.user.name == self.player_user.player_name:
-                new_msg = self.player_user.get_player_stats(1)
+                new_msg = self.target_user.get_player_stats(1)
                 await interaction.response.edit_message(embed=new_msg)
         except Exception as e:
             print(e)
@@ -795,7 +783,7 @@ class StatView(discord.ui.View):
     async def breakdown(self, interaction: discord.Interaction, button: discord.Button):
         try:
             if interaction.user.name == self.player_user.player_name:
-                new_msg = self.player_user.get_player_stats(2)
+                new_msg = self.target_user.get_player_stats(2)
                 await interaction.response.edit_message(embed=new_msg)
         except Exception as e:
             print(e)
@@ -804,7 +792,7 @@ class StatView(discord.ui.View):
     async def defensive_stats(self, interaction: discord.Interaction, button: discord.Button):
         try:
             if interaction.user.name == self.player_user.player_name:
-                new_msg = self.player_user.get_player_stats(3)
+                new_msg = self.target_user.get_player_stats(3)
                 await interaction.response.edit_message(embed=new_msg)
         except Exception as e:
             print(e)
@@ -813,7 +801,7 @@ class StatView(discord.ui.View):
     async def bonus_stats(self, interaction: discord.Interaction, button: discord.Button):
         try:
             if interaction.user.name == self.player_user.player_name:
-                new_msg = self.player_user.get_player_stats(4)
+                new_msg = self.target_user.get_player_stats(4)
                 await interaction.response.edit_message(embed=new_msg)
         except Exception as e:
             print(e)
@@ -926,7 +914,7 @@ class ResetView(discord.ui.View):
     @discord.ui.button(label="Confirm Reset", style=discord.ButtonStyle.danger)
     async def confirm_reset_button(self, interaction: discord.Interaction, button: discord.ui.Button):
         if interaction.user.name == self.player_object.player_name:
-            if self.embed_msg:
+            if not self.embed_msg:
                 reload_player = player.get_player_by_id(self.player_object.player_id)
                 num_tokens = inventory.check_stock(reload_player, "cSKILL")
                 if num_tokens >= 1:
@@ -935,9 +923,10 @@ class ResetView(discord.ui.View):
                     result_msg = "ALL SKILL POINTS RESET!"
                 else:
                     result_msg = "Come back when you have the resetter token."
+                self.embed_msg = reload_player.create_path_embed()
                 self.embed_msg.add_field(name=result_msg, value="", inline=False)
-                points_view = PointsView(reload_player)
-            await interaction.response.edit_message(embed=embed_msg, view=points_view)
+            points_view = PointsView(reload_player)
+            await interaction.response.edit_message(embed=self.embed_msg, view=points_view)
 
     @discord.ui.button(label="Reselect", style=discord.ButtonStyle.secondary)
     async def reselect_path_button(self, interaction: discord.Interaction, button: discord.ui.Button):

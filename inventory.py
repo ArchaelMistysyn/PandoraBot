@@ -246,9 +246,9 @@ class CustomItem:
                     case 3:
                         self.item_base_type = "Wonderous Wings"
                     case 2:
-                        self.item_base_type = "Lucent Wings"
-                    case _:
                         self.item_base_type = "Feathered Wings"
+                    case _:
+                        self.item_base_type = "Error - Tier 1 Wing"
                 self.assign_bonus_stat()
                 self.add_roll(1)
             case "C":
@@ -280,15 +280,11 @@ class CustomItem:
                             self.item_name = "Gem of Twilight"
                     case 2:
                         if random_variant == 1:
-                            self.item_name = "Gem of Clarity"
+                            self.item_name = "Gem of Land and Sky"
                         else:
                             self.item_name = "Gem of Nature's Wrath"
                     case _:
-                        if random_variant == 1:
-                            self.item_name = "Gem of the Deep"
-                        else:
-                            self.item_name = "Gem of Land and Sky"
-
+                        self.item_name = "Error - Tier 1 Gem"
                 for idx, x in enumerate(range(self.item_tier)):
                     self.add_roll(self.item_tier)
 
@@ -362,7 +358,7 @@ class CustomItem:
                 descriptor = "Authority"
             unique_skill = f"{keyword} {descriptor}"
         else:
-            random_pos = random.randint(0, 3)
+            random_pos = random.randint(0, len(globalitems.tier_5_ability_list))
             unique_skill = globalitems.tier_5_ability_list[random_pos]
         self.item_bonus_stat = unique_skill
 
@@ -558,6 +554,8 @@ class CustomItem:
             self.add_roll(roll_tier)
             while selected_roll == self.item_prefix_values[random_roll]:
                 self.add_roll(roll_tier)
+                if selected_roll == self.item_prefix_values[random_roll]:
+                    self.item_prefix_values[random_roll] = ""
         else:
             selected_roll = self.item_suffix_values[random_roll]
             roll_tier = selected_roll[1]
@@ -565,11 +563,15 @@ class CustomItem:
             self.add_roll(roll_tier)
             while selected_roll == self.item_suffix_values[random_roll]:
                 self.add_roll(roll_tier)
+                if selected_roll == self.item_suffix_values[random_roll]:
+                    self.item_suffix_values[random_roll] = ""
 
     def generate_new_roll(self, roll_type, roll_tier):
         new_roll = ""
         roll_location = 0
         available_identifier = list(string.ascii_lowercase)
+        available_identifier += ["A", "B", "C", "D"]
+        # available_identifier += list(string.ascii_uppercase)
         match roll_type:
             case "P":
                 affix_type = "P"
@@ -1056,11 +1058,11 @@ def get_gear_tier_colours(base_tier):
 
 def generate_random_tier():
     random_num = random.randint(1, 100)
-    if random_num <= 1:
+    if random_num <= 2:
         temp_tier = 4
-    elif random_num <= 6:
+    elif random_num <= 12:
         temp_tier = 3
-    elif random_num <= 40:
+    elif random_num <= 52:
         temp_tier = 2
     else:
         temp_tier = 1
@@ -1122,7 +1124,18 @@ def get_roll_by_code(item_object, code):
     check_roll = ord(code[2])
     match code[0]:
         case "P":
-            if check_roll <= 106:
+            if check_roll <= 68:
+                roll_adjust = 10
+                if check_roll == 65:
+                    roll_keyword = "Critical"
+                elif check_roll == 66:
+                    roll_keyword = "Ultimate"
+                elif check_roll == 67:
+                    roll_keyword = "Bleed"
+                elif check_roll == 68:
+                    roll_keyword = "Combo"
+                roll = f"{roll_keyword} Penetration"
+            elif check_roll <= 106:
                 roll_num = check_roll - 97
                 if roll_num == 9:
                     roll_adjust = 8
@@ -1163,7 +1176,21 @@ def get_roll_by_code(item_object, code):
             bonus = str((1 + int(code[1])) * roll_adjust)
             roll_text += f'+{bonus}% {roll}'
         case "S":
-            if check_roll <= 106:
+            if check_roll <= 67:
+                if check_roll == 65:
+                    roll_adjust = 50
+                    roll_keyword = "Ultimate"
+                elif check_roll == 66:
+                    roll_adjust = 20
+                    roll_keyword = "Bleed"
+                elif check_roll == 67:
+                    roll_adjust = 5
+                    roll_keyword = "Combo"
+                roll = f"{roll_keyword} Damage"
+            elif check_roll <= 68:
+                roll_adjust = 3
+                roll = "Attack Speed"
+            elif check_roll <= 106:
                 roll_num = check_roll - 97
                 if roll_num == 9:
                     roll_keyword = "Omni"

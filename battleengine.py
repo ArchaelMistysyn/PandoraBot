@@ -30,6 +30,24 @@ with open("engine_bot_token.txt", 'r') as token_file:
 TOKEN = token_info
 
 
+# Raid View
+class RaidView(discord.ui.View):
+    def __init__(self, channel_num):
+        super().__init__(timeout=None)
+        self.channel_num = channel_num
+
+    @discord.ui.button(label="Join the raid!", style=discord.ButtonStyle.success, emoji="⚔️")
+    async def raid_callback(self, interaction: discord.Interaction, raid_select: discord.ui.Select):
+        clicked_by = player.get_player_by_name(str(interaction.user))
+        outcome = clicked_by.player_username
+        echelon_req = globalitems.channel_echelon_dict[self.channel_num]
+        if clicked_by.player_echelon == echelon_req:
+            outcome += bosses.add_participating_player(interaction.channel.id, clicked_by.player_id)
+        else:
+            outcome += f" is not echelon {echelon_req} and cannot join this raid."
+        await interaction.response.send_message(outcome)
+
+
 class EngineBot(commands.Bot):
     def __init__(self):
         super().__init__(command_prefix="!", intents=discord.Intents.all())
@@ -124,7 +142,7 @@ def run_discord_bot():
         level, boss_type, boss_tier = bosses.get_boss_details(channel_num)
         active_boss = bosses.spawn_boss(channel_id, 0, boss_tier, boss_type, level, channel_num)
         embed_msg = active_boss.create_boss_embed(0)
-        raid_button = menus.RaidView()
+        raid_button = RaidView(channel_num)
         sent_message = await channel_object.send(embed=embed_msg, view=raid_button)
         enginecogs.RaidCog(engine_bot, active_boss, channel_id, channel_num, sent_message, channel_object)
 

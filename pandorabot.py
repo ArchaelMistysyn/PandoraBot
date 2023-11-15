@@ -232,14 +232,19 @@ def run_discord_bot():
     @pandora_bot.hybrid_command(name='points', help="Assign your skill points.")
     @app_commands.guilds(discord.Object(id=1011375205999968427))
     async def points(ctx):
-        if any(ctx.channel.id in sl for sl in globalitems.global_server_channels):
+        channel_id = ctx.channel.id
+        if any(channel_id in sl for sl in globalitems.global_server_channels):
             await ctx.defer()
             user = ctx.author
             player_object = player.get_player_by_name(user)
             if player_object.player_class != "":
-                embed_msg = player_object.create_path_embed()
-                points_view = menus.PointsView(player_object)
-                await ctx.send(embed=embed_msg, view=points_view)
+                existing_id = bosses.get_raid_id(channel_id, player_object.player_id)
+                if existing_id == 0:
+                    embed_msg = player_object.create_path_embed()
+                    points_view = menus.PointsView(player_object)
+                    await ctx.send(embed=embed_msg, view=points_view)
+                else:
+                    await ctx.send("You cannot speak to Lyra while in combat.")
             else:
                 embed_msg = unregistered_message()
                 await ctx.send(embed=embed_msg)
@@ -428,7 +433,10 @@ def run_discord_bot():
         await ctx.defer()
         if any(ctx.channel.id in sl for sl in globalitems.global_server_channels):
             player_object = player.get_player_by_name(str(ctx.author))
-            target_user = player.get_player_by_name(str(user.name))
+            if user:
+                target_user = player.get_player_by_name(str(user.name))
+            else:
+                target_user = player_object
             if target_user.player_class != "":
                 target_user.get_equipped()
                 if target_user.player_equipped[0] != 0:
@@ -667,28 +675,29 @@ def run_discord_bot():
             await ctx.defer()
             player_object = player.get_player_by_name(str(ctx.author))
             if player_object.player_class != "":
-                response = player_object.check_equipped(item_id)
-                if response == "":
-                    selected_item = inventory.read_custom_item(item_id)
-                    embed_msg = selected_item.create_citem_embed()
-                    target_player_object = player.get_player_by_name(receiving_player.name)
-                    if player.check_user_exists(target_player_object.player_id):
-                        owner_check = selected_item.player_owner
-                        if selected_item.player_owner == -1:
-                            owner_check = bazaar.get_seller_by_item(item_id)
-                        if player_object.player_id == owner_check:
+                selected_item = inventory.read_custom_item(item_id)
+                if selected_item:
+                    response = player_object.check_equipped(selected_item)
+                    if response == "":
+                        embed_msg = selected_item.create_citem_embed()
+                        target_player_object = player.get_player_by_name(receiving_player.name)
+                        if player.check_user_exists(target_player_object.player_id):
+                            owner_check = selected_item.player_owner
+                            if selected_item.player_owner == -1:
+                                owner_check = bazaar.get_seller_by_item(item_id)
+                            if player_object.player_id == owner_check:
 
-                            selected_item.give_item(target_player_object.player_id)
-                            embed_title = "Item Transfer Complete!"
-                            embed_description = f"User: {target_player_object.player_username} has received item: {item_id}"
+                                selected_item.give_item(target_player_object.player_id)
+                                embed_title = "Item Transfer Complete!"
+                                embed_description = f"User: {target_player_object.player_username} has received item: {item_id}"
                         else:
-                            embed_title = "Cannot Transfer Item."
-                            embed_description = f"You do not own item {item_id}"
+                            embed_title = "Target user is not registered."
+                            embed_description = f"Unregistered users cannot receive items."
                     else:
-                        embed_title = "Target user is not registered."
-                        embed_description = f"Unregistered users cannot receive items."
+                        embed_title = f"Item {item_id} could not be transferred."
+                        embed_description = response
                 else:
-                    embed_title = "Item could not be transferred."
+                    embed_title = f"Item {item_id} could not be transferred."
                     embed_description = response
                 embed_msg = discord.Embed(colour=discord.Colour.dark_orange(),
                                           title=embed_title,
@@ -866,18 +875,21 @@ def run_discord_bot():
     @set_command_category('info', 2)
     @pandora_bot.hybrid_command(name='stats', help="Display your stats page.")
     @app_commands.guilds(discord.Object(id=1011375205999968427))
-    async def stats(ctx):
+    async def stats(ctx, user: discord.User = None):
         if any(ctx.channel.id in sl for sl in globalitems.global_server_channels):
             await ctx.defer()
-            user = ctx.author
-            player_object = player.get_player_by_name(user)
-            if player_object.player_class != "":
-                embed_msg = player_object.get_player_stats(1)
-                stat_view = menus.StatView(player_object)
+            command_user = ctx.author
+            player_object = player.get_player_by_name(command_user)
+            if user:
+                target_user = player.get_player_by_name(user.name)
+            else:
+                target_user = player_object
+            if target_user.player_class != "":
+                embed_msg = target_user.get_player_stats(1)
+                stat_view = menus.StatView(player_object, target_user)
                 await ctx.send(embed=embed_msg, view=stat_view)
             else:
-                embed_msg = unregistered_message()
-                await ctx.send(embed=embed_msg)
+                await ctx.send("Selected user is not registered.")
 
     @set_command_category('info', 3)
     @pandora_bot.hybrid_command(name='profile', help="View profile rank card.")

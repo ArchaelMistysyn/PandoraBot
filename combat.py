@@ -47,15 +47,6 @@ def run_cycle(combat_tracker, active_boss, player_object, method):
     hit_list = []
     if combat_tracker.stun_cycles <= 0:
         combo_count = 0
-        combo_adjuster = 1
-        charge_adjuster = 0
-        match player_object.player_class:
-            case "Knight":
-                charge_adjuster = 1
-            case "Summoner":
-                combo_adjuster = 2
-            case _:
-                pass
         hp_adjust_msg = ""
         if active_boss.boss_type_num >= 2:
             if active_boss.boss_element != 9:
@@ -87,42 +78,52 @@ def run_cycle(combat_tracker, active_boss, player_object, method):
             hits_per_cycle += 1
             combat_tracker.remaining_hits -= 1
         for x in range(hits_per_cycle):
-            combo_count += combo_adjuster
-            hit_damage, is_critical = player_object.get_player_boss_damage(active_boss)
-            combo_multiplier = (1 + (player_object.combo_multiplier * combo_count))
+            combo_count += 1 + player_object.combo_application
+            hit_damage, critical_type = player_object.get_player_boss_damage(active_boss)
             damage, skill_name = skill_adjuster(player_object, combat_tracker, hit_damage,
-                                                combo_count, charge_adjuster, False)
+                                                combo_count, False)
             if player_object.bleed_application >= 1:
                 combat_tracker.bleed_tracker += 0.05 * player_object.bleed_application
-                if combat_tracker.bleed_tracker >= 1.5 * player_object.bleed_application:
-                    combat_tracker.bleed_tracker = 1.5 * player_object.bleed_application
+                if combat_tracker.bleed_tracker >= 1:
+                    combat_tracker.bleed_tracker = 1
             hit_msg = f"{combo_count}x Combo: {skill_name} {damage:,}"
-            if is_critical:
-                hit_msg += f" *CRITICAL*"
-            hit_list.append([damage, is_critical, hit_msg])
+            if critical_type != "":
+                hit_msg += f" *{critical_type}*"
+            hit_list.append([damage, hit_msg])
             active_boss.boss_cHP -= damage
             if combat_tracker.charges >= 10:
-                combo_count += combo_adjuster
-                hit_damage, is_critical = player_object.get_player_boss_damage(active_boss)
+                combo_count += 1 + player_object.combo_application
+                hit_damage, critical_type = player_object.get_player_boss_damage(active_boss)
                 damage, skill_name = skill_adjuster(player_object, combat_tracker, hit_damage,
-                                                    combo_count, charge_adjuster, True)
+                                                    combo_count, True)
                 hit_msg = f"Ultimate: {skill_name} {damage:,}"
-                if is_critical:
-                    hit_msg += f" *CRITICAL*"
-                hit_list.append([damage, is_critical, hit_msg])
+                if critical_type != "":
+                    hit_msg += f" *{critical_type}*"
+                hit_list.append([damage, hit_msg])
+                active_boss.boss_cHP -= damage
                 if player_object.bleed_application >= 1:
-                    bleed_damage = 2 * player_object.get_bleed_damage(active_boss)
-                    hit_msg = f"Sanguine Rupture: {bleed_damage} *BLEED*"
-                    is_critical = False
-                    hit_list.append([bleed_damage, is_critical, hit_msg])
+                    hit_damage = 1.5 * player_object.get_bleed_damage(active_boss)
+                    bleed_damage = int(hit_damage * combat_tracker.bleed_tracker)
+                    bleed_damage, bleed_type = check_hyper_bleed(player_object, bleed_damage)
+                    bleed_damage *= (1 + player_object.bleed_penetration)
+                    hit_msg = f"Sanguine Rupture: {bleed_damage:,} *{bleed_type}*"
+                    for b in player_object.bleed_application:
+                        hit_list.append([bleed_damage, hit_msg])
+                        active_boss.boss_cHP -= bleed_damage
             if not active_boss.calculate_hp():
                 is_alive = False
                 break
         if player_object.bleed_application >= 1:
-            bleed_damage = player_object.get_bleed_damage(active_boss)
-            hit_msg = f"Blood Rupture: {bleed_damage} *BLEED*"
-            is_critical = False
-            hit_list.append([bleed_damage, is_critical, hit_msg])
+            hit_damage = 0.75 * player_object.get_bleed_damage(active_boss)
+            bleed_damage = int(hit_damage * combat_tracker.bleed_tracker)
+            bleed_damage, bleed_type = check_hyper_bleed(player_object, bleed_damage)
+            bleed_damage *= (1 + player_object.bleed_penetration)
+            hit_msg = f"Blood Rupture: {bleed_damage:,} *{bleed_type}*"
+            for b in player_object.bleed_application:
+                hit_list.append([bleed_damage, hit_msg])
+                active_boss.boss_cHP -= bleed_damage
+            if not active_boss.calculate_hp():
+                is_alive = False
         damage_values = [hit[0] for hit in hit_list]
         total_damage = sum(damage_values)
         combat_tracker.total_dps += total_damage
@@ -152,7 +153,7 @@ def run_solo_cycle(combat_tracker, active_boss, player_object):
             quest.assign_tokens(player_object, active_boss)
     hit_field = ""
     for hit in hit_list:
-        hit_field += f"{hit[2]}\n"
+        hit_field += f"{hit[1]}\n"
     embed_msg.add_field(name="", value=hit_field, inline=False)
     return embed_msg
 
@@ -227,34 +228,44 @@ def critical_check(player_object, player_damage):
     # Critical hits
     random_num = random.randint(1, 100)
     if random_num < player_object.critical_chance:
-        is_critical = True
         player_damage *= (1 + player_object.critical_multiplier)
+        omega_chance = player_object.critical_application * 5
+        omega_check = random.randint(1, 100)
+        if omega_check <= omega_chance:
+            critical_type = "OMEGA CRITICAL"
+            player_damage *= (1 + player_object.critical_multiplier)
+        else:
+            critical_type = "CRITICAL"
+        player_damage *= (1 + player_object.critical_penetration)
     else:
-        is_critical = False
-    return player_damage, is_critical
+        critical_type = ""
+    return player_damage, critical_type
 
 
 def skill_adjuster(player_object, combat_tracker, hit_damage,
-                   combo_count, charge_adjuster, is_ultimate):
+                   combo_count, is_ultimate):
     class_skill_list = skill_names_dict[player_object.player_class]
-    combo_multiplier = 1 + (player_object.combo_multiplier * combo_count)
+    combo_multiplier = (1 + (player_object.combo_multiplier * combo_count)) * (1 + player_object.combo_penetration)
     if is_ultimate:
-        ultimate_multiplier = 1 + player_object.ultimate_multiplier
+        ultimate_multiplier = (1 + player_object.ultimate_multiplier) * (1 + player_object.ultimate_penetration)
         damage = int(hit_damage * combo_multiplier * ultimate_multiplier * (2 + player_object.skill_base_damage_bonus[3]))
         skill_name = class_skill_list[3]
         charges_gained = -10
     elif combo_count < 3:
         damage = int(hit_damage * combo_multiplier * (0.5 + player_object.skill_base_damage_bonus[0]))
         skill_name = class_skill_list[0]
-        charges_gained = 1 + (1 * charge_adjuster)
+        charges_gained = 1 + player_object.ultimate_application
     elif combo_count < 5:
         damage = int(hit_damage * combo_multiplier * (0.75 + player_object.skill_base_damage_bonus[1]))
         skill_name = class_skill_list[1]
-        charges_gained = 1 + (1 * charge_adjuster)
+        charges_gained = 1 + player_object.ultimate_application
     else:
         damage = int(hit_damage * combo_multiplier * (1 + player_object.skill_base_damage_bonus[2]))
         skill_name = class_skill_list[2]
-        charges_gained = 1 + (2 * charge_adjuster)
+        charges_gained = 1 + player_object.ultimate_application
+    if not is_ultimate and player_object.glyph_of_eclipse:
+        ultimate_multiplier = (1 + player_object.ultimate_multiplier) * (1 + player_object.ultimate_penetration)
+        damage = int(hit_damage * ultimate_multiplier)
     combat_tracker.charges += charges_gained
 
     return damage, skill_name
@@ -282,9 +293,9 @@ def pvp_defences(attacker, defender, player_damage, e_weapon):
 def pvp_attack(attacker, defender):
     e_weapon = inventory.read_custom_item(attacker.player_equipped[0])
     player_damage = attacker.get_player_initial_damage()
-    player_damage, is_critical = critical_check(attacker, player_damage)
+    player_damage, critical_type = critical_check(attacker, player_damage)
     player_damage = pvp_defences(attacker, defender, player_damage, e_weapon)
-    return player_damage, is_critical
+    return player_damage, critical_type
 
 
 def pvp_bleed_damage(attacker, defender):
@@ -292,7 +303,20 @@ def pvp_bleed_damage(attacker, defender):
     bleed_damage = attacker.get_player_initial_damage()
     bleed_damage = pvp_defences(attacker, defender, bleed_damage, e_weapon)
     bleed_damage *= (1 + attacker.bleed_multiplier)
-    return bleed_damage
+    bleed_damage, bleed_type = check_hyper_bleed(attacker, bleed_damage)
+    bleed_damage *= (1 + attacker.bleed_penetration)
+    return bleed_damage. bleed_type
+
+
+def check_hyper_bleed(player_object, bleed_damage):
+    hyper_bleed_rate = player_object.bleed_application * 5
+    bleed_check = random.randint(1, 100)
+    if bleed_check <= hyper_bleed_rate:
+        bleed_type = "HYPERBLEED"
+        bleed_damage *= (1 + attacker.bleed_multiplier)
+    else:
+        bleed_type = "BLEED"
+    return bleed_damage, bleed_type
 
 
 def get_random_opponent(player_echelon):
