@@ -4,6 +4,8 @@ import random
 import bosses
 import pandorabot
 import quest
+import globalitems
+
 import pandas as pd
 import mysql.connector
 from mysql.connector.errors import Error
@@ -53,11 +55,17 @@ def run_cycle(combat_tracker, active_boss, player_object, method):
                 boss_damage_element = active_boss.boss_element
             else:
                 boss_damage_element = random.randint(0, 8)
-            boss_damage = random.randint(50 * active_boss.boss_tier, 200 * active_boss.boss_tier)
+            boss_damage = random.randint(10 * active_boss.boss_lvl, 30 * active_boss.boss_lvl)
             boss_damage -= int(boss_damage * player_object.elemental_resistance[boss_damage_element])
             boss_damage -= int(boss_damage * player_object.damage_mitigation * 0.01)
             combat_tracker.player_cHP -= boss_damage
             hp_adjust_msg = f"{active_boss.boss_name} attacks dealing {boss_damage:,} damage!\n"
+            if active_boss.boss_type_num >= 3:
+                boss_healing = int(0.001 * active_boss.boss_tier * active_boss.boss_mHP)
+                active_boss.boss_cHP += boss_healing
+                if active_boss.boss_cHP >= active_boss.boss_mHP:
+                    active_boss.boss_cHP = active_boss.boss_mHP
+                hp_adjust_msg += f"{active_boss.boss_name} regenerated {boss_healing:,} HP!\n"
             if combat_tracker.player_cHP <= 0:
                 if player_object.immortal:
                     combat_tracker.player_cHP = 1
@@ -103,11 +111,12 @@ def run_cycle(combat_tracker, active_boss, player_object, method):
                 active_boss.boss_cHP -= damage
                 if player_object.bleed_application >= 1:
                     hit_damage = 1.5 * player_object.get_bleed_damage(active_boss)
-                    bleed_damage = int(hit_damage * combat_tracker.bleed_tracker)
-                    bleed_damage, bleed_type = check_hyper_bleed(player_object, bleed_damage)
-                    bleed_damage *= (1 + player_object.bleed_penetration)
+                    hit_damage = int(hit_damage * combat_tracker.bleed_tracker)
+                    hit_damage, bleed_type = check_hyper_bleed(player_object, hit_damage)
+                    hit_damage *= (1 + player_object.bleed_penetration)
+                    bleed_damage = int(hit_damage)
                     hit_msg = f"Sanguine Rupture: {bleed_damage:,} *{bleed_type}*"
-                    for b in player_object.bleed_application:
+                    for b in range(player_object.bleed_application):
                         hit_list.append([bleed_damage, hit_msg])
                         active_boss.boss_cHP -= bleed_damage
             if not active_boss.calculate_hp():
@@ -115,11 +124,12 @@ def run_cycle(combat_tracker, active_boss, player_object, method):
                 break
         if player_object.bleed_application >= 1:
             hit_damage = 0.75 * player_object.get_bleed_damage(active_boss)
-            bleed_damage = int(hit_damage * combat_tracker.bleed_tracker)
-            bleed_damage, bleed_type = check_hyper_bleed(player_object, bleed_damage)
-            bleed_damage *= (1 + player_object.bleed_penetration)
+            hit_damage = int(hit_damage * combat_tracker.bleed_tracker)
+            hit_damage, bleed_type = check_hyper_bleed(player_object, hit_damage)
+            hit_damage *= (1 + player_object.bleed_penetration)
+            bleed_damage = int(hit_damage)
             hit_msg = f"Blood Rupture: {bleed_damage:,} *{bleed_type}*"
-            for b in player_object.bleed_application:
+            for b in range(player_object.bleed_application):
                 hit_list.append([bleed_damage, hit_msg])
                 active_boss.boss_cHP -= bleed_damage
             if not active_boss.calculate_hp():
@@ -206,21 +216,22 @@ def get_item_tier_damage(material_tier):
     return damage_temp
 
 
-def boss_defences(method, player_object, boss_object, location, weapon):
-    type_multiplier = (1 - 0.01 * boss_object.boss_lvl / 1.5)
-    bonus_multiplier = 0.01 * player_object.player_lvl / 1.5
+def boss_defences(method, player_object, boss_object, location):
+    type_multiplier = (1 - 0.05 * boss_object.boss_tier)
     if method == "Element":
         if boss_object.boss_eleweak[location] == 1:
+            type_multiplier = 1
             curse_penalty = boss_object.curse_debuffs[location]
-            type_multiplier += bonus_multiplier + curse_penalty
+            type_multiplier += curse_penalty
     else:
-        if weapon.item_damage_type in boss_object.boss_typeweak:
-            type_multiplier += bonus_multiplier
+        player_check = globalitems.class_icon_dict[player_object.player_class]
+        if player_check in boss_object.boss_typeweak:
+            type_multiplier = 1
     return type_multiplier
 
 
 def boss_true_mitigation(boss_object):
-    mitigation_multiplier = 1 - (boss_object.boss_tier * 0.1)
+    mitigation_multiplier = 1 - (boss_object.boss_lvl * 0.01)
     return mitigation_multiplier
 
 
@@ -229,7 +240,7 @@ def critical_check(player_object, player_damage):
     random_num = random.randint(1, 100)
     if random_num < player_object.critical_chance:
         player_damage *= (1 + player_object.critical_multiplier)
-        omega_chance = player_object.critical_application * 5
+        omega_chance = player_object.critical_application * 10
         omega_check = random.randint(1, 100)
         if omega_check <= omega_chance:
             critical_type = "OMEGA CRITICAL"
@@ -275,10 +286,8 @@ def pvp_defences(attacker, defender, player_damage, e_weapon):
     # Type Defences
     adjusted_damage = player_damage - defender.damage_mitigation * 0.01 * player_damage
     # Elemental Defences
-    temp_element_list = e_weapon.item_elements
-    if attacker.damage_limitation:
-        for limit in self.damage_limitation:
-            temp_element_list[limit] = 0
+    if attacker.elemental_capacity < 9:
+        temp_element_list = combat.limit_elements(attacker, e_weapon)
     for idx, x in enumerate(temp_element_list):
         if x == 1:
             attacker.elemental_damage[idx] = adjusted_damage * (1 + attacker.elemental_damage_multiplier[idx])
@@ -305,7 +314,7 @@ def pvp_bleed_damage(attacker, defender):
     bleed_damage *= (1 + attacker.bleed_multiplier)
     bleed_damage, bleed_type = check_hyper_bleed(attacker, bleed_damage)
     bleed_damage *= (1 + attacker.bleed_penetration)
-    return bleed_damage. bleed_type
+    return bleed_damage, bleed_type
 
 
 def check_hyper_bleed(player_object, bleed_damage):
@@ -313,7 +322,7 @@ def check_hyper_bleed(player_object, bleed_damage):
     bleed_check = random.randint(1, 100)
     if bleed_check <= hyper_bleed_rate:
         bleed_type = "HYPERBLEED"
-        bleed_damage *= (1 + attacker.bleed_multiplier)
+        bleed_damage *= (1 + player_object.bleed_multiplier)
     else:
         bleed_type = "BLEED"
     return bleed_damage, bleed_type
@@ -367,4 +376,20 @@ def toggle_flag(player_object):
         engine.dispose()
     except mysql.connector.Error as err:
         print("Database Error: {}".format(err))
+
+
+def limit_elements(player_object, e_weapon):
+    elemental_breakdown = []
+    temp_list = e_weapon.item_elements.copy()
+    for x, is_used in enumerate(temp_list):
+        if is_used:
+            temp_total = player_object.elemental_damage_multiplier[x] * player_object.elemental_penetration[x]
+            temp_total *= player_object.elemental_curse[x]
+            elemental_breakdown.append([x, temp_total])
+    sorted_indices = sorted(elemental_breakdown, key=lambda e: e[1], reverse=True)
+    damage_limitation = [idx for idx, _ in sorted_indices[:player_object.elemental_capacity]]
+    for i in [i for i in range(len(temp_list)) if i not in damage_limitation]:
+        temp_list[i] = 0
+    return temp_list
+
 

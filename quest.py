@@ -53,14 +53,14 @@ class Quest:
             if progress_count == 46:
                 is_completed = True
         elif self.token_num == 7:
-            if player_object.equipped_wing != 0:
-                e_wing = inventory.read_custom_item(player_object.equipped_wing)
+            if player_object.player_equipped[3] != 0:
+                e_wing = inventory.read_custom_item(player_object.player_equipped[3])
                 if e_wing.item_tier == 4:
                     is_completed = True
                     progress_count = 1
         elif self.token_num == 8:
-            if player_object.equipped_crest != 0:
-                e_crest = inventory.read_custom_item(player_object.equipped_crest)
+            if player_object.player_equipped[4] != 0:
+                e_crest = inventory.read_custom_item(player_object.player_equipped[4])
                 if e_crest.item_tier == 4:
                     is_completed = True
                     progress_count = 1
@@ -103,13 +103,13 @@ class Quest:
         elif self.token_num == 0:
             progress_count = tarot.collection_check(player_object.player_id)
         elif self.token_num == 7:
-            if player_object.equipped_wing != 0:
-                e_wing = inventory.read_custom_item(player_object.equipped_wing)
+            if player_object.player_equipped[3] != 0:
+                e_wing = inventory.read_custom_item(player_object.player_equipped[3])
                 if e_wing.item_tier == 4:
                     progress_count = 1
         elif self.token_num == 8:
-            if player_object.equipped_crest != 0:
-                e_crest = inventory.read_custom_item(player_object.equipped_crest)
+            if player_object.player_equipped[4] != 0:
+                e_crest = inventory.read_custom_item(player_object.player_equipped[4])
                 if e_crest.item_tier == 4:
                     progress_count = 1
         else:

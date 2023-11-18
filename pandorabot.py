@@ -634,6 +634,21 @@ def run_discord_bot():
                 await ctx.send(embed=embed_msg)
 
     @set_command_category('trade', 2)
+    @pandora_bot.hybrid_command(name='retrieve', help="Retrieve your items listed on the Bazaar.")
+    @app_commands.guilds(discord.Object(id=1011375205999968427))
+    async def retrieve(ctx):
+        if any(ctx.channel.id in sl for sl in globalitems.global_server_channels):
+            await ctx.defer()
+            user = ctx.author
+            player_object = player.get_player_by_name(user)
+            if player_object.player_class != "":
+                num_items = bazaar.retrieve_items(player_object.player_id)
+                await ctx.send(f"{num_items} unsold items retrieved.")
+            else:
+                embed_msg = unregistered_message()
+                await ctx.send(embed=embed_msg)
+
+    @set_command_category('trade', 3)
     @pandora_bot.hybrid_command(name='bazaar', help="View the Bazaar.")
     @app_commands.guilds(discord.Object(id=1011375205999968427))
     async def view_bazaar(ctx):
@@ -648,7 +663,7 @@ def run_discord_bot():
                 embed_msg = unregistered_message()
                 await ctx.send(embed=embed_msg)
 
-    @set_command_category('trade', 3)
+    @set_command_category('trade', 4)
     @pandora_bot.hybrid_command(name='market', help="Visit the black market item shop.")
     @app_commands.guilds(discord.Object(id=1011375205999968427))
     async def black_market(ctx):
@@ -667,7 +682,7 @@ def run_discord_bot():
                 embed_msg = unregistered_message()
                 await ctx.send(embed=embed_msg)
 
-    @set_command_category('trade', 4)
+    @set_command_category('trade', 5)
     @pandora_bot.hybrid_command(name='give', help="Transfer ownership of a gear item.")
     @app_commands.guilds(discord.Object(id=1011375205999968427))
     async def give(ctx, item_id: int, receiving_player: discord.User):
@@ -706,7 +721,7 @@ def run_discord_bot():
                 embed_msg = unregistered_message()
             await ctx.send(embed=embed_msg)
 
-    @set_command_category('trade', 5)
+    @set_command_category('trade', 6)
     @pandora_bot.hybrid_command(name='purge', help="Sells all gear in or below a tier.")
     @app_commands.guilds(discord.Object(id=1011375205999968427))
     async def purge(ctx, tier: int):
@@ -873,6 +888,19 @@ def run_discord_bot():
                 await ctx.send("Please enter a valid username.")
 
     @set_command_category('info', 2)
+    @pandora_bot.hybrid_command(name='guide', help="Display basic starter guide.")
+    @app_commands.guilds(discord.Object(id=1011375205999968427))
+    async def guide(ctx):
+        if any(ctx.channel.id in sl for sl in globalitems.global_server_channels):
+            await ctx.defer()
+            embed_msg = discord.Embed(colour=discord.Colour.dark_teal(),
+                                      title=menus.guide_dict[0][0],
+                                      description=menus.guide_dict[0][1])
+            current_guide = "Beginner"
+            guide_view = menus.GuideMenu()
+            await ctx.send(embed=embed_msg, view=guide_view)
+
+    @set_command_category('info', 3)
     @pandora_bot.hybrid_command(name='stats', help="Display your stats page.")
     @app_commands.guilds(discord.Object(id=1011375205999968427))
     async def stats(ctx, user: discord.User = None):
@@ -891,29 +919,28 @@ def run_discord_bot():
             else:
                 await ctx.send("Selected user is not registered.")
 
-    @set_command_category('info', 3)
+    @set_command_category('info', 4)
     @pandora_bot.hybrid_command(name='profile', help="View profile rank card.")
     @app_commands.guilds(discord.Object(id=1011375205999968427))
-    async def profile(ctx):
+    async def profile(ctx, user: discord.User = None):
         await ctx.defer()
-        user = ctx.author
-        achievement_list = []
-        roles_list = [r.name for r in user.roles]
-        for role in roles_list:
-            if "Holder" in role:
-                achievement_list.append(role)
-            elif "Echelon 5" in role:
-                achievement_list.append(role)
-        player_object = player.get_player_by_name(user)
-        if player_object.player_class != "":
-            filepath = pilengine.get_player_profile(player_object, achievement_list)
+        command_user = ctx.author
+        achv_list = []
+        if user:
+            target_name = user.name
+            achv_list = [role.name for role in user.roles if "Holder" in role.name or "Herrscher" in role.name]
+        else:
+            target_name = command_user.name
+            achv_list = [role.name for role in command_user.roles if "Holder" in role.name or "Herrscher" in role.name]
+        target_user = player.get_player_by_name(target_name)
+        if target_user.player_class != "":
+            filepath = pilengine.get_player_profile(target_user, achv_list)
             file_object = discord.File(filepath)
             await ctx.send(file=file_object)
         else:
-            embed_msg = unregistered_message()
-            await ctx.send(embed=embed_msg)
+            await ctx.send(f"Target user {target_name} is not registered")
 
-    @set_command_category('info', 4)
+    @set_command_category('info', 5)
     @pandora_bot.command(name='credits', help="Displays the game credits.")
     @app_commands.guilds(discord.Object(id=1011375205999968427))
     async def credits_list(ctx):

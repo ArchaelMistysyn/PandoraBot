@@ -180,7 +180,7 @@ def generate_random_item():
     elif random_reward <= 101:
         reward_id = "i6x"
     elif random_reward <= 1101:
-        reward_id = "i5x"
+        reward_id = "i5u"
     elif random_reward <= 51101:
         item_tier = 4
         reward_types = ["h", "j", "z", "s", "o", "t", "g", "w", "c", "j", "y", "Fae"]

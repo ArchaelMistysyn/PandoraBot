@@ -4,83 +4,131 @@ import player
 import os
 import globalitems
 
+echelon_0 = "https://kyleportfolio.ca/botimages/roleicon/echelon1.png"
 echelon_1 = "https://kyleportfolio.ca/botimages/roleicon/echelon1.png"
 echelon_2 = "https://kyleportfolio.ca/botimages/roleicon/echelon2.png"
 echelon_3 = "https://kyleportfolio.ca/botimages/roleicon/echelon3.png"
 echelon_4 = "https://kyleportfolio.ca/botimages/roleicon/echelon4.png"
 echelon_5 = "https://kyleportfolio.ca/botimages/roleicon/echelon5noflare.png"
 echelon_5flare = "https://kyleportfolio.ca/botimages/roleicon/echelon5flare.png"
-special_icon = ""
-rank_url_list = [echelon_1, echelon_2, echelon_3, echelon_4, echelon_5, echelon_5flare, special_icon]
+special_icon = "https://kyleportfolio.ca/botimages/roleicon/echelon5flare.png"
+special_iconflare = "https://kyleportfolio.ca/botimages/roleicon/echelon5flare.png"
+rank_url_list = [echelon_0, echelon_1, echelon_2, echelon_3, echelon_4, echelon_5, echelon_5flare,
+                 special_icon, special_iconflare]
 
 rank_colour = ["Green", "Blue", "Purple", "Gold", "Red", "Magenta"]
+profile_url = "https://kyleportfolio.ca/botimages/profilecards/"
+card_url = "cardBG/Rankcard_card_"
+exp_url = "expbar/Rankcard_Expbar_"
+wing_gem_url = "wing_gem/Rankcard_wing_"
+metal_url = "metal/Rankcard_metal_"
+rank_card_url_list = [f"{profile_url}{card_url}Teal.png", f"{profile_url}{card_url}Emerald.png",
+                      f"{profile_url}{card_url}Azure.png", f"{profile_url}{card_url}Amethyst.png",
+                      f"{profile_url}{card_url}Cobalt.png", f"{profile_url}{card_url}Rainbow.png",
+                      f"{profile_url}{card_url}Ruby.png", f"{profile_url}{card_url}Pink.png"]
+exp_bar_url_list = [f"{profile_url}{exp_url}Teal.png", f"{profile_url}{exp_url}Emerald.png",
+                    f"{profile_url}{exp_url}Cobalt.png", f"{profile_url}{exp_url}Amethyst.png",
+                    f"{profile_url}{exp_url}Azure.png", f"{profile_url}{exp_url}Rainbow.png",
+                    f"{profile_url}{exp_url}Ruby.png", f"{profile_url}{exp_url}Pink.png"]
+wing_gem_url_list = [f"{profile_url}{wing_gem_url}Teal.png", f"{profile_url}{wing_gem_url}Emerald.png",
+                     f"{profile_url}{wing_gem_url}Azure.png", f"{profile_url}{wing_gem_url}Amethyst.png",
+                     f"{profile_url}{wing_gem_url}Cobalt.png", f"{profile_url}{wing_gem_url}Rainbow.png",
+                     f"{profile_url}{wing_gem_url}Ruby.png", f"{profile_url}{wing_gem_url}Pink.png"]
+metal_url_list = [f"{profile_url}{metal_url}Bronze.png", f"{profile_url}{metal_url}Bronze.png",
+                  f"{profile_url}{metal_url}Silver.png", f"{profile_url}{metal_url}SilverPlus.png",
+                  f"{profile_url}{metal_url}Gold.png", f"{profile_url}{metal_url}GoldPlus.png",
+                  f"{profile_url}{metal_url}Stygian.png"]
+
+
+class RankCard:
+    def __init__(self, user, achievement_list):
+        self.user = user
+        self.fill_colour = "black"
+        echelon = self.user.player_echelon
+        card_loc = echelon
+        metal_loc = echelon
+        wing_loc = echelon
+        exp_bar_loc = echelon
+        icon_loc = echelon
+        if "Exclusive Title Holder" in achievement_list:
+            self.fill_colour = "white"
+            card_loc = 6
+            metal_loc = 6
+            wing_loc = 6
+            exp_bar_loc = 6
+            icon_loc = 7
+            if echelon == 5:
+                card_loc = 5
+                exp_bar_loc = 5
+                wing_loc = 5
+            if "Herrscher - Subscriber" in achievement_list:
+                icon_loc = 8
+        elif "Herrscher - Subscriber" in achievement_list:
+            if echelon < 5:
+                card_loc = 7
+                # exp_bar_loc = 7
+                # wing_loc = 7
+            elif echelon == 5:
+                icon_loc = 6
+        self.cardBG = rank_card_url_list[card_loc]
+        self.metal = metal_url_list[metal_loc]
+        self.wing = wing_gem_url_list[wing_loc]
+        self.exp_bar = exp_bar_url_list[exp_bar_loc]
+        self.role_icon = rank_url_list[icon_loc]
+        self.class_icon = player.get_thumbnail_by_class(self.user.player_class)
+        self.fill_percent = round(self.user.player_exp / player.get_max_exp(self.user.player_lvl), 2)
 
 
 def get_player_profile(player_object, achievement_list):
+    rank_card = RankCard(player_object, achievement_list)
     image_path = 'C:\\Users\\GamerTech\\PycharmProjects\\PandoraBot\\profilecard'
-    font_url = "https://kyleportfolio.ca//botimages/profilecards/fonts/aerolite/Aerolite.otf"
-    profile_url = "https://kyleportfolio.ca/botimages/profilecards/bg.png"
-    profile_card = Image.open(requests.get(profile_url, stream=True).raw)
-    w, h = 542, 247
-    new_size = (w, h)
-    profile_card = profile_card.resize(new_size)
+    font_url = "https://kyleportfolio.ca//botimages/profilecards/fonts/"
+    # chosen_font = "aerolite/Aerolite.otf"
+    chosen_font = "oranienbaum/Oranienbaum.ttf"
+    font_url += chosen_font
     font_file = requests.get(font_url, stream=True).raw
+    cardBG = Image.open(requests.get(rank_card.cardBG, stream=True).raw)
+    metal = Image.open(requests.get(rank_card.metal, stream=True).raw)
+    wing = Image.open(requests.get(rank_card.wing, stream=True).raw)
+    rank_icon = Image.open(requests.get(rank_card.role_icon, stream=True).raw)
+    class_icon = Image.open(requests.get(rank_card.class_icon, stream=True).raw)
+    exp_bar_image = Image.open(requests.get(rank_card.exp_bar, stream=True).raw)
+    result = Image.new("RGBA", cardBG.size)
+    result.paste(cardBG, (0, 0), cardBG)
+    result.paste(metal, (0, 0), metal)
+    result.paste(wing, (0, 0), wing)
+
+    # Username
+    title_font = ImageFont.truetype(font_file, 54)
+    title_text = player_object.player_username
+    image_editable = ImageDraw.Draw(result)
+    fill_colour = rank_card.fill_colour
+    image_editable.text((205, 216), title_text, fill=fill_colour, font=title_font)
+
+    # Class Icon
+    new_size = (64, 64)
+    class_icon = class_icon.resize(new_size)
+    result.paste(class_icon, (128, 216), mask=class_icon)
+
+    # Rank Icon
+    new_size = (120, 120)
+    rank_icon = rank_icon.resize(new_size)
+    result.paste(rank_icon, (629, 215), mask=rank_icon)
 
     # Exp Bar
-    current_lvl = player_object.player_lvl
-    current_exp = player_object.player_exp
-    max_exp = player.get_max_exp(current_lvl)
+    exp_bar_start = 197
+    exp_bar_end = 750
+    exp_bar_result = generate_exp_bar(exp_bar_image, exp_bar_start, exp_bar_end, rank_card.fill_percent)
+    result.paste(exp_bar_result, (exp_bar_start, 0), mask=exp_bar_result)
+    file_path = f"{image_path}\\ProfileCard{player_object.player_id}.png"
+    result.save(file_path)
+    return file_path
 
-    frame_url = "https://kyleportfolio.ca/botimages/profilecards/frame.png"
-    frame_bar = Image.open(requests.get(frame_url, stream=True).raw)
-    new_size = (420, 35)
-    frame_bar = frame_bar.resize(new_size)
-    # profile_card.paste(frame_bar, (40, 240), mask=frame_bar)
 
-    exp_url = "https://kyleportfolio.ca/botimages/profilecards/expbar.png"
-    exp_bar = Image.open(requests.get(exp_url, stream=True).raw)
-    new_size = (400, 20)
-    exp_bar = exp_bar.resize(new_size)
-    # profile_card.paste(exp_bar, (50, 250))
-
-    # Achievements
-    for idr, role in enumerate(globalitems.global_role_dict):
-        if role in achievement_list:
-            achv_url = globalitems.global_role_dict[role]
-        else:
-            achv_url = globalitems.not_owned_icon
-        achv_icon = Image.open(requests.get(achv_url, stream=True).raw)
-        new_size = (30, 30)
-        wloc = 40
-        hloc = 40
-        row = int(idr / 7)
-        achv_icon = achv_icon.resize(new_size)
-        # profile_card.paste(achv_icon, ((30 + (wloc * idr) - (wloc * 7 * row)), (140 + hloc * row)), mask=achv_icon)
-
-    # Main Card
-    title_font = ImageFont.truetype(font_file, 30)
-    title_text = player_object.player_username
-    image_editable = ImageDraw.Draw(profile_card)
-    fill_colour = rank_colour[player_object.player_echelon - 1]
-    image_editable.text((102, 105), title_text, fill=fill_colour, font=title_font)
-
-    # Class icon
-    class_name = player_object.player_class
-    class_url = player.get_thumbnail_by_class(class_name)
-    class_icon = Image.open(requests.get(class_url, stream=True).raw)
-    new_size = (34, 34)
-    class_icon = class_icon.resize(new_size)
-    profile_card.paste(class_icon, (60, 102), mask=class_icon)
-
-    # Rank icon
-    # rank_url = rank_url_list[player_object.player_echelon - 1]
-    rank_url = rank_url_list[5]
-    rank_icon = Image.open(requests.get(rank_url, stream=True).raw)
-    new_size = (58, 58)
-    rank_icon = rank_icon.resize(new_size)
-    profile_card.paste(rank_icon, (302, 103), mask=rank_icon)
-
-    # Finalize
-    filepath = f"{image_path}\\ProfileCard{player_object.player_id}.png"
-    profile_card.save(filepath)
-    return filepath
+def generate_exp_bar(exp_bar_image, exp_bar_start, exp_bar_end, fill_percent):
+    card_height = exp_bar_image.height
+    exp_width = int((exp_bar_end - exp_bar_start) * fill_percent)
+    exp_bar_cropped = exp_bar_image.crop((exp_bar_start, 0, exp_bar_start + exp_width, card_height))
+    exp_bar_result = Image.new("RGBA", exp_bar_cropped.size)
+    exp_bar_result.paste(exp_bar_cropped, (0, 0), mask=exp_bar_cropped)
+    return exp_bar_result

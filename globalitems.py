@@ -42,12 +42,13 @@ global_element_list = [element_fire, element_water, element_lightning, element_e
                        element_dark, element_light, element_celestial]
 element_names = ["Fire", "Water", "Lightning", "Earth", "Wind", "Ice", "Shadow", "Light", "Celestial"]
 element_special_names = ["Volcanic", "Aquatic", "Voltaic", "Seismic", "Sonic", "Arctic", "Lunar", "Solar", "Cosmic"]
-tier_5_ability_dict = {"Elemental Fractal": 200, "Specialist's Mastery": 10, "Curse of Immortality": True,
+tier_5_ability_dict = {"Elemental Fractal": 1, "Specialist's Mastery": 0.1, "Curse of Immortality": True,
                        "Omega Critical": 1, "Endless Combo": 1, "Crimson Reaper": 1, "Overflowing Vitality": 5,
                        "Ultimate Overdrive": 1}
 
 not_owned_icon = "https://kyleportfolio.ca/botimages/profilecards/noachv.png"
 owned_icon = "https://kyleportfolio.ca/botimages/profilecards/owned.png"
+
 global_role_dict = {"Activity Echelon 5 (MAX)": pilengine.echelon_5,
                     "Player Echelon 5 (MAX)": pilengine.echelon_5,
                     "Exclusive Title Holder": pilengine.echelon_5flare}

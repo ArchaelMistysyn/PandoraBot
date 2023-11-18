@@ -16,40 +16,56 @@ import combat
 import bazaar
 
 recipe_dict = {
-    "Heavenly Ore (Crude)": ["i1o", 100, "STONE1", 20, 100, "i5o"],
-    "Heavenly Soul (Light)": ["i1s", 100, "STONE1", 20, 100, "i5s"],
-    "Heavenly Ore (Cosmite)": ["i2o", 20, "STONE2", 20, 100, "i5o"],
-    "Heavenly Soul (Luminous)": ["i2s", 20, "STONE2", 20, 100, "i5s"],
-    "Heavenly Ore (Celestite)": ["i3o", 10, "STONE3", 20, 100, "i5o"],
-    "Heavenly Soul (Lucent)": ["i3s", 10, "STONE3", 20, 100, "i5s"],
-    "Heavenly Ore (Crystallite)": ["i4o", 2, "STONE4", 20, 100, "i5o"],
-    "Heavenly Soul (Lustrous)": ["i4s", 2, "STONE4", 20, 100, "i5s"],
-    "Elemental Origin (Fire)": ["i4z", 1, "Fae0", 50, 100, "Origin0"],
-    "Elemental Origin (Water)": ["i4z", 1, "Fae1", 50, 100, "Origin1"],
-    "Elemental Origin (Lightning)": ["i4z", 1, "Fae2", 50, 100, "Origin2"],
-    "Elemental Origin (Earth)": ["i4z", 1, "Fae3", 50, 100, "Origin3"],
-    "Elemental Origin (Wind)": ["i4z", 1, "Fae4", 50, 100, "Origin4"],
-    "Elemental Origin (Ice)": ["i4z", 1, "Fae5", 50, 100, "Origin5"],
-    "Elemental Origin (Shadow)": ["i4z", 1, "Fae6", 50, 100, "Origin6"],
-    "Elemental Origin (Light)": ["i4z", 1, "Fae7", 50, 100, "Origin7"],
-    "Elemental Origin (Celestial)": ["i4z", 1, "Fae8", 50, 100, "Origin8"],
-    "Pulsar Hammer": ["i4h", 1, "i5l", 1, 100, "i5hP"],
-    "Quasar Hammer": ["i4h", 1, "i5l", 1, 100, "i5hS"],
-    "Void Hammer": ["i4h", 1, "i5v", 1, 100, "v6h"],
-    "Void Pearl": ["i4p", 1, "i5v", 1, 100, "v6p"],
-    "Unrefined Key Weapon": ["i6x", 5, "i5l", 10, 100, "i6u"],
+    "Heavenly Ore (Crude)": ["i1o", 50, "STONE1", 10, 75, "i5o"],
+    "Heavenly Soul (Light)": ["i1s", 50, "STONE1", 10, 75, "i5s"],
+    "Heavenly Ore (Cosmite)": ["i2o", 20, "STONE2", 10, 75, "i5o"],
+    "Heavenly Soul (Luminous)": ["i2s", 20, "STONE2", 10, 75, "i5s"],
+    "Heavenly Ore (Celestite)": ["i3o", 10, "STONE3", 10, 75, "i5o"],
+    "Heavenly Soul (Lucent)": ["i3s", 10, "STONE3", 10, 75, "i5s"],
+    "Heavenly Ore (Crystallite)": ["i4o", 2, "STONE4", 10, 75, "i5o"],
+    "Heavenly Soul (Lustrous)": ["i4s", 2, "STONE4", 10, 75, "i5s"],
+
+    "Elemental Origin (Fire)": ["i4z", 1, "Fae0", 50, 75, "Origin0"],
+    "Elemental Origin (Water)": ["i4z", 1, "Fae1", 50, 75, "Origin1"],
+    "Elemental Origin (Lightning)": ["i4z", 1, "Fae2", 50, 75, "Origin2"],
+    "Elemental Origin (Earth)": ["i4z", 1, "Fae3", 50, 75, "Origin3"],
+    "Elemental Origin (Wind)": ["i4z", 1, "Fae4", 50, 75, "Origin4"],
+    "Elemental Origin (Ice)": ["i4z", 1, "Fae5", 50, 75, "Origin5"],
+    "Elemental Origin (Shadow)": ["i4z", 1, "Fae6", 50, 75, "Origin6"],
+    "Elemental Origin (Light)": ["i4z", 1, "Fae7", 50, 75, "Origin7"],
+    "Elemental Origin (Celestial)": ["i4z", 1, "Fae8", 50, 75, "Origin8"],
+
+    "Chaos Hammer": ["i4h", 1, "i5l", 1, 90, "i5hS"],
+    "Pulsar Hammer": ["i4h", 1, "i5l", 1, 90, "i5hP"],
+    "Quasar Hammer": ["i4h", 1, "i5l", 1, 90, "i5hS"],
+
+    "Void Hammer": ["i4h", 1, "i5v", 1, 90, "v6h"],
+    "Void Pearl": ["i4p", 1, "i5v", 1, 90, "v6p"],
+    "Crystallized Void": ["i6x", 1, "i5v", 1, 10, "v7x"],
+
+    "Fabled Core": ["STONE4", 10, "15l", 1, 90, "i5u"],
+    "Unrefined Fabled Item (Weapon)": ["i5aW", 25, "i5u", 1, 100, "i5xW"],
+    "Unrefined Fabled Item (Armour)": ["i5aA", 25, "i5u", 1, 100, "i5xA"],
+    "Unrefined Fabled Item (Accessory)": ["i5aY", 25, "i5u", 1, 100, "i5xY"],
+    "Unrefined Fabled Item (Wing)": ["i4w", 25, "i5u", 1, 100, "i5xG"],
+    "Unrefined Fabled Item (Crest)": ["i4c", 25, "i5u", 1, 100, "i5xC"],
+    "Unrefined Fabled Item (Gem)": ["i4g", 25, "i5u", 1, 100, "i5xD"],
+
     "Crystallized Wish": ["m6e", 50, "STONE4", 10, 100, "16x"],
+    "Unrefined Key Weapon": ["i6x", 5, "i5l", 10, 100, "i6uW"],
+    "Unrefined Dragon Heart Gem": ["i4g", 50, "i6x", 1, 100, "i6g"],
+
     "Miracle Origin": ["i6x", 1, "i4z", 1, 100, "m6z"],
-    "Miracle Ore": ["i6x", 1, "i5o", 5, 100, "m6o"],
-    "Miracle Soul": ["i6x", 1, "i5s", 5, 100, "m6s"],
-    "Miracle Flame": ["m6e", 5, "i3f", 100, 100, "m6f"],
-    "Miracle Matrix": ["i6x", 1, "i3k", 100, 100, "m6k"],
+    "Miracle Ore": ["i6x", 1, "i5o", 2, 100, "m6o"],
+    "Miracle Soul": ["i6x", 1, "i5s", 2, 100, "m6s"],
+    "Miracle Flame": ["m6e", 5, "i3f", 20, 100, "m6f"],
+    "Miracle Matrix": ["i6x", 1, "i3k", 50, 100, "m6k"],
     "Miracle Pearl": ["m6e", 5, "i4p", 1, 100, "m6p"],
     "Miracle Hammer": ["m6e", 10, "i4h", 1, 100, "m6h"],
     "Miracle Heart": ["i6x", 1, "i5l", 1, 100, "m6l"],
+    "Zenith Hammer": ["m6h", 1, "i5l", 1, 100, "i5hS"],
     "Genesis Hammer": ["m6h", 1, "m6l", 1, 100, "m6hP"],
-    "Terminus Hammer": ["m6h", 1, "m5l", 1, 100, "m6hS"],
-    "Crystallized Void": ["i6x", 1, "i5v", 1, 10, "v7x"]
+    "Terminus Hammer": ["m6h", 1, "m5l", 1, 100, "m6hS"]
 }
 
 
@@ -88,8 +104,10 @@ class RecipeObject:
         total_cost_2 = 0 - (num_crafts * self.cost_qty_2)
         inventory.update_stock(player_object, self.cost_item_1.item_id, total_cost_1)
         inventory.update_stock(player_object, self.cost_item_2.item_id, total_cost_2)
+        print(f"{player_object.player_username}: infusion paid")
         for x in range(num_crafts):
             random_attempt = random.randint(1, 100)
+            print(f"{player_object.player_username}: infusion roll: {random_attempt} / {self.success_rate}")
             if random_attempt <= self.success_rate:
                 inventory.update_stock(player_object, self.outcome_item.item_id, 1)
                 result += 1
@@ -121,8 +139,14 @@ class InfuseView(discord.ui.View):
                 emoji="<a:eenergy:1145534127349706772>", label="Void Infusion",
                 description="Creates upgraded void items."),
             discord.SelectOption(
+                emoji="<a:eenergy:1145534127349706772>", label="Fabled Infusion",
+                description="Creates Fabled Items."),
+            discord.SelectOption(
                 emoji="<a:eenergy:1145534127349706772>", label="Wish Infusion",
-                description="Creates unrefined key weapons.")
+                description="Creates Wish Items."),
+            discord.SelectOption(
+                emoji="<a:eenergy:1145534127349706772>", label="Miracle Infusion",
+                description="Creates Miracle Items.")
         ]
     )
     async def select_callback(self, interaction: discord.Interaction, method_select: discord.ui.Select):
@@ -141,12 +165,12 @@ class InfuseView(discord.ui.View):
                         new_view = VoidSelectView(self.player_object)
                     case "Heavenly Infusion":
                         new_view = HeavenlySelectView(self.player_object)
+                    case "Fabled Infusion":
+                        new_view = FabledSelectView(self.player_object)
                     case "Wish Infusion":
-                        reload_player = player.get_player_by_id(self.player_object.player_id)
-                        recipe_name = f"Unrefined Key Weapon"
-                        recipe_object = RecipeObject(recipe_name)
-                        embed_msg = recipe_object.create_cost_embed(reload_player)
-                        new_view = CraftView(reload_player, recipe_object)
+                        new_view = WishSelectView(self.player_object)
+                    case "Miracle Infusion":
+                        new_view = MiracleSelectView(self.player_object)
                     case _:
                         new_view = None
                 await interaction.response.edit_message(embed=embed_msg, view=new_view)
@@ -225,11 +249,11 @@ class HeavenlySelectView(discord.ui.View):
                 emoji="<:esoul:1145520258241806466>", label="Lustrous Soul", description="Use lustrous souls."),
         ]
     )
-    async def heavenly_callback(self, interaction: discord.Interaction, material_select: discord.ui.Select):
+    async def heavenly_callback(self, interaction: discord.Interaction, heavenly_select: discord.ui.Select):
         try:
             if interaction.user.name == self.player_object.player_name:
                 reload_player = player.get_player_by_id(self.player_object.player_id)
-                selected_option = material_select.values[0].split()
+                selected_option = heavenly_select.values[0].split()
                 recipe_name = f"Heavenly {selected_option[1]} ({selected_option[0]})"
                 recipe_object = RecipeObject(recipe_name)
                 embed_msg = recipe_object.create_cost_embed(reload_player)
@@ -250,16 +274,18 @@ class AstralSelectView(discord.ui.View):
         max_values=1,
         options=[
             discord.SelectOption(
+                emoji="<:ehammer:1145520259248427069>", label="Chaos Hammer", description="Rerolls all affixes."),
+            discord.SelectOption(
                 emoji="<:ehammer:1145520259248427069>", label="Pulsar Hammer", description="Modifies prefixes."),
             discord.SelectOption(
                 emoji="<:ehammer:1145520259248427069>", label="Quasar Hammer", description="Modifies suffixes.")
         ]
     )
-    async def astral_callback(self, interaction: discord.Interaction, hammer_select: discord.ui.Select):
+    async def astral_callback(self, interaction: discord.Interaction, astral_select: discord.ui.Select):
         try:
             if interaction.user.name == self.player_object.player_name:
                 reload_player = player.get_player_by_id(self.player_object.player_id)
-                recipe_name = hammer_select.values[0]
+                recipe_name = astral_select.values[0]
                 recipe_object = RecipeObject(recipe_name)
                 embed_msg = recipe_object.create_cost_embed(reload_player)
                 new_view = CraftView(reload_player, recipe_object)
@@ -286,11 +312,137 @@ class VoidSelectView(discord.ui.View):
                 emoji="<a:evoid:1145520260573827134>", label="Crystallized Void", description="???")
         ]
     )
-    async def void_callback(self, interaction: discord.Interaction, hammer_select: discord.ui.Select):
+    async def void_callback(self, interaction: discord.Interaction, void_select: discord.ui.Select):
         try:
             if interaction.user.name == self.player_object.player_name:
                 reload_player = player.get_player_by_id(self.player_object.player_id)
-                recipe_name = hammer_select.values[0]
+                recipe_name = void_select.values[0]
+                recipe_object = RecipeObject(recipe_name)
+                embed_msg = recipe_object.create_cost_embed(reload_player)
+                new_view = CraftView(reload_player, recipe_object)
+                await interaction.response.edit_message(embed=embed_msg, view=new_view)
+        except Exception as e:
+            print(e)
+
+class FabledSelectView(discord.ui.View):
+    def __init__(self, player_object):
+        super().__init__(timeout=None)
+        self.player_object = player_object
+
+    @discord.ui.select(
+        placeholder="Select the infusion recipe.",
+        min_values=1,
+        max_values=1,
+        options=[
+            discord.SelectOption(
+                emoji="<a:eenergy:1145534127349706772>", label="Fabled Core",
+                description="An ancient mechanism from a time long past."),
+            discord.SelectOption(
+                emoji="<a:eenergy:1145534127349706772>", label="Unrefined Fabled Item (Weapon)",
+                description="Forge an unrefined fabled weapon."),
+            discord.SelectOption(
+                emoji="<a:eenergy:1145534127349706772>", label="Unrefined Fabled Item (Armour)",
+                description="Forge an unrefined fabled armour."),
+            discord.SelectOption(
+                emoji="<a:eenergy:1145534127349706772>", label="Unrefined Fabled Item (Accessory)",
+                description="Forge an unrefined fabled accessory."),
+            discord.SelectOption(
+                emoji="<a:eenergy:1145534127349706772>", label="Unrefined Fabled Item (Wing)",
+                description="Forge an unrefined fabled wing."),
+            discord.SelectOption(
+                emoji="<a:eenergy:1145534127349706772>", label="Unrefined Fabled Item (Crest)",
+                description="Forge an unrefined fabled crest."),
+            discord.SelectOption(
+                emoji="<a:eenergy:1145534127349706772>", label="Unrefined Fabled Item (Gem)",
+                description="Forge an unrefined fabled gem.")
+
+        ]
+    )
+    async def fabled_callback(self, interaction: discord.Interaction, fabled_select: discord.ui.Select):
+        try:
+            if interaction.user.name == self.player_object.player_name:
+                reload_player = player.get_player_by_id(self.player_object.player_id)
+                recipe_name = fabled_select.values[0]
+                recipe_object = RecipeObject(recipe_name)
+                embed_msg = recipe_object.create_cost_embed(reload_player)
+                new_view = CraftView(reload_player, recipe_object)
+                await interaction.response.edit_message(embed=embed_msg, view=new_view)
+        except Exception as e:
+            print(e)
+
+
+class WishSelectView(discord.ui.View):
+    def __init__(self, player_object):
+        super().__init__(timeout=None)
+        self.player_object = player_object
+
+    @discord.ui.select(
+        placeholder="Select the infusion recipe.",
+        min_values=1,
+        max_values=1,
+        options=[
+            discord.SelectOption(
+                emoji="<a:eenergy:1145534127349706772>", label="Crystallized Wish",
+                description="A wish never fulfilled."),
+            discord.SelectOption(
+                emoji="<a:eenergy:1145534127349706772>", label="Unrefined Key Weapon", description="Forge a Key Weapon."),
+            discord.SelectOption(
+                emoji="<a:eenergy:1145534127349706772>", label="Unrefined Dragon Heart Gem",
+                description="Forge a Dragon Heart Gem")
+        ]
+    )
+    async def wish_callback(self, interaction: discord.Interaction, wish_select: discord.ui.Select):
+        try:
+            if interaction.user.name == self.player_object.player_name:
+                reload_player = player.get_player_by_id(self.player_object.player_id)
+                recipe_name = wish_select.values[0]
+                recipe_object = RecipeObject(recipe_name)
+                embed_msg = recipe_object.create_cost_embed(reload_player)
+                new_view = CraftView(reload_player, recipe_object)
+                await interaction.response.edit_message(embed=embed_msg, view=new_view)
+        except Exception as e:
+            print(e)
+
+
+class MiracleSelectView(discord.ui.View):
+    def __init__(self, player_object):
+        super().__init__(timeout=None)
+        self.player_object = player_object
+
+    @discord.ui.select(
+        placeholder="Select the infusion recipe.",
+        min_values=1,
+        max_values=1,
+        options=[
+            discord.SelectOption(
+                emoji="<a:eenergy:1145534127349706772>", label="Miracle Ore", description="???"),
+            discord.SelectOption(
+                emoji="<a:eenergy:1145534127349706772>", label="Miracle Soul", description="???"),
+            discord.SelectOption(
+                emoji="<a:eenergy:1145534127349706772>", label="Miracle Flame", description="???"),
+            discord.SelectOption(
+                emoji="<a:eenergy:1145534127349706772>", label="Miracle Matrix", description="???"),
+            discord.SelectOption(
+                emoji="<a:eenergy:1145534127349706772>", label="Miracle Hammer", description="???"),
+            discord.SelectOption(
+                emoji="<a:eenergy:1145534127349706772>", label="Miracle Pearl", description="???"),
+            discord.SelectOption(
+                emoji="<a:eenergy:1145534127349706772>", label="Miracle Heart", description="???"),
+            discord.SelectOption(
+                emoji="<:ehammer:1145520259248427069>", label="Zenith Hammer", description="???"),
+            discord.SelectOption(
+                emoji="<a:eenergy:1145534127349706772>", label="Genesis Hammer", description="???"),
+            discord.SelectOption(
+                emoji="<a:eenergy:1145534127349706772>", label="Terminus Hammer", description="???"),
+            discord.SelectOption(
+                emoji="<a:eenergy:1145534127349706772>", label="Miracle Origin", description="???")
+        ]
+    )
+    async def miracle_callback(self, interaction: discord.Interaction, miracle_select: discord.ui.Select):
+        try:
+            if interaction.user.name == self.player_object.player_name:
+                reload_player = player.get_player_by_id(self.player_object.player_id)
+                recipe_name = miracle_select.values[0]
                 recipe_object = RecipeObject(recipe_name)
                 embed_msg = recipe_object.create_cost_embed(reload_player)
                 new_view = CraftView(reload_player, recipe_object)

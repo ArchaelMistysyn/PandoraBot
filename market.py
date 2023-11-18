@@ -147,13 +147,7 @@ class ShopView1(discord.ui.View):
             discord.SelectOption(
                 emoji=globalitems.stamina_icon, label="Lesser Stamina Potion", value="i1y"),
             discord.SelectOption(
-                emoji="<a:elootitem:1144477550379274322>", label="Crate", value="i1r"),
-            discord.SelectOption(
-                emoji="<a:elootitem:1144477550379274322>", label="Namechanger Token", value="cNAME"),
-            discord.SelectOption(
-                emoji="<a:elootitem:1144477550379274322>", label="Pathchanger Token", value="cCLASS"),
-            discord.SelectOption(
-                emoji="<a:elootitem:1144477550379274322>", label="Resetter Token", value="cSKILL")
+                emoji="<a:elootitem:1144477550379274322>", label="Crate", value="i1r")
         ]
     )
     async def shop1_callback(self, interaction: discord.Interaction, item_select: discord.ui.Select):
@@ -181,7 +175,13 @@ class ShopView2(discord.ui.View):
             discord.SelectOption(
                 emoji="<:esoul:1145520258241806466>", label="Luminous Soul", value="i2s"),
             discord.SelectOption(
-                emoji=globalitems.stamina_icon, label="Standard Stamina Potion", value="i2y")
+                emoji=globalitems.stamina_icon, label="Standard Stamina Potion", value="i2y"),
+            discord.SelectOption(
+                emoji="<a:elootitem:1144477550379274322>", label="Namechanger Token", value="cNAME"),
+            discord.SelectOption(
+                emoji="<a:elootitem:1144477550379274322>", label="Pathchanger Token", value="cCLASS"),
+            discord.SelectOption(
+                emoji="<a:elootitem:1144477550379274322>", label="Resetter Token", value="cSKILL")
         ]
     )
     async def shop2_callback(self, interaction: discord.Interaction, item_select: discord.ui.Select):

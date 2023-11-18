@@ -253,7 +253,7 @@ class PvPCog(commands.Cog):
             bleed_damage *= 0.75
         scaled_damage = self.scale_damage(role, combatant, bleed_damage)
         hit_msg = f"{combatant[attacker].player_username} - {bleed_msg}: {scaled_damage:,} *{bleed_type}*"
-        for x in combatant[attacker].bleed_application:
+        for x in range(combatant[attacker].bleed_application):
             hit_list.append([scaled_damage, hit_msg])
             tracker[defender].player_cHP -= scaled_damage
 

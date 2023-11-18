@@ -280,6 +280,59 @@ def run_discord_bot():
                 embed_msg = unregistered_message()
                 await ctx.send(embed=embed_msg)
 
+    @engine_bot.hybrid_command(name='summon', help="Challenge a paragon boss.")
+    @app_commands.guilds(discord.Object(id=1011375205999968427))
+    async def solo(ctx, token_version: int):
+        channel_id = ctx.channel.id
+        if any(channel_id in sl for sl in globalitems.global_server_channels):
+            await ctx.defer()
+            player_name = ctx.author
+            player_object = player.get_player_by_name(player_name)
+            if token_version not in range(1, 4):
+                await ctx.send("Selected token not between 1 and 3.")
+                return
+            if player_object.player_class == "":
+                embed_msg = unregistered_message()
+                await ctx.send(embed=embed_msg)
+                return
+            if player_object.player_equipped[0] == 0:
+                await ctx.send("You must have a weapon equipped.")
+                return
+            existing_id = bosses.get_raid_id(channel_id, player_object.player_id)
+            if existing_id != 0:
+                await ctx.send("You already have a solo boss encounter running.")
+                return
+            token_id = f"i{(3 + token_version)}t"
+            token_item = loot.BasicItem(token_id)
+            player_stock = inventory.check_stock(player_object, token_id)
+            if player_stock <= 1:
+                await ctx.send(f"Out of Stock: {token_item.item_emoji} {token_item.item_name}.")
+                return
+            inventory.update_stock(player_object, token_id, -1)
+            spawned_boss = 3
+            boss_type = bosses.boss_list[spawned_boss]
+            if token_version == 1:
+                new_boss_tier = bosses.get_random_bosstier(boss_type)
+            else:
+                new_boss_tier = token_version + 3
+            active_boss = bosses.spawn_boss(channel_id, player_object.player_id, new_boss_tier,
+                                            boss_type, player_object.player_lvl, 0)
+            active_boss.player_id = player_object.player_id
+            embed_msg = active_boss.create_boss_embed(0)
+            channel_object = ctx.channel
+            spawn_msg = f"{player_object.player_username} has spawned a tier {active_boss.boss_tier} boss!"
+            await ctx.send(spawn_msg)
+            player_object.get_player_multipliers()
+            sent_message = await channel_object.send(embed=embed_msg)
+
+            async def run_solo_cog():
+                return enginecogs.SoloCog(engine_bot, player_object, active_boss, channel_id,
+                                          sent_message, channel_object)
+
+            solo_cog = await run_solo_cog()
+            task = asyncio.create_task(solo_cog.run())
+            await task
+
     @engine_bot.hybrid_command(name='arena', help="Enter pvp combat with another player.")
     @app_commands.guilds(discord.Object(id=1011375205999968427))
     async def arena(ctx):

@@ -265,14 +265,6 @@ class EnhanceView(discord.ui.View):
         except Exception as e:
             print(e)
 
-    @discord.ui.button(label="Cancel", style=discord.ButtonStyle.red, emoji="✖️")
-    async def button_cancel_callback(self, button_interaction: discord.Interaction, button: discord.Button):
-        try:
-            if button_interaction.user.name == self.player_object.player_name:
-                await button_interaction.response.edit_message(view=None)
-        except Exception as e:
-            print(e)
-
 
 class UpgradeView(discord.ui.View):
     def __init__(self, player_object, selected_item):
@@ -311,14 +303,6 @@ class UpgradeView(discord.ui.View):
         except Exception as e:
             print(e)
 
-    @discord.ui.button(label="Cancel", style=discord.ButtonStyle.red, emoji="✖️")
-    async def button_cancel_callback(self, button_interaction: discord.Interaction, button: discord.Button):
-        try:
-            if button_interaction.user.name == self.player_object.player_name:
-                await button_interaction.response.edit_message(view=None)
-        except Exception as e:
-            print(e)
-
 
 class ReforgeView(discord.ui.View):
     def __init__(self, player_object, selected_item):
@@ -343,14 +327,6 @@ class ReforgeView(discord.ui.View):
             if button_interaction.user.name == self.player_object.player_name:
                 new_view = SelectView(self.player_object)
                 await button_interaction.response.edit_message(view=new_view)
-        except Exception as e:
-            print(e)
-
-    @discord.ui.button(label="Cancel", style=discord.ButtonStyle.red, emoji="✖️")
-    async def button_cancel_callback(self, button_interaction: discord.Interaction, button: discord.Button):
-        try:
-            if button_interaction.user.name == self.player_object.player_name:
-                await button_interaction.response.edit_message(view=None)
         except Exception as e:
             print(e)
 
@@ -381,14 +357,6 @@ class SocketView(discord.ui.View):
         except Exception as e:
             print(e)
 
-    @discord.ui.button(label="Cancel", style=discord.ButtonStyle.red, emoji="✖️")
-    async def button_cancel_callback(self, button_interaction: discord.Interaction, button: discord.Button):
-        try:
-            if button_interaction.user.name == self.player_object.player_name:
-                await button_interaction.response.edit_message(view=None)
-        except Exception as e:
-            print(e)
-
 
 class CosmicAugmentView(discord.ui.View):
     def __init__(self, player_object, selected_item):
@@ -401,7 +369,7 @@ class CosmicAugmentView(discord.ui.View):
         try:
             if button_interaction.user.name == self.player_object.player_name:
                 material_id = "i4h"
-                embed_msg = run_button(self.player_object, self.selected_item, material_id, "All Fusion")
+                embed_msg = run_button(self.player_object, self.selected_item, material_id, "Single Fusion")
                 new_view = self
                 await button_interaction.response.edit_message(embed=embed_msg, view=new_view)
         except Exception as e:
@@ -424,14 +392,6 @@ class CosmicAugmentView(discord.ui.View):
             if button_interaction.user.name == self.player_object.player_name:
                 new_view = SelectView(self.player_object)
                 await button_interaction.response.edit_message(view=new_view)
-        except Exception as e:
-            print(e)
-
-    @discord.ui.button(label="Cancel", style=discord.ButtonStyle.red, emoji="✖️")
-    async def button_cancel_callback(self, button_interaction: discord.Interaction, button: discord.Button):
-        try:
-            if button_interaction.user.name == self.player_object.player_name:
-                await button_interaction.response.edit_message(view=None)
         except Exception as e:
             print(e)
 
@@ -464,20 +424,23 @@ class AstralAugmentView(discord.ui.View):
         except Exception as e:
             print(e)
 
+    @discord.ui.button(label="Chaos Fusion", style=discord.ButtonStyle.success, emoji="<:ehammer:1145520259248427069>")
+    async def chaos_fusion_callback(self, button_interaction: discord.Interaction, button: discord.Button):
+        try:
+            if button_interaction.user.name == self.player_object.player_name:
+                material_id = "i5hA"
+                embed_msg = run_button(self.player_object, self.selected_item, material_id, "All Fusion")
+                new_view = self
+                await button_interaction.response.edit_message(embed=embed_msg, view=new_view)
+        except Exception as e:
+            print(e)
+
     @discord.ui.button(label="Reselect", style=discord.ButtonStyle.blurple, emoji="↩️")
     async def reselect_callback(self, button_interaction: discord.Interaction, button: discord.Button):
         try:
             if button_interaction.user.name == self.player_object.player_name:
                 new_view = SelectView(self.player_object)
                 await button_interaction.response.edit_message(view=new_view)
-        except Exception as e:
-            print(e)
-
-    @discord.ui.button(label="Cancel", style=discord.ButtonStyle.red, emoji="✖️")
-    async def button_cancel_callback(self, button_interaction: discord.Interaction, button: discord.Button):
-        try:
-            if button_interaction.user.name == self.player_object.player_name:
-                await button_interaction.response.edit_message(view=None)
         except Exception as e:
             print(e)
 
@@ -509,14 +472,6 @@ class ImplantView(discord.ui.View):
         except Exception as e:
             print(e)
 
-    @discord.ui.button(label="Cancel", style=discord.ButtonStyle.red, emoji="✖️")
-    async def button_cancel_callback(self, button_interaction: discord.Interaction, button: discord.Button):
-        try:
-            if button_interaction.user.name == self.player_object.player_name:
-                await button_interaction.response.edit_message(view=None)
-        except Exception as e:
-            print(e)
-
 
 # Genesis Fountain Crafting
 class MiracleEnhanceView(discord.ui.View):
@@ -541,14 +496,6 @@ class MiracleEnhanceView(discord.ui.View):
             if button_interaction.user.name == self.player_object.player_name:
                 new_view = SelectView(self.player_object)
                 await button_interaction.response.edit_message(view=new_view)
-        except Exception as e:
-            print(e)
-
-    @discord.ui.button(label="Cancel", style=discord.ButtonStyle.red, emoji="✖️")
-    async def button_cancel_callback(self, button_interaction: discord.Interaction, button: discord.Button):
-        try:
-            if button_interaction.user.name == self.player_object.player_name:
-                await button_interaction.response.edit_message(view=None)
         except Exception as e:
             print(e)
 
@@ -588,14 +535,6 @@ class MiracleUpgradeView(discord.ui.View):
         except Exception as e:
             print(e)
 
-    @discord.ui.button(label="Cancel", style=discord.ButtonStyle.red, emoji="✖️")
-    async def button_cancel_callback(self, button_interaction: discord.Interaction, button: discord.Button):
-        try:
-            if button_interaction.user.name == self.player_object.player_name:
-                await button_interaction.response.edit_message(view=None)
-        except Exception as e:
-            print(e)
-
 
 class MiracleReforgeView(discord.ui.View):
     def __init__(self, player_object, selected_item):
@@ -619,14 +558,6 @@ class MiracleReforgeView(discord.ui.View):
             if button_interaction.user.name == self.player_object.player_name:
                 new_view = SelectView(self.player_object)
                 await button_interaction.response.edit_message(view=new_view)
-        except Exception as e:
-            print(e)
-
-    @discord.ui.button(label="Cancel", style=discord.ButtonStyle.red, emoji="✖️")
-    async def button_cancel_callback(self, button_interaction: discord.Interaction, button: discord.Button):
-        try:
-            if button_interaction.user.name == self.player_object.player_name:
-                await button_interaction.response.edit_message(view=None)
         except Exception as e:
             print(e)
 
@@ -656,14 +587,6 @@ class MiracleSocketView(discord.ui.View):
         except Exception as e:
             print(e)
 
-    @discord.ui.button(label="Cancel", style=discord.ButtonStyle.red, emoji="✖️")
-    async def button_cancel_callback(self, button_interaction: discord.Interaction, button: discord.Button):
-        try:
-            if button_interaction.user.name == self.player_object.player_name:
-                await button_interaction.response.edit_message(view=None)
-        except Exception as e:
-            print(e)
-
 
 class WishAugmentView(discord.ui.View):
     def __init__(self, player_object, selected_item):
@@ -675,7 +598,7 @@ class WishAugmentView(discord.ui.View):
     async def star_fusion_callback(self, button_interaction: discord.Interaction, button: discord.Button):
         try:
             if button_interaction.user.name == self.player_object.player_name:
-                embed_msg = run_button(self.player_object, self.selected_item, "m6h", "All Fusion")
+                embed_msg = run_button(self.player_object, self.selected_item, "m6h", "Single Fusion")
                 new_view = self
                 await button_interaction.response.edit_message(embed=embed_msg, view=new_view)
         except Exception as e:
@@ -697,14 +620,6 @@ class WishAugmentView(discord.ui.View):
             if button_interaction.user.name == self.player_object.player_name:
                 new_view = SelectView(self.player_object)
                 await button_interaction.response.edit_message(view=new_view)
-        except Exception as e:
-            print(e)
-
-    @discord.ui.button(label="Cancel", style=discord.ButtonStyle.red, emoji="✖️")
-    async def button_cancel_callback(self, button_interaction: discord.Interaction, button: discord.Button):
-        try:
-            if button_interaction.user.name == self.player_object.player_name:
-                await button_interaction.response.edit_message(view=None)
         except Exception as e:
             print(e)
 
@@ -735,20 +650,23 @@ class MiracleAugmentView(discord.ui.View):
         except Exception as e:
             print(e)
 
+    @discord.ui.button(label="Zenith Fusion", style=discord.ButtonStyle.success,
+                       emoji="<:ehammer:1145520259248427069>")
+    async def Zenith_fusion_callback(self, button_interaction: discord.Interaction, button: discord.Button):
+        try:
+            if button_interaction.user.name == self.player_object.player_name:
+                embed_msg = run_button(self.player_object, self.selected_item, "m6hA", "All Fusion")
+                new_view = self
+                await button_interaction.response.edit_message(embed=embed_msg, view=new_view)
+        except Exception as e:
+            print(e)
+
     @discord.ui.button(label="Reselect", style=discord.ButtonStyle.blurple, emoji="↩️")
     async def reselect_callback(self, button_interaction: discord.Interaction, button: discord.Button):
         try:
             if button_interaction.user.name == self.player_object.player_name:
                 new_view = SelectView(self.player_object)
                 await button_interaction.response.edit_message(view=new_view)
-        except Exception as e:
-            print(e)
-
-    @discord.ui.button(label="Cancel", style=discord.ButtonStyle.red, emoji="✖️")
-    async def button_cancel_callback(self, button_interaction: discord.Interaction, button: discord.Button):
-        try:
-            if button_interaction.user.name == self.player_object.player_name:
-                await button_interaction.response.edit_message(view=None)
         except Exception as e:
             print(e)
 
@@ -776,14 +694,6 @@ class MiracleImplantView(discord.ui.View):
             if button_interaction.user.name == self.player_object.player_name:
                 new_view = SelectView(self.player_object)
                 await button_interaction.response.edit_message(view=new_view)
-        except Exception as e:
-            print(e)
-
-    @discord.ui.button(label="Cancel", style=discord.ButtonStyle.red, emoji="✖️")
-    async def button_cancel_callback(self, button_interaction: discord.Interaction, button: discord.Button):
-        try:
-            if button_interaction.user.name == self.player_object.player_name:
-                await button_interaction.response.edit_message(view=None)
         except Exception as e:
             print(e)
 
@@ -826,8 +736,10 @@ def craft_item(player_object, selected_item, material_item, method):
                 outcome = reforge_item(player_object, selected_item, material_item, success_rate, success_check)
             case "Open":
                 outcome = open_item(player_object, selected_item, material_item, success_rate, success_check)
-            case "All Fusion":
+            case "Single Fusion":
                 outcome = modify_item_rolls(player_object, selected_item, material_item, success_rate, success_check, 2)
+            case "All Fusion":
+                outcome = modify_item_rolls(player_object, selected_item, material_item, success_rate, success_check, 3)
             case "Prefix Fusion":
                 outcome = modify_item_rolls(player_object, selected_item, material_item, success_rate, success_check, 0)
             case "Suffix Fusion":
@@ -956,13 +868,20 @@ def reforge_item(player_object, selected_item, material_item, success_rate, succ
 
 
 def modify_item_rolls(player_object, selected_item, material_item, success_rate, success_check, method):
-    inventory.update_stock(player_object, material_item.item_id, -1)
     if success_check <= success_rate:
         outcome = "1"
-        if selected_item.item_num_stars >= 5:
-            selected_item.reroll_roll(method)
+        if method == 2:
+            inventory.update_stock(player_object, material_item.item_id, -1)
+            if selected_item.item_num_stars >= 5:
+                selected_item.reroll_roll(method)
+            else:
+                selected_item.add_roll(1)
         else:
-            selected_item.add_roll(1)
+            if selected_item.item_num_stars >= 5:
+                inventory.update_stock(player_object, material_item.item_id, -1)
+                selected_item.reroll_roll(method)
+            else:
+                outcome = "3"
     else:
         outcome = "0"
     update_crafted_item(selected_item, outcome)
@@ -1013,15 +932,17 @@ class RefSelectView(discord.ui.View):
         max_values=1,
         options=[
             discord.SelectOption(
-                emoji="<a:eenergy:1145534127349706772>", label="Dragon Heart Gem", description="Refine dragon heart gems."),
+                emoji="<a:eenergy:1145534127349706772>", label="Weapon", description="Refine weapons."),
             discord.SelectOption(
-                emoji="<:eore:1145534835507593236>", label="Dragon Wing", description="Refine equippable wings."),
+                emoji="<a:eenergy:1145534127349706772>", label="Armour", description="Refine armours."),
             discord.SelectOption(
-                emoji="<:esoul:1145520258241806466>", label="Paragon Crest", description="Refine equippable crests."),
+                emoji="<a:eenergy:1145534127349706772>", label="Accessory", description="Refine accessories."),
             discord.SelectOption(
-                emoji="<:esoul:1145520258241806466>", label="Fabled Item", description="Refine fabled gear."),
+                emoji="<:eore:1145534835507593236>", label="Dragon Wing", description="Refine wings."),
             discord.SelectOption(
-                emoji="<:esoul:1145520258241806466>", label="Key Weapon", description="Refine key weapon.")
+                emoji="<:esoul:1145520258241806466>", label="Paragon Crest", description="Refine crests."),
+            discord.SelectOption(
+                emoji="<a:eenergy:1145534127349706772>", label="Dragon Gem", description="Refine gems.")
         ]
     )
     async def ref_select_callback(self, interaction: discord.Interaction, ref_select: discord.ui.Select):
@@ -1029,23 +950,26 @@ class RefSelectView(discord.ui.View):
             if interaction.user.name == self.player_user.player_name:
                 selected_type = ref_select.values[0]
                 match selected_type:
-                    case "Dragon Heart Gem":
-                        new_view = RefineryGemView(self.player_user, selected_type)
+                    case "Weapon":
+                        new_view = RefineryWeaponView(self.player_user, "W")
+                    case "Armour":
+                        new_view = RefineryArmourView(self.player_user, "A")
+                    case "Accessory":
+                        new_view = RefineryAccessoryView(self.player_user, "Y")
                     case "Dragon Wing":
-                        new_view = RefineryWingView(self.player_user, selected_type)
+                        new_view = RefineryWingView(self.player_user, "G")
                     case "Paragon Crest":
-                        new_view = RefineryCrestView(self.player_user, selected_type)
-                    case "Fabled Item":
-                        new_view = RefineryFabledView(self.player_user, selected_type)
+                        new_view = RefineryCrestView(self.player_user, "C")
+                    case "Dragon Gem":
+                        new_view = RefineryGemView(self.player_user, "D")
                     case _:
-                        new_view = RefineryWeaponView(self.player_user, selected_type)
-
+                        pass
                 await interaction.response.edit_message(view=new_view)
         except Exception as e:
             print(e)
 
 
-class RefineryGemView(discord.ui.View):
+class RefineryWeaponView(discord.ui.View):
     def __init__(self, player_user, selected_type):
         super().__init__(timeout=None)
         self.selected_type = selected_type
@@ -1053,26 +977,86 @@ class RefineryGemView(discord.ui.View):
         self.item_id = ""
         self.embed = None
 
-    @discord.ui.button(label="Refine Jewel", style=discord.ButtonStyle.success, emoji="✅")
-    async def refine_jewel(self, interaction: discord.Interaction, button: discord.Button):
+    @discord.ui.button(label="Fabled", style=discord.ButtonStyle.success, emoji="✅")
+    async def fabled_callback(self, interaction: discord.Interaction, button: discord.Button):
         try:
             if interaction.user.name == self.player_user.player_name:
                 if not self.embed:
-                    selected_tier = 4
+                    selected_tier = 5
                     self.embed = refine_item(self.player_user, self.selected_type, selected_tier)
-                new_view = OutcomeView(self.player_user, self.selected_type)
+                new_view = OutcomeView(self.player_user, self.selected_type, self.embed)
                 await interaction.response.edit_message(embed=self.embed, view=new_view)
         except Exception as e:
             print(e)
 
-    @discord.ui.button(label="Refine Gem", style=discord.ButtonStyle.success, emoji="✅")
-    async def refine_gem(self, interaction: discord.Interaction, button: discord.Button):
+    @discord.ui.button(label="Wish", style=discord.ButtonStyle.success, emoji="✅")
+    async def wish_callback(self, interaction: discord.Interaction, button: discord.Button):
         try:
             if interaction.user.name == self.player_user.player_name:
                 if not self.embed:
                     selected_tier = 6
                     self.embed = refine_item(self.player_user, self.selected_type, selected_tier)
-                new_view = OutcomeView(self.player_user, self.selected_type)
+                new_view = OutcomeView(self.player_user, self.selected_type, self.embed)
+                await interaction.response.edit_message(embed=self.embed, view=new_view)
+        except Exception as e:
+            print(e)
+
+    @discord.ui.button(label="Reselect", style=discord.ButtonStyle.blurple, emoji="↩️")
+    async def reselect_callback(self, interaction: discord.Interaction, button: discord.Button):
+        try:
+            if interaction.user.name == self.player_user.player_name:
+                new_view = RefSelectView(self.player_user)
+                await interaction.response.edit_message(view=new_view)
+        except Exception as e:
+            print(e)
+
+
+class RefineryArmourView(discord.ui.View):
+    def __init__(self, player_user, selected_type):
+        super().__init__(timeout=None)
+        self.selected_type = selected_type
+        self.player_user = player_user
+        self.item_id = ""
+        self.embed = None
+
+    @discord.ui.button(label="Fabled", style=discord.ButtonStyle.success, emoji="✅")
+    async def fabled_callback(self, interaction: discord.Interaction, button: discord.Button):
+        try:
+            if interaction.user.name == self.player_user.player_name:
+                if not self.embed:
+                    selected_tier = 5
+                    self.embed = refine_item(self.player_user, self.selected_type, selected_tier)
+                new_view = OutcomeView(self.player_user, self.selected_type, self.embed)
+                await interaction.response.edit_message(embed=self.embed, view=new_view)
+        except Exception as e:
+            print(e)
+
+    @discord.ui.button(label="Reselect", style=discord.ButtonStyle.blurple, emoji="↩️")
+    async def reselect_callback(self, interaction: discord.Interaction, button: discord.Button):
+        try:
+            if interaction.user.name == self.player_user.player_name:
+                new_view = RefSelectView(self.player_user)
+                await interaction.response.edit_message(view=new_view)
+        except Exception as e:
+            print(e)
+
+
+class RefineryAccessoryView(discord.ui.View):
+    def __init__(self, player_user, selected_type):
+        super().__init__(timeout=None)
+        self.selected_type = selected_type
+        self.player_user = player_user
+        self.item_id = ""
+        self.embed = None
+
+    @discord.ui.button(label="Fabled", style=discord.ButtonStyle.success, emoji="✅")
+    async def fabled_callback(self, interaction: discord.Interaction, button: discord.Button):
+        try:
+            if interaction.user.name == self.player_user.player_name:
+                if not self.embed:
+                    selected_tier = 5
+                    self.embed = refine_item(self.player_user, self.selected_type, selected_tier)
+                new_view = OutcomeView(self.player_user, self.selected_type, self.embed)
                 await interaction.response.edit_message(embed=self.embed, view=new_view)
         except Exception as e:
             print(e)
@@ -1095,14 +1079,26 @@ class RefineryWingView(discord.ui.View):
         self.item_id = ""
         self.embed = None
 
-    @discord.ui.button(label="Refine", style=discord.ButtonStyle.success, emoji="✅")
-    async def refine_callback(self, interaction: discord.Interaction, button: discord.Button):
+    @discord.ui.button(label="Wings", style=discord.ButtonStyle.success, emoji="✅")
+    async def wing_callback(self, interaction: discord.Interaction, button: discord.Button):
         try:
             if interaction.user.name == self.player_user.player_name:
                 if not self.embed:
                     selected_tier = 4
                     self.embed = refine_item(self.player_user, self.selected_type, selected_tier)
-                new_view = OutcomeView(self.player_user, self.selected_type)
+                new_view = OutcomeView(self.player_user, self.selected_type, self.embed)
+                await interaction.response.edit_message(embed=self.embed, view=new_view)
+        except Exception as e:
+            print(e)
+
+    @discord.ui.button(label="Fabled", style=discord.ButtonStyle.success, emoji="✅")
+    async def fabled_callback(self, interaction: discord.Interaction, button: discord.Button):
+        try:
+            if interaction.user.name == self.player_user.player_name:
+                if not self.embed:
+                    selected_tier = 5
+                    self.embed = refine_item(self.player_user, self.selected_type, selected_tier)
+                new_view = OutcomeView(self.player_user, self.selected_type, self.embed)
                 await interaction.response.edit_message(embed=self.embed, view=new_view)
         except Exception as e:
             print(e)
@@ -1125,44 +1121,26 @@ class RefineryCrestView(discord.ui.View):
         self.item_id = ""
         self.embed = None
 
-    @discord.ui.button(label="Refine", style=discord.ButtonStyle.success, emoji="✅")
-    async def refine_callback(self, interaction: discord.Interaction, button: discord.Button):
+    @discord.ui.button(label="Crest", style=discord.ButtonStyle.success, emoji="✅")
+    async def crest_callback(self, interaction: discord.Interaction, button: discord.Button):
         try:
             if interaction.user.name == self.player_user.player_name:
                 if not self.embed:
                     selected_tier = 4
                     self.embed = refine_item(self.player_user, self.selected_type, selected_tier)
-                new_view = OutcomeView(self.player_user, self.selected_type)
+                new_view = OutcomeView(self.player_user, self.selected_type, self.embed)
                 await interaction.response.edit_message(embed=self.embed, view=new_view)
         except Exception as e:
             print(e)
 
-    @discord.ui.button(label="Reselect", style=discord.ButtonStyle.blurple, emoji="↩️")
-    async def reselect_callback(self, interaction: discord.Interaction, button: discord.Button):
-        try:
-            if interaction.user.name == self.player_user.player_name:
-                new_view = RefSelectView(self.player_user)
-                await interaction.response.edit_message(view=new_view)
-        except Exception as e:
-            print(e)
-
-
-class RefineryFabledView(discord.ui.View):
-    def __init__(self, player_user, selected_type):
-        super().__init__(timeout=None)
-        self.selected_type = selected_type
-        self.player_user = player_user
-        self.item_id = ""
-        self.embed = None
-
-    @discord.ui.button(label="Fabled Item", style=discord.ButtonStyle.success, emoji="✅")
-    async def fabled_item_callback(self, interaction: discord.Interaction, button: discord.Button):
+    @discord.ui.button(label="Fabled", style=discord.ButtonStyle.success, emoji="✅")
+    async def fabled_callback(self, interaction: discord.Interaction, button: discord.Button):
         try:
             if interaction.user.name == self.player_user.player_name:
                 if not self.embed:
                     selected_tier = 5
                     self.embed = refine_item(self.player_user, self.selected_type, selected_tier)
-                new_view = OutcomeView(self.player_user, self.selected_type)
+                new_view = OutcomeView(self.player_user, self.selected_type, self.embed)
                 await interaction.response.edit_message(embed=self.embed, view=new_view)
         except Exception as e:
             print(e)
@@ -1177,7 +1155,7 @@ class RefineryFabledView(discord.ui.View):
             print(e)
 
 
-class RefineryWeaponView(discord.ui.View):
+class RefineryGemView(discord.ui.View):
     def __init__(self, player_user, selected_type):
         super().__init__(timeout=None)
         self.selected_type = selected_type
@@ -1185,14 +1163,38 @@ class RefineryWeaponView(discord.ui.View):
         self.item_id = ""
         self.embed = None
 
-    @discord.ui.button(label="Refine Key", style=discord.ButtonStyle.success, emoji="✅")
-    async def key_weapon_callback(self, interaction: discord.Interaction, button: discord.Button):
+    @discord.ui.button(label="Jewel", style=discord.ButtonStyle.success, emoji="✅")
+    async def jewel_callback(self, interaction: discord.Interaction, button: discord.Button):
+        try:
+            if interaction.user.name == self.player_user.player_name:
+                if not self.embed:
+                    selected_tier = 4
+                    self.embed = refine_item(self.player_user, self.selected_type, selected_tier)
+                new_view = OutcomeView(self.player_user, self.selected_type, self.embed)
+                await interaction.response.edit_message(embed=self.embed, view=new_view)
+        except Exception as e:
+            print(e)
+
+    @discord.ui.button(label="Fabled", style=discord.ButtonStyle.success, emoji="✅")
+    async def fabled_callback(self, interaction: discord.Interaction, button: discord.Button):
+        try:
+            if interaction.user.name == self.player_user.player_name:
+                if not self.embed:
+                    selected_tier = 5
+                    self.embed = refine_item(self.player_user, self.selected_type, selected_tier)
+                new_view = OutcomeView(self.player_user, self.selected_type, self.embed)
+                await interaction.response.edit_message(embed=self.embed, view=new_view)
+        except Exception as e:
+            print(e)
+
+    @discord.ui.button(label="Heart Gem", style=discord.ButtonStyle.success, emoji="✅")
+    async def gem_callback(self, interaction: discord.Interaction, button: discord.Button):
         try:
             if interaction.user.name == self.player_user.player_name:
                 if not self.embed:
                     selected_tier = 6
                     self.embed = refine_item(self.player_user, self.selected_type, selected_tier)
-                new_view = OutcomeView(self.player_user, self.selected_type)
+                new_view = OutcomeView(self.player_user, self.selected_type, self.embed)
                 await interaction.response.edit_message(embed=self.embed, view=new_view)
         except Exception as e:
             print(e)
@@ -1202,56 +1204,62 @@ class RefineryWeaponView(discord.ui.View):
         try:
             if interaction.user.name == self.player_user.player_name:
                 new_view = RefSelectView(self.player_user)
-                new_view = OutcomeView(self.player_user, self.selected_type)
                 await interaction.response.edit_message(view=new_view)
         except Exception as e:
             print(e)
             
             
 class OutcomeView(discord.ui.View):
-    def __init__(self, player_user, method):
+    def __init__(self, player_user, method, embed):
         super().__init__(timeout=None)
         self.player_user = player_user
         self.method = method
+        self.embed = embed
 
     @discord.ui.button(label="Return", style=discord.ButtonStyle.success, emoji="↩️")
     async def try_again_callback(self, interaction: discord.Interaction, button: discord.Button):
         try:
             if interaction.user.name == self.player_user.player_name:
                 match self.method:
-                    case "Dragon Heart Gem":
-                        new_view = RefineryGemView(self.player_user, self.method)
-                    case "Dragon Wing":
-                        new_view = RefineryWingView(self.player_user, self.method)
-                    case "Paragon Crest":
-                        new_view = RefineryCrestView(self.player_user, self.method)
-                    case "Fabled Item":
-                        new_view = RefineryFabledView(self.player_user, self.method)
-                    case _:
+                    case "W":
                         new_view = RefineryWeaponView(self.player_user, self.method)
-                await interaction.response.edit_message(view=new_view)
+                    case "A":
+                        new_view = RefineryArmourView(self.player_user, self.method)
+                    case "Y":
+                        new_view = RefineryAccessoryView(self.player_user, self.method)
+                    case "G":
+                        new_view = RefineryWingView(self.player_user, self.method)
+                    case "C":
+                        new_view = RefineryCrestView(self.player_user, self.method)
+                    case "D":
+                        new_view = RefineryGemView(self.player_user, self.method)
+                    case _:
+                        pass
+                await interaction.response.edit_message(embed=self.embed, view=new_view)
         except Exception as e:
             print(e)
 
 
 def refine_item(player_user, selected_type, selected_tier):
     item_id = f"i{str(selected_tier)}"
-
-    match selected_type:
-        case "Dragon Heart Gem":
-            item_id += "g"
-        case "Dragon Wing":
-            item_id += "w"
-        case "Paragon Crest":
-            item_id += "c"
-        case "Fabled Item":
-            item_id += "x"
-        case _:
-            item_id += "u"
+    if selected_tier == 4:
+        match selected_type:
+            case "G":
+                item_id += "w"
+            case "C":
+                item_id += "c"
+            case "D":
+                item_id += "g"
+            case _:
+                pass
+    elif selected_tier == 5:
+        item_id += f"x{selected_type}"
+    elif selected_tier == 6:
+        item_id += f"u{selected_type}"
     if inventory.check_stock(player_user, item_id) > 0:
         inventory.update_stock(player_user, item_id, -1)
-        new_item = inventory.try_refine(player_user.player_id, selected_type, selected_tier)
-        if new_item.item_id == 0:
+        new_item, is_success = inventory.try_refine(player_user.player_id, selected_type, selected_tier)
+        if is_success:
             result_id = inventory.inventory_add_custom_item(new_item)
             if result_id == 0:
                 embed_msg = inventory.full_inventory_embed(new_item, discord.Colour.red())

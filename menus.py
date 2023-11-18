@@ -15,6 +15,62 @@ import globalitems
 import insignia
 import combat
 
+starter_guide = "1. Use /quest to progress through the quest."
+starter_guide += "\n2. Use /map to farm for tier 1-4 Weapons, Armour, and Accessories."
+starter_guide += " Maps are also a great source of EXP."
+starter_guide += "\n3. Use /inv to check your inventory. Click Gear to check your gear."
+starter_guide += "\n4. Use /display [item id] to view, sell, and equip gear items."
+starter_guide += "\n5. Use /solo to farm bosses for gear."
+starter_guide += "\n6. Use /stamina to check your stamina and use stamina potions."
+starter_guide += "\n7. Use /market to buy fae cores, stamina potions, crafting materials, and more."
+starter_guide += "\n8. Use /gear to view your equipped gear."
+starter_guide += "\n9. Use /info for a command list."
+starter_guide += "\n10. Use /profile to view your server card."
+
+intermediate_guide = "1. Use /forge to craft your items. Details can be found in the wiki."
+intermediate_guide += "\n2. Use /engrave to engrave an insignia on your soul."
+intermediate_guide += " The insignia will grow in strength as you increase your echelon."
+intermediate_guide += "\n3. Use /infuse to craft new items."
+intermediate_guide += "\n4. Use /stats to check your stats."
+intermediate_guide += "\n5. Use /points to allocate skill points and acquire glyphs."
+intermediate_guide += "\n6. Use /refinery to refine dragon jewels, dragon wings, and paragon crests."
+intermediate_guide += "\n7. Use /inlay [gem id] to inlay a gem in a socket."
+intermediate_guide += "\n8. Use /bind to bind essence items to tarot cards."
+
+advanced_guide = "1. Use /bazaar, /sell, and /buy to trade items."
+advanced_guide += "\n2. "
+advanced_guide += "\n3."
+advanced_guide += "\n4. "
+advanced_guide += "\n5."
+advanced_guide += "\n6."
+advanced_guide += "\n7. "
+guide_dict = {0: ["Beginner Guide", starter_guide],
+              1: ["Intermediate Guide", intermediate_guide],
+              2: ["Advanced Guide", advanced_guide]}
+
+
+class GuideMenu(discord.ui.View):
+    def __init__(self):
+        super().__init__(timeout=None)
+
+    @discord.ui.button(label="Beginner", style=discord.ButtonStyle.blurple, emoji="🌟")
+    async def beginner_help_callback(self, interaction: discord.Interaction, button: discord.ui.Button):
+        embed_msg = discord.Embed(colour=discord.Colour.dark_teal(),
+                                  title=guide_dict[0][0], description=guide_dict[0][1])
+        await interaction.response.edit_message(embed=embed_msg)
+
+    @discord.ui.button(label="Intermediate", style=discord.ButtonStyle.blurple, emoji="✨")
+    async def intermediate_help_callback(self, interaction: discord.Interaction, button: discord.ui.Button):
+        embed_msg = discord.Embed(colour=discord.Colour.dark_teal(),
+                                  title=guide_dict[1][0], description=guide_dict[1][1])
+        await interaction.response.edit_message(embed=embed_msg)
+
+    @discord.ui.button(label="Advanced", style=discord.ButtonStyle.blurple, emoji="🚀")
+    async def advanced_help_callback(self, interaction: discord.Interaction, button: discord.ui.Button):
+        embed_msg = discord.Embed(colour=discord.Colour.dark_teal(),
+                                  title=guide_dict[2][0], description=guide_dict[2][1])
+        await interaction.response.edit_message(embed=embed_msg)
+
 
 class HelpView(discord.ui.View):
     def __init__(self, category_dict):
@@ -22,37 +78,37 @@ class HelpView(discord.ui.View):
         self.category_dict = category_dict
 
     @discord.ui.button(label="Game", style=discord.ButtonStyle.blurple, row=0, emoji="🐉")
-    async def game_help_callback(self, interaction: discord.Interaction, raid_select: discord.ui.Select):
+    async def game_help_callback(self, interaction: discord.Interaction, button: discord.Button):
         embed_msg = build_help_embed(self.category_dict,'game')
         await interaction.response.edit_message(embed=embed_msg)
 
     @discord.ui.button(label="Combat", style=discord.ButtonStyle.blurple, row=0, emoji="⚔️")
-    async def combat_help_callback(self, interaction: discord.Interaction, raid_select: discord.ui.Select):
+    async def combat_help_callback(self, interaction: discord.Interaction, button: discord.Button):
         embed_msg = build_help_embed(self.category_dict, 'combat')
         await interaction.response.edit_message(embed=embed_msg)
 
     @discord.ui.button(label="Gear", style=discord.ButtonStyle.blurple, row=0, emoji="⚔️")
-    async def gear_help_callback(self, interaction: discord.Interaction, raid_select: discord.ui.Select):
+    async def gear_help_callback(self, interaction: discord.Interaction, button: discord.Button):
         embed_msg = build_help_embed(self.category_dict,'gear')
         await interaction.response.edit_message(embed=embed_msg)
 
     @discord.ui.button(label="Craft", style=discord.ButtonStyle.blurple, row=1, emoji="<:ehammer:1145520259248427069>")
-    async def craft_help_callback(self, interaction: discord.Interaction, raid_select: discord.ui.Select):
+    async def craft_help_callback(self, interaction: discord.Interaction, button: discord.Button):
         embed_msg = build_help_embed(self.category_dict,'craft')
         await interaction.response.edit_message(embed=embed_msg)
 
     @discord.ui.button(label="Trade", style=discord.ButtonStyle.blurple, row=1, emoji="💲")
-    async def trade_help_callback(self, interaction: discord.Interaction, raid_select: discord.ui.Select):
+    async def trade_help_callback(self, interaction: discord.Interaction, button: discord.Button):
         embed_msg = build_help_embed(self.category_dict,'trade')
         await interaction.response.edit_message(embed=embed_msg)
 
     @discord.ui.button(label="Info", style=discord.ButtonStyle.blurple, row=1, emoji="ℹ️")
-    async def account_help_callback(self, interaction: discord.Interaction, raid_select: discord.ui.Select):
+    async def account_help_callback(self, interaction: discord.Interaction, button: discord.Button):
         embed_msg = build_help_embed(self.category_dict, 'info')
         await interaction.response.edit_message(embed=embed_msg)
 
     @discord.ui.button(label="Admin", style=discord.ButtonStyle.red, row=2, emoji="⌨")
-    async def admin_help_callback(self, interaction: discord.Interaction, raid_select: discord.ui.Select):
+    async def admin_help_callback(self, interaction: discord.Interaction, button: discord.Button):
         embed_msg = build_help_embed(self.category_dict, 'admin')
         await interaction.response.edit_message(embed=embed_msg)
 
@@ -635,17 +691,14 @@ class ManageCustomItemView(discord.ui.View):
         try:
             if interaction.user.name == self.player_user.player_name:
                 selected_item = inventory.read_custom_item(self.item_id)
-                embed_msg = selected_item.create_citem_embed()
-                response_embed = inventory.sell(self.player_user, selected_item, embed_msg)
-                await interaction.response.edit_message(embed=response_embed, view=None)
-        except Exception as e:
-            print(e)
-
-    @discord.ui.button(label="Cancel", style=discord.ButtonStyle.red, emoji="✖️")
-    async def cancel(self, interaction: discord.Interaction, button: discord.Button):
-        try:
-            if interaction.user.name == self.player_user.player_name:
-                await interaction.response.edit_message(view=None)
+                if selected_item.player_owner == self.player_user.player_id:
+                    embed_msg = selected_item.create_citem_embed()
+                    new_embed = inventory.sell(self.player_user, selected_item, embed_msg)
+                else:
+                    new_embed = selected_item.create_citem_embed()
+                    new_embed.add_field(name="Cannot Sell Item!",
+                                        value="Item is not owned or currently listed on the bazaar.", inline=False)
+                await interaction.response.edit_message(embed=new_embed, view=None)
         except Exception as e:
             print(e)
 
@@ -885,12 +938,34 @@ class PointsMenu(discord.ui.View):
         self.embed_msg = None
         self.view = None
 
-    @discord.ui.button(label="Allocate", style=discord.ButtonStyle.primary)
-    async def add_points_button(self, interaction: discord.Interaction, button: discord.ui.Button):
+    @discord.ui.button(emoji="1️⃣", label="Allocate 1", style=discord.ButtonStyle.primary)
+    async def add_one_point(self, interaction: discord.Interaction, button: discord.ui.Button):
         if interaction.user.name == self.player_object.player_name:
             if not self.embed_msg:
                 reload_player = player.get_player_by_id(self.player_object.player_id)
                 response = reload_player.allocate_points(self.selected_path, 1)
+                self.embed_msg = reload_player.build_points_embed(self.selected_path)
+                self.embed_msg.add_field(name="", value=response, inline=False)
+                self.view = PointsMenu(reload_player, self.selected_path)
+            await interaction.response.edit_message(embed=self.embed_msg, view=self.view)
+
+    @discord.ui.button(emoji="5️⃣", label="Allocate 5", style=discord.ButtonStyle.primary)
+    async def add_five_points(self, interaction: discord.Interaction, button: discord.ui.Button):
+        if interaction.user.name == self.player_object.player_name:
+            if not self.embed_msg:
+                reload_player = player.get_player_by_id(self.player_object.player_id)
+                response = reload_player.allocate_points(self.selected_path, 5)
+                self.embed_msg = reload_player.build_points_embed(self.selected_path)
+                self.embed_msg.add_field(name="", value=response, inline=False)
+                self.view = PointsMenu(reload_player, self.selected_path)
+            await interaction.response.edit_message(embed=self.embed_msg, view=self.view)
+
+    @discord.ui.button(emoji="🔟", label="Allocate 10", style=discord.ButtonStyle.primary)
+    async def add_ten_points(self, interaction: discord.Interaction, button: discord.ui.Button):
+        if interaction.user.name == self.player_object.player_name:
+            if not self.embed_msg:
+                reload_player = player.get_player_by_id(self.player_object.player_id)
+                response = reload_player.allocate_points(self.selected_path, 10)
                 self.embed_msg = reload_player.build_points_embed(self.selected_path)
                 self.embed_msg.add_field(name="", value=response, inline=False)
                 self.view = PointsMenu(reload_player, self.selected_path)

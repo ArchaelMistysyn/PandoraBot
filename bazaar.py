@@ -42,11 +42,36 @@ def list_custom_item(item, cost):
         pandora_db.execute(query)
         pandora_db.close()
         engine.dispose()
+        item.item_inlaid_gem_id = 0
         item.player_owner = -1
         item.item_inlaid_gem_id = 0
         item.update_stored_item()
     except exc.SQLAlchemyError as error:
         print(error)
+
+
+def retrieve_items(player_id):
+    try:
+        engine_url = mydb.get_engine_url()
+        engine = sqlalchemy.create_engine(engine_url)
+        pandora_db = engine.connect()
+        query = text(f"SELECT item_id FROM CustomBazaar WHERE seller_id = :player_id")
+        query = query.bindparams(player_id=player_id)
+        df = pd.read_sql(query, pandora_db)
+        if len(df) != 0:
+            item_ids = df['item_id'].tolist()
+            query = text(f"UPDATE CustomInventory SET player_id = :player_id WHERE item_id IN :item_ids")
+            query = query.bindparams(player_id=player_id, item_ids=tuple(item_ids))
+            pandora_db.execute(query)
+            query = text(f"DELETE FROM CustomBazaar WHERE item_id IN :item_ids")
+            query = query.bindparams(item_ids=tuple(item_ids))
+            pandora_db.execute(query)
+        pandora_db.close()
+        engine.dispose()
+        return len(item_ids) if item_ids else 0
+    except exc.SQLAlchemyError as error:
+        print(error)
+        return 0
 
 
 def show_bazaar_items():

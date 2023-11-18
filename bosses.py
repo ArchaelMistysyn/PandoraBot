@@ -357,25 +357,16 @@ def spawn_boss(channel_id, player_id, new_boss_tier, selected_boss_type, boss_le
 
 def get_random_bosstier(boss_type):
     random_number = random.randint(1, 100)
-    if random_number <= 1:
-        boss_tier = 6
-    elif random_number <= 3:
-        boss_tier = 5
-    elif random_number <= 8:
+    if random_number <= 10:
         boss_tier = 4
-    elif random_number <= 25:
+    elif random_number <= 35:
         boss_tier = 3
-    elif random_number <= 55:
+    elif random_number <= 65:
         boss_tier = 2
     elif random_number <= 100:
         boss_tier = 1
     else:
         boss_tier = 0
-
-    if boss_tier > 4:
-        if boss_type != "Paragon":
-            boss_tier = 4
-
     return boss_tier
 
 
