@@ -298,6 +298,15 @@ def run_discord_bot():
             if player_object.player_equipped[0] == 0:
                 await ctx.send("You must have a weapon equipped.")
                 return
+            if player_object.player_echelon < 5 and token_version == 3:
+                await ctx.send("You must be player echelon 5 to challenge the paragon sovereign.")
+                return
+            elif player_object.player_echelon < 4 and token_version == 2:
+                await ctx.send("You must be player echelon 4 to challenge a superior paragon.")
+                return
+            elif player_object.player_echelon < 3:
+                await ctx.send("You must be player echelon 3 to challenge a paragon.")
+                return
             existing_id = bosses.get_raid_id(channel_id, player_object.player_id)
             if existing_id != 0:
                 await ctx.send("You already have a solo boss encounter running.")
@@ -305,7 +314,7 @@ def run_discord_bot():
             token_id = f"i{(3 + token_version)}t"
             token_item = loot.BasicItem(token_id)
             player_stock = inventory.check_stock(player_object, token_id)
-            if player_stock <= 1:
+            if player_stock <= 0:
                 await ctx.send(f"Out of Stock: {token_item.item_emoji} {token_item.item_name}.")
                 return
             inventory.update_stock(player_object, token_id, -1)

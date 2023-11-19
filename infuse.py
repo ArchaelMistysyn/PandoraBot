@@ -25,17 +25,17 @@ recipe_dict = {
     "Heavenly Ore (Crystallite)": ["i4o", 2, "STONE4", 10, 75, "i5o"],
     "Heavenly Soul (Lustrous)": ["i4s", 2, "STONE4", 10, 75, "i5s"],
 
-    "Elemental Origin (Fire)": ["i4z", 1, "Fae0", 50, 75, "Origin0"],
-    "Elemental Origin (Water)": ["i4z", 1, "Fae1", 50, 75, "Origin1"],
-    "Elemental Origin (Lightning)": ["i4z", 1, "Fae2", 50, 75, "Origin2"],
-    "Elemental Origin (Earth)": ["i4z", 1, "Fae3", 50, 75, "Origin3"],
-    "Elemental Origin (Wind)": ["i4z", 1, "Fae4", 50, 75, "Origin4"],
-    "Elemental Origin (Ice)": ["i4z", 1, "Fae5", 50, 75, "Origin5"],
-    "Elemental Origin (Shadow)": ["i4z", 1, "Fae6", 50, 75, "Origin6"],
-    "Elemental Origin (Light)": ["i4z", 1, "Fae7", 50, 75, "Origin7"],
-    "Elemental Origin (Celestial)": ["i4z", 1, "Fae8", 50, 75, "Origin8"],
+    "Elemental Origin (Fire)": ["i4z", 1, "Fae0", 50, 80, "Origin0"],
+    "Elemental Origin (Water)": ["i4z", 1, "Fae1", 50, 80, "Origin1"],
+    "Elemental Origin (Lightning)": ["i4z", 1, "Fae2", 50, 80, "Origin2"],
+    "Elemental Origin (Earth)": ["i4z", 1, "Fae3", 50, 80, "Origin3"],
+    "Elemental Origin (Wind)": ["i4z", 1, "Fae4", 50, 80, "Origin4"],
+    "Elemental Origin (Ice)": ["i4z", 1, "Fae5", 50, 80, "Origin5"],
+    "Elemental Origin (Shadow)": ["i4z", 1, "Fae6", 50, 80, "Origin6"],
+    "Elemental Origin (Light)": ["i4z", 1, "Fae7", 50, 80, "Origin7"],
+    "Elemental Origin (Celestial)": ["i4z", 1, "Fae8", 50, 80, "Origin8"],
 
-    "Chaos Hammer": ["i4h", 1, "i5l", 1, 90, "i5hS"],
+    "Chaos Hammer": ["i4h", 1, "i5l", 1, 90, "i5hA"],
     "Pulsar Hammer": ["i4h", 1, "i5l", 1, 90, "i5hP"],
     "Quasar Hammer": ["i4h", 1, "i5l", 1, 90, "i5hS"],
 
@@ -63,7 +63,7 @@ recipe_dict = {
     "Miracle Pearl": ["m6e", 5, "i4p", 1, 100, "m6p"],
     "Miracle Hammer": ["m6e", 10, "i4h", 1, 100, "m6h"],
     "Miracle Heart": ["i6x", 1, "i5l", 1, 100, "m6l"],
-    "Zenith Hammer": ["m6h", 1, "i5l", 1, 100, "i5hS"],
+    "Zenith Hammer": ["m6h", 1, "i5l", 1, 100, "i5hA"],
     "Genesis Hammer": ["m6h", 1, "m6l", 1, 100, "m6hP"],
     "Terminus Hammer": ["m6h", 1, "m5l", 1, 100, "m6hS"]
 }

@@ -42,7 +42,7 @@ global_element_list = [element_fire, element_water, element_lightning, element_e
                        element_dark, element_light, element_celestial]
 element_names = ["Fire", "Water", "Lightning", "Earth", "Wind", "Ice", "Shadow", "Light", "Celestial"]
 element_special_names = ["Volcanic", "Aquatic", "Voltaic", "Seismic", "Sonic", "Arctic", "Lunar", "Solar", "Cosmic"]
-tier_5_ability_dict = {"Elemental Fractal": 1, "Specialist's Mastery": 0.1, "Curse of Immortality": True,
+tier_5_ability_dict = {"Elemental Overflow": 2, "Specialist's Mastery": 0.1, "Curse of Immortality": True,
                        "Omega Critical": 1, "Endless Combo": 1, "Crimson Reaper": 1, "Overflowing Vitality": 5,
                        "Ultimate Overdrive": 1}
 

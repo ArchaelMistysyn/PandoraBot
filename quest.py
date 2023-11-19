@@ -60,10 +60,8 @@ class Quest:
                     progress_count = 1
         elif self.token_num == 8:
             if player_object.player_equipped[4] != 0:
-                e_crest = inventory.read_custom_item(player_object.player_equipped[4])
-                if e_crest.item_tier == 4:
-                    is_completed = True
-                    progress_count = 1
+                is_completed = True
+                progress_count = 1
         else:
             progress_count = player_object.check_tokens(self.token_num)
             if progress_count >= self.cost:
@@ -109,9 +107,7 @@ class Quest:
                     progress_count = 1
         elif self.token_num == 8:
             if player_object.player_equipped[4] != 0:
-                e_crest = inventory.read_custom_item(player_object.player_equipped[4])
-                if e_crest.item_tier == 4:
-                    progress_count = 1
+                progress_count = 1
         else:
             progress_count = player_object.check_tokens(self.token_num)
         self.set_quest_output(progress_count)

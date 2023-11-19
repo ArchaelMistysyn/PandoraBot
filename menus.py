@@ -565,9 +565,9 @@ def binding_ritual(player_object, essence_type):
     if essence_stock > 0:
         inventory.update_stock(player_object, essence_id, -1)
         random_num = random.randint(1, 8)
-        if random_num == 1:
+        if random_num == 2:
             variant_num = 2
-        elif random_num <= 4:
+        elif random_num <= 6:
             variant_num = 1
         else:
             variant_num = 0
@@ -790,7 +790,7 @@ class ClassChangeView(discord.ui.View):
     )
     async def change_callback(self, interaction: discord.Interaction, class_select: discord.ui.Select):
         try:
-            if interaction.user.name == self.player_name:
+            if interaction.user.name == self.player_object.player_name:
                 if not self.embed:
                     reload_player = player.get_player_by_id(self.player_object.player_id)
                     current_class = reload_player.player_class

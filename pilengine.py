@@ -66,8 +66,8 @@ class RankCard:
         elif "Herrscher - Subscriber" in achievement_list:
             if echelon < 5:
                 card_loc = 7
-                # exp_bar_loc = 7
-                # wing_loc = 7
+                exp_bar_loc = 7
+                wing_loc = 7
             elif echelon == 5:
                 icon_loc = 6
         self.cardBG = rank_card_url_list[card_loc]
@@ -84,7 +84,8 @@ def get_player_profile(player_object, achievement_list):
     image_path = 'C:\\Users\\GamerTech\\PycharmProjects\\PandoraBot\\profilecard'
     font_url = "https://kyleportfolio.ca//botimages/profilecards/fonts/"
     # chosen_font = "aerolite/Aerolite.otf"
-    chosen_font = "oranienbaum/Oranienbaum.ttf"
+    # chosen_font = "oranienbaum/Oranienbaum.ttf"
+    chosen_font = "blackchancery/BLKCHCRY.TTF"
     font_url += chosen_font
     font_file = requests.get(font_url, stream=True).raw
     cardBG = Image.open(requests.get(rank_card.cardBG, stream=True).raw)
@@ -103,7 +104,7 @@ def get_player_profile(player_object, achievement_list):
     title_text = player_object.player_username
     image_editable = ImageDraw.Draw(result)
     fill_colour = rank_card.fill_colour
-    image_editable.text((205, 216), title_text, fill=fill_colour, font=title_font)
+    image_editable.text((204, 215), title_text, fill=fill_colour, font=title_font)
 
     # Class Icon
     new_size = (64, 64)

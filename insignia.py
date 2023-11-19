@@ -34,7 +34,7 @@ def display_insignia(player_object, insignia_code, output_type):
         case 9:
             insignia_name += "Refraction"
             icon_list = globalitems.omni_icon
-            bonus = 25 + 5 * player_echelon
+            bonus = 25 + 25 * player_object.player_echelon
             item_rolls += f"\n{int(bonus)}% Omni Penetration"
         case _:
             insignia_name = "ERROR"

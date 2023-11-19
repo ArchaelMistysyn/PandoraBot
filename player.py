@@ -60,7 +60,7 @@ class PlayerProfile:
         self.final_damage = 0.0
 
         self.elemental_capacity = 3
-        self.elemental_overflow = 0
+        self.elemental_application = 0
 
         self.combo_multiplier = 0.05
         self.combo_penetration = 0.0
@@ -74,6 +74,8 @@ class PlayerProfile:
         self.ultimate_multiplier = 0.0
         self.ultimate_penetration = 0.0
         self.ultimate_application = 0
+
+        self.temporal_application = 0
 
         self.banes = [0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
         self.skill_base_damage_bonus = [0, 0, 0, 0]
@@ -114,7 +116,7 @@ class PlayerProfile:
         self.final_damage = 0.0
 
         self.elemental_capacity = 3
-        self.elemental_overflow = 0
+        self.elemental_application = 0
 
         self.combo_multiplier = 0.05
         self.combo_penetration = 0.0
@@ -128,6 +130,8 @@ class PlayerProfile:
         self.ultimate_multiplier = 0.0
         self.ultimate_penetration = 0.0
         self.ultimate_application = 0
+
+        self.temporal_application = 0
 
         self.banes = [0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
         self.skill_base_damage_bonus = [0, 0, 0, 0]
@@ -184,6 +188,8 @@ class PlayerProfile:
                 used_multipliers = []
                 if self.elemental_capacity < 9:
                     temp_element_list = combat.limit_elements(self, e_weapon)
+                else:
+                    temp_element_list = e_weapon.item_elements.copy()
                 for i, is_used in enumerate(temp_element_list):
                     if is_used:
                         used_elements.append(globalitems.global_element_list[i])
@@ -212,6 +218,8 @@ class PlayerProfile:
                 temp_pen_str = f"(Pen: {int(round(self.elemental_penetration[z] * 100)):,}%)"
                 temp_curse_str = f"(Curse: {int(round(self.elemental_curse[z] * 100)):,}%)"
                 stats += f"{temp_icon} {temp_dmg_str} - {temp_pen_str} - {temp_curse_str}\n"
+            stats += f"Elemental Details: (Cap: {self.elemental_capacity}) - (App: {self.elemental_application}) - "
+            stats += f"(Frc: {self.elemental_application * 5}%))"
             second_title = "Special Breakdown"
             second_msg = f"Critical Chance: (Reg: {int(round(self.critical_chance))}%) - "
             second_msg += f"(Omg: {int(round(self.critical_application * 10))}%)"
@@ -244,7 +252,7 @@ class PlayerProfile:
             stats += f"\nClass Mastery: {int(round(self.class_multiplier * 100))}%"
             stats += f"\nFinal Damage: {int(round(self.final_damage * 100))}%"
             stats += f"\nDefence Penetration: {int(round(self.defence_penetration * 100))}%"
-            stats += f"\nOmni Aura: {int(round(self.aura))}%"
+            stats += f"\nOmni Aura: {int(round(self.aura * 100))}%"
         embed_msg = discord.Embed(colour=echelon_colour[0],
                                   title=self.player_username,
                                   description=id_msg)
@@ -466,10 +474,10 @@ class PlayerProfile:
                       "Galaxies", "Basic Attack 2 Base Damage +75%", 40,
                       "Superclusters", "Basic Attack 3 Base Damage +100%", 60,
                       "Universes", "Basic Attack 3 Base Damage +150%", 80],
-            "Confluence": ["Unity", "Elemental Overflow +1", 20,
-                           "Harmony", "Elemental Overflow +1", 40,
-                           "Synergy", "Elemental Overflow +1", 60,
-                           "Equilibrium", "Elemental Overflow +2", 80]
+            "Confluence": ["Unity", "Elemental Overflow +2", 20,
+                           "Harmony", "Elemental Overflow +2", 40,
+                           "Synergy", "Elemental Overflow +2", 60,
+                           "Equilibrium", "Elemental Overflow +4", 80]
         }
         path_type = selected_path.split(" ")[-1]
         embed.description = "Stats per point:\n" + '\n'.join(perks[path_type])
@@ -497,7 +505,7 @@ class PlayerProfile:
             case "Ranger":
                 self.critical_application += 1
             case "Weaver":
-                self.elemental_overflow += 1
+                self.elemental_application += 2
             case "Assassin":
                 self.bleed_application += 1
             case "Mage":
@@ -573,13 +581,13 @@ class PlayerProfile:
         confluence_bonus = self.player_stats[5]
         self.aura += 0.01 * confluence_bonus
         if confluence_bonus >= 20:
-            self.elemental_overflow += 1
+            self.elemental_application += 2
             if confluence_bonus >= 40:
-                self.elemental_overflow += 1
+                self.elemental_application += 2
                 if confluence_bonus >= 60:
-                    self.elemental_overflow += 1
+                    self.elemental_application += 2
                     if confluence_bonus >= 80:
-                        self.elemental_overflow += 2
+                        self.elemental_application += 4
 
         # Item Multipliers
         e_item = []
@@ -615,9 +623,7 @@ class PlayerProfile:
         base_critical_chance += self.critical_application * 5
         self.critical_multiplier += self.critical_application * 1.5
         self.skill_base_damage_bonus[3] += self.ultimate_application * 0.5
-        self.all_elemental_multiplier += self.elemental_overflow * 0.5
-        self.all_elemental_penetration += self.elemental_overflow * 0.25
-        self.all_elemental_curse += self.elemental_overflow * 0.1
+        self.all_elemental_multiplier += self.elemental_application * 0.5
 
         # General Calculations
         self.critical_chance = (1 + self.critical_chance) * base_critical_chance
@@ -662,8 +668,8 @@ class PlayerProfile:
             location = check_cascade(self.elemental_curse)
             self.elemental_curse[location] += self.elemental_curse[0]
             self.elemental_curse[location] += self.elemental_curse[5]
-        if self.elemental_overflow > 0:
-            self.elemental_capacity += self.elemental_overflow
+        if self.elemental_application > 0:
+            self.elemental_capacity += self.elemental_application
             if self.elemental_capacity > 9:
                 self.elemental_capacity = 9
         elemental_breakdown = []
@@ -689,8 +695,9 @@ class PlayerProfile:
 
     def get_player_boss_damage(self, boss_object):
         e_weapon = inventory.read_custom_item(self.player_equipped[0])
+        num_elements = sum(e_weapon.item_elements)
         player_damage = self.get_player_initial_damage()
-        player_damage, critical_type = combat.critical_check(self, player_damage)
+        player_damage, critical_type = combat.critical_check(self, player_damage, num_elements)
         self.player_total_damage = self.boss_adjustments(player_damage, boss_object, e_weapon)
         return self.player_total_damage, critical_type
 
@@ -704,6 +711,8 @@ class PlayerProfile:
         # Elemental Defences
         if self.elemental_capacity < 9:
             temp_element_list = combat.limit_elements(self, e_weapon)
+        else:
+            temp_element_list = e_weapon.item_elements.copy()
         for idx, x in enumerate(temp_element_list):
             if x == 1:
                 self.elemental_damage[idx] = adjusted_damage * (1 + self.elemental_damage_multiplier[idx])
@@ -733,7 +742,7 @@ class PlayerProfile:
             for y in selected_elements_list:
                 self.elemental_penetration[y] += (150 / num_elements + 25 * self.player_echelon) * 0.01
         else:
-            self.all_elemental_penetration += 0.25 + 0.05 * self.player_echelon
+            self.all_elemental_penetration += 0.25 + 0.25 * self.player_echelon
         self.hp_bonus += 500 * self.player_echelon
 
     def assign_tarot_values(self, tarot_card):
@@ -1049,8 +1058,8 @@ class PlayerProfile:
             match unique_ability:
                 case "Curse of Immortality":
                     self.immortal = globalitems.tier_5_ability_dict[unique_ability]
-                case "Elemental Fractal":
-                    self.elemental_overflow += globalitems.tier_5_ability_dict[unique_ability]
+                case "Elemental Overflow":
+                    self.elemental_application += globalitems.tier_5_ability_dict[unique_ability]
                 case "Omega Critical":
                     self.critical_application += globalitems.tier_5_ability_dict[unique_ability]
                 case "Specialist's Mastery":
@@ -1063,6 +1072,8 @@ class PlayerProfile:
                     self.bleed_application += globalitems.tier_5_ability_dict[unique_ability]
                 case "Overflowing Vitality":
                     self.hp_multiplier += globalitems.tier_5_ability_dict[unique_ability]
+                case "Unravel":
+                    self.temporal_application += globalitems.tier_5_ability_dict[unique_ability]
                 case _:
                     nothing = False
         else:

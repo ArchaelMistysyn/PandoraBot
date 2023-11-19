@@ -978,7 +978,7 @@ def display_binventory(player_id, method):
 
 
 def custom_sort(item_id):
-    return item_id[2]
+    return item_id[2] if len(item_id) >= 3 else item_id
 
 
 def get_gear_tier_colours(base_tier):

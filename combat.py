@@ -235,10 +235,13 @@ def boss_true_mitigation(boss_object):
     return mitigation_multiplier
 
 
-def critical_check(player_object, player_damage):
+def critical_check(player_object, player_damage, num_elements):
     # Critical hits
     random_num = random.randint(1, 100)
-    if random_num < player_object.critical_chance:
+    if random_num <= (player_object.elemental_application * 5):
+        player_damage *= num_elements
+        critical_type = "FRACTAL"
+    elif random_num < player_object.critical_chance:
         player_damage *= (1 + player_object.critical_multiplier)
         omega_chance = player_object.critical_application * 10
         omega_check = random.randint(1, 100)
@@ -288,6 +291,8 @@ def pvp_defences(attacker, defender, player_damage, e_weapon):
     # Elemental Defences
     if attacker.elemental_capacity < 9:
         temp_element_list = combat.limit_elements(attacker, e_weapon)
+    else:
+        temp_element_list = e_weapon.item_elements.copy()
     for idx, x in enumerate(temp_element_list):
         if x == 1:
             attacker.elemental_damage[idx] = adjusted_damage * (1 + attacker.elemental_damage_multiplier[idx])
@@ -301,8 +306,9 @@ def pvp_defences(attacker, defender, player_damage, e_weapon):
 
 def pvp_attack(attacker, defender):
     e_weapon = inventory.read_custom_item(attacker.player_equipped[0])
+    num_elements = sum(e_weapon.item_elements)
     player_damage = attacker.get_player_initial_damage()
-    player_damage, critical_type = critical_check(attacker, player_damage)
+    player_damage, critical_type = critical_check(attacker, player_damage, num_elements)
     player_damage = pvp_defences(attacker, defender, player_damage, e_weapon)
     return player_damage, critical_type
 

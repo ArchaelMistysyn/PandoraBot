@@ -211,7 +211,7 @@ class ShopView3(discord.ui.View):
             discord.SelectOption(
                 emoji="<a:elootitem:1144477550379274322>", label="Socket Adder", value="i3k"),
             discord.SelectOption(
-                emoji="<a:eshadow2:1141653468965257216>", label="Purgatorial Flame", value="I3f"),
+                emoji="<a:eshadow2:1141653468965257216>", label="Purgatorial Flame", value="i3f"),
             discord.SelectOption(
                 emoji=globalitems.stamina_icon, label="Greater Stamina Potion", value="i3y")
         ]

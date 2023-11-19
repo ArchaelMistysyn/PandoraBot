@@ -183,18 +183,18 @@ def generate_random_item():
         reward_id = "i5u"
     elif random_reward <= 51101:
         item_tier = 4
-        reward_types = ["h", "j", "z", "s", "o", "t", "g", "w", "c", "j", "y", "Fae"]
+        reward_types = ["h", "j", "z", "s", "o", "t", "g", "w", "c", "j", "y"]
         item_type = reward_types[(random.randint(1, len(reward_types)) - 1)]
         reward_id = f"i{item_tier}{item_type}"
     else:
         if random_reward <= 251101:
             item_tier = 3
-            reward_types = ["s", "o", "k", "f", "j", "y", "Fae", "Fae"]
+            reward_types = ["s", "o", "k", "f", "j", "y", "Fae"]
         elif random_reward <= 601101:
-            reward_types = ["s", "o", "j", "y", "Fae", "Fae", "Fae"]
+            reward_types = ["s", "o", "j", "y", "Fae", "Fae"]
             item_tier = 2
         else:
-            reward_types = ["s", "o", "j", "y", "Fae", "Fae", "Fae", "Fae"]
+            reward_types = ["s", "o", "j", "y", "Fae", "Fae", "Fae"]
             item_tier = 1
         item_type = reward_types[(random.randint(1, len(reward_types)) - 1)]
         if item_type != "j":
@@ -202,7 +202,6 @@ def generate_random_item():
         reward_id = f"i{item_tier}{item_type}"
     if item_type == "Fae":
         random_element = random.randint(0, 8)
-        reward_id = f"Fae{random_element}"
         reward_id = f"Fae{random_element}"
     return reward_id, quantity
 

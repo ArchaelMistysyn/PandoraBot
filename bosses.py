@@ -193,10 +193,10 @@ class CurrentBoss:
 def get_boss_details(channel_num):
     if channel_num < 4:
         max_types = channel_num
+        random_boss_type = random.randint(0, max_types)
+        selected_boss_type = boss_list[random_boss_type]
     else:
-        max_types = 3
-    random_boss_type = random.randint(0, max_types)
-    selected_boss_type = boss_list[random_boss_type]
+        selected_boss_type = boss_list[3]
     boss_tier = get_random_bosstier(selected_boss_type)
     if boss_tier < 5:
         level = random.randint(1, 9)
