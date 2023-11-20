@@ -389,21 +389,23 @@ def run_discord_bot():
         if any(ctx.channel.id in sl for sl in globalitems.global_server_channels):
             await ctx.defer()
             existing_user = player.get_player_by_name(ctx.author)
-            if new_username.isalpha():
-                if player.check_username(new_username):
-                    token_stock = inventory.check_stock(existing_user, "cNAME")
-                    if token_stock >= 1:
-                        inventory.update_stock(existing_user, "cNAME", -1)
-                        existing_user.player_username = new_username
-                        existing_user.set_player_field("player_username", new_username)
-                        message = f'Got it! I\'ll call you {existing_user.player_username} from now on!'
-                    else:
-                        message = f"It's not that easy to change your name. Bring me a token to prove you are serious."
-                else:
-                    message = f'Sorry that username is taken.'
+            if not new_username.isalpha():
+                await ctx.send("Please enter a valid username. No special or numeric characters.")
+                return
+            if not player.check_username(new_username):
+                await ctx.send("Username already in use.")
+                return
+            if len(new_username) > 12:
+                await ctx.send("Please enter a username under 12 characters.")
+                return
+            token_stock = inventory.check_stock(existing_user, "cNAME")
+            if token_stock < 1:
+                await ctx.send(f"It's not that easy to change your name. Bring me a token to prove you are serious.")
             else:
-                message = "Please enter a valid username with no numeric or special characters."
-            await ctx.send(message)
+                inventory.update_stock(existing_user, "cNAME", -1)
+                existing_user.player_username = new_username
+                existing_user.set_player_field("player_username", new_username)
+                await ctx.send(f'Got it! I\'ll call you {existing_user.player_username} from now on!')
 
     @pandora_bot.event
     async def open_lootbox(ctx, embed_msg, item_tier):
@@ -794,6 +796,14 @@ def run_discord_bot():
                 embed_msg = unregistered_message()
                 await ctx.send(embed=embed_msg)
 
+    @pandora_bot.hybrid_command(name='testing', help="Testing Command.")
+    @app_commands.guilds(discord.Object(id=1011375205999968427))
+    async def testing(ctx):
+        embed_msg = discord.Embed(colour=discord.Colour.dark_teal(),
+                                  title="This command is for testing purposes.",
+                                  description="This command serves no function.")
+        await ctx.send(embed=embed_msg)
+
     @set_command_category('craft', 3)
     @pandora_bot.hybrid_command(name='infuse', help="Infuse items using alchemy.")
     @app_commands.guilds(discord.Object(id=1011375205999968427))
@@ -863,29 +873,31 @@ def run_discord_bot():
         if any(ctx.channel.id in sl for sl in globalitems.global_server_channels):
             await ctx.defer()
             user = ctx.author
-            if username.isalpha():
-                if player.check_username(username):
-                    register_msg = ('You find yourself seperated from your companions in the labyrinth. Unarmed, you '
-                                    'are desperately searching every room and chest for something you can use.\n You'
-                                    'stumble into an empty room in which sits a peculiar box. You hesitate at first '
-                                    'and consider the possibility of a trap or mimic. However, hearing footsteps in '
-                                    'the distance extinguishes any doubt. There is no time. You open the box.\n'
-                                    'A flurry of souls rushes by, assuredly scaring away any nearby monsters. '
-                                    'Everything goes silent and all that remains is an otherworldly girl staring at '
-                                    'you in confusion. A soft voice coming not from the girl echoes through your mind, '
-                                    '"Everything begins and ends with a wish. What do you wish to be?" '
-                                    'You think it for only a second and the voice responds with a playful laugh, '
-                                    ' "Let it be so." Then the voice disappears without a trace.')
-                    embed_msg = discord.Embed(colour=discord.Colour.dark_teal(),
-                                              title="Register - Select Class",
-                                              description=register_msg)
-                    player_name = str(user)
-                    class_view = menus.ClassSelect(player_name, username)
-                    await ctx.send(embed=embed_msg, view=class_view)
-                else:
-                    ctx.send("Username already in use.")
-            else:
+            if not username.isalpha():
                 await ctx.send("Please enter a valid username.")
+                return
+            if not player.check_username(username):
+                await ctx.send("Username already in use.")
+                return
+            if len(username) > 12:
+                await ctx.send("Please enter a username under 12 characters.")
+                return
+            register_msg = ('You find yourself seperated from your companions in the labyrinth. Unarmed, you '
+                            'are desperately searching every room and chest for something you can use.\n You'
+                            'stumble into an empty room in which sits a peculiar box. You hesitate at first '
+                            'and consider the possibility of a trap or mimic. However, hearing footsteps in '
+                            'the distance extinguishes any doubt. There is no time. You open the box.\n'
+                            'A flurry of souls rushes by, assuredly scaring away any nearby monsters. '
+                            'Everything goes silent and all that remains is an otherworldly girl staring at '
+                            'you in confusion. A soft voice coming not from the girl echoes through your mind, '
+                            '"Everything begins and ends with a wish. What do you wish to be?" '
+                            'You think it for only a second and the voice responds with a playful laugh, '
+                            ' "Let it be so." Then the voice disappears without a trace.')
+            embed_msg = discord.Embed(colour=discord.Colour.dark_teal(),
+                                      title="Register - Select Class",
+                                      description=register_msg)
+            player_name = str(user)
+            class_view = menus.ClassSelect(player_name, username)
 
     @set_command_category('info', 2)
     @pandora_bot.hybrid_command(name='guide', help="Display basic starter guide.")

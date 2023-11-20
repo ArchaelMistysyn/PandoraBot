@@ -910,6 +910,8 @@ class PointsView(discord.ui.View):
                                  description="Dark, Light, and Ultimate Specialist"),
             discord.SelectOption(emoji=globalitems.path_icon[4], label="Path of Stars",
                                  description="Celestial and Combo Specialist"),
+            discord.SelectOption(emoji=globalitems.path_icon[5], label="Path of Time",
+                                 description="Time Control Specialist"),
             discord.SelectOption(emoji=globalitems.path_icon[5], label="Path of Confluence",
                                  description="Multi Elemental Specialist"),
             discord.SelectOption(emoji="❌", label="Reset",

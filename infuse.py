@@ -44,11 +44,11 @@ recipe_dict = {
     "Crystallized Void": ["i6x", 1, "i5v", 1, 10, "v7x"],
 
     "Fabled Core": ["STONE4", 10, "15l", 1, 90, "i5u"],
-    "Unrefined Fabled Item (Weapon)": ["i5aW", 25, "i5u", 1, 100, "i5xW"],
-    "Unrefined Fabled Item (Armour)": ["i5aA", 25, "i5u", 1, 100, "i5xA"],
-    "Unrefined Fabled Item (Accessory)": ["i5aY", 25, "i5u", 1, 100, "i5xY"],
-    "Unrefined Fabled Item (Wing)": ["i4w", 25, "i5u", 1, 100, "i5xG"],
-    "Unrefined Fabled Item (Crest)": ["i4c", 25, "i5u", 1, 100, "i5xC"],
+    "Unrefined Fabled Item (Weapon)": ["i5aW", 200, "i5u", 5, 100, "i5xW"],
+    "Unrefined Fabled Item (Armour)": ["i5aA", 100, "i5u", 2, 100, "i5xA"],
+    "Unrefined Fabled Item (Accessory)": ["i5aY", 100, "i5u", 2, 100, "i5xY"],
+    "Unrefined Fabled Item (Wing)": ["i4w", 50, "i5u", 2, 100, "i5xG"],
+    "Unrefined Fabled Item (Crest)": ["i4c", 50, "i5u", 2, 100, "i5xC"],
     "Unrefined Fabled Item (Gem)": ["i4g", 25, "i5u", 1, 100, "i5xD"],
 
     "Crystallized Wish": ["m6e", 50, "STONE4", 10, 100, "16x"],

@@ -449,23 +449,24 @@ class PlayerProfile:
             "Horizon": ["Earth Damage: 5%", "Wind Damage: 5%", "Earth Resistance: 1%", "Wind Resistance: 1%",
                         "Bleed Damage: 10%"],
             "Eclipse": ["Dark Damage: 5%", "Light Damage: 5%", "Dark Resistance: 1%", "Light Resistance: 1%",
-                        "Ultimate Damage: 25%"],
+                        "Ultimate Damage: 10%"],
             "Stars": ["Celestial Damage: 7%", "Celestial Resistance: 1%", "Combo Damage: 3%"],
+            "Time": ["???%"],
             "Confluence": ["Omni Aura 1%"]
         }
         glyph_data = {
             "Storms": ["Cyclone", "Critical Application +1", 20,
                        "Vortex", "Critical Application +1", 40,
-                       "Tempest", "Critical Application +2", 60,
-                       "Maelstrom", "Critical Application +3", 80],
+                       "Tempest", "Critical Application +1", 60,
+                       "Maelstrom", "Critical Application +2", 80],
             "Frostfire": ["Iceburn", "Grants Cascade Damage", 20,
                           "Glacial Flame", "Grants Cascade Penetration", 40,
                           "Snowy Blaze", "Grants Cascade Curse", 60,
                           "Subzero Inferno", "Triple your fire/ice damage, penetration, and curse", 80],
             "Horizon": ["Red Skies", "Bleed Application +1", 20,
                         "Vermilion Dawn", "Bleed Application +1", 40,
-                        "Scarlet Sunset", "Bleed Application +2", 60,
-                        "Ruby Tears", "Bleed Application +3", 80],
+                        "Scarlet Sunset", "Bleed Application +1", 60,
+                        "Ruby Tears", "Bleed Application +2", 80],
             "Eclipse": ["Umbra", "Ultimate Application +1", 20,
                         "Shadowfall", "Ultimate Application +1", 40,
                         "Eventide", "Ultimate Application +1", 60,
@@ -477,7 +478,11 @@ class PlayerProfile:
             "Confluence": ["Unity", "Elemental Overflow +2", 20,
                            "Harmony", "Elemental Overflow +2", 40,
                            "Synergy", "Elemental Overflow +2", 60,
-                           "Equilibrium", "Elemental Overflow +4", 80]
+                           "Equilibrium", "Elemental Overflow +3", 80],
+            "Time": ["a", "Temporal Application +1", 20,
+                     "b", "Temporal Application +1", 40,
+                     "c", "Temporal Application +1", 60,
+                     "d", "Temporal Application +2", 80]
         }
         path_type = selected_path.split(" ")[-1]
         embed.description = "Stats per point:\n" + '\n'.join(perks[path_type])
@@ -529,9 +534,9 @@ class PlayerProfile:
             if storm_bonus >= 40:
                 self.critical_application += 1
                 if storm_bonus >= 60:
-                    self.critical_application += 2
+                    self.critical_application += 1
                     if storm_bonus >= 80:
-                        self.critical_application += 3
+                        self.critical_application += 2
         frostfire_bonus = self.player_stats[1]
         self.elemental_damage_multiplier[5] += 0.05 * frostfire_bonus
         self.elemental_damage_multiplier[0] += 0.05 * frostfire_bonus
@@ -549,15 +554,15 @@ class PlayerProfile:
             if horizon_bonus >= 40:
                 self.bleed_application += 1
                 if horizon_bonus >= 60:
-                    self.bleed_application += 2
+                    self.bleed_application += 1
                     if horizon_bonus >= 80:
-                        self.bleed_application += 3
+                        self.bleed_application += 2
         eclipse_bonus = self.player_stats[3]
         self.elemental_damage_multiplier[6] += 0.05 * eclipse_bonus
         self.elemental_damage_multiplier[7] += 0.05 * eclipse_bonus
         self.elemental_resistance[6] += 0.01 * eclipse_bonus
         self.elemental_resistance[7] += 0.01 * eclipse_bonus
-        self.ultimate_multiplier += 0.25 * eclipse_bonus
+        self.ultimate_multiplier += 0.1 * eclipse_bonus
         if eclipse_bonus >= 20:
             self.ultimate_application += 1
             if eclipse_bonus >= 40:
@@ -587,7 +592,7 @@ class PlayerProfile:
                 if confluence_bonus >= 60:
                     self.elemental_application += 2
                     if confluence_bonus >= 80:
-                        self.elemental_application += 4
+                        self.elemental_application += 3
 
         # Item Multipliers
         e_item = []
@@ -622,8 +627,8 @@ class PlayerProfile:
         # Application Calculations
         base_critical_chance += self.critical_application * 5
         self.critical_multiplier += self.critical_application * 1.5
-        self.skill_base_damage_bonus[3] += self.ultimate_application * 0.5
-        self.all_elemental_multiplier += self.elemental_application * 0.5
+        self.skill_base_damage_bonus[3] += self.ultimate_application * 0.25
+        self.all_elemental_multiplier += self.elemental_application * 0.25
 
         # General Calculations
         self.critical_chance = (1 + self.critical_chance) * base_critical_chance

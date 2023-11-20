@@ -6,6 +6,7 @@ import pandas as pd
 import player
 import bosses
 import os
+import combat
 from PIL import Image, ImageFont, ImageDraw, ImageEnhance
 import mysql.connector
 from mysql.connector.errors import Error
@@ -85,15 +86,14 @@ class CurrentBoss:
         boss_field = f'Tier {self.boss_tier} {self.boss_type} - Level {self.boss_lvl}'
         if not self.calculate_hp():
             self.boss_cHP = 0
+        hp_bar_icons = combat.hp_bar_dict[self.boss_tier]
         boss_hp = f'{life_emoji} ({int(self.boss_cHP):,} / {int(self.boss_mHP):,})'
-        bar_length = int(int(self.boss_cHP) / int(self.boss_mHP) * 10)
-        hp_bar = life_bar_left
-        for x in range(bar_length):
-            hp_bar += life_bar_middle
-        for y in range(10 - bar_length):
-            hp_bar += "⬛"
-        hp_bar += life_bar_right
-        boss_hp += f'\n{hp_bar}'
+        if int(self.boss_cHP) >= 1:
+            bar_length = min(100, int((int(self.boss_cHP) / int(self.boss_mHP)) * 12))
+        else:
+            bar_length = 0
+        hp_bar_string = "".join(hp_bar_icons[0][:bar_length]) + "".join(hp_bar_icons[1][bar_length:])
+        boss_hp += f'\n{hp_bar_string}'
         boss_weakness = f'Weakness: '
         for x in self.boss_typeweak:
             boss_weakness += str(x)
@@ -191,13 +191,13 @@ class CurrentBoss:
 
 
 def get_boss_details(channel_num):
-    if channel_num < 4:
+    if channel_num < 3:
         max_types = channel_num
         random_boss_type = random.randint(0, max_types)
         selected_boss_type = boss_list[random_boss_type]
     else:
         selected_boss_type = boss_list[3]
-    boss_tier = get_random_bosstier(selected_boss_type)
+    boss_tier, selected_boss_type = get_random_bosstier(selected_boss_type)
     if boss_tier < 5:
         level = random.randint(1, 9)
         if channel_num == 1:
@@ -211,6 +211,7 @@ def get_boss_details(channel_num):
         level += channel_bonus
     else:
         level = 99
+
     return level, selected_boss_type, boss_tier
 
 
@@ -357,8 +358,13 @@ def spawn_boss(channel_id, player_id, new_boss_tier, selected_boss_type, boss_le
 
 def get_random_bosstier(boss_type):
     random_number = random.randint(1, 100)
+    new_boss_type = boss_type
     if random_number <= 10:
         boss_tier = 4
+        if boss_type == boss_list[3]:
+            paragon_exceptions = [0, 1, 2, 3, 3]
+            random_type = random.randint(0, 4)
+            new_boss_type = boss_list[random_type]
     elif random_number <= 35:
         boss_tier = 3
     elif random_number <= 65:
@@ -367,7 +373,7 @@ def get_random_bosstier(boss_type):
         boss_tier = 1
     else:
         boss_tier = 0
-    return boss_tier
+    return boss_tier, new_boss_type
 
 
 # generate ele weakness

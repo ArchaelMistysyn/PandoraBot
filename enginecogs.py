@@ -227,7 +227,7 @@ class PvPCog(commands.Cog):
 
     async def handle_pvp_ultimate(self, role, combatant, tracker, combo_count, hit_list):
         attacker, defender = self.set_roles(role)
-        if tracker[attacker].charges >= 10:
+        if tracker[attacker].charges >= 20:
             hit_damage, critical_type = combat.pvp_attack(combatant[attacker], combatant[defender])
             combo_count[attacker] += 1 + combatant[attacker].combo_application
             hit_damage, skill_name = combat.skill_adjuster(combatant[attacker], tracker[attacker], hit_damage,

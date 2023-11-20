@@ -43,6 +43,8 @@ class RaidView(discord.ui.View):
         echelon_req = globalitems.channel_echelon_dict[self.channel_num]
         if clicked_by.player_echelon == echelon_req:
             outcome += bosses.add_participating_player(interaction.channel.id, clicked_by.player_id)
+        elif clicked_by.player_echelon == 4 and echelon_req == 3:
+            outcome += bosses.add_participating_player(interaction.channel.id, clicked_by.player_id)
         else:
             outcome += f" is not echelon {echelon_req} and cannot join this raid."
         await interaction.response.send_message(outcome)
@@ -252,7 +254,7 @@ def run_discord_bot():
                                 max_spawn = 2
                             spawned_boss = random.randint(0, max_spawn)
                             boss_type = bosses.boss_list[spawned_boss]
-                            new_boss_tier = bosses.get_random_bosstier(boss_type)
+                            new_boss_tier, boss_type = bosses.get_random_bosstier(boss_type)
                             active_boss = bosses.spawn_boss(channel_id, player_object.player_id, new_boss_tier,
                                                             boss_type, player_object.player_lvl, 0)
                             active_boss.player_id = player_object.player_id
@@ -321,7 +323,7 @@ def run_discord_bot():
             spawned_boss = 3
             boss_type = bosses.boss_list[spawned_boss]
             if token_version == 1:
-                new_boss_tier = bosses.get_random_bosstier(boss_type)
+                new_boss_tier, boss_type = bosses.get_random_bosstier(boss_type)
             else:
                 new_boss_tier = token_version + 3
             active_boss = bosses.spawn_boss(channel_id, player_object.player_id, new_boss_tier,

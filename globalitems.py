@@ -44,7 +44,7 @@ element_names = ["Fire", "Water", "Lightning", "Earth", "Wind", "Ice", "Shadow",
 element_special_names = ["Volcanic", "Aquatic", "Voltaic", "Seismic", "Sonic", "Arctic", "Lunar", "Solar", "Cosmic"]
 tier_5_ability_dict = {"Elemental Overflow": 2, "Specialist's Mastery": 0.1, "Curse of Immortality": True,
                        "Omega Critical": 1, "Endless Combo": 1, "Crimson Reaper": 1, "Overflowing Vitality": 5,
-                       "Ultimate Overdrive": 1}
+                       "Ultimate Overdrive": 1, "Unravel": 1}
 
 not_owned_icon = "https://kyleportfolio.ca/botimages/profilecards/noachv.png"
 owned_icon = "https://kyleportfolio.ca/botimages/profilecards/owned.png"

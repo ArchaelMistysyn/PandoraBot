@@ -1,5 +1,5 @@
 boss_type,boss_tier,item_id,drop_rate
-All,0,i1r,25
+All,0,i1r,10
 All,0,i3k,15
 All,0,i4h,10
 All,0,i4p,5
@@ -41,3 +41,4 @@ Demon,0,STONE3,75
 Demon,0,i5u,1
 Paragon,0,i4c,25
 Paragon,0,STONE4,75
+Paragon,0,i5u,3

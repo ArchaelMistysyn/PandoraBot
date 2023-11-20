@@ -165,6 +165,7 @@ class Room:
         self.room_element = random.randint(0, 8)
         random_deity = random.randint(0, 22)
         self.room_deity = tarot.tarot_card_list(random_deity)
+        self.deity_tier = tarot.get_tarot_tier(self.room_deity)
 
     def prepare_room(self, expedition):
         random_check = random.randint(1, 100)
@@ -798,9 +799,9 @@ class TreasureRoomView(discord.ui.View):
                             self.new_view = None
                     else:
                         if self.expedition.expedition_tier >= 4:
-                            fragment_roller = random.randint(0, (self.expedition_tier + 3))
+                            fragment_roller = random.randint(0, (self.expedition.expedition_tier + 3))
                             if active_room.room_type == "g":
-                                bonus_check = random.randint(0, (self.expedition_tier + 3))
+                                bonus_check = random.randint(0, (self.expedition.expedition_tier + 3))
                                 fragment_roller = max(fragment_roller, bonus_check)
                             num_fragments = reward_probabilities[fragment_roller]
                             fragment_id = f"i5a{active_room.reward_type}"

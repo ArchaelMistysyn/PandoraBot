@@ -104,7 +104,7 @@ def get_player_profile(player_object, achievement_list):
     title_text = player_object.player_username
     image_editable = ImageDraw.Draw(result)
     fill_colour = rank_card.fill_colour
-    image_editable.text((204, 215), title_text, fill=fill_colour, font=title_font)
+    image_editable.text((195, 215), title_text, fill=fill_colour, font=title_font)
 
     # Class Icon
     new_size = (64, 64)
