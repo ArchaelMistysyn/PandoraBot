@@ -39,6 +39,7 @@ class CurrentBoss:
         self.curse_debuffs = [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
         self.aura = 0.0
         self.boss_element = 0
+        self.damage_cap = -1
 
     def __str__(self):
         return self.boss_name
@@ -285,6 +286,10 @@ def spawn_boss(channel_id, player_id, new_boss_tier, selected_boss_type, boss_le
             boss_object.boss_name = boss_name
             boss_object.boss_mHP = boss_mHP
             boss_object.boss_cHP = boss_cHP
+            if boss_object.boss_tier <= 4:
+                boss_object.damage_cap = (10 ** int(boss_level / 10 + 4) - 1)
+            else:
+                boss_object.damage_cap = -1
             boss_object.boss_typeweak = boss_typeweak
             boss_object.boss_eleweak = boss_eleweak
             boss_object.boss_image = boss_image
@@ -321,16 +326,16 @@ def spawn_boss(channel_id, player_id, new_boss_tier, selected_boss_type, boss_le
             boss_typeweak = boss_typeweak[:-1]
 
             if new_boss_tier <= 4:
-                hp_min = get_base_hp(selected_boss_type, channel_num)
-                hp_max = int(hp_min * (boss_level * 0.01 + 1))
-                subtotal_hp = random.randint(hp_min, hp_max)
-                subtotal_hp *= 10 ** int(boss_level / 10)
-                subtotal_hp += (new_boss_tier * 0.1) * subtotal_hp
+                subtotal_hp = 10 ** int(boss_level / 10 + 5)
                 total_hp = int(subtotal_hp)
+                boss_object.damage_cap = (10 ** int(boss_level / 10 + 4) - 1)
             elif new_boss_tier == 5:
                 total_hp = 10000000000000
+                boss_object.damage_cap = -1
             else:
                 total_hp = 999999999999999
+                boss_object.damage_cap = -1
+
             boss_object.boss_mHP = total_hp
             boss_object.boss_cHP = boss_object.boss_mHP
             query = text("INSERT INTO ActiveRaids (channel_id, player_id) VALUES (:input_1, :player_id)")
@@ -404,35 +409,6 @@ def get_type(chosen_weakness):
             type_temp = "<:cD:1150195280969478254>"
 
     return type_temp
-
-
-def get_base_hp(base_type, channel_num):
-    if channel_num < 4:
-        match base_type:
-            case "Fortress":
-                base_hp = 50000
-            case "Dragon":
-                base_hp = 60000
-            case "Demon":
-                base_hp = 75000
-            case "Paragon":
-                base_hp = 100000
-            case _:
-                base_hp = 0
-    else:
-        match base_type:
-            case "Fortress":
-                base_hp = 1000000
-            case "Dragon":
-                base_hp = 2000000
-            case "Demon":
-                base_hp = 3000000
-            case "Paragon":
-                base_hp = 5000000
-            case _:
-                base_hp = 0
-
-    return base_hp
 
 
 def get_boss_descriptor(boss_type):

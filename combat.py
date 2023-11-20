@@ -114,6 +114,8 @@ def run_cycle(combat_tracker, active_boss, player_object, method):
                 combat_tracker.bleed_tracker += 0.05 * player_object.bleed_application
                 if combat_tracker.bleed_tracker >= 1:
                     combat_tracker.bleed_tracker = 1
+            if damage >= active_boss.damage_cap != -1:
+                damage = active_boss.damage_cap
             hit_msg = f"{combo_count}x Combo: {skill_name} {damage:,}"
             if critical_type != "":
                 hit_msg += f" *{critical_type}*"
@@ -124,6 +126,8 @@ def run_cycle(combat_tracker, active_boss, player_object, method):
                 hit_damage, critical_type = player_object.get_player_boss_damage(active_boss)
                 damage, skill_name = skill_adjuster(player_object, combat_tracker, hit_damage,
                                                     combo_count, True)
+                if damage >= active_boss.damage_cap != -1:
+                    damage = active_boss.damage_cap
                 hit_msg = f"Ultimate: {skill_name} {damage:,}"
                 if critical_type != "":
                     hit_msg += f" *{critical_type}*"
@@ -135,6 +139,8 @@ def run_cycle(combat_tracker, active_boss, player_object, method):
                     hit_damage, bleed_type = check_hyper_bleed(player_object, hit_damage)
                     hit_damage *= (1 + player_object.bleed_penetration)
                     bleed_damage = int(hit_damage)
+                    if bleed_damage >= active_boss.damage_cap != -1:
+                        bleed_damage = active_boss.damage_cap
                     hit_msg = f"Sanguine Rupture: {bleed_damage:,} *{bleed_type}*"
                     for b in range(player_object.bleed_application):
                         hit_list.append([bleed_damage, hit_msg])
@@ -148,6 +154,8 @@ def run_cycle(combat_tracker, active_boss, player_object, method):
             hit_damage, bleed_type = check_hyper_bleed(player_object, hit_damage)
             hit_damage *= (1 + player_object.bleed_penetration)
             bleed_damage = int(hit_damage)
+            if bleed_damage >= active_boss.damage_cap != -1:
+                bleed_damage = active_boss.damage_cap
             hit_msg = f"Blood Rupture: {bleed_damage:,} *{bleed_type}*"
             for b in range(player_object.bleed_application):
                 hit_list.append([bleed_damage, hit_msg])

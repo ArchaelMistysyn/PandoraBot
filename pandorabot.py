@@ -142,7 +142,7 @@ def run_discord_bot():
     @set_command_category('admin', 2)
     @pandora_bot.command(name='admin', help="Tester Only")
     @app_commands.guilds(discord.Object(id=1011375205999968427))
-    async def admin(ctx, backdoor, value):
+    async def admin(ctx, backdoor, value: int):
         if any(ctx.channel.id in sl for sl in globalitems.global_server_channels):
             user = ctx.author
             achievement_list = []
@@ -152,7 +152,7 @@ def run_discord_bot():
                 if backdoor == "stamina_hack":
                     player_object.set_player_field("player_stamina", value)
                 if backdoor == "item_hack":
-                    inventory.update_stock(player_object, value, 10)
+                    inventory.update_stock(player_object, value, value)
                 if backdoor == "item_hack_all":
                     filename = "itemlist.csv"
                     with (open(filename, 'r') as f):
@@ -464,7 +464,7 @@ def run_discord_bot():
             if player_object.player_class != "":
                 inventory_view = inventory.BInventoryView(player_object)
                 inventory_title = f'{player_object.player_username}\'s Inventory:\n'
-                player_inventory = inventory.display_binventory(player_object.player_id, "Crafting Items")
+                player_inventory = inventory.display_binventory(player_object.player_id, "Crafting")
                 embed_msg = discord.Embed(colour=discord.Colour.dark_orange(),
                                           title=inventory_title,
                                           description=player_inventory)

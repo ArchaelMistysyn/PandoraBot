@@ -43,7 +43,8 @@ recipe_dict = {
     "Void Pearl": ["i4p", 1, "i5v", 1, 90, "v6p"],
     "Crystallized Void": ["i6x", 1, "i5v", 1, 10, "v7x"],
 
-    "Fabled Core": ["STONE4", 10, "15l", 1, 90, "i5u"],
+    "Fabled Core": ["STONE4", 25, "15l", 1, 90, "i5u"],
+    "Fabled Flame": ["i5u", 1, "i3f", 1, 90, "i5f"],
     "Unrefined Fabled Item (Weapon)": ["i5aW", 200, "i5u", 5, 100, "i5xW"],
     "Unrefined Fabled Item (Armour)": ["i5aA", 100, "i5u", 2, 100, "i5xA"],
     "Unrefined Fabled Item (Accessory)": ["i5aY", 100, "i5u", 2, 100, "i5xY"],
@@ -51,8 +52,12 @@ recipe_dict = {
     "Unrefined Fabled Item (Crest)": ["i4c", 50, "i5u", 2, 100, "i5xC"],
     "Unrefined Fabled Item (Gem)": ["i4g", 25, "i5u", 1, 100, "i5xD"],
 
+    "Fragmentized Wish (Weapon)": ["i5aW", 10, "STONE4", 1, 100, "m6e"],
+    "Fragmentized Wish (Armour)": ["i5aA", 10, "STONE4", 1, 100, "m6e"],
+    "Fragmentized Wish (Accessory)": ["i5aY", 10, "STONE4", 1, 100, "m6e"],
     "Crystallized Wish": ["m6e", 50, "STONE4", 10, 100, "16x"],
-    "Unrefined Key Weapon": ["i6x", 5, "i5l", 10, 100, "i6uW"],
+    "Wish Core": ["i6x", 5, "i5u", 1, 100, ""],
+    "Unrefined Wish Item (Weapon)": ["i6x", 5, "i5l", 10, 100, "i6uW"],
     "Unrefined Dragon Heart Gem": ["i4g", 50, "i6x", 1, 100, "i6g"],
 
     "Miracle Origin": ["i6x", 1, "i4z", 1, 100, "m6z"],
@@ -324,6 +329,7 @@ class VoidSelectView(discord.ui.View):
         except Exception as e:
             print(e)
 
+
 class FabledSelectView(discord.ui.View):
     def __init__(self, player_object):
         super().__init__(timeout=None)
@@ -337,6 +343,9 @@ class FabledSelectView(discord.ui.View):
             discord.SelectOption(
                 emoji="<a:eenergy:1145534127349706772>", label="Fabled Core",
                 description="An ancient mechanism from a time long past."),
+            discord.SelectOption(
+                emoji="<a:eenergy:1145534127349706772>", label="Fabled Flame",
+                description="A powerful flame said to burn forever."),
             discord.SelectOption(
                 emoji="<a:eenergy:1145534127349706772>", label="Unrefined Fabled Item (Weapon)",
                 description="Forge an unrefined fabled weapon."),
@@ -382,10 +391,23 @@ class WishSelectView(discord.ui.View):
         max_values=1,
         options=[
             discord.SelectOption(
+                emoji="<a:eenergy:1145534127349706772>", label="Fragmentized Wish (Weapon)",
+                description="???"),
+            discord.SelectOption(
+                emoji="<a:eenergy:1145534127349706772>", label="Fragmentized Wish (Armour)",
+                description="???"),
+            discord.SelectOption(
+                emoji="<a:eenergy:1145534127349706772>", label="Fragmentized Wish (Accessory)",
+                description="???"),
+            discord.SelectOption(
                 emoji="<a:eenergy:1145534127349706772>", label="Crystallized Wish",
                 description="A wish never fulfilled."),
             discord.SelectOption(
-                emoji="<a:eenergy:1145534127349706772>", label="Unrefined Key Weapon", description="Forge a Key Weapon."),
+                emoji="<a:eenergy:1145534127349706772>", label="Wish Core",
+                description="The embodiment of a wish."),
+            discord.SelectOption(
+                emoji="<a:eenergy:1145534127349706772>", label="Unrefined Wish Item (Weapon)",
+                description="Forge an unrefined wish item (weapon)."),
             discord.SelectOption(
                 emoji="<a:eenergy:1145534127349706772>", label="Unrefined Dragon Heart Gem",
                 description="Forge a Dragon Heart Gem")

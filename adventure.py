@@ -312,25 +312,23 @@ class EmbarkView(discord.ui.View):
                 if not self.paid:
                     reload_user = player.get_player_by_id(self.player_user.player_id)
                     if reload_user.spend_stamina((200 + self.selected_tier * 50)):
-                        reload_user.update_tokens(2, 1)
                         self.paid = True
-
-                if self.paid:
-                    reload_player = player.get_player_by_id(self.player_user.player_id)
-                    reload_player.get_equipped()
-                    reload_player.get_player_multipliers()
-                    new_view = IntentRoomView(reload_player, self.colour, self.selected_tier)
-                    random_msg = random.randint(0, (len(intent_msg_list) - 1))
-                    intent_msg = intent_msg_list[random_msg]
-                    intent_embed = discord.Embed(colour=self.colour,
-                                                 title="The voice of __Eleuia, The Wish__ echoes through your mind.",
-                                                 description=intent_msg)
-                    intent_embed.add_field(name="\n", value="Select your intent. Intent items have a higher rate.")
-                    await interaction.response.edit_message(embed=intent_embed, view=new_view)
-                else:
-                    self.embed_msg.clear_fields()
-                    self.embed_msg.add_field(name="Not Enough Stamina!", value="Please check your /stamina!")
-                    await interaction.response.edit_message(embed=self.embed_msg, view=self)
+                        if reload_user.player_echelon == 0:
+                            reload_user.update_tokens(2, 1)
+                        reload_user.get_equipped()
+                        reload_user.get_player_multipliers()
+                        new_view = IntentRoomView(reload_user, self.colour, self.selected_tier)
+                        random_msg = random.randint(0, (len(intent_msg_list) - 1))
+                        intent_msg = intent_msg_list[random_msg]
+                        intent_embed = discord.Embed(colour=self.colour,
+                                                     title="The voice of __Eleuia, The Wish__ echoes through your mind.",
+                                                     description=intent_msg)
+                        intent_embed.add_field(name="\n", value="Select your intent. Intent items have a higher rate.")
+                        await interaction.response.edit_message(embed=intent_embed, view=new_view)
+                    else:
+                        self.embed_msg.clear_fields()
+                        self.embed_msg.add_field(name="Not Enough Stamina!", value="Please check your /stamina!")
+                        await interaction.response.edit_message(embed=self.embed_msg, view=self)
         except Exception as e:
             print(e)
 
@@ -874,7 +872,7 @@ class ItemView(discord.ui.View):
             if interaction.user.name == self.expedition.player_object.player_name:
                 if not self.embed:
                     self.new_view = TransitionView(self.expedition)
-                    sell_value = self.item.item_tier * 250
+                    sell_value = self.item.item_tier * 500
                     user = player.get_player_by_id(self.expedition.player_object.player_id)
                     user.player_coins += sell_value
                     user.set_player_field("player_coins", user.player_coins)

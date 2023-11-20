@@ -315,6 +315,8 @@ class ReforgeView(discord.ui.View):
         try:
             if button_interaction.user.name == self.player_object.player_name:
                 material_id = "i3f"
+                if self.selected_item.item_tier >= 5:
+                    material_id = "i5f"
                 embed_msg = run_button(self.player_object, self.selected_item, material_id, "Reforge")
                 new_view = self
                 await button_interaction.response.edit_message(embed=embed_msg, view=new_view)

@@ -4,6 +4,7 @@ import bosses
 import combat
 import pandas as pd
 import discord
+import re
 from discord.ui import Button, View
 
 import inventory
@@ -43,11 +44,15 @@ class BInventoryView(discord.ui.View):
         max_values=1,
         options=[
             discord.SelectOption(
-                emoji="<a:eenergy:1145534127349706772>", label="Crafting Items", description="Crafting Items"),
+                emoji="<a:eenergy:1145534127349706772>", label="Crafting", description="Crafting Items"),
             discord.SelectOption(
                 emoji="<a:eenergy:1145534127349706772>", label="Fae Cores", description="Fae Cores"),
             discord.SelectOption(
-                emoji="<a:eenergy:1145534127349706772>", label="Misc Items", description="Misc Items")
+                emoji="<a:eenergy:1145534127349706772>", label="Materials", description="Material Items"),
+            discord.SelectOption(
+                emoji="<a:eenergy:1145534127349706772>", label="Unprocessed", description="Unprocessed Items"),
+            discord.SelectOption(
+                emoji="<a:eenergy:1145534127349706772>", label="Misc", description="Misc Items")
         ]
     )
     async def inventory_callback(self, interaction: discord.Interaction, inventory_select: discord.ui.Select):
@@ -945,23 +950,25 @@ def display_binventory(player_id, method):
         engine_url = mydb.get_engine_url()
         engine = sqlalchemy.create_engine(engine_url)
         pandora_db = engine.connect()
-        match method:
-            case "Fae Cores":
-                query = text("SELECT item_id, item_qty FROM BasicInventory "
-                             "WHERE player_id = :id_check AND item_qty <> 0 AND item_id REGEXP '^Fae' "
-                             "ORDER BY item_id ASC")
-            case "Misc Items":
-                query = text("SELECT item_id, item_qty FROM BasicInventory "
-                             "WHERE player_id = :id_check AND item_qty <> 0 "
-                             "AND item_id REGEXP '^STONE|j$|r$|^t|v$|y$|^c' "
-                             "ORDER BY item_id ASC")
-            case _:
-                query = text("SELECT item_id, item_qty FROM BasicInventory "
-                             "WHERE player_id = :id_check AND item_qty <> 0 AND item_id REGEXP '^i|^v|^m|^v' "
-                             "AND item_id NOT REGEXP '^j|^r|v$|y$' "
-                             "ORDER BY item_id ASC")
+        regex_dict = {
+            "Crafting": ["^(i|v|m|Origin)", ".*(r|j|y|u|m|g|t|w|c|4z|([1-4](s|o))|((a|x|u)[A-Z]))$"],
+            "Fae Cores": ["^Fae", ""],
+            "Materials": ["^(i6m).*|.*(i|v|u|(a[A-Z])|4z|([1-4](s|o)))$", ""],
+            "Unprocessed": ["^t.*|.*(((x|u)[A-Z])|w|c|g)$", ""],
+            "Misc": ["^(STONE|c).*|.*(t|y|r|j)$", ""]
+        }
+        regex_pattern = regex_dict[method]
+        query = text(
+            f"SELECT item_id, item_qty FROM BasicInventory "
+            f"WHERE player_id = :id_check AND item_qty <> 0 "
+            "ORDER BY item_id ASC"
+        )
         query = query.bindparams(id_check=player_id)
         df = pd.read_sql(query, pandora_db)
+        df = df[df['item_id'].str.match(regex_pattern[0])]
+        if regex_pattern[1] != "":
+            df_exclude = df[df['item_id'].str.match(regex_pattern[1])]
+            df = df[~df['item_id'].isin(df_exclude['item_id'])]
         pandora_db.close()
         engine.dispose()
         merged_df = df.merge(item_list, left_on='item_id', right_on='item_id')
@@ -1052,15 +1059,17 @@ def update_stock(player_object, item_id, change):
         if len(df.index) != 0:
             player_stock = int(df['item_qty'].values[0])
             player_stock += change
+            if player_stock <= 0:
+                player_stock = 0
             query = text("UPDATE BasicInventory SET item_qty = :new_qty "
                          "WHERE player_id = :id_check AND item_id = :item_check")
             query = query.bindparams(id_check=player_object.player_id, item_check=item_id, new_qty=player_stock)
             pandora_db.execute(query)
         else:
-            if change > 0:
-                player_stock = change
-            else:
+            if change <= 0:
                 player_stock = 0
+            else:
+                player_stock = change
             query = text("INSERT INTO BasicInventory (player_id, item_id, item_qty) "
                          "VALUES(:player_id, :item_id, :new_qty)")
             query = query.bindparams(item_id=item_id, player_id=player_object.player_id, new_qty=player_stock)
@@ -1210,7 +1219,7 @@ def sell(user, item, embed_msg):
     reload_player = player.get_player_by_id(user.player_id)
     response_embed = embed_msg
     response = user.check_equipped(item)
-    sell_value = item.item_tier * 250
+    sell_value = item.item_tier * 500
     if response == "":
         reload_player.player_coins += sell_value
         reload_player.set_player_field("player_coins", reload_player.player_coins)
