@@ -58,7 +58,7 @@ class BInventoryView(discord.ui.View):
     async def inventory_callback(self, interaction: discord.Interaction, inventory_select: discord.ui.Select):
         try:
             if interaction.user.name == self.user.player_name:
-                inventory_title = f'{self.user.player_username}\'s Inventory:\n'
+                inventory_title = f'{self.user.player_username}\'s {inventory_select.values[0]} Inventory:\n'
                 player_inventory = display_binventory(self.user.player_id, inventory_select.values[0])
 
                 new_embed = discord.Embed(colour=discord.Colour.dark_orange(),
@@ -244,9 +244,7 @@ class CustomItem:
                                   "Fabled Dragon Jewel - Emptiness"]
                 if self.item_tier == 6:
                     random_resonance = random.randint(0, 22)
-                    random_tarot = tarot.tarot_card_list(random_resonance)
-                    tarot_name = random_tarot.split(", ")[1:]
-                    resonance = ' '.join(tarot_name)
+                    resonance = tarot.get_resonance(random_resonance)
                     self.item_name = f"Miracle Dragon Heart Gem - {resonance}"
                 else:
                     random_variant = random.randint(0, 2)
@@ -508,7 +506,6 @@ class CustomItem:
             selected_roll = self.item_prefix_values[random_roll]
             roll_tier = selected_roll[1]
             self.item_prefix_values[random_roll] = ""
-            self.add_roll(roll_tier)
             while self.item_prefix_values[random_roll] == selected_roll or self.item_prefix_values[random_roll] == "":
                 self.add_roll(roll_tier)
                 if selected_roll == self.item_prefix_values[random_roll]:
@@ -517,10 +514,9 @@ class CustomItem:
             selected_roll = self.item_suffix_values[random_roll]
             roll_tier = selected_roll[1]
             self.item_suffix_values[random_roll] = ""
-            self.add_roll(roll_tier)
             while self.item_suffix_values[random_roll] == selected_roll or self.item_suffix_values[random_roll] == "":
                 self.add_roll(roll_tier)
-                if selected_roll == self.item_suffix_values[random_roll]:
+                if self.item_suffix_values[random_roll] == selected_roll:
                     self.item_suffix_values[random_roll] = ""
 
     def generate_new_roll(self, roll_type, roll_tier):
@@ -605,7 +601,7 @@ class CustomItem:
             display_stars += "<:estar1:1143756443967819906>"
         for y in range((5 - self.item_num_stars)):
             display_stars += "<:ebstar2:1144826056222724106>"
-            item_types = ""
+        item_types = ""
         if self.item_type != "D":
             item_types = f'{self.item_damage_type}'
             for idz, z in enumerate(self.item_elements):
@@ -1207,10 +1203,9 @@ def try_refine(player_owner, item_type, selected_tier):
                 is_success = True
             else:
                 is_success = False
-            new_tier = selected_tier
-        elif new_tier == 6:
+        elif selected_tier == 6:
             is_success = True
-            new_tier = selected_tier
+        new_tier = selected_tier
     new_item = CustomItem(player_owner, item_type, new_tier)
     return new_item, is_success
 

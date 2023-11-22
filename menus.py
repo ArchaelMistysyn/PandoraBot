@@ -368,9 +368,9 @@ class BindingT2View(discord.ui.View):
         max_values=1,
         options=[
             discord.SelectOption(
-                emoji="<a:eenergy:1145534127349706772>", label="XVI", description="Essence of The Star"),
+                emoji="<a:eenergy:1145534127349706772>", label="XVII", description="Essence of The Star"),
             discord.SelectOption(
-                emoji="<a:eenergy:1145534127349706772>", label="XVII", description="Essence of The Moon"),
+                emoji="<a:eenergy:1145534127349706772>", label="XVIII", description="Essence of The Moon"),
             discord.SelectOption(
                 emoji="<a:eenergy:1145534127349706772>", label="XIX", description="Essence of The Sun"),
             discord.SelectOption(

@@ -1,4 +1,5 @@
 import pilengine
+import random
 
 # Global emojis
 stamina_icon = "<:estamina:1145534039684562994>"
@@ -55,3 +56,24 @@ global_role_dict = {"Activity Echelon 5 (MAX)": pilengine.echelon_5,
 
 # Date formatting
 date_formatting = '%Y-%m-%d %H:%M:%S'
+
+gem_list = [("Rock", 1), ("Bronze Chunk", 500), ("Silver Chunk", 1000),
+                    ("Gold Ore", 5000), ("Platinum Ore", 10000), ("Bismuth Ore", 20000),
+                    ("Silent Topaz", 30000), ("Mist Zircon", 40000), ("Prismatic Opal", 50000),
+                    ("Whispering Emerald", 75000), ("Drowned Sapphire", 100000), ("Blood Amethyst", 150000),
+                    ("Soul Diamond", 250000), ("Stygian Ruby", 500000), ("Aurora Tear", 1000000),
+                    ("Blood of God", 2500000), ("Universe Prism", 5000000), ("Stone of the True Void", 10000000)]
+
+
+def generate_ramping_reward(success_rate, decay_rate, total_steps):
+    current_step = 0
+    decay_point = 15
+    while current_step < total_steps:
+        if random.randint(1, 100) <= success_rate:
+            current_step += 1
+            if current_step >= decay_point:
+                success_rate -= (decay_rate * ((current_step + 1) - decay_point))
+        else:
+            return current_step
+    return current_step
+

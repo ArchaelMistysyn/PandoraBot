@@ -19,7 +19,7 @@ paragon_t1 = ["Karma, The Reflection", "Runa, The Magic",
 paragon_t2 = ["Nova, The Star", "Luna, The Moon", "Luma, The Sun", "Arcelia, The Clarity", "Kama, The Love"]
 paragon_t3 = ["Thana, The Death", "Chrona, The Temporal", "Rua, The Abyss", "Nua, The Heavens", "Ultima, The Creation"]
 paragon_t4 = ["Pandora, The Celestial", "Diabla, The Primordial",
-              "Tyra, The Behemoth", "Astratha, The Dragon", "Aurora, The Fortress"]
+              "Tyra, The Behemoth", "Astratha, The Dimensional", "Aurora, The Fortress"]
 paragon_t5 = ["Oblivia, The Void", "Akasha, The Infinite"]
 paragon_t6 = ["Eleuia, The Wish"]
 paragon_list = [paragon_t1, paragon_t2, paragon_t3, paragon_t4, paragon_t5, paragon_t6]
@@ -94,7 +94,7 @@ class TarotView(discord.ui.View):
             if interaction.user.name == self.player_user.player_name:
                 direction = 0
                 active_card = check_tarot(self.player_user.player_id,
-                                                tarot_card_list(self.current_position), self.current_variant)
+                                          tarot_card_list(self.current_position), self.current_variant)
                 if self.added_message:
                     embed_total = len(self.embed_msg.fields)
                     self.embed_msg.remove_field(embed_total - 1)
@@ -148,7 +148,7 @@ def cycle_tarot(player_owner, current_msg, current_position, current_variant, di
     card_num_list = ["0", "I", "II", "III", "IV", "V", "VI", "VII", "VIII", "IX", "X",
                      "XI", "XII", "XIII", "XIV", "XV", "XVI", "XVII", "XVIII", "XIX", "XX", "XXI", "XXX"]
     card_name_list = ["Karma, The Reflection", "Runa, The Magic", "Pandora, The Celestial", "Oblivia, The Void",
-                      "Akasha, The Infinite", "Arkaya, The Duality", "Kama, The Love", "Astratha, The Dragon",
+                      "Akasha, The Infinite", "Arkaya, The Duality", "Kama, The Love", "Astratha, The Dimensional",
                       "Tyra, The Behemoth", "Alaya, The Memory", "Chrona, The Temporal", "Nua, The Heavens",
                       "Rua, The Abyss", "Thana, The Death", "Arcelia, The Clarity", "Diabla, The Primordial",
                       "Aurora, The Fortress", "Nova, The Star", "Luna, The Moon", "Luma, The Sun",
@@ -547,7 +547,7 @@ def get_number_by_numeral(roman_numeral):
 
 def tarot_card_list(position):
     card_name_list = ["Karma, The Reflection", "Runa, The Magic", "Pandora, The Celestial", "Oblivia, The Void",
-                      "Akasha, The Infinite", "Arkaya, The Duality", "Kama, The Love", "Astratha, The Dragon",
+                      "Akasha, The Infinite", "Arkaya, The Duality", "Kama, The Love", "Astratha, The Dimensional",
                       "Tyra, The Behemoth", "Alaya, The Memory", "Chrona, The Temporal", "Nua, The Heavens",
                       "Rua, The Abyss", "Thana, The Death", "Arcelia, The Clarity", "Diabla, The Primordial",
                       "Aurora, The Fortress", "Nova, The Star", "Luna, The Moon", "Luma, The Sun",
@@ -557,13 +557,20 @@ def tarot_card_list(position):
 
 def get_number_by_tarot(card_name):
     card_name_list = ["Karma, The Reflection", "Runa, The Magic", "Pandora, The Celestial", "Oblivia, The Void",
-                      "Akasha, The Infinite", "Arkaya, The Duality", "Kama, The Love", "Astratha, The Dragon",
+                      "Akasha, The Infinite", "Arkaya, The Duality", "Kama, The Love", "Astratha, The Dimensional",
                       "Tyra, The Behemoth", "Alaya, The Memory", "Chrona, The Temporal", "Nua, The Heavens",
                       "Rua, The Abyss", "Thana, The Death", "Arcelia, The Clarity", "Diabla, The Primordial",
                       "Aurora, The Fortress", "Nova, The Star", "Luna, The Moon", "Luma, The Sun",
                       "Aria, The Requiem", "Ultima, The Creation", "Eleuia, The Wish"]
     position = card_name_list.index(card_name)
     return position
+
+
+def get_resonance(card_num):
+    selected_tarot = tarot_card_list(card_num)
+    tarot_name = selected_tarot.split(", ")[1:]
+    resonance = ' '.join(tarot_name)
+    return resonance
 
 
 def collection_check(player_id):

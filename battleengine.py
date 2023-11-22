@@ -358,7 +358,7 @@ def run_discord_bot():
                     echelon_colour, colour_img = inventory.get_gear_tier_colours(player_object.player_echelon)
                     if opponent_player.player_equipped[0] != 0:
                         run_command = False
-                        difference = player_object.check_cooldown("arena")
+                        difference, method = player_object.check_cooldown("arena")
                         if difference:
                             one_day = timedelta(days=1)
                             cooldown = one_day - difference
@@ -374,7 +374,7 @@ def run_discord_bot():
                         else:
                             run_command = True
                         if run_command:
-                            player_object.set_cooldown("arena")
+                            player_object.set_cooldown("arena", "")
                             if player_object.player_username == opponent_player.player_username:
                                 opponent_player.player_username = f"Shadow {opponent_player.player_username}"
                             pvp_msg = f"{player_object.player_username} vs {opponent_player.player_username}!"

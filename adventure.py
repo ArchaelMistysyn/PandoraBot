@@ -332,14 +332,6 @@ class EmbarkView(discord.ui.View):
         except Exception as e:
             print(e)
 
-    @discord.ui.button(label="Cancel", style=discord.ButtonStyle.red, emoji="✖️")
-    async def cancel_callback(self, interaction: discord.Interaction, button: discord.Button):
-        try:
-            if interaction.user.name == self.player_user.player_name:
-                await interaction.response.edit_message(view=None)
-        except Exception as e:
-            print(e)
-
 
 class TransitionView(discord.ui.View):
     def __init__(self, expedition):
@@ -935,3 +927,148 @@ def death_embed():
     death_header = "The voice of __Thana, The Death__ echoes through your mind"
     death_msg = death_msg_list[random_msg]
     return death_header, death_msg
+
+
+def build_manifest_return_embed(player_object, method, colour):
+    temp_dict = {}
+    method_info = method.split(";")
+    description_msg = ""
+    card_stars = int(method_info[2])
+    success_rate = 50 + card_stars * 5
+    if method_info[1] != "-1":
+        title_msg = f"Echo of __{method_info[1]}__ - Returns! ({method_info[0]})"
+    else:
+        title_msg = f"Pandora, The Celestial Returns"
+    if method_info[0] == "Hunt":
+        total_exp_gained = 0
+        monster_dict = {
+            "slime": 50, "bat": 100, "spider": 200, "wolf": 300, "goblin": 400,
+            "skeleton": 500, "faerie": 600, "ogre": 700, "harpy": 800, "wraith": 900,
+            "lamia": 1000, "lich": 1500, "teyeger": 2000, "minotaur": 2500, "basilisk": 3000,
+            "wyrm": 3500, "phoenix": 4000, "chimaera": 4500, "hydra": 5000, "dragon": 9999
+        }
+        death_dict = {1: "Defeated", 2: "Slain", 3: "Slaughtered", 4: "Massacred"}
+        for encounter in range(player_object.player_echelon + 5):
+            is_success = random.randint(1, 100)
+            if is_success <= success_rate:
+                enemy_num = random.randint(0, 14)
+                enemy_num += random.randint(0, player_object.player_echelon)
+                enemy_list = list(monster_dict.keys())
+                random_enemy = enemy_list[enemy_num]
+                temp_dict[random_enemy] = temp_dict.get(random_enemy, 0) + 1
+        for monster_type, num_slain in temp_dict.items():
+            exp_total = num_slain * monster_dict.get(monster_type, 0)
+            total_exp_gained += exp_total
+            if num_slain <= 3:
+                death_type = death_dict[num_slain]
+            else:
+                death_type = death_dict[4]
+            if num_slain == 1:
+                description_msg += f"{num_slain}x {monster_type} {death_type}!\n"
+            else:
+                description_msg += f"{num_slain}x {monster_type}s {death_type}!\n"
+        description_msg += f"{globalitems.exp_icon} {exp_total}x EXP awarded!\n"
+        player_object.player_exp += total_exp_gained
+        player_object.set_player_field("player_exp", player_object.player_exp)
+    elif method_info[0] == "Mine":
+        outcome = globalitems.generate_ramping_reward(success_rate, 15, 18)
+        if outcome <= player_object.player_echelon:
+            outcome = player_object.player_echelon
+        outcome_item = globalitems.gem_list[outcome][0]
+        outcome_coins = globalitems.gem_list[outcome][1]
+        player_object.player_coins += outcome_coins
+        player_object.set_player_field("player_coins", player_object.player_coins)
+        description_msg += (f"You found a {outcome_item}!"
+                            f"\nSold for {globalitems.coin_icon} {outcome_coins}x Lotus Coins!")
+    else:
+        for x in range(player_object.player_echelon + 4):
+            reward_id, num_reward = loot.generate_random_item()
+            temp_dict[reward_id] = temp_dict.get(reward_id, 0) + num_reward
+        for item_id, item_quantity in temp_dict.items():
+            loot_item = loot.BasicItem(item_id)
+            inventory.update_stock(player_object, item_id, item_quantity)
+            description_msg += f"{loot_item.item_emoji} {item_quantity}x {loot_item.item_name} received!\n"
+    embed_msg = discord.Embed(colour=colour, title=title_msg, description=description_msg)
+    return embed_msg
+
+
+class ManifestView(discord.ui.View):
+    def __init__(self, player_user, embed_msg, e_tarot, colour, num_hours):
+        super().__init__(timeout=None)
+        self.player_user = player_user
+        self.embed_msg = embed_msg
+        self.e_tarot = e_tarot
+        self.colour = colour
+        self.num_hours = num_hours
+        self.paid = False
+
+    @discord.ui.button(label="Hunt", style=discord.ButtonStyle.success, emoji="⚔️")
+    async def hunt_callback(self, interaction: discord.Interaction, map_select: discord.ui.Select):
+        try:
+            if interaction.user.name == self.player_user.player_name:
+                if not self.paid:
+                    reload_user = player.get_player_by_id(self.player_user.player_id)
+                    if reload_user.spend_stamina(500):
+                        self.paid = True
+                        method = "Hunt"
+                        method_info = f"{method};{self.e_tarot.card_name};{self.e_tarot.num_stars}"
+                        reload_user.set_cooldown("manifest", method_info)
+                        self.embed_msg = discord.Embed(colour=self.colour,
+                                                       title=f"{self.e_tarot.card_name} Embarks - {method}",
+                                                       description=f"Expected return time: {self.num_hours} hours.")
+                        new_view = None
+                    else:
+                        self.embed_msg.clear_fields()
+                        self.embed_msg.add_field(name="Not Enough Stamina!", value="Please check your /stamina!")
+                        new_view = self
+                await interaction.response.edit_message(embed=self.embed_msg, view=new_view)
+        except Exception as e:
+            print(e)
+
+    @discord.ui.button(label="Mine", style=discord.ButtonStyle.success, emoji="⚔️")
+    async def mine_callback(self, interaction: discord.Interaction, map_select: discord.ui.Select):
+        try:
+            if interaction.user.name == self.player_user.player_name:
+                if not self.paid:
+                    reload_user = player.get_player_by_id(self.player_user.player_id)
+                    if reload_user.spend_stamina(500):
+                        self.paid = True
+                        method = "Mine"
+                        method_info = f"{method};{self.e_tarot.card_name};{self.e_tarot.num_stars}"
+                        reload_user.set_cooldown("manifest", method_info)
+                        self.embed_msg = discord.Embed(colour=self.colour,
+                                                       title=f"{self.e_tarot.card_name} Embarks - {method}",
+                                                       description=f"Expected return time: {self.num_hours} hours.")
+                        new_view = None
+                    else:
+                        self.embed_msg.clear_fields()
+                        self.embed_msg.add_field(name="Not Enough Stamina!", value="Please check your /stamina!")
+                        new_view = self
+                await interaction.response.edit_message(embed=self.embed_msg, view=new_view)
+        except Exception as e:
+            print(e)
+
+    @discord.ui.button(label="Gather", style=discord.ButtonStyle.success, emoji="⚔️")
+    async def gather_callback(self, interaction: discord.Interaction, map_select: discord.ui.Select):
+        try:
+            if interaction.user.name == self.player_user.player_name:
+                if not self.paid:
+                    reload_user = player.get_player_by_id(self.player_user.player_id)
+                    if reload_user.spend_stamina(500):
+                        self.paid = True
+                        method = "Gather"
+                        method_info = f"{method};{self.e_tarot.card_name};{self.e_tarot.num_stars}"
+                        reload_user.set_cooldown("manifest", method_info)
+                        self.embed_msg = discord.Embed(colour=self.colour,
+                                                       title=f"{self.e_tarot.card_name} Embarks - {method}",
+                                                       description=f"Expected return time: {self.num_hours} hours.")
+                        new_view = None
+                    else:
+                        self.embed_msg.clear_fields()
+                        self.embed_msg.add_field(name="Not Enough Stamina!", value="Please check your /stamina!")
+                        new_view = self
+                await interaction.response.edit_message(embed=self.embed_msg, view=new_view)
+        except Exception as e:
+            print(e)
+
+

@@ -80,8 +80,6 @@ class CurrentBoss:
                 tier_colour = discord.Colour.red()
                 life_emoji = "❤️"
                 life_bar_middle = "🟥"
-        life_bar_left = "⬅️"
-        life_bar_right = "➡️"
         dps_msg = f"{dps:,} / min"
         boss_title = f'{self.boss_name}'
         boss_field = f'Tier {self.boss_tier} {self.boss_type} - Level {self.boss_lvl}'
@@ -90,10 +88,14 @@ class CurrentBoss:
         hp_bar_icons = combat.hp_bar_dict[self.boss_tier]
         boss_hp = f'{life_emoji} ({int(self.boss_cHP):,} / {int(self.boss_mHP):,})'
         if int(self.boss_cHP) >= 1:
-            bar_length = min(100, int((int(self.boss_cHP) / int(self.boss_mHP)) * 12))
+            bar_percentage = (int(self.boss_cHP) / int(self.boss_mHP)) * 100
+            hp_threshhold = 100 / 15
+            bar_length = int(bar_percentage / hp_threshhold)
         else:
             bar_length = 0
-        hp_bar_string = "".join(hp_bar_icons[0][:bar_length]) + "".join(hp_bar_icons[1][bar_length:])
+        filled_segments = hp_bar_icons[0][:bar_length]
+        empty_segments = hp_bar_icons[1][bar_length:]
+        hp_bar_string = ''.join(filled_segments + empty_segments)
         boss_hp += f'\n{hp_bar_string}'
         boss_weakness = f'Weakness: '
         for x in self.boss_typeweak:
@@ -305,7 +307,6 @@ def spawn_boss(channel_id, player_id, new_boss_tier, selected_boss_type, boss_le
                     boss_type_num = 4
 
             boss_object = CurrentBoss(boss_type_num, selected_boss_type, new_boss_tier, boss_level)
-            boss_object.generate_boss_name_image(selected_boss_type, new_boss_tier)
 
             boss_eleweak = ""
             num_eleweak = 3
@@ -336,6 +337,7 @@ def spawn_boss(channel_id, player_id, new_boss_tier, selected_boss_type, boss_le
                 total_hp = 999999999999999
                 boss_object.damage_cap = -1
 
+            boss_object.generate_boss_name_image(boss_object.boss_type, boss_object.boss_tier)
             boss_object.boss_mHP = total_hp
             boss_object.boss_cHP = boss_object.boss_mHP
             query = text("INSERT INTO ActiveRaids (channel_id, player_id) VALUES (:input_1, :player_id)")
@@ -369,7 +371,7 @@ def get_random_bosstier(boss_type):
         if boss_type == boss_list[3]:
             paragon_exceptions = [0, 1, 2, 3, 3]
             random_type = random.randint(0, 4)
-            new_boss_type = boss_list[random_type]
+            new_boss_type = boss_list[paragon_exceptions[random_type]]
     elif random_number <= 35:
         boss_tier = 3
     elif random_number <= 65:

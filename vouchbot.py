@@ -79,7 +79,7 @@ def run_discord_bot():
             await ctx.send("You cannot vouch for yourself.")
         command_user = player.get_player_by_name(ctx.author)
         if command_user.player_class != "":
-            difference = command_user.check_cooldown("vouch")
+            difference, method = command_user.check_cooldown("vouch")
             run_command = False
             if difference:
                 six_hours = timedelta(hours=6)
@@ -92,7 +92,7 @@ def run_discord_bot():
             else:
                 run_command = True
             if run_command:
-                command_user.set_cooldown("vouch")
+                command_user.set_cooldown("vouch", "")
                 player_object = player.get_player_by_name(user.name)
                 if player_object.player_class != "":
                     role_points = {

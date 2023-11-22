@@ -219,7 +219,7 @@ class PlayerProfile:
                 temp_curse_str = f"(Curse: {int(round(self.elemental_curse[z] * 100)):,}%)"
                 stats += f"{temp_icon} {temp_dmg_str} - {temp_pen_str} - {temp_curse_str}\n"
             stats += f"Elemental Details: (Cap: {self.elemental_capacity}) - (App: {self.elemental_application}) - "
-            stats += f"(Frc: {self.elemental_application * 5}%))"
+            stats += f"(Frc: {self.elemental_application * 5}%)"
             second_title = "Special Breakdown"
             second_msg = f"Critical Chance: (Reg: {int(round(self.critical_chance))}%) - "
             second_msg += f"(Omg: {int(round(self.critical_application * 10))}%)"
@@ -1113,13 +1113,18 @@ class PlayerProfile:
                 previous = dt.strptime(date_string, globalitems.date_formatting)
                 now = dt.now()
                 difference = now - previous
+                method = str(df["method"].values[0])
+            else:
+                method = ""
             pandora_db.close()
             engine.dispose()
         except mysql.connector.Error as err:
             print("Database Error: {}".format(err))
-        return difference
+            difference = 0
+            method = ""
+        return difference, method
 
-    def set_cooldown(self, command_name):
+    def set_cooldown(self, command_name, method):
         difference = None
         try:
             engine_url = mydb.get_engine_url()
@@ -1132,17 +1137,31 @@ class PlayerProfile:
                 query = text("UPDATE CommandCooldowns SET command_name = :cmd_check, time_used =:time_check "
                              "WHERE player_id = :player_check")
             else:
-                query = text("INSERT INTO CommandCooldowns (player_id, command_name, time_used) "
-                             "VALUES (:player_check, :cmd_check, :time_check)")
+                query = text("INSERT INTO CommandCooldowns (player_id, command_name, method, time_used) "
+                             "VALUES (:player_check, :cmd_check, :method, :time_check)")
             timestamp = dt.now()
             current_time = timestamp.strftime(globalitems.date_formatting)
-            query = query.bindparams(player_check=self.player_id, cmd_check=command_name, time_check=current_time)
+            query = query.bindparams(player_check=self.player_id, cmd_check=command_name,
+                                     method=method, time_check=current_time)
             pandora_db.execute(query)
             pandora_db.close()
             engine.dispose()
         except mysql.connector.Error as err:
             print("Database Error: {}".format(err))
         return difference
+
+    def clear_cooldown(self, command_name):
+        try:
+            engine_url = mydb.get_engine_url()
+            engine = sqlalchemy.create_engine(engine_url)
+            pandora_db = engine.connect()
+            query = text("DELETE FROM CommandCooldowns WHERE player_id = :player_check AND command_name = :cmd_check")
+            query = query.bindparams(player_check=self.player_id, cmd_check=command_name)
+            pandora_db.execute(query)
+            pandora_db.close()
+            engine.dispose()
+        except mysql.connector.Error as err:
+            print("Database Error: {}".format(err))
 
 
 def reset_all_cooldowns():

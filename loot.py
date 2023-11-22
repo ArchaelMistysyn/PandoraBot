@@ -189,12 +189,12 @@ def generate_random_item():
     else:
         if random_reward <= 251101:
             item_tier = 3
-            reward_types = ["s", "o", "k", "f", "j", "y", "Fae"]
+            reward_types = ["s", "s", "o", "o", "k", "k", "f", "f", "j", "y", "Fae"]
         elif random_reward <= 601101:
-            reward_types = ["s", "o", "j", "y", "Fae", "Fae"]
+            reward_types = ["s", "s", "o", "o", "j", "y", "Fae", "Fae"]
             item_tier = 2
         else:
-            reward_types = ["s", "o", "j", "y", "Fae", "Fae", "Fae"]
+            reward_types = ["s", "s", "o", "o", "j", "y", "Fae", "Fae", "Fae"]
             item_tier = 1
         item_type = reward_types[(random.randint(1, len(reward_types)) - 1)]
         if item_type != "j":

@@ -142,7 +142,7 @@ def run_discord_bot():
     @set_command_category('admin', 2)
     @pandora_bot.command(name='admin', help="Tester Only")
     @app_commands.guilds(discord.Object(id=1011375205999968427))
-    async def admin(ctx, backdoor, value: int):
+    async def admin(ctx, backdoor, value):
         if any(ctx.channel.id in sl for sl in globalitems.global_server_channels):
             user = ctx.author
             achievement_list = []
@@ -150,14 +150,14 @@ def run_discord_bot():
             if "Passcard - Pandora Tester" in roles_list:
                 player_object = player.get_player_by_name(user)
                 if backdoor == "stamina_hack":
-                    player_object.set_player_field("player_stamina", value)
+                    player_object.set_player_field("player_stamina", int(value))
                 if backdoor == "item_hack":
-                    inventory.update_stock(player_object, value, value)
+                    inventory.update_stock(player_object, value, 10)
                 if backdoor == "item_hack_all":
                     filename = "itemlist.csv"
                     with (open(filename, 'r') as f):
                         for item_line in csv.DictReader(f):
-                            inventory.update_stock(player_object, str(item_line['item_id']), int(value))
+                            inventory.update_stock(player_object, str(item_line['item_id']), 10)
             else:
                 await ctx.send("Only testers can use this command.")
 
@@ -250,49 +250,62 @@ def run_discord_bot():
                 await ctx.send(embed=embed_msg)
 
     @set_command_category('game', 4)
-    @pandora_bot.hybrid_command(name='bdsm', help="Claim daily reward.")
+    @pandora_bot.hybrid_command(name='manifest',
+                                help="Manifest the echo of a bound paragon to perform a task. Cost: 500 Stamina")
     @app_commands.guilds(discord.Object(id=1011375205999968427))
-    async def bdsm(ctx):
+    async def manifest(ctx):
         if any(ctx.channel.id in sl for sl in globalitems.global_server_channels):
             await ctx.defer()
             player_object = player.get_player_by_name(str(ctx.author))
-            if player_object.player_class != "":
-                run_command = False
-                difference = player_object.check_cooldown("bdsm")
-                if difference:
-                    one_day = timedelta(days=1)
-                    cooldown = one_day - difference
-                    if difference <= one_day:
-                        cooldown_timer = int(cooldown.total_seconds() / 60 / 60)
-                        time_msg = f"Your shipment is on cooldown for {cooldown_timer} hours."
-                        embed_msg = discord.Embed(colour=discord.Colour.dark_teal(),
-                                                  title="Boxed Daily Shipment!",
-                                                  description=time_msg)
-                        await ctx.send(embed=embed_msg)
-                    else:
-                        run_command = True
-                else:
-                    run_command = True
-
-                if run_command:
-                    player_object.set_cooldown("bdsm")
-                    random_qty = random.randint(0, 10)
-                    if random_qty <= 7:
-                        quantity = 1
-                    elif random_qty <= 9:
-                        quantity = 2
-                    else:
-                        quantity = 3
-                    crate_id = "i1r"
-                    loot_item = loot.BasicItem(crate_id)
-                    inventory.update_stock(player_object, crate_id, quantity)
-                    embed_msg = discord.Embed(colour=discord.Colour.dark_teal(),
-                                              title=f"{player_object.player_username}: Boxed Daily Shipment!",
-                                              description=f"{loot_item.item_emoji} {quantity}x Daily crate acquired!")
-                    await ctx.send(embed=embed_msg)
-            else:
+            if player_object.player_class == "":
                 embed_msg = unregistered_message()
                 await ctx.send(embed=embed_msg)
+                return
+            difference, method_info = player_object.check_cooldown("manifest")
+            colour, icon = inventory.get_gear_tier_colours(player_object.player_echelon)
+            num_hours = 6 + player_object.player_echelon
+            if difference:
+                wait_time = timedelta(hours=num_hours)
+                cooldown = wait_time - difference
+                if difference <= wait_time:
+                    cooldown_timer = int(cooldown.total_seconds() / 60 / 60)
+                    time_msg = f"Your manifestation will return in {cooldown_timer} hours."
+                    embed_msg = discord.Embed(colour=colour,
+                                              title="Echo Manifestation",
+                                              description=time_msg)
+                else:
+                    player_object.clear_cooldown("manifest")
+                    embed_msg = adventure.build_manifest_return_embed(player_object, method_info, colour)
+                await ctx.send(embed=embed_msg)
+            else:
+                player_object.get_equipped()
+                if player_object.equipped_tarot != "":
+                    tarot_info = player_object.equipped_tarot.split(";")
+                    e_tarot = tarot.check_tarot(player_object.player_id,
+                                                tarot.tarot_card_list(int(tarot_info[0])), int(tarot_info[1]))
+                else:
+                    e_tarot = tarot.TarotCard(player_object.player_id, "II", 1,
+                                              "Pandora, The Celestial", 0, 0, 0)
+                manifest_description = ""
+                embed_msg = discord.Embed(colour=colour)
+                if player_object.equipped_tarot != "":
+                    embed_msg.set_image(url=e_tarot.card_image_link)
+                    embed_msg.title = f"Echo of {e_tarot.card_name}"
+                    manifest_description = "What do you need me to help you with?"
+                    display_stars = ""
+                    for x in range(e_tarot.num_stars):
+                        display_stars += "<:estar1:1143756443967819906>"
+                    for y in range((5 - e_tarot.num_stars)):
+                        display_stars += "<:ebstar2:1144826056222724106>"
+                    manifest_description += f"\nSelected Tarot Rating: {display_stars}"
+                else:
+                    embed.title = "Pandora, The Celestial"
+                    manifest_description = ("You don't seem to have any tarot cards set to perform echo manifestation."
+                                            " Let's divide and conquer. I'll handle the task for you. What would you"
+                                            "like me to help with?")
+                embed_msg.description = manifest_description
+                new_view = adventure.ManifestView(player_object, embed_msg, e_tarot, colour, num_hours)
+                await ctx.send(embed=embed_msg, view=new_view)
 
     @set_command_category('game', 5)
     @pandora_bot.hybrid_command(name='crate', help="Open a crate.")
@@ -463,7 +476,7 @@ def run_discord_bot():
             player_object = player.get_player_by_name(str(ctx.author))
             if player_object.player_class != "":
                 inventory_view = inventory.BInventoryView(player_object)
-                inventory_title = f'{player_object.player_username}\'s Inventory:\n'
+                inventory_title = f'{player_object.player_username}\'s Crafting Inventory:\n'
                 player_inventory = inventory.display_binventory(player_object.player_id, "Crafting")
                 embed_msg = discord.Embed(colour=discord.Colour.dark_orange(),
                                           title=inventory_title,
