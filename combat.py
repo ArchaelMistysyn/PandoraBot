@@ -58,6 +58,8 @@ class CombatTracker:
         self.total_dps = 0
         self.total_cycles = 0
         self.stun_cycles = 0
+        self.time_lock = 0
+        self.time_damage = 0
         self.player_cHP = 0
         self.bleed_tracker = 0.0
 
@@ -75,7 +77,8 @@ def run_cycle(combat_tracker, active_boss, player_object, method):
                 boss_damage_element = active_boss.boss_element
             else:
                 boss_damage_element = random.randint(0, 8)
-            boss_damage = random.randint(10 * active_boss.boss_lvl, 30 * active_boss.boss_lvl)
+            boss_adjuster = int(active_boss.boss_lvl / 10 + 1)
+            boss_damage = random.randint(100 * boss_adjuster, 250 * boss_adjuster)
             boss_damage -= int(boss_damage * player_object.elemental_resistance[boss_damage_element])
             boss_damage -= int(boss_damage * player_object.damage_mitigation * 0.01)
             combat_tracker.player_cHP -= boss_damage
@@ -85,7 +88,7 @@ def run_cycle(combat_tracker, active_boss, player_object, method):
                 active_boss.boss_cHP += boss_healing
                 if active_boss.boss_cHP >= active_boss.boss_mHP:
                     active_boss.boss_cHP = active_boss.boss_mHP
-                hp_adjust_msg += f"{active_boss.boss_name} regenerated {boss_healing:,} HP!\n"
+                hp_adjust_msg += f"{active_boss.boss_name} regenerated 0.{active_boss.boss_tier}% HP!\n"
             if combat_tracker.player_cHP <= 0:
                 if player_object.immortal:
                     combat_tracker.player_cHP = 1
@@ -116,7 +119,10 @@ def run_cycle(combat_tracker, active_boss, player_object, method):
                     combat_tracker.bleed_tracker = 1
             if damage >= active_boss.damage_cap != -1:
                 damage = active_boss.damage_cap
+            damage, status_msg = check_lock(player_object, combat_tracker, damage)
             hit_msg = f"{combo_count}x Combo: {skill_name} {damage:,}"
+            if status_msg != "":
+                hit_msg += f" *{status_msg}*"
             if critical_type != "":
                 hit_msg += f" *{critical_type}*"
             hit_list.append([damage, hit_msg])
@@ -128,7 +134,10 @@ def run_cycle(combat_tracker, active_boss, player_object, method):
                                                     combo_count, True)
                 if damage >= active_boss.damage_cap != -1:
                     damage = active_boss.damage_cap
+                damage, status_msg = check_lock(player_object, combat_tracker, damage)
                 hit_msg = f"Ultimate: {skill_name} {damage:,}"
+                if status_msg != "":
+                    hit_msg += f" *{status_msg}*"
                 if critical_type != "":
                     hit_msg += f" *{critical_type}*"
                 hit_list.append([damage, hit_msg])
@@ -234,14 +243,35 @@ def get_item_tier_damage(material_tier):
             damage_temp = 150000
         case "Key of Miracles,":
             damage_temp = 250000
-        case "Voidcrystal":
+        case "Voidcrystal" | "Voidspecter":
             damage_temp = 25000
-        case "Voidplasma":
+        case "Voidplasma" | "Voidforme":
             damage_temp = 50000
         case _:
             damage_temp = 0
 
     return damage_temp
+
+
+def check_lock(player_object, combat_tracker, damage):
+    status_msg = ""
+    if combat_tracker.time_lock == 0:
+        lock_rate = 5 * player_object.temporal_application
+        random_lock_chance = random.randint(1, 100)
+        if random_lock_chance <= lock_rate:
+            combat_tracker.time_lock = player_object.temporal_application + 1
+            status_msg = "TIME LOCK"
+    elif combat_tracker.time_lock > 0:
+        combat_tracker.time_lock -= 1
+        combat_tracker.time_damage += damage
+        if combat_tracker.time_lock == 0:
+            damage = combat_tracker.time_damage * (player_object.temporal_application + 1)
+            combat_tracker.time_damage = 0
+            status_msg = "TIME SHATTER"
+        else:
+            damage = 0
+            status_msg = "LOCKED"
+    return damage, status_msg
 
 
 def boss_defences(method, player_object, boss_object, location):
@@ -252,8 +282,8 @@ def boss_defences(method, player_object, boss_object, location):
             curse_penalty = boss_object.curse_debuffs[location]
             type_multiplier += curse_penalty
     else:
-        player_check = globalitems.class_icon_dict[player_object.player_class]
-        if player_check in boss_object.boss_typeweak:
+        location = globalitems.class_name_list.index(player_object.player_class)
+        if boss_object.boss_typeweak[location] == 1:
             type_multiplier = 1
     return type_multiplier
 

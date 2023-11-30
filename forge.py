@@ -155,7 +155,9 @@ class ForgeView(discord.ui.View):
             discord.SelectOption(
                 emoji="<:ehammer:1145520259248427069>", label="Astral Augment", description="Add/Modify item rolls."),
             discord.SelectOption(
-                emoji="<a:eorigin:1145520263954440313>", label="Implant Element", description="Gain new elements.")
+                emoji="<a:eorigin:1145520263954440313>", label="Implant Element", description="Gain new elements."),
+            discord.SelectOption(
+                emoji="<a:eorigin:1145520263954440313>", label="Voidforge", description="Unlock forbidden power.")
         ]
     )
     async def forge_callback(self, interaction: discord.Interaction, forge_select: discord.ui.Select):
@@ -174,6 +176,8 @@ class ForgeView(discord.ui.View):
                         new_view = CosmicAugmentView(self.player_object, self.selected_item)
                     case "Astral Augment":
                         new_view = AstralAugmentView(self.player_object, self.selected_item)
+                    case "Voidforge":
+                        new_view = VoidCraftView(self.player_object, self.selected_item)
                     case "Implant Element":
                         new_view = ElementSelectView(self.player_object, self.selected_item, "Implant")
                     case _:
@@ -475,6 +479,44 @@ class ImplantView(discord.ui.View):
             print(e)
 
 
+class VoidCraftView(discord.ui.View):
+    def __init__(self, player_object, selected_item):
+        super().__init__(timeout=None)
+        self.selected_item = selected_item
+        self.player_object = player_object
+
+    @discord.ui.button(label="Implant", style=discord.ButtonStyle.success, emoji="<a:evoid:1145520260573827134>")
+    async def implant_callback(self, button_interaction: discord.Interaction, button: discord.Button):
+        try:
+            if button_interaction.user.name == self.player_object.player_name:
+                material_id = f"OriginV"
+                embed_msg = run_button(self.player_object, self.selected_item, material_id, "VReinforce")
+                new_view = self
+                await button_interaction.response.edit_message(embed=embed_msg, view=new_view)
+        except Exception as e:
+            print(e)
+
+    @discord.ui.button(label="Augment", style=discord.ButtonStyle.success, emoji="<a:evoid:1145520260573827134>")
+    async def augment_callback(self, button_interaction: discord.Interaction, button: discord.Button):
+        try:
+            if button_interaction.user.name == self.player_object.player_name:
+                material_id = f"v6p"
+                embed_msg = run_button(self.player_object, self.selected_item, material_id, "VAttunement")
+                new_view = self
+                await button_interaction.response.edit_message(embed=embed_msg, view=new_view)
+        except Exception as e:
+            print(e)
+
+    @discord.ui.button(label="Reselect", style=discord.ButtonStyle.blurple, emoji="↩️")
+    async def reselect_callback(self, button_interaction: discord.Interaction, button: discord.Button):
+        try:
+            if button_interaction.user.name == self.player_object.player_name:
+                new_view = SelectView(self.player_object)
+                await button_interaction.response.edit_message(view=new_view)
+        except Exception as e:
+            print(e)
+
+
 # Genesis Fountain Crafting
 class MiracleEnhanceView(discord.ui.View):
     def __init__(self, player_object, selected_item):
@@ -731,7 +773,9 @@ def craft_item(player_object, selected_item, material_item, method):
             case "Enhance":
                 outcome = enhance_item(player_object, selected_item, material_item, success_rate, success_check)
             case "Reinforce":
-                outcome = reinforce_item(player_object, selected_item, material_item, success_rate, success_check)
+                outcome = reinforce_item(player_object, selected_item, material_item, success_rate, success_check, 0)
+            case "VReinforce":
+                outcome = reinforce_item(player_object, selected_item, material_item, success_rate, success_check, 1)
             case "Bestow":
                 outcome = bestow_item(player_object, selected_item, material_item, success_rate, success_check)
             case "Reforge":
@@ -747,7 +791,9 @@ def craft_item(player_object, selected_item, material_item, method):
             case "Suffix Fusion":
                 outcome = modify_item_rolls(player_object, selected_item, material_item, success_rate, success_check, 1)
             case "Attunement":
-                outcome = attune_item(player_object, selected_item, material_item, success_rate, success_check)
+                outcome = attune_item(player_object, selected_item, material_item, success_rate, success_check, 0)
+            case "VAttunement":
+                outcome = attune_item(player_object, selected_item, material_item, success_rate, success_check, 1)
             case "Implant":
                 outcome = implant_item(player_object, selected_item, material_item, success_rate, success_check)
             case _:
@@ -792,26 +838,46 @@ def enhance_item(player_object, selected_item, material_item, success_rate, succ
     return outcome
 
 
-def reinforce_item(player_object, selected_item, material_item, success_rate, success_check):
+def reinforce_item(player_object, selected_item, material_item, success_rate, success_check, method):
     damage_check = combat.get_item_tier_damage(selected_item.item_material_tier)
-    maxed_values = [10000, 25000, 50000, 250000]
-    if damage_check not in maxed_values:
-        inventory.update_stock(player_object, material_item.item_id, -1)
-        if success_check <= success_rate:
-            material_tier_list = ["Iron", "Steel", "Silver", "Mithril", "Diamond", "Crystal",
-                                  "Illusion", "Essence", "Spirit", "Soulbound", "Phantasmal", "Spectral",
-                                  "Crude", "Metallic", "Gold", "Jewelled", "Diamond", "Crystal",
-                                  "Key of ???", "Key of Freedoms", "Key of Desires", "Key of Hopes",
-                                  "Key of Dreams", "Key of Wishes",
-                                  "Fabled", "Legendary", "Mythical", "Fantastical", "Omniscient", "Plasma"]
-            current_location = material_tier_list.index(selected_item.item_material_tier)
-            selected_item.item_material_tier = material_tier_list[current_location + 1]
-            selected_item.set_item_name()
-            outcome = "1"
+    if method == 0:
+        maxed_values = [10000, 25000, 50000, 250000]
+        if damage_check not in maxed_values:
+            inventory.update_stock(player_object, material_item.item_id, -1)
+            if success_check <= success_rate:
+                material_tier_list = ["Iron", "Steel", "Silver", "Mithril", "Diamond", "Crystal",
+                                      "Illusion", "Essence", "Spirit", "Soulbound", "Phantasmal", "Spectral",
+                                      "Crude", "Metallic", "Gold", "Jewelled", "Diamond", "Crystal",
+                                      "Key of ???", "Key of Freedoms", "Key of Desires", "Key of Hopes",
+                                      "Key of Dreams", "Key of Wishes",
+                                      "Fabled", "Legendary", "Mythical", "Fantastical", "Omniscient", "Plasma"]
+                current_location = material_tier_list.index(selected_item.item_material_tier)
+                selected_item.item_material_tier = material_tier_list[current_location + 1]
+                selected_item.set_item_name()
+                outcome = "1"
+            else:
+                outcome = "0"
         else:
-            outcome = "0"
+            outcome = "2"
     else:
-        outcome = "2"
+        maxed_values = [10000, 150000]
+        if damage_check in maxed_values:
+            if success_check <= success_rate:
+                over_upgrades = {"Plasma": "Voidplasma", "Crystal": "VoidCrystal",
+                                 "Spectral": "Voidspecter", "Key of Wishes": "Key of Miracles"}
+                if selected_item.item_tier < 5:
+                    selected_item.item_material_tier = over_upgrades[selected_item.item_material_tier]
+                else:
+                    if selected_item.item_material_tier == "Spectral":
+                        selected_item.item_material_tier = "Voidforme"
+                    else:
+                        selected_item.item_material_tier = over_upgrades[selected_item.item_material_tier]
+                        selected_item.set_item_name()
+                outcome = "1"
+            else:
+                outcome = "0"
+        else:
+            outcome = "3"
     update_crafted_item(selected_item, outcome)
     return outcome
 
@@ -890,19 +956,32 @@ def modify_item_rolls(player_object, selected_item, material_item, success_rate,
     return outcome
 
 
-def attune_item(player_object, selected_item, material_item, success_rate, success_check):
-    check_aug = selected_item.check_augment()
-    if check_aug < 18:
-        inventory.update_stock(player_object, material_item.item_id, -1)
-        if success_check <= success_rate:
-            selected_item.add_augment()
-            outcome = "1"
+def attune_item(player_object, selected_item, material_item, success_rate, success_check, method):
+    check_aug, check_vaug = selected_item.check_augment()
+    if method == 0:
+        if check_aug == -1:
+            return "3"
+        if check_aug < 18:
+            inventory.update_stock(player_object, material_item.item_id, -1)
+            if success_check <= success_rate:
+                selected_item.add_augment(method)
+                outcome = "1"
+            else:
+                outcome = "0"
         else:
-            outcome = "0"
-    elif check_aug == -1:
-        outcome = "3"
+            outcome = "2"
     else:
-        outcome = "2"
+        if check_aug == -1 or check_aug < 18:
+            return "3"
+        elif check_vaug == 6:
+            return "2"
+        else:
+            inventory.update_stock(player_object, material_item.item_id, -1)
+            if success_check <= success_rate:
+                selected_item.add_augment(method)
+                outcome = "1"
+            else:
+                outcome = "0"
     update_crafted_item(selected_item, outcome)
     return outcome
 

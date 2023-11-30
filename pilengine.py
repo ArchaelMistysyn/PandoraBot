@@ -11,8 +11,8 @@ echelon_3 = "https://kyleportfolio.ca/botimages/roleicon/echelon3.png"
 echelon_4 = "https://kyleportfolio.ca/botimages/roleicon/echelon4.png"
 echelon_5 = "https://kyleportfolio.ca/botimages/roleicon/echelon5noflare.png"
 echelon_5flare = "https://kyleportfolio.ca/botimages/roleicon/echelon5flare.png"
-special_icon = "https://kyleportfolio.ca/botimages/roleicon/echelon5flare.png"
-special_iconflare = "https://kyleportfolio.ca/botimages/roleicon/echelon5flare.png"
+special_icon = "https://kyleportfolio.ca/botimages/roleicon/exclusivenoflare.png"
+special_iconflare = "https://kyleportfolio.ca/botimages/roleicon/exclusiveflare.png"
 rank_url_list = [echelon_0, echelon_1, echelon_2, echelon_3, echelon_4, echelon_5, echelon_5flare,
                  special_icon, special_iconflare]
 

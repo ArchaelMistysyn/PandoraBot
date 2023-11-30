@@ -673,6 +673,7 @@ class ManageCustomItemView(discord.ui.View):
         super().__init__(timeout=None)
         self.player_user = player_user
         self.item_id = item_id
+        self.stored_embed = None
 
     @discord.ui.button(label="Equip", style=discord.ButtonStyle.blurple, emoji="⚔️")
     async def equip_item(self, interaction: discord.Interaction, button: discord.Button):
@@ -691,13 +692,18 @@ class ManageCustomItemView(discord.ui.View):
         try:
             if interaction.user.name == self.player_user.player_name:
                 selected_item = inventory.read_custom_item(self.item_id)
-                if selected_item.player_owner == self.player_user.player_id:
-                    embed_msg = selected_item.create_citem_embed()
-                    new_embed = inventory.sell(self.player_user, selected_item, embed_msg)
+                if not self.stored_embed:
+                    if selected_item.player_owner == self.player_user.player_id:
+                        embed_msg = selected_item.create_citem_embed()
+                        new_embed = inventory.sell(self.player_user, selected_item, embed_msg)
+                        self.stored_embed = new_embed
+                    else:
+                        new_embed = selected_item.create_citem_embed()
+                        new_embed.add_field(name="Cannot Sell Item!",
+                                            value="Item is not owned or currently listed on the bazaar.",
+                                            inline=False)
                 else:
-                    new_embed = selected_item.create_citem_embed()
-                    new_embed.add_field(name="Cannot Sell Item!",
-                                        value="Item is not owned or currently listed on the bazaar.", inline=False)
+                    new_embed = self.stored_embed
                 await interaction.response.edit_message(embed=new_embed, view=None)
         except Exception as e:
             print(e)
@@ -722,19 +728,19 @@ class ClassSelect(discord.ui.View):
         max_values=1,
         options=[
             discord.SelectOption(
-                emoji="<:cB:1154266777396711424>", label="Knight", description="The Valiant Knight"),
+                emoji=globalitems.class_icon_list[0], label="Knight", description="The Valiant Knight"),
             discord.SelectOption(
-                emoji="<:cA:1150195102589931641>", label="Ranger", description="The Precise Ranger"),
+                emoji=globalitems.class_icon_list[1], label="Ranger", description="The Precise Ranger"),
             discord.SelectOption(
-                emoji="<:cC:1150195246588764201>", label="Mage", description="The Arcane Mage"),
+                emoji=globalitems.class_icon_list[2], label="Mage", description="The Arcane Mage"),
             discord.SelectOption(
-                emoji="❌", label="Assassin", description="The Stealthy Assassin"),
+                emoji=globalitems.class_icon_list[3], label="Assassin", description="The Stealthy Assassin"),
             discord.SelectOption(
-                emoji="❌", label="Weaver", description="The Mysterious Weaver"),
+                emoji=globalitems.class_icon_list[4], label="Weaver", description="The Mysterious Weaver"),
             discord.SelectOption(
-                emoji="❌", label="Rider", description="The Mounted Rider"),
+                emoji=globalitems.class_icon_list[5], label="Rider", description="The Mounted Rider"),
             discord.SelectOption(
-                emoji="<:cD:1150195280969478254>", label="Summoner", description="The Trusted Summoner")
+                emoji=globalitems.class_icon_list[6], label="Summoner", description="The Trusted Summoner")
         ]
     )
     async def class_callback(self, interaction: discord.Interaction, class_select: discord.ui.Select):
@@ -773,19 +779,19 @@ class ClassChangeView(discord.ui.View):
         max_values=1,
         options=[
             discord.SelectOption(
-                emoji="<:cB:1154266777396711424>", label="Knight", description="The Valiant Knight"),
+                emoji=globalitems.class_icon_list[0], label="Knight", description="The Valiant Knight"),
             discord.SelectOption(
-                emoji="<:cA:1150195102589931641>", label="Ranger", description="The Precise Ranger"),
+                emoji=globalitems.class_icon_list[1], label="Ranger", description="The Precise Ranger"),
             discord.SelectOption(
-                emoji="<:cC:1150195246588764201>", label="Mage", description="The Arcane Mage"),
+                emoji=globalitems.class_icon_list[2], label="Mage", description="The Arcane Mage"),
             discord.SelectOption(
-                emoji="❌", label="Assassin", description="The Stealthy Assassin"),
+                emoji=globalitems.class_icon_list[3], label="Assassin", description="The Stealthy Assassin"),
             discord.SelectOption(
-                emoji="❌", label="Weaver", description="The Mysterious Weaver"),
+                emoji=globalitems.class_icon_list[4], label="Weaver", description="The Mysterious Weaver"),
             discord.SelectOption(
-                emoji="❌", label="Rider", description="The Mounted Rider"),
+                emoji=globalitems.class_icon_list[5], label="Rider", description="The Mounted Rider"),
             discord.SelectOption(
-                emoji="<:cD:1150195280969478254>", label="Summoner", description="The Trusted Summoner")
+                emoji=globalitems.class_icon_list[6], label="Summoner", description="The Trusted Summoner")
         ]
     )
     async def change_callback(self, interaction: discord.Interaction, class_select: discord.ui.Select):

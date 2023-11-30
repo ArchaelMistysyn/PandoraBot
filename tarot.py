@@ -13,6 +13,7 @@ import inventory
 import mydb
 import pandas as pd
 import pilengine
+import globalitems
 
 paragon_t1 = ["Karma, The Reflection", "Runa, The Magic",
               "Arkaya, The Duality", "Alaya, The Memory", "Aria, The Requiem"]
@@ -179,7 +180,7 @@ def cycle_tarot(player_owner, current_msg, current_position, current_variant, di
         filename = "https://kyleportfolio.ca/botimages/tarot/cardback.png"
     display_stars = ""
     for x in range(card_num_stars):
-        display_stars += "<:estar1:1143756443967819906>"
+        display_stars += globalitems.star_icon
     for y in range((5 - card_num_stars)):
         display_stars += "<:ebstar2:1144826056222724106>"
     card_title = f"{card_num_list[new_position]} - {card_name_list[new_position]}"
@@ -481,7 +482,7 @@ def create_tarot_embed(tarot_card):
     gear_colour, gear_emoji = inventory.get_gear_tier_colours(tarot_card.card_tier)
     display_stars = ""
     for x in range(tarot_card.num_stars):
-        display_stars += "<:estar1:1143756443967819906>"
+        display_stars += globalitems.star_icon
     for y in range((5 - tarot_card.num_stars)):
         display_stars += "<:ebstar2:1144826056222724106>"
     card_title = f"{tarot_card.card_numeral} - {tarot_card.card_name}"

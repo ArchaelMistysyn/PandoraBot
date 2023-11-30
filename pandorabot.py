@@ -299,12 +299,17 @@ def run_discord_bot():
                         display_stars += "<:ebstar2:1144826056222724106>"
                     manifest_description += f"\nSelected Tarot Rating: {display_stars}"
                 else:
-                    embed.title = "Pandora, The Celestial"
+                    embed_msg.title = "Pandora, The Celestial"
                     manifest_description = ("You don't seem to have any tarot cards set to perform echo manifestation."
                                             " Let's divide and conquer. I'll handle the task for you. What would you"
-                                            "like me to help with?")
+                                            " like me to help with?")
                 embed_msg.description = manifest_description
-                new_view = adventure.ManifestView(player_object, embed_msg, e_tarot, colour, num_hours)
+                if player_object.player_echelon < 2:
+                    new_view = adventure.ManifestView1(player_object, embed_msg, e_tarot, colour, num_hours)
+                elif player_object.player_echelon < 4:
+                    new_view = adventure.ManifestView2(player_object, embed_msg, e_tarot, colour, num_hours)
+                else:
+                    new_view = adventure.ManifestView3(player_object, embed_msg, e_tarot, colour, num_hours)
                 await ctx.send(embed=embed_msg, view=new_view)
 
     @set_command_category('game', 5)

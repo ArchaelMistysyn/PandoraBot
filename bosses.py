@@ -34,7 +34,7 @@ class CurrentBoss:
         self.boss_image = ""
         self.boss_mHP = 0
         self.boss_cHP = 0
-        self.boss_typeweak = []
+        self.boss_typeweak = [0, 0, 0, 0, 0, 0, 0]
         self.boss_eleweak = [0, 0, 0, 0, 0, 0, 0, 0, 0]
         self.curse_debuffs = [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
         self.aura = 0.0
@@ -98,8 +98,9 @@ class CurrentBoss:
         hp_bar_string = ''.join(filled_segments + empty_segments)
         boss_hp += f'\n{hp_bar_string}'
         boss_weakness = f'Weakness: '
-        for x in self.boss_typeweak:
-            boss_weakness += str(x)
+        for idx, x in enumerate(self.boss_typeweak):
+            if x == 1:
+                boss_weakness += globalitems.class_icon_list[idx]
         for idy, y in enumerate(self.boss_eleweak):
             if y == 1:
                 boss_weakness += globalitems.global_element_list[idy]
@@ -240,7 +241,7 @@ def restore_solo_bosses(channel_id):
                 boss_mHP = int(df["boss_mHP"].values[0])
                 boss_cHP = int(df["boss_cHP"].values[0])
                 temp_types = list(df['boss_typeweak'].values[0].split(';'))
-                boss_typeweak = temp_types
+                boss_typeweak = list(map(int, temp_types))
                 temp_elements = list(df['boss_eleweak'].values[0].split(';'))
                 boss_eleweak = list(map(int, temp_elements))
                 boss_image = str(df["boss_image"].values[0])
@@ -280,7 +281,7 @@ def spawn_boss(channel_id, player_id, new_boss_tier, selected_boss_type, boss_le
             boss_mHP = int(df["boss_mHP"].values[0])
             boss_cHP = int(df["boss_cHP"].values[0])
             temp_types = list(df['boss_typeweak'].values[0].split(';'))
-            boss_typeweak = temp_types
+            boss_typeweak = list(map(int, temp_types))
             temp_elements = list(df['boss_eleweak'].values[0].split(';'))
             boss_eleweak = list(map(int, temp_elements))
             boss_image = str(df["boss_image"].values[0])
@@ -308,21 +309,18 @@ def spawn_boss(channel_id, player_id, new_boss_tier, selected_boss_type, boss_le
 
             boss_object = CurrentBoss(boss_type_num, selected_boss_type, new_boss_tier, boss_level)
 
-            boss_eleweak = ""
             num_eleweak = 3
             eleweak_list = random.sample(range(9), num_eleweak)
             for x in eleweak_list:
                 boss_object.boss_eleweak[x] = 1
-            for y in boss_object.boss_eleweak:
-                boss_eleweak += f"{str(y)};"
+            boss_eleweak = ";".join(str(y) for y in boss_object.boss_eleweak)
 
             num_typeweak = 2
-            typeweak_list = random.sample(range(0, 4), num_typeweak)
-            boss_typeweak = ""
-            for y in typeweak_list:
-                new_weakness = get_type(int(y))
-                boss_object.boss_typeweak.append(new_weakness)
-                boss_typeweak += f"{new_weakness};"
+            typeweak_list = random.sample(range(7), num_typeweak)
+            for x in typeweak_list:
+                boss_object.boss_typeweak[x] = 1
+            boss_typeweak = ";".join(str(y) for y in boss_object.boss_typeweak)
+
             boss_eleweak = boss_eleweak[:-1]
             boss_typeweak = boss_typeweak[:-1]
 
@@ -392,25 +390,6 @@ def get_element(chosen_weakness):
     element_temp = globalitems.global_element_list[random_number]
 
     return element_temp
-
-
-# generate type weakness
-def get_type(chosen_weakness):
-    if chosen_weakness == 0:
-        random_number = random.randint(1, 4)
-    else:
-        random_number = chosen_weakness
-    match random_number:
-        case 1:
-            type_temp = '<:cA:1150195102589931641>'
-        case 2:
-            type_temp = '<:cB:1154266777396711424>'
-        case 3:
-            type_temp = "<:cC:1150195246588764201>"
-        case _:
-            type_temp = "<:cD:1150195280969478254>"
-
-    return type_temp
 
 
 def get_boss_descriptor(boss_type):

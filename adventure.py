@@ -936,7 +936,7 @@ def build_manifest_return_embed(player_object, method, colour):
     card_stars = int(method_info[2])
     success_rate = 50 + card_stars * 5
     if method_info[1] != "-1":
-        title_msg = f"Echo of __{method_info[1]}__ - Returns! ({method_info[0]})"
+        title_msg = f"Echo of __{method_info[1]}__ - Returns ({method_info[0]})"
     else:
         title_msg = f"Pandora, The Celestial Returns"
     if method_info[0] == "Hunt":
@@ -967,7 +967,7 @@ def build_manifest_return_embed(player_object, method, colour):
                 description_msg += f"{num_slain}x {monster_type} {death_type}!\n"
             else:
                 description_msg += f"{num_slain}x {monster_type}s {death_type}!\n"
-        description_msg += f"{globalitems.exp_icon} {exp_total}x EXP awarded!\n"
+        description_msg += f"{globalitems.exp_icon} {total_exp_gained:,}x EXP awarded!\n"
         player_object.player_exp += total_exp_gained
         player_object.set_player_field("player_exp", player_object.player_exp)
     elif method_info[0] == "Mine":
@@ -982,17 +982,22 @@ def build_manifest_return_embed(player_object, method, colour):
                             f"\nSold for {globalitems.coin_icon} {outcome_coins}x Lotus Coins!")
     else:
         for x in range(player_object.player_echelon + 4):
-            reward_id, num_reward = loot.generate_random_item()
-            temp_dict[reward_id] = temp_dict.get(reward_id, 0) + num_reward
-        for item_id, item_quantity in temp_dict.items():
-            loot_item = loot.BasicItem(item_id)
-            inventory.update_stock(player_object, item_id, item_quantity)
-            description_msg += f"{loot_item.item_emoji} {item_quantity}x {loot_item.item_name} received!\n"
+            random_attempt = random.randint(1, 100)
+            if success_rate <= random_attempt:
+                reward_id, num_reward = loot.generate_random_item()
+                temp_dict[reward_id] = temp_dict.get(reward_id, 0) + num_reward
+        if temp_dict:
+            for item_id, item_quantity in temp_dict.items():
+                loot_item = loot.BasicItem(item_id)
+                inventory.update_stock(player_object, item_id, item_quantity)
+                description_msg += f"{loot_item.item_emoji} {item_quantity}x {loot_item.item_name} received!\n"
+        else:
+            description_msg = "No items found."
     embed_msg = discord.Embed(colour=colour, title=title_msg, description=description_msg)
     return embed_msg
 
 
-class ManifestView(discord.ui.View):
+class ManifestView1(discord.ui.View):
     def __init__(self, player_user, embed_msg, e_tarot, colour, num_hours):
         super().__init__(timeout=None)
         self.player_user = player_user
@@ -1004,71 +1009,97 @@ class ManifestView(discord.ui.View):
 
     @discord.ui.button(label="Hunt", style=discord.ButtonStyle.success, emoji="⚔️")
     async def hunt_callback(self, interaction: discord.Interaction, map_select: discord.ui.Select):
-        try:
-            if interaction.user.name == self.player_user.player_name:
-                if not self.paid:
-                    reload_user = player.get_player_by_id(self.player_user.player_id)
-                    if reload_user.spend_stamina(500):
-                        self.paid = True
-                        method = "Hunt"
-                        method_info = f"{method};{self.e_tarot.card_name};{self.e_tarot.num_stars}"
-                        reload_user.set_cooldown("manifest", method_info)
-                        self.embed_msg = discord.Embed(colour=self.colour,
-                                                       title=f"{self.e_tarot.card_name} Embarks - {method}",
-                                                       description=f"Expected return time: {self.num_hours} hours.")
-                        new_view = None
-                    else:
-                        self.embed_msg.clear_fields()
-                        self.embed_msg.add_field(name="Not Enough Stamina!", value="Please check your /stamina!")
-                        new_view = self
-                await interaction.response.edit_message(embed=self.embed_msg, view=new_view)
-        except Exception as e:
-            print(e)
+        result = common_callback(self, self.player_user, self.embed_msg, self.e_tarot, self.colour, self.num_hours, "Hunt")
+        await interaction.response.edit_message(embed=result[0], view=result[1])
 
-    @discord.ui.button(label="Mine", style=discord.ButtonStyle.success, emoji="⚔️")
+    @discord.ui.button(label="Gather", style=discord.ButtonStyle.secondary, emoji="⚔️", disabled=True)
+    async def gather_callback(self, interaction: discord.Interaction, map_select: discord.ui.Select):
+        result = common_callback(self, self.player_user, self.embed_msg, self.e_tarot, self.colour, self.num_hours, "Gather")
+        await interaction.response.edit_message(embed=result[0], view=result[1])
+
+    @discord.ui.button(label="Mine", style=discord.ButtonStyle.secondary, emoji="⚔️", disabled=True)
     async def mine_callback(self, interaction: discord.Interaction, map_select: discord.ui.Select):
-        try:
-            if interaction.user.name == self.player_user.player_name:
-                if not self.paid:
-                    reload_user = player.get_player_by_id(self.player_user.player_id)
-                    if reload_user.spend_stamina(500):
-                        self.paid = True
-                        method = "Mine"
-                        method_info = f"{method};{self.e_tarot.card_name};{self.e_tarot.num_stars}"
-                        reload_user.set_cooldown("manifest", method_info)
-                        self.embed_msg = discord.Embed(colour=self.colour,
-                                                       title=f"{self.e_tarot.card_name} Embarks - {method}",
-                                                       description=f"Expected return time: {self.num_hours} hours.")
-                        new_view = None
-                    else:
-                        self.embed_msg.clear_fields()
-                        self.embed_msg.add_field(name="Not Enough Stamina!", value="Please check your /stamina!")
-                        new_view = self
-                await interaction.response.edit_message(embed=self.embed_msg, view=new_view)
-        except Exception as e:
-            print(e)
+        result = common_callback(self, self.player_user, self.embed_msg, self.e_tarot, self.colour, self.num_hours, "Mine")
+        await interaction.response.edit_message(embed=result[0], view=result[1])
+
+
+class ManifestView2(discord.ui.View):
+    def __init__(self, player_user, embed_msg, e_tarot, colour, num_hours):
+        super().__init__(timeout=None)
+        self.player_user = player_user
+        self.embed_msg = embed_msg
+        self.e_tarot = e_tarot
+        self.colour = colour
+        self.num_hours = num_hours
+        self.paid = False
+
+    @discord.ui.button(label="Hunt", style=discord.ButtonStyle.success, emoji="⚔️")
+    async def hunt_callback(self, interaction: discord.Interaction, map_select: discord.ui.Select):
+        result = common_callback(self, self.player_user, self.embed_msg, self.e_tarot, self.colour, self.num_hours, "Hunt")
+        await interaction.response.edit_message(embed=result[0], view=result[1])
 
     @discord.ui.button(label="Gather", style=discord.ButtonStyle.success, emoji="⚔️")
     async def gather_callback(self, interaction: discord.Interaction, map_select: discord.ui.Select):
-        try:
-            if interaction.user.name == self.player_user.player_name:
-                if not self.paid:
-                    reload_user = player.get_player_by_id(self.player_user.player_id)
-                    if reload_user.spend_stamina(500):
-                        self.paid = True
-                        method = "Gather"
-                        method_info = f"{method};{self.e_tarot.card_name};{self.e_tarot.num_stars}"
-                        reload_user.set_cooldown("manifest", method_info)
-                        self.embed_msg = discord.Embed(colour=self.colour,
-                                                       title=f"{self.e_tarot.card_name} Embarks - {method}",
-                                                       description=f"Expected return time: {self.num_hours} hours.")
-                        new_view = None
-                    else:
-                        self.embed_msg.clear_fields()
-                        self.embed_msg.add_field(name="Not Enough Stamina!", value="Please check your /stamina!")
-                        new_view = self
-                await interaction.response.edit_message(embed=self.embed_msg, view=new_view)
-        except Exception as e:
-            print(e)
+        result = common_callback(self, self.player_user, self.embed_msg, self.e_tarot, self.colour, self.num_hours, "Gather")
+        await interaction.response.edit_message(embed=result[0], view=result[1])
+
+    @discord.ui.button(label="Mine", style=discord.ButtonStyle.secondary, emoji="⚔️", disabled=True)
+    async def mine_callback(self, interaction: discord.Interaction, map_select: discord.ui.Select):
+        result = common_callback(self, self.player_user, self.embed_msg, self.e_tarot, self.colour, self.num_hours,
+                                 "Mine")
+        await interaction.response.edit_message(embed=result[0], view=result[1])
+
+
+class ManifestView3(discord.ui.View):
+    def __init__(self, player_user, embed_msg, e_tarot, colour, num_hours):
+        super().__init__(timeout=None)
+        self.player_user = player_user
+        self.embed_msg = embed_msg
+        self.e_tarot = e_tarot
+        self.colour = colour
+        self.num_hours = num_hours
+        self.paid = False
+
+    @discord.ui.button(label="Hunt", style=discord.ButtonStyle.success, emoji="⚔️")
+    async def hunt_callback(self, interaction: discord.Interaction, map_select: discord.ui.Select):
+        result = common_callback(self, self.player_user, self.embed_msg, self.e_tarot, self.colour, self.num_hours, "Hunt")
+        await interaction.response.edit_message(embed=result[0], view=result[1])
+
+    @discord.ui.button(label="Gather", style=discord.ButtonStyle.success, emoji="⚔️")
+    async def gather_callback(self, interaction: discord.Interaction, map_select: discord.ui.Select):
+        result = common_callback(self, self.player_user, self.embed_msg, self.e_tarot, self.colour, self.num_hours, "Gather")
+        await interaction.response.edit_message(embed=result[0], view=result[1])
+
+    @discord.ui.button(label="Mine", style=discord.ButtonStyle.success, emoji="⚔️")
+    async def mine_callback(self, interaction: discord.Interaction, map_select: discord.ui.Select):
+        result = common_callback(self, self.player_user, self.embed_msg, self.e_tarot, self.colour, self.num_hours,
+                                 "Mine")
+        await interaction.response.edit_message(embed=result[0], view=result[1])
+
+
+def common_callback(view, player_user, embed_msg, e_tarot, colour, num_hours, method):
+    try:
+        if not view.paid:
+            reload_user = player.get_player_by_id(player_user.player_id)
+            existing_timestamp, _ = reload_user.check_cooldown("manifest")
+            if existing_timestamp:
+                embed_msg.clear_fields()
+                embed_msg.add_field(name="In Progress!", value="You've already got a manifestation running!")
+                new_view = None
+            elif reload_user.spend_stamina(500):
+                view.paid = True
+                method_info = f"{method};{e_tarot.card_name};{e_tarot.num_stars}"
+                reload_user.set_cooldown("manifest", method_info)
+                embed_msg = discord.Embed(colour=colour,
+                                          title=f"{e_tarot.card_name} Embarks - {method}",
+                                          description=f"Expected return time: {num_hours} hours.")
+                new_view = None
+            else:
+                embed_msg.clear_fields()
+                embed_msg.add_field(name="Not Enough Stamina!", value="Please check your /stamina!")
+                new_view = view
+        return embed_msg, new_view
+    except Exception as e:
+        print(e)
 
 

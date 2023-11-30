@@ -19,7 +19,7 @@ def display_insignia(player_object, insignia_code, output_type):
     num_elements = element_list.count(1)
     display_stars = ""
     for x in range(player_object.player_echelon):
-        display_stars += "<:estar1:1143756443967819906>"
+        display_stars += globalitems.star_icon
     for y in range((5 - player_object.player_echelon)):
         display_stars += "<:ebstar2:1144826056222724106>"
         item_types = ""

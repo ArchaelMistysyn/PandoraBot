@@ -225,16 +225,19 @@ class PlayerProfile:
             second_msg += f"(Omg: {int(round(self.critical_application * 10))}%)"
             second_msg += f"\nCritical Multiplier: (Dmg: {int(round(self.critical_multiplier * 100))}%) - "
             second_msg += f"(Pen: {int(round(self.critical_penetration * 100))}%) - "
-            second_msg += f"(App: {int(round(self.critical_application))})"
+            second_msg += f"(App: {self.critical_application})"
             second_msg += f"\nBleed Multiplier: (Dmg: {int(round(self.bleed_multiplier * 100))}%) - "
             second_msg += f"(Pen: {int(round(self.bleed_penetration * 100))}%) - "
-            second_msg += f"(App: {int(round(self.bleed_application))})"
+            second_msg += f"(App: {self.bleed_application})"
             second_msg += f"\nCombo Multiplier: (Dmg: {int(round(self.combo_multiplier * 100))}%) - "
             second_msg += f"(Pen: {int(round(self.combo_penetration * 100))}%) - "
-            second_msg += f"(App: {int(round(self.combo_application))})"
+            second_msg += f"(App: {self.combo_application})"
             second_msg += f"\nUltimate Multiplier: (Dmg: {int(round(self.ultimate_multiplier * 100))}%) - "
             second_msg += f"(Pen: {int(round(self.ultimate_penetration * 100))}%) - "
-            second_msg += f"(App: {int(round(self.ultimate_application))})"
+            second_msg += f"(App: {self.ultimate_application})"
+            second_msg += f"\nTime Multiplier: (Dmg: {(self.temporal_application + 1) * 100}%) - "
+            second_msg += f"(LCK: {self.temporal_application * 5}%) - "
+            second_msg += f"(App: {self.temporal_application})"
         elif method == 3:
             title_msg = "Defensive Stats"
             stats = f"Player HP: {self.player_mHP:,}"
@@ -514,7 +517,7 @@ class PlayerProfile:
             case "Assassin":
                 self.bleed_application += 1
             case "Mage":
-                self.class_multiplier += 0.1
+                self.temporal_application += 1
             case "Summoner":
                 self.combo_application += 1
             case "Knight":
@@ -1354,5 +1357,5 @@ def checkNaN(test_string):
 
 
 def get_thumbnail_by_class(class_name):
-    thumbnail_url = f"https://kyleportfolio.ca/botimages/{class_name}.png"
+    thumbnail_url = f"https://kyleportfolio.ca/botimages/classicon/{class_name}.png"
     return thumbnail_url

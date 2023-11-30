@@ -39,9 +39,10 @@ recipe_dict = {
     "Pulsar Hammer": ["i4h", 1, "i5l", 1, 90, "i5hP"],
     "Quasar Hammer": ["i4h", 1, "i5l", 1, 90, "i5hS"],
 
-    "Void Hammer": ["i4h", 1, "i5v", 1, 90, "v6h"],
-    "Void Pearl": ["i4p", 1, "i5v", 1, 90, "v6p"],
-    "Crystallized Void": ["i6x", 1, "i5v", 1, 10, "v7x"],
+    "Void Hammer": ["i5v", 1, "i4h", 1, 90, "v6h"],
+    "Void Pearl": ["i5v", 1, "i4p", 1, 90, "v6p"],
+    "Void Origin": ["i5v", 1, "i4z", 1, 90, "OriginV"],
+    "Crystallized Void": ["i5v", 1, "i6x", 1, 10, "v7x"],
 
     "Fabled Core": ["STONE4", 25, "15l", 1, 90, "i5u"],
     "Fabled Flame": ["i5u", 1, "i3f", 1, 90, "i5f"],
@@ -312,7 +313,10 @@ class VoidSelectView(discord.ui.View):
             discord.SelectOption(
                 emoji="<a:evoid:1145520260573827134>", label="Void Hammer", description="Upgrade to 6 stars."),
             discord.SelectOption(
-                emoji="<a:evoid:1145520260573827134>", label="Void Pearl", description="Upgrade max tier rolls"),
+                emoji="<a:evoid:1145520260573827134>", label="Void Pearl", description="Upgrade max tier rolls."),
+            discord.SelectOption(
+                emoji="<a:evoid:1145520260573827134>", label="Void Origin",
+                description="Further upgrade the reinforcement."),
             discord.SelectOption(
                 emoji="<a:evoid:1145520260573827134>", label="Crystallized Void", description="???")
         ]
