@@ -83,11 +83,11 @@ def get_player_profile(player_object, achievement_list):
     rank_card = RankCard(player_object, achievement_list)
     image_path = 'C:\\Users\\GamerTech\\PycharmProjects\\PandoraBot\\profilecard'
     font_url = "https://kyleportfolio.ca//botimages/profilecards/fonts/"
-    # chosen_font = "aerolite/Aerolite.otf"
-    # chosen_font = "oranienbaum/Oranienbaum.ttf"
+    level_font_url = "aerolite/Aerolite.otf"
+    # level_font_url = "oranienbaum/Oranienbaum.ttf"
     chosen_font = "blackchancery/BLKCHCRY.TTF"
-    font_url += chosen_font
-    font_file = requests.get(font_url, stream=True).raw
+    font_file = requests.get((font_url + chosen_font), stream=True).raw
+    level_font_file = requests.get((font_url + level_font_url), stream=True).raw
     cardBG = Image.open(requests.get(rank_card.cardBG, stream=True).raw)
     metal = Image.open(requests.get(rank_card.metal, stream=True).raw)
     wing = Image.open(requests.get(rank_card.wing, stream=True).raw)
@@ -101,15 +101,18 @@ def get_player_profile(player_object, achievement_list):
 
     # Username
     title_font = ImageFont.truetype(font_file, 54)
+    level_font = ImageFont.truetype(level_font_file, 40)
+
     title_text = player_object.player_username
+    title_text = title_text.center(10)
     image_editable = ImageDraw.Draw(result)
     fill_colour = rank_card.fill_colour
-    image_editable.text((195, 215), title_text, fill=fill_colour, font=title_font)
+    image_editable.text((200, 215), title_text, fill=fill_colour, font=title_font)
 
     # Class Icon
-    new_size = (64, 64)
+    new_size = (68, 68)
     class_icon = class_icon.resize(new_size)
-    result.paste(class_icon, (128, 216), mask=class_icon)
+    result.paste(class_icon, (130, 214), mask=class_icon)
 
     # Rank Icon
     new_size = (120, 120)
@@ -121,6 +124,13 @@ def get_player_profile(player_object, achievement_list):
     exp_bar_end = 750
     exp_bar_result = generate_exp_bar(exp_bar_image, exp_bar_start, exp_bar_end, rank_card.fill_percent)
     result.paste(exp_bar_result, (exp_bar_start, 0), mask=exp_bar_result)
+
+    # Level and Exp Text
+    level_text = f"{player_object.player_lvl}"
+    level_text_position = (90, 230)
+    image_editable.text(level_text_position, level_text, fill=fill_colour, font=level_font)
+
+    # Save File
     file_path = f"{image_path}\\ProfileCard{player_object.player_id}.png"
     result.save(file_path)
     return file_path

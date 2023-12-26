@@ -947,7 +947,7 @@ def build_manifest_return_embed(player_object, method, colour):
             "lamia": 1000, "lich": 1500, "teyeger": 2000, "minotaur": 2500, "basilisk": 3000,
             "wyrm": 3500, "phoenix": 4000, "chimaera": 4500, "hydra": 5000, "dragon": 9999
         }
-        death_dict = {1: "Defeated", 2: "Slain", 3: "Slaughtered", 4: "Massacred"}
+        death_dict = {1: "defeated", 2: "slain", 3: "slaughtered", 4: "massacred"}
         for encounter in range(player_object.player_echelon + 5):
             is_success = random.randint(1, 100)
             if is_success <= success_rate:
@@ -956,6 +956,7 @@ def build_manifest_return_embed(player_object, method, colour):
                 enemy_list = list(monster_dict.keys())
                 random_enemy = enemy_list[enemy_num]
                 temp_dict[random_enemy] = temp_dict.get(random_enemy, 0) + 1
+        temp_dict = dict(sorted(temp_dict.items(), key=lambda m: monster_dict.get(m[0], 0) * m[1], reverse=True))
         for monster_type, num_slain in temp_dict.items():
             exp_total = num_slain * monster_dict.get(monster_type, 0)
             total_exp_gained += exp_total
@@ -963,10 +964,13 @@ def build_manifest_return_embed(player_object, method, colour):
                 death_type = death_dict[num_slain]
             else:
                 death_type = death_dict[4]
-            if num_slain == 1:
-                description_msg += f"{num_slain}x {monster_type} {death_type}!\n"
-            else:
-                description_msg += f"{num_slain}x {monster_type}s {death_type}!\n"
+            monster_line = f"{num_slain}x {monster_type}{'s' if num_slain > 1 else ''} {death_type}!\n"
+            if exp_total > 2000:
+                monster_line = f"**{monster_line}**"
+        if not temp_dict:
+            description_msg += "No monsters were slain.\n"
+        else:
+            total_exp_gained += player_object.player_echelon * 500
         description_msg += f"{globalitems.exp_icon} {total_exp_gained:,}x EXP awarded!\n"
         player_object.player_exp += total_exp_gained
         player_object.set_player_field("player_exp", player_object.player_exp)

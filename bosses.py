@@ -63,30 +63,25 @@ class CurrentBoss:
             case 1:
                 tier_colour = discord.Colour.green()
                 life_emoji = "💚"
-                life_bar_middle = "🟩"
             case 2:
                 tier_colour = discord.Colour.blue()
                 life_emoji = "💙"
-                life_bar_middle = "🟦"
             case 3:
                 tier_colour = discord.Colour.purple()
                 life_emoji = "💜"
-                life_bar_middle = "🟪"
             case 4:
                 tier_colour = discord.Colour.gold()
                 life_emoji = "💛"
-                life_bar_middle = "🟧"
             case _:
                 tier_colour = discord.Colour.red()
                 life_emoji = "❤️"
-                life_bar_middle = "🟥"
-        dps_msg = f"{dps:,} / min"
+        dps_msg = f"{globalitems.number_conversion(dps)} / min"
         boss_title = f'{self.boss_name}'
         boss_field = f'Tier {self.boss_tier} {self.boss_type} - Level {self.boss_lvl}'
         if not self.calculate_hp():
             self.boss_cHP = 0
         hp_bar_icons = combat.hp_bar_dict[self.boss_tier]
-        boss_hp = f'{life_emoji} ({int(self.boss_cHP):,} / {int(self.boss_mHP):,})'
+        boss_hp = f'{life_emoji} ({globalitems.display_hp(int(self.boss_cHP), int(self.boss_mHP))})'
         if int(self.boss_cHP) >= 1:
             bar_percentage = (int(self.boss_cHP) / int(self.boss_mHP)) * 100
             hp_threshhold = 100 / 15
@@ -321,8 +316,8 @@ def spawn_boss(channel_id, player_id, new_boss_tier, selected_boss_type, boss_le
                 boss_object.boss_typeweak[x] = 1
             boss_typeweak = ";".join(str(y) for y in boss_object.boss_typeweak)
 
-            boss_eleweak = boss_eleweak[:-1]
-            boss_typeweak = boss_typeweak[:-1]
+            boss_eleweak = boss_eleweak.rstrip(';')
+            boss_typeweak = boss_typeweak.rstrip(';')
 
             if new_boss_tier <= 4:
                 subtotal_hp = 10 ** int(boss_level / 10 + 5)

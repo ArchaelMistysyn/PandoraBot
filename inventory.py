@@ -964,7 +964,7 @@ def display_binventory(player_id, method):
         engine = sqlalchemy.create_engine(engine_url)
         pandora_db = engine.connect()
         regex_dict = {
-            "Crafting": ["^(i|v|m|Origin)", ".*(r|j|y|u|m|g|t|w|c|4z|([1-4](s|o))|((a|x|u)[A-Z]))$"],
+            "Crafting": ["^(i|v|m|Origin)", ".*(r|j|y|u|m|g|t|w|c|v|4z|([1-4](s|o))|((a|x|u)[A-Z]))$"],
             "Fae Cores": ["^Fae", ""],
             "Materials": ["^(i6m).*|.*(i|v|u|(a[A-Z])|4z|([1-4](s|o)))$", ""],
             "Unprocessed": ["^t.*|.*(((x|u)[A-Z])|w|c|g)$", ""],
@@ -998,7 +998,12 @@ def display_binventory(player_id, method):
 
 
 def custom_sort(item_id):
-    return item_id[2] if len(item_id) >= 3 else item_id
+    if len(item_id) < 3:
+        return item_id[0], '', ''
+    elif len(item_id) < 7:
+        return item_id[0], item_id[2], '', ''
+    else:
+        return item_id[0], item_id[2], item_id[1], item_id[6]
 
 
 def get_gear_tier_colours(base_tier):

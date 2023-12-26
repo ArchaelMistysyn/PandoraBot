@@ -161,8 +161,8 @@ class PvPCog(commands.Cog):
             color=self.colour
         )
         # pvp_embed.set_thumbnail(url="")
-        player_1_hp_msg = f"{self.combat_tracker1.player_cHP:,} / {self.player1.player_mHP:,}"
-        player_2_hp_msg = f"{self.combat_tracker2.player_cHP:,} / {self.player2.player_mHP:,}"
+        player_1_hp_msg = f"{globalitems.display_hp(self.combat_tracker1.player_cHP, self.player1.player_mHP)}"
+        player_2_hp_msg = f"{globalitems.display_hp(self.combat_tracker2.player_cHP, self.player2.player_mHP)}"
         pvp_embed.add_field(name=self.player1.player_username, value=player_1_hp_msg, inline=True)
         pvp_embed.add_field(name=self.player2.player_username, value=player_2_hp_msg, inline=True)
         battle_msg = f"Cycle Count: {self.combat_tracker1.total_cycles}"
@@ -214,7 +214,7 @@ class PvPCog(commands.Cog):
                                                        combo_count[attacker], False)
         scaled_damage = self.scale_damage(role, combatant, hit_damage)
         scaled_damage, status_msg = combat.check_lock(combatant[attacker], tracker[attacker], scaled_damage)
-        hit_msg = f"{combatant[attacker].player_username} - {combo_count[attacker]}x Combo: {skill_name} {scaled_damage:,}"
+        hit_msg = f"{combatant[attacker].player_username} - {combo_count[attacker]}x Combo: {skill_name} {globalitems.number_conversion(scaled_damage)}"
         if status_msg != "":
             hit_msg += f" *{status_msg}*"
         if critical_type != "":
@@ -237,7 +237,7 @@ class PvPCog(commands.Cog):
                                                            combo_count[attacker], True)
             scaled_damage = self.scale_damage(role, combatant, hit_damage)
             scaled_damage, status_msg = combat.check_lock(combatant[attacker], tracker[attacker], scaled_damage)
-            hit_msg = f"{combatant[attacker].player_username} - Ultimate: {skill_name} {scaled_damage:,}"
+            hit_msg = f"{combatant[attacker].player_username} - Ultimate: {skill_name} {globalitems.number_conversion(scaled_damage)}"
             if status_msg != "":
                 hit_msg += f" *{status_msg}*"
             if critical_type != "":
@@ -258,7 +258,7 @@ class PvPCog(commands.Cog):
             bleed_msg = "Blood Rupture"
             bleed_damage *= 0.75
         scaled_damage = self.scale_damage(role, combatant, bleed_damage)
-        hit_msg = f"{combatant[attacker].player_username} - {bleed_msg}: {scaled_damage:,} *{bleed_type}*"
+        hit_msg = f"{combatant[attacker].player_username} - {bleed_msg}: {globalitems.number_conversion(scaled_damage)} *{bleed_type}*"
         for x in range(combatant[attacker].bleed_application):
             hit_list.append([scaled_damage, hit_msg])
             tracker[defender].player_cHP -= scaled_damage

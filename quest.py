@@ -21,13 +21,13 @@ class Quest:
         self.quest_num = quest_num
         self.quest_title = quest_title
         self.story_message = story_message
+        if ";" in self.story_message:
+            msg_split = self.story_message.split(";")
+            self.story_message = f"{msg_split[0]}\n\n{msg_split[1]}"
         self.cost = cost
         self.token_num = token_num
         self.item_handin = item_handin
         self.quest_message = quest_message
-        if ";" in self.quest_message:
-            msg_split = self.quest_message.split(";")
-            self.quest_message = f"{msg_split[0]}\n{msg_split[1]}"
         self.quest_output = ""
         self.award_exp = award_exp
         self.award_coins = award_coins

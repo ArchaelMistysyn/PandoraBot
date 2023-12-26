@@ -80,3 +80,19 @@ def generate_ramping_reward(success_rate, decay_rate, total_steps):
             return current_step
     return current_step
 
+
+def number_conversion(input_number):
+    labels = ['', 'K', 'M', 'B', 'T', 'Q', 'Q+', 'Q++', 'Q+++', 'Q++++']
+    num_digits = len(str(input_number))
+    index = max(0, (num_digits - 1) // 3)
+    formatted_value = input_number / 1000 ** index
+    format_string = "{:.0f}" if formatted_value.is_integer() else "{:.2f}"
+    output_string = "**{} {}**".format(format_string, labels[index]).format(formatted_value)
+    return output_string
+
+
+def display_hp(current_hp, max_hp):
+    current_hp_converted = number_conversion(current_hp)
+    max_hp_converted = number_conversion(max_hp)
+    hp_msg = f"{current_hp_converted} / {max_hp_converted}"
+    return hp_msg

@@ -413,8 +413,8 @@ def run_discord_bot():
             if not player.check_username(new_username):
                 await ctx.send("Username already in use.")
                 return
-            if len(new_username) > 12:
-                await ctx.send("Please enter a username under 12 characters.")
+            if len(new_username) > 10:
+                await ctx.send("Please enter a username 10 or less characters.")
                 return
             token_stock = inventory.check_stock(existing_user, "cNAME")
             if token_stock < 1:
@@ -897,8 +897,8 @@ def run_discord_bot():
             if not player.check_username(username):
                 await ctx.send("Username already in use.")
                 return
-            if len(username) > 12:
-                await ctx.send("Please enter a username under 12 characters.")
+            if len(username) > 10:
+                await ctx.send("Please enter a username 10 or less characters.")
                 return
             register_msg = ('You find yourself seperated from your companions in the labyrinth. Unarmed, you '
                             'are desperately searching every room and chest for something you can use.\n You'
@@ -916,6 +916,7 @@ def run_discord_bot():
                                       description=register_msg)
             player_name = str(user)
             class_view = menus.ClassSelect(player_name, username)
+            await ctx.send(embed=embed_msg, view=class_view)
 
     @set_command_category('info', 2)
     @pandora_bot.hybrid_command(name='guide', help="Display basic starter guide.")
