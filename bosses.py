@@ -540,6 +540,6 @@ def create_dead_boss_embed(channel_id, active_boss, dps):
     output_list = ""
     for idx, x in enumerate(player_list):
         player_object = player.get_player_by_id(x)
-        output_list += f'{str(player_object.player_username)}: {int(damage_list[idx]):,}\n'
+        output_list += f'{str(player_object.player_username)}: {globalitems.number_conversion(int(damage_list[idx]))}\n'
     dead_embed.add_field(name="SLAIN", value=output_list, inline=False)
     return dead_embed

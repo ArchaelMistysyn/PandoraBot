@@ -117,10 +117,12 @@ def run_cycle(combat_tracker, active_boss, player_object, method):
                 combat_tracker.bleed_tracker += 0.05 * player_object.bleed_application
                 if combat_tracker.bleed_tracker >= 1:
                     combat_tracker.bleed_tracker = 1
+            extension = ""
             if damage >= active_boss.damage_cap != -1:
                 damage = active_boss.damage_cap
+                extension = " *LIMIT*"
             damage, status_msg = check_lock(player_object, combat_tracker, damage)
-            hit_msg = f"{combo_count}x Combo: {skill_name} {globalitems.number_conversion(damage)}"
+            hit_msg = f"{combo_count}x Combo: {skill_name} {globalitems.number_conversion(damage)}{extension}"
             if status_msg != "":
                 hit_msg += f" *{status_msg}*"
             if critical_type != "":
@@ -132,10 +134,12 @@ def run_cycle(combat_tracker, active_boss, player_object, method):
                 hit_damage, critical_type = player_object.get_player_boss_damage(active_boss)
                 damage, skill_name = skill_adjuster(player_object, combat_tracker, hit_damage,
                                                     combo_count, True)
+                extension = ""
                 if damage >= active_boss.damage_cap != -1:
                     damage = active_boss.damage_cap
+                    extension = " *LIMIT*"
                 damage, status_msg = check_lock(player_object, combat_tracker, damage)
-                hit_msg = f"Ultimate: {skill_name} {globalitems.number_conversion(damage)}"
+                hit_msg = f"Ultimate: {skill_name} {globalitems.number_conversion(damage)}{extension}"
                 if status_msg != "":
                     hit_msg += f" *{status_msg}*"
                 if critical_type != "":
@@ -148,9 +152,11 @@ def run_cycle(combat_tracker, active_boss, player_object, method):
                     hit_damage, bleed_type = check_hyper_bleed(player_object, hit_damage)
                     hit_damage *= (1 + player_object.bleed_penetration)
                     bleed_damage = int(hit_damage)
+                    extension = ""
                     if bleed_damage >= active_boss.damage_cap != -1:
                         bleed_damage = active_boss.damage_cap
-                    hit_msg = f"Sanguine Rupture: {globalitems.number_conversion(bleed_damage)} *{bleed_type}*"
+                        extension = " *LIMIT*"
+                    hit_msg = f"Sanguine Rupture: {globalitems.number_conversion(bleed_damage)}{extension} *{bleed_type}*"
                     for b in range(player_object.bleed_application):
                         hit_list.append([bleed_damage, hit_msg])
                         active_boss.boss_cHP -= bleed_damage
@@ -163,9 +169,11 @@ def run_cycle(combat_tracker, active_boss, player_object, method):
             hit_damage, bleed_type = check_hyper_bleed(player_object, hit_damage)
             hit_damage *= (1 + player_object.bleed_penetration)
             bleed_damage = int(hit_damage)
+            extension = ""
             if bleed_damage >= active_boss.damage_cap != -1:
                 bleed_damage = active_boss.damage_cap
-            hit_msg = f"Blood Rupture: {globalitems.number_conversion(bleed_damage)} *{bleed_type}*"
+                extension = " *LIMIT*"
+            hit_msg = f"Blood Rupture: {globalitems.number_conversion(bleed_damage)}{extension} *{bleed_type}*"
             for b in range(player_object.bleed_application):
                 hit_list.append([bleed_damage, hit_msg])
                 active_boss.boss_cHP -= bleed_damage

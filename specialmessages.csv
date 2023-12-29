@@ -49,6 +49,6 @@ TrapName,Cold Room
 TrapName,Dim Room
 TrapName,Bright Room
 TrapName,Disorienting Room
-SafeMsg,How fortunate! A young carbuncle is resting nearby. If it's not territorial you can recover just by being in proximity of it's aura. The risk it will attack you is low.
-SafeMsg,Before you is a magic fountain with a mysterious liquid. You can tell there are restorative properties. The risk it is unsafe to drink from is low.
-SafeMsg,"Protected by a barrier, this room provides an opportunity to care for your injuries. The risk of nearby monsters is low."
+SafeMsg,How fortunate! A young carbuncle heals your wounds!
+SafeMsg,A healing fountain lies just up ahead!
+SafeMsg,A protective barrier offers you the opportunity to rest and recover!

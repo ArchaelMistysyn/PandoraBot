@@ -900,17 +900,16 @@ def run_discord_bot():
             if len(username) > 10:
                 await ctx.send("Please enter a username 10 or less characters.")
                 return
-            register_msg = ('You find yourself seperated from your companions in the labyrinth. Unarmed, you '
-                            'are desperately searching every room and chest for something you can use.\n You'
-                            'stumble into an empty room in which sits a peculiar box. You hesitate at first '
-                            'and consider the possibility of a trap or mimic. However, hearing footsteps in '
-                            'the distance extinguishes any doubt. There is no time. You open the box.\n'
-                            'A flurry of souls rushes by, assuredly scaring away any nearby monsters. '
-                            'Everything goes silent and all that remains is an otherworldly girl staring at '
-                            'you in confusion. A soft voice coming not from the girl echoes through your mind, '
+            register_msg = ('In an ancient ruin you come across an empty room in which sits a peculiar box. '
+                            'Hesitating at first you consider the possibility of a trap or mimic. '
+                            'Without a trap in sight you reach forward and open the box.\n'
+                            'A flurry of souls flood the room and leak out into the corridor. '
+                            'One pauses and speaks softly into your mind. '
                             '"Everything begins and ends with a wish. What do you wish to be?" '
                             'You think it for only a second and the voice responds with a playful laugh, '
-                            ' "Let it be so." Then the voice disappears without a trace.')
+                            '"Let it be so." Then the voice disappears without a trace. '
+                            'Silence falls and then all that remains is an '
+                            'otherworldly girl staring at you in confusion.')
             embed_msg = discord.Embed(colour=discord.Colour.dark_teal(),
                                       title="Register - Select Class",
                                       description=register_msg)

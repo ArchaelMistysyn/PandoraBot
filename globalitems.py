@@ -85,9 +85,14 @@ def number_conversion(input_number):
     labels = ['', 'K', 'M', 'B', 'T', 'Q', 'Q+', 'Q++', 'Q+++', 'Q++++']
     num_digits = len(str(input_number))
     index = max(0, (num_digits - 1) // 3)
-    formatted_value = input_number / 1000 ** index
-    format_string = "{:.0f}" if formatted_value.is_integer() else "{:.2f}"
-    output_string = "**{} {}**".format(format_string, labels[index]).format(formatted_value)
+    input_str = str(input_number)
+    integer_digits = (num_digits - 1) % 3 + 1
+    integer_part = input_str[:integer_digits]
+    decimal_part = input_str[integer_digits:][:2]
+    if decimal_part == "00":
+        decimal_part = ""
+    output_string = f"**{integer_part}.{decimal_part} {labels[index]}**" if decimal_part else f"**{integer_part} {labels[index]}**"
+
     return output_string
 
 
