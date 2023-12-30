@@ -356,7 +356,7 @@ def pvp_defences(attacker, defender, player_damage, e_weapon):
     adjusted_damage = player_damage - defender.damage_mitigation * 0.01 * player_damage
     # Elemental Defences
     if attacker.elemental_capacity < 9:
-        temp_element_list = combat.limit_elements(attacker, e_weapon)
+        temp_element_list = limit_elements(attacker, e_weapon)
     else:
         temp_element_list = e_weapon.item_elements.copy()
     for idx, x in enumerate(temp_element_list):

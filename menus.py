@@ -745,9 +745,13 @@ class ClassSelect(discord.ui.View):
     )
     async def class_callback(self, interaction: discord.Interaction, class_select: discord.ui.Select):
         try:
-            if interaction.user.name == self.player_name:
+            formatted_player_name = self.player_name
+            if interaction.user.discriminator != "":
+                formatted_player_name = self.player_name[:-5]
+            if interaction.user.name == player_name:
                 new_player = player.PlayerProfile()
-                new_player.player_name = self.player_name
+                formatted_player_name = player.normalize_username(formatted_player_name)
+                new_player.player_name = formatted_player_name
                 new_player.player_username = self.username
                 chosen_class = class_select.values[0]
                 response = new_player.add_new_player(chosen_class)

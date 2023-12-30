@@ -21,8 +21,17 @@ from datetime import datetime as dt
 import quest
 import tarot
 import globalitems
+from unidecode import unidecode
 
 path_names = ["Storms", "Frostfire", "Horizon", "Eclipse", "Stars", "Confluence"]
+
+
+def normalize_username(unfiltered_username):
+    if any(ord(char) > 127 for char in unfiltered_username):
+        normalized_username = unidecode(unfiltered_username)
+    else:
+        normalized_username = unfiltered_username
+    return normalized_username
 
 
 class PlayerProfile:
@@ -1138,7 +1147,7 @@ class PlayerProfile:
             df = pd.read_sql(query, pandora_db)
             if len(df) != 0:
                 query = text("UPDATE CommandCooldowns SET command_name = :cmd_check, time_used =:time_check "
-                             "WHERE player_id = :player_check")
+                             "WHERE player_id = :player_check AND method = :method")
             else:
                 query = text("INSERT INTO CommandCooldowns (player_id, command_name, method, time_used) "
                              "VALUES (:player_check, :cmd_check, :method, :time_check)")
@@ -1229,14 +1238,15 @@ def get_player_by_id(player_id: int) -> PlayerProfile:
     return target_player
 
 
-def get_player_by_name(player_name: str) -> PlayerProfile:
+def get_player_by_name(player_name) -> PlayerProfile:
     target_player = PlayerProfile()
+    normalized_player_name = normalize_username(str(player_name))
     try:
         engine_url = mydb.get_engine_url()
         engine = sqlalchemy.create_engine(engine_url)
         pandora_db = engine.connect()
         query = text("SELECT * FROM PlayerList WHERE player_name = :player_check")
-        query = query.bindparams(player_check=player_name)
+        query = query.bindparams(player_check=normalized_player_name)
         df = pd.read_sql(query, pandora_db)
         pandora_db.close()
         engine.dispose()
@@ -1255,7 +1265,7 @@ def get_player_by_name(player_name: str) -> PlayerProfile:
             target_player.get_equipped()
     except mysql.connector.Error as err:
         print("Database Error: {}".format(err))
-        target_player.player_name = player_name
+        target_player.player_name = normalized_player_name
     return target_player
 
 

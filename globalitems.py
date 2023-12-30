@@ -1,4 +1,5 @@
 import pilengine
+import discord
 import random
 
 # Global emojis
@@ -56,7 +57,8 @@ owned_icon = "https://kyleportfolio.ca/botimages/profilecards/owned.png"
 global_role_dict = {"Activity Echelon 5 (MAX)": pilengine.echelon_5,
                     "Player Echelon 5 (MAX)": pilengine.echelon_5,
                     "Exclusive Title Holder": pilengine.echelon_5flare}
-
+button_colour_list = [discord.ButtonStyle.red, discord.ButtonStyle.green,
+                      discord.ButtonStyle.blurple, discord.ButtonStyle.secondary]
 # Date formatting
 date_formatting = '%Y-%m-%d %H:%M:%S'
 

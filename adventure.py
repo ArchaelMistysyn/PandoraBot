@@ -13,7 +13,7 @@ import tarot
 
 map_tier_dict = {"Ancient Ruins": 1, "Spatial Dungeon": 2, "Starlit Temple": 3,
                  "Celestial Labyrinth": 4, "Dimensional Spire": 5, "Chaos Rift": 6}
-random_room_list = ["trap_room", "statue_room", "treasure", "trial_room", "sanctuary_room",
+random_room_list = ["trap_room", "statue_room", "treasure", "trial_room", "sanctuary_room", "penetralia_room",
                     "healing_room", "greater_treasure", "basic_monster", "elite_monster", "jackpot_room"]
 death_msg_list = ["Back so soon? I think I'll play with you a little longer.", "Death is not the end.",
                   "Can't have you dying before the prelude now can we?", "I will overlook this, just this once. "
@@ -47,9 +47,12 @@ wrath_msg_list = msg_df.loc[msg_df['message_type'] == "Wrath"]
 wrath_msg_list = wrath_msg_list['message'].tolist()
 
 trial_variants_dict = {"Offering": ["Pay with your life.", ["Pain (30%)", "Blood (60%)", "Death (90%)"],
-                                    ["🗡️", "🩸", "💀"]],
+                                    ["🗡️", "💧", "💀"]],
                        "Greed": ["Pay with your wealth.", ["Poor (1,000)", "Affluent (5,000)", "Rich (10,000)"],
-                                    ["💸", "💍", "👑"]]}
+                                    ["💸", "💍", "👑"]],
+                       "Soul": ["Pay with your stamina.", ["Vitality (100)", "Spirit (300)", "Essence (500)"],
+                                 ["🟢", "🟡", "🔴"]]
+                       }
 
 reward_probabilities = [1, 1, 1, 1, 2, 2, 2, 3, 3, 3, 4, 4, 5, 6, 7, 8, 9, 10]
 
@@ -59,30 +62,11 @@ class Expedition:
         self.expedition_tier = expedition_tier
         self.luck = self.expedition_tier
         self.player_object = player_object
-        self.current_room_num = 0
         self.expedition_length = 8 + expedition_tier
-        self.expedition_rooms = []
-        self.expedition_views = []
         self.expedition_colour = room_colour
-        self.room_type_list = ["any", "any", "basic_monster", "healing_room",
-                               "any", "any", "elite_monster", "greater_treasure"]
-        for extra_room in range(expedition_tier):
-            random_location = random.randint(0, (len(self.room_type_list) - 2))
-            self.room_type_list.insert(random_location, "any")
-        for current_room in range(self.expedition_length):
-            self.generate_room(current_room)
-
-    def generate_room(self, current_room):
-        room_description = ""
-        room_type = self.room_type_list[current_room]
-        if room_type == "any":
-            room_type = self.random_room()
-        self.room_type_list[current_room] = room_type
-        new_room = Room(room_type, self.expedition_tier, self.expedition_colour)
-        new_room.prepare_room(self)
-        self.expedition_rooms.append(new_room)
-        new_view = self.generate_room_view(room_type, new_room.room_variant)
-        self.expedition_views.append(new_view)
+        self.current_room_num = 0
+        self.current_room = None
+        self.current_room_view = None
 
     def random_room(self):
         random_room = random.randint(0, (len(random_room_list) - 2))
@@ -108,35 +92,39 @@ class Expedition:
                 new_view = SanctuaryRoomView(self)
             case "trial_room":
                 new_view = TrialRoomView(self, variant)
-            case "jackpot_room":
-                new_view = GoldenRoomView(self)
+            case "penetralia_room" | "jackpot_room":
+                new_view = GoldenRoomView(self, room_type)
             case _:
                 new_view = None
                 print("Error!")
         return new_view
 
     def display_next_room(self):
-        if self.current_room_num + 1 != self.expedition_length:
+        if self.current_room_num + 1 < self.expedition_length:
             new_room_num = self.current_room_num + 1
-            embed_msg = self.expedition_rooms[new_room_num].prepare_room(self)
+            # Generate Room
+            new_room_type = self.random_room()
+            new_room = Room(new_room_type, self.expedition_tier, self.expedition_colour)
+            new_room.prepare_room(self)
+            # Generate View
+            new_view = self.generate_room_view(new_room_type, new_room.room_variant)
+            # Build Embed
+            embed_msg = new_room.embed
             hp_msg = globalitems.display_hp(self.player_object.player_cHP, self.player_object.player_mHP)
             embed_msg.add_field(name="", value=hp_msg, inline=False)
-            new_room_view = self.expedition_views[new_room_num]
+            # Store the new current room information
+            self.current_room = new_room
+            self.current_room_view = new_view
         else:
             embed_msg = discord.Embed(colour=self.expedition_colour,
                                       title="Expedition Completed!",
                                       description="Would you like to embark on another expedition?")
             reload_player = player.get_player_by_id(self.player_object.player_id)
-            new_room_view = MapSelectView(reload_player, embed_msg)
-        return embed_msg, new_room_view
+            new_view = MapSelectView(reload_player, embed_msg)
+        return embed_msg, new_view
 
-    def teleport(self, current_room):
-        for x in range(0, (self.expedition_length - 1)):
-            if x != current_room:
-                self.expedition_rooms[x].embed.clear_fields()
-                self.expedition_rooms[x].prepare_room(self)
-                self.expedition_views[x] = self.generate_room_view(self.expedition_rooms[x].room_type,
-                                                                   self.expedition_rooms[x].room_variant)
+    def teleport(self):
+        self.current_room_num = random.randint(0, (self.expedition_length - 1))
 
     def take_damage(self, min_dmg, max_dmg, dmg_element):
         damage = random.randint(min_dmg, max_dmg) * self.expedition_tier
@@ -217,6 +205,10 @@ class Room:
                 else:
                     prefix = "A"
                 description_msg = f"{prefix} {element_descriptor} {monster} blocks your path."
+            case "penetralia_room":
+                title_msg = "Secret Penetralia"
+                description_msg = (f"This room is well hidden, "
+                                   f"there must be something good inside somebody doesn't want you to find!")
             case "jackpot_room":
                 title_msg = "Golden Penetralia!"
                 description_msg = f"Riches spread all across the secret room. Ripe for the taking!"
@@ -324,8 +316,9 @@ class EmbarkView(discord.ui.View):
                         reload_user.get_equipped()
                         reload_user.get_player_multipliers()
                         new_expedition = Expedition(reload_user, self.selected_tier, self.colour)
-                        new_view = new_expedition.expedition_views[0]
-                        new_embed = new_expedition.expedition_rooms[0].embed
+                        new_expedition.display_next_room()
+                        new_view = new_expedition.current_room_view
+                        new_embed = new_expedition.current_room.embed
                         await interaction.response.edit_message(embed=new_embed, view=new_view)
                     else:
                         self.embed_msg.clear_fields()
@@ -356,7 +349,7 @@ class TransitionView(discord.ui.View):
                         if self.expedition.player_object.player_cHP > self.expedition.player_object.player_mHP:
                             self.expedition.player_object.player_cHP = self.expedition.player_object.player_mHP
                         hp_msg = (f'Regen: +{regen_amount}\n'
-                                  f'{self.expedition.player_object.player_cHP} / {self.expedition.player_object.player_mHP} HP')
+                                  f'{globalitems.display_hp(self.expedition.player_object.player_cHP, self.expedition.player_object.player_mHP)} HP')
                         self.embed.add_field(name="", value=hp_msg, inline=False)
                 await interaction.response.edit_message(embed=self.embed, view=self.new_view)
         except Exception as e:
@@ -375,9 +368,9 @@ class HealRoomView(discord.ui.View):
         try:
             if interaction.user.name == self.expedition.player_object.player_name:
                 if not self.embed:
-                    self.embed.clear_fields()
-                    active_room = self.expedition.expedition_rooms[self.expedition.current_room_num]
+                    active_room = self.expedition.current_room
                     self.embed = active_room.embed
+                    self.embed.clear_fields()
                     if active_room.check_trap():
                         self.embed = discord.Embed(colour=self.expedition.expedition_colour,
                                                    title="Recovery Failed!",
@@ -404,18 +397,18 @@ class HealRoomView(discord.ui.View):
         try:
             if interaction.user.name == self.expedition.player_object.player_name:
                 if not self.embed:
-                    self.embed.clear_fields()
-                    active_room = self.expedition.expedition_rooms[self.expedition.current_room_num]
+                    active_room = self.expedition.current_room
                     self.embed = active_room.embed
+                    self.embed.clear_fields()
                     heal_amount = random.randint(self.expedition.expedition_tier, (10 + self.expedition.luck))
                     heal_total = int(self.expedition.player_object.player_mHP * (heal_amount * 0.01)) * 2
                     if active_room.check_trap():
                         damage = heal_total
+                        damage = self.expedition.take_damage(damage, damage, active_room.room_element)
                         dmg_msg = f'You took {damage:,} damage.'
                         self.embed = discord.Embed(colour=self.expedition.expedition_colour,
                                                    title="Ambushed!",
                                                    description=f"You were attacked while resting! {dmg_msg}")
-                        self.expedition.player_object.player_cHP -= damage
                         if self.expedition.player_object.player_cHP <= 0 and not self.expedition.player_object.immortal:
                             self.expedition.player_object.player_cHP = 0
                             hp_msg = globalitems.display_hp(0, self.expedition.player_object.player_mHP)
@@ -458,9 +451,9 @@ class MonsterRoomView(discord.ui.View):
         try:
             if interaction.user.name == self.expedition.player_object.player_name:
                 if not self.embed:
-                    self.embed.clear_fields()
-                    active_room = self.expedition.expedition_rooms[self.expedition.current_room_num]
+                    active_room = self.expedition.current_room
                     self.embed = active_room.embed
+                    self.embed.clear_fields()
                     # Set modifiers
                     monster_adjuster = 1
                     if active_room.room_type == "elite_monster":
@@ -481,7 +474,6 @@ class MonsterRoomView(discord.ui.View):
                         # Handle damage
                         damage = self.expedition.take_damage(min_dmg, max_dmg, active_room.room_element)
                         dmg_msg = f'You took {damage:,} damage.'
-                        self.expedition.player_object.player_cHP -= damage
                         if self.expedition.player_object.player_cHP <= 0 and not self.expedition.player_object.immortal:
                             self.expedition.player_object.player_cHP = 0
                             hp_msg = globalitems.display_hp(0, self.expedition.player_object.player_mHP)
@@ -511,8 +503,9 @@ class MonsterRoomView(discord.ui.View):
         try:
             if interaction.user.name == self.expedition.player_object.player_name:
                 if not self.embed:
-                    active_room = self.expedition.expedition_rooms[self.expedition.current_room_num]
+                    active_room = self.expedition.current_room
                     self.embed = active_room.embed
+                    self.embed.clear_fields()
                     monster_adjuster = 1
                     if active_room.room_type == "elite_monster":
                         monster_adjuster = 2
@@ -529,11 +522,9 @@ class MonsterRoomView(discord.ui.View):
                     else:
                         damage = self.expedition.take_damage(min_dmg, max_dmg, active_room.room_element)
                         dmg_msg = f'You take {damage:,} damage!'
-                        self.expedition.player_object.player_cHP -= damage
                         if self.expedition.player_object.player_cHP <= 0 and not self.expedition.player_object.immortal:
                             self.expedition.player_object.player_cHP = 0
-                            self.embed.clear_fields()
-                            hp_msg = globalitems.display_hp(0, self.expedition.player_object.player_mHP)
+                            hp_msg = globalitems.display_hp(self.expedition.player_object.player_cHP, self.expedition.player_object.player_mHP)
                             self.embed.add_field(name="Dead - Run Ended", value=hp_msg, inline=False)
                             death_header, death_msg = death_embed()
                             self.embed.add_field(name=death_header, value=death_msg, inline=False)
@@ -541,7 +532,9 @@ class MonsterRoomView(discord.ui.View):
                         else:
                             if self.expedition.player_object.immortal and self.expedition.player_object.player_cHP < 1:
                                 self.expedition.player_object.player_cHP = 1
-                            self.embed.add_field(name="Stealth Failed", value=dmg_msg, inline=False)
+                            hp_msg = globalitems.display_hp(self.expedition.player_object.player_cHP,
+                                                            self.expedition.player_object.player_mHP)
+                            self.embed.add_field(name="Stealth Failed", value=f"{dmg_msg}\n{hp_msg}", inline=False)
                             self.new_view = MonsterRoomView(self.expedition)
                 await interaction.response.edit_message(embed=self.embed, view=self.new_view)
         except Exception as e:
@@ -560,9 +553,9 @@ class TrapRoomView(discord.ui.View):
         try:
             if interaction.user.name == self.expedition.player_object.player_name:
                 if not self.embed:
-                    self.embed.clear_fields()
-                    active_room = self.expedition.expedition_rooms[self.expedition.current_room_num]
+                    active_room = self.expedition.current_room
                     self.embed = active_room.embed
+                    self.embed.clear_fields()
                     player_resist = self.expedition.player_object.elemental_resistance[active_room.room_element]
                     player_resist += self.expedition.player_object.all_elemental_resistance
                     trap_trigger = random.randint(1, 100)
@@ -586,7 +579,7 @@ class TrapRoomView(discord.ui.View):
                             self.embed.add_field(name="Trap Triggered!", value=trap_msg, inline=False)
                             if active_room.room_element >= 6:
                                 teleport_room = random.randint(0, (self.expedition.expedition_length - 2))
-                                self.expedition.teleport(self.expedition.current_room_num)
+                                self.expedition.teleport()
                                 self.new_view = TransitionView(self.expedition)
                             else:
                                 damage = self.expedition.take_damage(100, 300, active_room.room_element)
@@ -622,7 +615,7 @@ class StatueRoomView(discord.ui.View):
         try:
             if interaction.user.name == self.expedition.player_object.player_name:
                 if not self.embed:
-                    active_room = self.expedition.expedition_rooms[self.expedition.current_room_num]
+                    active_room = self.expedition.current_room
                     self.embed = active_room.embed
                     self.embed.clear_fields()
                     blessing_chance = random.randint(1, 100)
@@ -633,31 +626,31 @@ class StatueRoomView(discord.ui.View):
                     if active_room.deity_tier == 6:
                         if blessing_chance <= 5:
                             reward_id = f"i6x"
-                            blessing_msg = "Miraculous Blessing"
+                            blessing_msg = "Miraculous Blessing\nLuck +7"
                             self.expedition.luck += 7
                         elif blessing_chance <= 10:
                             reward_id = "i6t"
-                            blessing_msg = "Sovereign's Blessing!"
+                            blessing_msg = "Sovereign's Blessing!\nLuck +5"
                             self.expedition.luck += 5
                     if active_room.deity_tier == 5:
                         if blessing_chance <= 5:
                             reward_id = f"i5u"
-                            blessing_msg = "Fabled Blessing"
+                            blessing_msg = "Fabled Blessing\nLuck +3"
                             self.expedition.luck += 3
                         elif blessing_chance <= 10:
                             reward_id = "i5t"
-                            blessing_msg = "Superior Blessing!"
+                            blessing_msg = "Superior Blessing!\nLuck +2"
                             self.expedition.luck += 2
                     if reward_id == "":
                         blessing_chance = random.randint(1, 100)
                         if blessing_chance <= 5:
                             deity_numeral = tarot.tarot_numeral_list(tarot.get_number_by_tarot(active_room.room_deity))
                             reward_id = f"t{deity_numeral}"
-                            blessing_msg = f"{active_room.room_deity}'s Blessing!"
+                            blessing_msg = f"{active_room.room_deity}'s Blessing!\nLuck +2"
                             self.expedition.luck += 2
                         elif blessing_chance <= 30:
                             reward_id = "i4t"
-                            blessing_msg = "Paragon's Blessing!"
+                            blessing_msg = "Paragon's Blessing!\nLuck +1"
                             self.expedition.luck += 1
                     if reward_id != "":
                         loot_item = loot.BasicItem(reward_id)
@@ -682,7 +675,7 @@ class StatueRoomView(discord.ui.View):
         try:
             if interaction.user.name == self.expedition.player_object.player_name:
                 if not self.embed:
-                    active_room = self.expedition.expedition_rooms[self.expedition.current_room_num]
+                    active_room = self.expedition.current_room
                     self.embed = active_room.embed
                     self.new_view = TransitionView(self.expedition)
                     event_chance = random.randint(1, 1000)
@@ -718,7 +711,7 @@ class TreasureRoomView(discord.ui.View):
         try:
             if interaction.user.name == self.expedition.player_object.player_name:
                 if not self.embed:
-                    active_room = self.expedition.expedition_rooms[self.expedition.current_room_num]
+                    active_room = self.expedition.current_room
                     self.embed = active_room.embed
                     if active_room.check_trap():
                         if active_room.room_type == "treasure":
@@ -833,12 +826,16 @@ class TrialRoomView(discord.ui.View):
         self.new_view = None
         self.variant = variant
         trial_details = trial_variants_dict[variant]
+        variant_index = list(trial_variants_dict.keys()).index(variant)
         self.option1.label = trial_details[1][0]
         self.option1.emoji = trial_details[2][0]
+        self.option1.style = globalitems.button_colour_list[variant_index]
         self.option2.label = trial_details[1][1]
         self.option2.emoji = trial_details[2][1]
+        self.option2.style = globalitems.button_colour_list[variant_index]
         self.option3.label = trial_details[1][2]
         self.option3.emoji = trial_details[2][2]
+        self.option3.style = globalitems.button_colour_list[variant_index]
 
     @discord.ui.button(style=discord.ButtonStyle.blurple)
     async def option1(self, interaction: discord.Interaction, button: discord.Button):
@@ -888,9 +885,9 @@ class TrialRoomView(discord.ui.View):
     def run_option_button(self, reload_player, option_selected):
         completed_msg = "Cost could not be paid. Nothing Gained."
         output_msg = ""
-        match self.active_room.room_variant:
+        match self.expedition.current_room.room_variant:
             case "Offering":
-                cost = int(0.3 * option_selected * self.expedition.player_object.player_cHP)
+                cost = int(0.3 * option_selected * self.expedition.player_object.player_mHP)
                 if cost < self.expedition.player_object.player_cHP:
                     self.expedition.player_object.player_cHP -= cost
                     completed_msg = ""
@@ -898,12 +895,21 @@ class TrialRoomView(discord.ui.View):
                                                     self.expedition.player_object.player_mHP)
                     output_msg = f"Sacrificed {cost} HP\n{hp_msg}\nGained +{(1 + 2 * (option_selected - 1))} luck!"
             case "Greed":
-                cost = 1000 * option_selected
+                cost_list = [1000, 5000, 10000]
+                cost = cost_list[(option_selected - 1)]
                 if reload_player.player_coins >= cost:
                     reload_player.player_coins -= cost
                     reload_player.set_player_field("player_coins", reload_player.player_coins)
                     completed_msg = ""
                     output_msg = (f"Sacrificed {cost} lotus coins\nRemaining: {reload_player.player_coins}\n"
+                                  f"Gained +{(1 + 2 * (option_selected - 1))} luck!")
+            case "Soul":
+                cost = int(100 + 200 * (option_selected - 1))
+                if reload_player.player_stamina >= cost:
+                    reload_player.player_stamina -= cost
+                    reload_player.set_player_field("player_stamina", reload_player.player_stamina)
+                    completed_msg = ""
+                    output_msg = (f"Sacrificed {cost} stamina\nRemaining: {reload_player.player_stamina}\n"
                                   f"Gained +{(1 + 2 * (option_selected - 1))} luck!")
             case _:
                 pass
@@ -923,12 +929,23 @@ class SanctuaryRoomView(discord.ui.View):
         self.embed = None
         self.new_view = None
         self.random_numbers = random.sample(range(9), 3)
-        self.option1.label = f"{globalitems.element_names[self.random_numbers[0]]} Cores"
-        self.option1.emoji = globalitems.global_element_list[self.random_numbers[0]]
-        self.option2.label = f"{globalitems.element_names[self.random_numbers[1]]} Cores"
-        self.option2.emoji = globalitems.global_element_list[self.random_numbers[1]]
-        self.option3.label = f"{globalitems.element_names[self.random_numbers[2]]} Cores"
-        self.option3.emoji = globalitems.global_element_list[self.random_numbers[2]]
+        rare_occurrence = random.randint(1, 1000)
+        if rare_occurrence <= self.expedition.luck:
+            self.item_type = "Origin"
+            item_icon = [globalitems.global_element_list[self.random_numbers[0]],
+                         globalitems.global_element_list[self.random_numbers[1]],
+                         globalitems.global_element_list[self.random_numbers[2]]]
+        else:
+            self.item_type = "Cores"
+            item_icon = [globalitems.global_element_list[self.random_numbers[0]],
+                         globalitems.global_element_list[self.random_numbers[1]],
+                         globalitems.global_element_list[self.random_numbers[2]]]
+        self.option1.label = f"{globalitems.element_names[self.random_numbers[0]]} {self.item_type}"
+        self.option1.emoji = item_icon[0]
+        self.option2.label = f"{globalitems.element_names[self.random_numbers[1]]} {self.item_type}"
+        self.option2.emoji = item_icon[1]
+        self.option3.label = f"{globalitems.element_names[self.random_numbers[2]]} {self.item_type}"
+        self.option3.emoji = item_icon[2]
 
     @discord.ui.button(style=discord.ButtonStyle.blurple)
     async def option1(self, interaction: discord.Interaction, button: discord.Button):
@@ -973,8 +990,14 @@ class SanctuaryRoomView(discord.ui.View):
             print(e)
 
     def run_option_button(self, option_selected):
-        item_id = f"Fae{self.random_numbers[option_selected]}"
-        quantity = random.randint((1 + self.expedition.luck), (5 + self.expedition.luck))
+        id_type = ""
+        if self.item_type == "Cores":
+            id_type = "Fae"
+            quantity = random.randint((1 + self.expedition.luck), (5 + self.expedition.luck))
+        elif self.item_type == "Origin":
+            id_type = "Origin"
+            quantity = 1
+        item_id = f"{id_type}{self.random_numbers[option_selected]}"
         inventory.update_stock(self.expedition.player_object, item_id, quantity)
         output_msg = (f"{globalitems.global_element_list[self.random_numbers[option_selected]]} "
                       f"{quantity}x Fae Core ({globalitems.element_names[self.random_numbers[option_selected]]})")
@@ -984,9 +1007,10 @@ class SanctuaryRoomView(discord.ui.View):
 
 
 class GoldenRoomView(discord.ui.View):
-    def __init__(self,  expedition):
+    def __init__(self,  expedition, room_type):
         super().__init__(timeout=None)
         self.expedition = expedition
+        self.room_type = room_type
         self.embed = None
         self.new_view = None
 
@@ -995,27 +1019,35 @@ class GoldenRoomView(discord.ui.View):
         try:
             if interaction.user.name == self.expedition.player_object.player_name:
                 if not self.embed:
-                    active_room = self.expedition.expedition_rooms[self.expedition.current_room_num]
-                    reward_coins = 10000 * self.expedition.luck
+                    active_room = self.expedition.current_room
+                    if self.room_type == "jackpot_room":
+                        base_coins = 10000
+                        jackpot_chance = 50 * self.expedition.luck
+                    else:
+                        base_coins = random.randint(100, 2000)
+                        jackpot_chance = 5 * self.expedition.luck
+                    reward_coins = base_coins * self.expedition.luck
                     title_msg = "Treasures Obtained!"
                     description_msg = f"You acquired {globalitems.coin_icon} {reward_coins}x lotus coins!"
                     bonus_coins = 0
                     random_num = random.randint(1, 1000)
                     reward_title = ""
-                    jackpot_rates = [1, 10, 30, 50]
-                    jackpot_check = [sum(jackpot_rates[:i+1]) + (i + 1) * self.expedition.luck for i in range(len(jackpot_rates))]
-                    if random_num <= jackpot_check[0]:
-                        bonus_coins = random.randint(500000, 1000000)
-                        reward_title = "Ultimate Jackpot!!!!"
-                    elif random_num <= jackpot_check[1]:
-                        bonus_coins = random.randint(100000, 250000)
-                        reward_title = "Greater Jackpot!!!"
-                    elif random_num <= jackpot_check[2]:
-                        bonus_coins = random.randint(50000, 100000)
-                        reward_title = "Standard Jackpot!!"
-                    elif random_num <= jackpot_check[3]:
-                        bonus_coins = random.randint(10000, 50000)
-                        reward_title = "Lesser Jackpot!"
+                    jackpot_available = random.randint(1, 1000)
+                    if jackpot_available <= jackpot_chance:
+                        jackpot_rates = [1, 10, 30, 50]
+                        jackpot_check = [sum(jackpot_rates[:i+1]) + (i + 1) * self.expedition.luck for i in range(len(jackpot_rates))]
+                        if random_num <= jackpot_check[0]:
+                            bonus_coins = random.randint(500000, 1000000)
+                            reward_title = "Ultimate Jackpot!!!!"
+                        elif random_num <= jackpot_check[1]:
+                            bonus_coins = random.randint(100000, 250000)
+                            reward_title = "Greater Jackpot!!!"
+                        elif random_num <= jackpot_check[2]:
+                            bonus_coins = random.randint(50000, 100000)
+                            reward_title = "Standard Jackpot!!"
+                        elif random_num <= jackpot_check[3]:
+                            bonus_coins = random.randint(10000, 50000)
+                            reward_title = "Lesser Jackpot!"
                     self.embed = discord.Embed(colour=self.expedition.expedition_colour,
                                                title=title_msg, description=description_msg)
                     if reward_title != "":
