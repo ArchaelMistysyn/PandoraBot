@@ -605,11 +605,11 @@ class CustomItem:
                         suffix_rolls += "<:ov:1177184321686228992>"
                     else:
                         suffix_rolls += "<:or:1177184323691098195>"
-
         for x in range(self.item_num_stars):
             display_stars += globalitems.star_icon
-        for y in range((5 - self.item_num_stars)):
-            display_stars += "<:ebstar2:1144826056222724106>"
+        if self.item_num_stars < 5:
+            for y in range((5 - self.item_num_stars)):
+                display_stars += "<:ebstar2:1144826056222724106>"
         item_types = ""
         if self.item_type != "D":
             item_types = f'{globalitems.class_icon_dict[self.item_damage_type]}'

@@ -275,8 +275,8 @@ class UpgradeView(discord.ui.View):
                             ["<a:eorigin:1145520263954440313>"], [[f"Origin{self.element}"]],
                             ["Implant"]],
                        "Voidforge": [
-                            3, ["Corrupt", "Augment", "HammerGoesHere"],
-                            [void_icon, void_icon, void_icon], [[f"OriginV"], [f"v6p"], ["i6x"]],
+                            3, ["Corrupt", "Augment", "Void Fusion"],
+                            [void_icon, void_icon, void_icon], [[f"OriginV"], [f"v6p"], ["v6h"]],
                             ["VReinforce", "VAttunement", "VHammer"]]
                        }
         self.menu_details = method_dict[self.menu_type]
@@ -388,7 +388,8 @@ def check_maxed(target_item, method, material_id, element):
             if damage_check in maxed_values:
                 is_maxed = True
         case "VReinforce":
-            pass
+            if "Void" in target_item.item_material_tier or "Key of Miracles" == target_item.item_material_tier:
+                is_maxed = True
         case "Bestow":
             damage_check = combat.get_item_tier_damage(target_item.item_blessing_tier)
             if damage_check in maxed_values:
@@ -413,6 +414,9 @@ def check_maxed(target_item, method, material_id, element):
         case "VAttunement":
             check_aug, check_vaug = target_item.check_augment()
             if check_vaug == 6:
+                is_maxed = True
+        case "VHammer":
+            if target_item.item_num_stars >= 6:
                 is_maxed = True
         case "Implant":
             if target_item.item_elements[element] == 1:
@@ -455,6 +459,8 @@ def craft_item(player_object, selected_item, material_item, method):
                 outcome = attune_item(player_object, selected_item, material_item, success_rate, success_check, 0)
             case "VAttunement":
                 outcome = attune_item(player_object, selected_item, material_item, success_rate, success_check, 1)
+            case "VHammer":
+                outcome = void_fusion(player_object, selected_item, material_item, success_rate, success_check)
             case "Implant":
                 outcome = implant_item(player_object, selected_item, material_item, success_rate, success_check)
             case _:
@@ -642,6 +648,21 @@ def implant_item(player_object, selected_item, material_item, success_rate, succ
             outcome = "0"
     else:
         outcome = "4"
+    update_crafted_item(selected_item, outcome)
+    return outcome
+
+
+def void_fusion(player_object, selected_item, material_item, success_rate, success_check):
+    num_stars = selected_item.item_num_stars
+    if num_stars == 5:
+        inventory.update_stock(player_object, material_item.item_id, -1)
+        if success_check <= success_rate:
+            selected_item.item_num_stars = 6
+            outcome = "1"
+        else:
+            outcome = "0"
+    else:
+        outcome = "3"
     update_crafted_item(selected_item, outcome)
     return outcome
 

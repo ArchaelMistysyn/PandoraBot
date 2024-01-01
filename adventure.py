@@ -14,7 +14,7 @@ import tarot
 map_tier_dict = {"Ancient Ruins": 1, "Spatial Dungeon": 2, "Starlit Temple": 3,
                  "Celestial Labyrinth": 4, "Dimensional Spire": 5, "Chaos Rift": 6}
 random_room_list = ["trap_room", "statue_room", "treasure", "trial_room", "sanctuary_room", "penetralia_room",
-                    "healing_room", "greater_treasure", "dragon_shrine",
+                    "healing_room", "greater_treasure", "dragon_shrine", "epitaph_room", "selection_room",
                     "basic_monster", "basic_monster", "elite_monster", "jackpot_room"]
 death_msg_list = ["Back so soon? I think I'll play with you a little longer.", "Death is not the end.",
                   "Can't have you dying before the prelude now can we?", "I will overlook this, just this once. "
@@ -61,9 +61,9 @@ reward_probabilities = [1, 1, 1, 1, 2, 2, 2, 3, 3, 3, 4, 4, 5, 6, 7, 8, 9, 10]
 class Expedition:
     def __init__(self, player_object, expedition_tier, room_colour):
         self.expedition_tier = expedition_tier
-        self.luck = self.expedition_tier
         self.player_object = player_object
-        self.expedition_length = 8 + expedition_tier
+        self.luck = 1 + self.player_object.player_echelon
+        self.expedition_length = 9 + expedition_tier
         self.expedition_colour = room_colour
         self.current_room_num = 0
         self.current_room = None
@@ -93,6 +93,10 @@ class Expedition:
                 new_view = SanctuaryRoomView(self)
             case "dragon_shrine":
                 new_view = DragonRoomView(self)
+            case "epitaph_room":
+                new_view = EpitaphRoomView(self)
+            case "selection_room":
+                new_view = SelectionRoomView(self)
             case "trial_room":
                 new_view = TrialRoomView(self, variant)
             case "penetralia_room" | "jackpot_room":
@@ -248,6 +252,14 @@ class Room:
                 title_msg = f"{self.room_variant}{element_descriptor} Dragon Shrine"
                 description_msg = (f"The shrine awaits the ritual of the challenger. Those who can withstand the "
                                    f"elemental power of a dragon and complete the ritual shall be granted passage.")
+            case "epitaph_room":
+                title_msg = f"Epitaph Room"
+                description_msg = ("You see a tablet inscribed with glowing letters. It will take some time to uncover"
+                                   "the message.")
+            case "selection_room":
+                title_msg = f"Selection Room"
+                description_msg = ("Two items sit precariously atop podiums, but it's obviously a trap. "
+                                   "Trying to take both seems extremely dangerous.")
             case _:
                 title_msg = "ERROR"
                 description_msg = "ERROR"
@@ -263,13 +275,13 @@ class Room:
             case "trap_room":
                 is_trap = True
             case "treasure":
-                if trap_check <= max(1, (25 - luck_value)):
+                if trap_check <= max(0, (25 - luck_value)):
                     is_trap = True
             case "healing_room":
-                if trap_check <= max(1, (25 - luck_value)):
+                if trap_check <= max(0, (25 - luck_value)):
                     is_trap = True
             case "greater_treasure":
-                if trap_check <= max(1, (15 - luck_value)):
+                if trap_check <= max(0, (15 - luck_value)):
                     is_trap = True
             case _:
                 is_trap = False
@@ -597,37 +609,7 @@ class TrapRoomView(discord.ui.View):
                     if trap_trigger <= self.trap_check:
                         self.embed, self.new_view = treasure_found(self.expedition, "A")
                     else:
-                        lethality = random.randint(1, 100)
-                        if lethality <= max(15, self.expedition.luck):
-                            trap_msg = trap_trigger2_list[self.active_room.room_element]
-                            self.embed.add_field(name="Fatal Trap - Run Ended", value=trap_msg, inline=False)
-                            death_header, death_msg = death_embed()
-                            self.embed.add_field(name=death_header, value=death_msg, inline=False)
-                            self.new_view = None
-                        else:
-                            trap_msg = trap_trigger1_list[self.active_room.room_element]
-                            self.embed.add_field(name="Trap Triggered!", value=trap_msg, inline=False)
-                            if self.active_room.room_element >= 6:
-                                teleport_room = random.randint(0, (self.expedition.expedition_length - 2))
-                                self.expedition.teleport()
-                                self.new_view = TransitionView(self.expedition)
-                            else:
-                                damage = self.expedition.take_damage(100, 300, self.active_room.room_element)
-                                dmg_msg = f'You took {damage:,} damage.'
-                                self.embed.add_field(name="", value=dmg_msg, inline=False)
-                                if self.expedition.player_object.player_cHP <= 0 and not self.expedition.player_object.immortal:
-                                    self.expedition.player_object.player_cHP = 0
-                                    hp_msg = f'0 / {self.expedition.player_object.player_mHP} HP'
-                                    self.embed.add_field(name="Dead - Run Ended", value=hp_msg, inline=False)
-                                    death_header, death_msg = death_embed()
-                                    self.embed.add_field(name=death_header, value=death_msg, inline=False)
-                                    self.new_view = None
-                                else:
-                                    if self.expedition.player_object.immortal and self.expedition.player_object.player_cHP < 1:
-                                        self.expedition.player_object.player_cHP = 1
-                                    hp_msg = globalitems.display_hp(self.expedition.player_object.player_cHP, self.expedition.player_object.player_mHP)
-                                    self.embed.add_field(name="", value=hp_msg, inline=False)
-                                    self.new_view = TransitionView(self.expedition)
+                        self.embed, self.new_view = trap_triggered(self.expedition, self.active_room, self.embed)
                 await interaction.response.edit_message(embed=self.embed, view=self.new_view)
         except Exception as e:
             print(e)
@@ -639,6 +621,149 @@ class TrapRoomView(discord.ui.View):
                     self.embed, self.new_view = self.expedition.display_next_room()
                     self.expedition.current_room_num += 1
                     self.embed = self.expedition.handle_regen(self.embed)
+                await interaction.response.edit_message(embed=self.embed, view=self.new_view)
+        except Exception as e:
+            print(e)
+
+
+class EpitaphRoomView(discord.ui.View):
+    def __init__(self, expedition):
+        super().__init__(timeout=None)
+        self.expedition = expedition
+        self.embed = None
+        self.new_view = None
+        self.active_room = self.expedition.current_room
+        self.search_check = 100
+        self.search.label = f"Search ({self.search_check}%)"
+        self.decipher_check = 100
+        self.decipher.label = f"Decipher ({self.decipher_check}%)"
+
+    @discord.ui.button(style=discord.ButtonStyle.blurple, emoji="⚔️")
+    async def search(self, interaction: discord.Interaction, button: discord.Button):
+        await self.search_callback(interaction, button)
+
+    @discord.ui.button(style=discord.ButtonStyle.blurple, emoji="🧩")
+    async def decipher(self, interaction: discord.Interaction, button: discord.Button):
+        await self.decipher_callback(interaction, button)
+
+    async def search_callback(self, interaction: discord.Interaction, button: discord.Button):
+        try:
+            if interaction.user.name == self.expedition.player_object.player_name:
+                if not self.embed:
+                    self.embed = self.active_room.embed
+                    self.embed.clear_fields()
+                    random_num = random.randint(1, 100)
+                    if random_num <= self.item_check:
+                        self.embed, self.new_view = treasure_found(self.expedition, "W")
+                    else:
+                        output_msg = "You leave empty handed."
+                        self.embed = discord.Embed(colour=self.expedition.expedition_colour,
+                                                   title="Search Failed!", description=output_msg)
+                        self.new_view = TransitionView(self.expedition)
+                await interaction.response.edit_message(embed=self.embed, view=self.new_view)
+        except Exception as e:
+            print(e)
+
+    async def decipher_callback(self, interaction: discord.Interaction, button: discord.Button):
+        try:
+            if interaction.user.name == self.expedition.player_object.player_name:
+                if not self.embed:
+                    self.embed = self.active_room.embed
+                    self.embed.clear_fields()
+                    random_num = random.randint(1, 100)
+                    if random_num <= self.decipher_check:
+                        luck_gained = random.randint(1, 3)
+                        self.expedition.luck += luck_gained
+                        output_msg = +f"**+{luck_gained} Luck**"
+                        self.embed = discord.Embed(colour=self.expedition.expedition_colour,
+                                                   title="Decryption Success!", description=output_msg)
+                        self.new_view = TransitionView(self.expedition)
+                    else:
+                        output_msg = "You leave empty handed."
+                        self.embed = discord.Embed(colour=self.expedition.expedition_colour,
+                                                   title="Decryption Failed!", description=output_msg)
+                        self.new_view = TransitionView(self.expedition)
+                await interaction.response.edit_message(embed=self.embed, view=self.new_view)
+        except Exception as e:
+            print(e)
+
+
+class SelectionRoomView(discord.ui.View):
+    def __init__(self, expedition):
+        super().__init__(timeout=None)
+        self.expedition = expedition
+        self.embed = None
+        self.new_view = None
+        self.active_room = self.expedition.current_room
+        self.item_pools = [["i1o", "i1s", "i2o", "i2s", "STONE1", "STONE2", "STONE3", "STONE4", "i1y", "i1j", "ESS"],
+                           ["i3o", "i3s", "i3k", "i3f", "i2y", "i3y", "i2j", "i3j", "i4t", "i1r", "ESS"],
+                           ["i4o", "i4s", "i4h", "i4p", "i4z", "i4y", "i4w", "i4g", "i4c", "i5t", "i4j", "ESS"],
+                           ["i5o", "i5s", "i5l", "i5hP", "i5hS", "i5hA", "i5u", "i5f", "i6t", "i6m", "i5f", "ESS"],
+                           ["i6x", "i5xW", "i5xA", "i5xY", "i5xG", "i5xC", "i5v", "v6p", "v6h", "i5xD", "ESS"],
+                           ["m6o", "m6s", "m6z", "m6f", "m6k", "m6h", "m6l", "m6hA", "m6hP", "m6hS", "i6uD", "ESS"],
+                           ["v7x", "i6uW"]]
+        random_tier = random.randint(0, self.expedition.luck // 5)
+        selected_pool = self.item_pools[random_tier]
+        item_location = random.sample(range(0, (len(selected_pool) - 1)), 2)
+        selected_set = [selected_pool[item_location[0]], selected_pool[item_location[1]]]
+        selected_set = check_essence(selected_set, random_tier)
+        self.choice_items = [inventory.get_basic_item_by_id(selected_set[0]),
+                             inventory.get_basic_item_by_id(selected_set[1])]
+        self.option1.label = f"{self.choice_items[0].item_name}"
+        self.option1.emoji = self.choice_items[0].item_emoji
+        self.option1.custom_id = "1"
+        self.option2.label = f"{self.choice_items[1].item_name}"
+        self.option2.emoji = self.choice_items[1].item_emoji
+        self.option2.custom_id = "2"
+        self.speed_check = min((self.expedition.luck * 5), 75)
+        self.speed.label = f"Both ({self.speed_check}%)"
+
+    @discord.ui.button(style=discord.ButtonStyle.blurple)
+    async def option1(self, interaction: discord.Interaction, button: discord.Button):
+        await self.option_callback(interaction, button)
+
+    @discord.ui.button(style=discord.ButtonStyle.blurple)
+    async def option2(self, interaction: discord.Interaction, button: discord.Button):
+        await self.option_callback(interaction, button)
+
+    @discord.ui.button(style=discord.ButtonStyle.blurple, emoji="🐦")
+    async def speed(self, interaction: discord.Interaction, button: discord.Button):
+        await self.speed_callback(interaction, button)
+
+    async def option_callback(self, interaction: discord.Interaction, button: discord.Button):
+        try:
+            if interaction.user.name == self.expedition.player_object.player_name:
+                if not self.embed:
+                    button_id = int(button.custom_id)
+                    self.embed = self.active_room.embed
+                    self.embed.clear_fields()
+                    target_item = self.choice_items[(button_id - 1)]
+                    inventory.update_stock(self.expedition.player_object, target_item.item_id, 1)
+                    output_msg = f"{target_item.item_emoji} 1x {target_item.item_name} acquired!"
+                    self.embed = discord.Embed(colour=self.expedition.expedition_colour,
+                                               title="Item Selected!", description=output_msg)
+                    self.new_view = TransitionView(self.expedition)
+                await interaction.response.edit_message(embed=self.embed, view=self.new_view)
+        except Exception as e:
+            print(e)
+
+    async def speed_callback(self, interaction: discord.Interaction, button: discord.Button):
+        try:
+            if interaction.user.name == self.expedition.player_object.player_name:
+                if not self.embed:
+                    self.embed = self.active_room.embed
+                    self.embed.clear_fields()
+                    random_outcome = random.randint(1, 100)
+                    if random_outcome <= self.speed_check:
+                        inventory.update_stock(self.expedition.player_object, self.choice_items[0].item_id, 1)
+                        inventory.update_stock(self.expedition.player_object, self.choice_items[1].item_id, 1)
+                        output_msg = f"{self.choice_items[0].item_emoji} 1x {self.choice_items[0].item_name} acquired!\n"
+                        output_msg += f"{self.choice_items[1].item_emoji} 1x {self.choice_items[1].item_name} acquired!"
+                        self.embed = discord.Embed(colour=self.expedition.expedition_colour,
+                                                   title="Received Both Items!", description=output_msg)
+                        self.new_view = TransitionView(self.expedition)
+                    else:
+                        self.embed, self.new_view = trap_triggered(self.expedition, self.active_room, self.embed)
                 await interaction.response.edit_message(embed=self.embed, view=self.new_view)
         except Exception as e:
             print(e)
@@ -1006,7 +1131,7 @@ class SanctuaryRoomView(discord.ui.View):
         id_type = ""
         if self.item_type == "Cores":
             id_type = "Fae"
-            quantity = random.randint((1 + self.expedition.luck), (5 + self.expedition.luck))
+            quantity = random.randint((1 + self.expedition.luck), (10 + self.expedition.luck))
         elif self.item_type == "Origin":
             id_type = "Origin"
             quantity = 1
@@ -1224,6 +1349,52 @@ def death_embed():
     death_header = "The voice of __Thana, The Death__ echoes through your mind"
     death_msg = death_msg_list[random_msg]
     return death_header, death_msg
+
+
+def check_essence(selected_items, pool_tier):
+    checked_items = selected_items.copy()
+    for item_index, item in enumerate(selected_items):
+        if item == "ESS":
+            random_paragon = random.choice(tarot.paragon_list[pool_tier])
+            essence_id = f"t{tarot.tarot_numeral_list(tarot.get_number_by_tarot(random_paragon))}"
+            checked_items[item_index] = essence_id
+    return checked_items
+
+
+def trap_triggered(expedition, active_room, embed):
+    lethality = random.randint(1, 100)
+    if lethality <= max(0, (15 - expedition.luck)):
+        trap_msg = trap_trigger2_list[active_room.room_element]
+        embed.add_field(name="Fatal Trap - Run Ended", value=trap_msg, inline=False)
+        death_header, death_msg = death_embed()
+        embed.add_field(name=death_header, value=death_msg, inline=False)
+        new_view = None
+    else:
+        trap_msg = trap_trigger1_list[active_room.room_element]
+        embed.add_field(name="Trap Triggered!", value=trap_msg, inline=False)
+        if active_room.room_element >= 6:
+            teleport_room = random.randint(0, (expedition.expedition_length - 2))
+            expedition.teleport()
+            new_view = TransitionView(expedition)
+        else:
+            damage = expedition.take_damage(100, 300, active_room.room_element)
+            dmg_msg = f'You took {damage:,} damage.'
+            embed.add_field(name="", value=dmg_msg, inline=False)
+            if expedition.player_object.player_cHP <= 0 and not expedition.player_object.immortal:
+                expedition.player_object.player_cHP = 0
+                hp_msg = f'0 / {expedition.player_object.player_mHP} HP'
+                embed.add_field(name="Dead - Run Ended", value=hp_msg, inline=False)
+                death_header, death_msg = death_embed()
+                embed.add_field(name=death_header, value=death_msg, inline=False)
+                new_view = None
+            else:
+                if expedition.player_object.immortal and expedition.player_object.player_cHP < 1:
+                    expedition.player_object.player_cHP = 1
+                hp_msg = globalitems.display_hp(expedition.player_object.player_cHP,
+                                                expedition.player_object.player_mHP)
+                embed.add_field(name="", value=hp_msg, inline=False)
+                new_view = TransitionView(expedition)
+    return embed, new_view
 
 
 def treasure_found(expedition, treasure_type):
