@@ -469,7 +469,7 @@ class MonsterRoomView(discord.ui.View):
         self.active_room = self.expedition.current_room
         if self.active_room.room_type == "elite_monster":
             self.monster_adjuster = 2
-        self.stealth_chance = int(50 / self.monster_adjuster) + (self.expedition.luck * (2 / self.monster_adjuster))
+        self.stealth_chance = int(50 / self.monster_adjuster + (self.expedition.luck * (2 / self.monster_adjuster)))
         self.stealth.label = f"Stealth ({self.stealth_chance}%)"
         self.stealth.emoji = "↩️"
         self.fight.label = "Fight"
@@ -577,10 +577,11 @@ class TrapRoomView(discord.ui.View):
         self.player_resist = self.expedition.player_object.elemental_resistance[self.active_room.room_element]
         self.trap_check = int(self.expedition.luck + (self.player_resist * 100))
         self.salvage.label = f"Search ({self.trap_check}%)"
+        self.bypass.label = f"Bypass"
 
     @discord.ui.button(style=discord.ButtonStyle.success)
     async def salvage(self, interaction: discord.Interaction, button: discord.Button):
-        await self.search_callback(interaction, button)
+        await self.salvage_callback(interaction, button)
 
     @discord.ui.button(style=discord.ButtonStyle.blurple, emoji="⬆️")
     async def bypass(self, interaction: discord.Interaction, button: discord.Button):
@@ -1031,13 +1032,13 @@ class DragonRoomView(discord.ui.View):
         self.resistance = [self.expedition.player_object.elemental_resistance[3],
                            self.expedition.player_object.elemental_resistance[4],
                            self.expedition.player_object.elemental_resistance[self.expedition.current_room.room_element]]
-        self.success_rate = [min(100, int(resistance * 100) + 10) for resistance in self.resistance]
+        self.success_rate = [min(100, int(resistance * 100) + 5) for resistance in self.resistance]
         self.option1.label = f"Ritual of Land ({self.success_rate[0]}%)"
-        self.option1.emoji = self.item[0].item_emoji
+        self.option1.emoji = globalitems.global_element_list[3]
         self.option2.label = f"Ritual of Sky ({self.success_rate[1]}%)"
-        self.option2.emoji = self.item[1].item_emoji
+        self.option2.emoji = globalitems.global_element_list[4]
         self.option3.label = f"Ritual of Chaos ({self.success_rate[2]}%)"
-        self.option3.emoji = f"{globalitems.global_element_list[self.expedition.current_room.room_element]}"
+        self.option3.emoji = globalitems.global_element_list[self.expedition.current_room.room_element]
 
     @discord.ui.button(style=discord.ButtonStyle.blurple)
     async def option1(self, interaction: discord.Interaction, button: discord.Button):
@@ -1055,7 +1056,7 @@ class DragonRoomView(discord.ui.View):
         try:
             if interaction.user.name == self.expedition.player_object.player_name:
                 if not self.embed:
-                    self.embed = self.run_option_button(0)
+                    self.embed = self.run_option_button(1)
                     self.new_view = TransitionView(self.expedition)
                 await interaction.response.edit_message(embed=self.embed, view=self.new_view)
         except Exception as e:
@@ -1065,7 +1066,7 @@ class DragonRoomView(discord.ui.View):
         try:
             if interaction.user.name == self.expedition.player_object.player_name:
                 if not self.embed:
-                    self.embed = self.run_option_button(1)
+                    self.embed = self.run_option_button(2)
                     self.new_view = TransitionView(self.expedition)
                 await interaction.response.edit_message(embed=self.embed, view=self.new_view)
         except Exception as e:
@@ -1075,7 +1076,7 @@ class DragonRoomView(discord.ui.View):
         try:
             if interaction.user.name == self.expedition.player_object.player_name:
                 if not self.embed:
-                    self.embed = self.run_option_button(2)
+                    self.embed = self.run_option_button(3)
                     self.new_view = TransitionView(self.expedition)
                 await interaction.response.edit_message(embed=self.embed, view=self.new_view)
         except Exception as e:
@@ -1138,13 +1139,13 @@ class GoldenRoomView(discord.ui.View):
             self.reward_adjuster = 2
         self.success_rate = [min(100, (5 + 5 * self.reward_adjuster) +
                                  (self.expedition.luck * (5 * self.reward_adjuster))), 100]
-        self.option1.label = f"Search ({self.success_rate[0]}%)"
-        self.option1.emoji = "📿"
+        self.search.label = f"Search ({self.success_rate[0]}%)"
+        self.search.emoji = "📿"
         self.collect.label = f"Collect"
-        self.option2.emoji = "💲"
+        self.collect.emoji = "💲"
 
     @discord.ui.button(style=discord.ButtonStyle.blurple)
-    async def Search(self, interaction: discord.Interaction, button: discord.Button):
+    async def search(self, interaction: discord.Interaction, button: discord.Button):
         await self.jewellery_callback(interaction, button)
 
     @discord.ui.button(style=discord.ButtonStyle.blurple)
@@ -1227,19 +1228,17 @@ def death_embed():
 
 def treasure_found(expedition, treasure_type):
     active_room = expedition.current_room
+    check_num = expedition.luck
+    if active_room.room_variant == "Greater":
+        check_num += 3
     if expedition.expedition_tier >= 4:
-        fragment_roller = random.randint(0, (expedition.luck + 3))
-        if active_room.room_variant == "Greater":
-            bonus_check = random.randint(0, (expedition.luck + 3))
-            fragment_roller = max(fragment_roller, bonus_check)
-        if fragment_roller < len(reward_probabilities):
-            num_fragments = reward_probabilities[fragment_roller]
-        else:
-            num_fragments = 10
+        check_num += 3
+        fragment_roller = min((len(reward_probabilities) - 1), random.randint(0, check_num))
+        num_fragments = reward_probabilities[fragment_roller]
         fragment_id = f"i5a{treasure_type}"
         reward_item = loot.BasicItem(fragment_id)
         loot_msg = f"{reward_item.item_emoji} {num_fragments}x {reward_item.item_name}"
-        embed = discord.Embed(colour=self.expedition.expedition_colour,
+        embed = discord.Embed(colour=expedition.expedition_colour,
                               title="Fragments Acquired!",
                               description=loot_msg)
         update_stock = inventory.update_stock(expedition.player_object,
@@ -1247,7 +1246,7 @@ def treasure_found(expedition, treasure_type):
         new_view = TransitionView(expedition)
     else:
         reward_tier = inventory.generate_random_tier()
-        for x in range(expedition.luck):
+        for x in range(check_num):
             random_tier = inventory.generate_random_tier()
             if random_tier > reward_tier:
                 reward_tier = random_tier

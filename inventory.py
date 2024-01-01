@@ -658,7 +658,8 @@ class CustomItem:
     def check_augment(self):
         augment_total = 0
         v_augment_total = 0
-        if len(self.item_prefix_values) + len(self.item_suffix_values) == 0:
+        num_rolls = len(self.item_prefix_values) + len(self.item_suffix_values)
+        if num_rolls == 0:
             augment_total = -1
         else:
             for x in self.item_prefix_values:
@@ -673,6 +674,8 @@ class CustomItem:
                 if check == 5:
                     augment_total -= 1
                     v_augment_total += 1
+        if num_rolls != 6 and (num_rolls * 3 == augment_total or num_rolls == v_augment_total):
+            augment_total = -1
         return augment_total, v_augment_total
 
     def add_augment(self, method):
@@ -722,8 +725,9 @@ class BasicItem:
         return embed_msg
 
 
-def get_basic_item_by_id(item_id):
+def get_basic_item_by_id(input_id):
     df = pd.read_csv("itemlist.csv")
+    item_id = str(input_id)
     df = df.loc[df['item_id'] == item_id]
     target_item = None
     if len(df.index) != 0:
@@ -731,6 +735,7 @@ def get_basic_item_by_id(item_id):
         target_item.item_name = str(df["item_name"].values[0])
         target_item.item_id = str(df["item_id"].values[0])
         target_item.item_tier = int(df["item_tier"].values[0])
+        target_item.item_base_rate = int(df["item_base_rate"].values[0])
         target_item.item_emoji = str(df["item_emoji"].values[0])
         target_item.item_description = str(df["item_description"].values[0])
         target_item.item_cost = int(df["item_cost"].values[0])
