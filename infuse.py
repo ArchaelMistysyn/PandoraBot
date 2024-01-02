@@ -44,7 +44,7 @@ recipe_dict = {
     "Void Origin": ["i5v", 1, "i4z", 1, 90, "OriginV"],
     "Crystallized Void": ["i5v", 1, "i6x", 1, 10, "v7x"],
 
-    "Fabled Core": ["STONE4", 25, "15l", 1, 90, "i5u"],
+    "Fabled Core": ["STONE5", 25, "i5l", 1, 90, "i5u"],
     "Fabled Flame": ["i5u", 1, "i3f", 1, 90, "i5f"],
     "Unrefined Fabled Item (Weapon)": ["i5aW", 200, "i5u", 5, 100, "i5xW"],
     "Unrefined Fabled Item (Armour)": ["i5aA", 100, "i5u", 2, 100, "i5xA"],
@@ -56,7 +56,7 @@ recipe_dict = {
     "Fragmentized Wish (Weapon)": ["i5aW", 10, "STONE4", 1, 100, "m6e"],
     "Fragmentized Wish (Armour)": ["i5aA", 10, "STONE4", 1, 100, "m6e"],
     "Fragmentized Wish (Accessory)": ["i5aY", 10, "STONE4", 1, 100, "m6e"],
-    "Crystallized Wish": ["m6e", 50, "STONE4", 10, 100, "16x"],
+    "Crystallized Wish": ["m6e", 50, "STONE5", 10, 100, "16x"],
     "Wish Core": ["i6x", 5, "i5u", 1, 100, ""],
     "Unrefined Wish Item (Weapon)": ["i6x", 5, "i5l", 10, 100, "i6uW"],
     "Unrefined Dragon Heart Gem": ["i4g", 50, "i6x", 1, 100, "i6g"],

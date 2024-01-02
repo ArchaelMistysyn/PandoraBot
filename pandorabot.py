@@ -770,7 +770,7 @@ def run_discord_bot():
                                           title="Pandora's Celestial Forge",
                                           description="Let me know what you'd like me to upgrade today!")
                 embed_msg.set_image(url="https://i.ibb.co/QjWDYG3/forge.jpg")
-                forge_view = forge.SelectView(player_object)
+                forge_view = forge.SelectView(player_object, "celestial")
                 await ctx.send(embed=embed_msg, view=forge_view)
             else:
                 embed_msg = unregistered_message()
@@ -841,7 +841,37 @@ def run_discord_bot():
                 embed_msg = unregistered_message()
                 await ctx.send(embed=embed_msg)
 
+        # Crafting Commands
     @set_command_category('craft', 4)
+    @pandora_bot.hybrid_command(name='purify', help="Purify voidforged gear items.")
+    @app_commands.guilds(discord.Object(id=1011375205999968427))
+    async def void_purification(ctx):
+        await ctx.defer()
+        user = ctx.author
+        player_object = player.get_player_by_name(user)
+        if player_object.player_class != "":
+            player_object.get_equipped()
+            e_weapon = inventory.read_custom_item(player_object.player_equipped[0])
+            if player_object.player_quest >= 27:
+                entry_msg = ("Within this cave resides the true abyss. Only a greater darkness can cleanse the void "
+                             "and reveal the true form. The costs will be steep, I trust you came prepared. "
+                             "Nothing can save you down there.")
+                embed_msg = discord.Embed(colour=discord.Colour.blurple(),
+                                          title="Echo of Oblivia",
+                                          description=entry_msg)
+                embed_msg.set_image(url="https://i.ibb.co/QjWDYG3/forge.jpg")
+                new_view = forge.SelectView(player_object, "purify")
+            else:
+                embed_msg = discord.Embed(colour=discord.Colour.blurple(),
+                                          title="???",
+                                          description="A great darkness clouds your path. Entry is impossible.")
+                new_view = None
+            await ctx.send(embed=embed_msg, view=new_view)
+        else:
+            embed_msg = unregistered_message()
+            await ctx.send(embed=embed_msg)
+
+    @set_command_category('craft', 5)
     @pandora_bot.hybrid_command(name='fountain', help="Go to the ???")
     @app_commands.guilds(discord.Object(id=1011375205999968427))
     async def fountain(ctx):
@@ -852,21 +882,19 @@ def run_discord_bot():
             if player_object.player_class != "":
                 player_object.get_equipped()
                 e_weapon = inventory.read_custom_item(player_object.player_equipped[0])
-                if player_object.player_quest >= 27 and e_weapon.item_tier == 6:
-                    entry_msg = ("You who has defiled my wish now seek to realize your own. You now have the key "
-                                 "which grants you the right to enter this place. Just ahead resides the fountain of "
-                                 "genesis, origin of all. The power you still covet can be acquired here. Go now, "
-                                 "I am no longer qualified to stand in your path.")
+                if player_object.player_quest >= 27:
+                    entry_msg = ("You who has defiled my wish now seek to realize your own. Just ahead resides the "
+                                 "fountain of genesis, origin of all. The power you still covet can be acquired here. "
+                                 "Go now, I am no longer qualified to stand in your path.")
                     embed_msg = discord.Embed(colour=discord.Colour.blurple(),
                                               title="Echo of Eleuia",
                                               description=entry_msg)
                     embed_msg.set_image(url="https://i.ibb.co/QjWDYG3/forge.jpg")
-                    new_view = forge.GenesisView(player_object, e_weapon)
-
+                    new_view = forge.SelectView(player_object, "miracle")
                 else:
                     embed_msg = discord.Embed(colour=discord.Colour.blurple(),
                                               title="???",
-                                              description="A powerful force emanates from within. Preventing entry.")
+                                              description="A powerful light emanates from within. Entry is impossible.")
                     new_view = None
                 await ctx.send(embed=embed_msg, view=new_view)
             else:

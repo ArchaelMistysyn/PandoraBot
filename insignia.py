@@ -12,7 +12,7 @@ def display_insignia(player_object, insignia_code, output_type):
     tier_colour, tier_icon = inventory.get_gear_tier_colours(player_object.player_echelon)
     hp_bonus = 500 * player_object.player_echelon
     item_rolls = f"+{hp_bonus} HP Bonus"
-    item_rolls += f"+{player_object.player_echelon} Luck"
+    item_rolls += f"\n+{player_object.player_echelon} Luck"
     item_rolls += f"\n{player_object.player_lvl}% Final Damage"
     item_rolls += f"\n{player_object.player_echelon * 10}% Attack Speed"
     temp_elements = insignia_code.split(";")

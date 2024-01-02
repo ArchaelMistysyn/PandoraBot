@@ -239,22 +239,24 @@ def get_item_tier_damage(material_tier):
             damage_temp = 8000
         case "Crystal" | "Divine" | "Spectral" | "Balefire" | "Transcendent" | "Plasma":
             damage_temp = 10000
-        case "Key of Freedom," | "Chroma":
+        case "Key of Desires," | "Chroma":
             damage_temp = 20000
-        case "Key of Desires," | "Chromatic":
+        case "Key of Hopes," | "Chromatic":
             damage_temp = 40000
-        case "Key of Hopes," | "Prisma":
+        case "Key of Dreams," | "Prisma":
             damage_temp = 60000
-        case "Key of Dreams," | "Prismatic":
+        case "Key of Wishes," | "Prismatic":
             damage_temp = 80000
-        case "Key of Wishes," | "Iridescent":
+        case "Key of Miracles," | "Iridescent":
             damage_temp = 150000
-        case "Key of Miracles,":
-            damage_temp = 250000
+        case "Eschaton":
+            damage_temp = 500000
         case "Voidcrystal" | "Voidspecter":
             damage_temp = 25000
         case "Voidplasma" | "Voidforme":
             damage_temp = 50000
+        case "????????":
+            damage_temp = 250000
         case _:
             damage_temp = 0
 

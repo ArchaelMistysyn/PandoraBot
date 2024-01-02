@@ -122,8 +122,9 @@ class Expedition:
             self.current_room_view = new_view
             # Build Embed
             embed_msg = new_room.embed
-            hp_msg = globalitems.display_hp(self.player_object.player_cHP, self.player_object.player_mHP)
-            embed_msg.add_field(name="", value=hp_msg, inline=False)
+            status_msg = globalitems.display_hp(self.player_object.player_cHP, self.player_object.player_mHP)
+            status_msg += f"\nLuck: {self.luck}"
+            embed_msg.add_field(name="", value=status_msg, inline=False)
         else:
             embed_msg = discord.Embed(colour=self.expedition_colour,
                                       title="Expedition Completed!",
@@ -587,7 +588,7 @@ class TrapRoomView(discord.ui.View):
         self.new_view = None
         self.active_room = self.expedition.current_room
         self.player_resist = self.expedition.player_object.elemental_resistance[self.active_room.room_element]
-        self.trap_check = int(self.expedition.luck + (self.player_resist * 100))
+        self.trap_check = min(100, int(self.expedition.luck + (self.player_resist * 100)))
         self.salvage.label = f"Search ({self.trap_check}%)"
         self.bypass.label = f"Bypass"
 
@@ -633,8 +634,8 @@ class EpitaphRoomView(discord.ui.View):
         self.embed = None
         self.new_view = None
         self.active_room = self.expedition.current_room
-        self.search_check = 100
-        self.search.label = f"Search ({self.search_check}%)"
+        self.item_check = 100
+        self.search.label = f"Search ({self.item_check}%)"
         self.decipher_check = 100
         self.decipher.label = f"Decipher ({self.decipher_check}%)"
 
@@ -674,7 +675,7 @@ class EpitaphRoomView(discord.ui.View):
                     if random_num <= self.decipher_check:
                         luck_gained = random.randint(1, 3)
                         self.expedition.luck += luck_gained
-                        output_msg = +f"**+{luck_gained} Luck**"
+                        output_msg = f"**+{luck_gained} Luck**"
                         self.embed = discord.Embed(colour=self.expedition.expedition_colour,
                                                    title="Decryption Success!", description=output_msg)
                         self.new_view = TransitionView(self.expedition)
@@ -702,11 +703,15 @@ class SelectionRoomView(discord.ui.View):
                            ["i6x", "i5xW", "i5xA", "i5xY", "i5xG", "i5xC", "i5v", "v6p", "v6h", "i5xD", "ESS"],
                            ["m6o", "m6s", "m6z", "m6f", "m6k", "m6h", "m6l", "m6hA", "m6hP", "m6hS", "i6uD", "ESS"],
                            ["v7x", "i6uW"]]
-        random_tier = random.randint(0, self.expedition.luck // 5)
-        selected_pool = self.item_pools[random_tier]
+        random_num = random.randint(1, 100000)
+        if random_num <= self.expedition.luck:
+            reward_tier = 6
+        else:
+            reward_tier = min(5, self.expedition.luck // 5)
+        selected_pool = self.item_pools[reward_tier]
         item_location = random.sample(range(0, (len(selected_pool) - 1)), 2)
         selected_set = [selected_pool[item_location[0]], selected_pool[item_location[1]]]
-        selected_set = check_essence(selected_set, random_tier)
+        selected_set = check_essence(selected_set, reward_tier)
         self.choice_items = [inventory.get_basic_item_by_id(selected_set[0]),
                              inventory.get_basic_item_by_id(selected_set[1])]
         self.option1.label = f"{self.choice_items[0].item_name}"
@@ -1023,6 +1028,7 @@ class TrialRoomView(discord.ui.View):
     def run_option_button(self, reload_player, option_selected):
         completed_msg = "Cost could not be paid. Nothing Gained."
         output_msg = ""
+        luck_gained = 1 + 2 * (option_selected - 1)
         match self.expedition.current_room.room_variant:
             case "Offering":
                 cost = int(0.3 * option_selected * self.expedition.player_object.player_mHP)
@@ -1031,7 +1037,7 @@ class TrialRoomView(discord.ui.View):
                     completed_msg = ""
                     hp_msg = globalitems.display_hp(self.expedition.player_object.player_cHP,
                                                     self.expedition.player_object.player_mHP)
-                    output_msg = f"Sacrificed {cost} HP\n{hp_msg}\nGained +{(1 + 2 * (option_selected - 1))} luck!"
+                    output_msg = f"Sacrificed {cost} HP\n{hp_msg}\nGained +{luck_gained} luck!"
             case "Greed":
                 cost_list = [1000, 5000, 10000]
                 cost = cost_list[(option_selected - 1)]
@@ -1040,7 +1046,7 @@ class TrialRoomView(discord.ui.View):
                     reload_player.set_player_field("player_coins", reload_player.player_coins)
                     completed_msg = ""
                     output_msg = (f"Sacrificed {cost} lotus coins\nRemaining: {reload_player.player_coins}\n"
-                                  f"Gained +{(1 + 2 * (option_selected - 1))} luck!")
+                                  f"Gained +{luck_gained} luck!")
             case "Soul":
                 cost = int(100 + 200 * (option_selected - 1))
                 if reload_player.player_stamina >= cost:
@@ -1048,10 +1054,11 @@ class TrialRoomView(discord.ui.View):
                     reload_player.set_player_field("player_stamina", reload_player.player_stamina)
                     completed_msg = ""
                     output_msg = (f"Sacrificed {cost} stamina\nRemaining: {reload_player.player_stamina}\n"
-                                  f"Gained +{(1 + 2 * (option_selected - 1))} luck!")
+                                  f"Gained +{luck_gained} luck!")
             case _:
                 pass
         if completed_msg == "":
+            self.expedition.luck += luck_gained
             embed_msg = discord.Embed(colour=self.expedition.expedition_colour,
                                       title="Trial Passed!", description=output_msg)
         else:
@@ -1424,7 +1431,7 @@ def treasure_found(expedition, treasure_type):
                 if reward_tier == 4:
                     break
         reward_item = inventory.CustomItem(expedition.player_object.player_id,
-                                           active_room.reward_type, reward_tier)
+                                           treasure_type, reward_tier)
         embed = reward_item.create_citem_embed()
         new_view = ItemView(expedition, reward_item)
     return embed, new_view

@@ -126,7 +126,7 @@ class CInventoryView(discord.ui.View):
             if interaction.user.name == self.user.player_name:
                 new_view = BInventoryView(self.user)
                 inventory_title = f'{self.user.player_username}\'s Inventory:\n'
-                player_inventory = display_binventory(self.user.player_id, "Crafting Items")
+                player_inventory = display_binventory(self.user.player_id, "Crafting")
                 new_embed = discord.Embed(colour=discord.Colour.dark_orange(),
                                           title=inventory_title,
                                           description=player_inventory)
@@ -177,6 +177,9 @@ class CustomItem:
                 self.item_blessing_tier = "Refined"
             elif self.item_tier <= 4:
                 self.item_material_tier = "Iron"
+            elif self.item_tier == 7:
+                self.item_material_tier = "Eschaton"
+                self.item_blessing_tier = ""
         match self.item_type:
             case "W":
                 self.set_base_attack_speed()
@@ -275,7 +278,8 @@ class CustomItem:
         self.base_damage_max = random_damage2
 
     def set_base_attack_speed(self):
-        speed_range_list = [(1.00, 1.20), (1.21, 1.50), (1.51, 1.90), (1.91, 2.40), (2.41, 3.00), (3.01, 4.00)]
+        speed_range_list = [(1.00, 1.20), (1.21, 1.50), (1.51, 1.90), (1.91, 2.40),
+                            (2.41, 3.00), (3.01, 4.00), (4.01, 5.00)]
         selected_range = speed_range_list[(self.item_tier - 1)]
         random_speed = round(random.uniform(selected_range[0], selected_range[1]), 2)
         self.item_bonus_stat = f"{random_speed}"
@@ -704,6 +708,12 @@ class CustomItem:
         self.player_owner = new_owner
         self.update_stored_item()
 
+    def is_void_item(self):
+        void_item = False
+        if "Void" in self.item_material_tier or "Eschaton" == self.item_material_tier:
+            void_item = True
+        return void_item
+
 
 class BasicItem:
     def __init__(self):
@@ -1031,6 +1041,9 @@ def get_gear_tier_colours(base_tier):
         case 5:
             tier_colour = discord.Colour.red()
             tier_emoji = '🔴'
+        case 6:
+            tier_colour = discord.Colour.magenta()
+            tier_emoji = '⚪'
         case _:
             tier_colour = discord.Colour.pink()
             tier_emoji = '⚪'

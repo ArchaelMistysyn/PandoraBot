@@ -111,5 +111,6 @@ i5aY,Fabled Accessory Fragment,5,100,<a:elootitem:1144477550379274322>,Used for 
 i5hA,Chaos Hammer,5,100,<a:elootitem:1144477550379274322>,Reroll all affixes on a 6 affix gear item.,0,
 m6hA,Zenith Hammer,5,100,<a:elootitem:1144477550379274322>,Reroll all affixes on a 6 affix wish item.,0,
 i5f,Fabled Flame,5,80,<a:elootitem:1144477550379274322>,80% chance to reforge the base stats and unique ability of a tier 5 gear item.,0,
-i6u,Wish Core,6,100,<a:elootitem:1144477550379274322>,"Convert a tier 5 non-weapon, non-gem item to tier 6",0,
+i6u,Wish Core,6,90,<a:elootitem:1144477550379274322>,"Convert a tier 5 non-weapon, non-gem item to tier 6",0,
 OriginV,Void Origin,5,100,<a:evoid:1145520260573827134>,Upgrades the the reinforcement above the maximum.,0,
+STONE5,Raid Stone,5,100,<a:elootitem:1144477550379274322>,Obtained from raids. It's a stone.,0,

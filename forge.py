@@ -48,29 +48,30 @@ void_ready_values = [10000, 150000]
 
 
 class SelectView(discord.ui.View):
-    def __init__(self, player_object):
+    def __init__(self, player_object, method):
         super().__init__(timeout=None)
         self.selected_item = None
         self.player_object = player_object
+        self.method = method
         self.value = None
+        select_options = [
+                discord.SelectOption(
+                    emoji="<a:eenergy:1145534127349706772>", label="Weapon", description="Equipped Weapon"),
+                discord.SelectOption(
+                    emoji="<a:eenergy:1145534127349706772>", label="Armour", description="Equipped Armour"),
+                discord.SelectOption(
+                    emoji="<a:eenergy:1145534127349706772>", label="Accessory", description="Equipped Accessory"),
+                discord.SelectOption(
+                    emoji="<a:eenergy:1145534127349706772>", label="Wing", description="Equipped Wing"),
+                discord.SelectOption(
+                    emoji="<a:eenergy:1145534127349706772>", label="Crest", description="Equipped Paragon Crest")
+            ]
+        self.select_menu = discord.ui.select(
+            placeholder="Select crafting base!", min_values=1, max_values=1, options=select_options
+        )
+        self.select_menu.callback = self.select_callback
+        self.add_item(self.select_menu)
 
-    @discord.ui.select(
-        placeholder="Select crafting base!",
-        min_values=1,
-        max_values=1,
-        options=[
-            discord.SelectOption(
-                emoji="<a:eenergy:1145534127349706772>", label="Weapon", description="Equipped Weapon"),
-            discord.SelectOption(
-                emoji="<a:eenergy:1145534127349706772>", label="Armour", description="Equipped Armour"),
-            discord.SelectOption(
-                emoji="<a:eenergy:1145534127349706772>", label="Accessory", description="Equipped Accessory"),
-            discord.SelectOption(
-                emoji="<a:eenergy:1145534127349706772>", label="Wing", description="Equipped Wing"),
-            discord.SelectOption(
-                emoji="<a:eenergy:1145534127349706772>", label="Crest", description="Equipped Paragon Crest")
-        ]
-    )
     async def select_callback(self, interaction: discord.Interaction, item_select: discord.ui.Select):
         try:
             if interaction.user.name == self.player_object.player_name:
@@ -78,15 +79,25 @@ class SelectView(discord.ui.View):
                 selected_item = self.player_object.player_equipped[location]
                 if selected_item != 0:
                     self.selected_item = inventory.read_custom_item(selected_item)
-                    if self.selected_item.item_type == "W" and self.selected_item.item_tier == 6:
-                        key_msg = ("I've never seen anything like this. I'm sorry, this item is not powered by the "
-                                   "stars. You will need to find another method of reforging it.")
+                    if self.method == "purify":
+                        if self.selected_item.item_tier >= 5 and self.selected_item.is_void_item():
+                            embed_msg = self.selected_item.create_citem_embed()
+                            new_view = PurifyView(self.player_object, self.selected_item)
+                        else:
+                            key_msg = ("This item does not meet the qualifications for void purification. "
+                                       "Soaking it in the true abyss would only erase it.")
+                            embed_msg = discord.Embed(colour=discord.Colour.magenta(),
+                                                      title="Oblivia, The Void", description=key_msg)
+                            new_view = self
+                    elif self.selected_item.item_tier == 6 and method == "celestial":
+                        key_msg = ("I've never seen anything like this. I'm sorry, this item is resonates with power "
+                                   "beyond that of the stars. You will need to find another method of reforging it.")
                         embed_msg = discord.Embed(colour=discord.Colour.magenta(),
                                                   title="Pandora, The Celestial", description=key_msg)
                         new_view = self
                     else:
                         embed_msg = self.selected_item.create_citem_embed()
-                        new_view = ForgeView(self.player_object, self.selected_item)
+                        new_view = ForgeView(self.player_object, self.selected_item, self.method)
                 else:
                     error_msg = "Not equipped"
                     embed_msg = menus.create_error_embed(error_msg)
@@ -96,64 +107,90 @@ class SelectView(discord.ui.View):
             print(e)
 
 
-class GenesisView(discord.ui.View):
+class PurifyView(discord.ui.View):
     def __init__(self, player_object, selected_item):
         super().__init__(timeout=None)
         self.selected_item = selected_item
         self.player_object = player_object
+        self.embed = None
+        self.new_view = None
+        if self.selected_item.item_tier == 5:
+            item_id = "i6u"
+            label_name = "Purify"
+            if self.selected_item.item_type == "W":
+                self.purify.disabled = True
+                self.purify.style = globalitems.button_colour_list[3]
+                label_name += " [???]"
+        else:
+            item_id = "v7x"
+            label_name = "Transcend"
+            if self.selected_item.item_tier == 7:
+                self.purify.disabled = True
+                self.purify.style = globalitems.button_colour_list[3]
+                label_name += " [MAX]"
+        self.material = inventory.get_basic_item_by_id(item_id)
+        self.purify_check = self.material.item_base_rate
+        if not self.purify.disabled:
+            label_name += f" ({self.purify_check}%)"
+        self.purify.label = label_name
+        self.purify.emoji = self.material.item_emoji
 
-    @discord.ui.select(
-        placeholder="Select crafting method!",
-        min_values=1,
-        max_values=1,
-        options=[
-            discord.SelectOption(
-                emoji="<a:eenergy:1145534127349706772>", label="Enhance", description="Enhance the weapon."),
-            discord.SelectOption(
-                emoji="<:eore:1145534835507593236>", label="Upgrade", description="Upgrade the weapon quality."),
-            discord.SelectOption(
-                emoji="<a:eshadow2:1141653468965257216>", label="Reforge", description="Reforge the weapon base stats"),
-            discord.SelectOption(
-                emoji="⚫", label="Add Socket", description="Add an open socket to the weapon."),
-            discord.SelectOption(
-                emoji=hammer_icon, label="Miracle Augment", description="Add/Modify weapon rolls."),
-            discord.SelectOption(
-                emoji=hammer_icon, label="??? Augment",
-                description="Add/Modify specific weapon rolls."),
-            discord.SelectOption(
-                emoji="<a:eorigin:1145520263954440313>", label="Implant Element", description="Gain new elements.")
-        ]
-    )
-    async def forge_callback(self, interaction: discord.Interaction, forge_select: discord.ui.Select):
+    @discord.ui.button(style=discord.ButtonStyle.success)
+    async def purify(self, interaction: discord.Interaction, button: discord.Button):
+        await self.purify_callback(interaction, button)
+
+    @discord.ui.button(style=discord.ButtonStyle.blurple)
+    async def reselect(self, interaction: discord.Interaction, button: discord.Button):
+        await self.reselect_callback(interaction, button)
+
+    async def purify_callback(self, interaction: discord.Interaction, button: discord.Button):
         try:
-            if interaction.user.name == self.player_object.player_name:
-                match forge_select.values[0]:
-                    case "Enhance":
-                        new_view = MiracleEnhanceView(self.player_object, self.selected_item)
-                    case "Upgrade":
-                        new_view = MiracleUpgradeView(self.player_object, self.selected_item)
-                    case "Reforge":
-                        new_view = MiracleReforgeView(self.player_object, self.selected_item)
-                    case "Add Socket":
-                        new_view = MiracleSocketView(self.player_object, self.selected_item)
-                    case "Wish Augment":
-                        new_view = WishAugmentView(self.player_object, self.selected_item)
-                    case "Miracle Augment":
-                        new_view = MiracleAugmentView(self.player_object, self.selected_item)
-                    case "Implant Element":
-                        new_view = MiracleOriginView(self.player_object, self.selected_item)
-                    case _:
-                        new_view = None
-                await interaction.response.edit_message(view=new_view)
+            if interaction.user.name == self.expedition.player_object.player_name:
+                if not self.embed:
+                    reload_item = inventory.read_custom_item(self.selected_item.item_id)
+                    material_stock = inventory.check_stock(self.player_object, self.material.item_id)
+                    result_msg = ""
+                    if material_stock >= 1:
+                        inventory.update_stock(self.player_object, self.material.item_id, -1)
+                        random_num = random.randint(1, 100)
+                        if random_num <= self.purify_check:
+                            reload_item.item_tier += 1
+                            reload_item.update_stored_item()
+                            result_msg = f"Successfully evolved item to tier ({reload_item.item_tier})!"
+                        else:
+                            result_msg = "Failed!"
+                    else:
+                        result_msg = f"Out of stock! {self.material.item_emoji}"
+                    self.embed = self.selected_item.create_citem_embed()
+                    self.embed.add_field(name="", value=result_msg, inline=False)
+                    self.new_view = PurifyView(self.player_object, reload_item)
+                await interaction.response.edit_message(embed=self.embed, view=self.new_view)
+        except Exception as e:
+            print(e)
+
+    async def reselect_callback(self, interaction: discord.Interaction, button: discord.Button):
+        try:
+            if interaction.user.name == self.expedition.player_object.player_name:
+                if not self.embed:
+                    entry_msg = (
+                        "Within this cave resides the true abyss. Only a greater darkness can cleanse the void "
+                        "and reveal the true form. The costs will be steep, I trust you came prepared. "
+                        "Nothing can save you down there.")
+                    self.embed = discord.Embed(colour=discord.Colour.blurple(),
+                                               title="Echo of Oblivia",
+                                               description=entry_msg)
+                    self.new_view = SelectView(self.player_object, "purify")
+                await interaction.response.edit_message(embed=self.embed, view=self.new_view)
         except Exception as e:
             print(e)
 
 
 class ForgeView(discord.ui.View):
-    def __init__(self, player_object, selected_item):
+    def __init__(self, player_object, selected_item, permission):
         super().__init__(timeout=None)
         self.selected_item = selected_item
         self.player_object = player_object
+        self.permission = permission
 
     @discord.ui.select(
         placeholder="Select crafting method!",
@@ -183,20 +220,23 @@ class ForgeView(discord.ui.View):
         try:
             if interaction.user.name == self.player_object.player_name:
                 if forge_select.values[0] == "Enhance" or forge_select.values[0] == "Implant Element":
-                    new_view = ElementSelectView(self.player_object, self.selected_item, forge_select.values[0])
+                    new_view = ElementSelectView(self.player_object, self.selected_item,
+                                                 forge_select.values[0], self.permission)
                 else:
-                    new_view = UpgradeView(self.player_object, self.selected_item, forge_select.values[0], 0)
+                    new_view = UpgradeView(self.player_object, self.selected_item,
+                                           forge_select.values[0], 0, self.permission)
                 await interaction.response.edit_message(view=new_view)
         except Exception as e:
             print(e)
 
 
 class ElementSelectView(discord.ui.View):
-    def __init__(self, player_object, selected_item, method):
+    def __init__(self, player_object, selected_item, method, permission):
         super().__init__(timeout=None)
         self.selected_item = selected_item
         self.player_object = player_object
         self.method = method
+        self.permission = permission
 
     @discord.ui.select(
         placeholder="Select the element to use.",
@@ -236,7 +276,8 @@ class ElementSelectView(discord.ui.View):
         try:
             if interaction.user.name == self.player_object.player_name:
                 selected_element = int(element_select.values[0])
-                new_view = UpgradeView(self.player_object, self.selected_item, self.method, selected_element)
+                new_view = UpgradeView(self.player_object, self.selected_item, self.method,
+                                       selected_element, self.permission)
                 await interaction.response.edit_message(view=new_view)
         except Exception as e:
             print(e)
@@ -244,12 +285,13 @@ class ElementSelectView(discord.ui.View):
 
 # Regular Crafting
 class UpgradeView(discord.ui.View):
-    def __init__(self, player_object, selected_item, menu_type, element):
+    def __init__(self, player_object, selected_item, menu_type, element, permission):
         super().__init__(timeout=None)
         self.selected_item = selected_item
         self.player_object = player_object
         self.menu_type = menu_type
         self.element = element
+        self.permission = permission
         # Method: num_buttons, button_names, button_emojis, material_ids, crafting_method
         method_dict = {"Enhance": [
                             1, ["Enhance"], [globalitems.global_element_list[self.element]], [[f"Fae{self.element}"]],
@@ -268,8 +310,9 @@ class UpgradeView(discord.ui.View):
                             [hammer_icon, "<:eprl:1148390531345432647>"], [[f"i4h"], [f"i4p"]],
                             ["Single Fusion", "Attunement"]],
                        "Astral Augment": [
-                            3, ["Pulsar Fusion", "Quasar Fusion", "Chaos Fusion"], [hammer_icon, hammer_icon], 
-                            [[f"i5hP"], [f"i5hS"], ["i5hA"]], ["Prefix Fusion", "Suffix Fusion", "All Fusion"]],
+                            3, ["Pulsar Fusion", "Quasar Fusion", "Chaos Fusion"],
+                            [hammer_icon, hammer_icon, hammer_icon], [[f"i5hP"], [f"i5hS"], ["i5hA"]],
+                            ["Prefix Fusion", "Suffix Fusion", "All Fusion"]],
                        "Implant Element": [
                             1, [f"Implant ({globalitems.element_names[self.element]})"],
                             ["<a:eorigin:1145520263954440313>"], [[f"Origin{self.element}"]],
@@ -279,7 +322,36 @@ class UpgradeView(discord.ui.View):
                             [void_icon, void_icon, void_icon], [[f"OriginV"], [f"v6p"], ["v6h"]],
                             ["VReinforce", "VAttunement", "VHammer"]]
                        }
-        self.menu_details = method_dict[self.menu_type]
+        method_dict_t6 = {"Enhance": [
+                              1, ["Enhance"], ["<:Star_PinkBlue:1179736203013140480>"], [[f"i6m"]],
+                              ["Enhance"]],
+                          "Upgrade": [
+                              2, ["Reinforce", "Bestow"],
+                              ["<:eore:1145534835507593236>", "<:esoul:1145520258241806466>"], [[f"m6o"], [f"m6s"]],
+                              ["Reinforce", "Bestow"]],
+                          "Reforge": [
+                              1, ["Reforge"], ["<a:eshadow2:1141653468965257216>"], [[f"m6f"]], ["Reforge"]],
+                          "Add Socket": [
+                              1, ["Add Socket"], ["⚫"], [[f"m6k"]], ["Open"]],
+                          "Wish Augment": [
+                              2, ["Miracle Fusion", "Attunement"],
+                              [hammer_icon, "<:eprl:1148390531345432647>"], [[f"m6h"], [f"m6p"]],
+                              ["Single Fusion", "Attunement"]],
+                          "Miracle Augment": [
+                              3, ["Genesis Fusion", "Terminus Fusion", "Zenith Fusion"],
+                              [hammer_icon, hammer_icon, hammer_icon],
+                              [[f"m6hP"], [f"m6hS"], ["m6hA"]], ["Prefix Fusion", "Suffix Fusion", "All Fusion"]],
+                          "Implant Element": [
+                              1, [f"Implant"], ["<a:eorigin:1145520263954440313>"], [[f"m6z"]], ["Implant"]],
+                          "Voidforge": [
+                              3, ["Corrupt", "Augment", "Void Fusion"],
+                              [void_icon, void_icon, void_icon], [[f"OriginV"], [f"v6p"], ["v6h"]],
+                              ["VReinforce", "VAttunement", "VHammer"]]
+                          }
+        if self.selected_item.item_tier >= 6:
+            self.menu_details = method_dict_miracle[self.menu_type]
+        else:
+            self.menu_details = method_dict[self.menu_type]
         self.material_id_list = self.menu_details[3]
         self.method = self.menu_details[4]
         for button_num in range(self.menu_details[0]):
@@ -334,7 +406,8 @@ class UpgradeView(discord.ui.View):
                     material_id = self.material_id_list[button_id][1]
                 embed_msg, self.selected_item = run_button(self.player_object, self.selected_item,
                                                            material_id, self.method[button_id])
-                new_view = UpgradeView(self.player_object, self.selected_item, self.menu_type, self.element)
+                new_view = UpgradeView(self.player_object, self.selected_item, self.menu_type,
+                                       self.element, self.permission)
                 await button_interaction.response.edit_message(embed=embed_msg, view=new_view)
         except Exception as e:
             print(e)
@@ -342,7 +415,7 @@ class UpgradeView(discord.ui.View):
     async def reselect_callback(self, button_interaction: discord.Interaction, button: discord.Button):
         try:
             if button_interaction.user.name == self.player_object.player_name:
-                new_view = SelectView(self.player_object)
+                new_view = SelectView(self.player_object, self.permission)
                 await button_interaction.response.edit_message(view=new_view)
         except Exception as e:
             print(e)
@@ -388,7 +461,7 @@ def check_maxed(target_item, method, material_id, element):
             if damage_check in maxed_values:
                 is_maxed = True
         case "VReinforce":
-            if "Void" in target_item.item_material_tier or "Key of Miracles" == target_item.item_material_tier:
+            if target_item.is_void_item:
                 is_maxed = True
         case "Bestow":
             damage_check = combat.get_item_tier_damage(target_item.item_blessing_tier)
@@ -1024,280 +1097,4 @@ def refine_item(player_user, selected_type, selected_tier):
                                   description="")
     return embed_msg
 
-
-# THIS SHIT NEEDS JESUS
-# THIS SHIT NEEDS JESUS
-# THIS SHIT NEEDS JESUS
-# THIS SHIT NEEDS JESUS
-# THIS SHIT NEEDS JESUS
-# THIS SHIT NEEDS JESUS
-# THIS SHIT NEEDS JESUS
-# THIS SHIT NEEDS JESUS
-# THIS SHIT NEEDS JESUS
-# THIS SHIT NEEDS JESUS
-# THIS SHIT NEEDS JESUS
-# THIS SHIT NEEDS JESUS
-# THIS SHIT NEEDS JESUS
-# THIS SHIT NEEDS JESUS
-# THIS SHIT NEEDS JESUS
-# THIS SHIT NEEDS JESUS
-# THIS SHIT NEEDS JESUS
-# THIS SHIT NEEDS JESUS
-# THIS SHIT NEEDS JESUS
-# THIS SHIT NEEDS JESUS
-# THIS SHIT NEEDS JESUS
-# THIS SHIT NEEDS JESUS
-# THIS SHIT NEEDS JESUS
-# THIS SHIT NEEDS JESUS
-# THIS SHIT NEEDS JESUS
-# THIS SHIT NEEDS JESUS
-# THIS SHIT NEEDS JESUS
-# THIS SHIT NEEDS JESUS
-# THIS SHIT NEEDS JESUS
-# THIS SHIT NEEDS JESUS
-# THIS SHIT NEEDS JESUS
-# THIS SHIT NEEDS JESUS
-# THIS SHIT NEEDS JESUS
-# THIS SHIT NEEDS JESUS
-# THIS SHIT NEEDS JESUS
-# THIS SHIT NEEDS JESUS
-# THIS SHIT NEEDS JESUS
-# THIS SHIT NEEDS JESUS
-# THIS SHIT NEEDS JESUS
-# THIS SHIT NEEDS JESUS
-# THIS SHIT NEEDS JESUS
-# THIS SHIT NEEDS JESUS
-# THIS SHIT NEEDS JESUS
-# THIS SHIT NEEDS JESUS
-# THIS SHIT NEEDS JESUS
-# THIS SHIT NEEDS JESUS
-# THIS SHIT NEEDS JESUS
-# THIS SHIT NEEDS JESUS
-
-
-
-
-# Genesis Fountain Crafting
-class MiracleEnhanceView(discord.ui.View):
-    def __init__(self, player_object, selected_item):
-        super().__init__(timeout=None)
-        self.selected_item = selected_item
-        self.player_object = player_object
-
-    @discord.ui.button(label="Enhance", style=discord.ButtonStyle.success, emoji="<a:eenergy:1145534127349706772>")
-    async def enhance_callback(self, button_interaction: discord.Interaction, button: discord.Button):
-        try:
-            if button_interaction.user.name == self.player_object.player_name:
-                embed_msg, self.selected_item = run_button(self.player_object, self.selected_item, "i6m", "Enhance")
-                new_view = self
-                await button_interaction.response.edit_message(embed=embed_msg, view=new_view)
-        except Exception as e:
-            print(e)
-
-    @discord.ui.button(label="Reselect", style=discord.ButtonStyle.blurple, emoji="↩️")
-    async def reselect_callback(self, button_interaction: discord.Interaction, button: discord.Button):
-        try:
-            if button_interaction.user.name == self.player_object.player_name:
-                new_view = SelectView(self.player_object)
-                await button_interaction.response.edit_message(view=new_view)
-        except Exception as e:
-            print(e)
-
-
-class MiracleUpgradeView(discord.ui.View):
-    def __init__(self, player_object, selected_item):
-        super().__init__(timeout=None)
-        self.selected_item = selected_item
-        self.player_object = player_object
-
-    @discord.ui.button(label="Reinforce", style=discord.ButtonStyle.success, emoji="<:eore:1145534835507593236>")
-    async def reinforce_callback(self, button_interaction: discord.Interaction, button: discord.Button):
-        try:
-            if button_interaction.user.name == self.player_object.player_name:
-                embed_msg, self.selected_item = run_button(self.player_object, self.selected_item, "m6o", "Reinforce")
-                new_view = self
-                await button_interaction.response.edit_message(embed=embed_msg, view=new_view)
-        except Exception as e:
-            print(e)
-
-    @discord.ui.button(label="Bestow", style=discord.ButtonStyle.success, emoji="<:esoul:1145520258241806466>")
-    async def bestow_callback(self, button_interaction: discord.Interaction, button: discord.Button):
-        try:
-            if button_interaction.user.name == self.player_object.player_name:
-                embed_msg, self.selected_item = run_button(self.player_object, self.selected_item, "m6s", "Bestow")
-                new_view = self
-                await button_interaction.response.edit_message(embed=embed_msg, view=new_view)
-        except Exception as e:
-            print(e)
-
-    @discord.ui.button(label="Reselect", style=discord.ButtonStyle.blurple, emoji="↩️")
-    async def reselect_callback(self, button_interaction: discord.Interaction, button: discord.Button):
-        try:
-            if button_interaction.user.name == self.player_object.player_name:
-                new_view = SelectView(self.player_object)
-                await button_interaction.response.edit_message(view=new_view)
-        except Exception as e:
-            print(e)
-
-
-class MiracleReforgeView(discord.ui.View):
-    def __init__(self, player_object, selected_item):
-        super().__init__(timeout=None)
-        self.selected_item = selected_item
-        self.player_object = player_object
-
-    @discord.ui.button(label="Reforge", style=discord.ButtonStyle.success, emoji="<a:eshadow2:1141653468965257216>")
-    async def reforge_callback(self, button_interaction: discord.Interaction, button: discord.Button):
-        try:
-            if button_interaction.user.name == self.player_object.player_name:
-                embed_msg, self.selected_item = run_button(self.player_object, self.selected_item, "m6f", "Reforge")
-                new_view = self
-                await button_interaction.response.edit_message(embed=embed_msg, view=new_view)
-        except Exception as e:
-            print(e)
-
-    @discord.ui.button(label="Reselect", style=discord.ButtonStyle.blurple, emoji="↩️")
-    async def reselect_callback(self, button_interaction: discord.Interaction, button: discord.Button):
-        try:
-            if button_interaction.user.name == self.player_object.player_name:
-                new_view = SelectView(self.player_object)
-                await button_interaction.response.edit_message(view=new_view)
-        except Exception as e:
-            print(e)
-
-
-class MiracleSocketView(discord.ui.View):
-    def __init__(self, player_object, selected_item):
-        super().__init__(timeout=None)
-        self.selected_item = selected_item
-        self.player_object = player_object
-
-    @discord.ui.button(label="Add Socket", style=discord.ButtonStyle.success, emoji="⚫")
-    async def socket_callback(self, button_interaction: discord.Interaction, button: discord.Button):
-        try:
-            if button_interaction.user.name == self.player_object.player_name:
-                embed_msg, self.selected_item = run_button(self.player_object, self.selected_item, "m6k", "Open")
-                new_view = self
-                await button_interaction.response.edit_message(embed=embed_msg, view=new_view)
-        except Exception as e:
-            print(e)
-
-    @discord.ui.button(label="Reselect", style=discord.ButtonStyle.blurple, emoji="↩️")
-    async def reselect_callback(self, button_interaction: discord.Interaction, button: discord.Button):
-        try:
-            if button_interaction.user.name == self.player_object.player_name:
-                new_view = SelectView(self.player_object)
-                await button_interaction.response.edit_message(view=new_view)
-        except Exception as e:
-            print(e)
-
-
-class WishAugmentView(discord.ui.View):
-    def __init__(self, player_object, selected_item):
-        super().__init__(timeout=None)
-        self.selected_item = selected_item
-        self.player_object = player_object
-
-    @discord.ui.button(label="Wish Fusion", style=discord.ButtonStyle.success, emoji=hammer_icon)
-    async def star_fusion_callback(self, button_interaction: discord.Interaction, button: discord.Button):
-        try:
-            if button_interaction.user.name == self.player_object.player_name:
-                embed_msg, self.selected_item = run_button(self.player_object, self.selected_item, "m6h", "Single Fusion")
-                new_view = self
-                await button_interaction.response.edit_message(embed=embed_msg, view=new_view)
-        except Exception as e:
-            print(e)
-
-    @discord.ui.button(label="Attunement", style=discord.ButtonStyle.success, emoji="<:eprl:1148390531345432647>")
-    async def attunement_callback(self, button_interaction: discord.Interaction, button: discord.Button):
-        try:
-            if button_interaction.user.name == self.player_object.player_name:
-                embed_msg, self.selected_item = run_button(self.player_object, self.selected_item, "m6p", "Attunement")
-                new_view = self
-                await button_interaction.response.edit_message(embed=embed_msg, view=new_view)
-        except Exception as e:
-            print(e)
-
-    @discord.ui.button(label="Reselect", style=discord.ButtonStyle.blurple, emoji="↩️")
-    async def reselect_callback(self, button_interaction: discord.Interaction, button: discord.Button):
-        try:
-            if button_interaction.user.name == self.player_object.player_name:
-                new_view = SelectView(self.player_object)
-                await button_interaction.response.edit_message(view=new_view)
-        except Exception as e:
-            print(e)
-
-
-class MiracleAugmentView(discord.ui.View):
-    def __init__(self, player_object, selected_item):
-        super().__init__(timeout=None)
-        self.selected_item = selected_item
-        self.player_object = player_object
-
-    @discord.ui.button(label="Genesis Fusion", style=discord.ButtonStyle.success, emoji=hammer_icon)
-    async def genesis_fusion_callback(self, button_interaction: discord.Interaction, button: discord.Button):
-        try:
-            if button_interaction.user.name == self.player_object.player_name:
-                embed_msg, self.selected_item = run_button(self.player_object, self.selected_item, "m6hP", "Prefix Fusion")
-                new_view = self
-                await button_interaction.response.edit_message(embed=embed_msg, view=new_view)
-        except Exception as e:
-            print(e)
-
-    @discord.ui.button(label="Terminus Fusion", style=discord.ButtonStyle.success, emoji=hammer_icon)
-    async def terminus_fusion_callback(self, button_interaction: discord.Interaction, button: discord.Button):
-        try:
-            if button_interaction.user.name == self.player_object.player_name:
-                embed_msg, self.selected_item = run_button(self.player_object, self.selected_item, "m6hS", "Suffix Fusion")
-                new_view = self
-                await button_interaction.response.edit_message(embed=embed_msg, view=new_view)
-        except Exception as e:
-            print(e)
-
-    @discord.ui.button(label="Zenith Fusion", style=discord.ButtonStyle.success,
-                       emoji=hammer_icon)
-    async def Zenith_fusion_callback(self, button_interaction: discord.Interaction, button: discord.Button):
-        try:
-            if button_interaction.user.name == self.player_object.player_name:
-                embed_msg, self.selected_item = run_button(self.player_object, self.selected_item, "m6hA", "All Fusion")
-                new_view = self
-                await button_interaction.response.edit_message(embed=embed_msg, view=new_view)
-        except Exception as e:
-            print(e)
-
-    @discord.ui.button(label="Reselect", style=discord.ButtonStyle.blurple, emoji="↩️")
-    async def reselect_callback(self, button_interaction: discord.Interaction, button: discord.Button):
-        try:
-            if button_interaction.user.name == self.player_object.player_name:
-                new_view = SelectView(self.player_object)
-                await button_interaction.response.edit_message(view=new_view)
-        except Exception as e:
-            print(e)
-
-
-class MiracleImplantView(discord.ui.View):
-    def __init__(self, player_object, selected_item, element):
-        super().__init__(timeout=None)
-        self.selected_item = selected_item
-        self.player_object = player_object
-        self.element = element
-
-    @discord.ui.button(label="Implant", style=discord.ButtonStyle.success, emoji="<a:eorigin:1145520263954440313>")
-    async def implant_callback(self, button_interaction: discord.Interaction, button: discord.Button):
-        try:
-            if button_interaction.user.name == self.player_object.player_name:
-                embed_msg, self.selected_item = run_button(self.player_object, self.selected_item, "m6z", "Implant")
-                new_view = self
-                await button_interaction.response.edit_message(embed=embed_msg, view=new_view)
-        except Exception as e:
-            print(e)
-
-    @discord.ui.button(label="Reselect", style=discord.ButtonStyle.blurple, emoji="↩️")
-    async def reselect_callback(self, button_interaction: discord.Interaction, button: discord.Button):
-        try:
-            if button_interaction.user.name == self.player_object.player_name:
-                new_view = SelectView(self.player_object)
-                await button_interaction.response.edit_message(view=new_view)
-        except Exception as e:
-            print(e)
 

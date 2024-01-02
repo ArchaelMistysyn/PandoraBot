@@ -330,6 +330,9 @@ def spawn_boss(channel_id, player_id, new_boss_tier, selected_boss_type, boss_le
                 total_hp = 999999999999999
                 boss_object.damage_cap = -1
 
+            if channel_num != 0:
+                total_hp *= 100
+
             boss_object.generate_boss_name_image(boss_object.boss_type, boss_object.boss_tier)
             boss_object.boss_mHP = total_hp
             boss_object.boss_cHP = boss_object.boss_mHP

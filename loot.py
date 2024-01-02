@@ -73,9 +73,16 @@ def award_loot(boss_object, player_list, exp_amount, coin_amount):
             core_element = boss_object.boss_element
         else:
             core_element = random.randint(0, 8)
+        fae_qty = random.randint(1, boss_object.boss_lvl)
         fae_item = BasicItem(f"Fae{core_element}")
-        loot_msg[counter] += f"{fae_item.item_emoji} {boss_tier}x {fae_item.item_name}\n"
-        df_change.loc[len(df_change)] = [temp_player.player_id, fae_item.item_id, boss_tier]
+        loot_msg[counter] += f"{fae_item.item_emoji} {fae_qty}x {fae_item.item_name}\n"
+        df_change.loc[len(df_change)] = [temp_player.player_id, fae_item.item_id, fae_qty]
+        # Check raid stone drops.
+        random_check = random.randint(1, 100)
+        if random_check <= 75:
+            raid_item = BasicItem(f"STONE5")
+            loot_msg[counter] += f"{raid_item.item_emoji} 1x {raid_item.item_name}\n"
+            df_change.loc[len(df_change)] = [temp_player.player_id, raid_item.item_id, 1]
         # Check essence drops
         tarot_qty = 0
         if ' - ' in boss_object.boss_name:
@@ -112,9 +119,9 @@ def award_loot(boss_object, player_list, exp_amount, coin_amount):
                     drop_rate = float(line["drop_rate"])
                     loot_item = BasicItem(dropped_item)
                     qty = 0
-                    num_attempts = 1
+                    num_attempts = 2
                     if boss_object.player_id == 0:
-                        num_attempts = 2
+                        num_attempts = 5
                     for y in range(num_attempts):
                         if is_dropped(drop_rate):
                             qty += 1
@@ -174,23 +181,23 @@ def create_loot_embed(current_embed, active_boss, player_list):
 
 def generate_random_item():
     quantity = 1
-    random_reward = random.randint(1, 1000000)
+    random_reward = random.randint(1, 100000)
     if random_reward <= 1:
         reward_id = "v7x"
-    elif random_reward <= 101:
+    elif random_reward <= 51:
         reward_id = "i6x"
-    elif random_reward <= 1101:
+    elif random_reward <= 151:
         reward_id = "i5u"
-    elif random_reward <= 51101:
+    elif random_reward <= 5151:
         item_tier = 4
         reward_types = ["h", "j", "z", "s", "o", "t", "g", "w", "c", "j", "y"]
         item_type = reward_types[(random.randint(1, len(reward_types)) - 1)]
         reward_id = f"i{item_tier}{item_type}"
     else:
-        if random_reward <= 251101:
+        if random_reward <= 25151:
             item_tier = 3
             reward_types = ["s", "s", "o", "o", "k", "k", "f", "f", "j", "y", "Fae"]
-        elif random_reward <= 601101:
+        elif random_reward <= 60151:
             reward_types = ["s", "s", "o", "o", "j", "y", "Fae", "Fae"]
             item_tier = 2
         else:
