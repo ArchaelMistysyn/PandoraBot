@@ -5,7 +5,7 @@ import pandorabot
 import discord
 import globalitems
 from functools import reduce
-insignia_prefix = ["Dormant", "Awoken", "Evolved", "Infused", "Symbiotic"]
+insignia_prefix = ["Dormant", "Awoken", "Evolved", "Infused", "Symbiotic", "Resonating"]
 
 
 def display_insignia(player_object, insignia_code, output_type):
@@ -21,8 +21,9 @@ def display_insignia(player_object, insignia_code, output_type):
     display_stars = ""
     for x in range(player_object.player_echelon):
         display_stars += globalitems.star_icon
-    for y in range((5 - player_object.player_echelon)):
-        display_stars += "<:ebstar2:1144826056222724106>"
+    if player_object.player_echelon < 5:
+        for y in range((5 - player_object.player_echelon)):
+            display_stars += "<:ebstar2:1144826056222724106>"
         item_types = ""
     insignia_name = f"{insignia_prefix[player_object.player_echelon]} "
     match num_elements:

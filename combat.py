@@ -229,34 +229,36 @@ def get_item_tier_damage(material_tier):
     match material_tier:
         case  "Steel" | "Glittering" | "Essence" | "Metallic" | "Faint" | "Enchanted" | \
               "Corrupt" | "Pure" | "Tempered" | "Legendary":
-            damage_temp = 2000
+            damage_temp = 2500
         case "Silver" | "Dazzling" | "Spirit" | "Gold" | "Luminous" | "Inverted" | "Pristine" | "Empowered" | "Mythical":
-            damage_temp = 4000
+            damage_temp = 5000
         case "Mithril" | "Lustrous" | "Soulbound" | "Jeweled" | "Shining" | \
              "Abyssal" | "Majestic" | "Unsealed" | "Fantastical":
-            damage_temp = 6000
+            damage_temp = 7500
         case "Diamond" | "Radiant" | "Phantasmal" | "Calamitous" | "Awakened" | "Omniscient":
-            damage_temp = 8000
-        case "Crystal" | "Divine" | "Spectral" | "Balefire" | "Transcendent" | "Plasma":
             damage_temp = 10000
-        case "Key of Desires," | "Chroma":
-            damage_temp = 20000
-        case "Key of Hopes," | "Chromatic":
-            damage_temp = 40000
-        case "Key of Dreams," | "Prisma":
-            damage_temp = 60000
-        case "Key of Wishes," | "Prismatic":
-            damage_temp = 80000
-        case "Key of Miracles," | "Iridescent":
-            damage_temp = 150000
-        case "Eschaton":
-            damage_temp = 500000
-        case "Voidcrystal" | "Voidspecter":
+        case "Crystal" | "Divine" | "Spectral" | "Balefire" | "Transcendent" | "Plasma":
             damage_temp = 25000
-        case "Voidplasma" | "Voidforme":
-            damage_temp = 50000
-        case "????????":
+        case "Void":
+            damage_temp = 75000
+        case "Key of Creation -" | "Prelude":
+            damage_temp = 60000
+        case "Key of Desires -" | "Opalescent":
+            damage_temp = 80000
+        case "Key of Hopes -" | "Chromatic":
+            damage_temp = 100000
+        case "Key of Dreams -" | "Prismatic":
+            damage_temp = 125000
+        case "Key of Wishes -" | "Resplendent":
+            damage_temp = 150000
+        case "Key of Miracles -" | "Iridescent":
+            damage_temp = 200000
+        case "Wish":
             damage_temp = 250000
+        case "Destiny":
+            damage_temp = 500000
+        case "Eschaton":
+            damage_temp = 1000000
         case _:
             damage_temp = 0
 

@@ -72,8 +72,10 @@ class CurrentBoss:
             case 4:
                 tier_colour = discord.Colour.gold()
                 life_emoji = "💛"
+            case 5:
+                tier_colour = 0xcc0000
             case _:
-                tier_colour = discord.Colour.red()
+                tier_colour = discord.Colour.magenta()
                 life_emoji = "❤️"
         dps_msg = f"{globalitems.number_conversion(dps)} / min"
         boss_title = f'{self.boss_name}'
@@ -331,7 +333,8 @@ def spawn_boss(channel_id, player_id, new_boss_tier, selected_boss_type, boss_le
                 boss_object.damage_cap = -1
 
             if channel_num != 0:
-                total_hp *= 100
+                total_hp *= 10
+                boss_object.damage_cap = (10 ** int(boss_level / 10 + 5) - 1)
 
             boss_object.generate_boss_name_image(boss_object.boss_type, boss_object.boss_tier)
             boss_object.boss_mHP = total_hp

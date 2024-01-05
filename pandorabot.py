@@ -748,11 +748,11 @@ def run_discord_bot():
         if any(ctx.channel.id in sl for sl in globalitems.global_server_channels):
             await ctx.defer()
             existing_user = player.get_player_by_name(ctx.author)
-            if tier in range(1, 6):
+            if tier in range(1, 7):
                 result, coin_total = inventory.purge(existing_user, tier)
                 message = f"{result} items sold.\n {globalitems.coin_icon} {coin_total}x lotus coins acquired."
             else:
-                message = "The tier must be between 1 and 5."
+                message = "The tier must be between 1 and 6."
             await ctx.send(message)
 
     # Crafting Commands
@@ -786,7 +786,7 @@ def run_discord_bot():
             player_object = player.get_player_by_name(player_name)
             if player_object.player_class != "":
                 embed_msg = discord.Embed(colour=discord.Colour.dark_orange(),
-                                          title='',
+                                          title='Refinery',
                                           description="Please select the item to refine")
                 embed_msg.set_image(url="https://i.ibb.co/QjWDYG3/forge.jpg")
                 ref_view = forge.RefSelectView(player_object)
@@ -852,7 +852,7 @@ def run_discord_bot():
         if player_object.player_class != "":
             player_object.get_equipped()
             e_weapon = inventory.read_custom_item(player_object.player_equipped[0])
-            if player_object.player_quest >= 27:
+            if player_object.player_quest >= 24:
                 entry_msg = ("Within this cave resides the true abyss. Only a greater darkness can cleanse the void "
                              "and reveal the true form. The costs will be steep, I trust you came prepared. "
                              "Nothing can save you down there.")

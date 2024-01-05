@@ -78,16 +78,17 @@ def award_loot(boss_object, player_list, exp_amount, coin_amount):
         loot_msg[counter] += f"{fae_item.item_emoji} {fae_qty}x {fae_item.item_name}\n"
         df_change.loc[len(df_change)] = [temp_player.player_id, fae_item.item_id, fae_qty]
         # Check raid stone drops.
-        random_check = random.randint(1, 100)
-        if random_check <= 75:
-            raid_item = BasicItem(f"STONE5")
-            loot_msg[counter] += f"{raid_item.item_emoji} 1x {raid_item.item_name}\n"
-            df_change.loc[len(df_change)] = [temp_player.player_id, raid_item.item_id, 1]
+        if boss_object.player_id == 0:
+            random_check = random.randint(1, 100)
+            if random_check <= 75:
+                raid_item = BasicItem(f"STONE5")
+                loot_msg[counter] += f"{raid_item.item_emoji} 1x {raid_item.item_name}\n"
+                df_change.loc[len(df_change)] = [temp_player.player_id, raid_item.item_id, 1]
         # Check essence drops
         tarot_qty = 0
         if ' - ' in boss_object.boss_name:
             if boss_object.player_id == 0:
-                attempts = 2
+                attempts = 5
             else:
                 attempts = 1
             for y in range(0, attempts):
@@ -119,7 +120,7 @@ def award_loot(boss_object, player_list, exp_amount, coin_amount):
                     drop_rate = float(line["drop_rate"])
                     loot_item = BasicItem(dropped_item)
                     qty = 0
-                    num_attempts = 2
+                    num_attempts = 1
                     if boss_object.player_id == 0:
                         num_attempts = 5
                     for y in range(num_attempts):
@@ -171,6 +172,12 @@ def create_loot_embed(current_embed, active_boss, player_list):
     exp_amount += level_bonus
     coin_amount = active_boss.boss_type_num * active_boss.boss_tier * 250
     coin_amount += int(level_bonus / 10)
+    if active_boss.player_id == 0:
+        exp_amount *= 5
+        coin_amount *= 5
+    else:
+        exp_amount *= 2
+        coin_amount *= 2
     loot_output = award_loot(active_boss, player_list, exp_amount, coin_amount)
     for counter, loot_section in enumerate(loot_output):
         temp_player = player.get_player_by_id(player_list[counter])
@@ -208,6 +215,7 @@ def generate_random_item():
             quantity = random.randint(1, 3)
         reward_id = f"i{item_tier}{item_type}"
     if item_type == "Fae":
+        quantity = 10
         random_element = random.randint(0, 8)
         reward_id = f"Fae{random_element}"
     return reward_id, quantity

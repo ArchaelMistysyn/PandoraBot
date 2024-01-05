@@ -48,8 +48,18 @@ global_element_list = [element_fire, element_water, element_lightning, element_e
 element_names = ["Fire", "Water", "Lightning", "Earth", "Wind", "Ice", "Shadow", "Light", "Celestial"]
 element_special_names = ["Volcanic", "Aquatic", "Voltaic", "Seismic", "Sonic", "Arctic", "Lunar", "Solar", "Cosmic"]
 tier_5_ability_dict = {"Elemental Overflow": 2, "Specialist's Mastery": 0.1, "Curse of Immortality": True,
-                       "Omega Critical": 1, "Endless Combo": 1, "Crimson Reaper": 1, "Overflowing Vitality": 5,
+                       "Omega Critical": 1, "Endless Combo": 1, "Crimson Reaper": 1, "Blooming Vitality": 5,
                        "Ultimate Overdrive": 1, "Unravel": 1}
+void_ability_dict = {"Void Application (Overflow)": "Elemental Overflow",
+                     "Void Application (Mastery)": "Specialist's Mastery",
+                     "Void Application (Immortality)": "Curse of Immortality",
+                     "Void Application (Omega)": "Omega Critical",
+                     "Void Application (Combo)": "Endless Combo",
+                     "Void Application (Reaper)": "Crimson Reaper",
+                     "Void Application (Bloom)": "Blooming Vitality",
+                     "Void Application (Overdrive)": "Ultimate Overdrive",
+                     "Void Application (Unravel)": "Unravel"}
+reverse_void_ability_dict = {v: k for k, v in void_ability_dict.items()}
 
 not_owned_icon = "https://kyleportfolio.ca/botimages/profilecards/noachv.png"
 owned_icon = "https://kyleportfolio.ca/botimages/profilecards/owned.png"

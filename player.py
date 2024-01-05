@@ -619,12 +619,12 @@ class PlayerProfile:
             else:
                 e_item.append(None)
         if e_item[0]:
-            base_attack_speed *= float(e_item[0].item_bonus_stat)
+            base_attack_speed *= float(e_item[0].item_base_stat)
             if self.player_class == "Rider":
                 base_attack_speed *= 1.25
         if e_item[1]:
-            base_damage_mitigation = float(e_item[1].item_bonus_stat)
-        for y in range(2, 5):
+            base_damage_mitigation = float(e_item[1].item_base_stat)
+        for y in range(1, 5):
             if e_item[y]:
                 self.unique_ability_multipliers(e_item[y])
         if self.equipped_tarot != "":
@@ -1069,9 +1069,15 @@ class PlayerProfile:
         return embed_msg
 
     def unique_ability_multipliers(self, item):
-        unique_ability = item.item_bonus_stat
+        if item.item_bonus_stat == "":
+            return
         item_type = item.item_type
         if item.item_tier >= 5:
+            if item.item_bonus_stat in globalitems.tier_5_ability_dict:
+                unique_ability = item.item_bonus_stat
+            else:
+                unique_ability = globalitems.void_ability_dict[item.item_bonus_stat]
+                self.final_damage += 0.5
             match unique_ability:
                 case "Curse of Immortality":
                     self.immortal = globalitems.tier_5_ability_dict[unique_ability]
@@ -1087,14 +1093,14 @@ class PlayerProfile:
                     self.ultimate_application += globalitems.tier_5_ability_dict[unique_ability]
                 case "Crimson Reaper":
                     self.bleed_application += globalitems.tier_5_ability_dict[unique_ability]
-                case "Overflowing Vitality":
+                case "Blooming Vitality":
                     self.hp_multiplier += globalitems.tier_5_ability_dict[unique_ability]
                 case "Unravel":
                     self.temporal_application += globalitems.tier_5_ability_dict[unique_ability]
                 case _:
-                    nothing = False
+                    pass
         else:
-            keywords = unique_ability.split()
+            keywords = item.item_bonus_stat.split()
             match item_type:
                 case "Y":
                     if keywords[0] in bosses.boss_list:
@@ -1109,8 +1115,7 @@ class PlayerProfile:
                     buff_type_loc = globalitems.element_special_names.index(keywords[0])
                     self.elemental_penetration[buff_type_loc] += 0.25
                 case _:
-                    nothing = False
-
+                    pass
     def check_cooldown(self, command_name):
         difference = None
         try:
