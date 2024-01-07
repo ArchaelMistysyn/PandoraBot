@@ -15,6 +15,7 @@ import quest
 import asyncio
 import combat
 import bazaar
+import itemrolls
 
 element_fire = "<:ee:1141653476816986193>"
 element_water = "<:ef:1141653475059572779>"
@@ -91,7 +92,7 @@ class SelectView(discord.ui.View):
                                 is_eligible = False
                         elif self.selected_item.item_type == "W" and self.selected_item.item_tier < 6:
                             is_eligible = False
-                            _, check_vaug, _ = self.selected_item.check_augment()
+                            _, check_vaug, _ = itemrolls.check_augment(self.selected_item)
                             if check_vaug != 6:
                                 is_eligible = False
                         # Display the correct view and message.
@@ -285,62 +286,54 @@ class ForgeView(discord.ui.View):
             selected_option = interaction.data['values'][0]
             if interaction.user.name == self.player_object.player_name:
                 if selected_option in ["Enhance", "Implant Element"] and self.selected_item.item_tier < 6:
-                    new_view = ElementSelectView(self.player_object, self.selected_item, selected_option, self.permission)
+                    new_view = SubSelectView(self.player_object, self.selected_item, selected_option, self.permission)
+                elif "Augment" in selected_option:
+                    new_view = SubSelectView(self.player_object, self.selected_item, selected_option, self.permission)
                 else:
-                    new_view = UpgradeView(self.player_object, self.selected_item, selected_option, 0, self.permission)
+                    new_view = UpgradeView(self.player_object, self.selected_item, selected_option,
+                                           -1, 0, self.permission)
                 await interaction.response.edit_message(view=new_view)
         except Exception as e:
             print(e)
 
 
-class ElementSelectView(discord.ui.View):
+class SubSelectView(discord.ui.View):
     def __init__(self, player_object, selected_item, method, permission):
         super().__init__(timeout=None)
         self.selected_item = selected_item
         self.player_object = player_object
         self.method = method
         self.permission = permission
+        if self.method in ["Enhance", "Implant Element"]:
+            self.menu_type = "Element"
+            selected_list = globalitems.element_names
+            options = [discord.SelectOption(
+                emoji=globalitems.global_element_list[i], label=option, value=str(i),
+                description=f"Use {option.lower()} item.")
+                for i, option in enumerate(selected_list)
+            ]
+        else:
+            self.menu_type = "Fusion"
+            selected_list = ["Star", "Chaos", "Pulsar", "Quasar", "Genesis", "Terminus", "Zenith"]
+            description_list = ["Add/Reroll", "Reroll All", "Reroll damage", "Reroll defensive", "Reroll penetration",
+                                "Reroll curse", "Reroll unique"]
+            options = [discord.SelectOption(
+                emoji=hammer_icon, label=f"{option} Fusion", value=str(i),
+                description=f"Use {option.lower()} fusion: {description_list[i]}")
+                for i, option in enumerate(selected_list)
+            ]
+        self.select_menu = discord.ui.Select(placeholder="Select the crafting method to use.",
+                                             min_values=1, max_values=1, options=options)
+        self.select_menu.callback = self.select_callback
+        self.add_item(self.select_menu)
 
-    @discord.ui.select(
-        placeholder="Select the element to use.",
-        min_values=1,
-        max_values=1,
-        options=[
-            discord.SelectOption(
-                emoji=fae_icon[0], label="Fire",
-                value="0", description="Use fire item."),
-            discord.SelectOption(
-                emoji=fae_icon[1], label="Water",
-                value="1", description="Use water item."),
-            discord.SelectOption(
-                emoji=fae_icon[2], label="Lightning",
-                value="2", description="Use lightning item."),
-            discord.SelectOption(
-                emoji=fae_icon[3], label="Earth",
-                value="3", description="Use earth item."),
-            discord.SelectOption(
-                emoji=fae_icon[4], label="Wind",
-                value="4", description="Use wind item."),
-            discord.SelectOption(
-                emoji=fae_icon[5], label="Ice",
-                value="5", description="Use ice item."),
-            discord.SelectOption(
-                emoji=fae_icon[6], label="Shadow",
-                value="6", description="Use shadow item."),
-            discord.SelectOption(
-                emoji=fae_icon[7], label="Light",
-                value="7", description="Use light item."),
-            discord.SelectOption(
-                emoji=fae_icon[8], label="Celestial",
-                value="8", description="Use celestial item.")
-        ]
-    )
-    async def element_callback(self, interaction: discord.Interaction, element_select: discord.ui.Select):
+    async def select_callback(self, interaction: discord.Interaction):
+        method_select = int(interaction.data['values'][0])
+        hammer_select = method_select if self.menu_type == "Fusion" else -1
         try:
             if interaction.user.name == self.player_object.player_name:
-                selected_element = int(element_select.values[0])
                 new_view = UpgradeView(self.player_object, self.selected_item, self.method,
-                                       selected_element, self.permission)
+                                       hammer_select, method_select, self.permission)
                 await interaction.response.edit_message(view=new_view)
         except Exception as e:
             print(e)
@@ -348,11 +341,12 @@ class ElementSelectView(discord.ui.View):
 
 # Regular Crafting
 class UpgradeView(discord.ui.View):
-    def __init__(self, player_object, selected_item, menu_type, element, permission):
+    def __init__(self, player_object, selected_item, menu_type, hammer_type, element, permission):
         super().__init__(timeout=None)
         self.selected_item = selected_item
         self.player_object = player_object
         self.menu_type = menu_type
+        self.hammer_type = hammer_type
         self.element = element
         self.permission = permission
         # Method: num_buttons, button_names, button_emojis, material_ids, crafting_method
@@ -369,18 +363,20 @@ class UpgradeView(discord.ui.View):
                        "Cosmic Attunement": [
                             1, ["Attunement"], ["<:eprl:1148390531345432647>"], [[f"i4p"]], ["Attunement"]],
                        "Astral Augment": [
-                            4, ["Star Fusion", "Chaos Fusion", "Pulsar Fusion", "Quasar Fusion"],
-                            [hammer_icon, hammer_icon, hammer_icon, hammer_icon],
-                            [[f"i4h"], ["i5hA"], [f"i5hP"], [f"i5hS"]],
-                            ["Single Fusion", "All Fusion", "Prefix Fusion", "Suffix Fusion"]],
+                            1, ["Star Fusion", "Chaos Fusion", "Pulsar Fusion", "Quasar Fusion",
+                                "Genesis Fusion", "Terminus Fusion", "Zenith Fusion"],
+                            [hammer_icon, hammer_icon, hammer_icon, hammer_icon, hammer_icon, hammer_icon, hammer_icon],
+                            [[f"i2h"], ["i3h"], [f"i4hA"], [f"i4hB"], [f"i5hA"], [f"i5hB"], [f"i6hZ"]],
+                            ["any fusion", "all fusion", "damage fusion", "defense fusion",
+                             "penetration fusion", "curse fusion", "unique fusion"]],
                        "Implant Element": [
                             1, [f"Implant ({globalitems.element_names[self.element]})"],
                             ["<a:eorigin:1145520263954440313>"], [[f"Origin{self.element}"]],
                             ["Implant"]],
                        "Voidforge": [
-                            3, ["Corrupt", "Augment", "Void Fusion"],
-                            [void_icon, void_icon, void_icon], [[f"OriginV"], [f"v6p"], ["v6h"]],
-                            ["VReinforce", "VAttunement", "VHammer"]]
+                            3, ["Void Fusion", "Augment", "Corruption"],
+                            [void_icon, void_icon, void_icon], [[f"v6h"], [f"v6p"], ["OriginV"]],
+                            ["VReinforce", "VAttunement", "Corrupt"]]
                        }
         method_dict_t6 = {"Enhance": [
                               1, ["Enhance"], ["<:Star_PinkBlue:1179736203013140480>"], [[f"i6m"]],
@@ -395,10 +391,12 @@ class UpgradeView(discord.ui.View):
                           "Wish Attunement": [
                               1, ["Attunement"], ["<:eprl:1148390531345432647>"], [[f"m6p"]], ["MultiAttunement"]],
                           "Miracle Augment": [
-                              4, ["Miracle Fusion", "Zenith Fusion", "Genesis Fusion", "Terminus Fusion"],
-                              [hammer_icon, hammer_icon, hammer_icon, hammer_icon],
-                              [[f"m6h"], [f"m6hA"], [f"m6hP"], ["m6hS"]],
-                              ["Single Fusion", "All Fusion", "Prefix Fusion", "Suffix Fusion"]],
+                            1, ["Wish Fusion", "Chaos Fusion", "Pulsar Fusion", "Quasar Fusion",
+                                "Genesis Fusion", "Terminus Fusion", "Zenith Fusion"],
+                            [hammer_icon, hammer_icon, hammer_icon, hammer_icon, hammer_icon, hammer_icon, hammer_icon],
+                            [[f"m6h"], ["i3h"], [f"i4hA"], [f"i4hB"], [f"i5hA"], [f"i5hB"], [f"i6hZ"]],
+                            ["any fusion", "all fusion", "damage fusion", "defense fusion",
+                             "penetration fusion", "curse fusion", "unique fusion"]],
                           "Miracle Implant": [
                               1, [f"Implant"], ["<a:eorigin:1145520263954440313>"], [[f"m6z"]], ["Implant"]]
                           }
@@ -408,7 +406,10 @@ class UpgradeView(discord.ui.View):
             self.menu_details = method_dict[self.menu_type]
         self.material_id_list = self.menu_details[3]
         self.method = self.menu_details[4]
-        for button_num in range(self.menu_details[0]):
+        for button_count in range(self.menu_details[0]):
+            button_num = button_count
+            if self.hammer_type != -1:
+                button_num = self.hammer_type
             is_maxed, success_rate = check_maxed(self.selected_item, self.method[button_num],
                                                  self.material_id_list[button_num][0], self.element)
             button_label = self.menu_details[1][button_num]
@@ -420,7 +421,7 @@ class UpgradeView(discord.ui.View):
                 button_style = globalitems.button_colour_list[1]
                 button_label += f" ({success_rate}%)"
             # Assign values to the buttons
-            button_object = self.children[button_num]
+            button_object = self.children[button_count]
             button_object.label = button_label
             button_object.emoji = button_emoji
             button_object.style = button_style
@@ -442,12 +443,8 @@ class UpgradeView(discord.ui.View):
     async def button2(self, interaction: discord.Interaction, button: discord.Button):
         await self.button_callback(interaction, button)
 
-    @discord.ui.button(label="DefaultLabel3",style=discord.ButtonStyle.success, row=2)
+    @discord.ui.button(label="DefaultLabel3",style=discord.ButtonStyle.success, row=1)
     async def button3(self, interaction: discord.Interaction, button: discord.Button):
-        await self.button_callback(interaction, button)
-
-    @discord.ui.button(label="DefaultLabel4", style=discord.ButtonStyle.success, row=2)
-    async def button4(self, interaction: discord.Interaction, button: discord.Button):
         await self.button_callback(interaction, button)
 
     @discord.ui.button(label="Reselect", style=discord.ButtonStyle.blurple, row=2)
@@ -464,7 +461,7 @@ class UpgradeView(discord.ui.View):
                     material_id = self.material_id_list[button_id][1]
                 embed_msg, self.selected_item = run_button(self.player_object, self.selected_item,
                                                            material_id, self.method[button_id])
-                new_view = UpgradeView(self.player_object, self.selected_item, self.menu_type,
+                new_view = UpgradeView(self.player_object, self.selected_item, self.menu_type, self.hammer_type,
                                        self.element, self.permission)
                 await button_interaction.response.edit_message(embed=embed_msg, view=new_view)
         except Exception as e:
@@ -503,7 +500,6 @@ def check_maxed(target_item, method, material_id, element):
     is_maxed = False
     material_item = inventory.get_basic_item_by_id(material_id)
     success_rate = material_item.item_base_rate
-    num_rolls = len(target_item.item_prefix_values) + len(target_item.item_suffix_values)
     match method:
         case "Enhance":
             if target_item.item_enhancement >= max_enhancement[(target_item.item_tier - 1)]:
@@ -535,18 +531,18 @@ def check_maxed(target_item, method, material_id, element):
             if target_item.item_num_sockets == 1:
                 is_maxed = True
         case "Attunement":
-            check_aug, _, _ = target_item.check_augment()
+            check_aug, _, _ = itemrolls.check_augment(target_item)
             if check_aug == 18:
                 is_maxed = True
         case "VAttunement":
-            _, check_vaug, _ = target_item.check_augment()
+            _, check_vaug, _ = itemrolls.check_augment(target_item)
             if check_vaug == 6:
                 is_maxed = True
         case "MultiAttunement":
-            check_aug, check_vaug, check_maug = target_item.check_augment()
-            if num_rolls * 5 == check_aug + check_vaug + check_maug:
+            check_aug, check_vaug, check_maug = itemrolls.check_augment(target_item)
+            if target_item.item_num_rolls * 5 == check_aug + check_vaug + check_maug:
                 is_maxed = True
-        case "VHammer":
+        case "Corrupt":
             if target_item.item_bonus_stat in globalitems.void_ability_dict:
                 is_maxed = True
         case "Implant":
@@ -584,28 +580,23 @@ def craft_item(player_object, selected_item, material_item, method):
                 outcome = reforge_item(player_object, selected_item, material_item, success_rate, success_check)
             case "Open":
                 outcome = open_item(player_object, selected_item, material_item, success_rate, success_check)
-            case "Single Fusion":
-                outcome = modify_item_rolls(player_object, selected_item, material_item, success_rate, success_check, 2)
-            case "All Fusion":
-                outcome = modify_item_rolls(player_object, selected_item, material_item, success_rate, success_check, 3)
-            case "Prefix Fusion":
-                outcome = modify_item_rolls(player_object, selected_item, material_item, success_rate, success_check, 0)
-            case "Suffix Fusion":
-                outcome = modify_item_rolls(player_object, selected_item, material_item, success_rate, success_check, 1)
             case "Attunement":
                 outcome = attune_item(player_object, selected_item, material_item, success_rate, success_check, 0)
             case "VAttunement":
                 outcome = attune_item(player_object, selected_item, material_item, success_rate, success_check, 1)
             case "MultiAttunement":
                 outcome = attune_item(player_object, selected_item, material_item, success_rate, success_check, 2)
-            case "VHammer":
-                outcome = void_fusion(player_object, selected_item, material_item, success_rate, success_check)
+            case "Corrupt":
+                outcome = void_corruption(player_object, selected_item, material_item, success_rate, success_check)
             case "Implant":
                 outcome = implant_item(player_object, selected_item, material_item, success_rate, success_check)
             case "Purify":
                 outcome = purify_item(player_object, selected_item, material_item, success_rate, success_check)
             case _:
-                outcome = "Error"
+                if "fusion" in method:
+                    method_type = method.split()
+                    outcome = modify_item_rolls(player_object, selected_item, material_item,
+                                                success_rate, success_check, method_type[0])
     else:
         outcome = material_item.item_id
     return outcome, cost
@@ -666,8 +657,7 @@ def reinforce_item(player_object, selected_item, material_item, success_rate, su
                 return 3
             if damage_check_blessing not in maxed_values:
                 return 3
-            num_rolls = len(selected_item.item_prefix_values) + len(selected_item.item_suffix_values)
-            if num_rolls != 6:
+            if selected_item.item_num_rolls != 6:
                 return 3
             # Material is consumed. Attempts to upgrade the item (Void Corruption).
             inventory.update_stock(player_object, material_item.item_id, -1)
@@ -722,23 +712,25 @@ def reforge_item(player_object, selected_item, material_item, success_rate, succ
 
 def modify_item_rolls(player_object, selected_item, material_item, success_rate, success_check, method):
     outcome = 0
-    num_rolls = len(selected_item.item_prefix_values) + len(selected_item.item_suffix_values)
-    if num_rolls < 6:
+    if selected_item.item_num_rolls < 6:
         # Check eligibility for which methods can add a roll.
-        if method != 2:
+        if method != "any":
             return 3
         # Material is consumed. Attempts to add a roll to the item.
         if success_check <= success_rate:
             inventory.update_stock(player_object, material_item.item_id, -1)
             if success_check <= success_rate:
-                selected_item.add_roll(1)
+                itemrolls.add_roll(selected_item, 1)
                 outcome = 1
     else:
+        # Check eligibility for which methods can be used on the item.
+        if method not in itemrolls.roll_structure_dict[selected_item.item_type] and method != "all":
+            return 3
         # Material is consumed. Attempts to re-roll the item.
         if success_check <= success_rate:
             inventory.update_stock(player_object, material_item.item_id, -1)
             if success_check <= success_rate:
-                selected_item.reroll_roll(method)
+                itemrolls.reroll_roll(selected_item, method)
                 outcome = 1
     # Update the item if applicable.
     if outcome == 1:
@@ -747,7 +739,7 @@ def modify_item_rolls(player_object, selected_item, material_item, success_rate,
 
 
 def attune_item(player_object, selected_item, material_item, success_rate, success_check, method):
-    check_aug, check_vaug, check_maug = selected_item.check_augment()
+    check_aug, check_vaug, check_maug = itemrolls.check_augment(selected_item)
     outcome = 0
     # Confirm if the item has eligible rolls if not maxed.
     if check_aug == -1:
@@ -759,7 +751,7 @@ def attune_item(player_object, selected_item, material_item, success_rate, succe
         # Material is consumed. Attempts to add an augment.
         inventory.update_stock(player_object, material_item.item_id, -1)
         if success_check <= success_rate:
-            selected_item.add_augment(method)
+            itemrolls.add_augment(selected_item, method)
             outcome = 1
     elif method == 1:
         # If the item is not a void item it is not eligible.
@@ -773,18 +765,17 @@ def attune_item(player_object, selected_item, material_item, success_rate, succe
         # Material is consumed. Attempts to add a void augment.
         inventory.update_stock(player_object, material_item.item_id, -1)
         if success_check <= success_rate:
-            selected_item.add_augment(method)
+            itemrolls.add_augment(selected_item, method)
             outcome = 1
     else:
         # Confirm if the item has eligible rolls and is not maxed.
-        num_rolls = len(selected_item.item_prefix_values) + len(selected_item.item_suffix_values)
         if check_aug == 18 and check_vaug == 6 and check_maug == 6:
             return 2
-        if num_rolls * 5 == check_aug + check_vaug + check_maug:
+        if selected_item.item_num_rolls * 5 == check_aug + check_vaug + check_maug:
             return 3
         inventory.update_stock(player_object, material_item.item_id, -1)
         if success_check <= success_rate:
-            selected_item.add_augment(method)
+            itemrolls.add_augment(selected_item, method)
             outcome = 1
 
     # Update the item if applicable.
@@ -818,13 +809,12 @@ def implant_item(player_object, selected_item, material_item, success_rate, succ
     return outcome
 
 
-def void_fusion(player_object, selected_item, material_item, success_rate, success_check):
+def void_corruption(player_object, selected_item, material_item, success_rate, success_check):
     outcome = 0
     # Confirm the item is eligible.
-    num_rolls = len(selected_item.item_prefix_values) + len(selected_item.item_suffix_values)
-    if num_rolls < 6:
+    if selected_item.item_num_rolls < 6:
         return 3
-    check_aug, check_vaug, _ = selected_item.check_augment()
+    check_aug, check_vaug, _ = itemrolls.check_augment(selected_item)
     if check_vaug != 6:
         return 3
     # Material is consumed. Attempt to upgrade the unique skill.
@@ -838,7 +828,7 @@ def void_fusion(player_object, selected_item, material_item, success_rate, succe
 
 def purify_item(player_object, selected_item, material_item, success_rate, success_check):
     outcome = 0
-    _, check_vaug, check_maug = selected_item.check_augment()
+    _, check_vaug, check_maug = itemrolls.check_augment(selected_item)
     # Check if item is eligible
     if selected_item.item_enhancement < max_enhancement[(selected_item.item_tier - 1)]:
         return 3

@@ -696,12 +696,12 @@ class SelectionRoomView(discord.ui.View):
         self.embed = None
         self.new_view = None
         self.active_room = self.expedition.current_room
-        self.item_pools = [["i1o", "i1s", "i2o", "i2s", "STONE1", "STONE2", "STONE3", "STONE4", "i1y", "i1j", "ESS"],
-                           ["i3o", "i3s", "i3k", "i3f", "i2y", "i3y", "i2j", "i3j", "i4t", "i1r", "ESS"],
-                           ["i4o", "i4s", "i4h", "i4p", "i4z", "i4y", "i4w", "i4g", "i4c", "i5t", "i4j", "ESS"],
-                           ["i5o", "i5s", "i5l", "i5hP", "i5hS", "i5hA", "i5u", "i5f", "i6t", "i6m", "i5f", "ESS"],
-                           ["i6x", "i5xW", "i5xA", "i5xY", "i5xG", "i5xC", "i5v", "v6p", "v6h", "i5xD", "ESS"],
-                           ["m6o", "m6s", "m6z", "m6f", "m6k", "m6h", "m6l", "m6hA", "m6hP", "m6hS", "i6uD", "ESS"],
+        self.item_pools = [["i2h", "i1o", "i1s", "i2o", "i2s", "STONE3", "STONE4", "i2y", "i2j", "ESS"],
+                           ["i2h", "i3h", "i3o", "i3s", "i3k", "i3f", "i3y", "i3j", "i4t", "i1r", "STONE5", "ESS"],
+                           ["i4hA", "i4hB", "i4o", "i4s", "i4p", "i4z", "i4y", "i4w", "i4g", "i4c", "i5t", "i4j", "ESS"],
+                           ["i5o", "i5s", "i5l", "i5hA", "i5hB", "i6hZ", "i5u", "i5f", "i6t", "i6m", "i5v", "ESS"],
+                           ["i6x", "i5xW", "i5xA", "i5xY", "i5xG", "i5xC", "v6f", "v6p", "v6h", "i5xD", "ESS"],
+                           ["m6o", "m6s", "m6z", "m6f", "m6k", "m6h", "m6l", "i6uD", "ESS"],
                            ["v7x", "i6uW"]]
         random_num = random.randint(1, 100000)
         if random_num <= self.expedition.luck:
@@ -1189,7 +1189,6 @@ class DragonRoomView(discord.ui.View):
             if interaction.user.name == self.expedition.player_object.player_name:
                 if not self.embed:
                     self.embed = self.run_option_button(1)
-                    self.new_view = TransitionView(self.expedition)
                 await interaction.response.edit_message(embed=self.embed, view=self.new_view)
         except Exception as e:
             print(e)
@@ -1199,7 +1198,6 @@ class DragonRoomView(discord.ui.View):
             if interaction.user.name == self.expedition.player_object.player_name:
                 if not self.embed:
                     self.embed = self.run_option_button(2)
-                    self.new_view = TransitionView(self.expedition)
                 await interaction.response.edit_message(embed=self.embed, view=self.new_view)
         except Exception as e:
             print(e)
@@ -1209,7 +1207,6 @@ class DragonRoomView(discord.ui.View):
             if interaction.user.name == self.expedition.player_object.player_name:
                 if not self.embed:
                     self.embed = self.run_option_button(3)
-                    self.new_view = TransitionView(self.expedition)
                 await interaction.response.edit_message(embed=self.embed, view=self.new_view)
         except Exception as e:
             print(e)
@@ -1230,6 +1227,7 @@ class DragonRoomView(discord.ui.View):
                 output_msg = f"**+{quantity} Luck**"
             embed_msg = discord.Embed(colour=self.expedition.expedition_colour,
                                       title="Ritual Success!", description=output_msg)
+            self.new_view = TransitionView(self.expedition)
         else:
             damage = self.expedition.take_damage((self.reward_multiplier * 100), (self.reward_multiplier * 300),
                                                  self.expedition.current_room.room_element)
@@ -1247,7 +1245,7 @@ class DragonRoomView(discord.ui.View):
                 self.expedition.luck -= self.reward_multiplier
                 if self.expedition.luck <= 1:
                     self.expedition.luck = 1
-                luck_msg += f"**-{self.reward_multiplier} Luck**"
+                luck_msg = f"**-{self.reward_multiplier} Luck**"
                 embed_msg.add_field(name="", value=luck_msg, inline=False)
                 if self.expedition.player_object.immortal and self.expedition.player_object.player_cHP < 1:
                     self.expedition.player_object.player_cHP = 1
@@ -1256,6 +1254,7 @@ class DragonRoomView(discord.ui.View):
                 embed_msg.add_field(name="", value=hp_msg, inline=False)
                 self.new_view = TransitionView(self.expedition)
         return embed_msg
+
 
 
 class GoldenRoomView(discord.ui.View):

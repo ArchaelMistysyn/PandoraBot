@@ -67,7 +67,7 @@ def award_loot(boss_object, player_list, exp_amount, coin_amount):
         temp_player.player_coins += temp_coin_amount
         temp_player.set_player_field("player_exp", temp_player.player_exp)
         temp_player.set_player_field("player_coins", temp_player.player_coins)
-        loot_msg.append(f"{globalitems.exp_icon} {exp_amount}x\n{globalitems.coin_icon} {temp_coin_amount}x\n")
+        loot_msg.append(f"{globalitems.exp_icon} {exp_amount:,}x\n{globalitems.coin_icon} {temp_coin_amount:,}x\n")
         # Check fae core drops
         if boss_object.boss_element != 9:
             core_element = boss_object.boss_element
@@ -198,14 +198,18 @@ def generate_random_item():
     elif random_reward <= 5151:
         item_tier = 4
         reward_types = ["h", "j", "z", "s", "o", "t", "g", "w", "c", "j", "y"]
-        item_type = reward_types[(random.randint(1, len(reward_types)) - 1)]
-        reward_id = f"i{item_tier}{item_type}"
+        item_type = reward_types[random.randint(0, (len(reward_types) - 1))]
+        if item_type == "h":
+            reward_types = ["i4hA", "i4hB", "i5hA", "i5hB"]
+            reward_id = reward_types[random.randint(0, (len(reward_types) - 1))]
+        else:
+            reward_id = f"i{item_tier}{item_type}"
     else:
         if random_reward <= 25151:
             item_tier = 3
-            reward_types = ["s", "s", "o", "o", "k", "k", "f", "f", "j", "y", "Fae"]
+            reward_types = ["h", "s" "o", "k", "k", "f", "f", "j", "y", "Fae"]
         elif random_reward <= 60151:
-            reward_types = ["s", "s", "o", "o", "j", "y", "Fae", "Fae"]
+            reward_types = ["h", "s", "s", "o", "o", "j", "y", "Fae", "Fae"]
             item_tier = 2
         else:
             reward_types = ["s", "s", "o", "o", "j", "y", "Fae", "Fae", "Fae"]

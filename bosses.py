@@ -74,6 +74,7 @@ class CurrentBoss:
                 life_emoji = "💛"
             case 5:
                 tier_colour = 0xcc0000
+                life_emoji = "❤️"
             case _:
                 tier_colour = discord.Colour.magenta()
                 life_emoji = "❤️"

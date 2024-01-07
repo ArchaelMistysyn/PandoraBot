@@ -20,6 +20,7 @@ import mydb
 from datetime import datetime as dt
 import quest
 import tarot
+import itemrolls
 import globalitems
 from unidecode import unidecode
 
@@ -60,6 +61,7 @@ class PlayerProfile:
         self.player_damage = 0.0
         self.player_total_damage = 0.0
         self.elemental_damage = [0, 0, 0, 0, 0, 0, 0, 0, 0]
+        self.elemental_conversion = [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
         self.elemental_damage_multiplier = [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
         self.elemental_penetration = [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
         self.all_elemental_multiplier = 0.0
@@ -86,6 +88,8 @@ class PlayerProfile:
 
         self.temporal_application = 0
 
+        self.specialty_rate = [0.0, 0.0, 0.0, 0.0, 0.0]
+        self.unique_conversion = [0.0, 0.0]
         self.banes = [0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
         self.skill_base_damage_bonus = [0, 0, 0, 0]
 
@@ -613,9 +617,9 @@ class PlayerProfile:
                 e_item.append(inventory.read_custom_item(x))
                 e_item[idx].update_damage()
                 self.player_damage += random.randint(e_item[idx].item_damage_min, e_item[idx].item_damage_max)
-                self.assign_roll_values(e_item[idx])
+                itemrolls.assign_roll_values(self, e_item[idx])
                 if e_item[idx].item_num_sockets == 1:
-                    self.assign_gem_values(e_item[idx])
+                    itemrolls.assign_gem_values(self, e_item[idx])
             else:
                 e_item.append(None)
         if e_item[0]:
@@ -887,130 +891,6 @@ class PlayerProfile:
                     self.all_elemental_curse += card_multiplier * 30
                 else:
                     self.aura += card_multiplier * 40
-
-    def assign_roll_values(self, equipped_item):
-        for x in equipped_item.item_prefix_values:
-            roll_tier = int(str(x)[1])
-            check_roll = ord(str(x[2]))
-            roll_adjust = 0.01 * (1 + roll_tier)
-            if check_roll <= 68:
-                if check_roll == 65:
-                    bonus = roll_adjust * 25
-                    self.critical_penetration += bonus
-                elif check_roll == 66:
-                    bonus = roll_adjust * 20
-                    self.ultimate_penetration += bonus
-                elif check_roll == 67:
-                    bonus = roll_adjust * 25
-                    self.bleed_penetration += bonus
-                elif check_roll == 68:
-                    bonus = roll_adjust * 20
-                    self.combo_penetration += bonus
-            elif check_roll <= 106:
-                roll_num = check_roll - 97
-                if roll_num == 9:
-                    bonus = roll_adjust * 15
-                    self.all_elemental_multiplier += bonus
-                else:
-                    bonus = roll_adjust * 25
-                    self.elemental_damage_multiplier[roll_num] += bonus
-            elif check_roll <= 116:
-                roll_num = check_roll - 97 - 10
-                if roll_num == 9:
-                    bonus = roll_adjust * 10
-                    self.all_elemental_penetration += bonus
-                else:
-                    bonus = roll_adjust * 15
-                    self.elemental_penetration[roll_num] += bonus
-            else:
-                match check_roll:
-                    case 117:
-                        bonus = roll_adjust * 15
-                        self.damage_mitigation += bonus
-                    case 118:
-                        bonus = roll_adjust * 25
-                        self.banes[4] += bonus
-                    case 119:
-                        bonus = roll_adjust * 1
-                        self.hp_regen += bonus
-                    case 120:
-                        bonus = roll_adjust * 15
-                        self.hp_multiplier += bonus
-                    case 121:
-                        bonus = roll_adjust * 5
-                        self.aura += bonus
-                    case _:
-                        bonus = roll_adjust * 3
-                        self.class_multiplier += bonus
-
-        for y in equipped_item.item_suffix_values:
-            roll_tier = int(str(y)[1])
-            check_roll = ord(str(y[2]))
-            roll_adjust = 0.01 * (1 + roll_tier)
-            if check_roll <= 68:
-                if check_roll == 65:
-                    bonus = roll_adjust * 25
-                    self.ultimate_multiplier += bonus
-                elif check_roll == 66:
-                    bonus = roll_adjust * 25
-                    self.bleed_multiplier += bonus
-                elif check_roll == 67:
-                    bonus = roll_adjust * 10
-                    self.combo_multiplier += bonus
-                elif check_roll == 68:
-                    bonus = roll_adjust * 5
-                    self.attack_speed += bonus
-            elif check_roll <= 106:
-                roll_num = check_roll - 97
-                if roll_num == 9:
-                    bonus = roll_adjust * 5
-                    self.all_elemental_resistance += bonus
-                else:
-                    bonus = roll_adjust * 15
-                    self.elemental_resistance[roll_num] += bonus
-            elif check_roll <= 116:
-                roll_num = check_roll - 97 - 10
-                if roll_num == 9:
-                    bonus = roll_adjust * 8
-                    self.all_elemental_curse += bonus
-                else:
-                    bonus = roll_adjust * 15
-                    self.elemental_curse[roll_num] += bonus
-            elif check_roll >= 119:
-                roll_num = check_roll - 119
-                bonus = roll_adjust * 25
-                self.banes[roll_num] += bonus
-            else:
-                match check_roll:
-                    case 117:
-                        bonus = roll_adjust * 20
-                        self.critical_chance += bonus
-                    case 118:
-                        bonus = roll_adjust * 25
-                        self.critical_multiplier += bonus
-                    case _:
-                        no_change = True
-
-        for idz, z in enumerate(equipped_item.item_elements):
-            if z == 1:
-                match equipped_item.item_type:
-                    case "A":
-                        self.elemental_resistance[idz] += 0.15
-                    case "Y":
-                        self.elemental_damage[idz] += 0.25
-                    case "G":
-                        self.elemental_penetration[idz] += 0.15
-                    case "C":
-                        self.elemental_curse[idz] += 0.1
-                    case _:
-                        no_change = True
-
-    def assign_gem_values(self, e_item):
-        gem_id = e_item.item_inlaid_gem_id
-        if gem_id != 0:
-            e_gem = inventory.read_custom_item(gem_id)
-            self.player_damage += (e_gem.item_damage_min + e_gem.item_damage_max) / 2
-            self.assign_roll_values(e_gem)
 
     def equip(self, selected_item) -> str:
         try:

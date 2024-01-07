@@ -35,12 +35,15 @@ recipe_dict = {
     "Elemental Origin (Light)": ["i4z", 1, "Fae7", 50, 80, "Origin7"],
     "Elemental Origin (Celestial)": ["i4z", 1, "Fae8", 50, 80, "Origin8"],
 
-    "Chaos Hammer": ["i4h", 1, "i5l", 1, 90, "i5hA"],
-    "Pulsar Hammer": ["i4h", 1, "i5l", 1, 90, "i5hP"],
-    "Quasar Hammer": ["i4h", 1, "i5l", 1, 90, "i5hS"],
+    "Chaos Hammer": ["i2h", 1, "STONE5", 1, 90, "i3h"],
+    "Pulsar Hammer": ["i2h", 1, "STONE5", 1, 90, "i4hA"],
+    "Quasar Hammer": ["i2h", 1, "STONE5", 1, 90, "i4hB"],
+    "Genesis Hammer": ["i2h", 1, "i5l", 1, 100, "i5hA"],
+    "Terminus Hammer": ["i2h", 1, "i5l", 1, 100, "i5hB"],
 
-    "Void Hammer": ["i5v", 1, "i4h", 1, 90, "v6h"],
+    "Void Hammer": ["i5v", 1, "i2h", 1, 90, "v6h"],
     "Void Pearl": ["i5v", 1, "i4p", 1, 90, "v6p"],
+    "Void Flame": ["i5v", 1, "i3f", 1, 90, "v6f"],
     "Void Origin": ["i5v", 1, "i4z", 1, 90, "OriginV"],
     "Crystallized Void": ["i5v", 1, "i6x", 1, 10, "v7x"],
 
@@ -67,11 +70,9 @@ recipe_dict = {
     "Miracle Flame": ["i6m", 5, "i3f", 20, 100, "m6f"],
     "Miracle Matrix": ["i6x", 1, "i3k", 50, 100, "m6k"],
     "Miracle Pearl": ["i6m", 5, "i4p", 1, 100, "m6p"],
-    "Miracle Hammer": ["i6m", 10, "i4h", 1, 100, "m6h"],
+    "Wish Hammer": ["i6m", 10, "i2h", 1, 100, "m6h"],
     "Miracle Heart": ["i6x", 1, "i5l", 1, 100, "m6l"],
-    "Zenith Hammer": ["m6h", 1, "i5l", 1, 100, "i5hA"],
-    "Genesis Hammer": ["m6h", 1, "m6l", 1, 100, "m6hP"],
-    "Terminus Hammer": ["m6h", 1, "m5l", 1, 100, "m6hS"]
+    "Zenith Hammer": ["i2h", 1, "m6l", 1, 100, "i6hZ"]
 }
 
 
@@ -449,7 +450,7 @@ class MiracleSelectView(discord.ui.View):
             discord.SelectOption(
                 emoji="<a:eenergy:1145534127349706772>", label="Miracle Matrix", description="???"),
             discord.SelectOption(
-                emoji="<a:eenergy:1145534127349706772>", label="Miracle Hammer", description="???"),
+                emoji="<a:eenergy:1145534127349706772>", label="Wish Hammer", description="???"),
             discord.SelectOption(
                 emoji="<a:eenergy:1145534127349706772>", label="Miracle Pearl", description="???"),
             discord.SelectOption(
