@@ -15,6 +15,15 @@ special_icon = "https://kyleportfolio.ca/botimages/roleicon/exclusivenoflare.png
 special_iconflare = "https://kyleportfolio.ca/botimages/roleicon/exclusiveflare.png"
 rank_url_list = [echelon_0, echelon_1, echelon_2, echelon_3, echelon_4, echelon_5, echelon_5flare,
                  special_icon, special_iconflare]
+frame_url_list = ["https://kyleportfolio.ca/botimages/iconframes/Icon_border_Bronze.png",
+                  "https://kyleportfolio.ca/botimages/iconframes/Icon_border_Bronze.png",
+                  "https://kyleportfolio.ca/botimages/iconframes/Icon_border_Silver.png",
+                  "https://kyleportfolio.ca/botimages/iconframes/Icon_border_SilverPurple.png",
+                  "https://kyleportfolio.ca/botimages/iconframes/Icon_border_Goldblue.png",
+                  "https://kyleportfolio.ca/botimages/iconframes/Icon_border_Goldred.png",
+                  "https://kyleportfolio.ca/botimages/iconframes/Icon_border_Pink.png",
+                  "https://kyleportfolio.ca/botimages/iconframes/Icon_border_Black.png"]
+generic_frame_url = "https://kyleportfolio.ca/botimages/iconframes/Iconframe.png"
 
 rank_colour = ["Green", "Blue", "Purple", "Gold", "Red", "Magenta"]
 profile_url = "https://kyleportfolio.ca/botimages/profilecards/"
@@ -45,29 +54,26 @@ class RankCard:
         self.user = user
         self.fill_colour = "black"
         echelon = self.user.player_echelon
-        card_loc = echelon
-        metal_loc = echelon
-        wing_loc = echelon
-        exp_bar_loc = echelon
-        icon_loc = echelon
+        card_loc, metal_loc, wing_loc, exp_bar_loc, icon_loc, frame_loc = (
+            echelon, echelon, echelon, echelon, echelon, echelon)
         if "Exclusive Title Holder" in achievement_list:
             self.fill_colour = "white"
-            card_loc = 6
-            metal_loc = 6
-            wing_loc = 6
-            exp_bar_loc = 6
-            icon_loc = 7
+            card_loc, metal_loc, wing_loc, exp_bar_loc = 6, 6, 6, 6
+            icon_loc, frame_loc = 7, 7
+            # Check if titleholder is eschelon 5.
             if echelon == 5:
                 card_loc = 5
                 exp_bar_loc = 5
                 wing_loc = 5
+            # Check if titleholder is subscriber.
             if "Herrscher - Subscriber" in achievement_list:
                 icon_loc = 8
+        # Check if non titleholder is subscriber
         elif "Herrscher - Subscriber" in achievement_list:
+            frame_loc = 6
             if echelon < 5:
-                card_loc = 7
-                exp_bar_loc = 7
-                wing_loc = 7
+                card_loc, exp_bar_loc, wing_loc = 7, 7, 7
+            # Check if subscriber is eschelon 5.
             elif echelon == 5:
                 icon_loc = 6
         self.cardBG = rank_card_url_list[card_loc]
@@ -75,6 +81,7 @@ class RankCard:
         self.wing = wing_gem_url_list[wing_loc]
         self.exp_bar = exp_bar_url_list[exp_bar_loc]
         self.role_icon = rank_url_list[icon_loc]
+        self.frame_icon = frame_url_list[frame_loc]
         self.class_icon = player.get_thumbnail_by_class(self.user.player_class)
         self.fill_percent = round(self.user.player_exp / player.get_max_exp(self.user.player_lvl), 2)
 
@@ -92,6 +99,8 @@ def get_player_profile(player_object, achievement_list):
     metal = Image.open(requests.get(rank_card.metal, stream=True).raw)
     wing = Image.open(requests.get(rank_card.wing, stream=True).raw)
     rank_icon = Image.open(requests.get(rank_card.role_icon, stream=True).raw)
+    rank_icon_frame = Image.open(requests.get(rank_card.frame_icon, stream=True).raw)
+    class_icon_frame = Image.open(requests.get(generic_frame_url, stream=True).raw)
     class_icon = Image.open(requests.get(rank_card.class_icon, stream=True).raw)
     exp_bar_image = Image.open(requests.get(rank_card.exp_bar, stream=True).raw)
     result = Image.new("RGBA", cardBG.size)
@@ -114,10 +123,20 @@ def get_player_profile(player_object, achievement_list):
     class_icon = class_icon.resize(new_size)
     result.paste(class_icon, (130, 214), mask=class_icon)
 
+    # Class Icon Frame
+    new_size = (68, 68)
+    class_icon_frame = class_icon_frame.resize(new_size)
+    result.paste(class_icon_frame, (131, 214), mask=class_icon_frame)
+
     # Rank Icon
     new_size = (120, 120)
     rank_icon = rank_icon.resize(new_size)
     result.paste(rank_icon, (629, 215), mask=rank_icon)
+
+    # Rank Icon Frame
+    new_size = (125, 125)
+    rank_icon_frame = rank_icon_frame.resize(new_size)
+    result.paste(rank_icon_frame, (627, 215), mask=rank_icon_frame)
 
     # Exp Bar
     exp_bar_start = 197

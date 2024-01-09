@@ -268,7 +268,7 @@ def get_item_tier_damage(material_tier):
 def check_lock(player_object, combat_tracker, damage):
     status_msg = ""
     if combat_tracker.time_lock == 0:
-        lock_rate = 5 * player_object.temporal_application
+        lock_rate = 5 * player_object.temporal_application + int(round(self.specialty_rate[3] * 100))
         random_lock_chance = random.randint(1, 100)
         if random_lock_chance <= lock_rate:
             combat_tracker.time_lock = player_object.temporal_application + 1
@@ -308,12 +308,12 @@ def boss_true_mitigation(boss_object):
 def critical_check(player_object, player_damage, num_elements):
     # Critical hits
     random_num = random.randint(1, 100)
-    if random_num <= (player_object.elemental_application * 5):
+    if random_num <= (player_object.elemental_application * 5 + int(round(self.specialty_rate[2] * 100))):
         player_damage *= num_elements
         critical_type = "FRACTAL"
     elif random_num < player_object.critical_chance:
         player_damage *= (1 + player_object.critical_multiplier)
-        omega_chance = player_object.critical_application * 10
+        omega_chance = player_object.critical_application * 10 + int(round(self.specialty_rate[1] * 100))
         omega_check = random.randint(1, 100)
         if omega_check <= omega_chance:
             critical_type = "OMEGA CRITICAL"
@@ -365,7 +365,7 @@ def pvp_defences(attacker, defender, player_damage, e_weapon):
         temp_element_list = e_weapon.item_elements.copy()
     for idx, x in enumerate(temp_element_list):
         if x == 1:
-            attacker.elemental_damage[idx] = adjusted_damage * (1 + attacker.elemental_damage_multiplier[idx])
+            attacker.elemental_damage[idx] = adjusted_damage * (1 + attacker.elemental_multiplier[idx])
             resist_multi = 1 - defender.elemental_resistance[idx]
             penetration_multi = 1 + attacker.elemental_penetration[idx]
             attacker.elemental_damage[idx] *= resist_multi * penetration_multi
@@ -394,7 +394,7 @@ def pvp_bleed_damage(attacker, defender):
 
 
 def check_hyper_bleed(player_object, bleed_damage):
-    hyper_bleed_rate = player_object.bleed_application * 5
+    hyper_bleed_rate = player_object.bleed_application * 5 + int(round(self.specialty_rate[0] * 100))
     bleed_check = random.randint(1, 100)
     if bleed_check <= hyper_bleed_rate:
         bleed_type = "HYPERBLEED"
@@ -459,7 +459,7 @@ def limit_elements(player_object, e_weapon):
     temp_list = e_weapon.item_elements.copy()
     for x, is_used in enumerate(temp_list):
         if is_used:
-            temp_total = player_object.elemental_damage_multiplier[x] * player_object.elemental_penetration[x]
+            temp_total = player_object.elemental_multiplier[x] * player_object.elemental_penetration[x]
             temp_total *= player_object.elemental_curse[x]
             elemental_breakdown.append([x, temp_total])
     sorted_indices = sorted(elemental_breakdown, key=lambda e: e[1], reverse=True)

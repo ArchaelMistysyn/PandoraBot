@@ -111,6 +111,9 @@ class SelectView(discord.ui.View):
                         embed_msg = discord.Embed(colour=discord.Colour.magenta(),
                                                   title="Pandora, The Celestial", description=key_msg)
                         new_view = self
+                    elif self.method == "custom":
+                        embed_msg = self.selected_item.create_citem_embed()
+                        new_view = itemrolls.SelectRollsView(self.player_object, self.selected_item)
                     else:
                         embed_msg = self.selected_item.create_citem_embed()
                         new_view = ForgeView(self.player_object, self.selected_item, self.method)
@@ -286,9 +289,15 @@ class ForgeView(discord.ui.View):
             selected_option = interaction.data['values'][0]
             if interaction.user.name == self.player_object.player_name:
                 if selected_option in ["Enhance", "Implant Element"] and self.selected_item.item_tier < 6:
-                    new_view = SubSelectView(self.player_object, self.selected_item, selected_option, self.permission)
+                    new_view = SubSelectView(self.player_object, self.selected_item,
+                                             selected_option, self.permission)
                 elif "Augment" in selected_option:
-                    new_view = SubSelectView(self.player_object, self.selected_item, selected_option, self.permission)
+                    if self.selected_item.item_num_rolls < 6:
+                        new_view = UpgradeView(self.player_object, self.selected_item, selected_option,
+                                               0, 0, self.permission)
+                    else:
+                        new_view = SubSelectView(self.player_object, self.selected_item,
+                                                 selected_option, self.permission)
                 else:
                     new_view = UpgradeView(self.player_object, self.selected_item, selected_option,
                                            -1, 0, self.permission)
@@ -367,7 +376,7 @@ class UpgradeView(discord.ui.View):
                                 "Genesis Fusion", "Terminus Fusion", "Zenith Fusion"],
                             [hammer_icon, hammer_icon, hammer_icon, hammer_icon, hammer_icon, hammer_icon, hammer_icon],
                             [[f"i2h"], ["i3h"], [f"i4hA"], [f"i4hB"], [f"i5hA"], [f"i5hB"], [f"i6hZ"]],
-                            ["any fusion", "all fusion", "damage fusion", "defense fusion",
+                            ["any fusion", "all fusion", "damage fusion", "defensive fusion",
                              "penetration fusion", "curse fusion", "unique fusion"]],
                        "Implant Element": [
                             1, [f"Implant ({globalitems.element_names[self.element]})"],
@@ -395,7 +404,7 @@ class UpgradeView(discord.ui.View):
                                 "Genesis Fusion", "Terminus Fusion", "Zenith Fusion"],
                             [hammer_icon, hammer_icon, hammer_icon, hammer_icon, hammer_icon, hammer_icon, hammer_icon],
                             [[f"m6h"], ["i3h"], [f"i4hA"], [f"i4hB"], [f"i5hA"], [f"i5hB"], [f"i6hZ"]],
-                            ["any fusion", "all fusion", "damage fusion", "defense fusion",
+                            ["any fusion", "all fusion", "damage fusion", "defensive fusion",
                              "penetration fusion", "curse fusion", "unique fusion"]],
                           "Miracle Implant": [
                               1, [f"Implant"], ["<a:eorigin:1145520263954440313>"], [[f"m6z"]], ["Implant"]]
@@ -722,6 +731,13 @@ def modify_item_rolls(player_object, selected_item, material_item, success_rate,
             if success_check <= success_rate:
                 itemrolls.add_roll(selected_item, 1)
                 outcome = 1
+    elif method == "any":
+        # Material is consumed. Attempts to re-roll the item.
+        if success_check <= success_rate:
+            inventory.update_stock(player_object, material_item.item_id, -1)
+            if success_check <= success_rate:
+                itemrolls.reroll_roll(selected_item, method)
+                outcome = 1
     else:
         # Check eligibility for which methods can be used on the item.
         if method not in itemrolls.roll_structure_dict[selected_item.item_type] and method != "all":
@@ -910,7 +926,7 @@ class RefineItemView(discord.ui.View):
         menu_dict = {
             "W": [2, ["Fabled", "Wish"], ["✅", "✅"], [5, 6]],
             "A": [1, ["Fabled"], ["✅"], [5]],
-            "Y": [2, ["Accessory", "Fabled"], ["✅", "✅"], [4, 5]],
+            "Y": [1, ["Fabled"], ["✅"], [5]],
             "G": [2, ["Wing", "Fabled"], ["✅", "✅"], [4, 5]],
             "C": [2, ["Crest", "Fabled"], ["✅", "✅"], [4, 5]],
             "D": [3, ["Jewel", "Fabled", "Heart Gem"], ["✅", "✅", "✅"], [4, 5, 6]]
@@ -966,7 +982,7 @@ class RefineItemView(discord.ui.View):
                 new_embed = discord.Embed(colour=discord.Colour.dark_orange(),
                                           title='Refinery',
                                           description="Please select the item to refine")
-                embed_msg.set_image(url="https://i.ibb.co/QjWDYG3/forge.jpg")
+                new_embed.set_image(url="https://i.ibb.co/QjWDYG3/forge.jpg")
                 await interaction.response.edit_message(embed=new_embed, view=new_view)
         except Exception as e:
             print(e)

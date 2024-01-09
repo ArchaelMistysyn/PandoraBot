@@ -153,6 +153,8 @@ def run_discord_bot():
                     player_object.set_player_field("player_stamina", int(value))
                 if backdoor == "item_hack":
                     inventory.update_stock(player_object, value, 10)
+                if backdoor == "coin_hack":
+                    player_object.set_player_field("player_coins", int(value))
                 if backdoor == "item_hack_all":
                     filename = "itemlist.csv"
                     with (open(filename, 'r') as f):
@@ -895,6 +897,41 @@ def run_discord_bot():
                     embed_msg = discord.Embed(colour=discord.Colour.blurple(),
                                               title="???",
                                               description="A powerful light emanates from within. Entry is impossible.")
+                    new_view = None
+                await ctx.send(embed=embed_msg, view=new_view)
+            else:
+                embed_msg = unregistered_message()
+                await ctx.send(embed=embed_msg)
+
+    @set_command_category('craft', 6)
+    @pandora_bot.hybrid_command(name='scribe', help="Speak with ???")
+    @app_commands.guilds(discord.Object(id=1011375205999968427))
+    async def scribe(ctx):
+        if any(ctx.channel.id in sl for sl in globalitems.global_server_channels):
+            await ctx.defer()
+            user = ctx.author
+            player_object = player.get_player_by_name(user)
+            if player_object.player_class != "":
+                player_object.get_equipped()
+                e_weapon = inventory.read_custom_item(player_object.player_equipped[0])
+                if player_object.player_quest >= 23:
+                    entry_msg = ("I have taken quite a liking to you, you know. "
+                                 "The plane of eons is ruled by the True Laws. "
+                                 "They are named as such because they cannot be defied even by themselves. "
+                                 "This means that with my permission you exist and without it you do not. "
+                                 "\nNo matter how many realities you intend to shape, the True Laws exist eternally. "
+                                 "I grant you passage because your goal is impossible. You can do nothing to us. "
+                                 "\nI will record your attempt. I will even help you. Your failure is already written.")
+                    embed_msg = discord.Embed(colour=discord.Colour.blurple(),
+                                              title="Vexia, Scribe of the Eons",
+                                              description=entry_msg)
+                    embed_msg.set_image(url="https://i.ibb.co/QjWDYG3/forge.jpg")
+                    new_view = forge.SelectView(player_object, "custom")
+                else:
+                    denial_msg = "Without the grace of the Eons. The laws of reality deny your entry."
+                    embed_msg = discord.Embed(colour=discord.Colour.blurple(),
+                                              title="???",
+                                              description=denial_msg)
                     new_view = None
                 await ctx.send(embed=embed_msg, view=new_view)
             else:

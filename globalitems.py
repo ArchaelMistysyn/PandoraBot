@@ -59,6 +59,7 @@ void_ability_dict = {"Void Application (Overflow)": "Elemental Overflow",
                      "Void Application (Bloom)": "Blooming Vitality",
                      "Void Application (Overdrive)": "Ultimate Overdrive",
                      "Void Application (Unravel)": "Unravel"}
+
 reverse_void_ability_dict = {v: k for k, v in void_ability_dict.items()}
 
 not_owned_icon = "https://kyleportfolio.ca/botimages/profilecards/noachv.png"

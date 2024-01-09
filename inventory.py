@@ -24,6 +24,7 @@ import mydb
 import globalitems
 import string
 import itemrolls
+import itemicons
 
 import tarot
 
@@ -138,121 +139,39 @@ class CInventoryView(discord.ui.View):
 
 class CustomItem:
     def __init__(self, player_owner, item_type, item_tier):
-        # initialize owner id
+        # initialize input data.
         self.player_owner = player_owner
         self.item_type = item_type
         self.item_tier = item_tier
         self.item_num_stars = self.item_tier
-        self.item_damage_type = generate_item_type()
 
-        self.item_base_type = ""
-        if self.item_tier <= 4:
-            self.generate_base()
-
-        # initialize default values
+        # Initialize single default values
         self.item_id = 0
         self.item_name = ""
-        self.item_elements = [0, 0, 0, 0, 0, 0, 0, 0, 0]
         self.item_enhancement = 0
-        self.item_roll_values = []
-        self.item_num_rolls = 0
-        self.item_base_stat = 0
-        self.item_bonus_stat = ""
-        self.item_material_tier = ""
-        self.item_blessing_tier = ""
-        self.item_damage_min = 0
-        self.item_damage_max = 0
-        self.item_num_sockets = 0
-        self.item_inlaid_gem_id = 0
+        self.item_elements = [0, 0, 0, 0, 0, 0, 0, 0, 0]
 
-        random_rolltype = random.randint(0, 1)
-        if random_rolltype == 0:
-            rolltype = "P"
-        else:
-            rolltype = "S"
+        # Initialize associated default values.
+        self.item_num_rolls, self.item_roll_values = 0, []
+        self.item_base_stat, self.item_bonus_stat = 0, ""
+        self.item_material_tier, self.item_blessing_tier = "", ""
+        self.item_damage_min, self.item_damage_max = 0, 0
+        self.item_num_sockets, self.item_inlaid_gem_id = 0, 0
+
+        # Generate an item type and base.
+        self.item_damage_type = generate_item_type()
+        self.item_base_type = ""
+        self.generate_base()
+
+        # Generate base damage.
         random_damage1, random_damage2 = get_tier_damage(self.item_tier, self.item_type)
         self.base_damage_min = random_damage1
         self.base_damage_max = random_damage2
+        self.update_damage()
+
+        # Add an element to non-gem items and set the name.
         if self.item_type != "D":
             itemrolls.add_roll(self, 1)
-            if self.item_tier == 5:
-                self.item_material_tier = "Fabled"
-                self.item_blessing_tier = "Refined"
-            elif self.item_tier <= 4:
-                self.item_material_tier = "Iron"
-            elif self.item_tier == 7:
-                self.item_material_tier = "Eschaton"
-                self.item_blessing_tier = ""
-        match self.item_type:
-            case "W":
-                self.set_base_attack_speed()
-                if self.item_tier == 6:
-                    self.item_material_tier = "Key of Creation -"
-                    self.item_blessing_tier = "Prelude"
-                elif self.item_damage_type == "Summoner" or self.item_damage_type == "Rider":
-                    self.item_blessing_tier = "Standard"
-                    self.item_material_tier = "Illusion"
-                else:
-                    self.item_blessing_tier = "Basic"
-                if self.item_tier >= 5:
-                    class_matcher = globalitems.class_name_list.index(self.item_damage_type)
-                    item_variant = random.randint(0, 1)
-                    special_item_variants = [
-                        ["Saber", "Scythe"],
-                        ["Cannon", "Bow"],
-                        ["Staff", "Spellbook"],
-                        ["Dagger", "Claws"],
-                        ["Threads"], [""],
-                        ["Dragon", "Cerberus"],
-                        ["Anima", "Golem"]
-                    ]
-                    if class_matcher == 4:
-                        item_variant = 0
-                    self.item_base_type = special_item_variants[class_matcher][item_variant]
-            case "A":
-                if self.item_tier <= 4:
-                    self.item_blessing_tier = "Standard"
-                self.set_base_damage_mitigation()
-                self.assign_bonus_stat()
-            case "Y":
-                if self.item_tier == 5:
-                    self.item_base_type = "Amulet"
-                elif self.item_tier <= 4:
-                    self.item_material_tier = "Crude"
-                    self.item_blessing_tier = "Sparkling"
-                self.assign_bonus_stat()
-            case "G":
-                if self.item_tier <= 4:
-                    self.item_material_tier = "Crude"
-                    self.item_blessing_tier = "Sparkling"
-                tier_variants = ["Feathered Wings", "Wonderous Wings", "Dimensional Wings", "Rift Wings"]
-                self.item_base_type = tier_variants[(self.item_tier - 2)]
-                self.assign_bonus_stat()
-            case "C":
-                random_blessing = random.randint(1, 2)
-                self.item_blessing_tier = "Clear" if random_blessing == 1 else "Tainted"
-                if self.item_tier >= 5:
-                    self.item_base_type = "Diadem"
-                random_num = random.randint(0, 2)
-                # set crest unique skill
-                self.assign_bonus_stat()
-            case _:
-                gem_names_list = ["Gem of Nature's Wrath", "Gem of Land and Sky", "Gem of the Deep",
-                                  "Gem of Twilight", "Gem of Chaos", "Gem of Aurora",
-                                  "Gem of Dimensions", "Gem of Fate", "Gem of Dreams",
-                                  "Fabled Dragon Jewel - Infinity", "Fabled Dragon Jewel - Transcendence",
-                                  "Fabled Dragon Jewel - Emptiness"]
-                if self.item_tier == 6:
-                    random_resonance = random.randint(0, 22)
-                    resonance = tarot.get_resonance(random_resonance)
-                    self.item_name = f"Miracle Dragon Heart Gem - {resonance}"
-                else:
-                    random_variant = random.randint(0, 2)
-                    self.item_name = gem_names_list[(((self.item_tier - 2) * 3) + random_variant)]
-                for idx, x in enumerate(range(self.item_tier)):
-                    itemrolls.add_roll(self, 6)
-        self.update_damage()
-        if self.item_type != "D":
             self.add_item_element(9)
             self.set_item_name()
 
@@ -386,31 +305,97 @@ class CustomItem:
                    "Fox", "Spider", "Crocodile", "Basilisk",
                    "Wyrm", "Salamander", "Coatl", "Phoenix"]]
         }
+        special_weapon_variants = [
+            ["Saber", "Scythe"],
+            ["Cannon", "Bow"],
+            ["Staff", "Spellbook"],
+            ["Dagger", "Claws"],
+            ["Threads"], ["Threads"],
+            ["Dragon", "Cerberus"],
+            ["Anima", "Golem"]
+        ]
+
+        default_material_names = {"W": "Iron", "A": "Iron", "Y": "Crude",  "G": "Crude", "C": "Crude"}
+        default_blessing_names = {"W": "Basic", "A": "Standard", "Y": "Sparkling",  "G": "Sparkling", "C": "Clear"}
+        wing_tier_variants = ["Feathered Wings", "Wonderous Wings", "Dimensional Wings", "Rift Wings"]
+        gem_names_dict = {2: ["Gem of Nature's Wrath", "Gem of Land and Sky", "Gem of the Deep"],
+                          3: ["Gem of Twilight", "Gem of Chaos", "Gem of Aurora"],
+                          4: ["Gem of Dimensions", "Gem of Fate", "Gem of Dreams"],
+                          5: ["Fabled Dragon Jewel - Destiny", "Fabled Dragon Jewel - Fate"],
+                          6: ["Miracle Dragon Heart Gem"],
+                          7: ["Miracle Dragon Heart Gem - Emptiness", "Miracle Dragon Heart Gem - Transcendence"]
+                          }
+
+        # Set non gem shared default naming values and base roll.
+        if self.item_type != "D":
+            if self.item_tier == 7:
+                self.item_material_tier = "Eschaton"
+                self.item_blessing_tier = ""
+            elif self.item_tier == 6:
+                self.item_material_tier = "Destiny"
+                self.item_blessing_tier = ""
+                # Naming exception for tier 6 weapons.
+                if self.item_type == "W":
+                    self.item_material_tier = "Key of Creation -"
+                    self.item_blessing_tier = "Prelude"
+            elif self.item_tier == 5:
+                self.item_material_tier = "Fabled"
+                self.item_blessing_tier = "Refined"
+            elif self.item_tier <= 4:
+                self.item_material_tier = default_material_names[self.item_type]
+                self.item_blessing_tier = default_blessing_names[self.item_type]
+                # Naming exception for rider and summoner weapons of tier 4 or lower.
+                if self.item_damage_type == "Summoner" or self.item_damage_type == "Rider" and self.item_type == "W":
+                    self.item_blessing_tier = "Standard"
+                    self.item_material_tier = "Illusion"
+                # Naming exception for crests tier 4 or lower.
+                if self.item_type == "C":
+                    random_blessing = random.randint(1, 2)
+                    self.item_blessing_tier = "Clear" if random_blessing == 1 else "Tainted"
+
+        # Assign a bonus stat if eligible.
+        if self.item_type in "AYGC":
+            self.assign_bonus_stat()
+
+        # Set item specific details.
         match self.item_type:
             case "W":
+                self.set_base_attack_speed()
                 class_checker = globalitems.class_name_list.index(self.item_damage_type)
-                if class_checker >= 5:
-                    item_base = random.choice(item_lists["_"][0])
+                if self.item_tier <= 4:
+                    if class_checker >= 5:
+                        self.item_base_type = random.choice(item_lists["_"][0])
+                    else:
+                        item_namelist = item_lists.get(class_checker, [])
+                        self.item_base_type = random.choice(item_namelist[self.item_tier - 1]) if item_namelist else "Unknown"
                 else:
-                    item_namelist = item_lists.get(class_checker, [])
-                    item_base = random.choice(item_namelist[self.item_tier - 1]) if item_namelist else "Unknown Type"
+                    self.item_base_type = random.choice(special_weapon_variants[class_checker])
             case "A":
-                base_dict = {1: "Armour", 2: "Shell", 3: "Mail", 4: "Plate", 5: "Lorica"}
-                location = self.item_tier
-                if location > 5:
-                    location = 5
-                item_base = base_dict[location]
+                self.set_base_damage_mitigation()
+                armour_base_dict = {1: "Armour", 2: "Shell", 3: "Mail", 4: "Plate", 5: "Lorica"}
+                self.item_base_type = armour_base_dict[max(5, self.item_tier)]
             case "Y":
-                base_dict = {1: "Bracelet", 2: "Necklace", 3: "Ring", 4: "Earring"}
-                location = random.randint(1, len(base_dict))
-                item_base = base_dict[location]
+                acc_base_list = ["Bracelet", "Necklace", "Ring", "Earring"]
+                self.item_base_type = random.choice(acc_base_list)
+                if self.item_tier >= 5:
+                    self.item_base_type = "Amulet"
+            case "G":
+                self.item_base_type = wing_tier_variants[(self.item_tier - 2)]
             case "C":
-                base_dict = {1: "Halo", 2: "Horns", 3: "Crown", 4: "Tiara", 5: "Diadem"}
-                location = random.randint(1, len(base_dict))
-                item_base = base_dict[location]
+                crest_base_list = ["Halo", "Horns", "Crown", "Tiara"]
+                self.item_base_type = random.choice(crest_base_list)
+                if self.item_tier >= 5:
+                    self.item_base_type = "Diadem"
+            case "D":
+                self.item_name = random.choice(gem_names_dict[self.item_tier])
+                if self.item_tier >= 6:
+                    random_resonance = random.randint(0, 22)
+                    resonance = tarot.get_resonance(random_resonance)
+                    if self.item_tier != 7:
+                        self.item_name = f"{self.item_name} - {resonance}"
+                itemrolls.add_roll(self, 6)
             case _:
-                item_base = ""
-        self.item_base_type = item_base
+                self.item_base_type = "BASE ERROR"
 
     def add_item_element(self, add_element):
         if add_element == 9:
@@ -419,35 +404,34 @@ class CustomItem:
             new_element = add_element
         self.item_elements[new_element] = 1
 
+    def get_citem_thumbnail(self):
+        if self.is_void_corrupted() and self.item_tier == 5:
+            thumb_img = itemicons.item_icon_dict[self.item_type][0]
+        else:
+            thumb_img = itemicons.item_icon_dict[self.item_type][self.item_tier]
+        return thumb_img
+
     def create_citem_embed(self):
         gear_colours = get_gear_tier_colours(self.item_tier)
         tier_colour = gear_colours[0]
         gem_min = 0
         gem_max = 0
-
         item_title = f'{self.item_name} '
         item_title = item_title.ljust(46, "᲼")
         self.update_damage()
         display_stars, item_rolls, base_type, aux_suffix = "", "", "", ""
-        match self.item_type:
-            case "W":
-                base_type = "Base Attack Speed "
-                aux_suffix = "/min"
-                thumb_img = "https://i.ibb.co/ygGCRnc/sworddefaulticon.png"
-            case "A":
-                base_type = "Base Damage Mitigation "
-                aux_suffix = "%"
-                thumb_img = "https://i.ibb.co/p2K2GFK/armouricon.png"
-            case "Y":
-                thumb_img = "https://i.ibb.co/FbhP60F/ringicon.png"
-            case "G":
-                thumb_img = "https://i.ibb.co/FbhP60F/ringicon.png"
-            case "C":
-                thumb_img = "https://i.ibb.co/FbhP60F/ringicon.png"
-            case _:
-                thumb_img = "https://i.ibb.co/FbhP60F/ringicon.png"
+        # Set the thumbnail image.
+        thumb_img = self.get_citem_thumbnail()
+        # Set the base stat text.
+        if self.item_type == "W":
+            base_type = "Base Attack Speed "
+            aux_suffix = "/min"
+        elif self.item_type == "A":
+            base_type = "Base Damage Mitigation "
+            aux_suffix = "%"
         if self.item_base_stat != 0 and self.item_base_stat != "0":
             item_rolls = f'{base_type}{self.item_base_stat}{aux_suffix}\n'
+        # Set the bonus stat text.
         item_rolls += f"{self.item_bonus_stat}"
         rolls_msg = itemrolls.display_rolls(self)
         for x in range(self.item_num_stars):
@@ -794,33 +778,18 @@ def custom_sort(item_id):
 
 
 def get_gear_tier_colours(base_tier):
-    match base_tier:
-        case 0:
-            tier_colour = discord.Colour.dark_gray()
-            tier_emoji = '⚫'
-        case 1:
-            tier_colour = discord.Colour.green()
-            tier_emoji = '🟢'
-        case 2:
-            tier_colour = discord.Colour.blue()
-            tier_emoji = '🔵'
-        case 3:
-            tier_colour = discord.Colour.purple()
-            tier_emoji = '🟣'
-        case 4:
-            tier_colour = discord.Colour.gold()
-            tier_emoji = '🟡'
-        case 5:
-            tier_colour = 0xcc0000
-            tier_emoji = '🔴'
-        case 6:
-            tier_colour = discord.Colour.magenta()
-            tier_emoji = '⚪'
-        case _:
-            tier_colour = discord.Colour.pink()
-            tier_emoji = '⚪'
+    tier_colors = {
+        0: (discord.Colour.dark_gray(), '⚫'),
+        1: (discord.Colour.green(), '🟢'),
+        2: (discord.Colour.blue(), '🔵'),
+        3: (discord.Colour.purple(), '🟣'),
+        4: (discord.Colour.gold(), '🟡'),
+        5: (0xcc0000, '🔴'),
+        6: (discord.Colour.magenta(), '⚪'),
+        7: (discord.Colour.pink(), '⚪')
+    }
 
-    return tier_colour, tier_emoji
+    return tier_colors[base_tier][0], tier_colors[base_tier][1]
 
 
 def generate_random_tier():
@@ -888,133 +857,14 @@ def update_stock(player_object, item_id, change):
         print(error)
 
 
-def get_roll_by_code(item_object, code):
-    roll_text = ""
-    check_roll = ord(code[2])
-    match code[0]:
-        case "P":
-            if check_roll <= 68:
-                if check_roll == 65:
-                    roll_adjust = 25
-                    roll_keyword = "Critical"
-                elif check_roll == 66:
-                    roll_adjust = 20
-                    roll_keyword = "Ultimate"
-                elif check_roll == 67:
-                    roll_adjust = 25
-                    roll_keyword = "Bleed"
-                elif check_roll == 68:
-                    roll_adjust = 20
-                    roll_keyword = "Combo"
-                roll = f"{roll_keyword} Penetration"
-            elif check_roll <= 106:
-                roll_num = check_roll - 97
-                if roll_num == 9:
-                    roll_adjust = 15
-                    roll_keyword = "Omni"
-                else:
-                    roll_adjust = 25
-                    roll_keyword = globalitems.element_names[roll_num]
-                roll = f"{roll_keyword} Damage"
-            elif check_roll <= 116:
-                roll_num = check_roll - 97 - 10
-                if roll_num == 9:
-                    roll_adjust = 10
-                    roll_keyword = "Omni"
-                else:
-                    roll_adjust = 15
-                    roll_keyword = globalitems.element_names[roll_num]
-                roll = f"{roll_keyword} Penetration"
-            else:
-                match check_roll:
-                    case 117:
-                        roll = "Damage Mitigation"
-                        roll_adjust = 15
-                    case 118:
-                        roll = "Human Bane"
-                        roll_adjust = 25
-                    case 119:
-                        roll = "Health Regen"
-                        roll_adjust = 1
-                    case 120:
-                        roll = "Health Multiplier"
-                        roll_adjust = 15
-                    case 121:
-                        roll = "Omni Aura"
-                        roll_adjust = 5
-                    case _:
-                        roll = "Class Mastery"
-                        roll_adjust = 3
-            bonus = str((1 + int(code[1])) * roll_adjust)
-            roll_text += f'+{bonus}% {roll}'
-        case "S":
-            if check_roll <= 67:
-                if check_roll == 65:
-                    roll_adjust = 25
-                    roll_keyword = "Ultimate"
-                elif check_roll == 66:
-                    roll_adjust = 25
-                    roll_keyword = "Bleed"
-                elif check_roll == 67:
-                    roll_adjust = 10
-                    roll_keyword = "Combo"
-                roll = f"{roll_keyword} Damage"
-            elif check_roll <= 68:
-                roll_adjust = 5
-                roll = "Attack Speed"
-            elif check_roll <= 106:
-                roll_num = check_roll - 97
-                if roll_num == 9:
-                    roll_keyword = "Omni"
-                    roll_adjust = 5
-                else:
-                    roll_keyword = globalitems.element_names[roll_num]
-                    roll_adjust = 10
-                roll = f"{roll_keyword} Resistance"
-            elif check_roll <= 116:
-                roll_num = check_roll - 97 - 10
-                if roll_num == 9:
-                    roll_adjust = 8
-                    roll_keyword = "Omni"
-                else:
-                    roll_adjust = 15
-                    roll_keyword = globalitems.element_names[roll_num]
-                roll = f"{roll_keyword} Curse"
-            elif check_roll >= 119:
-                roll_num = check_roll - 119
-                roll_adjust = 20
-                roll = f"{bosses.boss_list[roll_num]} Bane"
-            else:
-                match check_roll:
-                    case 117:
-                        roll = "Critical Chance"
-                        roll_adjust = 20
-                    case 118:
-                        roll = "Critical Multiplier"
-                        roll_adjust = 25
-                    case _:
-                        nothing = True
-            bonus = str((1 + int(code[1])) * roll_adjust)
-            roll_text += f'+{bonus}% {roll}'
-        case _:
-            roll_text = "Error"
-    return roll_text
-
-
 def try_refine(player_owner, item_type, selected_tier):
     if selected_tier == 4:
         new_tier = generate_random_tier()
-        if new_tier != 1:
-            is_success = True
-        else:
-            is_success = False
+        is_success = True if new_tier != 1 else False
     else:
         if selected_tier == 5:
             success_check = random_outcome = random.randint(1, 100)
-            if success_check <= 50:
-                is_success = True
-            else:
-                is_success = False
+            is_success = True if success_check <= 50 else False
         elif selected_tier == 6:
             is_success = True
         new_tier = selected_tier

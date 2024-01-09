@@ -62,7 +62,7 @@ class PlayerProfile:
         self.player_total_damage = 0.0
         self.elemental_damage = [0, 0, 0, 0, 0, 0, 0, 0, 0]
         self.elemental_conversion = [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
-        self.elemental_damage_multiplier = [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+        self.elemental_multiplier = [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
         self.elemental_penetration = [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
         self.all_elemental_multiplier = 0.0
         self.all_elemental_penetration = 0.0
@@ -120,7 +120,7 @@ class PlayerProfile:
         self.player_damage = 0.0
         self.player_total_damage = 0.0
         self.elemental_damage = [0, 0, 0, 0, 0, 0, 0, 0, 0]
-        self.elemental_damage_multiplier = [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+        self.elemental_multiplier = [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
         self.elemental_penetration = [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
         self.all_elemental_multiplier = 0.0
         self.all_elemental_penetration = 0.0
@@ -187,7 +187,7 @@ class PlayerProfile:
             stats = f"Item Base Damage: {int(round(self.player_damage)):,}"
             stats += f"\nAttack Speed: {round(math.floor(self.attack_speed * 10) / 10, 1)} / min"
             for x in range(9):
-                total_multi = (1 + self.elemental_damage_multiplier[x]) * (1 + self.elemental_penetration[x])
+                total_multi = (1 + self.elemental_multiplier[x]) * (1 + self.elemental_penetration[x])
                 total_multi *= (1 + self.elemental_curse[x]) * (1 + self.aura)
                 element_multipliers.append((x, total_multi * 100))
             spread = sorted(element_multipliers, key=lambda k: k[1], reverse=True)
@@ -221,21 +221,21 @@ class PlayerProfile:
             stats = ""
             element_breakdown = []
             for x in range(9):
-                total_multi = (1 + self.elemental_damage_multiplier[x]) * (1 + self.elemental_penetration[x])
+                total_multi = (1 + self.elemental_multiplier[x]) * (1 + self.elemental_penetration[x])
                 total_multi *= (1 + self.elemental_curse[x])
                 element_breakdown.append((x, total_multi * 100))
             sorted_element_breakdown = sorted(element_breakdown, key=lambda v: v[1], reverse=True)
             for z, total_multi in sorted_element_breakdown:
                 temp_icon = globalitems.global_element_list[z]
-                temp_dmg_str = f"(Dmg: {int(round(self.elemental_damage_multiplier[z] * 100)):,}%)"
+                temp_dmg_str = f"(Dmg: {int(round(self.elemental_multiplier[z] * 100)):,}%)"
                 temp_pen_str = f"(Pen: {int(round(self.elemental_penetration[z] * 100)):,}%)"
                 temp_curse_str = f"(Curse: {int(round(self.elemental_curse[z] * 100)):,}%)"
                 stats += f"{temp_icon} {temp_dmg_str} - {temp_pen_str} - {temp_curse_str}\n"
             stats += f"Elemental Details: (Cap: {self.elemental_capacity}) - (App: {self.elemental_application}) - "
-            stats += f"(Frc: {self.elemental_application * 5}%)"
+            stats += f"(Frc: {self.elemental_application * 5 + int(round(self.specialty_rate[2] * 100))}%)"
             second_title = "Special Breakdown"
             second_msg = f"Critical Chance: (Reg: {int(round(self.critical_chance))}%) - "
-            second_msg += f"(Omg: {int(round(self.critical_application * 10))}%)"
+            second_msg += f"(Omg: {self.critical_application * 10 + int(round(self.specialty_rate[1] * 100))}%)"
             second_msg += f"\nCritical Multiplier: (Dmg: {int(round(self.critical_multiplier * 100))}%) - "
             second_msg += f"(Pen: {int(round(self.critical_penetration * 100))}%) - "
             second_msg += f"(App: {self.critical_application})"
@@ -249,7 +249,7 @@ class PlayerProfile:
             second_msg += f"(Pen: {int(round(self.ultimate_penetration * 100))}%) - "
             second_msg += f"(App: {self.ultimate_application})"
             second_msg += f"\nTime Multiplier: (Dmg: {(self.temporal_application + 1) * 100}%) - "
-            second_msg += f"(LCK: {self.temporal_application * 5}%) - "
+            second_msg += f"(LCK: {self.temporal_application * 5 + int(round(self.specialty_rate[3] * 100))}%) - "
             second_msg += f"(App: {self.temporal_application})"
         elif method == 3:
             title_msg = "Defensive Stats"
@@ -540,8 +540,8 @@ class PlayerProfile:
 
         # Path Multipliers
         storm_bonus = self.player_stats[0]
-        self.elemental_damage_multiplier[1] += 0.05 * storm_bonus
-        self.elemental_damage_multiplier[2] += 0.05 * storm_bonus
+        self.elemental_multiplier[1] += 0.05 * storm_bonus
+        self.elemental_multiplier[2] += 0.05 * storm_bonus
         self.elemental_resistance[1] += 0.01 * storm_bonus
         self.elemental_resistance[2] += 0.01 * storm_bonus
         self.critical_multiplier += 0.03 * storm_bonus
@@ -554,14 +554,14 @@ class PlayerProfile:
                     if storm_bonus >= 80:
                         self.critical_application += 2
         frostfire_bonus = self.player_stats[1]
-        self.elemental_damage_multiplier[5] += 0.05 * frostfire_bonus
-        self.elemental_damage_multiplier[0] += 0.05 * frostfire_bonus
+        self.elemental_multiplier[5] += 0.05 * frostfire_bonus
+        self.elemental_multiplier[0] += 0.05 * frostfire_bonus
         self.elemental_resistance[5] += 0.01 * frostfire_bonus
         self.elemental_resistance[0] += 0.01 * frostfire_bonus
         self.class_multiplier += 0.01 * frostfire_bonus
         horizon_bonus = self.player_stats[2]
-        self.elemental_damage_multiplier[3] += 0.05 * horizon_bonus
-        self.elemental_damage_multiplier[4] += 0.05 * horizon_bonus
+        self.elemental_multiplier[3] += 0.05 * horizon_bonus
+        self.elemental_multiplier[4] += 0.05 * horizon_bonus
         self.elemental_resistance[3] += 0.01 * horizon_bonus
         self.elemental_resistance[4] += 0.01 * horizon_bonus
         self.bleed_multiplier += 0.1 * horizon_bonus
@@ -574,8 +574,8 @@ class PlayerProfile:
                     if horizon_bonus >= 80:
                         self.bleed_application += 2
         eclipse_bonus = self.player_stats[3]
-        self.elemental_damage_multiplier[6] += 0.05 * eclipse_bonus
-        self.elemental_damage_multiplier[7] += 0.05 * eclipse_bonus
+        self.elemental_multiplier[6] += 0.05 * eclipse_bonus
+        self.elemental_multiplier[7] += 0.05 * eclipse_bonus
         self.elemental_resistance[6] += 0.01 * eclipse_bonus
         self.elemental_resistance[7] += 0.01 * eclipse_bonus
         self.ultimate_multiplier += 0.1 * eclipse_bonus
@@ -588,7 +588,7 @@ class PlayerProfile:
                     if eclipse_bonus >= 80:
                         self.glyph_of_eclipse = True
         star_bonus = self.player_stats[4]
-        self.elemental_damage_multiplier[8] += 0.07 * star_bonus
+        self.elemental_multiplier[8] += 0.07 * star_bonus
         self.elemental_resistance[8] += 0.01 * star_bonus
         self.combo_multiplier += 0.03 * star_bonus
         if star_bonus >= 20:
@@ -671,16 +671,16 @@ class PlayerProfile:
             highest_index = temp_list.index(max(temp_list))
             return highest_index
         if frostfire_bonus >= 80:
-            self.elemental_damage_multiplier[0] *= 3
-            self.elemental_damage_multiplier[5] *= 3
+            self.elemental_multiplier[0] *= 3
+            self.elemental_multiplier[5] *= 3
             self.elemental_penetration[0] *= 3
             self.elemental_penetration[5] *= 3
             self.elemental_curse[0] *= 3
             self.elemental_curse[5] *= 3
         if frostfire_bonus >= 20:
-            location = check_cascade(self.elemental_damage_multiplier)
-            self.elemental_damage_multiplier[location] += self.elemental_damage_multiplier[0]
-            self.elemental_damage_multiplier[location] += self.elemental_damage_multiplier[5]
+            location = check_cascade(self.elemental_multiplier)
+            self.elemental_multiplier[location] += self.elemental_multiplier[0]
+            self.elemental_multiplier[location] += self.elemental_multiplier[5]
         if frostfire_bonus >= 40:
             location = check_cascade(self.elemental_penetration)
             self.elemental_penetration[location] += self.elemental_penetration[0]
@@ -693,16 +693,21 @@ class PlayerProfile:
             self.elemental_capacity += self.elemental_application
             if self.elemental_capacity > 9:
                 self.elemental_capacity = 9
-        elemental_breakdown = []
+        # Apply omni multipliers.
         for x in range(9):
-            self.elemental_damage_multiplier[x] += self.all_elemental_multiplier
+            self.elemental_multiplier[x] += self.all_elemental_multiplier
             self.elemental_penetration[x] += self.all_elemental_penetration
             self.elemental_resistance[x] += self.all_elemental_resistance
             self.elemental_curse[x] += self.all_elemental_curse
             if self.elemental_resistance[x] >= 0.9:
                 self.elemental_resistance[x] = 0.9
+            # Apply unique resistance conversion.
+            self.elemental_multiplier[x] += self.elemental_resistance[x] * int(round(self.unique_conversion[0] * 100))
         for y in range(5):
             self.banes[y] += self.banes[5]
+        # Calculate unique conversions
+        for x in range(9):
+            self.final_damage += int(round(self.player_mHP / 10)) * self.unique_conversion[1]
 
     def get_player_initial_damage(self):
         initial_damage = self.player_damage
@@ -736,7 +741,7 @@ class PlayerProfile:
             temp_element_list = e_weapon.item_elements.copy()
         for idx, x in enumerate(temp_element_list):
             if x == 1:
-                self.elemental_damage[idx] = adjusted_damage * (1 + self.elemental_damage_multiplier[idx])
+                self.elemental_damage[idx] = adjusted_damage * (1 + self.elemental_multiplier[idx])
                 resist_multi = combat.boss_defences("Element", self, boss_object, idx)
                 penetration_multi = 1 + self.elemental_penetration[idx]
                 self.elemental_damage[idx] *= resist_multi * penetration_multi
@@ -774,14 +779,14 @@ class PlayerProfile:
                 if tarot_card.card_variant == 1:
                     self.elemental_resistance[5] += card_multiplier * 15
                 else:
-                    self.elemental_damage_multiplier[5] += card_multiplier * 25
+                    self.elemental_multiplier[5] += card_multiplier * 25
             case 1:
                 if tarot_card.card_variant == 1:
                     self.elemental_resistance[0] += card_multiplier * 10
                     self.elemental_resistance[5] += card_multiplier * 10
                 else:
-                    self.elemental_damage_multiplier[0] += card_multiplier * 15
-                    self.elemental_damage_multiplier[5] += card_multiplier * 15
+                    self.elemental_multiplier[0] += card_multiplier * 15
+                    self.elemental_multiplier[5] += card_multiplier * 15
             case 2:
                 if tarot_card.card_variant == 1:
                     self.elemental_penetration[8] += card_multiplier * 25
@@ -821,7 +826,7 @@ class PlayerProfile:
                 if tarot_card.card_variant == 1:
                     self.elemental_resistance[2] += card_multiplier * 15
                 else:
-                    self.elemental_damage_multiplier[2] += card_multiplier * 25
+                    self.elemental_multiplier[2] += card_multiplier * 25
             case 10:
                 if tarot_card.card_variant == 1:
                     self.combo_multiplier += card_multiplier * 25
@@ -863,21 +868,21 @@ class PlayerProfile:
                 if tarot_card.card_variant == 1:
                     self.elemental_resistance[8] += card_multiplier * 15
                 else:
-                    self.elemental_damage_multiplier[8] += card_multiplier * 25
+                    self.elemental_multiplier[8] += card_multiplier * 25
             case 18:
                 if tarot_card.card_variant == 1:
                     self.elemental_resistance[6] += card_multiplier * 15
                 else:
-                    self.elemental_damage_multiplier[6] += card_multiplier * 25
+                    self.elemental_multiplier[6] += card_multiplier * 25
             case 19:
                 if tarot_card.card_variant == 1:
                     self.elemental_resistance[7] += card_multiplier * 15
                 else:
-                    self.elemental_damage_multiplier[7] += card_multiplier * 25
+                    self.elemental_multiplier[7] += card_multiplier * 25
             case 20:
                 if tarot_card.card_variant == 1:
-                    self.elemental_damage_multiplier[4] += card_multiplier * 15
-                    self.elemental_damage_multiplier[3] += card_multiplier * 15
+                    self.elemental_multiplier[4] += card_multiplier * 15
+                    self.elemental_multiplier[3] += card_multiplier * 15
                 else:
                     self.elemental_penetration[4] += card_multiplier * 20
                     self.elemental_penetration[3] += card_multiplier * 20
@@ -885,7 +890,7 @@ class PlayerProfile:
                 if tarot_card.card_variant == 1:
                     self.elemental_resistance[3] += card_multiplier * 15
                 else:
-                    self.elemental_damage_multiplier[3] += card_multiplier * 25
+                    self.elemental_multiplier[3] += card_multiplier * 25
             case 22:
                 if tarot_card.card_variant == 1:
                     self.all_elemental_curse += card_multiplier * 30
@@ -990,7 +995,7 @@ class PlayerProfile:
                         self.banes[4] += 0.5
                 case "G":
                     buff_type_loc = globalitems.element_special_names.index(keywords[0])
-                    self.elemental_damage_multiplier[buff_type_loc] += 0.25
+                    self.elemental_multiplier[buff_type_loc] += 0.25
                 case "C":
                     buff_type_loc = globalitems.element_special_names.index(keywords[0])
                     self.elemental_penetration[buff_type_loc] += 0.25
