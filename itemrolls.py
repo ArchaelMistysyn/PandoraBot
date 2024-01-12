@@ -109,20 +109,20 @@ shared_unique_rolls = {
 }
 
 weapon_unique_rolls = {
-    "unique-0-w": ["1% Chance for trigger Annihilator X", 1, 1, [["specialty_rate", 0]]],
-    "unique-1-w": ["X% of Non-Fire Damage Converted to Fire Damage", 10, 10, [["elemental_conversion", 0]]],
-    "unique-2-w": ["X% of Non-Water Damage Converted to Water Damage", 10, 10, [["elemental_conversion", 1]]],
-    "unique-3-w": ["X% of Non-Lightning Damage Converted to Lightning Damage", 10, 10, [["elemental_conversion", 2]]],
-    "unique-4-w": ["X% of Non-Earth Damage Converted to Earth Damage", 10, 10, [["elemental_conversion", 3]]],
-    "unique-5-w": ["X% of Non-Wind Damage Converted to Wind Damage", 10, 10, [["elemental_conversion", 4]]],
-    "unique-6-w": ["X% of Non-Ice Damage Converted to Ice Damage", 10, 10, [["elemental_conversion", 5]]],
-    "unique-7-w": ["X% of Non-Shadow Damage Converted to Shadow Damage", 10, 10, [["elemental_conversion", 6]]],
-    "unique-8-w": ["X% of Non-Light Damage Converted to Light Damage", 10, 10, [["elemental_conversion", 7]]],
-    "unique-9-w": ["X% of Non-Celestial Damage Converted to Celestial Damage", 10, 10, [["elemental_conversion", 8]]],
-    "unique-10-w": ["X% Hybrid Conversion (Eclipse)", 7, 5, [["elemental_conversion", 7], ["elemental_conversion", 6]]],
-    "unique-11-w": ["X% Hybrid Conversion (Horizon)", 7, 5, [["elemental_conversion", 4], ["elemental_conversion", 3]]],
-    "unique-12-w": ["X% Hybrid Conversion (Frostfire)", 7, 5, [["elemental_conversion", 5], ["elemental_conversion", 0]]],
-    "unique-13-w": ["X% Hybrid Conversion (Storm)", 7, 5, [["elemental_conversion", 1], ["elemental_conversion", 2]]]
+    "unique-0-w": ["X% Chance for trigger Annihilator on hit", 1, 1, [["specialty_rate", 0]]],
+    "unique-1-w": ["X% Less Non-Fire Damage, X% More Fire Damage", 15, 10, [["elemental_conversion", 0]]],
+    "unique-2-w": ["X% Less Non-Water Damage, X% More Water Damage", 15, 10, [["elemental_conversion", 1]]],
+    "unique-3-w": ["X% Less Non-Lightning Damage, X% More Lightning Damage", 15, 10, [["elemental_conversion", 2]]],
+    "unique-4-w": ["X% Less Non-Earth Damage, X% More Earth Damage", 15, 10, [["elemental_conversion", 3]]],
+    "unique-5-w": ["X% Less Non-Wind Damage, X% More Wind Damage", 15, 10, [["elemental_conversion", 4]]],
+    "unique-6-w": ["X% Less Non-Ice Damage, X% More Ice Damage", 15, 10, [["elemental_conversion", 5]]],
+    "unique-7-w": ["X% Less Non-Shadow Damage, X% More Shadow Damage", 15, 10, [["elemental_conversion", 6]]],
+    "unique-8-w": ["X% Less Non-Light Damage, X% More Light Damage", 15, 10, [["elemental_conversion", 7]]],
+    "unique-9-w": ["X% Less Non-Celestial Damage, X% More Celestial Damage", 15, 10, [["elemental_conversion", 8]]],
+    "unique-10-w": ["X% Less Non-Eclipse Damage, X% More Eclipse Damage", 10, 5, [["elemental_conversion", (6, 7)]]],
+    "unique-11-w": ["X% Less Non-Horizon Damage, X% More Horizon Damage", 10, 5, [["elemental_conversion", (3, 4)]]],
+    "unique-12-w": ["X% Less Non-Frostfire Damage, X% More Frostfire Damage", 10, 5, [["elemental_conversion", (0, 5)]]],
+    "unique-13-w": ["X% Less Non-Storm Damage, X% More Storm Damage", 10, 5, [["elemental_conversion", (1, 2)]]]
 }
 
 armour_unique_rolls = {
@@ -539,15 +539,37 @@ def assign_roll_values(player_object, equipped_item):
             roll_data = roll_list[current_roll.roll_code][3]
         else:
             roll_data = item_roll_master_dict[current_roll.roll_category][0][current_roll.roll_code][3]
-        # Update all the attributes associated with the roll.
-        for attribute_info in roll_data:
-            attribute_name, attribute_position = attribute_info
-            if attribute_position == -1:
-                setattr(player_object, attribute_name, getattr(player_object, attribute_name) + current_roll.roll_value)
-            else:
-                target_list = getattr(player_object, attribute_name)
-                target_list[attribute_position] += current_roll.roll_value
+        # Check for exception rolls that require special handling.
+        if not handle_roll_exceptions(player_object, current_roll, roll_data):
+            # Update all the attributes associated with the roll.
+            for attribute_info in roll_data:
+                attribute_name, attribute_position = attribute_info
+                if attribute_position == -1:
+                    setattr(player_object, attribute_name, getattr(player_object, attribute_name) + current_roll.roll_value)
+                else:
+                    target_list = getattr(player_object, attribute_name)
+                    target_list[attribute_position] += current_roll.roll_value
+
     assign_item_element_stats(player_object, equipped_item)
+
+
+def handle_roll_exceptions(player_object, selected_roll, selected_data):
+    if "elemental_conversion" in selected_data[0]:
+        attribute_name, attribute_position = selected_data[0]
+        target_list = getattr(player_object, attribute_name)
+        # Apply more multipliers.
+        if isinstance(attribute_position, tuple):
+            other_positions = [i for i in range(len(target_list)) if i not in attribute_position]
+            for position in attribute_position:
+                target_list[position] += selected_roll.roll_value
+        else:
+            target_list[position] += selected_roll.roll_value
+        # Apply less multipliers.
+        for position in other_positions:
+            other_positions = [i for i in range(len(target_list)) if i != attribute_position]
+            target_list[position] -= selected_roll.roll_value
+        return True
+    return False
 
 
 def assign_item_element_stats(player_object, equipped_item):

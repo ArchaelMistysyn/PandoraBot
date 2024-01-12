@@ -146,8 +146,7 @@ class CustomItem:
         self.item_num_stars = self.item_tier
 
         # Initialize single default values
-        self.item_id = 0
-        self.item_name = ""
+        self.item_id, self.item_name = 0, ""
         self.item_enhancement = 0
         self.item_elements = [0, 0, 0, 0, 0, 0, 0, 0, 0]
 
@@ -164,9 +163,7 @@ class CustomItem:
         self.generate_base()
 
         # Generate base damage.
-        random_damage1, random_damage2 = get_tier_damage(self.item_tier, self.item_type)
-        self.base_damage_min = random_damage1
-        self.base_damage_max = random_damage2
+        self.base_damage_min, self.base_damage_max = get_tier_damage(self.item_tier, self.item_type)
         self.update_damage()
 
         # Add an element to non-gem items and set the name.
@@ -617,13 +614,8 @@ def get_tier_damage(item_tier, item_type):
                         [1, 25000], [1, 100000], [1, 500000]]
     damage_values = damage_tier_list[item_tier - 1]
     damage_adjust = 2 if item_type == "W" else 1
-    random_damage1 = random.randint(damage_values[0], damage_values[1]) * damage_adjust
-    random_damage2 = random.randint(damage_values[0], damage_values[1]) * damage_adjust
-    if random_damage2 < random_damage1:
-        temp_damage = random_damage1
-        random_damage1 = random_damage2
-        random_damage2 = temp_damage
-    return random_damage1, random_damage2
+    temp_damage = [random.randint(damage_values[0], damage_values[1]) * damage_adjust for _ in range(2)]
+    return min(temp_damage), max(temp_damage)
 
 
 # write item to inventory

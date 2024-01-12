@@ -214,9 +214,12 @@ class PvPCog(commands.Cog):
                                                        combo_count[attacker], False)
         scaled_damage = self.scale_damage(role, combatant, hit_damage)
         scaled_damage, status_msg = combat.check_lock(combatant[attacker], tracker[attacker], scaled_damage)
+        scaled_damage, second_msg = combat.check_annihilator(combatant[attacker], scaled_damage)
         hit_msg = f"{combatant[attacker].player_username} - {combo_count[attacker]}x Combo: {skill_name} {globalitems.number_conversion(scaled_damage)}"
         if status_msg != "":
             hit_msg += f" *{status_msg}*"
+        if second_msg != "":
+            hit_msg += f" *{second_msg}*"
         if critical_type != "":
             hit_msg += f" *{critical_type}*"
         hit_list.append([scaled_damage, hit_msg])
@@ -237,9 +240,12 @@ class PvPCog(commands.Cog):
                                                            combo_count[attacker], True)
             scaled_damage = self.scale_damage(role, combatant, hit_damage)
             scaled_damage, status_msg = combat.check_lock(combatant[attacker], tracker[attacker], scaled_damage)
+            scaled_damage, second_msg = combat.check_annihilator(combatant[attacker], scaled_damage)
             hit_msg = f"{combatant[attacker].player_username} - Ultimate: {skill_name} {globalitems.number_conversion(scaled_damage)}"
             if status_msg != "":
                 hit_msg += f" *{status_msg}*"
+            if second_msg != "":
+                hit_msg += f" *{second_msg}*"
             if critical_type != "":
                 hit_msg += f" *{critical_type}*"
             hit_list.append([scaled_damage, hit_msg])

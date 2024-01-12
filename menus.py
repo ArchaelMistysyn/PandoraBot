@@ -44,7 +44,7 @@ advanced_guide += "\n4. "
 advanced_guide += "\n5."
 advanced_guide += "\n6. After clearing quest 23 you can use /purify to upgrade items past tier 5."
 advanced_guide += "\n7. After clearing quest 26 you can use /fountain to upgrade tier 6 and higher items."
-advanced_guide += "\n7. "
+advanced_guide += "\n7. You can use /scribe to customize perfect items."
 guide_dict = {0: ["Beginner Guide", starter_guide],
               1: ["Intermediate Guide", intermediate_guide],
               2: ["Advanced Guide", advanced_guide]}

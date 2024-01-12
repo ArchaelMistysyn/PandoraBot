@@ -37,77 +37,60 @@ def normalize_username(unfiltered_username):
 
 class PlayerProfile:
     def __init__(self):
-        self.player_id = 0
-        self.player_name = ""
-        self.player_username = ""
-        self.player_stamina = 0
-        self.player_exp = 0
-        self.player_lvl = 0
-        self.player_echelon = 0
+
+        # Initialize player base info.
+        self.player_id, self.player_name, self.player_username = 0, "", ""
+        self.player_exp, self.player_lvl, self.player_echelon = 0, 0, 0
+        self.player_class = ""
+        self.player_quest = 0
+        self.player_coins, self.player_stamina, self.vouch_points = 0, 0, 0
+
+        # Initialize player gear/stats info.
         self.player_stats = [0, 0, 0, 0, 0, 0]
         self.player_glyphs = ""
         self.player_equipped = [0, 0, 0, 0, 0]
-        self.equipped_tarot = ""
-        self.insignia = ""
-        self.player_coins = 0
-        self.player_class = ""
-        self.player_quest = 0
-        self.vouch_points = 0
+        self.equipped_tarot, self.insignia = "", ""
 
+        # Initialize player health stats.
         self.player_mHP = 1000
         self.player_cHP = self.player_mHP
         self.immortal = False
 
-        self.player_damage = 0.0
-        self.player_total_damage = 0.0
+        # Initialize player damage values.
+        self.player_damage, self.player_total_damage = 0.0, 0.0
+
+        # Initialize elemental stats.
         self.elemental_damage = [0, 0, 0, 0, 0, 0, 0, 0, 0]
-        self.elemental_conversion = [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
         self.elemental_multiplier = [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
         self.elemental_penetration = [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
-        self.all_elemental_multiplier = 0.0
-        self.all_elemental_penetration = 0.0
+        self.elemental_curse = [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+        self.elemental_conversion = [1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0]
+        self.all_elemental_multiplier, self.all_elemental_penetration, self.all_elemental_curse = 0.0, 0.0, 0.0
+        self.aura = 0.0
+
+        # Initialize class specialization stats.
+        self.glyph_of_eclipse = False
+        self.temporal_application = 0
+        self.elemental_capacity, self.elemental_application = 3, 0
+        self.bleed_multiplier, self.bleed_penetration, self.bleed_application = 0.0, 0.0, 0
+        self.combo_multiplier, self.combo_penetration, self.combo_application = 0.05, 0.0, 0
+        self.ultimate_multiplier, self.ultimate_penetration, self.ultimate_application = 0.0, 0.0, 0
+        self.critical_chance, self.critical_multiplier = 0.0, 1.0
+        self.critical_penetration, self.critical_application = 0.0, 0
+
+        # Initialize misc stats.
+        self.banes = [0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+        self.skill_base_damage_bonus = [0, 0, 0, 0]
+        self.specialty_rate = [0.0, 0.0, 0.0, 0.0, 0.0]
+        self.unique_conversion = [0.0, 0.0]
+        self.attack_speed = 0.0
+        self.bonus_hits = 0.0
         self.defence_penetration = 0.0
         self.class_multiplier = 0.0
         self.final_damage = 0.0
 
-        self.elemental_capacity = 3
-        self.elemental_application = 0
-
-        self.combo_multiplier = 0.05
-        self.combo_penetration = 0.0
-        self.combo_application = 0
-
-        self.bleed_application = 0
-        self.bleed_multiplier = 0.0
-        self.bleed_penetration = 0.0
-
-        self.glyph_of_eclipse = False
-        self.ultimate_multiplier = 0.0
-        self.ultimate_penetration = 0.0
-        self.ultimate_application = 0
-
-        self.temporal_application = 0
-
-        self.specialty_rate = [0.0, 0.0, 0.0, 0.0, 0.0]
-        self.unique_conversion = [0.0, 0.0]
-        self.banes = [0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
-        self.skill_base_damage_bonus = [0, 0, 0, 0]
-
-        self.critical_chance = 0.0
-        self.critical_multiplier = 0.0
-        self.critical_penetration = 0.0
-        self.critical_application = 0
-
-        self.attack_speed = 0.0
-        self.bonus_hits = 0.0
-
-        self.aura = 0.0
-        self.elemental_curse = [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
-        self.all_elemental_curse = 0.0
-
-        self.hp_bonus = 0.0
-        self.hp_regen = 0.0
-        self.hp_multiplier = 0.0
+        # Initialize defensive stats.
+        self.hp_bonus, self.hp_regen, self.hp_multiplier = 0.0, 0.0, 0.0
         self.damage_mitigation = 0.0
         self.mitigation_multiplier = 0.0
         self.elemental_resistance = [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
@@ -117,53 +100,40 @@ class PlayerProfile:
         return str(self.player_name)
 
     def reset_multipliers(self):
-        self.player_damage = 0.0
-        self.player_total_damage = 0.0
+        self.player_damage, self.player_total_damage = 0.0, 0.0
+
+        # Initialize elemental stats.
         self.elemental_damage = [0, 0, 0, 0, 0, 0, 0, 0, 0]
         self.elemental_multiplier = [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
         self.elemental_penetration = [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
-        self.all_elemental_multiplier = 0.0
-        self.all_elemental_penetration = 0.0
+        self.elemental_curse = [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+        self.elemental_conversion = [1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0]
+        self.all_elemental_multiplier, self.all_elemental_penetration, self.all_elemental_curse = 0.0, 0.0, 0.0
+        self.aura = 0.0
+
+        # Initialize class specialization stats.
+        self.glyph_of_eclipse = False
+        self.temporal_application = 0
+        self.elemental_capacity, self.elemental_application = 3, 0
+        self.bleed_multiplier, self.bleed_penetration, self.bleed_application = 0.0, 0.0, 0
+        self.combo_multiplier, self.combo_penetration, self.combo_application = 0.05, 0.0, 0
+        self.ultimate_multiplier, self.ultimate_penetration, self.ultimate_application = 0.0, 0.0, 0
+        self.critical_chance, self.critical_multiplier = 0.0, 1.0
+        self.critical_penetration, self.critical_application = 0.0, 0
+
+        # Initialize misc stats.
+        self.banes = [0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+        self.skill_base_damage_bonus = [0, 0, 0, 0]
+        self.specialty_rate = [0.0, 0.0, 0.0, 0.0, 0.0]
+        self.unique_conversion = [0.0, 0.0]
+        self.attack_speed = 0.0
+        self.bonus_hits = 0.0
         self.defence_penetration = 0.0
         self.class_multiplier = 0.0
         self.final_damage = 0.0
 
-        self.elemental_capacity = 3
-        self.elemental_application = 0
-
-        self.combo_multiplier = 0.05
-        self.combo_penetration = 0.0
-        self.combo_application = 0
-
-        self.bleed_application = 0
-        self.bleed_multiplier = 0.00
-        self.bleed_penetration = 0.0
-
-        self.glyph_of_eclipse = False
-        self.ultimate_multiplier = 0.0
-        self.ultimate_penetration = 0.0
-        self.ultimate_application = 0
-
-        self.temporal_application = 0
-
-        self.banes = [0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
-        self.skill_base_damage_bonus = [0, 0, 0, 0]
-
-        self.critical_chance = 0.0
-        self.critical_multiplier = 1.0
-        self.critical_penetration = 0.0
-        self.critical_application = 0
-
-        self.attack_speed = 0.0
-        self.bonus_hits = 0.0
-
-        self.aura = 0.0
-        self.elemental_curse = [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
-        self.all_elemental_curse = 0.0
-
-        self.hp_bonus = 0.0
-        self.hp_regen = 0.0
-        self.hp_multiplier = 0.0
+        # Initialize defensive stats.
+        self.hp_bonus, self.hp_regen, self.hp_multiplier = 0.0, 0.0, 0.0
         self.damage_mitigation = 0.0
         self.mitigation_multiplier = 0.0
         self.elemental_resistance = [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
@@ -188,7 +158,7 @@ class PlayerProfile:
             stats += f"\nAttack Speed: {round(math.floor(self.attack_speed * 10) / 10, 1)} / min"
             for x in range(9):
                 total_multi = (1 + self.elemental_multiplier[x]) * (1 + self.elemental_penetration[x])
-                total_multi *= (1 + self.elemental_curse[x]) * (1 + self.aura)
+                total_multi *= (1 + self.elemental_curse[x]) * (1 + self.aura) * self.elemental_conversion[x]
                 element_multipliers.append((x, total_multi * 100))
             spread = sorted(element_multipliers, key=lambda k: k[1], reverse=True)
             for y, total_multi in spread:
@@ -222,7 +192,7 @@ class PlayerProfile:
             element_breakdown = []
             for x in range(9):
                 total_multi = (1 + self.elemental_multiplier[x]) * (1 + self.elemental_penetration[x])
-                total_multi *= (1 + self.elemental_curse[x])
+                total_multi *= (1 + self.elemental_curse[x]) * self.elemental_conversion[x]
                 element_breakdown.append((x, total_multi * 100))
             sorted_element_breakdown = sorted(element_breakdown, key=lambda v: v[1], reverse=True)
             for z, total_multi in sorted_element_breakdown:
@@ -539,76 +509,69 @@ class PlayerProfile:
                 pass
 
         # Path Multipliers
+        thresholds = [20, 40, 60, 80]
+        increments = [1, 1, 1, 2]
+
+        # Storm Path
         storm_bonus = self.player_stats[0]
         self.elemental_multiplier[1] += 0.05 * storm_bonus
         self.elemental_multiplier[2] += 0.05 * storm_bonus
         self.elemental_resistance[1] += 0.01 * storm_bonus
         self.elemental_resistance[2] += 0.01 * storm_bonus
         self.critical_multiplier += 0.03 * storm_bonus
-        if storm_bonus >= 20:
-            self.critical_application += 1
-            if storm_bonus >= 40:
-                self.critical_application += 1
-                if storm_bonus >= 60:
-                    self.critical_application += 1
-                    if storm_bonus >= 80:
-                        self.critical_application += 2
-        frostfire_bonus = self.player_stats[1]
-        self.elemental_multiplier[5] += 0.05 * frostfire_bonus
-        self.elemental_multiplier[0] += 0.05 * frostfire_bonus
-        self.elemental_resistance[5] += 0.01 * frostfire_bonus
-        self.elemental_resistance[0] += 0.01 * frostfire_bonus
-        self.class_multiplier += 0.01 * frostfire_bonus
+        for threshold, increment in zip(thresholds, increments):
+            if storm_bonus >= threshold:
+                self.critical_application += increment
+
+        # Horizon Path
         horizon_bonus = self.player_stats[2]
         self.elemental_multiplier[3] += 0.05 * horizon_bonus
         self.elemental_multiplier[4] += 0.05 * horizon_bonus
         self.elemental_resistance[3] += 0.01 * horizon_bonus
         self.elemental_resistance[4] += 0.01 * horizon_bonus
         self.bleed_multiplier += 0.1 * horizon_bonus
-        if horizon_bonus >= 20:
-            self.bleed_application += 1
-            if horizon_bonus >= 40:
-                self.bleed_application += 1
-                if horizon_bonus >= 60:
-                    self.bleed_application += 1
-                    if horizon_bonus >= 80:
-                        self.bleed_application += 2
+        for threshold, increment in zip(thresholds, increments):
+            if horizon_bonus >= threshold:
+                self.bleed_application += increment
+
+        # Frostfire Path
+        frostfire_bonus = self.player_stats[1]
+        self.elemental_multiplier[5] += 0.05 * frostfire_bonus
+        self.elemental_multiplier[0] += 0.05 * frostfire_bonus
+        self.elemental_resistance[5] += 0.01 * frostfire_bonus
+        self.elemental_resistance[0] += 0.01 * frostfire_bonus
+        self.class_multiplier += 0.01 * frostfire_bonus
+
+        # Eclipse Path
         eclipse_bonus = self.player_stats[3]
         self.elemental_multiplier[6] += 0.05 * eclipse_bonus
         self.elemental_multiplier[7] += 0.05 * eclipse_bonus
         self.elemental_resistance[6] += 0.01 * eclipse_bonus
         self.elemental_resistance[7] += 0.01 * eclipse_bonus
         self.ultimate_multiplier += 0.1 * eclipse_bonus
-        if eclipse_bonus >= 20:
-            self.ultimate_application += 1
-            if eclipse_bonus >= 40:
-                self.ultimate_application += 1
-                if eclipse_bonus >= 60:
-                    self.ultimate_application += 1
-                    if eclipse_bonus >= 80:
-                        self.glyph_of_eclipse = True
+        for threshold, increment in zip(thresholds, increments):
+            if eclipse_bonus >= threshold:
+                if eclipse_bonus >= 80:
+                    self.glyph_of_eclipse = True
+                else:
+                    self.ultimate_application += increment
+
+        # Confluence Path
+        confluence_bonus = self.player_stats[5]
+        self.aura += 0.01 * confluence_bonus
+        for threshold, increment in zip(thresholds, increments):
+            if confluence_bonus >= threshold:
+                self.elemental_application += increment + 1
+
+        # Star Path
+        star_increments = [0.5, 0.75, 1, 1.5]
         star_bonus = self.player_stats[4]
         self.elemental_multiplier[8] += 0.07 * star_bonus
         self.elemental_resistance[8] += 0.01 * star_bonus
         self.combo_multiplier += 0.03 * star_bonus
-        if star_bonus >= 20:
-            self.skill_base_damage_bonus[0] += 0.5
-            if star_bonus >= 40:
-                self.skill_base_damage_bonus[1] += 0.75
-                if star_bonus >= 60:
-                    self.skill_base_damage_bonus[2] += 1
-                    if star_bonus >= 80:
-                        self.skill_base_damage_bonus[2] += 1.5
-        confluence_bonus = self.player_stats[5]
-        self.aura += 0.01 * confluence_bonus
-        if confluence_bonus >= 20:
-            self.elemental_application += 2
-            if confluence_bonus >= 40:
-                self.elemental_application += 2
-                if confluence_bonus >= 60:
-                    self.elemental_application += 2
-                    if confluence_bonus >= 80:
-                        self.elemental_application += 3
+        for index, (threshold, increment) in enumerate(zip(thresholds, star_increments)):
+            if star_bonus >= threshold:
+                self.skill_base_damage_bonus[index] += increment
 
         # Item Multipliers
         e_item = []
@@ -663,13 +626,14 @@ class PlayerProfile:
         self.class_multiplier += 0.05
         self.class_multiplier *= match_count
 
-        # Elemental Calculations
-        def check_cascade(input_list):
-            temp_list = input_list.copy()
-            temp_list[0] = 0
-            temp_list[5] = 0
-            highest_index = temp_list.index(max(temp_list))
-            return highest_index
+        # Frostfire Path
+        def apply_cascade(bonus, data_list, cascade_breakpoint):
+            if bonus >= cascade_breakpoint:
+                temp_list = data_list.copy()
+                temp_list[0], temp_list[5] = 0, 0
+                highest_index = temp_list.index(max(temp_list))
+                data_list[highest_index] += data_list[0] + data_list[5]
+
         if frostfire_bonus >= 80:
             self.elemental_multiplier[0] *= 3
             self.elemental_multiplier[5] *= 3
@@ -677,22 +641,16 @@ class PlayerProfile:
             self.elemental_penetration[5] *= 3
             self.elemental_curse[0] *= 3
             self.elemental_curse[5] *= 3
-        if frostfire_bonus >= 20:
-            location = check_cascade(self.elemental_multiplier)
-            self.elemental_multiplier[location] += self.elemental_multiplier[0]
-            self.elemental_multiplier[location] += self.elemental_multiplier[5]
-        if frostfire_bonus >= 40:
-            location = check_cascade(self.elemental_penetration)
-            self.elemental_penetration[location] += self.elemental_penetration[0]
-            self.elemental_penetration[location] += self.elemental_penetration[5]
-        if frostfire_bonus >= 60:
-            location = check_cascade(self.elemental_curse)
-            self.elemental_curse[location] += self.elemental_curse[0]
-            self.elemental_curse[location] += self.elemental_curse[5]
+        apply_cascade(frostfire_bonus, self.elemental_multiplier, 20)
+        apply_cascade(frostfire_bonus, self.elemental_penetration, 40)
+        apply_cascade(frostfire_bonus, self.elemental_curse, 60)
+
+        # Elemental Calculations
         if self.elemental_application > 0:
             self.elemental_capacity += self.elemental_application
             if self.elemental_capacity > 9:
                 self.elemental_capacity = 9
+
         # Apply omni multipliers.
         for x in range(9):
             self.elemental_multiplier[x] += self.all_elemental_multiplier
@@ -744,7 +702,7 @@ class PlayerProfile:
                 self.elemental_damage[idx] = adjusted_damage * (1 + self.elemental_multiplier[idx])
                 resist_multi = combat.boss_defences("Element", self, boss_object, idx)
                 penetration_multi = 1 + self.elemental_penetration[idx]
-                self.elemental_damage[idx] *= resist_multi * penetration_multi
+                self.elemental_damage[idx] *= resist_multi * penetration_multi * self.elemental_conversion[idx]
         subtotal_damage = sum(self.elemental_damage) * (1 + boss_object.aura)
         subtotal_damage *= combat.boss_true_mitigation(boss_object)
         adjusted_damage = int(subtotal_damage)
@@ -1001,6 +959,7 @@ class PlayerProfile:
                     self.elemental_penetration[buff_type_loc] += 0.25
                 case _:
                     pass
+
     def check_cooldown(self, command_name):
         difference = None
         try:

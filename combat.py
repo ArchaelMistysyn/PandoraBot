@@ -122,9 +122,12 @@ def run_cycle(combat_tracker, active_boss, player_object, method):
                 damage = active_boss.damage_cap
                 extension = " *LIMIT*"
             damage, status_msg = check_lock(player_object, combat_tracker, damage)
+            damage, second_msg = check_annihilator(player_object, damage)
             hit_msg = f"{combo_count}x Combo: {skill_name} {globalitems.number_conversion(damage)}{extension}"
             if status_msg != "":
                 hit_msg += f" *{status_msg}*"
+            if second_msg != "":
+                hit_msg += f" *{second_msg}*"
             if critical_type != "":
                 hit_msg += f" *{critical_type}*"
             hit_list.append([damage, hit_msg])
@@ -139,9 +142,12 @@ def run_cycle(combat_tracker, active_boss, player_object, method):
                     damage = active_boss.damage_cap
                     extension = " *LIMIT*"
                 damage, status_msg = check_lock(player_object, combat_tracker, damage)
+                damage, second_msg = check_annihilator(player_object, damage)
                 hit_msg = f"Ultimate: {skill_name} {globalitems.number_conversion(damage)}{extension}"
                 if status_msg != "":
                     hit_msg += f" *{status_msg}*"
+                if second_msg != "":
+                    hit_msg += f" *{second_msg}*"
                 if critical_type != "":
                     hit_msg += f" *{critical_type}*"
                 hit_list.append([damage, hit_msg])
@@ -265,10 +271,20 @@ def get_item_tier_damage(material_tier):
     return damage_temp
 
 
+def check_annihilator(player_object, input_damage):
+    status_msg = ""
+    damage = input_damage
+    random_num = random.randint(1, 100)
+    if random_num <= player_object.specialty_rate[0]:
+        damage *= 10
+        status_msg = "ANNIHILATOR"
+    return damage, status_msg
+
+
 def check_lock(player_object, combat_tracker, damage):
     status_msg = ""
     if combat_tracker.time_lock == 0:
-        lock_rate = 5 * player_object.temporal_application + int(round(self.specialty_rate[3] * 100))
+        lock_rate = 5 * player_object.temporal_application + int(round(player_object.specialty_rate[3] * 100))
         random_lock_chance = random.randint(1, 100)
         if random_lock_chance <= lock_rate:
             combat_tracker.time_lock = player_object.temporal_application + 1
@@ -308,12 +324,12 @@ def boss_true_mitigation(boss_object):
 def critical_check(player_object, player_damage, num_elements):
     # Critical hits
     random_num = random.randint(1, 100)
-    if random_num <= (player_object.elemental_application * 5 + int(round(self.specialty_rate[2] * 100))):
+    if random_num <= (player_object.elemental_application * 5 + int(round(player_object.specialty_rate[2] * 100))):
         player_damage *= num_elements
         critical_type = "FRACTAL"
     elif random_num < player_object.critical_chance:
         player_damage *= (1 + player_object.critical_multiplier)
-        omega_chance = player_object.critical_application * 10 + int(round(self.specialty_rate[1] * 100))
+        omega_chance = player_object.critical_application * 10 + int(round(player_object.specialty_rate[1] * 100))
         omega_check = random.randint(1, 100)
         if omega_check <= omega_chance:
             critical_type = "OMEGA CRITICAL"
@@ -368,7 +384,7 @@ def pvp_defences(attacker, defender, player_damage, e_weapon):
             attacker.elemental_damage[idx] = adjusted_damage * (1 + attacker.elemental_multiplier[idx])
             resist_multi = 1 - defender.elemental_resistance[idx]
             penetration_multi = 1 + attacker.elemental_penetration[idx]
-            attacker.elemental_damage[idx] *= resist_multi * penetration_multi
+            attacker.elemental_damage[idx] *= resist_multi * penetration_multi * attacker.elemental_conversion[idx]
     subtotal_damage = sum(attacker.elemental_damage) * (1 + attacker.aura) * (1 + attacker.banes[4])
     adjusted_damage = int(subtotal_damage)
     return adjusted_damage
@@ -394,7 +410,7 @@ def pvp_bleed_damage(attacker, defender):
 
 
 def check_hyper_bleed(player_object, bleed_damage):
-    hyper_bleed_rate = player_object.bleed_application * 5 + int(round(self.specialty_rate[0] * 100))
+    hyper_bleed_rate = player_object.bleed_application * 5 + int(round(player_object.specialty_rate[0] * 100))
     bleed_check = random.randint(1, 100)
     if bleed_check <= hyper_bleed_rate:
         bleed_type = "HYPERBLEED"
