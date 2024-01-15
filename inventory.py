@@ -315,7 +315,8 @@ class CustomItem:
         default_material_names = {"W": "Iron", "A": "Iron", "Y": "Crude",  "G": "Crude", "C": "Crude"}
         default_blessing_names = {"W": "Basic", "A": "Standard", "Y": "Sparkling",  "G": "Sparkling", "C": "Clear"}
         wing_tier_variants = ["Feathered Wings", "Wonderous Wings", "Dimensional Wings", "Rift Wings"]
-        gem_names_dict = {2: ["Gem of Nature's Wrath", "Gem of Land and Sky", "Gem of the Deep"],
+        gem_names_dict = {1: ["Unknown Gem"],
+                          2: ["Gem of Nature's Wrath", "Gem of Land and Sky", "Gem of the Deep"],
                           3: ["Gem of Twilight", "Gem of Chaos", "Gem of Aurora"],
                           4: ["Gem of Dimensions", "Gem of Fate", "Gem of Dreams"],
                           5: ["Fabled Dragon Jewel - Destiny", "Fabled Dragon Jewel - Fate"],
@@ -391,6 +392,9 @@ class CustomItem:
                     if self.item_tier != 7:
                         self.item_name = f"{self.item_name} - {resonance}"
                 itemrolls.add_roll(self, 6)
+                points_type = random.randint(0, 5)
+                points_value = self.item_tier - 1 if self.item_tier != 7 else 10
+                self.item_bonus_stat = f"{points_type};{points_value}"
             case _:
                 self.item_base_type = "BASE ERROR"
 
@@ -429,7 +433,10 @@ class CustomItem:
         if self.item_base_stat != 0 and self.item_base_stat != "0":
             item_rolls = f'{base_type}{self.item_base_stat}{aux_suffix}\n'
         # Set the bonus stat text.
-        item_rolls += f"{self.item_bonus_stat}"
+        if self.item_type != "D":
+            item_rolls += f"{self.item_bonus_stat}"
+        else:
+            item_rolls += f"{get_gem_stat_message(self.item_bonus_stat)}"
         rolls_msg = itemrolls.display_rolls(self)
         for x in range(self.item_num_stars):
             display_stars += globalitems.star_icon
@@ -767,6 +774,13 @@ def custom_sort(item_id):
         return item_id[0], item_id[2], '', ''
     else:
         return item_id[0], item_id[2], item_id[1], item_id[6]
+
+
+def get_gem_stat_message(gem_bonus_code):
+    bonus_stat_details = gem_bonus_code.split(";")
+    path_name = player.path_names[int(bonus_stat_details[0])]
+    stat_message = f"Path of {path_name} +{bonus_stat_details[1]}"
+    return stat_message
 
 
 def get_gear_tier_colours(base_tier):

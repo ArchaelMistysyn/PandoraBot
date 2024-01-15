@@ -242,6 +242,7 @@ def run_discord_bot():
             if player_object.player_class != "":
                 existing_id = bosses.get_raid_id(channel_id, player_object.player_id)
                 if existing_id == 0:
+                    player_object.get_player_multipliers()
                     embed_msg = player_object.create_path_embed()
                     points_view = menus.PointsView(player_object)
                     await ctx.send(embed=embed_msg, view=points_view)

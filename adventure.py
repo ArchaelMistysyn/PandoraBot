@@ -1256,7 +1256,6 @@ class DragonRoomView(discord.ui.View):
         return embed_msg
 
 
-
 class GoldenRoomView(discord.ui.View):
     def __init__(self, expedition, room_type):
         super().__init__(timeout=None)

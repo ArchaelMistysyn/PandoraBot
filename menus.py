@@ -834,7 +834,7 @@ class StatView(discord.ui.View):
         self.player_user = player_user
         self.target_user = target_user
 
-    @discord.ui.button(label="Offensive", style=discord.ButtonStyle.blurple, emoji="⚔️")
+    @discord.ui.button(label="Offensive", style=discord.ButtonStyle.blurple)
     async def offensive_stats(self, interaction: discord.Interaction, button: discord.Button):
         try:
             if interaction.user.name == self.player_user.player_name:
@@ -843,7 +843,7 @@ class StatView(discord.ui.View):
         except Exception as e:
             print(e)
 
-    @discord.ui.button(label="Breakdown", style=discord.ButtonStyle.blurple, emoji="⚔️")
+    @discord.ui.button(label="Breakdown", style=discord.ButtonStyle.blurple)
     async def breakdown(self, interaction: discord.Interaction, button: discord.Button):
         try:
             if interaction.user.name == self.player_user.player_name:
@@ -852,7 +852,7 @@ class StatView(discord.ui.View):
         except Exception as e:
             print(e)
 
-    @discord.ui.button(label="Defensive", style=discord.ButtonStyle.blurple, emoji="🛡️")
+    @discord.ui.button(label="Defensive", style=discord.ButtonStyle.blurple)
     async def defensive_stats(self, interaction: discord.Interaction, button: discord.Button):
         try:
             if interaction.user.name == self.player_user.player_name:
@@ -861,11 +861,20 @@ class StatView(discord.ui.View):
         except Exception as e:
             print(e)
 
-    @discord.ui.button(label="Multipliers", style=discord.ButtonStyle.blurple, emoji="🔫")
-    async def bonus_stats(self, interaction: discord.Interaction, button: discord.Button):
+    @discord.ui.button(label="Multipliers", style=discord.ButtonStyle.blurple)
+    async def multiplier_stats(self, interaction: discord.Interaction, button: discord.Button):
         try:
             if interaction.user.name == self.player_user.player_name:
                 new_msg = self.target_user.get_player_stats(4)
+                await interaction.response.edit_message(embed=new_msg)
+        except Exception as e:
+            print(e)
+
+    @discord.ui.button(label="Points", style=discord.ButtonStyle.blurple)
+    async def bonus_stats(self, interaction: discord.Interaction, button: discord.Button):
+        try:
+            if interaction.user.name == self.player_user.player_name:
+                new_msg = self.target_user.get_player_stats(5)
                 await interaction.response.edit_message(embed=new_msg)
         except Exception as e:
             print(e)

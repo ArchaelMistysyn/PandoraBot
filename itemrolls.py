@@ -131,10 +131,10 @@ armour_unique_rolls = {
 }
 
 accessory_unique_rolls = {
-    "unique-0-y": ["Hyper Bleed Rate", 2, 15, [["specialty_rate", 0]]],
-    "unique-1-y": ["Omega Critical Rate", 2, 15, [["specialty_rate", 1]]],
-    "unique-2-y": ["Fractal Rate", 2, 15, [["specialty_rate", 2]]],
-    "unique-3-y": ["Time Lock Rate", 2, 15, [["specialty_rate", 3]]],
+    "unique-0-y": ["Hyper Bleed Rate", 2, 15, [["specialty_rate", 1]]],
+    "unique-1-y": ["Omega Critical Rate", 2, 15, [["specialty_rate", 2]]],
+    "unique-2-y": ["Fractal Rate", 2, 15, [["specialty_rate", 3]]],
+    "unique-3-y": ["Time Lock Rate", 2, 15, [["specialty_rate", 4]]],
     "unique-4-y": ["Fortress Bane", 25, 10, [["banes", 0]]],
     "unique-5-y": ["Dragon Bane", 25, 10, [["banes", 1]]],
     "unique-6-y": ["Demon Bane", 25, 10, [["banes", 2]]],
@@ -296,7 +296,7 @@ class SkillPurchaseView(discord.ui.View):
                     temp_num_rolls = reload_item.item_num_rolls
                     for roll_index in range(max(temp_num_rolls, self.total_rolls)):
                         # Log the tiers from the original rolls.
-                        if (roll_index + 1) >= temp_num_rolls:
+                        if (roll_index + 1) > temp_num_rolls:
                             temp_tier = 1
                         else:
                             current_roll = ItemRoll(reload_item.item_roll_values[roll_index])
@@ -479,13 +479,14 @@ def check_augment(selected_item):
 
     def split_augment(augment_total, v_augment_total, m_augment_total, roll_tier):
         temp_total = roll_tier - 1
+        extra_augments = 0
         if temp_total > 3:
             extra_augments = temp_total - 3
             if extra_augments == 1:
                 v_augment_total += 1
             if extra_augments == 2:
                 m_augment_total += 1
-            augment_total += temp_total - extra_augments
+        augment_total += temp_total - extra_augments
         return augment_total, v_augment_total, m_augment_total
 
     # check if the item has no rolls.
@@ -527,6 +528,9 @@ def assign_gem_values(player_object, e_item):
     if gem_id != 0:
         e_gem = inventory.read_custom_item(gem_id)
         player_object.player_damage += (e_gem.item_damage_min + e_gem.item_damage_max) / 2
+        if e_gem.item_bonus_stat != "":
+            bonus_stat_details = e_gem.item_bonus_stat.split(";")
+            player_object.gear_points[int(bonus_stat_details[0])] += int(bonus_stat_details[1])
         assign_roll_values(player_object, e_gem)
 
 

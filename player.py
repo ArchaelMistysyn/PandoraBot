@@ -25,6 +25,36 @@ import globalitems
 from unidecode import unidecode
 
 path_names = ["Storms", "Frostfire", "Horizon", "Eclipse", "Stars", "Confluence"]
+glyph_data = {
+            "Storms": ["Cyclone", "Critical Application +1", 20,
+                       "Vortex", "Critical Application +1", 40,
+                       "Tempest", "Critical Application +1", 60,
+                       "Maelstrom", "Critical Application +2", 80],
+            "Frostfire": ["Iceburn", "Grants Cascade Damage", 20,
+                          "Glacial Flame", "Grants Cascade Penetration", 40,
+                          "Snowy Blaze", "Grants Cascade Curse", 60,
+                          "Subzero Inferno", "Triple your fire/ice damage, penetration, and curse", 80],
+            "Horizon": ["Red Skies", "Bleed Application +1", 20,
+                        "Vermilion Dawn", "Bleed Application +1", 40,
+                        "Scarlet Sunset", "Bleed Application +1", 60,
+                        "Ruby Tears", "Bleed Application +2", 80],
+            "Eclipse": ["Umbra", "Ultimate Application +1", 20,
+                        "Shadowfall", "Ultimate Application +1", 40,
+                        "Eventide", "Ultimate Application +1", 60,
+                        "Twilight", "Basic Skills are affected by Ultimate Damage and Penetration multipliers", 80],
+            "Stars": ["Nebulas", "Basic Attack 1 Base Damage +50%", 20,
+                      "Galaxies", "Basic Attack 2 Base Damage +75%", 40,
+                      "Superclusters", "Basic Attack 3 Base Damage +100%", 60,
+                      "Universes", "Basic Attack 3 Base Damage +150%", 80],
+            "Confluence": ["Unity", "Elemental Overflow +2", 20,
+                           "Harmony", "Elemental Overflow +2", 40,
+                           "Synergy", "Elemental Overflow +2", 60,
+                           "Equilibrium", "Elemental Overflow +3", 80],
+            "Time": ["a", "Temporal Application +1", 20,
+                     "b", "Temporal Application +1", 40,
+                     "c", "Temporal Application +1", 60,
+                     "d", "Temporal Application +2", 80]
+        }
 
 
 def normalize_username(unfiltered_username):
@@ -46,7 +76,7 @@ class PlayerProfile:
         self.player_coins, self.player_stamina, self.vouch_points = 0, 0, 0
 
         # Initialize player gear/stats info.
-        self.player_stats = [0, 0, 0, 0, 0, 0]
+        self.player_stats, self.gear_points = [0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0]
         self.player_glyphs = ""
         self.player_equipped = [0, 0, 0, 0, 0]
         self.equipped_tarot, self.insignia = "", ""
@@ -101,6 +131,7 @@ class PlayerProfile:
 
     def reset_multipliers(self):
         self.player_damage, self.player_total_damage = 0.0, 0.0
+        self.gear_points = [0, 0, 0, 0, 0, 0]
 
         # Initialize elemental stats.
         self.elemental_damage = [0, 0, 0, 0, 0, 0, 0, 0, 0]
@@ -140,6 +171,7 @@ class PlayerProfile:
         self.all_elemental_resistance = 0.1
 
     def get_player_stats(self, method):
+        # Construct the header.
         echelon_colour = inventory.get_gear_tier_colours(self.player_echelon)
         resources = f'<:estamina:1145534039684562994> {self.player_username}\'s stamina: '
         resources += str(self.player_stamina)
@@ -147,11 +179,16 @@ class PlayerProfile:
         exp = f'Level: {self.player_lvl} Exp: ({self.player_exp} / '
         exp += f'{get_max_exp(self.player_lvl)})'
         id_msg = f'User ID: {self.player_id}\nClass: {globalitems.class_icon_dict[self.player_class]}'
+
+        # Initialize the values.
         self.get_player_multipliers()
         element_multipliers = []
         spread = []
-        second_title = ""
-        second_msg = ""
+        title_msg, stats = "", ""
+        second_title, second_msg = "", ""
+        temp_embed = None
+
+        # Create the embed data.
         if method == 1:
             title_msg = "Offensive Stats"
             stats = f"Item Base Damage: {int(round(self.player_damage)):,}"
@@ -188,7 +225,6 @@ class PlayerProfile:
                             second_msg += "\n"
         elif method == 2:
             title_msg = "Elemental Breakdown"
-            stats = ""
             element_breakdown = []
             for x in range(9):
                 total_multi = (1 + self.elemental_multiplier[x]) * (1 + self.elemental_penetration[x])
@@ -202,15 +238,16 @@ class PlayerProfile:
                 temp_curse_str = f"(Curse: {int(round(self.elemental_curse[z] * 100)):,}%)"
                 stats += f"{temp_icon} {temp_dmg_str} - {temp_pen_str} - {temp_curse_str}\n"
             stats += f"Elemental Details: (Cap: {self.elemental_capacity}) - (App: {self.elemental_application}) - "
-            stats += f"(Frc: {self.elemental_application * 5 + int(round(self.specialty_rate[2] * 100))}%)"
+            stats += f"(Frc: {self.elemental_application * 5 + int(round(self.specialty_rate[3] * 100))}%)"
             second_title = "Special Breakdown"
             second_msg = f"Critical Chance: (Reg: {int(round(self.critical_chance))}%) - "
-            second_msg += f"(Omg: {self.critical_application * 10 + int(round(self.specialty_rate[1] * 100))}%)"
+            second_msg += f"(Omg: {self.critical_application * 10 + int(round(self.specialty_rate[2] * 100))}%)"
             second_msg += f"\nCritical Multiplier: (Dmg: {int(round(self.critical_multiplier * 100))}%) - "
             second_msg += f"(Pen: {int(round(self.critical_penetration * 100))}%) - "
             second_msg += f"(App: {self.critical_application})"
             second_msg += f"\nBleed Multiplier: (Dmg: {int(round(self.bleed_multiplier * 100))}%) - "
             second_msg += f"(Pen: {int(round(self.bleed_penetration * 100))}%) - "
+            second_msg += f"(HPR: {self.bleed_application * 5 + int(round(self.specialty_rate[1] * 100))}%) - "
             second_msg += f"(App: {self.bleed_application})"
             second_msg += f"\nCombo Multiplier: (Dmg: {int(round(self.combo_multiplier * 100))}%) - "
             second_msg += f"(Pen: {int(round(self.combo_penetration * 100))}%) - "
@@ -219,17 +256,17 @@ class PlayerProfile:
             second_msg += f"(Pen: {int(round(self.ultimate_penetration * 100))}%) - "
             second_msg += f"(App: {self.ultimate_application})"
             second_msg += f"\nTime Multiplier: (Dmg: {(self.temporal_application + 1) * 100}%) - "
-            second_msg += f"(LCK: {self.temporal_application * 5 + int(round(self.specialty_rate[3] * 100))}%) - "
+            second_msg += f"(LCK: {self.temporal_application * 5 + int(round(self.specialty_rate[4] * 100))}%) - "
             second_msg += f"(App: {self.temporal_application})"
+            second_msg += f"\nAnnihilator: (Dmg: 1000%) - (ANH: {int(round(self.specialty_rate[0] * 100))}%)"
         elif method == 3:
             title_msg = "Defensive Stats"
             stats = f"Player HP: {self.player_mHP:,}"
             for idy, y in enumerate(self.elemental_resistance):
                 stats += f"\n{globalitems.global_element_list[idy]} Resistance: {int(y * 100)}%"
             stats += f"\nDamage Mitigation: {int(round(self.damage_mitigation))}%"
-        else:
+        elif method == 4:
             title_msg = "Multipliers"
-            stats = ""
             for idh, h in enumerate(self.banes):
                 if idh < 4:
                     stats += f"\n{bosses.boss_list[idh]} Bane: {int(h * 100)}%"
@@ -239,13 +276,30 @@ class PlayerProfile:
             stats += f"\nFinal Damage: {int(round(self.final_damage * 100))}%"
             stats += f"\nDefence Penetration: {int(round(self.defence_penetration * 100))}%"
             stats += f"\nOmni Aura: {int(round(self.aura * 100))}%"
+        else:
+            temp_embed = self.create_path_embed()
+
+        # Finalize the embed.
         embed_msg = discord.Embed(colour=echelon_colour[0],
                                   title=self.player_username,
                                   description=id_msg)
         embed_msg.add_field(name=exp, value=resources, inline=False)
         embed_msg.add_field(name=title_msg, value=stats, inline=False)
+        # Handle secondary fields.
         if second_title != "":
             embed_msg.add_field(name=second_title, value=second_msg, inline=False)
+        # Handle points page exception fields.
+        if temp_embed is not None:
+            for field in temp_embed.fields[:-1]:
+                embed_msg.add_field(name=field.name, value=field.value, inline=field.inline)
+            for path_index, path_type in enumerate(path_names):
+                total_points = self.player_stats[path_index] + self.gear_points[path_index]
+                if total_points != 0:
+                    glyph_data_list = glyph_data.get(path_type, [])
+                    for name, details, value in zip(glyph_data_list[::3], glyph_data_list[1::3], glyph_data_list[2::3]):
+                        if total_points >= value:
+                            glyph_name = f"Glyph of {name} - {value} Points"
+                            embed_msg.add_field(name=glyph_name, value=f"{details}", inline=False)
         thumbnail_url = get_thumbnail_by_class(self.player_class)
         embed_msg.set_thumbnail(url=thumbnail_url)
         return embed_msg
@@ -417,8 +471,11 @@ class PlayerProfile:
         points_msg = "Your shiny toys are useless if you don't know how to use them."
         embed = discord.Embed(color=colour, title="Lyra, Head Instructor", description=points_msg)
         embed.add_field(name=f"{self.player_username}'s Skill Points", value="", inline=False)
-        for path_label, points in zip(path_names, self.player_stats):
-            embed.add_field(name=f"Path of {path_label}", value=f"Points: {points}", inline=True)
+        for path_label, points, gear_points in zip(path_names, self.player_stats, self.gear_points):
+            value_msg = f"Points: {points}"
+            if gear_points > 0:
+                value_msg += f" (+{gear_points})"
+            embed.add_field(name=f"Path of {path_label}", value=value_msg, inline=True)
         spent_points = sum(self.player_stats)
         remaining_points = self.player_lvl - spent_points
         embed.add_field(name=f"Unspent Points: {remaining_points}", value="", inline=False)
@@ -440,40 +497,16 @@ class PlayerProfile:
             "Time": ["???%"],
             "Confluence": ["Omni Aura 1%"]
         }
-        glyph_data = {
-            "Storms": ["Cyclone", "Critical Application +1", 20,
-                       "Vortex", "Critical Application +1", 40,
-                       "Tempest", "Critical Application +1", 60,
-                       "Maelstrom", "Critical Application +2", 80],
-            "Frostfire": ["Iceburn", "Grants Cascade Damage", 20,
-                          "Glacial Flame", "Grants Cascade Penetration", 40,
-                          "Snowy Blaze", "Grants Cascade Curse", 60,
-                          "Subzero Inferno", "Triple your fire/ice damage, penetration, and curse", 80],
-            "Horizon": ["Red Skies", "Bleed Application +1", 20,
-                        "Vermilion Dawn", "Bleed Application +1", 40,
-                        "Scarlet Sunset", "Bleed Application +1", 60,
-                        "Ruby Tears", "Bleed Application +2", 80],
-            "Eclipse": ["Umbra", "Ultimate Application +1", 20,
-                        "Shadowfall", "Ultimate Application +1", 40,
-                        "Eventide", "Ultimate Application +1", 60,
-                        "Twilight", "Basic Skills are affected by Ultimate Damage and Penetration multipliers", 80],
-            "Stars": ["Nebulas", "Basic Attack 1 Base Damage +50%", 20,
-                      "Galaxies", "Basic Attack 2 Base Damage +75%", 40,
-                      "Superclusters", "Basic Attack 3 Base Damage +100%", 60,
-                      "Universes", "Basic Attack 3 Base Damage +150%", 80],
-            "Confluence": ["Unity", "Elemental Overflow +2", 20,
-                           "Harmony", "Elemental Overflow +2", 40,
-                           "Synergy", "Elemental Overflow +2", 60,
-                           "Equilibrium", "Elemental Overflow +3", 80],
-            "Time": ["a", "Temporal Application +1", 20,
-                     "b", "Temporal Application +1", 40,
-                     "c", "Temporal Application +1", 60,
-                     "d", "Temporal Application +2", 80]
-        }
+
         path_type = selected_path.split(" ")[-1]
         embed.description = "Stats per point:\n" + '\n'.join(perks[path_type])
         points_field = self.player_stats[path_names.index(path_type)]
-        embed.add_field(name="", value=f"{self.player_username}'s {selected_path} Points: {points_field}", inline=False)
+        gear_points = self.gear_points[path_names.index(path_type)]
+        points_msg = f"{self.player_username}'s {selected_path} points: {points_field}"
+        total_points = points_field + gear_points
+        if gear_points > 0:
+            points_msg += f" (+{gear_points})"
+        embed.add_field(name="", value=points_msg, inline=False)
         glyph_data_list = glyph_data.get(path_type, [])
         for name, details, value in zip(glyph_data_list[::3], glyph_data_list[1::3], glyph_data_list[2::3]):
             embed.add_field(name=f"Glyph of {name} - {value} Points", value=f"{details}", inline=False)
@@ -508,71 +541,6 @@ class PlayerProfile:
             case _:
                 pass
 
-        # Path Multipliers
-        thresholds = [20, 40, 60, 80]
-        increments = [1, 1, 1, 2]
-
-        # Storm Path
-        storm_bonus = self.player_stats[0]
-        self.elemental_multiplier[1] += 0.05 * storm_bonus
-        self.elemental_multiplier[2] += 0.05 * storm_bonus
-        self.elemental_resistance[1] += 0.01 * storm_bonus
-        self.elemental_resistance[2] += 0.01 * storm_bonus
-        self.critical_multiplier += 0.03 * storm_bonus
-        for threshold, increment in zip(thresholds, increments):
-            if storm_bonus >= threshold:
-                self.critical_application += increment
-
-        # Horizon Path
-        horizon_bonus = self.player_stats[2]
-        self.elemental_multiplier[3] += 0.05 * horizon_bonus
-        self.elemental_multiplier[4] += 0.05 * horizon_bonus
-        self.elemental_resistance[3] += 0.01 * horizon_bonus
-        self.elemental_resistance[4] += 0.01 * horizon_bonus
-        self.bleed_multiplier += 0.1 * horizon_bonus
-        for threshold, increment in zip(thresholds, increments):
-            if horizon_bonus >= threshold:
-                self.bleed_application += increment
-
-        # Frostfire Path
-        frostfire_bonus = self.player_stats[1]
-        self.elemental_multiplier[5] += 0.05 * frostfire_bonus
-        self.elemental_multiplier[0] += 0.05 * frostfire_bonus
-        self.elemental_resistance[5] += 0.01 * frostfire_bonus
-        self.elemental_resistance[0] += 0.01 * frostfire_bonus
-        self.class_multiplier += 0.01 * frostfire_bonus
-
-        # Eclipse Path
-        eclipse_bonus = self.player_stats[3]
-        self.elemental_multiplier[6] += 0.05 * eclipse_bonus
-        self.elemental_multiplier[7] += 0.05 * eclipse_bonus
-        self.elemental_resistance[6] += 0.01 * eclipse_bonus
-        self.elemental_resistance[7] += 0.01 * eclipse_bonus
-        self.ultimate_multiplier += 0.1 * eclipse_bonus
-        for threshold, increment in zip(thresholds, increments):
-            if eclipse_bonus >= threshold:
-                if eclipse_bonus >= 80:
-                    self.glyph_of_eclipse = True
-                else:
-                    self.ultimate_application += increment
-
-        # Confluence Path
-        confluence_bonus = self.player_stats[5]
-        self.aura += 0.01 * confluence_bonus
-        for threshold, increment in zip(thresholds, increments):
-            if confluence_bonus >= threshold:
-                self.elemental_application += increment + 1
-
-        # Star Path
-        star_increments = [0.5, 0.75, 1, 1.5]
-        star_bonus = self.player_stats[4]
-        self.elemental_multiplier[8] += 0.07 * star_bonus
-        self.elemental_resistance[8] += 0.01 * star_bonus
-        self.combo_multiplier += 0.03 * star_bonus
-        for index, (threshold, increment) in enumerate(zip(thresholds, star_increments)):
-            if star_bonus >= threshold:
-                self.skill_base_damage_bonus[index] += increment
-
         # Item Multipliers
         e_item = []
         for idx, x in enumerate(self.player_equipped):
@@ -596,12 +564,79 @@ class PlayerProfile:
                 self.unique_ability_multipliers(e_item[y])
         if self.equipped_tarot != "":
             tarot_info = self.equipped_tarot.split(";")
-            e_tarot = tarot.check_tarot(self.player_id, tarot.tarot_card_list(int(tarot_info[0])), int(tarot_info[1]))
+            e_tarot = tarot.check_tarot(self.player_id, tarot.tarot_card_list(int(tarot_info[0])),
+                                        int(tarot_info[1]))
             base_damage = e_tarot.get_base_damage()
             self.player_damage += base_damage
             self.assign_tarot_values(e_tarot)
         if self.insignia != "":
             self.assign_insignia_values(self.insignia)
+
+        # Path Multipliers
+        total_points = [x + y for x, y in zip(self.player_stats, self.gear_points)]
+        thresholds = [20, 40, 60, 80]
+        increments = [1, 1, 1, 2]
+
+        # Storm Path
+        storm_bonus = total_points[0]
+        self.elemental_multiplier[1] += 0.05 * storm_bonus
+        self.elemental_multiplier[2] += 0.05 * storm_bonus
+        self.elemental_resistance[1] += 0.01 * storm_bonus
+        self.elemental_resistance[2] += 0.01 * storm_bonus
+        self.critical_multiplier += 0.03 * storm_bonus
+        for threshold, increment in zip(thresholds, increments):
+            if storm_bonus >= threshold:
+                self.critical_application += increment
+
+        # Horizon Path
+        horizon_bonus = total_points[2]
+        self.elemental_multiplier[3] += 0.05 * horizon_bonus
+        self.elemental_multiplier[4] += 0.05 * horizon_bonus
+        self.elemental_resistance[3] += 0.01 * horizon_bonus
+        self.elemental_resistance[4] += 0.01 * horizon_bonus
+        self.bleed_multiplier += 0.1 * horizon_bonus
+        for threshold, increment in zip(thresholds, increments):
+            if horizon_bonus >= threshold:
+                self.bleed_application += increment
+
+        # Frostfire Path
+        frostfire_bonus = total_points[1]
+        self.elemental_multiplier[5] += 0.05 * frostfire_bonus
+        self.elemental_multiplier[0] += 0.05 * frostfire_bonus
+        self.elemental_resistance[5] += 0.01 * frostfire_bonus
+        self.elemental_resistance[0] += 0.01 * frostfire_bonus
+        self.class_multiplier += 0.01 * frostfire_bonus
+
+        # Eclipse Path
+        eclipse_bonus = total_points[3]
+        self.elemental_multiplier[6] += 0.05 * eclipse_bonus
+        self.elemental_multiplier[7] += 0.05 * eclipse_bonus
+        self.elemental_resistance[6] += 0.01 * eclipse_bonus
+        self.elemental_resistance[7] += 0.01 * eclipse_bonus
+        self.ultimate_multiplier += 0.1 * eclipse_bonus
+        for threshold, increment in zip(thresholds, increments):
+            if eclipse_bonus >= threshold:
+                if eclipse_bonus >= 80:
+                    self.glyph_of_eclipse = True
+                else:
+                    self.ultimate_application += increment
+
+        # Confluence Path
+        confluence_bonus = total_points[5]
+        self.aura += 0.01 * confluence_bonus
+        for threshold, increment in zip(thresholds, increments):
+            if confluence_bonus >= threshold:
+                self.elemental_application += increment + 1
+
+        # Star Path
+        star_increments = [0.5, 0.75, 1, 1.5]
+        star_bonus = total_points[4]
+        self.elemental_multiplier[8] += 0.07 * star_bonus
+        self.elemental_resistance[8] += 0.01 * star_bonus
+        self.combo_multiplier += 0.03 * star_bonus
+        for index, (threshold, increment) in enumerate(zip(thresholds, star_increments)):
+            if star_bonus >= threshold:
+                self.skill_base_damage_bonus[index] += increment
 
         # Application Calculations
         base_critical_chance += self.critical_application * 5

@@ -275,7 +275,7 @@ def check_annihilator(player_object, input_damage):
     status_msg = ""
     damage = input_damage
     random_num = random.randint(1, 100)
-    if random_num <= player_object.specialty_rate[0]:
+    if random_num <= int(round(player_object.specialty_rate[0] * 100)):
         damage *= 10
         status_msg = "ANNIHILATOR"
     return damage, status_msg
@@ -284,7 +284,7 @@ def check_annihilator(player_object, input_damage):
 def check_lock(player_object, combat_tracker, damage):
     status_msg = ""
     if combat_tracker.time_lock == 0:
-        lock_rate = 5 * player_object.temporal_application + int(round(player_object.specialty_rate[3] * 100))
+        lock_rate = 5 * player_object.temporal_application + int(round(player_object.specialty_rate[4] * 100))
         random_lock_chance = random.randint(1, 100)
         if random_lock_chance <= lock_rate:
             combat_tracker.time_lock = player_object.temporal_application + 1
@@ -324,12 +324,12 @@ def boss_true_mitigation(boss_object):
 def critical_check(player_object, player_damage, num_elements):
     # Critical hits
     random_num = random.randint(1, 100)
-    if random_num <= (player_object.elemental_application * 5 + int(round(player_object.specialty_rate[2] * 100))):
+    if random_num <= (player_object.elemental_application * 5 + int(round(player_object.specialty_rate[3] * 100))):
         player_damage *= num_elements
         critical_type = "FRACTAL"
     elif random_num < player_object.critical_chance:
         player_damage *= (1 + player_object.critical_multiplier)
-        omega_chance = player_object.critical_application * 10 + int(round(player_object.specialty_rate[1] * 100))
+        omega_chance = player_object.critical_application * 10 + int(round(player_object.specialty_rate[2] * 100))
         omega_check = random.randint(1, 100)
         if omega_check <= omega_chance:
             critical_type = "OMEGA CRITICAL"
@@ -410,7 +410,7 @@ def pvp_bleed_damage(attacker, defender):
 
 
 def check_hyper_bleed(player_object, bleed_damage):
-    hyper_bleed_rate = player_object.bleed_application * 5 + int(round(player_object.specialty_rate[0] * 100))
+    hyper_bleed_rate = player_object.bleed_application * 5 + int(round(player_object.specialty_rate[1] * 100))
     bleed_check = random.randint(1, 100)
     if bleed_check <= hyper_bleed_rate:
         bleed_type = "HYPERBLEED"
