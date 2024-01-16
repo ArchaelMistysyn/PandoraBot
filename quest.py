@@ -78,7 +78,7 @@ class Quest:
             reward_list += f"{globalitems.coin_icon} {self.award_coins}x Lotus Coins\n"
             if self.award_item != "":
                 inventory.update_stock(player_object, self.award_item, self.award_qty)
-                loot_item = loot.BasicItem(self.award_item)
+                loot_item = inventory.BasicItem(self.award_item)
                 reward_list += f"{loot_item.item_emoji} {self.award_qty}x {loot_item.item_name}\n"
             if self.award_role != "":
                 reward_list += f"New Role Achieved: {self.award_role}!"

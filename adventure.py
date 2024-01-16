@@ -712,8 +712,8 @@ class SelectionRoomView(discord.ui.View):
         item_location = random.sample(range(0, (len(selected_pool) - 1)), 2)
         selected_set = [selected_pool[item_location[0]], selected_pool[item_location[1]]]
         selected_set = check_essence(selected_set, reward_tier)
-        self.choice_items = [inventory.get_basic_item_by_id(selected_set[0]),
-                             inventory.get_basic_item_by_id(selected_set[1])]
+        self.choice_items = [inventory.BasicItem(selected_set[0]),
+                             inventory.BasicItem(selected_set[1])]
         self.option1.label = f"{self.choice_items[0].item_name}"
         self.option1.emoji = self.choice_items[0].item_emoji
         self.option1.custom_id = "1"
@@ -796,35 +796,35 @@ class StatueRoomView(discord.ui.View):
                     reload_player = player.get_player_by_id(self.expedition.player_object.player_id)
                     if active_room.deity_tier == 6:
                         if blessing_chance <= 5:
-                            reward_id = f"i6x"
+                            reward_id = f"Crystal1"
                             blessing_msg = "Miraculous Blessing\nLuck +7"
                             self.expedition.luck += 7
                         elif blessing_chance <= 10:
-                            reward_id = "i6t"
+                            reward_id = "Token3"
                             blessing_msg = "Sovereign's Blessing!\nLuck +5"
                             self.expedition.luck += 5
                     if active_room.deity_tier == 5:
                         if blessing_chance <= 5:
-                            reward_id = f"i5u"
+                            reward_id = f"Core1"
                             blessing_msg = "Fabled Blessing\nLuck +3"
                             self.expedition.luck += 3
                         elif blessing_chance <= 10:
-                            reward_id = "i5t"
+                            reward_id = "Token2"
                             blessing_msg = "Superior Blessing!\nLuck +2"
                             self.expedition.luck += 2
                     if reward_id == "":
                         blessing_chance = random.randint(1, 100)
                         if blessing_chance <= 5:
                             deity_numeral = tarot.tarot_numeral_list(tarot.get_number_by_tarot(active_room.room_deity))
-                            reward_id = f"t{deity_numeral}"
+                            reward_id = f"Essence{deity_numeral}"
                             blessing_msg = f"{active_room.room_deity}'s Blessing!\nLuck +2"
                             self.expedition.luck += 2
                         elif blessing_chance <= 30:
-                            reward_id = "i4t"
+                            reward_id = "Token1"
                             blessing_msg = "Paragon's Blessing!\nLuck +1"
                             self.expedition.luck += 1
                     if reward_id != "":
-                        loot_item = loot.BasicItem(reward_id)
+                        loot_item = inventory.BasicItem(reward_id)
                         item_msg = f"{loot_item.item_emoji} 1x {loot_item.item_name} received!"
                         self.embed.add_field(name=blessing_msg, value=item_msg, inline=False)
                         inventory.update_stock(reload_player, reward_id, num_reward)
@@ -858,7 +858,7 @@ class StatueRoomView(discord.ui.View):
                     elif event_chance <= 550 + (self.expedition.luck * 10):
                         reload_player = player.get_player_by_id(self.expedition.player_object.player_id)
                         reward_id, reward_qty = loot.generate_random_item()
-                        loot_item = loot.BasicItem(reward_id)
+                        loot_item = inventory.BasicItem(reward_id)
                         embed_title = f"Excavated {loot_item.item_name}!"
                         item_msg = f"{loot_item.item_emoji} {reward_qty} {loot_item.item_name} found in the rubble!"
                         self.embed.add_field(name=embed_title, value=item_msg, inline=False)
@@ -1160,7 +1160,7 @@ class DragonRoomView(discord.ui.View):
         self.reward_multiplier = 1
         if self.expedition.current_room.room_variant != "":
             self.reward_multiplier = 2
-        self.item = [inventory.get_basic_item_by_id("i4g"), inventory.get_basic_item_by_id("i4w"), None]
+        self.item = [inventory.BasicItem("Unrefined2"), inventory.BasicItem("Unrefined1"), None]
         self.resistance = [self.expedition.player_object.elemental_resistance[3],
                            self.expedition.player_object.elemental_resistance[4],
                            self.expedition.player_object.elemental_resistance[self.expedition.current_room.room_element]]
@@ -1361,7 +1361,7 @@ def check_essence(selected_items, pool_tier):
     for item_index, item in enumerate(selected_items):
         if item == "ESS":
             random_paragon = random.choice(tarot.paragon_list[pool_tier])
-            essence_id = f"t{tarot.tarot_numeral_list(tarot.get_number_by_tarot(random_paragon))}"
+            essence_id = f"Essence{tarot.tarot_numeral_list(tarot.get_number_by_tarot(random_paragon))}"
             checked_items[item_index] = essence_id
     return checked_items
 
@@ -1403,6 +1403,7 @@ def trap_triggered(expedition, active_room, embed):
 
 
 def treasure_found(expedition, treasure_type):
+    type_num = {"W": 1, "A": 2, "Y": 3}
     active_room = expedition.current_room
     check_num = expedition.luck
     if active_room.room_variant == "Greater":
@@ -1411,8 +1412,8 @@ def treasure_found(expedition, treasure_type):
         check_num += 3
         fragment_roller = min((len(reward_probabilities) - 1), random.randint(0, check_num))
         num_fragments = reward_probabilities[fragment_roller]
-        fragment_id = f"i5a{treasure_type}"
-        reward_item = loot.BasicItem(fragment_id)
+        fragment_id = f"Fragment{type_num[treasure_type]}"
+        reward_item = inventory.BasicItem(fragment_id)
         loot_msg = f"{reward_item.item_emoji} {num_fragments}x {reward_item.item_name}"
         embed = discord.Embed(colour=expedition.expedition_colour,
                               title="Fragments Acquired!",
@@ -1503,7 +1504,7 @@ def build_manifest_return_embed(player_object, method, colour):
                 temp_dict[reward_id] = temp_dict.get(reward_id, 0) + num_reward
         if temp_dict:
             for item_id, item_quantity in temp_dict.items():
-                loot_item = loot.BasicItem(item_id)
+                loot_item = inventory.BasicItem(item_id)
                 inventory.update_stock(player_object, item_id, item_quantity)
                 description_msg += f"{loot_item.item_emoji} {item_quantity}x {loot_item.item_name} received!\n"
         else:

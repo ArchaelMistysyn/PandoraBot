@@ -81,12 +81,12 @@ class RecipeObject:
         recipe_info = recipe_dict[recipe_name]
 
         self.recipe_name = recipe_name
-        self.cost_item_1 = loot.BasicItem(recipe_info[0])
+        self.cost_item_1 = inventory.BasicItem(recipe_info[0])
         self.cost_qty_1 = recipe_info[1]
-        self.cost_item_2 = loot.BasicItem(recipe_info[2])
+        self.cost_item_2 = inventory.BasicItem(recipe_info[2])
         self.cost_qty_2 = recipe_info[3]
         self.success_rate = recipe_info[4]
-        self.outcome_item = loot.BasicItem(recipe_info[5])
+        self.outcome_item = inventory.BasicItem(recipe_info[5])
 
     def create_cost_embed(self, player_object):
         stock_1 = inventory.check_stock(player_object, self.cost_item_1.item_id)

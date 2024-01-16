@@ -156,10 +156,11 @@ def run_discord_bot():
                 if backdoor == "coin_hack":
                     player_object.set_player_field("player_coins", int(value))
                 if backdoor == "item_hack_all":
-                    filename = "itemlist.csv"
-                    with (open(filename, 'r') as f):
-                        for item_line in csv.DictReader(f):
-                            inventory.update_stock(player_object, str(item_line['item_id']), 10)
+                    if ctx.message.author.id == 185530717638230016:
+                        inventory.max_all_items(player_object.player_id, int(value))
+                        await ctx.send("Admin item task completed.")
+                    else:
+                        await ctx.send("Only Archael can run this command.")
             else:
                 await ctx.send("Only testers can use this command.")
 
@@ -323,7 +324,7 @@ def run_discord_bot():
         if any(ctx.channel.id in sl for sl in globalitems.global_server_channels):
             player_object = player.get_player_by_name(str(ctx.author))
             if player_object.player_class != "":
-                crate_id = "i1r"
+                crate_id = "Crate"
                 crate_stock = inventory.check_stock(player_object, crate_id)
                 if crate_stock >= 1:
                     inventory.update_stock(player_object, crate_id, -1)
@@ -331,7 +332,7 @@ def run_discord_bot():
                                               title=f"{player_object.player_username}: Opening Crate!",
                                               description="What could be inside?")
                     reward_id, quantity = loot.generate_random_item()
-                    loot_item = loot.BasicItem(reward_id)
+                    loot_item = inventory.BasicItem(reward_id)
                     inventory.update_stock(player_object, reward_id, quantity)
                     message = await open_lootbox(ctx, embed_msg, loot_item.item_tier)
                     loot_description = f"{loot_item.item_emoji} {quantity}x {loot_item.item_name}"
@@ -340,7 +341,7 @@ def run_discord_bot():
                                               description=loot_description)
                     await message.edit(embed=embed_msg)
                 else:
-                    loot_item = loot.BasicItem(crate_id)
+                    loot_item = inventory.BasicItem(crate_id)
                     await ctx.send(f"Out of stock: {loot_item.item_emoji}!")
             else:
                 embed_msg = unregistered_message()
@@ -355,8 +356,8 @@ def run_discord_bot():
             player_object = player.get_player_by_name(str(ctx.author))
             if player_object.player_class != "":
                 if trove_tier in range(1, 5):
-                    trove_id = f"i{trove_tier}j"
-                    loot_item = loot.BasicItem(trove_id)
+                    trove_id = f"Trove{trove_tier}"
+                    loot_item = inventory.BasicItem(trove_id)
                     trove_stock = inventory.check_stock(player_object, trove_id)
                     if trove_stock >= 1:
                         inventory.update_stock(player_object, trove_id, -1)
@@ -419,11 +420,11 @@ def run_discord_bot():
             if len(new_username) > 10:
                 await ctx.send("Please enter a username 10 or less characters.")
                 return
-            token_stock = inventory.check_stock(existing_user, "cNAME")
+            token_stock = inventory.check_stock(existing_user, "Token1")
             if token_stock < 1:
                 await ctx.send(f"It's not that easy to change your name. Bring me a token to prove you are serious.")
             else:
-                inventory.update_stock(existing_user, "cNAME", -1)
+                inventory.update_stock(existing_user, "Token1", -1)
                 existing_user.player_username = new_username
                 existing_user.set_player_field("player_username", new_username)
                 await ctx.send(f'Got it! I\'ll call you {existing_user.player_username} from now on!')
@@ -522,9 +523,9 @@ def run_discord_bot():
                         if player_object.player_id == selected_item.player_owner:
                             item_view = menus.ManageCustomItemView(player_object, gear_id)
                 elif item_id.isalnum():
-                    selected_item = loot.BasicItem(item_id)
+                    selected_item = inventory.BasicItem(item_id)
                     if selected_item.item_id != "":
-                        embed_msg = selected_item.create_loot_embed(player_object)
+                        embed_msg = selected_item.create_bitem_embed(player_object)
                         # item_view = menus.ManageBasicItem(player_object, selected_item)
             else:
                 embed_msg = unregistered_message()
@@ -846,7 +847,7 @@ def run_discord_bot():
 
         # Crafting Commands
     @set_command_category('craft', 4)
-    @pandora_bot.hybrid_command(name='purify', help="Purify voidforged gear items.")
+    @pandora_bot.hybrid_command(name='purify', help="Perform void purification.")
     @app_commands.guilds(discord.Object(id=1011375205999968427))
     async def void_purification(ctx):
         await ctx.defer()
@@ -919,8 +920,8 @@ def run_discord_bot():
                     entry_msg = ("I have taken quite a liking to you, you know. "
                                  "The plane of eons is ruled by the True Laws. "
                                  "They are named as such because they cannot be defied even by themselves. "
-                                 "This means that with my permission you exist and without it you do not. "
-                                 "\nNo matter how many realities you intend to shape, the True Laws exist eternally. "
+                                 "With my permission you exist and without it you do not. "
+                                 "\nNo matter how many realities you reshape the True Laws exist eternally. "
                                  "I grant you passage because your goal is impossible. You can do nothing to us. "
                                  "\nI will record your attempt. I will even help you. Your failure is already written.")
                     embed_msg = discord.Embed(colour=discord.Colour.blurple(),
@@ -929,7 +930,7 @@ def run_discord_bot():
                     embed_msg.set_image(url="https://i.ibb.co/QjWDYG3/forge.jpg")
                     new_view = forge.SelectView(player_object, "custom")
                 else:
-                    denial_msg = "Without the grace of the Eons. The laws of reality deny your entry."
+                    denial_msg = "Without the grace of the Eons the laws of reality deny your entry."
                     embed_msg = discord.Embed(colour=discord.Colour.blurple(),
                                               title="???",
                                               description=denial_msg)
@@ -1044,14 +1045,18 @@ def run_discord_bot():
             await ctx.defer()
             credit_list = "Game created by: Kyle Mistysyn (Archael)"
             # Artists
-            credit_list += "\n@labcornerr - Emoji Artist (Fiverr)"
-            credit_list += "\n@Nong Dit - Artist (Fiverr)"
+            credit_list += "\nNong Dit @Nong Dit - Frame Artist (Fiverr)"
+            credit_list += "\nAztra.studio @Artherrera - Emoji/Icon Artist (Fiverr)"
+            credit_list += "\nLabs @labcornerr - Emoji/Icon Artist (Fiverr)"
+            credit_list += "\nVolff - Photoshop Assistance"
             # Programming
             credit_list += "\nBahamutt - Programming Assistance"
             credit_list += "\nPota - Programming Assistance"
             # Testers
             credit_list += "\nZweii - Alpha Tester"
             credit_list += "\nSoulViper - Alpha Tester"
+            credit_list += "\nKaelen - Alpha Tester"
+            credit_list += "\nVolff - Alpha Tester"
             embed_msg = discord.Embed(colour=discord.Colour.light_gray(),
                                       title="Credits",
                                       description=credit_list)

@@ -182,7 +182,7 @@ class ShopView(discord.ui.View):
 
 
 def show_item(player_user, selected_info):
-    selected_item = inventory.get_basic_item_by_id(selected_info)
+    selected_item = inventory.BasicItem(selected_info)
     embed_msg = selected_item.create_bitem_embed()
     cost = selected_item.item_cost
     embed_msg.add_field(name="Cost", value=cost, inline=False)

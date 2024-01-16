@@ -561,7 +561,7 @@ class PerformRitualView(discord.ui.View):
 
 def binding_ritual(player_object, essence_type):
     filename = ""
-    essence_id = f't{essence_type}'
+    essence_id = f'Essence{essence_type}'
     essence_stock = inventory.check_stock(player_object, essence_id)
     if essence_stock > 0:
         inventory.update_stock(player_object, essence_id, -1)
@@ -589,7 +589,7 @@ def binding_ritual(player_object, essence_type):
             result = "Binding Successful!"
             description_msg = "The sealed tarot card has been added to your collection."
     else:
-        loot_item = loot.BasicItem(essence_id)
+        loot_item = inventory.BasicItem(essence_id)
         result = "Ritual Failed!"
         description_msg = f"Out of stock: {loot_item.item_emoji}!"
 
@@ -806,9 +806,9 @@ class ClassChangeView(discord.ui.View):
                     reload_player = player.get_player_by_id(self.player_object.player_id)
                     current_class = reload_player.player_class
                     chosen_class = class_select.values[0]
-                    token_stock = inventory.check_stock(reload_player, "cCLASS")
+                    token_stock = inventory.check_stock(reload_player, "Token2")
                     if token_stock >= 1:
-                        token_stock = inventory.update_stock(reload_player, "cCLASS", -1)
+                        token_stock = inventory.update_stock(reload_player, "Token2", -1)
                         reload_player.set_player_field("player_class", chosen_class)
                         add_role = discord.utils.get(interaction.guild.roles, name=f"Class Role - {chosen_class}")
                         remove_role = discord.utils.get(interaction.guild.roles, name=f"Class Role - {current_class}")
@@ -1013,9 +1013,9 @@ class ResetView(discord.ui.View):
         if interaction.user.name == self.player_object.player_name:
             if not self.embed_msg:
                 reload_player = player.get_player_by_id(self.player_object.player_id)
-                num_tokens = inventory.check_stock(reload_player, "cSKILL")
+                num_tokens = inventory.check_stock(reload_player, "Token3")
                 if num_tokens >= 1:
-                    inventory.update_stock(reload_player, "cSKILL", -1)
+                    inventory.update_stock(reload_player, "Token3", -1)
                     reload_player.reset_skill_points()
                     result_msg = "ALL SKILL POINTS RESET!"
                 else:

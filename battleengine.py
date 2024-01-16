@@ -313,8 +313,8 @@ def run_discord_bot():
             if existing_id != 0:
                 await ctx.send("You already have a solo boss encounter running.")
                 return
-            token_id = f"i{(3 + token_version)}t"
-            token_item = loot.BasicItem(token_id)
+            token_id = f"Summon{token_version}"
+            token_item = inventory.BasicItem(token_id)
             player_stock = inventory.check_stock(player_object, token_id)
             if player_stock <= 0:
                 await ctx.send(f"Out of Stock: {token_item.item_emoji} {token_item.item_name}.")

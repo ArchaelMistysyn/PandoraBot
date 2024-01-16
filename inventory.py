@@ -25,6 +25,7 @@ import globalitems
 import string
 import itemrolls
 import itemicons
+import itemdata
 
 import tarot
 
@@ -499,41 +500,42 @@ class CustomItem:
 
 
 class BasicItem:
-    def __init__(self):
-        self.item_name = ""
+    def __init__(self, item_id):
         self.item_id = ""
-        self.item_tier = 0
+        self.item_name = ""
+        self.item_tier = ""
+        self.item_base_rate = 0
+        self.item_description = ""
         self.item_emoji = ""
         self.item_image = ""
-        self.item_description = ""
         self.item_cost = 0
+        self.get_bitem_by_id(item_id)
 
-    def create_bitem_embed(self):
-        tier_colour, tier_emoji = get_gear_tier_colours(self.item_tier)
-        embed_msg = discord.Embed(colour=tier_colour,
-                                  title=self.item_name,
-                                  description=f"Item ID: {self.item_id} - Item Tier: {self.item_tier}")
-        embed_msg.add_field(name="", value=self.item_description, inline=False)
-        # embed_msg.set_thumbnail(url=self.item_image)
+    def __str__(self):
+        return self.item_name
+
+    def get_bitem_by_id(self, item_id):
+        if item_id in itemdata.itemdata_dict:
+            item = itemdata.itemdata_dict[item_id]
+            self.item_id = item_id
+            self.item_name = item['name']
+            self.item_tier = item['tier']
+            self.item_base_rate = item['rate']
+            self.item_description = item['description']
+            self.item_emoji = item['emoji']
+            self.item_cost = item['cost']
+            self.item_image = item['image']
+        else:
+            # Handle the case where the item_id is not found in the dictionary
+            print(f"Item with ID '{item_id}' not found in itemdata_dict.")
+
+    def create_bitem_embed(self, player_object):
+        item_qty = inventory.check_stock(player_object, self.item_id)
+        item_msg = f"{self.item_description}\n{player_object.player_username}'s Stock: {item_qty}"
+        colour, emoji = inventory.get_gear_tier_colours(self.item_tier)
+        embed_msg = discord.Embed(colour=colour, title=self.item_name, description=item_msg)
+        # loot_embed.set_thumbnail(url=self.item_image)
         return embed_msg
-
-
-def get_basic_item_by_id(input_id):
-    df = pd.read_csv("itemlist.csv")
-    item_id = str(input_id)
-    df = df.loc[df['item_id'] == item_id]
-    target_item = None
-    if len(df.index) != 0:
-        target_item = BasicItem()
-        target_item.item_name = str(df["item_name"].values[0])
-        target_item.item_id = str(df["item_id"].values[0])
-        target_item.item_tier = int(df["item_tier"].values[0])
-        target_item.item_base_rate = int(df["item_base_rate"].values[0])
-        target_item.item_emoji = str(df["item_emoji"].values[0])
-        target_item.item_description = str(df["item_description"].values[0])
-        target_item.item_cost = int(df["item_cost"].values[0])
-        target_item.item_image = str(df["item_image"].values[0])
-    return target_item
 
 
 def get_item_shop_list(item_tier):
@@ -727,20 +729,23 @@ def display_cinventory(player_id, item_type) -> str:
 
 
 def display_binventory(player_id, method):
-    filename = 'itemlist.csv'
-    item_list = pd.read_csv(filename)
+    player_inventory = ""
     try:
         engine_url = mydb.get_engine_url()
         engine = sqlalchemy.create_engine(engine_url)
         pandora_db = engine.connect()
+
+        # Set the regular expression.
         regex_dict = {
-            "Crafting": ["^(i|v|m|Origin)", ".*(r|j|y|u|m|g|t|w|c|v|4z|([1-4](s|o))|((a|x|u)[A-Z]))$"],
-            "Fae Cores": ["^Fae", ""],
-            "Materials": ["^(i6m).*|.*(i|v|u|(a[A-Z])|4z|([1-4](s|o)))$", ""],
-            "Unprocessed": ["^t.*|.*(((x|u)[A-Z])|w|c|g)$", ""],
-            "Misc": ["^(STONE|c).*|.*(t|y|r|j)$", ""]
+            "Crafting": "^(Matrix|Hammer|Pearl|Origin|Lotus)",
+            "Fae Cores": "^Fae",
+            "Materials": "^(Fragment[0-9]|Ore|Soul|Heart|Core|FragmentM|Crystal)",
+            "Unprocessed": "^(Essence|Unrefined|Fabled)",
+            "Misc": "^(Potion|Trove|Crate|Stone|Token|Summon)"
         }
         regex_pattern = regex_dict[method]
+
+        # Pull the player's inventory
         query = text(
             f"SELECT item_id, item_qty FROM BasicInventory "
             f"WHERE player_id = :id_check AND item_qty <> 0 "
@@ -748,32 +753,21 @@ def display_binventory(player_id, method):
         )
         query = query.bindparams(id_check=player_id)
         df = pd.read_sql(query, pandora_db)
-        df = df[df['item_id'].str.match(regex_pattern[0])]
-        if regex_pattern[1] != "":
-            df_exclude = df[df['item_id'].str.match(regex_pattern[1])]
-            df = df[~df['item_id'].isin(df_exclude['item_id'])]
+
+        # Filter the data, pull associated data by the id, and build the output string.
+        inventory_list = []
+        df = df[df['item_id'].str.match(regex_pattern)]
+        for _, row in df.iterrows():
+            current_item = BasicItem(str(row['item_id']))
+            inventory_list.append([current_item, str(row['item_qty'])])
+        for item, quantity in inventory_list:
+            player_inventory += f"{item.item_emoji} {item.item_name}: {quantity}x\n"
+        # Close the connection.
         pandora_db.close()
         engine.dispose()
-        merged_df = df.merge(item_list, left_on='item_id', right_on='item_id')
-        if method != "Fae Cores":
-            merged_df['sort_key'] = merged_df['item_id'].apply(custom_sort)
-            merged_df = merged_df.sort_values(by='sort_key').drop(columns='sort_key')
-        merged_df = merged_df[['item_emoji', 'item_name', 'item_qty']]
-        temp = merged_df.style.set_properties(**{'text-align': 'left'}).hide(axis='index').hide(axis='columns')
-        player_inventory = temp.to_string()
     except exc.SQLAlchemyError as error:
         print(error)
-        player_inventory = ""
     return player_inventory
-
-
-def custom_sort(item_id):
-    if len(item_id) < 3:
-        return item_id[0], '', ''
-    elif len(item_id) < 7:
-        return item_id[0], item_id[2], '', ''
-    else:
-        return item_id[0], item_id[2], item_id[1], item_id[6]
 
 
 def get_gem_stat_message(gem_bonus_code):
@@ -950,3 +944,31 @@ def full_inventory_embed(lost_item, embed_colour):
                               title="Inventory Full!",
                               description=f"Please make space in your {item_type} inventory.")
     return embed_msg
+
+
+def max_all_items(player_id, quantity):
+    try:
+        engine_url = mydb.get_engine_url()
+        engine = sqlalchemy.create_engine(engine_url)
+        pandora_db = engine.connect()
+
+        # Clear the inventory.
+        query = text("DELETE FROM BasicInventory WHERE player_id = :id_check")
+        query = query.bindparams(id_check=player_id)
+        pandora_db.execute(query)
+
+        # Build the item list.
+        insert_values = ','.join(
+            f"('{player_id}', '{item_id}', {quantity})" for item_id in itemdata.itemdata_dict.keys()
+        )
+        # Add quantity to all items in the inventory.
+        query_string = f"INSERT INTO BasicInventory (player_id, item_id, item_qty) VALUES {insert_values}"
+        query = text(query_string)
+        pandora_db.execute(query)
+
+        # Close the connection.
+        pandora_db.close()
+        engine.dispose()
+    except exc.SQLAlchemyError as error:
+        print(error)
+

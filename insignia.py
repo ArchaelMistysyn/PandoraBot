@@ -260,6 +260,6 @@ def payment_embed(current_selection):
     for idx, x in enumerate(current_selection):
         if x != 0:
             fae_id = f"Fae{idx}"
-            loot_item = loot.BasicItem(fae_id)
+            loot_item = inventory.BasicItem(fae_id)
             cost_msg += f"{loot_item.item_emoji} 50x {loot_item.item_name}\n"
     return cost_msg

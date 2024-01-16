@@ -123,26 +123,26 @@ class PvPCog(commands.Cog):
         exp_msg = ""
         ended = False
         quantity = 2
-        loot_item = loot.BasicItem("i1r")
+        loot_item = inventory.BasicItem("i1r")
         if (not is_alive_player1 and not is_alive_player2) or self.combat_tracker1.total_cycles >= 50:
             result_message = "It's a draw!"
-            exp_amount = random.randint(self.player1.player_echelon * 250, self.player1.player_echelon * 500)
+            exp_amount = random.randint(self.player1.player_echelon * 500, self.player1.player_echelon * 1000)
             ended = True
             quantity = 1
-            inventory.update_stock(self.player1, "i1r", quantity)
-            inventory.update_stock(self.player2, "i1r", quantity)
-            loot_msg = f"Both Players {loot_item.item_emoji} {quantity}x crates acquired!"
+            inventory.update_stock(self.player1, "Crate", quantity)
+            inventory.update_stock(self.player2, "Crate", quantity)
+            loot_msg = f"Both Players {loot_item.item_emoji} {quantity}x crate(s) acquired!"
         elif not is_alive_player1:
             result_message = f"{self.player2.player_username} wins!"
-            exp_amount = random.randint(self.player1.player_echelon * 100, self.player1.player_echelon * 250)
+            exp_amount = random.randint(self.player1.player_echelon * 100, self.player1.player_echelon * 500)
             ended = True
-            inventory.update_stock(self.player2, "i1r", quantity)
+            inventory.update_stock(self.player2, "Crate", quantity)
             loot_msg = f"{self.player2.player_username} {loot_item.item_emoji} {quantity}x crates acquired!"
         elif not is_alive_player2:
-            exp_amount = random.randint(self.player1.player_echelon * 500, self.player1.player_echelon * 1000)
+            exp_amount = random.randint(self.player1.player_echelon * 1000, self.player1.player_echelon * 5000)
             result_message = f"{self.player1.player_username} wins!"
             ended = True
-            inventory.update_stock(self.player1, "i1r", quantity)
+            inventory.update_stock(self.player1, "Crate", quantity)
             loot_msg = f"{self.player1.player_username} {loot_item.item_emoji} {quantity}x crates acquired!"
         if ended:
             exp_msg = f"{globalitems.exp_icon} {exp_amount}x EXP acquired!"

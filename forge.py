@@ -134,20 +134,20 @@ class PurifyView(discord.ui.View):
         self.embed = None
         self.new_view = None
         if self.selected_item.item_tier == 5:
-            item_id = "i6u"
+            item_id = "Core3"
             label_name = "Purify"
             if self.selected_item.item_type == "W":
                 self.purify.disabled = True
                 self.purify.style = globalitems.button_colour_list[3]
                 label_name += " [???]"
         else:
-            item_id = "v7x"
+            item_id = "Crystal2"
             label_name = "Transcend"
             if self.selected_item.item_tier == 7:
                 self.purify.disabled = True
                 self.purify.style = globalitems.button_colour_list[3]
                 label_name += " [MAX]"
-        self.material = inventory.get_basic_item_by_id(item_id)
+        self.material = inventory.BasicItem(item_id)
         self.purify_check = self.material.item_base_rate
         if not self.purify.disabled:
             label_name += f" ({self.purify_check}%)"
@@ -364,18 +364,20 @@ class UpgradeView(discord.ui.View):
                             ["Enhance"]],
                        "Upgrade": [
                             2, ["Reinforce", "Bestow"],
-                            ["<:eore:1145534835507593236>", "<:esoul:1145520258241806466>"], [[f"i5o"], [f"i5s"]],
+                            ["<:eore:1145534835507593236>", "<:esoul:1145520258241806466>"], [[f"Ore5"], [f"Soul5"]],
                             ["Reinforce", "Bestow"]],
                        "Reforge": [
                             2, ["Reforge", "Create Socket"], ["<a:eshadow2:1141653468965257216>", "⚫"],
-                            [[f"i3f", f"i5f"], [f"i3k"]], ["Reforge", "Open"]],
+                            [[f"Flame1", f"Flame2"], [f"Matrix1", "Matrix2"]], ["Reforge", "Open"]],
                        "Cosmic Attunement": [
-                            1, ["Attunement"], ["<:eprl:1148390531345432647>"], [[f"i4p"]], ["Attunement"]],
+                            1, ["Attunement"], ["<:eprl:1148390531345432647>"], [[f"Pearl1"]], ["Attunement"]],
                        "Astral Augment": [
                             1, ["Star Fusion", "Chaos Fusion", "Pulsar Fusion", "Quasar Fusion",
                                 "Genesis Fusion", "Terminus Fusion", "Zenith Fusion"],
-                            [hammer_icon, hammer_icon, hammer_icon, hammer_icon, hammer_icon, hammer_icon, hammer_icon],
-                            [[f"i2h"], ["i3h"], [f"i4hA"], [f"i4hB"], [f"i5hA"], [f"i5hB"], [f"i6hZ"]],
+                            [hammer_icon, hammer_icon, hammer_icon, hammer_icon,
+                             hammer_icon, hammer_icon, hammer_icon],
+                            [[f"Hammer1"], ["Hammer2"], [f"Hammer3"], [f"Hammer4"],
+                             [f"Hammer5"], [f"Hammer6"], [f"Hammer7"]],
                             ["any fusion", "all fusion", "damage fusion", "defensive fusion",
                              "penetration fusion", "curse fusion", "unique fusion"]],
                        "Implant Element": [
@@ -384,30 +386,32 @@ class UpgradeView(discord.ui.View):
                             ["Implant"]],
                        "Voidforge": [
                             3, ["Void Fusion", "Augment", "Corruption"],
-                            [void_icon, void_icon, void_icon], [[f"v6h"], [f"v6p"], ["OriginV"]],
+                            [void_icon, void_icon, void_icon], [[f"Hammer8"], [f"Pearl3"], ["OriginV"]],
                             ["VReinforce", "VAttunement", "Corrupt"]]
                        }
         method_dict_t6 = {"Enhance": [
-                              1, ["Enhance"], ["<:Star_PinkBlue:1179736203013140480>"], [[f"i6m"]],
+                              1, ["Enhance"], ["<:Star_PinkBlue:1179736203013140480>"], [[f"FragmentM"]],
                               ["Enhance"]],
                           "Upgrade": [
                               2, ["Reinforce", "Bestow"],
-                              ["<:eore:1145534835507593236>", "<:esoul:1145520258241806466>"], [[f"m6o"], [f"m6s"]],
+                              ["<:eore:1145534835507593236>", "<:esoul:1145520258241806466>"], [[f"Ore6"], [f"Soul6"]],
                               ["Reinforce", "Bestow"]],
                           "Reforge": [
                               2, ["Reforge", "Create Socket"], ["<a:eshadow2:1141653468965257216>", "⚫"],
-                              [[f"m6f"], [f"m6k"]], ["Reforge", "Open"]],
+                              [[f"Flame4"], [f"Matrix3"]], ["Reforge", "Open"]],
                           "Wish Attunement": [
-                              1, ["Attunement"], ["<:eprl:1148390531345432647>"], [[f"m6p"]], ["MultiAttunement"]],
+                              1, ["Attunement"], ["<:eprl:1148390531345432647>"], [[f"Pearl4"]], ["MultiAttunement"]],
                           "Miracle Augment": [
                             1, ["Wish Fusion", "Chaos Fusion", "Pulsar Fusion", "Quasar Fusion",
                                 "Genesis Fusion", "Terminus Fusion", "Zenith Fusion"],
-                            [hammer_icon, hammer_icon, hammer_icon, hammer_icon, hammer_icon, hammer_icon, hammer_icon],
-                            [[f"m6h"], ["i3h"], [f"i4hA"], [f"i4hB"], [f"i5hA"], [f"i5hB"], [f"i6hZ"]],
+                            [hammer_icon, hammer_icon, hammer_icon, hammer_icon,
+                             hammer_icon, hammer_icon, hammer_icon],
+                            [[f"Hammer9"], ["Hammer2"], [f"Hammer3"], [f"Hammer4"],
+                             [f"Hammer5"], [f"Hammer6"], [f"Hammer7"]],
                             ["any fusion", "all fusion", "damage fusion", "defensive fusion",
                              "penetration fusion", "curse fusion", "unique fusion"]],
                           "Miracle Implant": [
-                              1, [f"Implant"], ["<a:eorigin:1145520263954440313>"], [[f"m6z"]], ["Implant"]]
+                              1, [f"Implant"], ["<a:eorigin:1145520263954440313>"], [[f"OriginM"]], ["Implant"]]
                           }
         if self.selected_item.item_tier >= 6:
             self.menu_details = method_dict_t6[self.menu_type]
@@ -486,7 +490,7 @@ class UpgradeView(discord.ui.View):
 
 
 def run_button(player_object, selected_item, material_id, method):
-    loot_item = loot.BasicItem(material_id)
+    loot_item = inventory.BasicItem(material_id)
     reload_item = inventory.read_custom_item(selected_item.item_id)
     result, cost = craft_item(player_object, reload_item, loot_item, method)
     result_dict = {0: "Failed!",
@@ -507,7 +511,7 @@ def run_button(player_object, selected_item, material_id, method):
 
 def check_maxed(target_item, method, material_id, element):
     is_maxed = False
-    material_item = inventory.get_basic_item_by_id(material_id)
+    material_item = inventory.BasicItem(material_id)
     success_rate = material_item.item_base_rate
     match method:
         case "Enhance":
@@ -806,7 +810,7 @@ def implant_item(player_object, selected_item, material_item, success_rate, succ
     if sum(selected_item.item_elements) == 9:
         return 2
     # Determine the element to add.
-    if material_item.item_id == "m6z":
+    if material_item.item_id == "OriginM":
         zero_indices = [index for index, value in enumerate(selected_item.item_elements) if value == 0]
         selected_index = random.choice(zero_indices)
         selected_element = selected_index
@@ -924,12 +928,13 @@ class RefineItemView(discord.ui.View):
     def __init__(self, player_user, selected_type):
         super().__init__(timeout=None)
         menu_dict = {
-            "W": [2, ["Fabled", "Wish"], ["✅", "✅"], [5, 6]],
-            "A": [1, ["Fabled"], ["✅"], [5]],
-            "Y": [1, ["Fabled"], ["✅"], [5]],
-            "G": [2, ["Wing", "Fabled"], ["✅", "✅"], [4, 5]],
-            "C": [2, ["Crest", "Fabled"], ["✅", "✅"], [4, 5]],
-            "D": [3, ["Jewel", "Fabled", "Heart Gem"], ["✅", "✅", "✅"], [4, 5, 6]]
+            "W": [2, ["Fabled", "Wish"], ["✅", "✅"], [5, 6], ["Fabled1", "Unrefined5"]],
+            "A": [1, ["Fabled"], ["✅"], [5], "Fabled2"],
+            "Y": [1, ["Fabled"], ["✅"], [5], "Fabled3"],
+            "G": [2, ["Wing", "Fabled"], ["✅", "✅"], [4, 5], ["Unrefined1", "Fabled4"]],
+            "C": [2, ["Crest", "Fabled"], ["✅", "✅"], [4, 5], ["Unrefined3", "Fabled5"]],
+            "D": [3, ["Jewel", "Fabled", "Heart Gem"], ["✅", "✅", "✅"],
+                  [4, 5, 6], "Unrefined2", "Fabled6", "Unrefined4"]
         }
         self.selected_type = selected_type
         self.player_user = player_user
@@ -969,7 +974,8 @@ class RefineItemView(discord.ui.View):
                 if not self.embed:
                     button_id = int(button.custom_id)
                     selected_tier = self.menu_details[3][button_id]
-                    self.embed = refine_item(self.player_user, self.selected_type, selected_tier)
+                    required_material = self.menu_details[4][button_id]
+                    self.embed = refine_item(self.player_user, self.selected_type, selected_tier, required_material)
                 new_view = RefineItemView(self.player_user, self.selected_type)
                 await interaction.response.edit_message(embed=self.embed, view=new_view)
         except Exception as e:
@@ -988,24 +994,9 @@ class RefineItemView(discord.ui.View):
             print(e)
 
 
-def refine_item(player_user, selected_type, selected_tier):
-    item_id = f"i{str(selected_tier)}"
-    if selected_tier == 4:
-        match selected_type:
-            case "G":
-                item_id += "w"
-            case "C":
-                item_id += "c"
-            case "D":
-                item_id += "g"
-            case _:
-                pass
-    elif selected_tier == 5:
-        item_id += f"x{selected_type}"
-    elif selected_tier == 6:
-        item_id += f"u{selected_type}"
-    if inventory.check_stock(player_user, item_id) > 0:
-        inventory.update_stock(player_user, item_id, -1)
+def refine_item(player_user, selected_type, selected_tier, required_material):
+    if inventory.check_stock(player_user, required_material) > 0:
+        inventory.update_stock(player_user, required_material, -1)
         new_item, is_success = inventory.try_refine(player_user.player_id, selected_type, selected_tier)
         if is_success:
             result_id = inventory.inventory_add_custom_item(new_item)
@@ -1018,7 +1009,7 @@ def refine_item(player_user, selected_type, selected_tier):
                                       title="Refinement Failed! The item is destroyed",
                                       description="Try Again?")
     else:
-        loot_item = loot.BasicItem(item_id)
+        loot_item = inventory.BasicItem(required_material)
         stock_message = f'Out of Stock: {loot_item.item_emoji}!'
         embed_msg = discord.Embed(colour=discord.Colour.red(),
                                   title="Cannot Refine!",

@@ -937,7 +937,7 @@ class PlayerProfile:
         potion_list = ["i1y", "i2y", "i3y", "i4y"]
         potion_msg = ""
         for x in potion_list:
-            loot_item = loot.BasicItem(str(x))
+            loot_item = inventory.BasicItem(str(x))
             potion_stock = inventory.check_stock(self, loot_item.item_id)
             potion_msg += f"\n{loot_item.item_emoji} {potion_stock}x {loot_item.item_name}"
         stamina_title = f"{self.player_username}\'s Stamina: "

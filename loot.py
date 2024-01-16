@@ -18,43 +18,6 @@ import mydb
 import pandorabot
 
 
-class BasicItem:
-    def __init__(self, item_id):
-        self.item_id = ""
-        self.item_name = ""
-        self.item_tier = ""
-        self.item_base_rate = 0
-        self.item_description = ""
-        self.item_emoji = ""
-        self.item_image = ""
-        self.get_bitem_by_id(item_id)
-
-    def __str__(self):
-        return self.item_name
-
-    def get_bitem_by_id(self, item_id):
-        filename = "itemlist.csv"
-        df = pd.read_csv(filename)
-        df = df.loc[df['item_id'] == item_id]
-        if len(df) != 0:
-            self.item_id = item_id
-            self.item_name = str(df["item_name"].values[0])
-            self.item_tier = int(df["item_tier"].values[0])
-            self.item_base_rate = int(df["item_base_rate"].values[0])
-            self.item_description = str(df["item_description"].values[0])
-            self.item_emoji = str(df["item_emoji"].values[0])
-
-    def create_loot_embed(self, player_object):
-        item_qty = inventory.check_stock(player_object, self.item_id)
-        item_msg = f"{self.item_description}\n{player_object.player_username}'s Stock: {item_qty}"
-        colour, emoji = inventory.get_gear_tier_colours(self.item_tier)
-        loot_embed = discord.Embed(colour=colour,
-                                   title=self.item_name,
-                                   description=item_msg)
-        # loot_embed.set_thumbnail(url=self.item_image)
-        return loot_embed
-
-
 def award_loot(boss_object, player_list, exp_amount, coin_amount):
     boss_tier = boss_object.boss_tier
     loot_msg = []
@@ -81,7 +44,7 @@ def award_loot(boss_object, player_list, exp_amount, coin_amount):
         if boss_object.player_id == 0:
             random_check = random.randint(1, 100)
             if random_check <= 75:
-                raid_item = BasicItem(f"STONE5")
+                raid_item = BasicItem(f"Stone5")
                 loot_msg[counter] += f"{raid_item.item_emoji} 1x {raid_item.item_name}\n"
                 df_change.loc[len(df_change)] = [temp_player.player_id, raid_item.item_id, 1]
         # Check essence drops
@@ -97,8 +60,8 @@ def award_loot(boss_object, player_list, exp_amount, coin_amount):
                     tarot_qty += 1
             if tarot_qty > 0:
                 temp = boss_object.boss_name.split(" ", 1)
-                tarot_id = f"t{temp[0]}"
-                tarot_item = loot.BasicItem(tarot_id)
+                tarot_id = f"Essence{temp[0]}"
+                tarot_item = inventory.BasicItem(tarot_id)
                 loot_msg[counter] += f"{tarot_item.item_emoji} {tarot_qty}x {tarot_item.item_name}\n"
                 df_change.loc[len(df_change)] = [temp_player.player_id, tarot_id, tarot_qty]
         filename = "droptable.csv"

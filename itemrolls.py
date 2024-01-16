@@ -11,7 +11,7 @@ roll_structure_dict = {"W": ["damage", "damage", "penetration", "penetration", "
                        "Y": ["damage", "damage", "damage", "penetration", "curse", "unique"],
                        "G": ["damage", "damage", "damage", "penetration", "curse", "unique"],
                        "C": ["damage", "damage", "damage", "penetration", "curse", "unique"],
-                       "D": ["damage", "damage", "damage", "penetration", "curse", "defensive"]}
+                       "D": ["damage", "damage", "penetration", "penetration", "defensive", "defensive"]}
 
 damage_rolls = {
     "damage-0": ["Fire Damage", 25, 10, [["elemental_multiplier", 0]]],
