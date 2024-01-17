@@ -541,13 +541,14 @@ class BasicItem:
 def get_item_shop_list(item_tier):
     item_list = []
     for item_id, item_data in itemdata.itemdata_dict.items():
+        temp_tier = min(6, int(item_data['tier']))
         # Fae Core shop exception.
         if item_tier == 0:
-            if 'Fae' in item_id:
+            if 'Fae' in item_id and item_data['cost'] != 0:
                 target_item = inventory.BasicItem(item_id)
                 item_list.append(target_item)
         # Handle all other items.
-        elif item_data['tier'] == item_tier:
+        elif temp_tier == item_tier and item_data['cost'] != 0:
             if 'Fae' not in item_id:
                 target_item = inventory.BasicItem(item_id)
                 item_list.append(target_item)
@@ -748,8 +749,10 @@ def display_binventory(player_id, method):
         inventory_list = []
         df = df[df['item_id'].str.match(regex_pattern)]
         for _, row in df.iterrows():
-            current_item = BasicItem(str(row['item_id']))
-            inventory_list.append([current_item, str(row['item_qty'])])
+            temp_id = str(row['item_id'])
+            if temp_id in itemdata.itemdata_dict:
+                current_item = BasicItem(temp_id)
+                inventory_list.append([current_item, str(row['item_qty'])])
         for item, quantity in inventory_list:
             player_inventory += f"{item.item_emoji} {quantity}x {item.item_name}\n"
         # Close the connection.

@@ -115,10 +115,10 @@ itemdata_dict = build_item_dict(itemdata_dict, stone_data, 1)
 potion_values = [500, 1000, 2500, 5000]
 stamina_data = [
     "Potion",
-    [None, 'Lesser Stamina Potion', None, None, '<:estamina:1145534039684562994>', None, 2500, ""],
-    [None, 'Standard Stamina Potion', None, None, '<:estamina:1145534039684562994>', None, 5000, ""],
-    [None, 'Greater Stamina Potion', None, None, '<:estamina:1145534039684562994>', None, 10000, ""],
-    [None, 'Ultimate Stamina Potion', None, None, '<:estamina:1145534039684562994>', None, 20000, ""]
+    [None, 'Lesser Stamina Potion', 100, 1, '<:estamina:1145534039684562994>', None, 2500, ""],
+    [None, 'Standard Stamina Potion', 100, 2, '<:estamina:1145534039684562994>', None, 5000, ""],
+    [None, 'Greater Stamina Potion', 100, 3, '<:estamina:1145534039684562994>', None, 10000, ""],
+    [None, 'Ultimate Stamina Potion', 100, 4, '<:estamina:1145534039684562994>', None, 20000, ""]
 ]
 for index, row in enumerate(stamina_data[1:]):
     row[5] = f'Consume to restore {potion_values[index]} stamina.'
@@ -128,10 +128,10 @@ itemdata_dict = build_item_dict(itemdata_dict, stamina_data, 1)
 trove_values = [(1000, 10000), (10000, 25000), (25000, 50000), (50000, 250000)]
 trove_data = [
     "Trove",
-    [None, 'Lesser Golden Trove', None, 1, '<a:elootitem:1144477550379274322>', None, 0, ""],
-    [None, 'Standard Golden Trove', None, 2, '<a:elootitem:1144477550379274322>', None, 0, ""],
-    [None, 'Greater Golden Trove', None, 3, '<a:elootitem:1144477550379274322>', None, 0, ""],
-    [None, 'Ultimate Golden Trove', None, 4, '<a:elootitem:1144477550379274322>', None, 0, ""]
+    [None, 'Lesser Golden Trove', 100, 1, '<a:elootitem:1144477550379274322>', None, 0, ""],
+    [None, 'Standard Golden Trove', 100, 2, '<a:elootitem:1144477550379274322>', None, 0, ""],
+    [None, 'Greater Golden Trove', 100, 3, '<a:elootitem:1144477550379274322>', None, 0, ""],
+    [None, 'Ultimate Golden Trove', 100, 4, '<a:elootitem:1144477550379274322>', None, 0, ""]
 ]
 for index, (min_value, max_value) in enumerate(trove_values):
     row = trove_data[index + 1]
@@ -255,12 +255,12 @@ itemdata_dict = build_item_dict(itemdata_dict, fabled_fragment_data, 1)
 unrefined_item_types = ['Weapon', 'Armour', 'Accessory', 'Wing', 'Crest', 'Gem']
 unrefined_fabled_data = [
     "Fabled",
-    [None, "Unrefined Fabled Item (Weapon)", 50, 5, '<a:elootitem:1144477550379274322>', None, 500000, ""],
-    [None, "Unrefined Fabled Item (Armour)", 50, 5, '<a:elootitem:1144477550379274322>', None, 500000, ""],
-    [None, "Unrefined Fabled Item (Accessory)", 50, 5, '<a:elootitem:1144477550379274322>', None, 500000, ""],
-    [None, "Unrefined Fabled Item (Wing)", 50, 5, '<a:elootitem:1144477550379274322>', None, 500000, ""],
-    [None, "Unrefined Fabled Item (Crest)", 50, 5, '<a:elootitem:1144477550379274322>', None, 500000, ""],
-    [None, "Unrefined Fabled Item (Gem)", 50, 5, '<a:elootitem:1144477550379274322>', None, 500000, ""]
+    [None, "Unrefined Fabled Item (Weapon)", 50, 5, '<a:elootitem:1144477550379274322>', None, 0, ""],
+    [None, "Unrefined Fabled Item (Armour)", 50, 5, '<a:elootitem:1144477550379274322>', None, 0, ""],
+    [None, "Unrefined Fabled Item (Accessory)", 50, 5, '<a:elootitem:1144477550379274322>', None, 0, ""],
+    [None, "Unrefined Fabled Item (Wing)", 50, 5, '<a:elootitem:1144477550379274322>', None, 0, ""],
+    [None, "Unrefined Fabled Item (Crest)", 50, 5, '<a:elootitem:1144477550379274322>', None, 0, ""],
+    [None, "Unrefined Fabled Item (Gem)", 50, 5, '<a:elootitem:1144477550379274322>', None, 0, ""]
 ]
 for index, row in enumerate(unrefined_fabled_data[1:]):
     row[5] = f'Refine for 50% chance to receive a tier 5 {unrefined_item_types[index].lower()}s.'
@@ -319,7 +319,7 @@ crystallized_data = [
     [None, 'Crystallized Wish', 100, 6, '<a:elootitem:1144477550379274322>',
      'Used for miracle infusion.', 0, ""],
     [None, 'Crystallized Void', 100, 7, '<a:evoid:1145520260573827134>',
-     'Used to transcend tier 6 gear items.', 99999999, ""]
+     'Used to transcend tier 6 gear items.', 10000000, ""]
 ]
 itemdata_dict = build_item_dict(itemdata_dict, crystallized_data, 1)
 

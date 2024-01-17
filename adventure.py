@@ -1139,8 +1139,8 @@ class CrystalRoomView(discord.ui.View):
 
     def run_option_button(self, option_selected):
         success_check = random.randint(1, 100)
+        quantity = 2 - option_selected
         if success_check <= self.success_rate[option_selected]:
-            quantity = 2 - option_selected
             inventory.update_stock(self.expedition.player_object, self.dropped_item.item_id, quantity)
             title_msg = "Found Materials!"
             self.expedition.luck += 1

@@ -139,17 +139,16 @@ class InfuseView(discord.ui.View):
         # Build the option menu dynamically based on recipe categories.
         select_options = [
             discord.SelectOption(
-                emoji="<a:eenergy:1145534127349706772>",
-                label=category,
+                emoji="<a:eenergy:1145534127349706772>", label=category,
                 description=f"Creates {category.lower()} items."
             ) for category in recipe_dict
         ]
-        select_menu = discord.ui.Select(
+        self.select_menu = discord.ui.Select(
             placeholder="What kind of infusion do you want to perform?",
-            min_values=1,
-            max_values=1,
-            options=select_options
+            min_values=1, max_values=1, options=select_options
         )
+        self.select_menu.callback = self.select_callback
+        self.add_item(self.select_menu)
 
     async def select_callback(self, interaction: discord.Interaction):
         try:
@@ -173,28 +172,29 @@ class SelectRecipeView(discord.ui.View):
         self.category = category
 
         # Build the option menu dynamically based on the category's recipes.
-        category_recipes = recipe_dict.get(category, {})
+        category_recipes = recipe_dict.get(self.category, {})
+        options_data_list = []
+        for recipe_name, recipe in category_recipes.items():
+            result_item = inventory.BasicItem(recipe[5])
+            options_data_list.append([recipe_name, recipe[4], result_item.item_emoji])
         select_options = [
             discord.SelectOption(
-                emoji=recipe[0], label=recipe_name,
-                description=f"Use {', '.join(map(str, recipe[1:-1]))} to craft {recipe[-1]}."
-            ) for recipe_name, recipe in category_recipes.items()
+                emoji=result_emoji, label=recipe_name, description=f"Success Rate {success_rate}%", value=recipe_name
+            ) for recipe_name, success_rate, result_emoji in options_data_list
         ]
-
-        select_menu = discord.ui.Select(
-            placeholder=f"Select the {category.lower()} infusion recipe.",
+        self.select_menu = discord.ui.Select(
+            placeholder=f"Select the {self.category.lower()} infusion recipe.",
             min_values=1, max_values=1, options=select_options
         )
-
-        select_menu.callback = self.recipe_callback
-        self.add_item(select_menu)
+        self.select_menu.callback = self.recipe_callback
+        self.add_item(self.select_menu)
 
     async def recipe_callback(self, interaction: discord.Interaction):
         try:
             if interaction.user.name == self.player_object.player_name:
                 reload_player = player.get_player_by_id(self.player_object.player_id)
                 selected_option = interaction.data['values'][0]
-                recipe_object = RecipeObject(selected_option, self.category)
+                recipe_object = RecipeObject(self.category, selected_option)
                 embed_msg = recipe_object.create_cost_embed(reload_player)
                 new_view = CraftView(reload_player, recipe_object)
                 await interaction.response.edit_message(embed=embed_msg, view=new_view)
@@ -209,7 +209,7 @@ class CraftView(discord.ui.View):
         self.recipe_object = recipe_object
         self.is_paid = False
 
-    async def run_button(self, selected_qty):
+    def run_button(self, selected_qty):
         reload_player = player.get_player_by_id(self.player_user.player_id)
         embed_title = "Cloaked Alchemist, Sangam"
         if self.recipe_object.can_afford(reload_player, selected_qty):

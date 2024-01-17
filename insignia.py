@@ -103,7 +103,7 @@ class InsigniaView(discord.ui.View):
                                               description="I applaud your greed. In addition to the payment "
                                                           "I hope your sanity can afford the cost.")
                     token_item = inventory.BasicItem("Token2")
-                    cost_msg = f"{token_item.item_emoji} {cost}x {token_item.item_name}\n"
+                    cost_msg = f"{token_item.item_emoji} {num_selected}x {token_item.item_name}\n"
                     fae_cost = payment_embed(current_selection)
                     cost_msg += fae_cost
                     embed_msg.add_field(name="Cost:", value=cost_msg, inline=False)
@@ -173,8 +173,7 @@ class ElementSelectView(discord.ui.View):
                                                   title="Isabelle, Soulweaver of the True Laws",
                                                   description="How entertaining. I am willing to engrave your soul, "
                                                               "but my services are as expensive as they are painful.")
-                        cost = num_selected * 10000
-                        cost_msg = f"{globalitems.coin_icon} {cost}x Lotus Coins\n"
+                        cost_msg = f"{globalitems.coin_icon} {num_selected}x Lotus Coins\n"
                         fae_cost = payment_embed(current_selection)
                         cost_msg += fae_cost
                         embed_msg.add_field(name="Cost:", value=cost_msg, inline=False)

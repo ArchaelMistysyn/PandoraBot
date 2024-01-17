@@ -3,6 +3,7 @@ import pandas as pd
 import csv
 import random
 
+import itemdata
 import globalitems
 import inventory
 import loot
@@ -162,7 +163,7 @@ def generate_random_item():
         511: (None, "Token"), 1011: (None, "Pearl"), 1511: (None, "Hammer"),
         2511: ("Flame1", None), 3511: ("Matrix1", None), 4511: (None, "Trove"),
         5511: (None, "Potion"), 6511: (None, "Soul"), 7511: (None, "Ore"),
-        10000: (None, "Fae"),
+        10000: (None, "Fae")
     }
 
     # Assign a reward id based on the probability, set id, or id prefix.
@@ -170,12 +171,13 @@ def generate_random_item():
         if random_reward <= upper_limit:
             if specific_reward:
                 reward_id = specific_reward
-            elif prefix:
-                reward_types = [key for key in dictionary.keys() if prefix in key]
+            elif prefix is not None:
+                reward_types = [key for key in itemdata.itemdata_dict.keys() if key is not None and prefix in key]
                 reward_id = random.choice(reward_types)
             break
 
     # Quantity Exceptions
+    print(reward_id)
     if reward_id == "Crystal2":
         quantity = 1
     elif "Fae" in reward_id:

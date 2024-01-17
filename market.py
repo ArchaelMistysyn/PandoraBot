@@ -61,7 +61,7 @@ class TierSelectView(discord.ui.View):
                     embed_msg = discord.Embed(colour=tier_colour, title=shop_msg, description="")
                     for x in item_list:
                         embed_msg.add_field(name=f"{x.item_emoji} {x.item_name}",
-                                            value=f"Cost: {x.item_cost}", inline=False)
+                                            value=f"Cost: {x.item_cost:,}", inline=False)
                 else:
                     embed_msg = discord.Embed(colour=discord.Colour.dark_orange(),
                                               title="Black Market",
@@ -102,7 +102,7 @@ def show_item(player_user, selected_info):
     selected_item = inventory.BasicItem(selected_info)
     embed_msg = selected_item.create_bitem_embed(player_user)
     cost = selected_item.item_cost
-    embed_msg.add_field(name="Cost", value=cost, inline=False)
+    embed_msg.add_field(name="Cost", value=f"{cost:,}", inline=False)
     purchase_view = PurchaseView(player_user, selected_item)
     return embed_msg, purchase_view
 
@@ -125,7 +125,7 @@ class PurchaseView(discord.ui.View):
                 self.is_paid = True
             embed_title = "Purchase Successful!"
             embed_description = (f"Purchased {self.selected_item.item_emoji} {self.selected_item.item_name}"
-                                 f" {quantity}x. Remaining lotus coins: {reload_player.player_coins}.")
+                                 f" {quantity:,}x. Remaining lotus coins: {reload_player.player_coins}.")
             embed_msg = discord.Embed(colour=discord.Colour.dark_orange(),
                                       title=embed_title,
                                       description=embed_description)
