@@ -539,27 +539,17 @@ class BasicItem:
 
 
 def get_item_shop_list(item_tier):
-    df = pd.read_csv("itemlist.csv")
-    if item_tier != 0:
-        df = df.loc[df['item_tier'] == item_tier]
-        if item_tier == 2:
-            df = df.loc[df['item_id'].str.contains('i|c', regex=True)]
-        else:
-            df = df.loc[df['item_id'].str.contains('i')]
-    else:
-        df = df.loc[df['item_id'].str.contains('Fae')]
     item_list = []
-    if len(df.index) != 0:
-        for index, row in df.iterrows():
-            if int(row["item_cost"]) != 0:
-                target_item = BasicItem()
-                target_item.item_name = str(row["item_name"])
-                target_item.item_id = str(row["item_id"])
-                target_item.item_tier = int(row["item_tier"])
-                target_item.item_emoji = str(row["item_emoji"])
-                target_item.item_description = str(row["item_description"])
-                target_item.item_cost = int(row["item_cost"])
-                target_item.item_image = str(row["item_image"])
+    for item_id, item_data in itemdata.itemdata_dict.items():
+        # Fae Core shop exception.
+        if item_tier == 0:
+            if 'Fae' in item_id:
+                target_item = inventory.BasicItem(item_id)
+                item_list.append(target_item)
+        # Handle all other items.
+        elif item_data['tier'] == item_tier:
+            if 'Fae' not in item_id:
+                target_item = inventory.BasicItem(item_id)
                 item_list.append(target_item)
     return item_list
 
@@ -761,7 +751,7 @@ def display_binventory(player_id, method):
             current_item = BasicItem(str(row['item_id']))
             inventory_list.append([current_item, str(row['item_qty'])])
         for item, quantity in inventory_list:
-            player_inventory += f"{item.item_emoji} {item.item_name}: {quantity}x\n"
+            player_inventory += f"{item.item_emoji} {quantity}x {item.item_name}\n"
         # Close the connection.
         pandora_db.close()
         engine.dispose()

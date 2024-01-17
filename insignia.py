@@ -92,18 +92,18 @@ class InsigniaView(discord.ui.View):
                     num_selected = 0
                     new_view = ElementSelectView(self.player_user, num_elements, num_selected, current_selection)
                     embed_msg = discord.Embed(colour=discord.Colour.dark_orange(),
-                                              title="Weaver Lord, Isabelle",
+                                              title="Isabelle, Soulweaver of the True Laws",
                                               description="What is the desired affinity?")
                 else:
                     current_selection = [1, 1, 1, 1, 1, 1, 1, 1, 1]
                     num_selected = 9
                     new_view = ConfirmSelectionView(self.player_user, num_selected, current_selection)
                     embed_msg = discord.Embed(colour=discord.Colour.dark_orange(),
-                                              title="Weaver Lord, Isabelle",
+                                              title="Isabelle, Soulweaver of the True Laws",
                                               description="I applaud your greed. In addition to the payment "
                                                           "I hope your sanity can afford the cost.")
-                    cost = num_selected * 5000
-                    cost_msg = f"{globalitems.coin_icon} {cost}x Lotus Coins\n"
+                    token_item = inventory.BasicItem("Token2")
+                    cost_msg = f"{token_item.item_emoji} {cost}x {token_item.item_name}\n"
                     fae_cost = payment_embed(current_selection)
                     cost_msg += fae_cost
                     embed_msg.add_field(name="Cost:", value=cost_msg, inline=False)
@@ -160,7 +160,7 @@ class ElementSelectView(discord.ui.View):
                 selected_element = int(element_select.values[0])
                 if self.current_selection[selected_element] == 1:
                     embed_msg = discord.Embed(colour=discord.Colour.dark_orange(),
-                                              title="Weaver Lord, Isabelle",
+                                              title="Isabelle, Soulweaver of the True Laws",
                                               description="What are you playing at? You've already picked that one.")
                     new_view = self
                 else:
@@ -170,7 +170,7 @@ class ElementSelectView(discord.ui.View):
                     if num_selected == self.num_elements:
                         new_view = ConfirmSelectionView(self.player_user, num_selected, current_selection)
                         embed_msg = discord.Embed(colour=discord.Colour.dark_orange(),
-                                                  title="Weaver Lord, Isabelle",
+                                                  title="Isabelle, Soulweaver of the True Laws",
                                                   description="How entertaining. I am willing to engrave your soul, "
                                                               "but my services are as expensive as they are painful.")
                         cost = num_selected * 10000
@@ -181,7 +181,7 @@ class ElementSelectView(discord.ui.View):
                     else:
                         new_view = ElementSelectView(self.player_user, self.num_elements, num_selected, current_selection)
                         embed_msg = discord.Embed(colour=discord.Colour.dark_orange(),
-                                                  title="Weaver Lord, Isabelle",
+                                                  title="Isabelle, Soulweaver of the True Laws",
                                                   description="What is the next desired affinity?")
                 await interaction.response.edit_message(embed=embed_msg, view=new_view)
         except Exception as e:
@@ -203,28 +203,27 @@ class ConfirmSelectionView(discord.ui.View):
                 if not self.embed_msg:
                     reload_player = player.get_player_by_id(self.player_user.player_id)
                     cannot_afford_description = ""
-                    cost = self.num_selected * 10000
+                    cost = self.num_selected
                     enough_fae = True
                     selected_elements_list = [ind for ind, y in enumerate(self.current_selection) if y == 1]
                     for x in selected_elements_list:
                         fae_id = f"Fae{x}"
                         fae_check = inventory.check_stock(reload_player, fae_id)
-                        if fae_check < 50:
+                        if fae_check < 100:
                             enough_fae = False
-                    if cost <= reload_player.player_coins:
+                    stock = inventory.check_stock(reload_player, "Token2")
+                    if cost <= stock:
                         if enough_fae:
-                            reload_player.player_coins -= cost
-                            reload_player.set_player_field("player_coins", reload_player.player_coins)
+                            inventory.update_stock(reload_player, "Token2", (cost * -1))
                             for z in selected_elements_list:
                                 fae_id = fae_id = f"Fae{z}"
-                                inventory.update_stock(reload_player, fae_id, -50)
+                                inventory.update_stock(reload_player, fae_id, -100)
                             delim = ";"
                             insignia_code = reduce(lambda full, new: str(full) + delim + str(new), self.current_selection)
                             insignia_description = display_insignia(reload_player, insignia_code, "Description")
                             reload_player.set_player_field("player_equip_insignia", insignia_code)
                             embed_title = "Insignia Engraved!"
                             embed_description = f"Engraved {insignia_description}"
-                            embed_description += f"\nRemaining lotus coins: {reload_player.player_coins}."
                             self.embed_msg = discord.Embed(colour=discord.Colour.dark_orange(),
                                                            title=embed_title,
                                                            description=embed_description)
@@ -232,10 +231,10 @@ class ConfirmSelectionView(discord.ui.View):
                             cannot_afford_description = ("Weaving requires a lot of fae energy. "
                                                          "I'll need you to bring me more cores.")
                     else:
-                        cannot_afford_description = "I'm not going to work for free. Come back with more coins."
+                        cannot_afford_description = "I'm not going to work for free. Bring tokens or don't come back."
                     if cannot_afford_description != "":
                         self.embed_msg = discord.Embed(colour=discord.Colour.dark_orange(),
-                                                       title="Weaver Lord, Isabelle",
+                                                       title="Isabelle, Soulweaver of the True Laws",
                                                        description=cannot_afford_description)
                 await interaction.response.edit_message(embed=self.embed_msg, view=None)
         except Exception as e:
@@ -247,7 +246,7 @@ class ConfirmSelectionView(discord.ui.View):
             if interaction.user.name == self.player_user.player_name:
                 engrave_msg = "My patience wears thin. Tell me, what kind of power do you seek?"
                 embed_msg = discord.Embed(colour=discord.Colour.dark_orange(),
-                                          title="Weaver Lord, Isabelle",
+                                          title="Isabelle, Soulweaver of the True Laws",
                                           description=engrave_msg)
                 new_view = InsigniaView(self.player_user)
                 await interaction.response.edit_message(embed=embed_msg, view=new_view)
@@ -261,5 +260,5 @@ def payment_embed(current_selection):
         if x != 0:
             fae_id = f"Fae{idx}"
             loot_item = inventory.BasicItem(fae_id)
-            cost_msg += f"{loot_item.item_emoji} 50x {loot_item.item_name}\n"
+            cost_msg += f"{loot_item.item_emoji} 100x {loot_item.item_name}\n"
     return cost_msg

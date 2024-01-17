@@ -66,14 +66,20 @@ itemdata_dict = build_item_dict(itemdata_dict, origin_data, 0)
 # Token List Data
 token_data = [
     "Token",
-    [None, 'Namechanger Token', 100, 2, '<a:elootitem:1144477550379274322>',
-     'Can be used to change your username.', 100000, ""],
-    [None, 'Pathchanger Token', 100, 2, '<a:elootitem:1144477550379274322>',
-     'Can be used to change your class.', 100000, ""],
-    [None, 'Resetter Token', 100, 2, '<a:elootitem:1144477550379274322>',
-     'Can be used to reset all skill points.', 100000, ""],
+    [None, 'Changeling Token', 100, 1, '<a:elootitem:1144477550379274322>',
+     'An ancient token. Can be used to change your class or username.', 100000, ""],
+    [None, 'Soulweaver Token', 100, 2, '<a:elootitem:1144477550379274322>',
+     'An ancient token. Can be used for insignia engraving and upgrades.', 100000, ""],
+    [None, 'Pathwalker Token', 100, 3, '<a:elootitem:1144477550379274322>',
+     'An ancient token. Can be used to reset all skill points.', 100000, ""],
+    [None, 'Placeholder Token', 100, 4, '<a:elootitem:1144477550379274322>',
+     'An ancient token. ???.', 100000, ""],
+    [None, 'Placeholder Token', 100, 5, '<a:elootitem:1144477550379274322>',
+     'An ancient token. ???.', 100000, ""],
     [None, 'Scribe Token', 100, 6, '<a:elootitem:1144477550379274322>',
-     'An ancient token. To one who knows its true purpose the value of this item is immeasurable', 500000, ""],
+     'An ancient token. To one who knows its true purpose the value of this item is immeasurable.', 250000, ""],
+    [None, '??? Token', 100, 7, '<a:elootitem:1144477550379274322>',
+     'An ancient token. ???.', 500000, ""]
 ]
 itemdata_dict = build_item_dict(itemdata_dict, token_data, 1)
 
@@ -86,6 +92,8 @@ summon_data = [
      'Perform a summoning ritual to summon a tier 4-5 paragon solo boss.', 25000, ""],
     [None, 'Summoning Artifact', 100, 6, '<a:elootitem:1144477550379274322>',
      'Perform a summoning ritual to summon a tier 6 paragon solo boss.', 100000, ""],
+    [None, 'Summoning Crystal', 100, 7, '<a:elootitem:1144477550379274322>',
+     'Perform a summoning ritual to summon ???.', 1000000, ""]
 ]
 itemdata_dict = build_item_dict(itemdata_dict, summon_data, 1)
 
@@ -97,7 +105,7 @@ stone_data = [
     [None, 'Dragon Stone', 100, 2, '<a:elootitem:1144477550379274322>', None, 0, ""],
     [None, 'Demon Stone', 100, 3, '<a:elootitem:1144477550379274322>', None, 0, ""],
     [None, 'Paragon Stone', 100, 4, '<a:elootitem:1144477550379274322>', None, 0, ""],
-    [None, 'Raid Stone', 100, 5, '<a:elootitem:1144477550379274322>', None, 0, ""],
+    [None, 'Raid Stone', 100, 5, '<a:elootitem:1144477550379274322>', None, 0, ""]
 ]
 for index, row in enumerate(stone_data[1:]):
     row[5] = f'Obtained from {stone_type[index].lower()}. It\'s a stone.'
@@ -110,7 +118,7 @@ stamina_data = [
     [None, 'Lesser Stamina Potion', None, None, '<:estamina:1145534039684562994>', None, 2500, ""],
     [None, 'Standard Stamina Potion', None, None, '<:estamina:1145534039684562994>', None, 5000, ""],
     [None, 'Greater Stamina Potion', None, None, '<:estamina:1145534039684562994>', None, 10000, ""],
-    [None, 'Ultimate Stamina Potion', None, None, '<:estamina:1145534039684562994>', None, 20000, ""],
+    [None, 'Ultimate Stamina Potion', None, None, '<:estamina:1145534039684562994>', None, 20000, ""]
 ]
 for index, row in enumerate(stamina_data[1:]):
     row[5] = f'Consume to restore {potion_values[index]} stamina.'
@@ -160,24 +168,14 @@ itemdata_dict = build_item_dict(itemdata_dict, soul_data, 1)
 # Hammer List Data
 hammer_data = [
     "Hammer",
-    [None, 'Star Hammer', 50, 2, '<:ehammer:1145520259248427069>',
-     'Adds an item roll or rerolls one if at capacity.', 25000, ""],
-    [None, 'Chaos Hammer', 33, 3, '<:ehammer:1145520259248427069>',
-     'Reroll all affixes on a 6 affix gear item.', 0, ""],
-    [None, 'Pulsar Hammer', 90, 4, '<:ehammer:1145520259248427069>',
-     'Rerolls a damage roll on a 6 affix gear item.', 0, ""],
-    [None, 'Quasar Hammer', 90, 4, '<:ehammer:1145520259248427069>',
-     'Rerolls a defensive roll on a 6 affix gear item.', 0, ""],
-    [None, 'Genesis Hammer', 90, 5, '<:ehammer:1145520259248427069>',
-     'Rerolls a penetration roll on a 6 affix gear item.', 0, ""],
-    [None, 'Terminus Hammer', 90, 5, '<:ehammer:1145520259248427069>',
-     'Rerolls a misc roll on a 6 affix gear item.', 0, ""],
-    [None, 'Zenith Hammer', 90, 6, '<:ehammer:1145520259248427069>',
-     'Rerolls a unique roll on a 6 affix gear item.', 0, ""],
-    [None, 'Void Hammer', 50, 6, '<a:evoid:1145520260573827134>',
-     'Converts eligible tier 5 gear items into void items.', 0, ""],
-    [None, 'Wish Hammer', 50, 6, '<:ehammer:1145520259248427069>',
-     'Used to add or reroll rolls of a wish item.', 0, ""],
+    [None, 'Star Hammer', 50, 3, '<:ehammer:1145520259248427069>',
+     'Adds an item roll or rerolls one if at capacity. Works on tier 5 and lower gear items.', 25000, ""],
+    [None, 'Astral Hammer', 33, 4, '<:ehammer:1145520259248427069>',
+     'Used to reroll specific item rolls. Works on tier 4 and lower gear items.', 0, ""],
+    [None, 'Fabled Hammer', 50, 5, '<:ehammer:1145520259248427069>',
+     'Used to reroll specific item rolls. Works on tier 5 and lower gear items.', 0, ""],
+    [None, 'Miracle Hammer', 50, 6, '<:ehammer:1145520259248427069>',
+     'Used to add or reroll item rolls. Works on tier 6 and abov gear items.', 0, ""]
 ]
 itemdata_dict = build_item_dict(itemdata_dict, hammer_data, 1)
 
@@ -189,7 +187,7 @@ matrix_data = [
     [None, 'Fabled Matrix', 100, 5, '<a:elootitem:1144477550379274322>',
      'Used to add a socket to a tier 5 gear item.', 100000, ""],
     [None, 'Miracle Matrix', 100, 6, '<a:elootitem:1144477550379274322>',
-     'Used to add a socket to a tier 6 gear item.', 250000, ""],
+     'Used to add a socket to a tier 6+ gear item.', 250000, ""]
 ]
 itemdata_dict = build_item_dict(itemdata_dict, matrix_data, 1)
 
@@ -203,7 +201,7 @@ pearl_data = [
     [None, 'Void Pearl', 85, 6, '<a:evoid:1145520260573827134>',
      'Augments an item roll of a void gear item. Increases the tier from 4 to 5.', 0, ""],
     [None, 'Miracle Pearl', 95, 6, '<:eprl:1148390531345432647>',
-     'Augments an item roll of a tier 6 gear item. Increases the tier by 1.', 0, ""],
+     'Augments an item roll of a tier 6 gear item. Increases the tier by 1.', 0, ""]
 ]
 itemdata_dict = build_item_dict(itemdata_dict, pearl_data, 1)
 
@@ -217,7 +215,7 @@ flame_data = [
     [None, 'Void Flame', 75, 6, '<a:evoid:1145520260573827134>',
      '75% chance to reroll a unique ability that has been void locked.', 0, ""],
     [None, 'Miracle Flame', 100, 6, '<a:eshadow2:1141653468965257216>',
-     'Used to reforge the base stats and unique ability of a tier 6 item. Cannot reroll void abilities.', 0, ""],
+     'Used to reforge the base stats and unique ability of a tier 6 item. Cannot reroll void abilities.', 0, ""]
 ]
 itemdata_dict = build_item_dict(itemdata_dict, flame_data, 1)
 
@@ -225,16 +223,17 @@ itemdata_dict = build_item_dict(itemdata_dict, flame_data, 1)
 core_data = [
     "Core",
     [None, 'Fabled Core', 100, 5, '<a:elootitem:1144477550379274322>', 'A core used for fabled infusion.', 250000, ""],
-    [None, 'Void Traces', 10, 5, '<a:evoid:1145520260573827134>', 'Used for void infusion.', 50000, ""],
-    [None, 'Wish Core', 90, 6, '<a:elootitem:1144477550379274322>', 'A core used for void purification.', 0, ""],
+    [None, 'Void Core', 50, 5, '<a:evoid:1145520260573827134>',
+     'A core used for to convert a tier 5 item into a void item.', 0, ""],
+    [None, 'Wish Core', 90, 6, '<a:elootitem:1144477550379274322>', 'A core used for void purification.', 0, ""]
 ]
 itemdata_dict = build_item_dict(itemdata_dict, core_data, 1)
 
 # Heart List Data
 heart_data = [
     "Heart",
-    [None, 'Astral Heart', 100, 5, '<a:elootitem:1144477550379274322>', 'Used in astral infusion.', 100000, ""],
-    [None, 'Miracle Heart', 100, 6, '<a:elootitem:1144477550379274322>', 'Used in miracle infusion.', 0, ""],
+    [None, 'Astral Heart', 100, 5, '<a:elootitem:1144477550379274322>', 'Used in various infusions.', 100000, ""],
+    [None, 'Miracle Heart', 100, 6, '<a:elootitem:1144477550379274322>', 'Used in miracle infusion.', 0, ""]
 ]
 itemdata_dict = build_item_dict(itemdata_dict, heart_data, 1)
 
@@ -245,7 +244,7 @@ fabled_fragment_data = [
     "Fragment",
     [None, "Fabled Weapon Fragment", 100, 5, '<a:elootitem:1144477550379274322>', None, 5000, ""],
     [None, "Fabled Armour Fragment", 100, 5, '<a:elootitem:1144477550379274322>', None, 5000, ""],
-    [None, "Fabled Accessory Fragment", 100, 5, '<a:elootitem:1144477550379274322>', None, 5000, ""],
+    [None, "Fabled Accessory Fragment", 100, 5, '<a:elootitem:1144477550379274322>', None, 5000, ""]
 ]
 for index, row in enumerate(fabled_fragment_data[1:]):
     row[5] = f'Used for infusing fabled {fragment_type[index].lower()}s.'
@@ -261,7 +260,7 @@ unrefined_fabled_data = [
     [None, "Unrefined Fabled Item (Accessory)", 50, 5, '<a:elootitem:1144477550379274322>', None, 500000, ""],
     [None, "Unrefined Fabled Item (Wing)", 50, 5, '<a:elootitem:1144477550379274322>', None, 500000, ""],
     [None, "Unrefined Fabled Item (Crest)", 50, 5, '<a:elootitem:1144477550379274322>', None, 500000, ""],
-    [None, "Unrefined Fabled Item (Gem)", 50, 5, '<a:elootitem:1144477550379274322>', None, 500000, ""],
+    [None, "Unrefined Fabled Item (Gem)", 50, 5, '<a:elootitem:1144477550379274322>', None, 500000, ""]
 ]
 for index, row in enumerate(unrefined_fabled_data[1:]):
     row[5] = f'Refine for 50% chance to receive a tier 5 {unrefined_item_types[index].lower()}s.'
@@ -279,7 +278,7 @@ unrefined_misc_data = [
     [None, 'Unrefined Dragon Heart Gem', 50, 6, '<a:elootitem:1144477550379274322>',
      'Refine for 50% chance to receive a tier 6 dragon heart gem.', 1500000, ""],
     [None, 'Unrefined Wish Item (Weapon)', 100, 6, '<a:elootitem:1144477550379274322>',
-     'Refine to acquire a tier 6 weapon.', 0, ""],
+     'Refine to acquire a tier 6 weapon.', 0, ""]
 ]
 itemdata_dict = build_item_dict(itemdata_dict, unrefined_misc_data, 1)
 
@@ -308,7 +307,7 @@ essence_data = [
     ['EssenceXIX', 'Essence of The Sun', 10, 2, '<a:elootitem:1144477550379274322>', None, 0, ""],
     ['EssenceXX', 'Essence of The Requiem', 10, 2, '<a:elootitem:1144477550379274322>', None, 0, ""],
     ['EssenceXXI', 'Essence of The Creation', 10, 2, '<a:elootitem:1144477550379274322>', None, 0, ""],
-    ['EssenceXXX', 'Essence of The Wish', 10, 6, '<a:elootitem:1144477550379274322>', None, 0, ""],
+    ['EssenceXXX', 'Essence of The Wish', 10, 6, '<a:elootitem:1144477550379274322>', None, 0, ""]
 ]
 for index, row in enumerate(essence_data[1:]):
     row[5] = f'Perform a binding ritual to attempt to seal this essence into card form.'
@@ -320,9 +319,21 @@ crystallized_data = [
     [None, 'Crystallized Wish', 100, 6, '<a:elootitem:1144477550379274322>',
      'Used for miracle infusion.', 0, ""],
     [None, 'Crystallized Void', 100, 7, '<a:evoid:1145520260573827134>',
-     'Used to transcend tier 6 gear items.', 99999999, ""],
+     'Used to transcend tier 6 gear items.', 99999999, ""]
 ]
 itemdata_dict = build_item_dict(itemdata_dict, crystallized_data, 1)
+
+# Lotus List Data
+lotus_data = [
+    "Lotus",
+    [None, 'Lotus of Prosperity', 100, 7, '<a:eorigin:1145520263954440313>',
+     '???', 99999999, ""],
+    [None, 'Lotus of Miracles', 100, 7, '<a:eorigin:1145520263954440313>',
+     '???', 0, ""],
+    [None, 'Lotus of Revelations', 100, 7, '<a:eorigin:1145520263954440313>',
+     '???', 0, ""]
+]
+itemdata_dict = build_item_dict(itemdata_dict, lotus_data, 1)
 
 # Uncategorized Item Data
 uncategorized_data = [
@@ -337,8 +348,7 @@ uncategorized_data = [
      'Used to enhance a tier 6 gear item.', 0, ""],
     ['Crate', 'Crate', 100, 1, '<a:elootitem:1144477550379274322>',
      'Contains a random item.', 10000, ""],
-    ['Lotus', 'Lotus of Revelations', 100, 7, '<a:eorigin:1145520263954440313>',
-     '???', 99999999, ""]
+    ['Trace1', 'Void Traces', 10, 5, '<a:evoid:1145520260573827134>', 'Used for void infusion.', 50000, ""]
 ]
 itemdata_dict = build_item_dict(itemdata_dict, uncategorized_data, 1)
 

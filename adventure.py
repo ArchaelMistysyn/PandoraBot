@@ -15,7 +15,7 @@ map_tier_dict = {"Ancient Ruins": 1, "Spatial Dungeon": 2, "Starlit Temple": 3,
                  "Celestial Labyrinth": 4, "Dimensional Spire": 5, "Chaos Rift": 6}
 random_room_list = ["trap_room", "statue_room", "treasure", "trial_room", "sanctuary_room", "penetralia_room",
                     "healing_room", "greater_treasure", "dragon_shrine", "epitaph_room", "selection_room",
-                    "basic_monster", "basic_monster", "elite_monster", "jackpot_room"]
+                    "crystal_room", "basic_monster", "basic_monster", "elite_monster", "jackpot_room"]
 death_msg_list = ["Back so soon? I think I'll play with you a little longer.", "Death is not the end.",
                   "Can't have you dying before the prelude now can we?", "I will overlook this, just this once. "
                   "I'll have you repay this favour to me when the time is right.",
@@ -95,6 +95,8 @@ class Expedition:
                 new_view = DragonRoomView(self)
             case "epitaph_room":
                 new_view = EpitaphRoomView(self)
+            case "crystal_room":
+                new_view = CrystalRoomView(self)
             case "selection_room":
                 new_view = SelectionRoomView(self)
             case "trial_room":
@@ -236,6 +238,11 @@ class Room:
                 self.room_variant = "Greater"
                 title_msg = "Golden Penetralia!"
                 description_msg = f"Riches spread all across the secret room. Ripe for the taking!"
+            case "crystal_room":
+                title_msg = "Crystal Cave"
+                description_msg = (f"Crystals are overly abundant in this cave. It is said that the rarest items are "
+                                   f"drawn to each other. Those adorned in precious metals may fare better then those "
+                                   f"who search blindly.")
             case "sanctuary_room":
                 title_msg = "Butterfae Sanctuary"
                 description_msg = "A wondrous room illuminated by the light of hundreds of elemental butterfaes"
@@ -696,13 +703,18 @@ class SelectionRoomView(discord.ui.View):
         self.embed = None
         self.new_view = None
         self.active_room = self.expedition.current_room
-        self.item_pools = [["i2h", "i1o", "i1s", "i2o", "i2s", "STONE3", "STONE4", "i2y", "i2j", "ESS"],
-                           ["i2h", "i3h", "i3o", "i3s", "i3k", "i3f", "i3y", "i3j", "i4t", "i1r", "STONE5", "ESS"],
-                           ["i4hA", "i4hB", "i4o", "i4s", "i4p", "i4z", "i4y", "i4w", "i4g", "i4c", "i5t", "i4j", "ESS"],
-                           ["i5o", "i5s", "i5l", "i5hA", "i5hB", "i6hZ", "i5u", "i5f", "i6t", "i6m", "i5v", "ESS"],
-                           ["i6x", "i5xW", "i5xA", "i5xY", "i5xG", "i5xC", "v6f", "v6p", "v6h", "i5xD", "ESS"],
-                           ["m6o", "m6s", "m6z", "m6f", "m6k", "m6h", "m6l", "i6uD", "ESS"],
-                           ["v7x", "i6uW"]]
+        self.item_pools = [["Hammer1", "Ore2", "Soul2", "Potion2", "Trove2", "ESS"],
+                           ["Hammer1", "Ore3", "Soul3", "Matrix1", "Flame1", "Potion3", "Trove3",
+                            "Summon1", "Token2", "ESS"],
+                           ["Hammer1", "Hammer2", "Pearl1", "Ore4", "Soul4", "OriginZ", "Potion4", "Trove4",
+                            "Summon2", "Unrefined1", "Unrefined2", "Unrefined3", "Token3", "ESS"],
+                           ["Hammer1", "Hammer2", "Ore5", "Soul5", "Heart1", "Core1", "Trace1", "Flame2", "Matrix2",
+                            "Summon3", "Token4", "ESS"],
+                           ["Crystal1", "Fabled1", "Fabled2", "Fabled3", "Fabled4", "Fabled5", "Fabled6",
+                            "Hammer1", "Hammer3", "Flame3", "Pearl3", "Core2", "Summon3", "Token5", "ESS"],
+                           ["Hammer1", "Hammer4", "Ore6", "Soul6", "OriginM", "Flame4", "Matrix3", "Heart2",
+                            "Summon4", "Unrefined4", "Token6", "ESS"],
+                           ["Crystal1", "Crystal2", "Unrefined4", "Unrefined5", "Lotus3"]]
         random_num = random.randint(1, 100000)
         if random_num <= self.expedition.luck:
             reward_tier = 6
@@ -800,7 +812,7 @@ class StatueRoomView(discord.ui.View):
                             blessing_msg = "Miraculous Blessing\nLuck +7"
                             self.expedition.luck += 7
                         elif blessing_chance <= 10:
-                            reward_id = "Token3"
+                            reward_id = "Summon3"
                             blessing_msg = "Sovereign's Blessing!\nLuck +5"
                             self.expedition.luck += 5
                     if active_room.deity_tier == 5:
@@ -809,7 +821,7 @@ class StatueRoomView(discord.ui.View):
                             blessing_msg = "Fabled Blessing\nLuck +3"
                             self.expedition.luck += 3
                         elif blessing_chance <= 10:
-                            reward_id = "Token2"
+                            reward_id = "Summon2"
                             blessing_msg = "Superior Blessing!\nLuck +2"
                             self.expedition.luck += 2
                     if reward_id == "":
@@ -820,7 +832,7 @@ class StatueRoomView(discord.ui.View):
                             blessing_msg = f"{active_room.room_deity}'s Blessing!\nLuck +2"
                             self.expedition.luck += 2
                         elif blessing_chance <= 30:
-                            reward_id = "Token1"
+                            reward_id = "Summon1"
                             blessing_msg = "Paragon's Blessing!\nLuck +1"
                             self.expedition.luck += 1
                     if reward_id != "":
@@ -1064,6 +1076,83 @@ class TrialRoomView(discord.ui.View):
         else:
             embed_msg = discord.Embed(colour=self.expedition.expedition_colour,
                                       title="Trial Failed!", description=completed_msg)
+        return embed_msg
+
+
+class CrystalRoomView(discord.ui.View):
+    def __init__(self, expedition):
+        super().__init__(timeout=None)
+        self.expedition = expedition
+        self.embed = None
+        self.new_view = None
+
+        rare_occurrence = random.randint(1, 1000)
+        random_item = "Crystal1" if rare_occurrence <= self.expedition.luck else "FragmentM"
+        self.dropped_item = inventory.BasicItem(random_item)
+
+        gear_tier_total = 0
+        for item_id in self.expedition.player_object.player_equipped:
+            if item_id != 0:
+                e_item = inventory.read_custom_item(item_id)
+                gear_tier_total += e_item.item_tier
+                if e_item.item_inlaid_gem_id != 0:
+                    e_gem = inventory.read_custom_item(e_item.item_inlaid_gem_id)
+                    gear_tier_total += e_gem.item_num_stars
+        if self.expedition.player_object.equipped_tarot != "":
+            player_tarot_info = self.expedition.player_object.equipped_tarot.split(";")
+            gear_tier_total += int(player_tarot_info[1])
+        if self.expedition.player_object.insignia != "":
+            gear_tier_total += self.expedition.player_object.player_echelon
+        self.success_rate = [min(100, gear_tier_total), min(100, self.expedition.luck * 2)]
+        self.option1.label = f"Resonate ({self.success_rate[0]}%)"
+        self.option1.emoji = "🌟"
+        self.option2.label = f"Search ({self.success_rate[1]}%)"
+        self.option2.emoji = "🔍"
+
+    @discord.ui.button(style=discord.ButtonStyle.blurple)
+    async def option1(self, interaction: discord.Interaction, button: discord.Button):
+        await self.option1_callback(interaction, button)
+
+    @discord.ui.button(style=discord.ButtonStyle.blurple)
+    async def option2(self, interaction: discord.Interaction, button: discord.Button):
+        await self.option2_callback(interaction, button)
+
+    async def option1_callback(self, interaction: discord.Interaction, button: discord.Button):
+        try:
+            if interaction.user.name == self.expedition.player_object.player_name:
+                if not self.embed:
+                    self.embed = self.run_option_button(0)
+                    self.new_view = TransitionView(self.expedition)
+                await interaction.response.edit_message(embed=self.embed, view=self.new_view)
+        except Exception as e:
+            print(e)
+
+    async def option2_callback(self, interaction: discord.Interaction, button: discord.Button):
+        try:
+            if interaction.user.name == self.expedition.player_object.player_name:
+                if not self.embed:
+                    self.embed = self.run_option_button(1)
+                    self.new_view = TransitionView(self.expedition)
+                await interaction.response.edit_message(embed=self.embed, view=self.new_view)
+        except Exception as e:
+            print(e)
+
+    def run_option_button(self, option_selected):
+        success_check = random.randint(1, 100)
+        if success_check <= self.success_rate[option_selected]:
+            quantity = 2 - option_selected
+            inventory.update_stock(self.expedition.player_object, self.dropped_item.item_id, quantity)
+            title_msg = "Found Materials!"
+            self.expedition.luck += 1
+            output_msg = f"{self.dropped_item.item_emoji} {quantity}x {self.dropped_item.item_name}"
+            output_msg += f"\n**Luck +1**"
+        else:
+            title_msg = "Nothing Found!"
+            output_msg = f"You leave empty handed.\n**Luck -1**"
+            if self.expedition.luck > quantity:
+                self.expedition.luck -= quantity
+        embed_msg = discord.Embed(colour=self.expedition.expedition_colour,
+                                  title=title_msg, description=output_msg)
         return embed_msg
 
 

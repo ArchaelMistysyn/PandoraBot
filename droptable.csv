@@ -19,11 +19,11 @@ All,4,OriginZ,10
 All,5,OriginZ,10
 All,6,OriginZ,10
 All,5,Core1,15
-All,5,Core2,25
+All,5,Trace1,25
 All,5,Potion4,10
 All,6,Potion4,15
 All,6,Unrefined4,25
-All,6,Core2,25
+All,6,Trace1,25
 All,0,Heart1,3
 All,6,FragmentM,75
 All,6,Crystal1,1
@@ -38,7 +38,7 @@ Dragon,0,Unrefined2,50
 Dragon,0,Stone2,75
 Demon,0,Flame1,10
 Demon,0,Stone3,75
-Demon,0,Core1,1
+Demon,0,Core1,3
 Paragon,0,Unrefined3,25
 Paragon,0,Stone4,75
-Paragon,0,Core1,3
+Paragon,0,Core1,5

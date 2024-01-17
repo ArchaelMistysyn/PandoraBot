@@ -158,7 +158,7 @@ item_roll_master_dict = {
 
 augment_icons = ["<:esocket:1148387477615300740>", "🟢", "🔵",
                  "<:eprl:1148390531345432647>", "<:ov:1177184321686228992>", "<:or:1177184323691098195>"]
-cost_list = [500000, 1000000, 2500000, 5000000, 10000000, 20000000]
+cost_list = [2, 3, 6, 10, 15, 25]
 
 
 class SelectRollsView(discord.ui.View):
@@ -171,7 +171,8 @@ class SelectRollsView(discord.ui.View):
         self.count_view = discord.ui.Select(
             placeholder="Select Number of Rolls", min_values=1, max_values=1,
             options=[
-                discord.SelectOption(label=f"{str(i)} Rolls", description=f"Cost: {cost_list[i - 1]:,}", value=str(i))
+                discord.SelectOption(label=f"{str(i)} Rolls",
+                                     description=f"Token Cost: {cost_list[i - 1]:,}", value=str(i))
                 for i in range(1, 7)
             ]
         )
@@ -184,7 +185,7 @@ class SelectRollsView(discord.ui.View):
                 if not self.embed:
                     roll_count = int(interaction.data['values'][0])
                     self.embed = discord.Embed(
-                        title="Vexia, Scribe of the Eons",
+                        title="Vexia, Scribe of the True Laws",
                         description="Select a damage skill. (1st Selection)",
                         color=discord.Color.blue()
                     )
@@ -239,7 +240,7 @@ class SkillSelectView(discord.ui.View):
                             current_roll = ItemRoll(temp_id)
                             npc_comment += f"{current_roll.roll_name}\n"
                         self.embed = discord.Embed(
-                            title="Vexia, Scribe of the Eons",
+                            title="Vexia, Scribe of the True Laws",
                             description=npc_comment,
                             color=discord.Color.blue()
                         )
@@ -256,9 +257,10 @@ class SkillSelectView(discord.ui.View):
                             if current_roll.roll_code == "unique-0-y":
                                 npc_comment = "Oooh, you have impeccable taste.\n"
                         summary_msg = npc_comment + skill_display
-                        summary_msg += f"\n{globalitems.coin_icon} Coin Offering: {cost_list[self.total_rolls - 1]:,}"
+                        token_object = inventory.BasicItem("Token6")
+                        summary_msg += f"\n{token_object.item_emoji} {token_object.item_name} Offering: {cost_list[self.total_rolls - 1]:,}"
                         self.embed = discord.Embed(
-                            title="Vexia, Scribe of the Eons",
+                            title="Vexia, Scribe of the True Laws",
                             description=summary_msg,
                             color=discord.Color.green()
                         )
@@ -285,10 +287,10 @@ class SkillPurchaseView(discord.ui.View):
                 reload_player = player.get_player_by_id(self.player_object.player_id)
                 custom_cost = cost_list[self.total_rolls - 1]
                 # Handle the cost and cost eligibility.
-                if reload_player.player_coins >= custom_cost:
-                    # Reload the player and item data.
-                    reload_player.player_coins -= custom_cost
-                    reload_player.set_player_field("player_coins", reload_player.player_coins)
+                current_stock = inventory.check_stock(reload_player, "Token6")
+                if current_stock >= custom_cost:
+                    # Pay the cost. Reload the item data.
+                    inventory.update_stock(reload_player, "Token6", (custom_cost * -1))
                     reload_item = inventory.read_custom_item(self.selected_item.item_id)
                     new_roll_list = []
                     roll_tier_list = []
@@ -323,7 +325,7 @@ class SkillPurchaseView(discord.ui.View):
                     # Display the cost failed message. Reload the same view.
                     cost_msg = "If you really want me you'd better provide a sufficient offering."
                     embed_msg = discord.Embed(colour=discord.Colour.dark_orange(),
-                                              title="Vexia, Scribe of the Eons",
+                                              title="Vexia, Scribe of the True Laws",
                                               description=cost_msg)
                     await interaction.response.edit_message(embed=embed_msg, view=self)
             else:
@@ -334,7 +336,7 @@ class SkillPurchaseView(discord.ui.View):
         try:
             if interaction.user.name == self.player_object.player_name:
                 cancellation_embed = discord.Embed(
-                    title="Vexia, Scribe of the Eons",
+                    title="Vexia, Scribe of the True Laws",
                     description="Come back when you've made up your mind.",
                     color=discord.Color.red()
                 )

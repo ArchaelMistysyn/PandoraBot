@@ -806,9 +806,9 @@ class ClassChangeView(discord.ui.View):
                     reload_player = player.get_player_by_id(self.player_object.player_id)
                     current_class = reload_player.player_class
                     chosen_class = class_select.values[0]
-                    token_stock = inventory.check_stock(reload_player, "Token2")
+                    token_stock = inventory.check_stock(reload_player, "Token1")
                     if token_stock >= 1:
-                        token_stock = inventory.update_stock(reload_player, "Token2", -1)
+                        token_stock = inventory.update_stock(reload_player, "Token1", -1)
                         reload_player.set_player_field("player_class", chosen_class)
                         add_role = discord.utils.get(interaction.guild.roles, name=f"Class Role - {chosen_class}")
                         remove_role = discord.utils.get(interaction.guild.roles, name=f"Class Role - {current_class}")
@@ -942,8 +942,8 @@ class PointsView(discord.ui.View):
         if interaction.user.name == self.player_object.player_name:
             selected_path = select.values[0]
             if selected_path == "Reset":
-                response = "Starting over is no easy feat. You'll first need to bring me a resetter token."
-                embed_msg = discord.Embed(colour=discord.Colour.dark_orange(), title="Lyra, Head Instructor",
+                response = "Starting over is no easy feat. You'll first need to bring me a token."
+                embed_msg = discord.Embed(colour=discord.Colour.dark_orange(), title="Lyra, Pathwalker of the True Laws",
                                           description=response)
                 new_view = ResetView(self.player_object)
             else:
@@ -1019,7 +1019,7 @@ class ResetView(discord.ui.View):
                     reload_player.reset_skill_points()
                     result_msg = "ALL SKILL POINTS RESET!"
                 else:
-                    result_msg = "Come back when you have the resetter token."
+                    result_msg = "Come back when you have a token."
                 self.embed_msg = reload_player.create_path_embed()
                 self.embed_msg.add_field(name=result_msg, value="", inline=False)
             points_view = PointsView(reload_player)

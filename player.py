@@ -469,7 +469,7 @@ class PlayerProfile:
     def create_path_embed(self):
         colour, icon = inventory.get_gear_tier_colours(self.player_echelon)
         points_msg = "Your shiny toys are useless if you don't know how to use them."
-        embed = discord.Embed(color=colour, title="Lyra, Head Instructor", description=points_msg)
+        embed = discord.Embed(color=colour, title="Lyra, Pathwalker of the True Laws", description=points_msg)
         embed.add_field(name=f"{self.player_username}'s Skill Points", value="", inline=False)
         for path_label, points, gear_points in zip(path_names, self.player_stats, self.gear_points):
             value_msg = f"Points: {points}"

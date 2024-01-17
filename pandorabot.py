@@ -248,7 +248,7 @@ def run_discord_bot():
                     points_view = menus.PointsView(player_object)
                     await ctx.send(embed=embed_msg, view=points_view)
                 else:
-                    await ctx.send("You cannot speak to Lyra while in combat.")
+                    await ctx.send("You cannot speak to the pathwalker while in combat.")
             else:
                 embed_msg = unregistered_message()
                 await ctx.send(embed=embed_msg)
@@ -394,12 +394,12 @@ def run_discord_bot():
                 existing_id = bosses.get_raid_id(channel_id, player_object.player_id)
                 if existing_id == 0:
                     embed_msg = discord.Embed(colour=discord.Colour.dark_orange(),
-                                              title="Mysmiria, The Changer",
-                                              description="With the right payment even you can be rewritten.")
+                                              title="Mysmiria, Changeling of the True Laws",
+                                              description="Bring me a token and even you can be rewritten.")
                     new_view = menus.ClassChangeView(player_object)
                     await ctx.send(embed=embed_msg, view=new_view)
                 else:
-                    await ctx.send("You cannot speak to the changer while in combat.")
+                    await ctx.send("You cannot speak to the changeling while in combat.")
             else:
                 embed_msg = unregistered_message()
                 await ctx.send(embed=embed_msg)
@@ -409,25 +409,41 @@ def run_discord_bot():
     @app_commands.guilds(discord.Object(id=1011375205999968427))
     async def who(ctx, new_username: str):
         if any(ctx.channel.id in sl for sl in globalitems.global_server_channels):
+            mysmiria_title = "Mysmiria, Changeling of the True Laws"
             await ctx.defer()
             existing_user = player.get_player_by_name(ctx.author)
+            if existing_user.player_class == "":
+                embed_msg = unregistered_message()
+                await ctx.send(embed=embed_msg)
+                return
             if not new_username.isalpha():
-                await ctx.send("Please enter a valid username. No special or numeric characters.")
+                embed_msg = discord.Embed(colour=discord.Colour.dark_orange(), title=mysmiria_title,
+                                          description="This name is unacceptable. I refuse.")
+                await ctx.send(embed=embed_msg)
                 return
             if not player.check_username(new_username):
-                await ctx.send("Username already in use.")
+                embed_msg = discord.Embed(colour=discord.Colour.dark_orange(), title=mysmiria_title,
+                                          description="This name belongs to another. I refuse.")
+                await ctx.send(embed=embed_msg)
                 return
             if len(new_username) > 10:
-                await ctx.send("Please enter a username 10 or less characters.")
+                embed_msg = discord.Embed(colour=discord.Colour.dark_orange(), title=mysmiria_title,
+                                          description="This name is too long. I refuse.")
+                await ctx.send(embed=embed_msg)
                 return
             token_stock = inventory.check_stock(existing_user, "Token1")
             if token_stock < 1:
-                await ctx.send(f"It's not that easy to change your name. Bring me a token to prove you are serious.")
+                embed_msg = discord.Embed(colour=discord.Colour.dark_orange(), title=mysmiria_title,
+                                          description="I will only help those with a token. I refuse.")
+                await ctx.send(embed=embed_msg)
+                return
             else:
                 inventory.update_stock(existing_user, "Token1", -1)
                 existing_user.player_username = new_username
                 existing_user.set_player_field("player_username", new_username)
-                await ctx.send(f'Got it! I\'ll call you {existing_user.player_username} from now on!')
+                embed_msg = discord.Embed(colour=discord.Colour.dark_orange(), title=mysmiria_title,
+                                          description=f'{existing_user.player_username} you say? Fine, I accept.')
+                await ctx.send(embed=embed_msg)
 
     @pandora_bot.event
     async def open_lootbox(ctx, embed_msg, item_tier):
@@ -592,7 +608,7 @@ def run_discord_bot():
             if player_object.player_class != "":
                 engrave_msg = "You've come a long way from home child. Tell me, what kind of power do you seek?"
                 embed_msg = discord.Embed(colour=discord.Colour.dark_orange(),
-                                          title="Weaver Lord, Isabelle",
+                                          title="Isabelle, Soulweaver of the True Laws",
                                           description=engrave_msg)
                 insignia_view = insignia.InsigniaView(player_object)
                 await ctx.send(embed=embed_msg, view=insignia_view)
@@ -917,20 +933,17 @@ def run_discord_bot():
                 player_object.get_equipped()
                 e_weapon = inventory.read_custom_item(player_object.player_equipped[0])
                 if player_object.player_quest >= 23:
-                    entry_msg = ("I have taken quite a liking to you, you know. "
-                                 "The plane of eons is ruled by the True Laws. "
-                                 "They are named as such because they cannot be defied even by themselves. "
-                                 "With my permission you exist and without it you do not. "
-                                 "\nNo matter how many realities you reshape the True Laws exist eternally. "
-                                 "I grant you passage because your goal is impossible. You can do nothing to us. "
-                                 "\nI will record your attempt. I will even help you. Your failure is already written.")
+                    entry_msg = ("I have taken quite a liking to you, but the plane of the True Laws is absolute. "
+                                 "With my permission you can exist here and without it you do not. "
+                                 "\nI grant you passage because of the futility of your actions. "
+                                 "\nI will record your attempts. I will even help you. Your failure is already written.")
                     embed_msg = discord.Embed(colour=discord.Colour.blurple(),
-                                              title="Vexia, Scribe of the Eons",
+                                              title="Vexia, Scribe of the True Laws",
                                               description=entry_msg)
                     embed_msg.set_image(url="https://i.ibb.co/QjWDYG3/forge.jpg")
                     new_view = forge.SelectView(player_object, "custom")
                 else:
-                    denial_msg = "Without the grace of the Eons the laws of reality deny your entry."
+                    denial_msg = "Without the grace of the True Laws your entry is denied."
                     embed_msg = discord.Embed(colour=discord.Colour.blurple(),
                                               title="???",
                                               description=denial_msg)

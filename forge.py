@@ -323,12 +323,14 @@ class SubSelectView(discord.ui.View):
             ]
         else:
             self.menu_type = "Fusion"
-            selected_list = ["Star", "Chaos", "Pulsar", "Quasar", "Genesis", "Terminus", "Zenith"]
+            selected_list = ["Star", "Astral", "Astral", "Astral", "Astral", "Astral", "Astral"]
+            if self.selected_item.item_tier == 5:
+                selected_list = ["Star", "Fabled", "Fabled", "Fabled", "Fabled", "Fabled", "Fabled"]
             description_list = ["Add/Reroll", "Reroll All", "Reroll damage", "Reroll defensive", "Reroll penetration",
                                 "Reroll curse", "Reroll unique"]
             options = [discord.SelectOption(
                 emoji=hammer_icon, label=f"{option} Fusion", value=str(i),
-                description=f"Use {option.lower()} fusion: {description_list[i]}")
+                description=f"Use {option.lower()} fusion: ({description_list[i]})")
                 for i, option in enumerate(selected_list)
             ]
         self.select_menu = discord.ui.Select(placeholder="Select the crafting method to use.",
@@ -370,14 +372,16 @@ class UpgradeView(discord.ui.View):
                             2, ["Reforge", "Create Socket"], ["<a:eshadow2:1141653468965257216>", "⚫"],
                             [[f"Flame1", f"Flame2"], [f"Matrix1", "Matrix2"]], ["Reforge", "Open"]],
                        "Cosmic Attunement": [
-                            1, ["Attunement"], ["<:eprl:1148390531345432647>"], [[f"Pearl1"]], ["Attunement"]],
+                            1, ["Attunement"], ["<:eprl:1148390531345432647>"], [[f"Pearl1", "Pearl2"]], ["Attunement"]],
                        "Astral Augment": [
-                            1, ["Star Fusion", "Chaos Fusion", "Pulsar Fusion", "Quasar Fusion",
-                                "Genesis Fusion", "Terminus Fusion", "Zenith Fusion"],
+                            1, ["Star Fusion (Add/Reroll)", "Astral Fusion (All)", "Astral Fusion (Damage)",
+                                "Astral Fusion (Defensive)", "Astral Fusion (Penetration)", "Astral Fusion (Curse)",
+                                "Astral Fusion (Unique)"],
                             [hammer_icon, hammer_icon, hammer_icon, hammer_icon,
                              hammer_icon, hammer_icon, hammer_icon],
-                            [[f"Hammer1"], ["Hammer2"], [f"Hammer3"], [f"Hammer4"],
-                             [f"Hammer5"], [f"Hammer6"], [f"Hammer7"]],
+                            [[f"Hammer1", "Hammer3"], ["Hammer2", "Hammer3"], [f"Hammer2", "Hammer3"],
+                             [f"Hammer2", "Hammer3"], [f"Hammer2", "Hammer3"], [f"Hammer2", "Hammer3"],
+                             [f"Hammer2", "Hammer3"]],
                             ["any fusion", "all fusion", "damage fusion", "defensive fusion",
                              "penetration fusion", "curse fusion", "unique fusion"]],
                        "Implant Element": [
@@ -386,7 +390,7 @@ class UpgradeView(discord.ui.View):
                             ["Implant"]],
                        "Voidforge": [
                             3, ["Void Fusion", "Augment", "Corruption"],
-                            [void_icon, void_icon, void_icon], [[f"Hammer8"], [f"Pearl3"], ["OriginV"]],
+                            [void_icon, void_icon, void_icon], [[f"Core2"], [f"Pearl3"], ["OriginV"]],
                             ["VReinforce", "VAttunement", "Corrupt"]]
                        }
         method_dict_t6 = {"Enhance": [
@@ -402,12 +406,13 @@ class UpgradeView(discord.ui.View):
                           "Wish Attunement": [
                               1, ["Attunement"], ["<:eprl:1148390531345432647>"], [[f"Pearl4"]], ["MultiAttunement"]],
                           "Miracle Augment": [
-                            1, ["Wish Fusion", "Chaos Fusion", "Pulsar Fusion", "Quasar Fusion",
-                                "Genesis Fusion", "Terminus Fusion", "Zenith Fusion"],
+                            1, ["Miracle Fusion (Add/Reroll)", "Miracle Fusion (All)", "Miracle Fusion (Damage)",
+                                "Miracle Fusion (Defensive)", "Miracle Fusion (Penetration)", "Miracle Fusion (Curse)",
+                                "Miracle Fusion (Unique)"],
                             [hammer_icon, hammer_icon, hammer_icon, hammer_icon,
                              hammer_icon, hammer_icon, hammer_icon],
-                            [[f"Hammer9"], ["Hammer2"], [f"Hammer3"], [f"Hammer4"],
-                             [f"Hammer5"], [f"Hammer6"], [f"Hammer7"]],
+                            [[f"Hammer4"], ["Hammer4"], [f"Hammer4"], [f"Hammer4"],
+                             [f"Hammer4"], [f"Hammer4"], [f"Hammer4"]],
                             ["any fusion", "all fusion", "damage fusion", "defensive fusion",
                              "penetration fusion", "curse fusion", "unique fusion"]],
                           "Miracle Implant": [

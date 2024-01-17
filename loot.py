@@ -150,41 +150,37 @@ def create_loot_embed(current_embed, active_boss, player_list):
 
 
 def generate_random_item():
-    quantity = 1
-    random_reward = random.randint(1, 100000)
-    if random_reward <= 1:
-        reward_id = "v7x"
-    elif random_reward <= 51:
-        reward_id = "i6x"
-    elif random_reward <= 151:
-        reward_id = "i5u"
-    elif random_reward <= 5151:
-        item_tier = 4
-        reward_types = ["h", "j", "z", "s", "o", "t", "g", "w", "c", "j", "y"]
-        item_type = reward_types[random.randint(0, (len(reward_types) - 1))]
-        if item_type == "h":
-            reward_types = ["i4hA", "i4hB", "i5hA", "i5hB"]
-            reward_id = reward_types[random.randint(0, (len(reward_types) - 1))]
-        else:
-            reward_id = f"i{item_tier}{item_type}"
-    else:
-        if random_reward <= 25151:
-            item_tier = 3
-            reward_types = ["h", "s" "o", "k", "k", "f", "f", "j", "y", "Fae"]
-        elif random_reward <= 60151:
-            reward_types = ["h", "s", "s", "o", "o", "j", "y", "Fae", "Fae"]
-            item_tier = 2
-        else:
-            reward_types = ["s", "s", "o", "o", "j", "y", "Fae", "Fae", "Fae"]
-            item_tier = 1
-        item_type = reward_types[(random.randint(1, len(reward_types)) - 1)]
-        if item_type != "j":
-            quantity = random.randint(1, 3)
-        reward_id = f"i{item_tier}{item_type}"
-    if item_type == "Fae":
-        quantity = 10
-        random_element = random.randint(0, 8)
-        reward_id = f"Fae{random_element}"
+    # Initialize the quantity and data.
+    quantity_table = [1, 1, 1, 1, 1, 1, 2, 2, 2, 3]
+    quantity = random.choice(quantity_table)
+    random_reward = random.randint(1, 10000)
+    reward_id = None
+
+    probability_rewards = {
+        1: ("Crystal2", None), 11: ("Crystal1", None), 61: ("OriginZ", None),
+        111: ("Core1", None), 211: ("Heart1", None), 411: (None, "Summon"),
+        511: (None, "Token"), 1011: (None, "Pearl"), 1511: (None, "Hammer"),
+        2511: ("Flame1", None), 3511: ("Matrix1", None), 4511: (None, "Trove"),
+        5511: (None, "Potion"), 6511: (None, "Soul"), 7511: (None, "Ore"),
+        10000: (None, "Fae"),
+    }
+
+    # Assign a reward id based on the probability, set id, or id prefix.
+    for upper_limit, (specific_reward, prefix) in probability_rewards.items():
+        if random_reward <= upper_limit:
+            if specific_reward:
+                reward_id = specific_reward
+            elif prefix:
+                reward_types = [key for key in dictionary.keys() if prefix in key]
+                reward_id = random.choice(reward_types)
+            break
+
+    # Quantity Exceptions
+    if reward_id == "Crystal2":
+        quantity = 1
+    elif "Fae" in reward_id:
+        quantity = random.randint(5, (50 * quantity))
+
     return reward_id, quantity
 
 

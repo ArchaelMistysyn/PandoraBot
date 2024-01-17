@@ -14,71 +14,79 @@ import quest
 import asyncio
 import combat
 import bazaar
+import itemdata
 
 recipe_dict = {
-    "Heavenly Ore (Crude)": ["i1o", 50, "STONE1", 10, 75, "i5o"],
-    "Heavenly Soul (Light)": ["i1s", 50, "STONE1", 10, 75, "i5s"],
-    "Heavenly Ore (Cosmite)": ["i2o", 20, "STONE2", 10, 75, "i5o"],
-    "Heavenly Soul (Luminous)": ["i2s", 20, "STONE2", 10, 75, "i5s"],
-    "Heavenly Ore (Celestite)": ["i3o", 10, "STONE3", 10, 75, "i5o"],
-    "Heavenly Soul (Lucent)": ["i3s", 10, "STONE3", 10, 75, "i5s"],
-    "Heavenly Ore (Crystallite)": ["i4o", 2, "STONE4", 10, 75, "i5o"],
-    "Heavenly Soul (Lustrous)": ["i4s", 2, "STONE4", 10, 75, "i5s"],
+    "Heavenly Infusion": {
+        "Heavenly Ore (Crude)": ["Ore1", 50, "Stone1", 10, 75, "Ore5"],
+        "Heavenly Soul (Light)": ["Soul1", 50, "Stone1", 10, 75, "Soul5"],
+        "Heavenly Ore (Cosmite)": ["Ore2", 20, "Stone2", 10, 75, "Ore5"],
+        "Heavenly Soul (Luminous)": ["Soul2", 20, "Stone2", 10, 75, "Soul5"],
+        "Heavenly Ore (Celestite)": ["Ore3", 10, "Stone3", 10, 75, "Ore5"],
+        "Heavenly Soul (Lucent)": ["Soul3", 10, "Stone3", 10, 75, "Soul5"],
+        "Heavenly Ore (Crystallite)": ["Ore4", 2, "Stone4", 10, 75, "Ore5"],
+        "Heavenly Soul (Lustrous)": ["Soul4", 2, "Stone4", 10, 75, "Soul5"],
+        "Astral Hammer": ["Hammer1", 1, "Heart1", 1, 90, "Hammer2"]},
 
-    "Elemental Origin (Fire)": ["i4z", 1, "Fae0", 50, 80, "Origin0"],
-    "Elemental Origin (Water)": ["i4z", 1, "Fae1", 50, 80, "Origin1"],
-    "Elemental Origin (Lightning)": ["i4z", 1, "Fae2", 50, 80, "Origin2"],
-    "Elemental Origin (Earth)": ["i4z", 1, "Fae3", 50, 80, "Origin3"],
-    "Elemental Origin (Wind)": ["i4z", 1, "Fae4", 50, 80, "Origin4"],
-    "Elemental Origin (Ice)": ["i4z", 1, "Fae5", 50, 80, "Origin5"],
-    "Elemental Origin (Shadow)": ["i4z", 1, "Fae6", 50, 80, "Origin6"],
-    "Elemental Origin (Light)": ["i4z", 1, "Fae7", 50, 80, "Origin7"],
-    "Elemental Origin (Celestial)": ["i4z", 1, "Fae8", 50, 80, "Origin8"],
+    "Elemental Infusion": {
+        "Elemental Origin (Fire)": ["OriginZ", 1, "Fae0", 100, 80, "Origin0"],
+        "Elemental Origin (Water)": ["OriginZ", 1, "Fae1", 100, 80, "Origin1"],
+        "Elemental Origin (Lightning)": ["OriginZ", 1, "Fae2", 100, 80, "Origin2"],
+        "Elemental Origin (Earth)": ["OriginZ", 1, "Fae3", 100, 80, "Origin3"],
+        "Elemental Origin (Wind)": ["OriginZ", 1, "Fae4", 100, 80, "Origin4"],
+        "Elemental Origin (Ice)": ["OriginZ", 1, "Fae5", 100, 80, "Origin5"],
+        "Elemental Origin (Shadow)": ["OriginZ", 1, "Fae6", 100, 80, "Origin6"],
+        "Elemental Origin (Light)": ["OriginZ", 1, "Fae7", 100, 80, "Origin7"],
+        "Elemental Origin (Celestial)": ["OriginZ", 1, "Fae8", 100, 80, "Origin8"]},
 
-    "Chaos Hammer": ["i2h", 1, "STONE5", 1, 90, "i3h"],
-    "Pulsar Hammer": ["i2h", 1, "STONE5", 1, 90, "i4hA"],
-    "Quasar Hammer": ["i2h", 1, "STONE5", 1, 90, "i4hB"],
-    "Genesis Hammer": ["i2h", 1, "i5l", 1, 100, "i5hA"],
-    "Terminus Hammer": ["i2h", 1, "i5l", 1, 100, "i5hB"],
+    "Fabled Infusion": {
+        "Fabled Core": ["Stone5", 25, "Heart1", 1, 90, "Core1"],
+        "Fabled Matrix": ["Matrix1", 1, "Core1", 1, 90, "Matrix2"],
+        "Fabled Flame": ["Flame1", 1, "Core1", 1, 90, "Flame2"],
+        "Fabled Pearl": ["Pearl1", 1, "Core1", 1, 90, "Pearl2"],
+        "Fabled Hammer (Star Hammer)": ["Hammer1", 1, "Core1", 1, 90, "Hammer3"],
+        "Fabled Hammer (Astral Hammer)": ["Hammer2", 1, "Core1", 1, 90, "Hammer3"],
+        "Unrefined Fabled Item (Weapon)": ["Fragment1", 200, "Core1", 5, 100, "Fabled1"],
+        "Unrefined Fabled Item (Armour)": ["Fragment2", 100, "Core1", 2, 100, "Fabled2"],
+        "Unrefined Fabled Item (Accessory)": ["Fragment3", 100, "Core1", 2, 100, "Fabled3"],
+        "Unrefined Fabled Item (Wing)": ["Unrefined1", 50, "Core1", 2, 100, "Fabled4"],
+        "Unrefined Fabled Item (Crest)": ["Unrefined3", 50, "Core1", 2, 100, "Fabled5"],
+        "Unrefined Fabled Item (Gem)": ["Unrefined2", 25, "Core1", 1, 100, "Fabled6"]},
 
-    "Void Hammer": ["i5v", 1, "i2h", 1, 90, "v6h"],
-    "Void Pearl": ["i5v", 1, "i4p", 1, 90, "v6p"],
-    "Void Flame": ["i5v", 1, "i3f", 1, 90, "v6f"],
-    "Void Origin": ["i5v", 1, "i4z", 1, 90, "OriginV"],
-    "Crystallized Void": ["i5v", 1, "i6x", 1, 10, "v7x"],
+    "Void Infusion": {
+        "Void Core": ["Traces1", 1, "Core1", 1, 90, "Core2"],
+        "Void Pearl": ["Traces1", 1, "Pearl2", 1, 90, "Pearl3"],
+        "Void Flame": ["Traces1", 1, "Flame2", 1, 90, "Flame3"],
+        "Void Origin": ["Traces1", 1, "OriginZ", 1, 90, "OriginV"],
+        "Crystallized Void": ["Traces1", 1, "Crystal1", 1, 10, "Crystal2"]},
 
-    "Fabled Core": ["STONE5", 25, "i5l", 1, 90, "i5u"],
-    "Fabled Flame": ["i5u", 1, "i3f", 1, 90, "i5f"],
-    "Unrefined Fabled Item (Weapon)": ["i5aW", 200, "i5u", 5, 100, "i5xW"],
-    "Unrefined Fabled Item (Armour)": ["i5aA", 100, "i5u", 2, 100, "i5xA"],
-    "Unrefined Fabled Item (Accessory)": ["i5aY", 100, "i5u", 2, 100, "i5xY"],
-    "Unrefined Fabled Item (Wing)": ["i4w", 50, "i5u", 2, 100, "i5xG"],
-    "Unrefined Fabled Item (Crest)": ["i4c", 50, "i5u", 2, 100, "i5xC"],
-    "Unrefined Fabled Item (Gem)": ["i4g", 25, "i5u", 1, 100, "i5xD"],
+    "Wish Infusion": {
+        "Fragmentized Wish (Weapon)": ["Fragment1", 10, "Stone4", 1, 100, "FragmentM"],
+        "Fragmentized Wish (Armour)": ["Fragment2", 10, "Stone4", 1, 100, "FragmentM"],
+        "Fragmentized Wish (Accessory)": ["Fragment3", 10, "Stone4", 1, 100, "FragmentM"],
+        "Crystallized Wish": ["FragmentM", 50, "Stone5", 10, 100, "Crystal1"],
+        "Wish Core": ["Crystal1", 5, "Core1", 1, 50, "Core3"],
+        "Unrefined Dragon Heart Gem": ["Unrefined2", 50, "Crystal1", 1, 100, "Unrefined4"],
+        "Unrefined Wish Item (Weapon)": ["Crystal1", 5, "Heart1", 10, 100, "Unrefined5"]},
 
-    "Fragmentized Wish (Weapon)": ["i5aW", 10, "STONE4", 1, 100, "i6m"],
-    "Fragmentized Wish (Armour)": ["i5aA", 10, "STONE4", 1, 100, "i6m"],
-    "Fragmentized Wish (Accessory)": ["i5aY", 10, "STONE4", 1, 100, "i6m"],
-    "Crystallized Wish": ["i6m", 25, "STONE5", 10, 100, "i6x"],
-    "Wish Core": ["i6x", 5, "i5u", 1, 50, "STONE5"],
-    "Unrefined Wish Item (Weapon)": ["i6x", 5, "i5l", 10, 100, "i6uW"],
-    "Unrefined Dragon Heart Gem": ["i4g", 50, "i6x", 1, 100, "i6g"],
+    "Miracle Infusion": {
+        "Miracle Origin": ["Heart2", 1, "OriginZ", 1, 100, "OriginM"],
+        "Miracle Ore": ["Crystal1", 1, "Ore5", 2, 100, "Ore6"],
+        "Miracle Soul": ["Crystal1", 1, "Soul5", 2, 100, "Soul6"],
+        "Miracle Flame": ["FragmentM", 5, "Flame1", 20, 100, "Flame4"],
+        "Miracle Matrix": ["Crystal1", 1, "Matrix1", 50, 100, "Matrix3"],
+        "Miracle Pearl": ["FragmentM", 5, "Pearl1", 1, 100, "Pearl4"],
+        "Miracle Hammer": ["FragmentM", 10, "Hammer1", 1, 100, "Hammer4"],
+        "Miracle Heart": ["Crystal1", 1, "Heart1", 1, 100, "Heart2"]},
 
-    "Miracle Origin": ["i6x", 1, "i4z", 1, 100, "m6z"],
-    "Miracle Ore": ["i6x", 1, "i5o", 2, 100, "m6o"],
-    "Miracle Soul": ["i6x", 1, "i5s", 2, 100, "m6s"],
-    "Miracle Flame": ["i6m", 5, "i3f", 20, 100, "m6f"],
-    "Miracle Matrix": ["i6x", 1, "i3k", 50, 100, "m6k"],
-    "Miracle Pearl": ["i6m", 5, "i4p", 1, 100, "m6p"],
-    "Wish Hammer": ["i6m", 10, "i2h", 1, 100, "m6h"],
-    "Miracle Heart": ["i6x", 1, "i5l", 1, 100, "m6l"],
-    "Zenith Hammer": ["i2h", 1, "m6l", 1, 100, "i6hZ"]
+    "Lotus Infusion": {
+        "Lotus of Miracles": ["Heart2", 99, "FragmentM", 99, 99, "Lotus2"]}
 }
 
 
 class RecipeObject:
-    def __init__(self, recipe_name):
-        recipe_info = recipe_dict[recipe_name]
+    def __init__(self, category, recipe_name):
+        recipe_info = recipe_dict[category][recipe_name]
 
         self.recipe_name = recipe_name
         self.cost_item_1 = inventory.BasicItem(recipe_info[0])
@@ -128,349 +136,65 @@ class InfuseView(discord.ui.View):
         self.player_object = player_object
         self.value = None
 
-    @discord.ui.select(
-        placeholder="What kind of infusion do you want to preform?",
-        min_values=1,
-        max_values=1,
-        options=[
+        # Build the option menu dynamically based on recipe categories.
+        select_options = [
             discord.SelectOption(
-                emoji="<a:eenergy:1145534127349706772>", label="Heavenly Infusion",
-                description="Creates heavenly upgrade materials."),
-            discord.SelectOption(
-                emoji="<a:eenergy:1145534127349706772>", label="Elemental Infusion",
-                description="Creates an elemental origin."),
-            discord.SelectOption(
-                emoji="<a:eenergy:1145534127349706772>", label="Astral Infusion",
-                description="Creates upgraded astral hammers."),
-            discord.SelectOption(
-                emoji="<a:eenergy:1145534127349706772>", label="Void Infusion",
-                description="Creates upgraded void items."),
-            discord.SelectOption(
-                emoji="<a:eenergy:1145534127349706772>", label="Fabled Infusion",
-                description="Creates Fabled Items."),
-            discord.SelectOption(
-                emoji="<a:eenergy:1145534127349706772>", label="Wish Infusion",
-                description="Creates Wish Items."),
-            discord.SelectOption(
-                emoji="<a:eenergy:1145534127349706772>", label="Miracle Infusion",
-                description="Creates Miracle Items.")
+                emoji="<a:eenergy:1145534127349706772>",
+                label=category,
+                description=f"Creates {category.lower()} items."
+            ) for category in recipe_dict
         ]
-    )
-    async def select_callback(self, interaction: discord.Interaction, method_select: discord.ui.Select):
+        select_menu = discord.ui.Select(
+            placeholder="What kind of infusion do you want to perform?",
+            min_values=1,
+            max_values=1,
+            options=select_options
+        )
+
+    async def select_callback(self, interaction: discord.Interaction):
         try:
             if interaction.user.name == self.player_object.player_name:
-                method = method_select.values[0]
-                embed_msg = discord.Embed(colour=discord.Colour.magenta(),
-                                          title="Cloaked Alchemist, Sangam",
-                                          description="Alright, what do you need?")
-                match method:
-                    case "Elemental Infusion":
-                        new_view = ElementSelectView(self.player_object)
-                    case "Astral Infusion":
-                        new_view = AstralSelectView(self.player_object)
-                    case "Void Infusion":
-                        new_view = VoidSelectView(self.player_object)
-                    case "Heavenly Infusion":
-                        new_view = HeavenlySelectView(self.player_object)
-                    case "Fabled Infusion":
-                        new_view = FabledSelectView(self.player_object)
-                    case "Wish Infusion":
-                        new_view = WishSelectView(self.player_object)
-                    case "Miracle Infusion":
-                        new_view = MiracleSelectView(self.player_object)
-                    case _:
-                        new_view = None
+                selected_category = interaction.data['values'][0]
+                embed_msg = discord.Embed(
+                    colour=discord.Colour.magenta(),
+                    title="Cloaked Alchemist, Sangam",
+                    description="Alright, what do you need?"
+                )
+                new_view = SelectRecipeView(self.player_object, selected_category)
                 await interaction.response.edit_message(embed=embed_msg, view=new_view)
         except Exception as e:
             print(e)
 
 
-class ElementSelectView(discord.ui.View):
-    def __init__(self, player_object):
+class SelectRecipeView(discord.ui.View):
+    def __init__(self, player_object, category):
         super().__init__(timeout=None)
         self.player_object = player_object
+        self.category = category
 
-    @discord.ui.select(
-        placeholder="Select the infusion recipe.",
-        min_values=1,
-        max_values=1,
-        options=[
+        # Build the option menu dynamically based on the category's recipes.
+        category_recipes = recipe_dict.get(category, {})
+        select_options = [
             discord.SelectOption(
-                emoji=globalitems.global_element_list[0], label="Fire", description="Use fire cores."),
-            discord.SelectOption(
-                emoji=globalitems.global_element_list[1], label="Water", description="Use water cores."),
-            discord.SelectOption(
-                emoji=globalitems.global_element_list[2], label="Lightning", description="Use lightning cores."),
-            discord.SelectOption(
-                emoji=globalitems.global_element_list[3], label="Earth", description="Use earth cores."),
-            discord.SelectOption(
-                emoji=globalitems.global_element_list[4], label="Wind", description="Use wind cores."),
-            discord.SelectOption(
-                emoji=globalitems.global_element_list[5], label="Ice", description="Use ice cores."),
-            discord.SelectOption(
-                emoji=globalitems.global_element_list[6], label="Shadow", description="Use shadow cores."),
-            discord.SelectOption(
-                emoji=globalitems.global_element_list[7], label="Light", description="Use light cores."),
-            discord.SelectOption(
-                emoji=globalitems.global_element_list[8], label="Celestial", description="Use celestial cores.")
+                emoji=recipe[0], label=recipe_name,
+                description=f"Use {', '.join(map(str, recipe[1:-1]))} to craft {recipe[-1]}."
+            ) for recipe_name, recipe in category_recipes.items()
         ]
-    )
-    async def element_callback(self, interaction: discord.Interaction, element_select: discord.ui.Select):
+
+        select_menu = discord.ui.Select(
+            placeholder=f"Select the {category.lower()} infusion recipe.",
+            min_values=1, max_values=1, options=select_options
+        )
+
+        select_menu.callback = self.recipe_callback
+        self.add_item(select_menu)
+
+    async def recipe_callback(self, interaction: discord.Interaction):
         try:
             if interaction.user.name == self.player_object.player_name:
                 reload_player = player.get_player_by_id(self.player_object.player_id)
-                recipe_name = f"Elemental Origin ({element_select.values[0]})"
-                recipe_object = RecipeObject(recipe_name)
-                embed_msg = recipe_object.create_cost_embed(reload_player)
-                new_view = CraftView(reload_player, recipe_object)
-                await interaction.response.edit_message(embed=embed_msg, view=new_view)
-        except Exception as e:
-            print(e)
-
-
-class HeavenlySelectView(discord.ui.View):
-    def __init__(self, player_object):
-        super().__init__(timeout=None)
-        self.player_object = player_object
-
-    @discord.ui.select(
-        placeholder="Select the infusion recipe.",
-        min_values=1,
-        max_values=1,
-        options=[
-            discord.SelectOption(
-                emoji="<:eore:1145534835507593236>", label="Crude Ore", description="Use crude ores."),
-            discord.SelectOption(
-                emoji="<:eore:1145534835507593236>", label="Cosmite Ore", description="Use cosmite ores."),
-            discord.SelectOption(
-                emoji="<:eore:1145534835507593236>", label="Celestite Ore", description="Use celestite ores."),
-            discord.SelectOption(
-                emoji="<:eore:1145534835507593236>", label="Crystallite Ore", description="Use crystallite ores."),
-            discord.SelectOption(
-                emoji="<:esoul:1145520258241806466>", label="Light Soul", description="Use light souls."),
-            discord.SelectOption(
-                emoji="<:esoul:1145520258241806466>", label="Luminous Soul", description="Use luminous souls."),
-            discord.SelectOption(
-                emoji="<:esoul:1145520258241806466>", label="Lucent Soul", description="Use lucent souls."),
-            discord.SelectOption(
-                emoji="<:esoul:1145520258241806466>", label="Lustrous Soul", description="Use lustrous souls."),
-        ]
-    )
-    async def heavenly_callback(self, interaction: discord.Interaction, heavenly_select: discord.ui.Select):
-        try:
-            if interaction.user.name == self.player_object.player_name:
-                reload_player = player.get_player_by_id(self.player_object.player_id)
-                selected_option = heavenly_select.values[0].split()
-                recipe_name = f"Heavenly {selected_option[1]} ({selected_option[0]})"
-                recipe_object = RecipeObject(recipe_name)
-                embed_msg = recipe_object.create_cost_embed(reload_player)
-                new_view = CraftView(reload_player, recipe_object)
-                await interaction.response.edit_message(embed=embed_msg, view=new_view)
-        except Exception as e:
-            print(e)
-
-
-class AstralSelectView(discord.ui.View):
-    def __init__(self, player_object):
-        super().__init__(timeout=None)
-        self.player_object = player_object
-
-    @discord.ui.select(
-        placeholder="Select the infusion recipe.",
-        min_values=1,
-        max_values=1,
-        options=[
-            discord.SelectOption(
-                emoji="<:ehammer:1145520259248427069>", label="Chaos Hammer", description="Rerolls all affixes."),
-            discord.SelectOption(
-                emoji="<:ehammer:1145520259248427069>", label="Pulsar Hammer", description="Modifies prefixes."),
-            discord.SelectOption(
-                emoji="<:ehammer:1145520259248427069>", label="Quasar Hammer", description="Modifies suffixes.")
-        ]
-    )
-    async def astral_callback(self, interaction: discord.Interaction, astral_select: discord.ui.Select):
-        try:
-            if interaction.user.name == self.player_object.player_name:
-                reload_player = player.get_player_by_id(self.player_object.player_id)
-                recipe_name = astral_select.values[0]
-                recipe_object = RecipeObject(recipe_name)
-                embed_msg = recipe_object.create_cost_embed(reload_player)
-                new_view = CraftView(reload_player, recipe_object)
-                await interaction.response.edit_message(embed=embed_msg, view=new_view)
-        except Exception as e:
-            print(e)
-
-
-class VoidSelectView(discord.ui.View):
-    def __init__(self, player_object):
-        super().__init__(timeout=None)
-        self.player_object = player_object
-
-    @discord.ui.select(
-        placeholder="Select the infusion recipe.",
-        min_values=1,
-        max_values=1,
-        options=[
-            discord.SelectOption(
-                emoji="<a:evoid:1145520260573827134>", label="Void Hammer", description="Upgrade to 6 stars."),
-            discord.SelectOption(
-                emoji="<a:evoid:1145520260573827134>", label="Void Pearl", description="Upgrade max tier rolls."),
-            discord.SelectOption(
-                emoji="<a:evoid:1145520260573827134>", label="Void Origin",
-                description="Further upgrade the reinforcement."),
-            discord.SelectOption(
-                emoji="<a:evoid:1145520260573827134>", label="Crystallized Void", description="???")
-        ]
-    )
-    async def void_callback(self, interaction: discord.Interaction, void_select: discord.ui.Select):
-        try:
-            if interaction.user.name == self.player_object.player_name:
-                reload_player = player.get_player_by_id(self.player_object.player_id)
-                recipe_name = void_select.values[0]
-                recipe_object = RecipeObject(recipe_name)
-                embed_msg = recipe_object.create_cost_embed(reload_player)
-                new_view = CraftView(reload_player, recipe_object)
-                await interaction.response.edit_message(embed=embed_msg, view=new_view)
-        except Exception as e:
-            print(e)
-
-
-class FabledSelectView(discord.ui.View):
-    def __init__(self, player_object):
-        super().__init__(timeout=None)
-        self.player_object = player_object
-
-    @discord.ui.select(
-        placeholder="Select the infusion recipe.",
-        min_values=1,
-        max_values=1,
-        options=[
-            discord.SelectOption(
-                emoji="<a:eenergy:1145534127349706772>", label="Fabled Core",
-                description="An ancient mechanism from a time long past."),
-            discord.SelectOption(
-                emoji="<a:eenergy:1145534127349706772>", label="Fabled Flame",
-                description="A powerful flame said to burn forever."),
-            discord.SelectOption(
-                emoji="<a:eenergy:1145534127349706772>", label="Unrefined Fabled Item (Weapon)",
-                description="Forge an unrefined fabled weapon."),
-            discord.SelectOption(
-                emoji="<a:eenergy:1145534127349706772>", label="Unrefined Fabled Item (Armour)",
-                description="Forge an unrefined fabled armour."),
-            discord.SelectOption(
-                emoji="<a:eenergy:1145534127349706772>", label="Unrefined Fabled Item (Accessory)",
-                description="Forge an unrefined fabled accessory."),
-            discord.SelectOption(
-                emoji="<a:eenergy:1145534127349706772>", label="Unrefined Fabled Item (Wing)",
-                description="Forge an unrefined fabled wing."),
-            discord.SelectOption(
-                emoji="<a:eenergy:1145534127349706772>", label="Unrefined Fabled Item (Crest)",
-                description="Forge an unrefined fabled crest."),
-            discord.SelectOption(
-                emoji="<a:eenergy:1145534127349706772>", label="Unrefined Fabled Item (Gem)",
-                description="Forge an unrefined fabled gem.")
-
-        ]
-    )
-    async def fabled_callback(self, interaction: discord.Interaction, fabled_select: discord.ui.Select):
-        try:
-            if interaction.user.name == self.player_object.player_name:
-                reload_player = player.get_player_by_id(self.player_object.player_id)
-                recipe_name = fabled_select.values[0]
-                recipe_object = RecipeObject(recipe_name)
-                embed_msg = recipe_object.create_cost_embed(reload_player)
-                new_view = CraftView(reload_player, recipe_object)
-                await interaction.response.edit_message(embed=embed_msg, view=new_view)
-        except Exception as e:
-            print(e)
-
-
-class WishSelectView(discord.ui.View):
-    def __init__(self, player_object):
-        super().__init__(timeout=None)
-        self.player_object = player_object
-
-    @discord.ui.select(
-        placeholder="Select the infusion recipe.",
-        min_values=1,
-        max_values=1,
-        options=[
-            discord.SelectOption(
-                emoji="<a:eenergy:1145534127349706772>", label="Fragmentized Wish (Weapon)",
-                description="???"),
-            discord.SelectOption(
-                emoji="<a:eenergy:1145534127349706772>", label="Fragmentized Wish (Armour)",
-                description="???"),
-            discord.SelectOption(
-                emoji="<a:eenergy:1145534127349706772>", label="Fragmentized Wish (Accessory)",
-                description="???"),
-            discord.SelectOption(
-                emoji="<a:eenergy:1145534127349706772>", label="Crystallized Wish",
-                description="A wish never fulfilled."),
-            discord.SelectOption(
-                emoji="<a:eenergy:1145534127349706772>", label="Wish Core",
-                description="The embodiment of a wish."),
-            discord.SelectOption(
-                emoji="<a:eenergy:1145534127349706772>", label="Unrefined Wish Item (Weapon)",
-                description="Forge an unrefined wish item (weapon)."),
-            discord.SelectOption(
-                emoji="<a:eenergy:1145534127349706772>", label="Unrefined Dragon Heart Gem",
-                description="Forge a Dragon Heart Gem")
-        ]
-    )
-    async def wish_callback(self, interaction: discord.Interaction, wish_select: discord.ui.Select):
-        try:
-            if interaction.user.name == self.player_object.player_name:
-                reload_player = player.get_player_by_id(self.player_object.player_id)
-                recipe_name = wish_select.values[0]
-                recipe_object = RecipeObject(recipe_name)
-                embed_msg = recipe_object.create_cost_embed(reload_player)
-                new_view = CraftView(reload_player, recipe_object)
-                await interaction.response.edit_message(embed=embed_msg, view=new_view)
-        except Exception as e:
-            print(e)
-
-
-class MiracleSelectView(discord.ui.View):
-    def __init__(self, player_object):
-        super().__init__(timeout=None)
-        self.player_object = player_object
-
-    @discord.ui.select(
-        placeholder="Select the infusion recipe.",
-        min_values=1,
-        max_values=1,
-        options=[
-            discord.SelectOption(
-                emoji="<a:eenergy:1145534127349706772>", label="Miracle Ore", description="???"),
-            discord.SelectOption(
-                emoji="<a:eenergy:1145534127349706772>", label="Miracle Soul", description="???"),
-            discord.SelectOption(
-                emoji="<a:eenergy:1145534127349706772>", label="Miracle Flame", description="???"),
-            discord.SelectOption(
-                emoji="<a:eenergy:1145534127349706772>", label="Miracle Matrix", description="???"),
-            discord.SelectOption(
-                emoji="<a:eenergy:1145534127349706772>", label="Wish Hammer", description="???"),
-            discord.SelectOption(
-                emoji="<a:eenergy:1145534127349706772>", label="Miracle Pearl", description="???"),
-            discord.SelectOption(
-                emoji="<a:eenergy:1145534127349706772>", label="Miracle Heart", description="???"),
-            discord.SelectOption(
-                emoji="<:ehammer:1145520259248427069>", label="Zenith Hammer", description="???"),
-            discord.SelectOption(
-                emoji="<a:eenergy:1145534127349706772>", label="Genesis Hammer", description="???"),
-            discord.SelectOption(
-                emoji="<a:eenergy:1145534127349706772>", label="Terminus Hammer", description="???"),
-            discord.SelectOption(
-                emoji="<a:eenergy:1145534127349706772>", label="Miracle Origin", description="???")
-        ]
-    )
-    async def miracle_callback(self, interaction: discord.Interaction, miracle_select: discord.ui.Select):
-        try:
-            if interaction.user.name == self.player_object.player_name:
-                reload_player = player.get_player_by_id(self.player_object.player_id)
-                recipe_name = miracle_select.values[0]
-                recipe_object = RecipeObject(recipe_name)
+                selected_option = interaction.data['values'][0]
+                recipe_object = RecipeObject(selected_option, self.category)
                 embed_msg = recipe_object.create_cost_embed(reload_player)
                 new_view = CraftView(reload_player, recipe_object)
                 await interaction.response.edit_message(embed=embed_msg, view=new_view)
@@ -485,35 +209,36 @@ class CraftView(discord.ui.View):
         self.recipe_object = recipe_object
         self.is_paid = False
 
+    async def run_button(self, selected_qty):
+        reload_player = player.get_player_by_id(self.player_user.player_id)
+        embed_title = "Cloaked Alchemist, Sangam"
+        if self.recipe_object.can_afford(reload_player, selected_qty):
+            if not self.is_paid:
+                result = self.recipe_object.perform_infusion(reload_player, selected_qty)
+                self.is_paid = True
+            if result > 0:
+                outcome_item = self.recipe_object.outcome_item
+                embed_description = "Infusion Successful!"
+                embed_description += f"\n{outcome_item.item_emoji} {result}x {outcome_item.item_name}"
+            else:
+                embed_description = "Infusion Failed! I guess it's just not your day today."
+            embed_msg = discord.Embed(colour=discord.Colour.dark_orange(),
+                                      title=embed_title,
+                                      description=embed_description)
+            new_view = CraftView(reload_player, self.recipe_object)
+        else:
+            embed_msg = discord.Embed(colour=discord.Colour.dark_orange(),
+                                      title="Not Enough Materials!",
+                                      description="Please come back when you have more materials.")
+            new_view = InfuseView(reload_player)
+        return embed_msg, new_view
+
     @discord.ui.button(label="Infuse 1", style=discord.ButtonStyle.success, emoji="1️⃣")
     async def infuse_1(self, interaction: discord.Interaction, button: discord.Button):
         try:
             if interaction.user.name == self.player_user.player_name:
-                selected_qty = 1
-                reload_player = player.get_player_by_id(self.player_user.player_id)
-                if self.recipe_object.can_afford(reload_player, selected_qty):
-                    if not self.is_paid:
-                        result = self.recipe_object.perform_infusion(reload_player, selected_qty)
-                        self.is_paid = True
-                    if result > 0:
-                        embed_title = "Cloaked Alchemist, Sangam"
-                        outcome_item = self.recipe_object.outcome_item
-                        embed_description = "Infusion Successful!"
-                        embed_description += f"\n{outcome_item.item_emoji} {result}x {outcome_item.item_name}"
-                    else:
-                        embed_title = "Cloaked Alchemist, Sangam"
-                        embed_description = "Infusion Failed! I guess it's just not your day today."
-                    embed_msg = discord.Embed(colour=discord.Colour.dark_orange(),
-                                              title=embed_title,
-                                              description=embed_description)
-                    refresh_view = CraftView(reload_player, self.recipe_object)
-                    await interaction.response.edit_message(embed=embed_msg, view=refresh_view)
-                else:
-                    embed_msg = discord.Embed(colour=discord.Colour.dark_orange(),
-                                              title="Not Enough Materials!",
-                                              description="Please come back when you have more materials.")
-                    reset_view = InfuseView(reload_player)
-                    await interaction.response.edit_message(embed=embed_msg, view=reset_view)
+                embed_msg, new_view = self.run_button(1)
+                await interaction.response.edit_message(embed=embed_msg, view=new_view)
         except Exception as e:
             print(e)
 
@@ -521,31 +246,8 @@ class CraftView(discord.ui.View):
     async def infuse_5(self, interaction: discord.Interaction, button: discord.Button):
         try:
             if interaction.user.name == self.player_user.player_name:
-                selected_qty = 5
-                reload_player = player.get_player_by_id(self.player_user.player_id)
-                if self.recipe_object.can_afford(reload_player, selected_qty):
-                    if not self.is_paid:
-                        result = self.recipe_object.perform_infusion(reload_player, selected_qty)
-                        self.is_paid = True
-                    if result > 0:
-                        embed_title = "Cloaked Alchemist, Sangam"
-                        outcome_item = self.recipe_object.outcome_item
-                        embed_description = f"{result}x Infusions Successful!"
-                        embed_description += f"\n{outcome_item.item_emoji} {result}x {outcome_item.item_name}"
-                    else:
-                        embed_title = "Cloaked Alchemist, Sangam"
-                        embed_description = "All Infusions Failed! Are you bringing me faulty materials?."
-                    embed_msg = discord.Embed(colour=discord.Colour.dark_orange(),
-                                              title=embed_title,
-                                              description=embed_description)
-                    refresh_view = CraftView(reload_player, self.recipe_object)
-                    await interaction.response.edit_message(embed=embed_msg, view=refresh_view)
-                else:
-                    embed_msg = discord.Embed(colour=discord.Colour.dark_orange(),
-                                              title="Not Enough Materials!",
-                                              description="Please come back when you have more materials.")
-                    reset_view = InfuseView(reload_player)
-                    await interaction.response.edit_message(embed=embed_msg, view=reset_view)
+                embed_msg, new_view = self.run_button(5)
+                await interaction.response.edit_message(embed=embed_msg, view=new_view)
         except Exception as e:
             print(e)
 
@@ -553,31 +255,8 @@ class CraftView(discord.ui.View):
     async def infuse_10(self, interaction: discord.Interaction, button: discord.Button):
         try:
             if interaction.user.name == self.player_user.player_name:
-                selected_qty = 10
-                reload_player = player.get_player_by_id(self.player_user.player_id)
-                if self.recipe_object.can_afford(reload_player, selected_qty):
-                    if not self.is_paid:
-                        result = self.recipe_object.perform_infusion(reload_player, selected_qty)
-                        self.is_paid = True
-                    if result > 0:
-                        embed_title = "Cloaked Alchemist, Sangam"
-                        outcome_item = self.recipe_object.outcome_item
-                        embed_description = f"{result}x Infusions Successful!"
-                        embed_description += f"\n{outcome_item.item_emoji} {result}x {outcome_item.item_name}"
-                    else:
-                        embed_title = "Cloaked Alchemist, Sangam"
-                        embed_description = "All Infusions Failed! Your lack of luck is impressive."
-                    embed_msg = discord.Embed(colour=discord.Colour.dark_orange(),
-                                              title=embed_title,
-                                              description=embed_description)
-                    refresh_view = CraftView(reload_player, self.recipe_object)
-                    await interaction.response.edit_message(embed=embed_msg, view=refresh_view)
-                else:
-                    embed_msg = discord.Embed(colour=discord.Colour.dark_orange(),
-                                              title="Not Enough Materials!",
-                                              description="Please come back when you have more materials.")
-                    reset_view = InfuseView(reload_player)
-                    await interaction.response.edit_message(embed=embed_msg, view=reset_view)
+                embed_msg, new_view = self.run_button(10)
+                await interaction.response.edit_message(embed=embed_msg, view=new_view)
         except Exception as e:
             print(e)
 
