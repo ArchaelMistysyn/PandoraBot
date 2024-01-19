@@ -225,7 +225,7 @@ class StaminaView(discord.ui.View):
         try:
             if interaction.user.name == self.player.player_name:
                 reload_player = player.get_player_by_id(self.player.player_id)
-                embed_msg = use_stamina_potion(reload_player, "i1y", 500)
+                embed_msg = use_stamina_potion(reload_player, "Potion1", 500)
                 await interaction.response.edit_message(embed=embed_msg, view=self)
         except Exception as e:
             print(e)
@@ -235,7 +235,7 @@ class StaminaView(discord.ui.View):
         try:
             if interaction.user.name == self.player.player_name:
                 reload_player = player.get_player_by_id(self.player.player_id)
-                embed_msg = use_stamina_potion(reload_player, "i2y", 1000)
+                embed_msg = use_stamina_potion(reload_player, "Potion2", 1000)
                 await interaction.response.edit_message(embed=embed_msg, view=self)
         except Exception as e:
             print(e)
@@ -245,7 +245,7 @@ class StaminaView(discord.ui.View):
         try:
             if interaction.user.name == self.player.player_name:
                 reload_player = player.get_player_by_id(self.player.player_id)
-                embed_msg = use_stamina_potion(reload_player, "i3y", 2500)
+                embed_msg = use_stamina_potion(reload_player, "Potion3", 2500)
                 await interaction.response.edit_message(embed=embed_msg, view=self)
         except Exception as e:
             print(e)
@@ -255,7 +255,7 @@ class StaminaView(discord.ui.View):
         try:
             if interaction.user.name == self.player.player_name:
                 reload_player = player.get_player_by_id(self.player.player_id)
-                embed_msg = use_stamina_potion(reload_player, "i4y", 5000)
+                embed_msg = use_stamina_potion(reload_player, "Potion4", 5000)
                 await interaction.response.edit_message(embed=embed_msg, view=self)
         except Exception as e:
             print(e)
@@ -601,72 +601,113 @@ def binding_ritual(player_object, essence_type):
 
 
 class GearView(discord.ui.View):
-    def __init__(self, player_user, target_user):
+    def __init__(self, player_user, target_user, current_position, view_type):
         super().__init__(timeout=None)
         self.player_user = player_user
         self.target_user = target_user
-        self.current_position = 0
+        self.view_type = view_type
+        self.current_position = current_position
+        self.previous_button.label = self.get_positional_label(-1)
+        self.next_button.label = self.get_positional_label(1)
 
-    @discord.ui.button(label="Previous", style=discord.ButtonStyle.blurple, emoji="⬅️")
-    async def previous_gear(self, interaction: discord.Interaction, button: discord.Button):
+        if self.current_position <= 4:
+            toggle_type = "Gem" if self.view_type == "Gear" else "Gear"
+            self.toggle_view_button.label = f"Toggle View ({toggle_type})"
+        else:
+            self.remove_item(self.children[1])
+
+    def get_positional_label(self, direction):
+        gear_button_list = ["Weapon", "Armour", "Accessory", "Wing", "Crest", "Tarot", "Insignia"]
+        max_position = 6 if self.view_type == "Gear" else 4
+        new_position = (self.current_position + direction) % (max_position + 1)
+        button_label = gear_button_list[new_position]
+        if self.view_type == "Gem":
+            button_label += " Gem"
+        return button_label
+
+    def cycle_gear(self, direction):
+        reload_user = player.get_player_by_id(self.player_user.player_id)
+        no_item = False
+        max_position = 6 if self.view_type == "Gear" else 4
+        self.current_position = (self.current_position + direction) % (max_position + 1)
+
+        # Handle gear positions.
+        if self.current_position <= 4:
+            item_type = inventory.item_type_dict[self.current_position]
+            selected_item = reload_user.player_equipped[self.current_position]
+            if selected_item == 0:
+                no_item = True
+            else:
+                # Handle the view variations.
+                equipped_item = inventory.read_custom_item(selected_item)
+                if self.view_type == "Gem":
+                    if equipped_item.item_inlaid_gem_id == 0:
+                        no_item = True
+                    else:
+                        equipped_gem = inventory.read_custom_item(equipped_item.item_inlaid_gem_id)
+                        new_msg = equipped_gem.create_citem_embed()
+                else:
+                    new_msg = equipped_item.create_citem_embed()
+
+        # Handle tarot position
+        elif self.current_position == 5:
+            item_type = "Tarot"
+            tarot_item = reload_user.equipped_tarot
+            if tarot_item == "":
+                no_item = True
+            else:
+                tarot_info = reload_user.equipped_tarot.split(";")
+                tarot_card = tarot.check_tarot(reload_user.player_id, tarot.tarot_card_list(int(tarot_info[0])),
+                                               int(tarot_info[1]))
+                new_msg = tarot.create_tarot_embed(tarot_card)
+        # Handle insignia position
+        else:
+            item_type = "Insignia"
+            insignia_item = reload_user.insignia
+            if insignia_item == "":
+                no_item = True
+            else:
+                new_msg = insignia.display_insignia(reload_user, insignia_item, "Embed")
+
+        # Build the output
+        if no_item:
+            no_item = item_type.lower()
+            gem_msg = "" if self.view_type == "Gear" else " Gem"
+            new_msg = discord.Embed(colour=discord.Colour.dark_gray(),
+                                    title=f"Equipped {item_type}{gem_msg}",
+                                    description=f"No {no_item}{gem_msg.lower()} is equipped")
+        return new_msg
+
+    @discord.ui.button(style=discord.ButtonStyle.blurple, emoji="⬅️")
+    async def previous_button(self, interaction: discord.Interaction, button: discord.Button):
         try:
             if interaction.user.name == self.player_user.player_name:
-                direction = -1
-                new_msg, self.current_position = cycle_gear(self.target_user, self.current_position, direction)
-                await interaction.response.edit_message(embed=new_msg)
+                new_msg = self.cycle_gear(-1)
+                new_view = GearView(self.player_user, self.target_user, self.current_position, self.view_type)
+                await interaction.response.edit_message(embed=new_msg, view=new_view)
         except Exception as e:
             print(e)
 
-    @discord.ui.button(label="Next", style=discord.ButtonStyle.blurple, emoji="➡️")
-    async def next_gear(self, interaction: discord.Interaction, button: discord.Button):
+    @discord.ui.button(style=discord.ButtonStyle.success)
+    async def toggle_view_button(self, interaction: discord.Interaction, button: discord.Button):
         try:
             if interaction.user.name == self.player_user.player_name:
-                direction = 1
-                new_msg, self.current_position = cycle_gear(self.target_user, self.current_position, direction)
-                await interaction.response.edit_message(embed=new_msg)
+                self.view_type = "Gear" if self.view_type == "Gem" else "Gem"
+                new_msg = self.cycle_gear(0)
+                new_view = GearView(self.player_user, self.target_user, self.current_position, self.view_type)
+                await interaction.response.edit_message(embed=new_msg, view=new_view)
         except Exception as e:
             print(e)
 
-
-def cycle_gear(user, current_position, direction):
-    reload_user = player.get_player_by_id(user.player_id)
-    no_item = False
-    if current_position == 0 and direction == -1:
-        new_position = 6
-    elif current_position == 6 and direction == 1:
-        new_position = 0
-    else:
-        new_position = current_position + direction
-    if new_position <= 4:
-        item_type = inventory.item_type_dict[new_position]
-        selected_item = reload_user.player_equipped[new_position]
-        if selected_item == 0:
-            no_item = True
-        else:
-            equipped_item = inventory.read_custom_item(selected_item)
-            new_msg = equipped_item.create_citem_embed()
-    elif new_position == 5:
-        item_type = "Tarot"
-        tarot_item = reload_user.equipped_tarot
-        if tarot_item == "":
-            no_item = True
-        else:
-            tarot_info = reload_user.equipped_tarot.split(";")
-            tarot_card = tarot.check_tarot(reload_user.player_id, tarot.tarot_card_list(int(tarot_info[0])), int(tarot_info[1]))
-            new_msg = tarot.create_tarot_embed(tarot_card)
-    else:
-        item_type = "Insignia"
-        insignia_item = reload_user.insignia
-        if insignia_item == "":
-            no_item = True
-        else:
-            new_msg = insignia.display_insignia(reload_user, insignia_item, "Embed")
-    if no_item:
-        no_item = item_type.lower()
-        new_msg = discord.Embed(colour=discord.Colour.dark_gray(),
-                                title=f"Equipped {item_type}",
-                                description=f"No {no_item} is equipped")
-    return new_msg, new_position
+    @discord.ui.button(style=discord.ButtonStyle.blurple, emoji="➡️")
+    async def next_button(self, interaction: discord.Interaction, button: discord.Button):
+        try:
+            if interaction.user.name == self.player_user.player_name:
+                new_msg = self.cycle_gear(1)
+                new_view = GearView(self.player_user, self.target_user, self.current_position, self.view_type)
+                await interaction.response.edit_message(embed=new_msg, view=new_view)
+        except Exception as e:
+            print(e)
 
 
 class ManageCustomItemView(discord.ui.View):
@@ -943,7 +984,7 @@ class PointsView(discord.ui.View):
             selected_path = select.values[0]
             if selected_path == "Reset":
                 response = "Starting over is no easy feat. You'll first need to bring me a token."
-                embed_msg = discord.Embed(colour=discord.Colour.dark_orange(), title="Lyra, Pathwalker of the True Laws",
+                embed_msg = discord.Embed(colour=discord.Colour.dark_orange(), title="Avalon, Pathwalker of the True Laws",
                                           description=response)
                 new_view = ResetView(self.player_object)
             else:

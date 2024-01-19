@@ -469,7 +469,7 @@ class PlayerProfile:
     def create_path_embed(self):
         colour, icon = inventory.get_gear_tier_colours(self.player_echelon)
         points_msg = "Your shiny toys are useless if you don't know how to use them."
-        embed = discord.Embed(color=colour, title="Lyra, Pathwalker of the True Laws", description=points_msg)
+        embed = discord.Embed(color=colour, title="Avalon, Pathwalker of the True Laws", description=points_msg)
         embed.add_field(name=f"{self.player_username}'s Skill Points", value="", inline=False)
         for path_label, points, gear_points in zip(path_names, self.player_stats, self.gear_points):
             value_msg = f"Points: {points}"
@@ -934,10 +934,9 @@ class PlayerProfile:
             return f"Item {item.item_id} is not recognized."
 
     def create_stamina_embed(self):
-        potion_list = ["i1y", "i2y", "i3y", "i4y"]
         potion_msg = ""
-        for x in potion_list:
-            loot_item = inventory.BasicItem(str(x))
+        for x in range(1, 5):
+            loot_item = inventory.BasicItem(f"Potion{x}")
             potion_stock = inventory.check_stock(self, loot_item.item_id)
             potion_msg += f"\n{loot_item.item_emoji} {potion_stock}x {loot_item.item_name}"
         stamina_title = f"{self.player_username}\'s Stamina: "

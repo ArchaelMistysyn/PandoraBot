@@ -16,6 +16,8 @@ import adventure
 import inventory
 import bosses
 import random
+
+import itemicons
 import loot
 import forge
 import player
@@ -482,7 +484,7 @@ def run_discord_bot():
                 if target_user.player_equipped[0] != 0:
                     equipped_item = inventory.read_custom_item(target_user.player_equipped[0])
                     embed_msg = equipped_item.create_citem_embed()
-                    gear_view = menus.GearView(player_object, target_user)
+                    gear_view = menus.GearView(player_object, target_user, 0, "Gear")
                 else:
                     embed_msg = discord.Embed(colour=discord.Colour.dark_gray(),
                                               title="Equipped weapon",
@@ -608,7 +610,7 @@ def run_discord_bot():
             if player_object.player_class != "":
                 engrave_msg = "You've come a long way from home child. Tell me, what kind of power do you seek?"
                 embed_msg = discord.Embed(colour=discord.Colour.dark_orange(),
-                                          title="Isabelle, Soulweaver of the True Laws",
+                                          title="Isolde, Soulweaver of the True Laws",
                                           description=engrave_msg)
                 insignia_view = insignia.InsigniaView(player_object)
                 await ctx.send(embed=embed_msg, view=insignia_view)
@@ -837,9 +839,12 @@ def run_discord_bot():
     @pandora_bot.hybrid_command(name='testing', help="Testing Command.")
     @app_commands.guilds(discord.Object(id=1011375205999968427))
     async def testing(ctx):
+        chosen_thumbnail = random.choice(itemicons.item_icon_dict["W"])
         embed_msg = discord.Embed(colour=discord.Colour.dark_teal(),
                                   title="This command is for testing purposes.",
-                                  description="This command serves no function.")
+                                  description=f"Thumbnail URL: {chosen_thumbnail}")
+        embed_msg.set_thumbnail(url=chosen_thumbnail)
+        print(embed_msg.thumbnail.url)
         await ctx.send(embed=embed_msg)
 
     @set_command_category('craft', 3)

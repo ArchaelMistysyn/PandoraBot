@@ -92,14 +92,14 @@ class InsigniaView(discord.ui.View):
                     num_selected = 0
                     new_view = ElementSelectView(self.player_user, num_elements, num_selected, current_selection)
                     embed_msg = discord.Embed(colour=discord.Colour.dark_orange(),
-                                              title="Isabelle, Soulweaver of the True Laws",
+                                              title="Isolde, Soulweaver of the True Laws",
                                               description="What is the desired affinity?")
                 else:
                     current_selection = [1, 1, 1, 1, 1, 1, 1, 1, 1]
                     num_selected = 9
                     new_view = ConfirmSelectionView(self.player_user, num_selected, current_selection)
                     embed_msg = discord.Embed(colour=discord.Colour.dark_orange(),
-                                              title="Isabelle, Soulweaver of the True Laws",
+                                              title="Isolde, Soulweaver of the True Laws",
                                               description="I applaud your greed. In addition to the payment "
                                                           "I hope your sanity can afford the cost.")
                     token_item = inventory.BasicItem("Token2")
@@ -160,7 +160,7 @@ class ElementSelectView(discord.ui.View):
                 selected_element = int(element_select.values[0])
                 if self.current_selection[selected_element] == 1:
                     embed_msg = discord.Embed(colour=discord.Colour.dark_orange(),
-                                              title="Isabelle, Soulweaver of the True Laws",
+                                              title="Isolde, Soulweaver of the True Laws",
                                               description="What are you playing at? You've already picked that one.")
                     new_view = self
                 else:
@@ -170,7 +170,7 @@ class ElementSelectView(discord.ui.View):
                     if num_selected == self.num_elements:
                         new_view = ConfirmSelectionView(self.player_user, num_selected, current_selection)
                         embed_msg = discord.Embed(colour=discord.Colour.dark_orange(),
-                                                  title="Isabelle, Soulweaver of the True Laws",
+                                                  title="Isolde, Soulweaver of the True Laws",
                                                   description="How entertaining. I am willing to engrave your soul, "
                                                               "but my services are as expensive as they are painful.")
                         cost_msg = f"{globalitems.coin_icon} {num_selected}x Lotus Coins\n"
@@ -180,7 +180,7 @@ class ElementSelectView(discord.ui.View):
                     else:
                         new_view = ElementSelectView(self.player_user, self.num_elements, num_selected, current_selection)
                         embed_msg = discord.Embed(colour=discord.Colour.dark_orange(),
-                                                  title="Isabelle, Soulweaver of the True Laws",
+                                                  title="Isolde, Soulweaver of the True Laws",
                                                   description="What is the next desired affinity?")
                 await interaction.response.edit_message(embed=embed_msg, view=new_view)
         except Exception as e:
@@ -233,7 +233,7 @@ class ConfirmSelectionView(discord.ui.View):
                         cannot_afford_description = "I'm not going to work for free. Bring tokens or don't come back."
                     if cannot_afford_description != "":
                         self.embed_msg = discord.Embed(colour=discord.Colour.dark_orange(),
-                                                       title="Isabelle, Soulweaver of the True Laws",
+                                                       title="Isolde, Soulweaver of the True Laws",
                                                        description=cannot_afford_description)
                 await interaction.response.edit_message(embed=self.embed_msg, view=None)
         except Exception as e:
@@ -245,7 +245,7 @@ class ConfirmSelectionView(discord.ui.View):
             if interaction.user.name == self.player_user.player_name:
                 engrave_msg = "My patience wears thin. Tell me, what kind of power do you seek?"
                 embed_msg = discord.Embed(colour=discord.Colour.dark_orange(),
-                                          title="Isabelle, Soulweaver of the True Laws",
+                                          title="Isolde, Soulweaver of the True Laws",
                                           description=engrave_msg)
                 new_view = InsigniaView(self.player_user)
                 await interaction.response.edit_message(embed=embed_msg, view=new_view)

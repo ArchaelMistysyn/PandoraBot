@@ -326,6 +326,8 @@ class SubSelectView(discord.ui.View):
             selected_list = ["Star", "Astral", "Astral", "Astral", "Astral", "Astral", "Astral"]
             if self.selected_item.item_tier == 5:
                 selected_list = ["Star", "Fabled", "Fabled", "Fabled", "Fabled", "Fabled", "Fabled"]
+            elif self.selected_item.item_tier == 6:
+                selected_list = ["Miracle", "Miracle", "Miracle", "Miracle", "Miracle", "Miracle", "Miracle"]
             description_list = ["Add/Reroll", "Reroll All", "Reroll damage", "Reroll defensive", "Reroll penetration",
                                 "Reroll curse", "Reroll unique"]
             options = [discord.SelectOption(
@@ -934,12 +936,12 @@ class RefineItemView(discord.ui.View):
         super().__init__(timeout=None)
         menu_dict = {
             "W": [2, ["Fabled", "Wish"], ["✅", "✅"], [5, 6], ["Fabled1", "Unrefined5"]],
-            "A": [1, ["Fabled"], ["✅"], [5], "Fabled2"],
-            "Y": [1, ["Fabled"], ["✅"], [5], "Fabled3"],
+            "A": [1, ["Fabled"], ["✅"], [5], ["Fabled2"]],
+            "Y": [1, ["Fabled"], ["✅"], [5], ["Fabled3"]],
             "G": [2, ["Wing", "Fabled"], ["✅", "✅"], [4, 5], ["Unrefined1", "Fabled4"]],
             "C": [2, ["Crest", "Fabled"], ["✅", "✅"], [4, 5], ["Unrefined3", "Fabled5"]],
             "D": [3, ["Jewel", "Fabled", "Heart Gem"], ["✅", "✅", "✅"],
-                  [4, 5, 6], "Unrefined2", "Fabled6", "Unrefined4"]
+                  [4, 5, 6], ["Unrefined2", "Fabled6", "Unrefined4"]]
         }
         self.selected_type = selected_type
         self.player_user = player_user

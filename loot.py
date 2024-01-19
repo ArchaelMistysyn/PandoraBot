@@ -38,14 +38,14 @@ def award_loot(boss_object, player_list, exp_amount, coin_amount):
         else:
             core_element = random.randint(0, 8)
         fae_qty = random.randint(1, boss_object.boss_lvl)
-        fae_item = BasicItem(f"Fae{core_element}")
+        fae_item = inventory.BasicItem(f"Fae{core_element}")
         loot_msg[counter] += f"{fae_item.item_emoji} {fae_qty}x {fae_item.item_name}\n"
         df_change.loc[len(df_change)] = [temp_player.player_id, fae_item.item_id, fae_qty]
         # Check raid stone drops.
         if boss_object.player_id == 0:
             random_check = random.randint(1, 100)
             if random_check <= 75:
-                raid_item = BasicItem(f"Stone5")
+                raid_item = inventory.BasicItem(f"Stone5")
                 loot_msg[counter] += f"{raid_item.item_emoji} 1x {raid_item.item_name}\n"
                 df_change.loc[len(df_change)] = [temp_player.player_id, raid_item.item_id, 1]
         # Check essence drops
@@ -82,7 +82,7 @@ def award_loot(boss_object, player_list, exp_amount, coin_amount):
                 if loot_qualifies:
                     dropped_item = str(line["item_id"])
                     drop_rate = float(line["drop_rate"])
-                    loot_item = BasicItem(dropped_item)
+                    loot_item = inventory.BasicItem(dropped_item)
                     qty = 0
                     num_attempts = 1
                     if boss_object.player_id == 0:
@@ -177,7 +177,6 @@ def generate_random_item():
             break
 
     # Quantity Exceptions
-    print(reward_id)
     if reward_id == "Crystal2":
         quantity = 1
     elif "Fae" in reward_id:
