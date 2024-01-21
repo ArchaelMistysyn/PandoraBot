@@ -96,7 +96,7 @@ def generate_ramping_reward(success_rate, decay_rate, total_steps):
 
 def number_conversion(input_number):
     labels = ['', 'K', 'M', 'B', 'T', 'Q', 'Q+', 'Q++', 'Q+++', 'Q++++']
-    num_digits = len(str(input_number))
+    num_digits = len(str(int(input_number)))
     index = max(0, (num_digits - 1) // 3)
     input_str = str(input_number)
     integer_digits = (num_digits - 1) % 3 + 1

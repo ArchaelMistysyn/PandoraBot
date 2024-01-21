@@ -281,7 +281,7 @@ def check_bloom(player_object, input_damage):
     damage = input_damage
     random_num = random.randint(1, 100)
     if random_num <= int(round(player_object.specialty_rate[0] * 100)):
-        damage *= player_object.bloom_multiplier
+        damage = int(damage * player_object.bloom_multiplier)
         status_msg = "BLOOM"
     return damage, status_msg
 

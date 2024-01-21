@@ -295,8 +295,8 @@ def run_discord_bot():
             player_object = player.get_player_by_name(player_name)
 
             # Confirm if the command can be run.
-            if token_version not in range(1, 5):
-                await ctx.send("Selected token not between 1 and 4.")
+            if token_version not in range(1, 6):
+                await ctx.send("Selected token not between 1 and 5.")
                 return
             if player_object.player_class == "":
                 embed_msg = unregistered_message()
