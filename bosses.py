@@ -68,7 +68,7 @@ class CurrentBoss:
             6: [discord.Colour.magenta(), "🩷"],
             7: [0xFFFFFF, "🤍"]
         }
-        tier_info = tier_colour_dict[self.item_tier]
+        tier_info = tier_colour_dict[self.boss_tier]
         tier_colour = tier_info[0]
         life_emoji = tier_info[1]
         # Set boss details
@@ -282,53 +282,55 @@ def spawn_boss(channel_id, player_id, new_boss_tier, selected_boss_type, boss_le
             boss_object.boss_eleweak = boss_eleweak
             boss_object.boss_image = boss_image
         else:
-            match selected_boss_type:
-                case "Fortress":
-                    boss_type_num = 1
-                case "Dragon":
-                    boss_type_num = 2
-                case "Demon":
-                    boss_type_num = 3
-                case "Paragon":
-                    boss_type_num = 4
-                case _:
-                    boss_type_num = 5
-
+            # Create the boss object.
+            boss_type_num = boss_list.index(selected_boss_type)
             boss_object = CurrentBoss(boss_type_num, selected_boss_type, new_boss_tier, boss_level)
 
+            # Assign elemental weaknesses.
             num_eleweak = 3
             eleweak_list = random.sample(range(9), num_eleweak)
             for x in eleweak_list:
                 boss_object.boss_eleweak[x] = 1
             boss_eleweak = ";".join(str(y) for y in boss_object.boss_eleweak)
+            boss_eleweak = boss_eleweak.rstrip(';')
 
+            # Assign type weaknesses.
             num_typeweak = 2
             typeweak_list = random.sample(range(7), num_typeweak)
             for x in typeweak_list:
                 boss_object.boss_typeweak[x] = 1
             boss_typeweak = ";".join(str(y) for y in boss_object.boss_typeweak)
-
-            boss_eleweak = boss_eleweak.rstrip(';')
             boss_typeweak = boss_typeweak.rstrip(';')
 
-            if new_boss_tier <= 4:
+            # Set boss hp and damage cap.
+            if new_boss_tier <= 4 and boss_object.boss_type != "Arbiter":
                 subtotal_hp = 10 ** int(boss_level / 10 + 5)
                 total_hp = int(subtotal_hp)
                 boss_object.damage_cap = (10 ** int(boss_level / 10 + 4) - 1)
-            elif new_boss_tier == 5:
+            elif new_boss_tier == 5 and boss_object.boss_type != "Arbiter":
                 total_hp = 10000000000000
                 boss_object.damage_cap = -1
-            else:
+            elif new_boss_tier == 6 and boss_object.boss_type != "Arbiter":
                 total_hp = 999999999999999
                 boss_object.damage_cap = -1
+            else:
+                arbitor_hp_dict = {1: 1000000000000000, 2: 2500000000000000, 3: 5000000000000000,
+                                   4: 10000000000000000, 5: 15000000000000000, 6: 100000000000000000,
+                                   7: 999999999999999999}
+                total_hp = arbitor_hp_dict[new_boss_tier]
+                boss_object.damage_cap = -1
 
+            # Increase raid boss hp and damage cap.
             if channel_num != 0:
                 total_hp *= 10
                 boss_object.damage_cap = (10 ** int(boss_level / 10 + 5) - 1)
 
+            # Assign remaining boss details.
             boss_object.generate_boss_name_image(boss_object.boss_type, boss_object.boss_tier)
             boss_object.boss_mHP = total_hp
             boss_object.boss_cHP = boss_object.boss_mHP
+
+            # Apply the new boss to the database.
             query = text("INSERT INTO ActiveRaids (channel_id, player_id) VALUES (:input_1, :player_id)")
             query = query.bindparams(input_1=str(channel_id), player_id=player_id)
             pandora_db.execute(query)
@@ -353,15 +355,16 @@ def spawn_boss(channel_id, player_id, new_boss_tier, selected_boss_type, boss_le
 
 
 def get_random_bosstier(boss_type):
-    random_number = random.randint(1, 100)
     # Assign tier rates.
     if boss_type != "Arbiter":
-        tier_breakpoints = {4: 10, 3: 35, 2: 65, 1: 100}
+        tier_breakpoint_list = {10: 4, 35: 3, 65: 2, 100: 1}
     else:
-        tier_breakpoints = {6: 3, 5: 10, 4: 20, 3: 40, 2: 65, 1: 100}
-    for tier_breakpoint, value in tier_breakpoints:
-        if random_number < tier_breakpoint:
-            boss_tier = value
+        tier_breakpoint_list = {3: 6, 10: 5, 20: 4, 40: 3, 65: 2, 100: 1}
+    # Determine the tier.
+    random_number = random.randint(1, 100)
+    for rate_breakpoint, tier_value in tier_breakpoint_list.items():
+        if random_number <= rate_breakpoint:
+            boss_tier = tier_value
             break
     # Handle non-paragon exceptions for pseudo-paragon type bosses.
     if boss_tier == 4 and boss_type == "Paragon":

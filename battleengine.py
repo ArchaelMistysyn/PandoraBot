@@ -305,7 +305,7 @@ def run_discord_bot():
             if player_object.player_equipped[0] == 0:
                 await ctx.send("You must have a weapon equipped.")
                 return
-            if (player_object.player_echelon < 5 or player_object.player_quest < 29) and token_version == 4:
+            if (player_object.player_echelon < 5 or player_object.player_quest < 29) and token_version == 5:
                 await ctx.send("You must be player echelon 5 and complete quest 28 to challenge the high arbiter.")
                 return
             if (player_object.player_echelon < 5 or player_object.player_quest < 28) and token_version == 4:
