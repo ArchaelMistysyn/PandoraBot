@@ -417,7 +417,7 @@ class CustomItem:
             thumb_img = itemicons.item_icon_dict[self.item_type][self.item_tier]
         return thumb_img
 
-    def create_citem_embed(self):
+    def create_citem_embed(self, roll_change_list=None):
         gear_colours = get_gear_tier_colours(self.item_tier)
         tier_colour = gear_colours[0]
         gem_min = 0
@@ -442,7 +442,7 @@ class CustomItem:
             item_rolls += f"{self.item_bonus_stat}"
         else:
             item_rolls += f"{get_gem_stat_message(self.item_bonus_stat)}"
-        rolls_msg = itemrolls.display_rolls(self)
+        rolls_msg = itemrolls.display_rolls(self, roll_change_list)
         for x in range(self.item_num_stars):
             display_stars += globalitems.star_icon
         if self.item_num_stars < 5:
@@ -617,6 +617,10 @@ def get_tier_damage(item_tier, item_type):
     damage_tier_list = [[250, 500], [500, 1000], [1000, 2500], [2500, 10000],
                         [1, 25000], [1, 100000], [1, 500000]]
     damage_values = damage_tier_list[item_tier - 1]
+    # Tier 7 gem exception.
+    if item_type == "D" and item_tier == 7:
+        damage_values = (500000, 500000)
+    # Weapon has twice the value.
     damage_adjust = 2 if item_type == "W" else 1
     temp_damage = [random.randint(damage_values[0], damage_values[1]) * damage_adjust for _ in range(2)]
     return min(temp_damage), max(temp_damage)
@@ -982,6 +986,34 @@ def max_all_items(player_id, quantity):
         query_string = f"INSERT INTO BasicInventory (player_id, item_id, item_qty) VALUES {insert_values}"
         query = text(query_string)
         pandora_db.execute(query)
+
+        # Close the connection.
+        pandora_db.close()
+        engine.dispose()
+    except exc.SQLAlchemyError as error:
+        print(error)
+
+
+def refresh_item_names():
+    try:
+        engine_url = mydb.get_engine_url()
+        engine = sqlalchemy.create_engine(engine_url)
+        pandora_db = engine.connect()
+
+        # Pull all item ids.
+        query_string = f"SELECT item_id FROM CustomInventory;"
+        query = text(query_string)
+        df = pd.read_sql(query, pandora_db)
+        item_ids_list = df['item_id'].tolist()
+
+        # Loop through all items and refresh the names updating them in the database.
+        for item_id in item_ids_list:
+            temp_object = read_custom_item(item_id)
+            if temp_object.item_type != "D":
+                temp_object.set_item_name()
+            else:
+                temp_object.set_gem_name()
+            temp_object.update_stored_item()
 
         # Close the connection.
         pandora_db.close()

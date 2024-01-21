@@ -214,7 +214,7 @@ class PvPCog(commands.Cog):
                                                        combo_count[attacker], False)
         scaled_damage = self.scale_damage(role, combatant, hit_damage)
         scaled_damage, status_msg = combat.check_lock(combatant[attacker], tracker[attacker], scaled_damage)
-        scaled_damage, second_msg = combat.check_annihilator(combatant[attacker], scaled_damage)
+        scaled_damage, second_msg = combat.check_bloom(combatant[attacker], scaled_damage)
         hit_msg = f"{combatant[attacker].player_username} - {combo_count[attacker]}x Combo: {skill_name} {globalitems.number_conversion(scaled_damage)}"
         if status_msg != "":
             hit_msg += f" *{status_msg}*"
@@ -240,7 +240,7 @@ class PvPCog(commands.Cog):
                                                            combo_count[attacker], True)
             scaled_damage = self.scale_damage(role, combatant, hit_damage)
             scaled_damage, status_msg = combat.check_lock(combatant[attacker], tracker[attacker], scaled_damage)
-            scaled_damage, second_msg = combat.check_annihilator(combatant[attacker], scaled_damage)
+            scaled_damage, second_msg = combat.check_bloom(combatant[attacker], scaled_damage)
             hit_msg = f"{combatant[attacker].player_username} - Ultimate: {skill_name} {globalitems.number_conversion(scaled_damage)}"
             if status_msg != "":
                 hit_msg += f" *{status_msg}*"

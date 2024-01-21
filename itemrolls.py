@@ -109,7 +109,7 @@ shared_unique_rolls = {
 }
 
 weapon_unique_rolls = {
-    "unique-0-w": ["X% Chance for trigger Annihilator on hit", 1, 1, [["specialty_rate", 0]]],
+    "unique-0-w": ["X% Chance to trigger Bloom on hit", 5, 1, [["specialty_rate", 0]]],
     "unique-1-w": ["X% Less Non-Fire Damage, X% More Fire Damage", 15, 10, [["elemental_conversion", 0]]],
     "unique-2-w": ["X% Less Non-Water Damage, X% More Water Damage", 15, 10, [["elemental_conversion", 1]]],
     "unique-3-w": ["X% Less Non-Lightning Damage, X% More Lightning Damage", 15, 10, [["elemental_conversion", 2]]],
@@ -126,8 +126,8 @@ weapon_unique_rolls = {
 }
 
 armour_unique_rolls = {
-    "unique-0-a": ["Gain X% Elemental Damage per Matching Resistance", 1, 30, [["unique_conversion", 0]]],
-    "unique-1-a": ["Gain X% Final Damage per 10 HP", 1, 30, [["unique_conversion", 1]]]
+    "unique-0-a": ["Gain X% Elemental Damage per Matching Resistance", 2, 30, [["unique_conversion", 0]]],
+    "unique-1-a": ["Gain X% Final Damage per 100 HP", 1, 30, [["unique_conversion", 1]]]
 }
 
 accessory_unique_rolls = {
@@ -138,7 +138,8 @@ accessory_unique_rolls = {
     "unique-4-y": ["Fortress Bane", 25, 10, [["banes", 0]]],
     "unique-5-y": ["Dragon Bane", 25, 10, [["banes", 1]]],
     "unique-6-y": ["Demon Bane", 25, 10, [["banes", 2]]],
-    "unique-7-y": ["Paragon Bane", 25, 10, [["banes", 3]]]
+    "unique-7-y": ["Paragon Bane", 25, 10, [["banes", 3]]],
+    "unique-8-y": ["Arbiter Bane", 25, 10, [["banes", 4]]]
 }
 
 unique_rolls = {
@@ -157,7 +158,8 @@ item_roll_master_dict = {
 }
 
 augment_icons = ["<:esocket:1148387477615300740>", "🟢", "🔵",
-                 "<:eprl:1148390531345432647>", "<:ov:1177184321686228992>", "<:or:1177184323691098195>"]
+                 "<:eprl:1148390531345432647>", "<:ov:1177184321686228992>", "<:or:1177184323691098195>",
+                 "⚪"]
 cost_list = [2, 3, 6, 10, 15, 25]
 
 
@@ -377,11 +379,14 @@ class ItemRoll:
         self.roll_name = current_roll[0]
 
 
-def display_rolls(selected_item):
+def display_rolls(selected_item, roll_change_list=None):
     item_rolls_msg = ""
-    for roll_information in selected_item.item_roll_values:
+    for roll_index, roll_information in enumerate(selected_item.item_roll_values):
         current_roll = ItemRoll(roll_information)
         item_rolls_msg += f'\n{current_roll.roll_icon} {current_roll.roll_msg}'
+        if roll_change_list is not None:
+            if roll_change_list[roll_index]:
+                item_rolls_msg += " [Transferred]"
     return item_rolls_msg
 
 

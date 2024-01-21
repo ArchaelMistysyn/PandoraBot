@@ -244,43 +244,46 @@ def run_discord_bot():
             await ctx.defer()
             player_name = ctx.author
             player_object = player.get_player_by_name(player_name)
-            if player_object.player_class != "":
-                if player_object.player_equipped[0] != 0:
-                    existing_id = bosses.get_raid_id(channel_id, player_object.player_id)
-                    if existing_id == 0:
-                        if player_object.spend_stamina(200):
-                            max_spawn = player_object.player_echelon
-                            if max_spawn > 2:
-                                max_spawn = 2
-                            spawned_boss = random.randint(0, max_spawn)
-                            boss_type = bosses.boss_list[spawned_boss]
-                            new_boss_tier, boss_type = bosses.get_random_bosstier(boss_type)
-                            active_boss = bosses.spawn_boss(channel_id, player_object.player_id, new_boss_tier,
-                                                            boss_type, player_object.player_lvl, 0)
-                            active_boss.player_id = player_object.player_id
-                            embed_msg = active_boss.create_boss_embed(0)
-                            channel_object = ctx.channel
-                            spawn_msg = f"{player_object.player_username} has spawned a tier {active_boss.boss_tier} boss!"
-                            await ctx.send(spawn_msg)
-                            player_object.get_player_multipliers()
-                            sent_message = await channel_object.send(embed=embed_msg)
 
-                            async def run_solo_cog():
-                                return enginecogs.SoloCog(engine_bot, player_object, active_boss, channel_id,
-                                                          sent_message, channel_object)
-
-                            solo_cog = await run_solo_cog()
-                            task = asyncio.create_task(solo_cog.run())
-                            await task
-                        else:
-                            await ctx.send("Not enough stamina.")
-                    else:
-                        await ctx.send("You already have a solo boss encounter running.")
-                else:
-                    await ctx.send("You must have a weapon equipped.")
-            else:
+            # Confirm if the command can be run.
+            if player_object.player_class == "":
                 embed_msg = unregistered_message()
                 await ctx.send(embed=embed_msg)
+                return
+            if player_object.player_equipped[0] == 0:
+                await ctx.send("You must have a weapon equipped.")
+                return
+            existing_id = bosses.get_raid_id(channel_id, player_object.player_id)
+            if existing_id != 0:
+                await ctx.send("You already have a solo boss encounter running.")
+                return
+            if player_object.spend_stamina(200):
+                await ctx.send("Not enough stamina.")
+                return
+
+            # Spawn the boss.
+            max_spawn = min(player_object.player_echelon, 2)
+            spawned_boss = random.randint(0, max_spawn)
+            boss_type = bosses.boss_list[spawned_boss]
+            new_boss_tier, boss_type = bosses.get_random_bosstier(boss_type)
+            player_object.get_player_multipliers()
+            active_boss = bosses.spawn_boss(channel_id, player_object.player_id, new_boss_tier,
+                                            boss_type, player_object.player_lvl, 0)
+            active_boss.player_id = player_object.player_id
+            embed_msg = active_boss.create_boss_embed(0)
+            channel_object = ctx.channel
+            spawn_msg = f"{player_object.player_username} has spawned a tier {active_boss.boss_tier} boss!"
+            await ctx.send(spawn_msg)
+            sent_message = await channel_object.send(embed=embed_msg)
+
+            # Run the boss cog.
+            async def run_solo_cog():
+                return enginecogs.SoloCog(engine_bot, player_object, active_boss, channel_id,
+                                          sent_message, channel_object)
+
+            solo_cog = await run_solo_cog()
+            task = asyncio.create_task(solo_cog.run())
+            await task
 
     @engine_bot.hybrid_command(name='summon', help="Challenge a paragon boss.")
     @app_commands.guilds(discord.Object(id=1011375205999968427))
@@ -290,8 +293,10 @@ def run_discord_bot():
             await ctx.defer()
             player_name = ctx.author
             player_object = player.get_player_by_name(player_name)
-            if token_version not in range(1, 4):
-                await ctx.send("Selected token not between 1 and 3.")
+
+            # Confirm if the command can be run.
+            if token_version not in range(1, 5):
+                await ctx.send("Selected token not between 1 and 4.")
                 return
             if player_object.player_class == "":
                 embed_msg = unregistered_message()
@@ -299,6 +304,12 @@ def run_discord_bot():
                 return
             if player_object.player_equipped[0] == 0:
                 await ctx.send("You must have a weapon equipped.")
+                return
+            if (player_object.player_echelon < 5 or player_object.player_quest < 29) and token_version == 4:
+                await ctx.send("You must be player echelon 5 and complete quest 28 to challenge the high arbiter.")
+                return
+            if (player_object.player_echelon < 5 or player_object.player_quest < 28) and token_version == 4:
+                await ctx.send("You must be player echelon 5 and complete quest 27 to challenge an arbiter.")
                 return
             if player_object.player_echelon < 5 and token_version == 3:
                 await ctx.send("You must be player echelon 5 to challenge the paragon sovereign.")
@@ -320,10 +331,12 @@ def run_discord_bot():
                 await ctx.send(f"Out of Stock: {token_item.item_emoji} {token_item.item_name}.")
                 return
             inventory.update_stock(player_object, token_id, -1)
-            spawned_boss = 3
+            spawned_boss = 3 if token_version < 4 else 4
             boss_type = bosses.boss_list[spawned_boss]
-            if token_version == 1:
+            if token_version in [1, 4]:
                 new_boss_tier, boss_type = bosses.get_random_bosstier(boss_type)
+            elif token_version == 5:
+                new_boss_tier = 7
             else:
                 new_boss_tier = token_version + 3
             active_boss = bosses.spawn_boss(channel_id, player_object.player_id, new_boss_tier,

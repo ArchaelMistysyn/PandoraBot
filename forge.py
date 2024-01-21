@@ -1051,24 +1051,32 @@ class MeldView(discord.ui.View):
                     self.player_object = player.get_player_by_id(self.player_object.player_id)
                     self.gem_1 = inventory.read_custom_item(self.gem_1.item_id)
                     self.gem_2 = inventory.read_custom_item(self.gem_2.item_id)
-
-                    # Process the meld attempt.
-                    success_roll = random.randint(1, 100)
-                    if success_roll <= self.affinity:
-                        error_msg = meld_gems(self.gem_1, self.gem_2)
-                        if error_msg == "":
-                            inventory.delete_item(self.player_object, self.gem_2)
-                            self.embed = self.gem_1.create_citem_embed()
-                        else:
-                            self.embed = discord.Embed(colour=discord.Colour.blurple(),
-                                                       title="Kazyth, Lifeblood of the True Laws",
-                                                       description=error_msg)
-                    else:
-                        inventory.delete_item(self.player_object, self.gem_2)
-                        fail_description = "The gems were not compatible enough, the sacrificial heart died."
+                    stock = inventory.check_stock(self.player_object, "Token4")
+                    if stock < self.cost:
+                        cannot_afford_msg = "Begone fool. Those without tokens have no right to stand before me."
                         self.embed = discord.Embed(colour=discord.Colour.blurple(),
                                                    title="Kazyth, Lifeblood of the True Laws",
-                                                   description=fail_description)
+                                                   description=cannot_afford_msg)
+                    else:
+                        # Pay the cost
+                        inventory.update_stock(self.player_object, "Token4", (self.cost * -1))
+                        # Process the meld attempt.
+                        success_roll = random.randint(1, 100)
+                        if success_roll <= self.affinity:
+                            error_msg, roll_change_list = meld_gems(self.gem_1, self.gem_2)
+                            if error_msg == "":
+                                inventory.delete_item(self.player_object, self.gem_2)
+                                self.embed = self.gem_1.create_citem_embed(roll_change_list)
+                            else:
+                                self.embed = discord.Embed(colour=discord.Colour.blurple(),
+                                                           title="Kazyth, Lifeblood of the True Laws",
+                                                           description=error_msg)
+                        else:
+                            inventory.delete_item(self.player_object, self.gem_2)
+                            fail_description = "The gems were not compatible enough, the sacrificial heart died."
+                            self.embed = discord.Embed(colour=discord.Colour.blurple(),
+                                                       title="Kazyth, Lifeblood of the True Laws",
+                                                       description=fail_description)
                 await interaction.response.edit_message(embed=self.embed, view=self.new_view)
         except Exception as e:
             print(e)
@@ -1076,19 +1084,29 @@ class MeldView(discord.ui.View):
 
 def meld_gems(gem_1, gem_2):
     if not inventory.if_custom_exists(gem_1.item_id) or not inventory.if_custom_exists(gem_2.item_id):
-        return "Melding interrupted : Gems no longer recognized before processing."
-    if gem_1.item_tier < 7:
-        return "Melding interrupted : Gem eligibility changed before processing."
+        return "Melding interrupted : Gems no longer recognized before processing.", None
+    if gem_1.item_tier >= 7:
+        return "Melding interrupted : Gem eligibility changed before processing.", None
+    tier_adjust = 0
     if gem_1.item_tier == gem_2.item_tier:
-        gem_1.item_tier += 1
-        gem_1.item_num_stars += 1
-        gem_1.item_bonus_stat = f"{gem_1.item_bonus_stat[0]};10"
+        tier_adjust = 1
+        gem_1.item_tier += tier_adjust
+        gem_1.item_num_stars += tier_adjust
+        gem_1.base_damage_min, gem_1.base_damage_max = inventory.get_tier_damage(gem_1.item_tier, gem_1.item_type)
+        gem_1.item_bonus_stat = f"{gem_1.item_bonus_stat[0]};{5 * tier_adjust}"
         gem_1.set_gem_name()
+    roll_change_list = []
     for roll_index, secondary_roll in enumerate(gem_2.item_roll_values):
-        random_roll = randon.randint(0, 1)
+        random_roll = random.randint(0, 1)
         if random_roll == 1:
-            gem_1.item_roll_values[roll_index] = f"{gem_1.item_roll_values[roll_index][0]}{secondary_roll[1:]}"
-    return ""
+            new_roll_value = secondary_roll[1:]
+            roll_change_list.append(True)
+        else:
+            new_roll_value = gem_1.item_roll_values[roll_index][1:]
+            roll_change_list.append(False)
+        gem_1.item_roll_values[roll_index] = f"{gem_1.item_tier}{new_roll_value}"
+    gem_1.update_stored_item()
+    return "", roll_change_list
 
 
 

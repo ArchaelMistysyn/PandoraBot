@@ -86,26 +86,29 @@ itemdata_dict = build_item_dict(itemdata_dict, token_data, 1)
 # Summoning List Data
 summon_data = [
     "Summon",
-    [None, 'Summoning Token', 100, 4, '<a:elootitem:1144477550379274322>',
+    [None, 'Summoning Sigil', 100, 4, '<a:elootitem:1144477550379274322>',
      'Perform a summoning ritual to summon a tier 1-4 paragon solo boss.', 10000, ""],
     [None, 'Summoning Relic', 100, 5, '<a:elootitem:1144477550379274322>',
      'Perform a summoning ritual to summon a tier 4-5 paragon solo boss.', 25000, ""],
     [None, 'Summoning Artifact', 100, 6, '<a:elootitem:1144477550379274322>',
      'Perform a summoning ritual to summon a tier 6 paragon solo boss.', 100000, ""],
-    [None, 'Summoning Crystal', 100, 7, '<a:elootitem:1144477550379274322>',
+    [None, 'Summoning Crystal', 100, 6, '<a:elootitem:1144477550379274322>',
+     'Perform a summoning ritual to summon ???.', 1000000, ""],
+    [None, 'Summoning Prism', 100, 7, '<a:elootitem:1144477550379274322>',
      'Perform a summoning ritual to summon ???.', 1000000, ""]
 ]
 itemdata_dict = build_item_dict(itemdata_dict, summon_data, 1)
 
 # Stone List Data
-stone_type = ["Fortress", "Dragon", "Demon", "Paragon", "Raid"]
+stone_type = ["Fortress", "Dragon", "Demon", "Paragon", "Raid", "Arbiter"]
 stone_data = [
     "Stone",
     [None, 'Fortress Stone', 100, 1, '<a:elootitem:1144477550379274322>', None, 0, ""],
     [None, 'Dragon Stone', 100, 2, '<a:elootitem:1144477550379274322>', None, 0, ""],
     [None, 'Demon Stone', 100, 3, '<a:elootitem:1144477550379274322>', None, 0, ""],
     [None, 'Paragon Stone', 100, 4, '<a:elootitem:1144477550379274322>', None, 0, ""],
-    [None, 'Raid Stone', 100, 5, '<a:elootitem:1144477550379274322>', None, 0, ""]
+    [None, 'Raid Stone', 100, 5, '<a:elootitem:1144477550379274322>', None, 0, ""],
+    [None, 'Arbiter Stone', 100, 6, '<a:elootitem:1144477550379274322>', None, 0, ""]
 ]
 for index, row in enumerate(stone_data[1:]):
     row[5] = f'Obtained from {stone_type[index].lower()}. It\'s a stone.'
@@ -331,6 +334,8 @@ lotus_data = [
     [None, 'Lotus of Miracles', 100, 7, '<a:eorigin:1145520263954440313>',
      '???', 0, ""],
     [None, 'Lotus of Revelations', 100, 7, '<a:eorigin:1145520263954440313>',
+     '???', 0, ""],
+    [None, 'Lotus of Eternity', 100, 7, '<a:eorigin:1145520263954440313>',
      '???', 0, ""]
 ]
 itemdata_dict = build_item_dict(itemdata_dict, lotus_data, 1)

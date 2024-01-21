@@ -109,9 +109,10 @@ class PlayerProfile:
         self.critical_penetration, self.critical_application = 0.0, 0
 
         # Initialize misc stats.
-        self.banes = [0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+        self.banes = [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
         self.skill_base_damage_bonus = [0, 0, 0, 0]
         self.specialty_rate = [0.0, 0.0, 0.0, 0.0, 0.0]
+        self.bloom_multiplier = 10.0
         self.unique_conversion = [0.0, 0.0]
         self.attack_speed = 0.0
         self.bonus_hits = 0.0
@@ -153,9 +154,10 @@ class PlayerProfile:
         self.critical_penetration, self.critical_application = 0.0, 0
 
         # Initialize misc stats.
-        self.banes = [0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+        self.banes = [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
         self.skill_base_damage_bonus = [0, 0, 0, 0]
         self.specialty_rate = [0.0, 0.0, 0.0, 0.0, 0.0]
+        self.bloom_multiplier = 10.0
         self.unique_conversion = [0.0, 0.0]
         self.attack_speed = 0.0
         self.bonus_hits = 0.0
@@ -175,8 +177,8 @@ class PlayerProfile:
         echelon_colour = inventory.get_gear_tier_colours(self.player_echelon)
         resources = f'<:estamina:1145534039684562994> {self.player_username}\'s stamina: '
         resources += str(self.player_stamina)
-        resources += f'\nLotus Coins: {self.player_coins}'
-        exp = f'Level: {self.player_lvl} Exp: ({self.player_exp} / '
+        resources += f'\nLotus Coins: {self.player_coins:,}'
+        exp = f'Level: {self.player_lvl} Exp: ({self.player_exp:,} / '
         exp += f'{get_max_exp(self.player_lvl)})'
         id_msg = f'User ID: {self.player_id}\nClass: {globalitems.class_icon_dict[self.player_class]}'
 
@@ -258,7 +260,8 @@ class PlayerProfile:
             second_msg += f"\nTime Multiplier: (Dmg: {(self.temporal_application + 1) * 100}%) - "
             second_msg += f"(LCK: {self.temporal_application * 5 + int(round(self.specialty_rate[4] * 100))}%) - "
             second_msg += f"(App: {self.temporal_application})"
-            second_msg += f"\nAnnihilator: (Dmg: 1000%) - (ANH: {int(round(self.specialty_rate[0] * 100))}%)"
+            second_msg += f"\nBloom: (Dmg: {int(round(self.bloom_multiplier * 100)):,}%) - "
+            second_msg += f"(BLM: {int(round(self.specialty_rate[0] * 100))}%)"
         elif method == 3:
             title_msg = "Defensive Stats"
             stats = f"Player HP: {self.player_mHP:,}"
@@ -268,9 +271,9 @@ class PlayerProfile:
         elif method == 4:
             title_msg = "Multipliers"
             for idh, h in enumerate(self.banes):
-                if idh < 4:
+                if idh < 5:
                     stats += f"\n{bosses.boss_list[idh]} Bane: {int(h * 100)}%"
-                elif idh == 4:
+                elif idh == 5:
                     stats += f"\nHuman Bane: {int(h * 100)}%"
             stats += f"\nClass Mastery: {int(round(self.class_multiplier * 100))}%"
             stats += f"\nFinal Damage: {int(round(self.final_damage * 100))}%"
@@ -701,11 +704,11 @@ class PlayerProfile:
                 self.elemental_resistance[x] = 0.9
             # Apply unique resistance conversion.
             self.elemental_multiplier[x] += self.elemental_resistance[x] * int(round(self.unique_conversion[0] * 100))
-        for y in range(5):
-            self.banes[y] += self.banes[5]
+        for y in range(6):
+            self.banes[y] += self.banes[6]
         # Calculate unique conversions
         for x in range(9):
-            self.final_damage += int(round(self.player_mHP / 10)) * self.unique_conversion[1]
+            self.final_damage += int(round(self.player_mHP / 100)) * self.unique_conversion[1]
 
     def get_player_initial_damage(self):
         initial_damage = self.player_damage
@@ -809,7 +812,7 @@ class PlayerProfile:
                 if tarot_card.card_variant == 1:
                     self.all_elemental_resistance += card_multiplier * 10
                 else:
-                    self.banes[4] += card_multiplier * 40
+                    self.banes[5] += card_multiplier * 40
             case 7:
                 if tarot_card.card_variant == 1:
                     self.ultimate_multiplier += card_multiplier * 25
@@ -861,7 +864,7 @@ class PlayerProfile:
                 if tarot_card.card_variant == 1:
                     self.damage_mitigation += card_multiplier * 15
                 else:
-                    self.banes[5] += card_multiplier * 10
+                    self.banes[6] += card_multiplier * 10
             case 17:
                 if tarot_card.card_variant == 1:
                     self.elemental_resistance[8] += card_multiplier * 15
@@ -986,7 +989,7 @@ class PlayerProfile:
                         buff_type_loc = bosses.boss_list.index(keywords[0])
                         self.banes[buff_type_loc] += 0.5
                     elif keywords[0] == "Human":
-                        self.banes[4] += 0.5
+                        self.banes[5] += 0.5
                 case "G":
                     buff_type_loc = globalitems.element_special_names.index(keywords[0])
                     self.elemental_multiplier[buff_type_loc] += 0.25

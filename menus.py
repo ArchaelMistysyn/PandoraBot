@@ -636,7 +636,7 @@ class GearView(discord.ui.View):
         return button_label
 
     def cycle_gear(self, direction):
-        reload_user = player.get_player_by_id(self.player_user.player_id)
+        reload_user = player.get_player_by_id(self.target_user.player_id)
         no_item = False
         max_position = 6 if self.view_type == "Gear" else 4
         self.current_position = (self.current_position + direction) % (max_position + 1)

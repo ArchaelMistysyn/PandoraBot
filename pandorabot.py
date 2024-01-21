@@ -146,7 +146,7 @@ def run_discord_bot():
     @set_command_category('admin', 2)
     @pandora_bot.command(name='admin', help="Tester Only")
     @app_commands.guilds(discord.Object(id=1011375205999968427))
-    async def admin(ctx, backdoor, value):
+    async def admin(ctx, backdoor, value="0"):
         if any(ctx.channel.id in sl for sl in globalitems.global_server_channels):
             user = ctx.author
             achievement_list = []
@@ -162,6 +162,12 @@ def run_discord_bot():
                 if backdoor == "item_hack_all":
                     if ctx.message.author.id == 185530717638230016:
                         inventory.max_all_items(player_object.player_id, int(value))
+                        await ctx.send("Admin item task completed.")
+                    else:
+                        await ctx.send("Only Archael can run this command.")
+                if backdoor == "refresh_item_names":
+                    if ctx.message.author.id == 185530717638230016:
+                        inventory.refresh_item_names()
                         await ctx.send("Admin item task completed.")
                     else:
                         await ctx.send("Only Archael can run this command.")
@@ -554,10 +560,9 @@ def run_discord_bot():
                 if player_object.player_id == selected_item.player_owner:
                     new_view = menus.ManageCustomItemView(player_object, selected_item)
                 await ctx.send(embed=embed_msg, view=new_view)
-
             elif item_id.isalnum():
                 # Check if item exists
-                if selected_item.item_id in itemdata.itemdata_dict:
+                if item_id not in itemdata.itemdata_dict:
                     await ctx.send(embed=embed_msg)
                     return
                 selected_item = inventory.BasicItem(item_id)
@@ -667,7 +672,8 @@ def run_discord_bot():
                                      "reason they exude great power. Refining living things is not a request to be "
                                      "taken lightly. Have you come prepared to bear the guilt for such blasphemy?\n")
             path_location = int(gem_1.item_bonus_stat[0])
-            target_info = f"\nTarget Tier: {gem_1.item_tier}\nTarget Path: {player.path_names[path_location]}"
+            target_tier = gem_1.item_tier if gem_1.item_tier != gem_2.item_tier else (gem_1.item_tier + 1)
+            target_info = f"\nTarget Tier: {target_tier}\nTarget Path: {player.path_names[path_location]}"
             embed_msg.add_field(name="", value=target_info, inline=False)
             primary_gem_info = itemrolls.display_rolls(gem_1)
             embed_msg.add_field(name=f"Primary Gem - ID: {base_gem_id}", value=primary_gem_info, inline=False)

@@ -122,7 +122,7 @@ def run_cycle(combat_tracker, active_boss, player_object, method):
                 damage = active_boss.damage_cap
                 extension = " *LIMIT*"
             damage, status_msg = check_lock(player_object, combat_tracker, damage)
-            damage, second_msg = check_annihilator(player_object, damage)
+            damage, second_msg = check_bloom(player_object, damage)
             hit_msg = f"{combo_count}x Combo: {skill_name} {globalitems.number_conversion(damage)}{extension}"
             if status_msg != "":
                 hit_msg += f" *{status_msg}*"
@@ -142,7 +142,7 @@ def run_cycle(combat_tracker, active_boss, player_object, method):
                     damage = active_boss.damage_cap
                     extension = " *LIMIT*"
                 damage, status_msg = check_lock(player_object, combat_tracker, damage)
-                damage, second_msg = check_annihilator(player_object, damage)
+                damage, second_msg = check_bloom(player_object, damage)
                 hit_msg = f"Ultimate: {skill_name} {globalitems.number_conversion(damage)}{extension}"
                 if status_msg != "":
                     hit_msg += f" *{status_msg}*"
@@ -276,13 +276,13 @@ def get_item_tier_damage(material_tier):
     return assigned_value
 
 
-def check_annihilator(player_object, input_damage):
+def check_bloom(player_object, input_damage):
     status_msg = ""
     damage = input_damage
     random_num = random.randint(1, 100)
     if random_num <= int(round(player_object.specialty_rate[0] * 100)):
-        damage *= 10
-        status_msg = "ANNIHILATOR"
+        damage *= player_object.bloom_multiplier
+        status_msg = "BLOOM"
     return damage, status_msg
 
 
@@ -390,7 +390,7 @@ def pvp_defences(attacker, defender, player_damage, e_weapon):
             resist_multi = 1 - defender.elemental_resistance[idx]
             penetration_multi = 1 + attacker.elemental_penetration[idx]
             attacker.elemental_damage[idx] *= resist_multi * penetration_multi * attacker.elemental_conversion[idx]
-    subtotal_damage = sum(attacker.elemental_damage) * (1 + attacker.aura) * (1 + attacker.banes[4])
+    subtotal_damage = sum(attacker.elemental_damage) * (1 + attacker.aura) * (1 + attacker.banes[5])
     adjusted_damage = int(subtotal_damage)
     return adjusted_damage
 
