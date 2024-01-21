@@ -17,7 +17,9 @@ import inventory
 import bosses
 import random
 
+import itemdata
 import itemicons
+import itemrolls
 import loot
 import forge
 import player
@@ -519,35 +521,50 @@ def run_discord_bot():
     async def display_item(ctx, item_id: str):
         if any(ctx.channel.id in sl for sl in globalitems.global_server_channels):
             await ctx.defer()
-            item_view = None
+            # Assign default outputs.
             embed_msg = discord.Embed(colour=discord.Colour.dark_orange(),
                                       title="An item with this ID does not exist.",
                                       description=f"Inputted ID: {item_id}")
+            new_view = None
             player_object = player.get_player_by_name(str(ctx.author))
-            if player_object.player_class != "":
-                if item_id.isnumeric():
-                    gear_id = int(item_id)
-                    if inventory.if_custom_exists(gear_id):
-                        selected_item = inventory.read_custom_item(gear_id)
-                        embed_msg = selected_item.create_citem_embed()
-                        if selected_item.player_owner == -1:
-                            seller_id = bazaar.get_seller_by_item(gear_id)
-                            seller_object = player.get_player_by_id(seller_id)
-                            owner_msg = f"Listed for sale by: {seller_object.player_username}"
-                        else:
-                            item_owner = player.get_player_by_id(selected_item.player_owner)
-                            owner_msg = f"Owned by: {item_owner.player_username}"
-                        embed_msg.add_field(name="", value=owner_msg)
-                        if player_object.player_id == selected_item.player_owner:
-                            item_view = menus.ManageCustomItemView(player_object, gear_id)
-                elif item_id.isalnum():
-                    selected_item = inventory.BasicItem(item_id)
-                    if selected_item.item_id != "":
-                        embed_msg = selected_item.create_bitem_embed(player_object)
-                        # item_view = menus.ManageBasicItem(player_object, selected_item)
-            else:
+            if player_object.player_class == "":
                 embed_msg = unregistered_message()
-            await ctx.send(embed=embed_msg, view=item_view)
+                await ctx.send(embed=embed_msg, view=item_view)
+                return
+            if item_id.isnumeric():
+                gear_id = int(item_id)
+                # Check the item exists
+                if not inventory.if_custom_exists(gear_id):
+                    await ctx.send(embed=embed_msg)
+                    return
+                selected_item = inventory.read_custom_item(gear_id)
+                embed_msg = selected_item.create_citem_embed()
+                # Check if item is on the bazaar.
+                if selected_item.player_owner == -1:
+                    seller_id = bazaar.get_seller_by_item(gear_id)
+                    seller_object = player.get_player_by_id(seller_id)
+                    owner_msg = f"Listed for sale by: {seller_object.player_username}"
+                    embed_msg.add_field(name="", value=owner_msg)
+                    await ctx.send(embed=embed_msg)
+                    return
+                item_owner = player.get_player_by_id(selected_item.player_owner)
+                owner_msg = f"Owned by: {item_owner.player_username}"
+                embed_msg.add_field(name="", value=owner_msg)
+                # Confirm ownership.
+                if player_object.player_id == selected_item.player_owner:
+                    new_view = menus.ManageCustomItemView(player_object, selected_item)
+                await ctx.send(embed=embed_msg, view=new_view)
+
+            elif item_id.isalnum():
+                # Check if item exists
+                if selected_item.item_id in itemdata.itemdata_dict:
+                    await ctx.send(embed=embed_msg)
+                    return
+                selected_item = inventory.BasicItem(item_id)
+                embed_msg = selected_item.create_bitem_embed(player_object)
+                # item_view = menus.ManageBasicItem(player_object, selected_item)
+                await ctx.send(embed=embed_msg)
+                return
 
     @set_command_category('gear', 3)
     @pandora_bot.hybrid_command(name='tarot', help="View your tarot collection.")
@@ -573,34 +590,6 @@ def run_discord_bot():
                 await ctx.send(embed=embed_msg)
 
     @set_command_category('gear', 4)
-    @pandora_bot.hybrid_command(name='inlay', help="Inlay a gem into an equipped gear item.")
-    @app_commands.guilds(discord.Object(id=1011375205999968427))
-    async def inlay(ctx, item_id: int):
-        await ctx.defer()
-        if any(ctx.channel.id in sl for sl in globalitems.global_server_channels):
-            if inventory.if_custom_exists(item_id):
-                selected_item = inventory.read_custom_item(item_id)
-                player_object = player.get_player_by_name(str(ctx.author))
-                if player_object.player_class != "":
-                    if player_object.player_id == selected_item.player_owner:
-                        embed_msg = discord.Embed(colour=discord.Colour.blurple(),
-                                                  title="Inlay Gem",
-                                                  description="Let me know what item you'd like to inlay this gem into!")
-                        embed_msg.set_image(url="https://i.ibb.co/QjWDYG3/forge.jpg")
-                        view = menus.InlaySelectView(player_object, selected_item.item_id)
-                        view.embed = await ctx.send(embed=embed_msg, view=view)
-
-                    else:
-                        response = "wrong item id"
-                        await ctx.send(response)
-                else:
-                    embed_msg = unregistered_message()
-                    await ctx.send(embed=embed_msg)
-            else:
-                response = "wrong item id"
-                await ctx.send(response)
-
-    @set_command_category('gear', 5)
     @pandora_bot.hybrid_command(name='engrave', help="Engrave an insignia on your soul.")
     @app_commands.guilds(discord.Object(id=1011375205999968427))
     async def engrave(ctx):
@@ -617,6 +606,86 @@ def run_discord_bot():
             else:
                 embed_msg = unregistered_message()
                 await ctx.send(embed=embed_msg)
+
+    @set_command_category('gear', 5)
+    @pandora_bot.hybrid_command(name='meld', help="Meld tier 5/6 dragon heart gems.")
+    @app_commands.guilds(discord.Object(id=1011375205999968427))
+    async def meld_item(ctx, base_gem_id: int, secondary_gem_id: int):
+        if any(ctx.channel.id in sl for sl in globalitems.global_server_channels):
+            await ctx.defer()
+            # Initialize default embed
+            embed_msg = discord.Embed(colour=discord.Colour.blurple(), title="Kazyth, Lifeblood of the True Laws",
+                                      description="")
+            new_view = None
+            player_object = player.get_player_by_name(str(ctx.author))
+            if player_object.player_class == "":
+                embed_msg = unregistered_message()
+                await ctx.send(embed=embed_msg, view=item_view)
+                return
+
+            if player_object.player_quest < 12:
+                denial_msg = "Tread carefully adventurer. Drawing too much attention to yourself can prove fatal."
+                embed_msg = discord.Embed(colour=discord.Colour.blurple(), title="???", description=denial_msg)
+                await ctx.send(embed=embed_msg, view=new_view)
+                return
+
+            # Confirm gems are valid.
+            def can_meld(input_gem_id, command_user):
+                if not inventory.if_custom_exists(input_gem_id):
+                    description = f"Gem id not recognized.\nID: {input_gem_id}"
+                    return False, description, None
+                gem_object = inventory.read_custom_item(input_gem_id)
+                if gem_object.item_tier < 5 or gem_object.item_tier >= 7:
+                    description = f"Gem is not eligible for melding.\nID: {input_gem_id}"
+                    return False, description, None
+                if gem_object.player_owner != command_user.player_id:
+                    item_owner = player.get_player_by_id(gem_object.player_owner)
+                    description = f"Owned by: {item_owner.player_username}"
+                    return False, description, None
+                if gem_object.player_owner == -1:
+                    seller_id = bazaar.get_seller_by_item(input_gem_id)
+                    seller_object = player.get_player_by_id(seller_id)
+                    description = (f"Gem item currently listed for sale by: {seller_object.player_username}"
+                                   f"\nID: {input_gem_id}")
+                    return False, description, None
+                return True, gem_object, None
+
+            # Handle eligibility.
+            is_eligible, gem_1, embed_message = can_meld(base_gem_id, player_object)
+            if not is_eligible:
+                embed_msg.description = embed_message
+                await ctx.send(embed=embed_msg, view=new_view)
+                return
+            is_eligible, gem_2, embed_message = can_meld(secondary_gem_id, player_object)
+            if not is_eligible:
+                embed_msg.description = embed_message
+                await ctx.send(embed=embed_msg, view=new_view)
+                return
+
+            # Build the meld details display.
+            embed_msg.description = ("A dragon's heart gem continues to beat long after extraction. This is the "
+                                     "reason they exude great power. Refining living things is not a request to be "
+                                     "taken lightly. Have you come prepared to bear the guilt for such blasphemy?\n")
+            path_location = int(gem_1.item_bonus_stat[0])
+            target_info = f"\nTarget Tier: {gem_1.item_tier}\nTarget Path: {player.path_names[path_location]}"
+            embed_msg.add_field(name="", value=target_info, inline=False)
+            primary_gem_info = itemrolls.display_rolls(gem_1)
+            embed_msg.add_field(name=f"Primary Gem - ID: {base_gem_id}", value=primary_gem_info, inline=False)
+            embed_msg.add_field(name="", value="------------------------------", inline=False)
+            secondary_gem_info = itemrolls.display_rolls(gem_2)
+            embed_msg.add_field(name=f"Secondary Gem - ID: {secondary_gem_id}", value=secondary_gem_info, inline=False)
+
+            # Build the cost display.
+            cost_map = {(5, 5): 5, (5, 6): 2, (6, 5): 3, (6, 6): 10}
+            stock = inventory.check_stock(player_object, "Token4")
+            token_object = inventory.BasicItem("Token4")
+            cost = cost_map[(gem_1.item_tier, gem_2.item_tier)]
+            cost_msg = f"{token_object.item_emoji} {token_object.item_name}: {stock}/{cost}"
+            embed_msg.add_field(name="Token Cost", value=cost_msg, inline=False)
+
+            # Display the view.
+            new_view = forge.MeldView(player_object, gem_1, gem_2, cost)
+            await ctx.send(embed=embed_msg, view=new_view)
 
     # Trading Commands
     @set_command_category('trade', 0)
@@ -927,7 +996,7 @@ def run_discord_bot():
                 await ctx.send(embed=embed_msg)
 
     @set_command_category('craft', 6)
-    @pandora_bot.hybrid_command(name='scribe', help="Speak with ???")
+    @pandora_bot.hybrid_command(name='scribe', help="Speak with ??? in the plane of the arbiters.")
     @app_commands.guilds(discord.Object(id=1011375205999968427))
     async def scribe(ctx):
         if any(ctx.channel.id in sl for sl in globalitems.global_server_channels):

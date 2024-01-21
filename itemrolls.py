@@ -257,7 +257,7 @@ class SkillSelectView(discord.ui.View):
                             if current_roll.roll_code == "unique-0-y":
                                 npc_comment = "Oooh, you have impeccable taste.\n"
                         summary_msg = npc_comment + skill_display
-                        token_object = inventory.BasicItem("Token6")
+                        token_object = inventory.BasicItem("Token4")
                         summary_msg += f"\n{token_object.item_emoji} {token_object.item_name} Offering: {cost_list[self.total_rolls - 1]:,}"
                         self.embed = discord.Embed(
                             title="Vexia, Scribe of the True Laws",
@@ -287,10 +287,10 @@ class SkillPurchaseView(discord.ui.View):
                 reload_player = player.get_player_by_id(self.player_object.player_id)
                 custom_cost = cost_list[self.total_rolls - 1]
                 # Handle the cost and cost eligibility.
-                current_stock = inventory.check_stock(reload_player, "Token6")
+                current_stock = inventory.check_stock(reload_player, "Token4")
                 if current_stock >= custom_cost:
                     # Pay the cost. Reload the item data.
-                    inventory.update_stock(reload_player, "Token6", (custom_cost * -1))
+                    inventory.update_stock(reload_player, "Token4", (custom_cost * -1))
                     reload_item = inventory.read_custom_item(self.selected_item.item_id)
                     new_roll_list = []
                     roll_tier_list = []

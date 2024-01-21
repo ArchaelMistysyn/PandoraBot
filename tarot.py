@@ -23,7 +23,18 @@ paragon_t4 = ["Pandora, The Celestial", "Diabla, The Primordial",
               "Tyra, The Behemoth", "Astratha, The Dimensional", "Aurora, The Fortress"]
 paragon_t5 = ["Oblivia, The Void", "Akasha, The Infinite"]
 paragon_t6 = ["Eleuia, The Wish"]
+# Tier based tarot list.
 paragon_list = [paragon_t1, paragon_t2, paragon_t3, paragon_t4, paragon_t5, paragon_t6]
+
+# Number based tarot list.
+card_num_list = ["0", "I", "II", "III", "IV", "V", "VI", "VII", "VIII", "IX", "X",
+                 "XI", "XII", "XIII", "XIV", "XV", "XVI", "XVII", "XVIII", "XIX", "XX", "XXI", "XXX"]
+card_name_list = ["Karma, The Reflection", "Runa, The Magic", "Pandora, The Celestial", "Oblivia, The Void",
+                  "Akasha, The Infinite", "Arkaya, The Duality", "Kama, The Love", "Astratha, The Dimensional",
+                  "Tyra, The Behemoth", "Alaya, The Memory", "Chrona, The Temporal", "Nua, The Heavens",
+                  "Rua, The Abyss", "Thana, The Death", "Arcelia, The Clarity", "Diabla, The Primordial",
+                  "Aurora, The Fortress", "Nova, The Star", "Luna, The Moon", "Luma, The Sun",
+                  "Aria, The Requiem", "Ultima, The Creation", "Eleuia, The Wish"]
 
 
 class CollectionView(discord.ui.View):
@@ -54,17 +65,60 @@ class TarotView(discord.ui.View):
         self.current_variant = 1
         self.added_message = False
 
+    def cycle_tarot(self, current_msg, direction):
+        max_position = 23
+
+        # Set the new variant and position.
+        if (self.current_variant == 1 and direction == -1) or (self.current_variant == 2 and direction == 1):
+            self.current_variant = 2
+        else:
+            direction = 0
+        self.current_position = (self.current_position + direction) % (max_position + 1)
+        current_msg.clear_fields()
+        tarot_card = check_tarot(player_owner.player_id, card_name_list[new_position], new_variant)
+
+        # Initialize card values.
+        card_num_stars = 0
+        card_qty = 0
+        filename = "https://kyleportfolio.ca/botimages/tarot/cardback.png"
+
+        # Assign card values if owned.
+        if tarot_card:
+            card_qty = tarot_card.card_qty
+            card_num_stars = tarot_card.num_stars
+            filename = tarot_card.card_image_link
+
+        # Display the tarot stars.
+        display_stars = ""
+        for x in range(card_num_stars):
+            display_stars += globalitems.star_icon
+        if card_num_stars < 5:
+            for y in range((5 - card_num_stars)):
+                display_stars += "<:ebstar2:1144826056222724106>"
+        card_title = f"{card_num_list[new_position]} - {card_name_list[new_position]}"
+
+        # Adjust display based on variant type.
+        if self.current_variant == 1:
+            card_title += " [Standard]"
+        else:
+            card_title += " [Premium]"
+
+        # Add the embed fields and image.
+        current_msg.add_field(name=card_title, value=display_stars, inline=False)
+        if tarot_card:
+            base_damage = tarot_card.get_base_damage()
+            current_msg.add_field(name=f"", value=f"Base Damage: {base_damage:,} - {base_damage:,}", inline=False)
+            current_msg.add_field(name=f"", value=tarot_card.display_tarot_bonus_stat(), inline=False)
+        current_msg.add_field(name=f"", value=f"Quantity: {card_qty}", inline=False)
+        current_msg.set_image(url=filename)
+        return new_msg
+
     @discord.ui.button(label="Previous", style=discord.ButtonStyle.blurple, emoji="⬅️")
     async def previous_card(self, interaction: discord.Interaction, button: discord.Button):
         try:
             if interaction.user.name == self.player_user.player_name:
-                direction = -1
                 current_message = self.embed_msg.clear_fields()
-                new_msg, self.current_position, self.current_variant = cycle_tarot(self.player_user,
-                                                                                   current_message,
-                                                                                   self.current_position,
-                                                                                   self.current_variant,
-                                                                                   direction)
+                new_msg = self.cycle_tarot(current_message, -1)
                 await interaction.response.edit_message(embed=new_msg)
         except Exception as e:
             print(e)
@@ -73,7 +127,6 @@ class TarotView(discord.ui.View):
     async def equip(self, interaction: discord.Interaction, button: discord.Button):
         try:
             if interaction.user.name == self.player_user.player_name:
-                direction = 0
                 new_msg = self.embed_msg
                 active_card = check_tarot(self.player_user.player_id, tarot_card_list(self.current_position),
                                           self.current_variant)
@@ -93,7 +146,6 @@ class TarotView(discord.ui.View):
     async def synthesize(self, interaction: discord.Interaction, button: discord.Button):
         try:
             if interaction.user.name == self.player_user.player_name:
-                direction = 0
                 active_card = check_tarot(self.player_user.player_id,
                                           tarot_card_list(self.current_position), self.current_variant)
                 if self.added_message:
@@ -105,11 +157,8 @@ class TarotView(discord.ui.View):
                         if active_card.num_stars != 5:
                             outcome = active_card.synthesize_tarot()
                             current_message = self.embed_msg
-                            new_msg, self.current_position, self.current_variant = cycle_tarot(self.player_user,
-                                                                                               current_message,
-                                                                                               self.current_position,
-                                                                                               self.current_variant,
-                                                                                               direction)
+                            new_msg = self.cycle_tarot(current_message, 0)
+
                             new_msg.add_field(name="", value=outcome,
                                               inline=False)
                             self.added_message = True
@@ -133,77 +182,11 @@ class TarotView(discord.ui.View):
     async def next_card(self, interaction: discord.Interaction, button: discord.Button):
         try:
             if interaction.user.name == self.player_user.player_name:
-                direction = 1
                 current_message = self.embed_msg.clear_fields()
-                new_msg, self.current_position, self.current_variant = cycle_tarot(self.player_user,
-                                                                                   current_message,
-                                                                                   self.current_position,
-                                                                                   self.current_variant,
-                                                                                   direction)
+                new_msg = self.cycle_tarot(current_message, 1)
                 await interaction.response.edit_message(embed=new_msg)
         except Exception as e:
             print(e)
-
-
-def cycle_tarot(player_owner, current_msg, current_position, current_variant, direction):
-    card_num_list = ["0", "I", "II", "III", "IV", "V", "VI", "VII", "VIII", "IX", "X",
-                     "XI", "XII", "XIII", "XIV", "XV", "XVI", "XVII", "XVIII", "XIX", "XX", "XXI", "XXX"]
-    card_name_list = ["Karma, The Reflection", "Runa, The Magic", "Pandora, The Celestial", "Oblivia, The Void",
-                      "Akasha, The Infinite", "Arkaya, The Duality", "Kama, The Love", "Astratha, The Dimensional",
-                      "Tyra, The Behemoth", "Alaya, The Memory", "Chrona, The Temporal", "Nua, The Heavens",
-                      "Rua, The Abyss", "Thana, The Death", "Arcelia, The Clarity", "Diabla, The Primordial",
-                      "Aurora, The Fortress", "Nova, The Star", "Luna, The Moon", "Luma, The Sun",
-                      "Aria, The Requiem", "Ultima, The Creation", "Eleuia, The Wish"]
-    if current_variant == 1 and direction == -1:
-        new_variant = 2
-        new_position = current_position + direction
-        if new_position == -1:
-            new_position = 22
-    elif current_variant == 2 and direction == 1:
-        new_variant = 1
-        new_position = current_position + direction
-        if new_position == 23:
-            new_position = 0
-    else:
-        new_variant = current_variant + direction
-        new_position = current_position
-    current_msg.clear_fields()
-    new_msg = current_msg
-    tarot_card = check_tarot(player_owner.player_id, card_name_list[new_position], new_variant)
-    if tarot_card:
-        card_qty = tarot_card.card_qty
-        card_num_stars = tarot_card.num_stars
-        filename = tarot_card.card_image_link
-    else:
-        card_num_stars = 0
-        card_qty = 0
-        filename = "https://kyleportfolio.ca/botimages/tarot/cardback.png"
-    display_stars = ""
-    for x in range(card_num_stars):
-        display_stars += globalitems.star_icon
-    for y in range((5 - card_num_stars)):
-        display_stars += "<:ebstar2:1144826056222724106>"
-    card_title = f"{card_num_list[new_position]} - {card_name_list[new_position]}"
-    if new_variant == 1:
-        card_title += " [Standard]"
-    else:
-        card_title += " [Premium]"
-    new_msg.add_field(name=card_title,
-                      value=display_stars,
-                      inline=False)
-    if tarot_card:
-        base_damage = tarot_card.get_base_damage()
-        new_msg.add_field(name=f"",
-                          value=f"Base Damage: {base_damage:,} - {base_damage:,}",
-                          inline=False)
-        new_msg.add_field(name=f"",
-                          value=tarot_card.display_tarot_bonus_stat(),
-                          inline=False)
-    new_msg.add_field(name=f"",
-                      value=f"Quantity: {card_qty}",
-                      inline=False)
-    new_msg.set_image(url=filename)
-    return new_msg, new_position, new_variant
 
 
 class TarotCard:

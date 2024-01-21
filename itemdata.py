@@ -72,12 +72,12 @@ token_data = [
      'An ancient token. Can be used for insignia engraving and upgrades.', 100000, ""],
     [None, 'Pathwalker Token', 100, 3, '<a:elootitem:1144477550379274322>',
      'An ancient token. Can be used to reset all skill points.', 100000, ""],
-    [None, 'Placeholder Token', 100, 4, '<a:elootitem:1144477550379274322>',
-     'An ancient token. ???.', 100000, ""],
-    [None, 'Placeholder Token', 100, 5, '<a:elootitem:1144477550379274322>',
-     'An ancient token. ???.', 100000, ""],
-    [None, 'Scribe Token', 100, 6, '<a:elootitem:1144477550379274322>',
+    [None, 'Lifeblood Token', 100, 4, '<a:elootitem:1144477550379274322>',
+     'An ancient token. Can be used to reshape dragon heart gems.', 100000, ""],
+    [None, 'Scribe Token', 100, 5, '<a:elootitem:1144477550379274322>',
      'An ancient token. To one who knows its true purpose the value of this item is immeasurable.', 250000, ""],
+    [None, 'Oracle Token', 100, 6, '<a:elootitem:1144477550379274322>',
+     'An ancient token. ???.', 100000, ""],
     [None, '??? Token', 100, 7, '<a:elootitem:1144477550379274322>',
      'An ancient token. ???.', 500000, ""]
 ]
@@ -275,7 +275,7 @@ unrefined_misc_data = [
      'Refine for 50% chance to receive a tier 2-4 dragon jewel.', 10000, ""],
     [None, 'Unrefined Paragon Crest', 50, 4, '<a:elootitem:1144477550379274322>',
      'Refine for 50% chance to receive a tier 2-4 paragon crest.', 10000, ""],
-    [None, 'Unrefined Dragon Heart Gem', 50, 6, '<a:elootitem:1144477550379274322>',
+    [None, 'Unrefined Wish Item (Gem)', 50, 6, '<a:elootitem:1144477550379274322>',
      'Refine for 50% chance to receive a tier 6 dragon heart gem.', 1500000, ""],
     [None, 'Unrefined Wish Item (Weapon)', 100, 6, '<a:elootitem:1144477550379274322>',
      'Refine to acquire a tier 6 weapon.', 0, ""]

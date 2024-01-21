@@ -66,7 +66,7 @@ recipe_dict = {
         "Fragmentized Wish (Accessory)": ["Fragment3", 10, "Stone4", 1, 100, "FragmentM"],
         "Crystallized Wish": ["FragmentM", 50, "Stone5", 10, 100, "Crystal1"],
         "Wish Core": ["Crystal1", 5, "Core1", 1, 50, "Core3"],
-        "Unrefined Dragon Heart Gem": ["Unrefined2", 50, "Crystal1", 1, 100, "Unrefined4"],
+        "Unrefined Wish Item (Gem)": ["Unrefined2", 50, "Crystal1", 1, 100, "Unrefined4"],
         "Unrefined Wish Item (Weapon)": ["Crystal1", 5, "Heart1", 10, 100, "Unrefined5"]},
 
     "Miracle Infusion": {

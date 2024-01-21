@@ -36,16 +36,16 @@ material_tier_list = ["Iron", "Steel", "Silver", "Mithril", "Diamond", "Crystal"
                       "Crude", "Metallic", "Gold", "Jewelled", "Diamond", "Crystal",
                       "Key of Creation -", "Key of Desires -", "Key of Hopes -",
                       "Key of Dreams -", "Key of Wishes -", "Key of Miracles -",
-                      "Fabled", "Legendary", "Mythical", "Fantastical", "Omniscient", "Plasma"]
-blessing_tier_list = ["Standard", "Faint", "Luminous", "Lustrous", "Radiant", "Divine",
-                      "Basic", "Enchanted", "Luminous", "Lustrous", "Radiant", "Divine",
+                      "Cosmite", "Celestite", "Crystallite", "Astralite", "Stellarite", "Nebulite"]
+blessing_tier_list = ["Standard", "Faint", "Luminous", "Lustrous", "Radiant", "Sanctified",
+                      "Basic", "Enchanted", "Luminous", "Lustrous", "Radiant", "Sanctified",
                       "Sparkling", "Glittering", "Dazzling", "Shining", "Radiant", "Divine",
                       "Tainted", "Corrupt", "Inverted", "Abyssal", "Calamitous", "Balefire",
-                      "Clear", "Pure", "Pristine", "Majestic", "Radiant", "Divine",
+                      "Clear", "Pure", "Pristine", "Majestic", "Radiant", "Sanctified",
                       "Prelude", "Opalescent", "Chromatic", "Prismatic", "Resplendent", "Iridescent",
-                      "Refined", "Tempered", "Empowered", "Unsealed", "Awakened", "Transcendent"]
-maxed_values = [25000, 50000, 75000, 200000, 250000, 500000, 1000000]
-void_ready_values = [25000, 200000]
+                      "Fabled", "Heroic", "Legendary", "Mythical", "Fantastical", "Vorpal"]
+maxed_values = [25000, 75000, 125000, 300000, 500000, 1000000, 2000000]
+void_ready_values = [75000, 300000]
 reinforce_success_rates = [100, 90, 80, 70, 60, 50]
 max_enhancement = [10, 20, 30, 40, 50, 100, 1000]
 
@@ -527,7 +527,7 @@ def check_maxed(target_item, method, material_id, element):
             else:
                 success_rate = max(5, (100 - (target_item.item_enhancement // 10) * 10))
         case "Reinforce":
-            if target_item.item_material_tier in ["Void", "Destiny", "Eschaton"]:
+            if target_item.item_material_tier in ["Void", "Destiny", "Eschaton", "Divine"]:
                 is_maxed = True
             else:
                 current_location = material_tier_list.index(target_item.item_material_tier)
@@ -539,7 +539,7 @@ def check_maxed(target_item, method, material_id, element):
             if target_item.is_void_corrupted():
                 is_maxed = True
         case "Bestow":
-            if target_item.item_material_tier in ["Void", "Destiny", "Eschaton"]:
+            if target_item.item_material_tier in ["Void", "Destiny", "Eschaton", "Divine"]:
                 is_maxed = True
             else:
                 current_location = blessing_tier_list.index(target_item.item_blessing_tier)
@@ -656,7 +656,7 @@ def reinforce_item(player_object, selected_item, material_item, success_rate, su
     outcome = 0
     damage_check_material = combat.get_item_tier_damage(selected_item.item_material_tier)
     damage_check_blessing = combat.get_item_tier_damage(selected_item.item_blessing_tier)
-    if selected_item.item_material_tier in ["Void", "Destiny", "Eschaton"]:
+    if selected_item.item_material_tier in ["Void", "Destiny", "Eschaton" "Divine"]:
         return 2
     if method == "bestow":
         # Check the item is eligible.
@@ -685,7 +685,7 @@ def reinforce_item(player_object, selected_item, material_item, success_rate, su
                 if damage_check_material == void_ready_values[0]:
                     selected_item.item_material_tier = "Void"
                 else:
-                    selected_item.item_material_tier = "Eschaton"
+                    selected_item.item_material_tier = "Divine" if selected_item.item_type != "W" else "Eschaton"
                     selected_item.item_blessing_tier = ""
                 outcome = 1
         else:
@@ -866,7 +866,7 @@ def purify_item(player_object, selected_item, material_item, success_rate, succe
         if check_vaug != 6:
             return 3
     elif selected_item.item_tier == 6:
-        target_tier = "Eschaton"
+        target_tier = "Divine" if selected_item.item_type != "W" else "Eschaton"
         if selected_item.item_num_sockets == 0:
             return 3
         if check_maug != 6:
@@ -1022,5 +1022,73 @@ def refine_item(player_user, selected_type, selected_tier, required_material):
                                   title="Cannot Refine!",
                                   description=stock_message)
     return embed_msg
+
+
+class MeldView(discord.ui.View):
+    def __init__(self, player_object, gem_1, gem_2, cost):
+        super().__init__(timeout=None)
+        self.player_object = player_object
+        self.gem_1 = gem_1
+        self.gem_2 = gem_2
+        self.cost = cost
+        self.embed = None
+        self.new_view = None
+
+        # Calculate affinity and update the meld button.
+        gem_damage_1 = self.gem_1.item_damage_min + self.gem_1.item_damage_max
+        gem_damage_2 = self.gem_2.item_damage_min + self.gem_2.item_damage_max
+        self.affinity = int(round((min(gem_damage_1, gem_damage_2) / max(gem_damage_1, gem_damage_2) * 100)))
+        self.affinity = min(100, (50 + self.affinity))
+        self.meld_gems.label = f"Meld (Affinity: {self.affinity}%)"
+        self.meld_gems.emoji = "🌟"
+
+    @discord.ui.button(style=discord.ButtonStyle.blurple)
+    async def meld_gems(self, interaction: discord.Interaction, button: discord.Button):
+        try:
+            if interaction.user.name == self.player_object.player_name:
+                if not self.embed:
+                    # Reload the data.
+                    self.player_object = player.get_player_by_id(self.player_object.player_id)
+                    self.gem_1 = inventory.read_custom_item(self.gem_1.item_id)
+                    self.gem_2 = inventory.read_custom_item(self.gem_2.item_id)
+
+                    # Process the meld attempt.
+                    success_roll = random.randint(1, 100)
+                    if success_roll <= self.affinity:
+                        error_msg = meld_gems(self.gem_1, self.gem_2)
+                        if error_msg == "":
+                            inventory.delete_item(self.player_object, self.gem_2)
+                            self.embed = self.gem_1.create_citem_embed()
+                        else:
+                            self.embed = discord.Embed(colour=discord.Colour.blurple(),
+                                                       title="Kazyth, Lifeblood of the True Laws",
+                                                       description=error_msg)
+                    else:
+                        inventory.delete_item(self.player_object, self.gem_2)
+                        fail_description = "The gems were not compatible enough, the sacrificial heart died."
+                        self.embed = discord.Embed(colour=discord.Colour.blurple(),
+                                                   title="Kazyth, Lifeblood of the True Laws",
+                                                   description=fail_description)
+                await interaction.response.edit_message(embed=self.embed, view=self.new_view)
+        except Exception as e:
+            print(e)
+
+
+def meld_gems(gem_1, gem_2):
+    if not inventory.if_custom_exists(gem_1.item_id) or not inventory.if_custom_exists(gem_2.item_id):
+        return "Melding interrupted : Gems no longer recognized before processing."
+    if gem_1.item_tier < 7:
+        return "Melding interrupted : Gem eligibility changed before processing."
+    if gem_1.item_tier == gem_2.item_tier:
+        gem_1.item_tier += 1
+        gem_1.item_num_stars += 1
+        gem_1.item_bonus_stat = f"{gem_1.item_bonus_stat[0]};10"
+        gem_1.set_gem_name()
+    for roll_index, secondary_roll in enumerate(gem_2.item_roll_values):
+        random_roll = randon.randint(0, 1)
+        if random_roll == 1:
+            gem_1.item_roll_values[roll_index] = f"{gem_1.item_roll_values[roll_index][0]}{secondary_roll[1:]}"
+    return ""
+
 
 

@@ -164,26 +164,25 @@ class InlaySelectView(discord.ui.View):
         try:
             if interaction.user.name == self.player_user.player_name:
                 selected_type = int(inlay_select.values[0])
-                no_socket = True
+                # Set default embed.
+                embed_msg = discord.Embed(colour=discord.Colour.dark_orange(),
+                                          title="Inlay Failed.",
+                                          description="No item equipped in this slot")
                 self.player_user.get_equipped()
-                if self.player_user.player_equipped[selected_type] != 0:
-                    e_item = inventory.read_custom_item(self.player_user.player_equipped[selected_type])
-                    if e_item.item_num_sockets == 1:
-                        no_socket = False
-                        embed_msg = e_item.create_citem_embed()
-                        confirm_view = ConfirmInlayView(self.player_user, e_item, self.gem_id)
-                else:
-                    embed_msg = discord.Embed(colour=discord.Colour.dark_orange(),
-                                              title="Inlay Failed.",
-                                              description="No item equipped in this slot")
+                # Confirm an item is equipped in the selected slot.
+                if self.player_user.player_equipped[selected_type] == 0:
                     await interaction.response.edit_message(embed=embed_msg)
-                if no_socket:
-                    embed_msg = discord.Embed(colour=discord.Colour.dark_orange(),
-                                              title="Inlay Failed.",
-                                              description="This equipped item has no socket")
+                    return
+                e_item = inventory.read_custom_item(self.player_user.player_equipped[selected_type])
+                # Confirm the item has sockets available.
+                if e_item.item_num_sockets != 1:
+                    embed_msg.description = "The equipped item has no available sockets."
                     await interaction.response.edit_message(embed=embed_msg)
-                else:
-                    await interaction.response.edit_message(embed=embed_msg, view=confirm_view)
+                    return
+                # Display confirmation menu.
+                embed_msg = e_item.create_citem_embed()
+                confirm_view = ConfirmInlayView(self.player_user, e_item, self.gem_id)
+                await interaction.response.edit_message(embed=embed_msg, view=confirm_view)
         except Exception as e:
             print(e)
 
@@ -199,6 +198,17 @@ class ConfirmInlayView(discord.ui.View):
     async def tier_one_callback(self, interaction: discord.Interaction, button: discord.Button):
         try:
             if interaction.user.name == self.player_user.player_name:
+                if not inventory.if_custom_exists(self.e_item.item_id):
+                    embed_msg = self.e_item.create_citem_embed()
+                    embed_msg.add_field(name="Inlay Failed!", value=f"Item with id {self.e_item.item_id}", inline=False)
+                    await interaction.response.edit_message(embed=embed_msg, view=None)
+                    return
+                if not inventory.if_custom_exists(self.gem_id):
+                    embed_msg = self.e_item.create_citem_embed()
+                    embed_msg.add_field(name="Inlay Failed!", value=f"Item with id {self.gem_id}", inline=False)
+                    await interaction.response.edit_message(embed=embed_msg, view=None)
+                    return
+                # Update the inlaid gem and re-display the item.
                 self.e_item.item_inlaid_gem_id = self.gem_id
                 self.e_item.update_stored_item()
                 embed_msg = self.e_item.create_citem_embed()
@@ -711,21 +721,27 @@ class GearView(discord.ui.View):
 
 
 class ManageCustomItemView(discord.ui.View):
-    def __init__(self, player_user, item_id):
+    def __init__(self, player_user, selected_item):
         super().__init__(timeout=None)
         self.player_user = player_user
-        self.item_id = item_id
+        self.selected_item = selected_item
+        if self.selected_item.item_type == "D":
+            self.equip_item.label = "Inlay"
+            self.equip_item.emoji = "🔱"
         self.stored_embed = None
 
     @discord.ui.button(label="Equip", style=discord.ButtonStyle.blurple, emoji="⚔️")
     async def equip_item(self, interaction: discord.Interaction, button: discord.Button):
         try:
             if interaction.user.name == self.player_user.player_name:
-                selected_item = inventory.read_custom_item(self.item_id)
-                new_msg = selected_item.create_citem_embed()
-                response = self.player_user.equip(selected_item)
-                new_msg.add_field(name=response, value="", inline=False)
-                await interaction.response.edit_message(embed=new_msg, view=None)
+                new_msg = self.selected_item.create_citem_embed()
+                if self.selected_item.item_type == "D":
+                    new_view = InlaySelectView(self.player_user, self.selected_item.item_id)
+                    await interaction.response.edit_message(view=new_view)
+                else:
+                    response = self.player_user.equip(self.selected_item)
+                    new_msg.add_field(name=response, value="", inline=False)
+                    await interaction.response.edit_message(embed=new_msg, view=None)
         except Exception as e:
             print(e)
 
@@ -733,7 +749,7 @@ class ManageCustomItemView(discord.ui.View):
     async def sell_item(self, interaction: discord.Interaction, button: discord.Button):
         try:
             if interaction.user.name == self.player_user.player_name:
-                selected_item = inventory.read_custom_item(self.item_id)
+                selected_item = inventory.read_custom_item(self.selected_item.item_id)
                 if not self.stored_embed:
                     if selected_item.player_owner == self.player_user.player_id:
                         embed_msg = selected_item.create_citem_embed()

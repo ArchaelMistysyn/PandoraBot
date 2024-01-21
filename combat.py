@@ -232,43 +232,48 @@ def run_raid_cycle(combat_tracker, active_boss, player_object):
 
 
 def get_item_tier_damage(material_tier):
-    match material_tier:
-        case  "Steel" | "Glittering" | "Essence" | "Metallic" | "Faint" | "Enchanted" | \
-              "Corrupt" | "Pure" | "Tempered" | "Legendary":
-            damage_temp = 2500
-        case "Silver" | "Dazzling" | "Spirit" | "Gold" | "Luminous" | "Inverted" | "Pristine" | "Empowered" | "Mythical":
-            damage_temp = 5000
-        case "Mithril" | "Lustrous" | "Soulbound" | "Jeweled" | "Shining" | \
-             "Abyssal" | "Majestic" | "Unsealed" | "Fantastical":
-            damage_temp = 7500
-        case "Diamond" | "Radiant" | "Phantasmal" | "Calamitous" | "Awakened" | "Omniscient":
-            damage_temp = 10000
-        case "Crystal" | "Divine" | "Spectral" | "Balefire" | "Transcendent" | "Plasma":
-            damage_temp = 25000
-        case "Void":
-            damage_temp = 75000
-        case "Key of Creation -" | "Prelude":
-            damage_temp = 60000
-        case "Key of Desires -" | "Opalescent":
-            damage_temp = 80000
-        case "Key of Hopes -" | "Chromatic":
-            damage_temp = 100000
-        case "Key of Dreams -" | "Prismatic":
-            damage_temp = 125000
-        case "Key of Wishes -" | "Resplendent":
-            damage_temp = 150000
-        case "Key of Miracles -" | "Iridescent":
-            damage_temp = 200000
-        case "Wish":
-            damage_temp = 250000
-        case "Destiny":
-            damage_temp = 500000
-        case "Eschaton":
-            damage_temp = 1000000
-        case _:
-            damage_temp = 0
-
-    return damage_temp
+    damage_string_dict = {
+        # Tier 0 Material Modifiers
+        "Key of Creation -": 75000,
+        # Tier 0 Blessing Modifiers
+        "Prelude": 75000,
+        # Tier 1 Material Modifiers
+        "Steel": 2500, "Essence": 2500, "Metallic": 2500,
+        "Celestite": 15000, "Key of Desires -": 100000,
+        # Tier 1 Blessing Modifiers
+        "Glittering": 2500, "Faint": 2500, "Enchanted": 2500, "Corrupt": 2500, "Pure": 2500,
+        "Heroic": 15000, "Opalescent": 100000,
+        # Tier 2 Material Modifiers
+        "Silver": 5000, "Spirit": 5000, "Gold": 5000,
+        "Crystallite": 25000, "Key of Hopes -": 150000,
+        # Tier 2 Blessing Modifiers
+        "Dazzling": 5000, "Luminous": 5000, "Inverted": 5000, "Pristine": 5000,
+        "Legendary": 25000, "Chromatic": 150000,
+        # Tier 3 Material Modifiers
+        "Mithril": 7500, "Soulbound": 7500, "Jewelled": 7500,
+        "Astralite": 35000, "Key of Dreams -": 200000,
+        # Tier 3 Blessing Modifiers
+        "Lustrous": 7500, "Shining": 7500, "Abyssal": 7500, "Majestic": 7500,
+        "Mythical": 35000, "Prismatic": 200000,
+        # Tier 4 Material Modifiers
+        "Diamond": 10000, "Phantasmal": 10000,
+        "Stellarite": 50000, "Key of Wishes -": 250000,
+        # Tier 4 Blessing Modifiers
+        "Radiant": 10000, "Calamitous": 10000,
+        "Fantastical": 50000, "Resplendent": 250000,
+        # Tier 5 Material Modifiers
+        "Crystal": 25000, "Spectral": 25000,
+        "Nebulite": 75000, "Key of Miracles -": 300000,
+        # Tier 5 Blessing Modifiers
+        "Sanctified": 25000, "Balefire": 25000,
+        "Vorpal": 75000, "Iridescent": 300000,
+        # Unique Damage Modifiers
+        "Void": 125000, "Destiny": 500000, "Divine": 1000000, "Eschaton": 2000000
+    }
+    assigned_value = 0
+    if material_tier in damage_string_dict:
+        assigned_value = damage_string_dict[material_tier]
+    return assigned_value
 
 
 def check_annihilator(player_object, input_damage):

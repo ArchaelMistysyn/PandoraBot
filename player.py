@@ -238,10 +238,10 @@ class PlayerProfile:
                 temp_curse_str = f"(Curse: {int(round(self.elemental_curse[z] * 100)):,}%)"
                 stats += f"{temp_icon} {temp_dmg_str} - {temp_pen_str} - {temp_curse_str}\n"
             stats += f"Elemental Details: (Cap: {self.elemental_capacity}) - (App: {self.elemental_application}) - "
-            stats += f"(Frc: {self.elemental_application * 5 + int(round(self.specialty_rate[3] * 100))}%)"
+            stats += f"(FRC: {self.elemental_application * 5 + int(round(self.specialty_rate[3] * 100))}%)"
             second_title = "Special Breakdown"
             second_msg = f"Critical Chance: (Reg: {int(round(self.critical_chance))}%) - "
-            second_msg += f"(Omg: {self.critical_application * 10 + int(round(self.specialty_rate[2] * 100))}%)"
+            second_msg += f"(OMG: {self.critical_application * 10 + int(round(self.specialty_rate[2] * 100))}%)"
             second_msg += f"\nCritical Multiplier: (Dmg: {int(round(self.critical_multiplier * 100))}%) - "
             second_msg += f"(Pen: {int(round(self.critical_penetration * 100))}%) - "
             second_msg += f"(App: {self.critical_application})"
@@ -326,6 +326,11 @@ class PlayerProfile:
             engine.dispose()
         except mysql.connector.Error as err:
             print("Database Error: {}".format(err))
+
+    def unequip_item(self, item):
+        self.player_equipped = [0 if element == item.item_id else element for element in self.player_equipped]
+        equipped_gear = ";".join(map(str, self.player_equipped))
+        self.set_player_field("player_equipped", equipped_gear)
 
     def add_new_player(self, selected_class):
         self.player_class = selected_class
@@ -895,25 +900,22 @@ class PlayerProfile:
             engine_url = mydb.get_engine_url()
             engine = sqlalchemy.create_engine(engine_url)
             pandora_db = engine.connect()
-            run_query = True
-            if selected_item.item_type in ["W", "A", "Y", "G", "C"]:
-                location = inventory.item_loc_dict[selected_item.item_type]
-                item_type = inventory.item_type_dict[location]
-            else:
-                run_query = False
+            if selected_item.item_type not in ["W", "A", "Y", "G", "C"]:
                 response = "Item is not equipable."
-            if run_query:
-                self.player_equipped[location] = selected_item.item_id
-                response = f"{item_type} {selected_item.item_id} is now equipped."
-                equipped_gear = ";".join(map(str, self.player_equipped))
-                query = text(f"UPDATE PlayerList SET player_equipped = :input_1 WHERE player_id = :player_check")
-                query = query.bindparams(player_check=int(self.player_id), input_1=equipped_gear)
-                pandora_db.execute(query)
+                return response
+            # Equip the item and update the database.
+            location = inventory.item_loc_dict[selected_item.item_type]
+            item_type = inventory.item_type_dict[location]
+            self.player_equipped[location] = selected_item.item_id
+            response = f"{item_type} {selected_item.item_id} is now equipped."
+            equipped_gear = ";".join(map(str, self.player_equipped))
+            query = text(f"UPDATE PlayerList SET player_equipped = :input_1 WHERE player_id = :player_check")
+            query = query.bindparams(player_check=int(self.player_id), input_1=equipped_gear)
+            pandora_db.execute(query)
             pandora_db.close()
             engine.dispose()
         except mysql.connector.Error as err:
             print("Database Error: {}".format(err))
-
         return response
 
     def check_equipped(self, item):

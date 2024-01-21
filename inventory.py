@@ -316,19 +316,11 @@ class CustomItem:
         default_material_names = {"W": "Iron", "A": "Iron", "Y": "Crude",  "G": "Crude", "C": "Crude"}
         default_blessing_names = {"W": "Basic", "A": "Standard", "Y": "Sparkling",  "G": "Sparkling", "C": "Clear"}
         wing_tier_variants = ["Feathered Wings", "Wonderous Wings", "Dimensional Wings", "Rift Wings"]
-        gem_names_dict = {1: ["Unknown Gem"],
-                          2: ["Gem of Nature's Wrath", "Gem of Land and Sky", "Gem of the Deep"],
-                          3: ["Gem of Twilight", "Gem of Chaos", "Gem of Aurora"],
-                          4: ["Gem of Dimensions", "Gem of Fate", "Gem of Dreams"],
-                          5: ["Fabled Dragon Jewel - Destiny", "Fabled Dragon Jewel - Fate"],
-                          6: ["Miracle Dragon Heart Gem"],
-                          7: ["Miracle Dragon Heart Gem - Emptiness", "Miracle Dragon Heart Gem - Transcendence"]
-                          }
 
         # Set non gem shared default naming values and base roll.
         if self.item_type != "D":
             if self.item_tier == 7:
-                self.item_material_tier = "Eschaton"
+                self.item_material_tier = "Divine" if self.item_type != "W" else "Eschaton"
                 self.item_blessing_tier = ""
             elif self.item_tier == 6:
                 self.item_material_tier = "Destiny"
@@ -339,7 +331,7 @@ class CustomItem:
                     self.item_blessing_tier = "Prelude"
             elif self.item_tier == 5:
                 self.item_material_tier = "Fabled"
-                self.item_blessing_tier = "Refined"
+                self.item_blessing_tier = "Cosmite"
             elif self.item_tier <= 4:
                 self.item_material_tier = default_material_names[self.item_type]
                 self.item_blessing_tier = default_blessing_names[self.item_type]
@@ -386,18 +378,30 @@ class CustomItem:
                 if self.item_tier >= 5:
                     self.item_base_type = "Diadem"
             case "D":
-                self.item_name = random.choice(gem_names_dict[self.item_tier])
-                if self.item_tier >= 6:
-                    random_resonance = random.randint(0, 22)
-                    resonance = tarot.get_resonance(random_resonance)
-                    if self.item_tier != 7:
-                        self.item_name = f"{self.item_name} - {resonance}"
+                self.set_gem_name()
                 itemrolls.add_roll(self, 6)
                 points_type = random.randint(0, 5)
                 points_value = self.item_tier - 1 if self.item_tier != 7 else 10
                 self.item_bonus_stat = f"{points_type};{points_value}"
             case _:
                 self.item_base_type = "BASE ERROR"
+
+    def set_gem_name(self):
+        gem_names_dict = {1: ["Unknown Gem"],
+                          2: ["Gem of Nature's Wrath", "Gem of Land and Sky", "Gem of the Deep"],
+                          3: ["Gem of Twilight", "Gem of Chaos", "Gem of Aurora"],
+                          4: ["Gem of Dimensions", "Gem of Fate", "Gem of Dreams"],
+                          5: ["Fabled Dragon Heart Gem - Destiny", "Fabled Dragon Heart Gem - Fate",
+                              "Miracle Dragon Heart Gem - Emptiness"],
+                          6: ["Miracle Dragon Heart Gem"],
+                          7: ["Divine Dragon Heart Gem - Transcendence"]
+                          }
+        self.item_name = random.choice(gem_names_dict[self.item_tier])
+        if self.item_tier >= 6:
+            random_resonance = random.randint(0, 22)
+            resonance = tarot.get_resonance(random_resonance)
+            if self.item_tier != 7:
+                self.item_name = f"{self.item_name} - {resonance}"
 
     def add_item_element(self, add_element):
         if add_element == 9:
@@ -494,7 +498,7 @@ class CustomItem:
 
     def is_void_corrupted(self):
         void_item = False
-        if "Void" in self.item_material_tier or "Eschaton" == self.item_material_tier:
+        if self.item_material_tier in ["Void", "Eschaton", "Divine"]:
             void_item = True
         return void_item
 
@@ -877,8 +881,7 @@ def sell(user, item, embed_msg):
             engine_url = mydb.get_engine_url()
             engine = sqlalchemy.create_engine(engine_url)
             pandora_db = engine.connect()
-            query = text("DELETE FROM CustomInventory "
-                         "WHERE item_id = :item_check")
+            query = text("DELETE FROM CustomInventory WHERE item_id = :item_check")
             query = query.bindparams(item_check=item.item_id)
             pandora_db.execute(query)
             pandora_db.close()
@@ -893,6 +896,27 @@ def sell(user, item, embed_msg):
     else:
         response_embed.add_field(name="Item Not Sold!", value=response, inline=False)
     return response_embed
+
+
+def delete_item(user_object, item):
+    try:
+        engine_url = mydb.get_engine_url()
+        engine = sqlalchemy.create_engine(engine_url)
+        pandora_db = engine.connect()
+        if item.item_type == "D":
+            query = text("UPDATE CustomInventory SET item_inlaid_gem_id = 0 WHERE item_inlaid_gem_id = :item_check")
+            query = query.bindparams(item_check=item.item_id)
+            pandora_db.execute(query)
+        else:
+            user_object.unequip_item(item.item_id)
+        query = text("DELETE FROM CustomInventory WHERE item_id = :item_check")
+        query = query.bindparams(item_check=item.item_id)
+        pandora_db.execute(query)
+
+        pandora_db.close()
+        engine.dispose()
+    except exc.SQLAlchemyError as error:
+        print(error)
 
 
 def purge(player_object, tier):
