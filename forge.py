@@ -1093,7 +1093,7 @@ def meld_gems(gem_1, gem_2):
         gem_1.item_tier += tier_adjust
         gem_1.item_num_stars += tier_adjust
         gem_1.base_damage_min, gem_1.base_damage_max = inventory.get_tier_damage(gem_1.item_tier, gem_1.item_type)
-        gem_1.item_bonus_stat = f"{gem_1.item_bonus_stat[0]};{5 * tier_adjust}"
+        gem_1.item_bonus_stat = f"{gem_1.item_bonus_stat[0]};{5 * (tier_adjust + 1)}"
         gem_1.set_gem_name()
     roll_change_list = []
     for roll_index, secondary_roll in enumerate(gem_2.item_roll_values):

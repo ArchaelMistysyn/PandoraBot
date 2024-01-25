@@ -174,9 +174,7 @@ class Room:
         self.room_variant = ""
         self.reward_type = "W"
         self.room_element = random.randint(0, 8)
-        random_deity = random.randint(0, 22)
-        self.room_deity = tarot.tarot_card_list(random_deity)
-        self.deity_tier = tarot.get_tarot_tier(self.room_deity)
+        self.room_deity = random.choice(list(tarot.card_dict.keys()))
 
     def prepare_room(self, expedition):
         random_check = random.randint(1, 100)
@@ -714,12 +712,9 @@ class SelectionRoomView(discord.ui.View):
                             "Hammer1", "Hammer3", "Flame3", "Pearl3", "Core2", "Summon3", "Token5", "ESS"],
                            ["Hammer1", "Hammer4", "Ore6", "Soul6", "OriginM", "Flame4", "Matrix3", "Heart2",
                             "Summon4", "Unrefined4", "Token6", "ESS"],
-                           ["Crystal1", "Crystal2", "Unrefined4", "Unrefined5", "Lotus3"]]
+                           ["Crystal1", "Crystal2", "Unrefined4", "Unrefined5", "Lotus3", "ESS"]]
         random_num = random.randint(1, 100000)
-        if random_num <= self.expedition.luck:
-            reward_tier = 6
-        else:
-            reward_tier = min(5, self.expedition.luck // 5)
+        reward_tier = 6 if random_num <= self.expedition.luck else min(5, self.expedition.luck // 5)
         selected_pool = self.item_pools[reward_tier]
         item_location = random.sample(range(0, (len(selected_pool) - 1)), 2)
         selected_set = [selected_pool[item_location[0]], selected_pool[item_location[1]]]
@@ -806,7 +801,8 @@ class StatueRoomView(discord.ui.View):
                     blessing_msg = ""
                     reward_id = ""
                     reload_player = player.get_player_by_id(self.expedition.player_object.player_id)
-                    if active_room.deity_tier == 6:
+                    deity_tier = tarot.card_dict[active_room.room_deity][1]
+                    if deity_tier == 6:
                         if blessing_chance <= 5:
                             reward_id = f"Crystal1"
                             blessing_msg = "Miraculous Blessing\nLuck +7"
@@ -815,7 +811,7 @@ class StatueRoomView(discord.ui.View):
                             reward_id = "Summon3"
                             blessing_msg = "Sovereign's Blessing!\nLuck +5"
                             self.expedition.luck += 5
-                    if active_room.deity_tier == 5:
+                    if deity_tier == 5:
                         if blessing_chance <= 5:
                             reward_id = f"Core1"
                             blessing_msg = "Fabled Blessing\nLuck +3"
@@ -827,9 +823,9 @@ class StatueRoomView(discord.ui.View):
                     if reward_id == "":
                         blessing_chance = random.randint(1, 100)
                         if blessing_chance <= 5:
-                            deity_numeral = tarot.tarot_numeral_list(tarot.get_number_by_tarot(active_room.room_deity))
+                            deity_numeral = active_room.room_deity
                             reward_id = f"Essence{deity_numeral}"
-                            blessing_msg = f"{active_room.room_deity}'s Blessing!\nLuck +2"
+                            blessing_msg = f"{tarot.card_dict[active_room.room_deity][0]}'s Blessing!\nLuck +2"
                             self.expedition.luck += 2
                         elif blessing_chance <= 30:
                             reward_id = "Summon1"
@@ -863,8 +859,8 @@ class StatueRoomView(discord.ui.View):
                     self.new_view = TransitionView(self.expedition)
                     event_chance = random.randint(1, 1000)
                     if event_chance <= 50:
-                        embed_title = f"Incurred __{active_room.room_deity}'s__ wrath!"
-                        wrath_msg = wrath_msg_list[tarot.get_number_by_tarot(active_room.room_deity)]
+                        embed_title = f"Incurred __{tarot.card_dict[active_room.room_deity][0]}'s__ wrath!"
+                        wrath_msg = wrath_msg_list[tarot.get_index_by_key(active_room.room_deity)]
                         self.new_view = None
                         self.embed.add_field(name=f"{embed_title} - Run Ended", value=wrath_msg, inline=False)
                     elif event_chance <= 550 + (self.expedition.luck * 10):
@@ -1449,8 +1445,8 @@ def check_essence(selected_items, pool_tier):
     checked_items = selected_items.copy()
     for item_index, item in enumerate(selected_items):
         if item == "ESS":
-            random_paragon = random.choice(tarot.paragon_list[pool_tier])
-            essence_id = f"Essence{tarot.tarot_numeral_list(tarot.get_number_by_tarot(random_paragon))}"
+            selected_data = [card_number for card_number, data in tarot.card_dict.items() if data[1] == pool_tier]
+            essence_id = f"Essence{random.choice(selected_data)}"
             checked_items[item_index] = essence_id
     return checked_items
 
@@ -1530,9 +1526,10 @@ def build_manifest_return_embed(player_object, method, colour):
     method_info = method.split(";")
     description_msg = ""
     card_stars = int(method_info[2])
-    success_rate = 50 + card_stars * 5
-    if method_info[1] != "-1":
-        title_msg = f"Echo of __{method_info[1]}__ - Returns ({method_info[0]})"
+    success_rate = 60 + card_stars * 3
+    card_name = tarot.card_dict[method_info[1]][0]
+    if method_info[2] != "0":
+        title_msg = f"Echo of __{card_name}__ - Returns ({method_info[0]})"
     else:
         title_msg = f"Pandora, The Celestial Returns"
     if method_info[0] == "Hunt":
@@ -1581,10 +1578,15 @@ def build_manifest_return_embed(player_object, method, colour):
             outcome = player_object.player_echelon
         outcome_item = globalitems.gem_list[outcome][0]
         outcome_coins = globalitems.gem_list[outcome][1]
-        player_object.player_coins += outcome_coins
-        player_object.set_player_field("player_coins", player_object.player_coins)
-        description_msg += (f"You found a {outcome_item}!"
-                            f"\nSold for {globalitems.coin_icon} {outcome_coins}x Lotus Coins!")
+        if outcome_coins != 0:
+            player_object.player_coins += outcome_coins
+            player_object.set_player_field("player_coins", player_object.player_coins)
+            description_msg += (f"You found a {outcome_item}!"
+                                f"\nSold for {globalitems.coin_icon} {outcome_coins}x Lotus Coins!")
+        else:
+            inventory.update_stock(player_object, "Lotus5", 1)
+            lotus_item = inventory.BasicItem("Lotus5")
+            description_msg += f"{lotus_item.item_emoji} 1x {lotus_item.item_name} found!"
     else:
         for x in range(player_object.player_echelon + 4):
             random_attempt = random.randint(1, 100)
@@ -1602,7 +1604,7 @@ def build_manifest_return_embed(player_object, method, colour):
     return embed_msg
 
 
-class ManifestView1(discord.ui.View):
+class ManifestView(discord.ui.View):
     def __init__(self, player_user, embed_msg, e_tarot, colour, num_hours):
         super().__init__(timeout=None)
         self.player_user = player_user
@@ -1611,78 +1613,30 @@ class ManifestView1(discord.ui.View):
         self.colour = colour
         self.num_hours = num_hours
         self.paid = False
+        if self.player_user.player_echelon < 2:
+            self.gather_callback.style = discord.ButtonStyle.secondary
+            self.gather_callback.disabled = True
+        if self.player_user.player_echelon < 4:
+            self.mine_callback.style = discord.ButtonStyle.secondary
+            self.mine_callback.disabled = True
 
     @discord.ui.button(label="Hunt", style=discord.ButtonStyle.success, emoji="⚔️")
     async def hunt_callback(self, interaction: discord.Interaction, map_select: discord.ui.Select):
-        result = common_callback(self, self.player_user, self.embed_msg, self.e_tarot, self.colour, self.num_hours, "Hunt")
-        await interaction.response.edit_message(embed=result[0], view=result[1])
-
-    @discord.ui.button(label="Gather", style=discord.ButtonStyle.secondary, emoji="⚔️", disabled=True)
-    async def gather_callback(self, interaction: discord.Interaction, map_select: discord.ui.Select):
-        result = common_callback(self, self.player_user, self.embed_msg, self.e_tarot, self.colour, self.num_hours, "Gather")
-        await interaction.response.edit_message(embed=result[0], view=result[1])
-
-    @discord.ui.button(label="Mine", style=discord.ButtonStyle.secondary, emoji="⚔️", disabled=True)
-    async def mine_callback(self, interaction: discord.Interaction, map_select: discord.ui.Select):
-        result = common_callback(self, self.player_user, self.embed_msg, self.e_tarot, self.colour, self.num_hours, "Mine")
-        await interaction.response.edit_message(embed=result[0], view=result[1])
-
-
-class ManifestView2(discord.ui.View):
-    def __init__(self, player_user, embed_msg, e_tarot, colour, num_hours):
-        super().__init__(timeout=None)
-        self.player_user = player_user
-        self.embed_msg = embed_msg
-        self.e_tarot = e_tarot
-        self.colour = colour
-        self.num_hours = num_hours
-        self.paid = False
-
-    @discord.ui.button(label="Hunt", style=discord.ButtonStyle.success, emoji="⚔️")
-    async def hunt_callback(self, interaction: discord.Interaction, map_select: discord.ui.Select):
-        result = common_callback(self, self.player_user, self.embed_msg, self.e_tarot, self.colour, self.num_hours, "Hunt")
+        result = manifest_callback(self, self.player_user, self.embed_msg, self.e_tarot, self.colour, self.num_hours, "Hunt")
         await interaction.response.edit_message(embed=result[0], view=result[1])
 
     @discord.ui.button(label="Gather", style=discord.ButtonStyle.success, emoji="⚔️")
     async def gather_callback(self, interaction: discord.Interaction, map_select: discord.ui.Select):
-        result = common_callback(self, self.player_user, self.embed_msg, self.e_tarot, self.colour, self.num_hours, "Gather")
-        await interaction.response.edit_message(embed=result[0], view=result[1])
-
-    @discord.ui.button(label="Mine", style=discord.ButtonStyle.secondary, emoji="⚔️", disabled=True)
-    async def mine_callback(self, interaction: discord.Interaction, map_select: discord.ui.Select):
-        result = common_callback(self, self.player_user, self.embed_msg, self.e_tarot, self.colour, self.num_hours,
-                                 "Mine")
-        await interaction.response.edit_message(embed=result[0], view=result[1])
-
-
-class ManifestView3(discord.ui.View):
-    def __init__(self, player_user, embed_msg, e_tarot, colour, num_hours):
-        super().__init__(timeout=None)
-        self.player_user = player_user
-        self.embed_msg = embed_msg
-        self.e_tarot = e_tarot
-        self.colour = colour
-        self.num_hours = num_hours
-        self.paid = False
-
-    @discord.ui.button(label="Hunt", style=discord.ButtonStyle.success, emoji="⚔️")
-    async def hunt_callback(self, interaction: discord.Interaction, map_select: discord.ui.Select):
-        result = common_callback(self, self.player_user, self.embed_msg, self.e_tarot, self.colour, self.num_hours, "Hunt")
-        await interaction.response.edit_message(embed=result[0], view=result[1])
-
-    @discord.ui.button(label="Gather", style=discord.ButtonStyle.success, emoji="⚔️")
-    async def gather_callback(self, interaction: discord.Interaction, map_select: discord.ui.Select):
-        result = common_callback(self, self.player_user, self.embed_msg, self.e_tarot, self.colour, self.num_hours, "Gather")
+        result = manifest_callback(self, self.player_user, self.embed_msg, self.e_tarot, self.colour, self.num_hours, "Gather")
         await interaction.response.edit_message(embed=result[0], view=result[1])
 
     @discord.ui.button(label="Mine", style=discord.ButtonStyle.success, emoji="⚔️")
     async def mine_callback(self, interaction: discord.Interaction, map_select: discord.ui.Select):
-        result = common_callback(self, self.player_user, self.embed_msg, self.e_tarot, self.colour, self.num_hours,
-                                 "Mine")
+        result = manifest_callback(self, self.player_user, self.embed_msg, self.e_tarot, self.colour, self.num_hours, "Mine")
         await interaction.response.edit_message(embed=result[0], view=result[1])
 
 
-def common_callback(view, player_user, embed_msg, e_tarot, colour, num_hours, method):
+def manifest_callback(view, player_user, embed_msg, e_tarot, colour, num_hours, method):
     try:
         if not view.paid:
             reload_user = player.get_player_by_id(player_user.player_id)
@@ -1693,7 +1647,7 @@ def common_callback(view, player_user, embed_msg, e_tarot, colour, num_hours, me
                 new_view = None
             elif reload_user.spend_stamina(500):
                 view.paid = True
-                method_info = f"{method};{e_tarot.card_name};{e_tarot.num_stars}"
+                method_info = f"{method};{e_tarot.card_numeral};{e_tarot.num_stars}"
                 reload_user.set_cooldown("manifest", method_info)
                 embed_msg = discord.Embed(colour=colour,
                                           title=f"{e_tarot.card_name} Embarks - {method}",

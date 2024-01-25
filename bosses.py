@@ -49,12 +49,7 @@ class CurrentBoss:
         self.aura = 0.0
 
     def calculate_hp(self) -> bool:
-        if self.boss_cHP <= 0:
-            is_alive = False
-        else:
-            is_alive = True
-
-        return is_alive
+        return self.boss_cHP > 0
 
     def create_boss_embed(self, dps):
         # img_link = self.boss_image
@@ -98,9 +93,7 @@ class CurrentBoss:
         for idy, y in enumerate(self.boss_eleweak):
             if y == 1:
                 boss_weakness += globalitems.global_element_list[idy]
-        embed_msg = discord.Embed(colour=tier_colour,
-                                  title=boss_title,
-                                  description="")
+        embed_msg = discord.Embed(colour=tier_colour, title=boss_title, description="")
         embed_msg.set_image(url=img_link)
         embed_msg.add_field(name=boss_field, value=boss_hp, inline=False)
         embed_msg.add_field(name=boss_weakness, value="", inline=False)
@@ -144,13 +137,13 @@ class CurrentBoss:
                          paragon_list_t6]
 
         # Arbiter names
-        arbiter_list_t1 = [("Mysmiria, Changeling of the True Laws", "")]
-        arbiter_list_t2 = [("Avalon, Pathwalker of the True Laws", "")]
-        arbiter_list_t3 = [("Isolde, Soulweaver of the True Laws", "")]
-        arbiter_list_t4 = [("Vexia, Scribe of the True Laws", "")]
-        arbiter_list_t5 = [("Kazyth, Lifeblood of the True Laws", "")]
-        arbiter_list_t6 = [("Fleur, Oracle of the True Laws", "")]
-        arbiter_list_t7 = [("Yubelle, Adjudicator of the True Laws", "")]
+        arbiter_list_t1 = [("XXII - Mysmiria, Changeling of the True Laws", "")]
+        arbiter_list_t2 = [("XXIII - Avalon, Pathwalker of the True Laws", "")]
+        arbiter_list_t3 = [("XXIV - Isolde, Soulweaver of the True Laws", "")]
+        arbiter_list_t4 = [("XXV - Vexia, Scribe of the True Laws", "")]
+        arbiter_list_t5 = [("XXVI - Kazyth, Lifeblood of the True Laws", "")]
+        arbiter_list_t6 = [("XXVII - Fleur, Oracle of the True Laws", "")]
+        arbiter_list_t7 = [("XXVIII - Yubelle, Adjudicator of the True Laws", "")]
         arbiter_names = [arbiter_list_t1, arbiter_list_t2, arbiter_list_t3, arbiter_list_t4, arbiter_list_t5,
                          arbiter_list_t6, arbiter_list_t7]
 
@@ -172,7 +165,7 @@ class CurrentBoss:
                     boss_prefix, self.boss_element = get_boss_descriptor(boss_type)
                     self.boss_name = boss_prefix + "the " + self.boss_name
             case "Dragon":
-                temp_name_split = boss_name.split()
+                temp_name_split = self.boss_name.split()
                 boss_element = temp_name_split[1]
                 if boss_tier != 4:
                     self.boss_element = globalitems.element_names.index(boss_element)
@@ -195,7 +188,7 @@ def get_boss_details(channel_num):
     else:
         selected_boss_type = boss_list[3]
     boss_tier, selected_boss_type = get_random_bosstier(selected_boss_type)
-    if boss_tier < 5:
+    if boss_tier < 5 and selected_boss_type != "Arbiter":
         level = random.randint(1, 9)
         channel_level_dict = {1: 30, 2: 50, 3: 60, 4: 80}
         level += channel_level_dict[channel_num]
@@ -284,6 +277,8 @@ def spawn_boss(channel_id, player_id, new_boss_tier, selected_boss_type, boss_le
         else:
             # Create the boss object.
             boss_type_num = boss_list.index(selected_boss_type)
+            if selected_boss_type == "Arbiter":
+                boss_level = 99
             boss_object = CurrentBoss(boss_type_num, selected_boss_type, new_boss_tier, boss_level)
 
             # Assign elemental weaknesses.

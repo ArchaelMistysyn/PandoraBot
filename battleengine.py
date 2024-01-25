@@ -257,7 +257,7 @@ def run_discord_bot():
             if existing_id != 0:
                 await ctx.send("You already have a solo boss encounter running.")
                 return
-            if player_object.spend_stamina(200):
+            if not player_object.spend_stamina(200):
                 await ctx.send("Not enough stamina.")
                 return
 

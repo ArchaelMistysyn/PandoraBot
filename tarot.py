@@ -8,6 +8,9 @@ from sqlalchemy import exc
 
 import discord
 import random
+
+import itemdata
+import itemrolls
 import player
 import inventory
 import mydb
@@ -15,416 +18,404 @@ import pandas as pd
 import pilengine
 import globalitems
 
-paragon_t1 = ["Karma, The Reflection", "Runa, The Magic",
-              "Arkaya, The Duality", "Alaya, The Memory", "Aria, The Requiem"]
-paragon_t2 = ["Nova, The Star", "Luna, The Moon", "Luma, The Sun", "Arcelia, The Clarity", "Kama, The Love"]
-paragon_t3 = ["Thana, The Death", "Chrona, The Temporal", "Rua, The Abyss", "Nua, The Heavens", "Ultima, The Creation"]
-paragon_t4 = ["Pandora, The Celestial", "Diabla, The Primordial",
-              "Tyra, The Behemoth", "Astratha, The Dimensional", "Aurora, The Fortress"]
-paragon_t5 = ["Oblivia, The Void", "Akasha, The Infinite"]
-paragon_t6 = ["Eleuia, The Wish"]
-# Tier based tarot list.
-paragon_list = [paragon_t1, paragon_t2, paragon_t3, paragon_t4, paragon_t5, paragon_t6]
+card_dict = {
+    "0": ["Karma, The Reflection", 1],
+    "I": ["Runa, The Magic", 1],
+    "II": ["Pandora, The Celestial", 4],
+    "III": ["Oblivia, The Void", 5],
+    "IV": ["Akasha, The Infinite", 5],
+    "V": ["Arkaya, The Duality", 1],
+    "VI": ["Kama, The Love", 4],
+    "VII": ["Astratha, The Dimensional", 4],
+    "VIII": ["Tyra, The Behemoth", 4],
+    "IX": ["Alaya, The Memory", 1],
+    "X": ["Chrona, The Temporal", 3],
+    "XI": ["Nua, The Heavens", 3],
+    "XII": ["Rua, The Abyss", 3],
+    "XIII": ["Thana, The Death", 3],
+    "XIV": ["Arcelia, The Clarity", 2],
+    "XV": ["Diabla, The Primordial", 4],
+    "XVI": ["Aurora, The Fortress", 4],
+    "XVII": ["Nova, The Star", 2],
+    "XVIII": ["Luna, The Moon", 2],
+    "XIX": ["Luma, The Sun", 2],
+    "XX": ["Aria, The Requiem", 1],
+    "XXI": ["Ultima, The Creation", 3],
+    "XXII": ["Mysmiria, Changeling of the True Laws", 1],
+    "XXIII": ["Avalon, Pathwalker of the True Laws", 2],
+    "XXIV": ["Isolde, Soulweaver of the True Laws", 3],
+    "XXV": ["Vexia, Scribe of the True Laws", 4],
+    "XXVI": ["Kazyth, Lifeblood of the True Laws", 5],
+    "XXVII": ["Fleur, Oracle of the True Laws", 6],
+    "XXVIII": ["Yubelle, Adjudicator of the True Laws", 7],
+    "XXIX": ["???, Bearer of the Lotus", 7],
+    "XXX": ["Eleuia, The Wish", 6]
+}
 
-# Number based tarot list.
-card_num_list = ["0", "I", "II", "III", "IV", "V", "VI", "VII", "VIII", "IX", "X",
-                 "XI", "XII", "XIII", "XIV", "XV", "XVI", "XVII", "XVIII", "XIX", "XX", "XXI", "XXX"]
-card_name_list = ["Karma, The Reflection", "Runa, The Magic", "Pandora, The Celestial", "Oblivia, The Void",
-                  "Akasha, The Infinite", "Arkaya, The Duality", "Kama, The Love", "Astratha, The Dimensional",
-                  "Tyra, The Behemoth", "Alaya, The Memory", "Chrona, The Temporal", "Nua, The Heavens",
-                  "Rua, The Abyss", "Thana, The Death", "Arcelia, The Clarity", "Diabla, The Primordial",
-                  "Aurora, The Fortress", "Nova, The Star", "Luna, The Moon", "Luma, The Sun",
-                  "Aria, The Requiem", "Ultima, The Creation", "Eleuia, The Wish"]
+# Key: [path, [description1, value1, reference1, location1], [description2, value2, reference2, location2]]
+card_stat_dict = {
+                  # Application Cards
+                  "X": [6, ["Temporal Application", 1, "temporal_application", None],
+                        ["Ultimate Application", 1, "ultimate_application", None]],
+                  "III": [4, ["Critical Application", 1, "critical_application", None],
+                          ["Critical Application", 1, "critical_application", None]],
+                  "IV": [0, ["Critical Application", 1, "critical_application", None],
+                         ["Critical Application", 1, "critical_application", None]],
+                  # Lesser Path Cards
+                  "XVII": [4, ["Celestial Damage", 25, "elemental_multiplier", 8],
+                           ["Celestial Damage", 25, "elemental_multiplier", 8]],
+                  "I": [5, ["Fire Damage", 25, "elemental_multiplier", 0],
+                        ["Ice Damage", 25, "elemental_multiplier", 5]],
+                  "XVIII": [3, ["Shadow Penetration", 20, "elemental_penetration", 6],
+                            ["Light Penetration", 20, "elemental_penetration", 7]],
+                  # Greater Path Cards
+                  "XX": [0, ["Water Penetration", 0, "elemental_penetration", 0],
+                         ["Lightning Penetration", 0, "elemental_penetration", 2]],
+                  "XV": [1, ["Ice Penetration", 20, "elemental_penetration", 5],
+                         ["Fire Penetration", 20, "elemental_penetration", 0]],
+                  "XIX": [2, ["Earth Penetration", 0, "elemental_penetration", 3],
+                          ["Wind Penetration", 0, "elemental_penetration", 4]],
+                  "V": [3, ["Shadow Penetration", 20, "elemental_penetration", 6],
+                        ["Light Penetration", 20, "elemental_penetration", 7]],
+                  "II": [4, ["Celestial Penetration", 0, "elemental_penetration", 8],
+                         ["Celestial Curse", 0, "elemental_curse", 8]],
+                  "XXI": [6, ["Temporal Application", 1, "temporal_application", None],
+                          ["Elemental Overflow", 1, "elemental_application", None]],
+                  # Bane Cards
+                  "XVI": [2, ["Fortress Bane", 25, "banes", 0],
+                          ["Fortress Bane", 25, "banes", 0]],
+                  "VII": [1, ["Dragon Bane", 25, "banes", 1],
+                          ["Dragon Bane", 25, "banes", 1]],
+                  "VIII": [3, ["Demon Bane", 25, "banes", 2],
+                           ["Demon Bane", 25, "banes", 2]],
+                  "0": [1, ["Paragon Bane", 25, "banes", 3],
+                        ["Paragon Bane", 25, "banes", 3]],
+                  "VI": [4, ["Human Bane", 25, "banes", 5],
+                         ["Human Bane", 25, "banes", 5]],
+                  # Solitude Cards
+                  "IX": [6, ["Wind Penetration", 20, "elemental_penetration", 4],
+                         ["Wind Curse", 15, "elemental_curse", 4]],
+                  "XI": [6, ["Light Penetration", 20, "elemental_penetration", 7],
+                         ["Light Curse", 15, "elemental_curse", 7]],
+                  "XII": [6, ["Shadow Penetration", 20, "elemental_penetration", 6],
+                          ["Shadow Curse", 15, "elemental_curse", 6]],
+                  "XIII": [6, ["Ice Penetration", 20, "elemental_penetration", 5],
+                           ["Ice Curse", 15, "elemental_curse", 5]],
+                  "XIV": [6, ["Water Penetration", 20, "elemental_penetration", 1],
+                          ["Water Curse", 15, "elemental_curse", 1]],
+                  # Arbiter Cards
+                  "XXII": [1, ["X% Chance to trigger Bloom on hit", 5, "specialty_rate", 0],
+                           ["Arbiter Bane", 25, "banes", 4]],
+                  "XXIII": [3, ["X% Chance to trigger Bloom on hit", 5, "specialty_rate", 0],
+                            ["Ultimate Application", 1, "ultimate_application", None]],
+                  "XXIV": [5, ["X% Chance to trigger Bloom on hit", 5, "specialty_rate", 0],
+                           ["Elemental Overflow", 1, "elemental_application", None]],
+                  "XXV": [0, ["X% Chance to trigger Bloom on hit", 5, "specialty_rate", 0],
+                          ["Critical Application", 1, "critical_application", None]],
+                  "XXVI": [2, ["X% Chance to trigger Bloom on hit", 5, "specialty_rate", 0],
+                           ["Bleed Application", 1, "bleed_application", None]],
+                  "XXVII": [6, ["X% Chance to trigger Bloom on hit", 5, "specialty_rate", 0],
+                            ["Temporal Application", 1, "temporal_application", None]],
+                  "XXVIII": ["All", ["X% Chance to trigger Bloom on hit", 5, "specialty_rate", 0],
+                             ["Bloom Damage", 500, "bloom_multiplier", None]],
+                  "XXIX": ["All", ["X% Chance to trigger Bloom on hit", 5, "specialty_rate", 0],
+                            ["Bloom Damage", 1000, "bloom_multiplier", None]],
+                  "XXX": ["All", ["Omni Aura", 25, "aura", None],
+                          ["Omni Curse", 25, "all_elemental_curse", None]]
+                  }
+synthesis_success_rate = {0: 0, 1: 75, 2: 50, 3: 25, 4: 15, 5: 10, 6: 5, 7: 0}
+card_variant = ["Empty", "Prelude", "Chromatic", "Prismatic", "Resplendent", "Iridescent", "Divine", "Transcendent"]
+tarot_damage = [0, 5000, 25000, 50000, 100000, 500000, 1000000, 5000000]
+tarot_hp = [0, 500, 1000, 1500, 2000, 2500, 5000, 10000]
+tarot_fd = [0, 10, 20, 30, 40, 50, 70, 100]
+path_point_values = [0, 1, 2, 3, 4, 5, 7, 10]
+
+
+class SearchTierView(discord.ui.View):
+    def __init__(self, player_user):
+        super().__init__(timeout=None)
+        self.player_user = player_user
+
+        # Build the option list.
+        select_options = [
+            discord.SelectOption(
+                label=f"Tier {tier} Tarot Cards", description="", value=f"{tier}"
+            ) for tier in range(1, 8)]
+        select_menu = discord.ui.Select(placeholder="Select Card Tier!",
+                                        min_values=1, max_values=1, options=select_options)
+        select_menu.callback = self.tier_select_callback
+        self.add_item(select_menu)
+
+    async def tier_select_callback(self, interaction: discord.Interaction):
+        try:
+            if interaction.user.name == self.player_user.player_name:
+                selected_option = interaction.data['values'][0]
+                new_view = SearchCardView(self.player_user, int(selected_option))
+                await interaction.response.edit_message(view=new_view)
+        except Exception as e:
+            print(e)
+
+
+class SearchCardView(discord.ui.View):
+    def __init__(self, player_user, selected_tier):
+        super().__init__(timeout=None)
+        self.player_user = player_user
+        self.selected_tier = selected_tier
+        selected_data = [(card_number, card_name) for card_number, (card_name, tier) in card_dict.items() if
+                         tier == selected_tier]
+
+        # Build the option list.
+        select_options = [
+            discord.SelectOption(
+                label=f"{card_number} - {card_name}",
+                description="",
+                value=f"{card_number}"
+            ) for card_number, card_name in selected_data]
+        select_menu = discord.ui.Select(placeholder="Search Card!", min_values=1, max_values=1, options=select_options)
+        select_menu.callback = self.card_select_callback
+        self.add_item(select_menu)
+
+    async def card_select_callback(self, interaction: discord.Interaction):
+        try:
+            if interaction.user.name == self.player_user.player_name:
+                selected_numeral = interaction.data['values'][0]
+                selected_card = get_index_by_key(selected_numeral)
+                new_embed = tarot_menu_embed(self.player_user, selected_numeral)
+                new_view = TarotView(self.player_user, selected_card)
+                await interaction.response.edit_message(embed=new_embed, view=new_view)
+        except Exception as e:
+            print(e)
 
 
 class CollectionView(discord.ui.View):
-    def __init__(self, player_user, embed_msg, start_location):
+    def __init__(self, player_user, start_location):
         super().__init__(timeout=None)
         self.player_user = player_user
-        self.embed_msg = embed_msg
         self.current_position = start_location
-        self.current_variant = 1
 
-    @discord.ui.button(label="View Collection", style=discord.ButtonStyle.blurple, emoji="✅")
+    @discord.ui.button(label="View Collection", style=discord.ButtonStyle.blurple)
     async def view_collection(self, interaction: discord.Interaction, button: discord.Button):
         try:
             if interaction.user.name == self.player_user.player_name:
-                new_msg, x, y = cycle_tarot(self.player_user, self.embed_msg, self.current_position, 1, 0)
-                new_view = TarotView(self.player_user, self.embed_msg, self.current_position)
+                selected_numeral = get_key_by_index(self.current_position)
+                new_msg = tarot_menu_embed(self.player_user, selected_numeral)
+                new_view = TarotView(self.player_user, self.current_position)
                 await interaction.response.edit_message(embed=new_msg, view=new_view)
+        except Exception as e:
+            print(e)
+
+    @discord.ui.button(label="Search Card", style=discord.ButtonStyle.blurple, emoji="🔎")
+    async def search_collection(self, interaction: discord.Interaction, button: discord.Button):
+        try:
+            if interaction.user.name == self.player_user.player_name:
+                new_view = SearchTierView(self.player_user)
+                await interaction.response.edit_message(view=new_view)
         except Exception as e:
             print(e)
 
 
 class TarotView(discord.ui.View):
-    def __init__(self, player_user, embed_msg, starting_location):
+    def __init__(self, player_user, starting_location):
         super().__init__(timeout=None)
         self.player_user = player_user
-        self.embed_msg = embed_msg
         self.current_position = starting_location
-        self.current_variant = 1
-        self.added_message = False
+        self.embed = None
+        self.selected_numeral = get_key_by_index(self.current_position)
 
-    def cycle_tarot(self, current_msg, direction):
-        max_position = 23
-
-        # Set the new variant and position.
-        if (self.current_variant == 1 and direction == -1) or (self.current_variant == 2 and direction == 1):
-            self.current_variant = 2
+        # Adjust non-positional buttons.
+        tarot = check_tarot(self.player_user.player_id, card_dict[self.selected_numeral][0])
+        self.bind_success_rate = 90 - (card_dict[self.selected_numeral][1] * 5)
+        self.attempt_bind.label = f"Bind ({self.bind_success_rate}%)"
+        if tarot is not None:
+            synthesis_rate = synthesis_success_rate[tarot.num_stars]
+            if tarot.num_stars != 7:
+                self.synthesize.label = f"Synth ({synthesis_success_rate[tarot.num_stars]}%)"
+            else:
+                self.synthesize.label = "Synth [MAX]"
+                self.synthesize.disabled = True
+                self.synthesize.style = discord.ButtonStyle.secondary
+            if self.player_user.equipped_tarot == self.selected_numeral:
+                self.equip.disabled = True
+                self.equip.style = discord.ButtonStyle.secondary
         else:
-            direction = 0
+            self.equip.disabled = True
+            self.equip.style = discord.ButtonStyle.secondary
+            self.synthesize.disabled = True
+            self.synthesize.style = discord.ButtonStyle.secondary
+
+        # Adjust positional button labels.
+        previous_position = self.current_position - 1 if self.current_position != 0 else 30
+        next_position = self.current_position + 1 if self.current_position != 30 else 0
+        previous_numeral = get_key_by_index(self.current_position - 1)
+        next_numeral = get_key_by_index(next_position)
+        self.previous_card.label = f"Prev: {previous_numeral}"
+        self.next_card.label = f"Next: {next_numeral}"
+
+    def cycle_tarot(self, direction):
+        max_position = 30
         self.current_position = (self.current_position + direction) % (max_position + 1)
-        current_msg.clear_fields()
-        tarot_card = check_tarot(player_owner.player_id, card_name_list[new_position], new_variant)
+        self.selected_numeral = get_key_by_index(self.current_position)
+        tarot = check_tarot(self.player_user, self.selected_numeral)
+        # Display the tarot card.
+        embed_msg = tarot_menu_embed(self.player_user, self.selected_numeral)
+        return embed_msg
 
-        # Initialize card values.
-        card_num_stars = 0
-        card_qty = 0
-        filename = "https://kyleportfolio.ca/botimages/tarot/cardback.png"
-
-        # Assign card values if owned.
-        if tarot_card:
-            card_qty = tarot_card.card_qty
-            card_num_stars = tarot_card.num_stars
-            filename = tarot_card.card_image_link
-
-        # Display the tarot stars.
-        display_stars = ""
-        for x in range(card_num_stars):
-            display_stars += globalitems.star_icon
-        if card_num_stars < 5:
-            for y in range((5 - card_num_stars)):
-                display_stars += "<:ebstar2:1144826056222724106>"
-        card_title = f"{card_num_list[new_position]} - {card_name_list[new_position]}"
-
-        # Adjust display based on variant type.
-        if self.current_variant == 1:
-            card_title += " [Standard]"
-        else:
-            card_title += " [Premium]"
-
-        # Add the embed fields and image.
-        current_msg.add_field(name=card_title, value=display_stars, inline=False)
-        if tarot_card:
-            base_damage = tarot_card.get_base_damage()
-            current_msg.add_field(name=f"", value=f"Base Damage: {base_damage:,} - {base_damage:,}", inline=False)
-            current_msg.add_field(name=f"", value=tarot_card.display_tarot_bonus_stat(), inline=False)
-        current_msg.add_field(name=f"", value=f"Quantity: {card_qty}", inline=False)
-        current_msg.set_image(url=filename)
-        return new_msg
-
-    @discord.ui.button(label="Previous", style=discord.ButtonStyle.blurple, emoji="⬅️")
+    @discord.ui.button(label="Previous", style=discord.ButtonStyle.blurple, row=1)
     async def previous_card(self, interaction: discord.Interaction, button: discord.Button):
         try:
             if interaction.user.name == self.player_user.player_name:
-                current_message = self.embed_msg.clear_fields()
-                new_msg = self.cycle_tarot(current_message, -1)
-                await interaction.response.edit_message(embed=new_msg)
+                new_msg = self.cycle_tarot(-1)
+                reload_view = TarotView(self.player_user, self.current_position)
+                await interaction.response.edit_message(embed=new_msg, view=reload_view)
         except Exception as e:
             print(e)
 
-    @discord.ui.button(label="Equip", style=discord.ButtonStyle.success, emoji="⚔️")
-    async def equip(self, interaction: discord.Interaction, button: discord.Button):
+    @discord.ui.button(label="Search", style=discord.ButtonStyle.blurple, emoji="🔎", row=1)
+    async def search_card(self, interaction: discord.Interaction, button: discord.Button):
         try:
             if interaction.user.name == self.player_user.player_name:
-                new_msg = self.embed_msg
-                active_card = check_tarot(self.player_user.player_id, tarot_card_list(self.current_position),
-                                          self.current_variant)
-                if active_card:
-                    reload_player = player.get_player_by_id(self.player_user.player_id)
-                    card_num = get_number_by_tarot(active_card.card_name)
-                    reload_player.equipped_tarot = f"{card_num};{active_card.card_variant}"
-                    reload_player.set_player_field("player_equip_tarot", reload_player.equipped_tarot)
-                    new_msg.add_field(name="Equipped!", value="", inline=False)
-                else:
-                    new_msg.add_field(name="Cannot Equip!", value="You do not own this card.", inline=False)
-                await interaction.response.edit_message(embed=new_msg)
+                completion_count = collection_check(self.player_user.player_id)
+                embed_msg = discord.Embed(colour=discord.Colour.magenta(),
+                                          title=f"{self.player_user.player_username}'s Tarot Collection",
+                                          description=f"Completion Total: {completion_count} / 31")
+                embed_msg.set_image(url="")
+                new_view = SearchTierView(self.player_user)
+                await interaction.response.edit_message(embed=embed_msg, view=new_view)
         except Exception as e:
             print(e)
 
-    @discord.ui.button(label="Synthesize", style=discord.ButtonStyle.success, emoji="🔱")
-    async def synthesize(self, interaction: discord.Interaction, button: discord.Button):
-        try:
-            if interaction.user.name == self.player_user.player_name:
-                active_card = check_tarot(self.player_user.player_id,
-                                          tarot_card_list(self.current_position), self.current_variant)
-                if self.added_message:
-                    embed_total = len(self.embed_msg.fields)
-                    self.embed_msg.remove_field(embed_total - 1)
-                    self.added_message = False
-                if active_card:
-                    if active_card.card_qty > 1:
-                        if active_card.num_stars != 5:
-                            outcome = active_card.synthesize_tarot()
-                            current_message = self.embed_msg
-                            new_msg = self.cycle_tarot(current_message, 0)
-
-                            new_msg.add_field(name="", value=outcome,
-                                              inline=False)
-                            self.added_message = True
-                        else:
-                            new_msg = self.embed_msg
-                            new_msg.add_field(name="Cannot Synthesize!", value="Card cannot be upgraded further.", inline=False)
-                            self.added_message = True
-                    else:
-                        new_msg = self.embed_msg
-                        new_msg.add_field(name="Cannot Synthesize!", value="Not enough cards in possession.", inline=False)
-                        self.added_message = True
-                else:
-                    new_msg = self.embed_msg
-                    new_msg.add_field(name="Cannot Synthesize!", value="You do not own this card.", inline=False)
-                    self.added_message = True
-                await interaction.response.edit_message(embed=new_msg)
-        except Exception as e:
-            print(e)
-
-    @discord.ui.button(label="Next", style=discord.ButtonStyle.blurple, emoji="➡️")
+    @discord.ui.button(label="Next", style=discord.ButtonStyle.blurple, row=1)
     async def next_card(self, interaction: discord.Interaction, button: discord.Button):
         try:
             if interaction.user.name == self.player_user.player_name:
-                current_message = self.embed_msg.clear_fields()
-                new_msg = self.cycle_tarot(current_message, 1)
-                await interaction.response.edit_message(embed=new_msg)
+                new_msg = self.cycle_tarot(1)
+                reload_view = TarotView(self.player_user, self.current_position)
+                await interaction.response.edit_message(embed=new_msg, view=reload_view)
+        except Exception as e:
+            print(e)
+
+    @discord.ui.button(label="Equip", style=discord.ButtonStyle.success, row=2)
+    async def equip(self, interaction: discord.Interaction, button: discord.Button):
+        try:
+            if interaction.user.name == self.player_user.player_name:
+                embed_msg = tarot_menu_embed(self.player_user, self.selected_numeral)
+                active_card = check_tarot(self.player_user.player_id, card_dict[self.selected_numeral][0])
+                if active_card:
+                    self.player_user = player.get_player_by_id(self.player_user.player_id)
+                    self.player_user.equipped_tarot = f"{active_card.card_numeral}"
+                    self.player_user.set_player_field("player_equip_tarot", self.player_user.equipped_tarot)
+                    embed_msg.add_field(name="Equipped!", value="", inline=False)
+                else:
+                    embed_msg.add_field(name="Cannot Equip!", value="You do not own this card.", inline=False)
+                reload_view = TarotView(self.player_user, self.current_position)
+                await interaction.response.edit_message(embed=embed_msg, view=reload_view)
+        except Exception as e:
+            print(e)
+
+    @discord.ui.button(label="Bind", style=discord.ButtonStyle.success, row=2)
+    async def attempt_bind(self, interaction: discord.Interaction, button: discord.Button):
+        try:
+            if interaction.user.name == self.player_user.player_name:
+                if not self.embed:
+                    self.embed = binding_ritual(self.player_user, self.selected_numeral, self.bind_success_rate)
+                reload_view = TarotView(self.player_user, self.current_position)
+                await interaction.response.edit_message(embed=self.embed, view=reload_view)
+        except Exception as e:
+            print(e)
+
+    @discord.ui.button(label="Synthesis", style=discord.ButtonStyle.success, row=2)
+    async def synthesize(self, interaction: discord.Interaction, button: discord.Button):
+        try:
+            if interaction.user.name == self.player_user.player_name:
+                active_card = check_tarot(self.player_user.player_id, card_dict[self.selected_numeral][0])
+                if not self.embed:
+                    self.embed = tarot_menu_embed(self.player_user, self.selected_numeral)
+                    title, description = "", ""
+                    if not active_card:
+                        description = "You do not own this card."
+                    if active_card.card_qty <= 1:
+                        description = "Not enough cards in possession."
+                    title = "" if description == "" else "Cannot Synthesize!"
+                    if active_card.num_stars >= 7:
+                        description = "Card cannot be upgraded further."
+                    if description != "":
+                        title = "Cannot Synthesize!"
+                    else:
+                        title, description = active_card.synthesize_tarot()
+                        self.embed = self.cycle_tarot(0)
+                    self.embed.add_field(name=title, value=description, inline=False)
+                reload_view = TarotView(self.player_user, self.current_position)
+                await interaction.response.edit_message(embed=self.embed, view=reload_view)
         except Exception as e:
             print(e)
 
 
 class TarotCard:
-    def __init__(self, player_id, card_numeral, card_variant, card_name, card_qty,
-                 num_stars, card_enhancement):
+    def __init__(self, player_id, card_numeral, card_qty, num_stars, card_enhancement):
         self.player_id = player_id
         self.card_numeral = card_numeral
-        self.card_variant = card_variant
-        self.card_name = card_name
+        self.card_name, self.card_tier = card_dict[card_numeral][0], card_dict[card_numeral][1]
         self.card_qty = card_qty
         self.num_stars = num_stars
-        self.card_tier = 1
+        self.damage, self.hp, self.fd = tarot_damage[self.num_stars], tarot_hp[self.num_stars], tarot_fd[self.num_stars]
         self.card_enhancement = card_enhancement
-        card_file = f'{self.card_numeral}variant{self.card_variant}'
-        self.card_image_link = f"https://kyleportfolio.ca/botimages/tarot/{card_file}.png"
+        if self.card_qty == 0:
+            self.card_image_link = "https://kyleportfolio.ca/botimages/tarot/cardback.png"
+        else:
+            self.card_image_link = f"https://kyleportfolio.ca/botimages/tarot/{self.card_numeral}.png"
 
-    def get_base_damage(self):
-        damage_value = 10000
-        if self.card_tier == 5:
-            damage_value = 25000
-        elif self.card_tier == 6:
-            damage_value = 50000
-        if self.card_variant == 2:
-            damage_value *= 2
-        base_damage = damage_value * self.num_stars
-        return base_damage
+    def create_tarot_embed(self):
+        gear_colour, gear_emoji = inventory.get_gear_tier_colours(self.num_stars)
+        display_stars = ""
+        for x in range(self.num_stars):
+            display_stars += globalitems.star_icon
+        for y in range((5 - self.num_stars)):
+            display_stars += "<:ebstar2:1144826056222724106>"
+        card_title = f"{self.card_numeral} - {self.card_name}"
+        card_title += f" [{card_variant[self.num_stars]}]"
+        tarot_embed = discord.Embed(colour=gear_colour, title=card_title, description=display_stars)
+        if self.num_stars != 0:
+            tarot_embed.add_field(name=f"", value=self.display_tarot_stats(), inline=False)
+        tarot_embed.set_image(url=self.card_image_link)
+        return tarot_embed
 
-    def display_tarot_bonus_stat(self):
-        display_method = 1
-        buff_type = ""
-        buff_value = 0
-        card_num = get_number_by_tarot(self.card_name)
-        match card_num:
-            case 0:
-                if self.card_variant == 1:
-                    buff_type = "Ice Resistance"
-                    buff_value = self.num_stars * 15
-                else:
-                    buff_type = "Ice Damage"
-                    buff_value = self.num_stars * 25
-            case 1:
-                if self.card_variant == 1:
-                    buff_type = "Fire and Ice Resistance"
-                    buff_value = self.num_stars * 10
-                else:
-                    buff_type = "Fire and Ice Damage"
-                    buff_value = self.num_stars * 15
-            case 2:
-                if self.card_variant == 1:
-                    buff_type = "Celestial Penetration"
-                    buff_value = self.num_stars * 25
-                else:
-                    buff_type = "Celestial Curse"
-                    buff_value = self.num_stars * 30
-            case 3:
-                if self.card_variant == 1:
-                    buff_type = "Defence Penetration"
-                    buff_value = self.num_stars * 25
-                else:
-                    buff_type = "Attack Speed"
-                    buff_value = self.num_stars * 10
-            case 4:
-                if self.card_variant == 1:
-                    buff_type = "Critical Damage"
-                    buff_value = self.num_stars * 30
-                else:
-                    buff_type = "Critical Penetration"
-                    buff_value = self.num_stars * 40
-            case 5:
-                if self.card_variant == 1:
-                    buff_type = "Lightning Penetration"
-                    buff_value = self.num_stars * 25
-                else:
-                    buff_type = "Lightning Curse"
-                    buff_value = self.num_stars * 30
-            case 6:
-                if self.card_variant == 1:
-                    buff_type = "Omni Resistance"
-                    buff_value = self.num_stars * 10
-                else:
-                    buff_type = "Human Bane"
-                    buff_value = self.num_stars * 40
-            case 7:
-                if self.card_variant == 1:
-                    buff_type = "Ultimate Damage"
-                    buff_value = self.num_stars * 25
-                else:
-                    buff_type = "Ultimate Penetration"
-                    buff_value = self.num_stars * 30
-            case 8:
-                if self.card_variant == 1:
-                    display_method = 2
-                    buff_type = "Bleed Damage"
-                    buff_value = self.num_stars * 25
-                else:
-                    buff_type = "Bleed Penetration"
-                    buff_value = self.num_stars * 30
-            case 9:
-                if self.card_variant == 1:
-                    buff_type = "Lightning Resistance"
-                    buff_value = self.num_stars * 15
-                else:
-                    buff_type = "Lightning Damage"
-                    buff_value = self.num_stars * 25
-            case 10:
-                if self.card_variant == 1:
-                    buff_type = "Cobmo Damage"
-                    buff_value = self.num_stars * 25
-                else:
-                    buff_type = "Combo Penetration"
-                    buff_value = self.num_stars * 30
-            case 11:
-                if self.card_variant == 1:
-                    buff_type = "Light Penetration"
-                    buff_value = self.num_stars * 25
-                else:
-                    buff_type = "Light Curse"
-                    buff_value = self.num_stars * 30
-            case 12:
-                if self.card_variant == 1:
-                    buff_type = "Shadow Penetration"
-                    buff_value = self.num_stars * 25
-                else:
-                    buff_type = "Shadow Curse"
-                    buff_value = self.num_stars * 30
-            case 13:
-                if self.card_variant == 1:
-                    buff_type = "Ice Penetration"
-                    buff_value = self.num_stars * 25
-                else:
-                    buff_type = "Ice Penetration"
-                    buff_value = self.num_stars * 30
-            case 14:
-                if self.card_variant == 1:
-                    buff_type = "Water Penetration"
-                    buff_value = self.num_stars * 25
-                else:
-                    buff_type = "Water Curse"
-                    buff_value = self.num_stars * 30
-            case 15:
-                if self.card_variant == 1:
-                    buff_type = "Fire and Ice Penetration"
-                    buff_value = self.num_stars * 15
-                else:
-                    buff_type = "Fire and Ice Curse"
-                    buff_value = self.num_stars * 20
-            case 16:
-                if self.card_variant == 1:
-                    buff_type = "Damage Mitigation"
-                    buff_value = self.num_stars * 15
-                else:
-                    buff_type = "Omni Bane"
-                    buff_value = self.num_stars * 10
-            case 17:
-                if self.card_variant == 1:
-                    buff_type = "Celestial Resistance"
-                    buff_value = self.num_stars * 15
-                else:
-                    buff_type = "Celestial Damage"
-                    buff_value = self.num_stars * 25
-            case 18:
-                if self.card_variant == 1:
-                    buff_type = "Shadow Resistance"
-                    buff_value = self.num_stars * 15
-                else:
-                    buff_type = "Shadow Damage"
-                    buff_value = self.num_stars * 25
-            case 19:
-                if self.card_variant == 1:
-                    buff_type = "Light Resistance"
-                    buff_value = self.num_stars * 15
-                else:
-                    buff_type = "Light Damage"
-                    buff_value = self.num_stars * 25
-            case 20:
-                if self.card_variant == 1:
-                    buff_type = "Wind and Earth Penetration"
-                    buff_value = self.num_stars * 15
-                else:
-                    buff_type = "Wind and Earth Curse"
-                    buff_value = self.num_stars * 220
-            case 21:
-                if self.card_variant == 1:
-                    buff_type = "Earth Resistance"
-                    buff_value = self.num_stars * 15
-                else:
-                    buff_type = "Earth Damage"
-                    buff_value = self.num_stars * 25
-            case 22:
-                if self.card_variant == 1:
-                    buff_type = "Omni Curse"
-                    buff_value = self.num_stars * 30
-                else:
-                    buff_type = "Omni Aura"
-                    buff_value = self.num_stars * 40
-        bonus_stat_string = f"{buff_type} +{buff_value}"
-        if display_method == 1:
-            bonus_stat_string += "%"
-        return bonus_stat_string
+    def display_tarot_stats(self):
+        card_data = card_stat_dict[self.card_numeral]
+        pearl = itemrolls.augment_icons[self.num_stars - 1]
+        path_string = f"Path of {player.path_names[card_data[0]]}" if card_data[0] != "All" else "All Paths"
+        stat_string = f"{path_string} +{path_point_values[self.num_stars]}\n"
+        stat_string += (f"{pearl} Base Damage {self.damage:,} - {self.damage:,}\n"
+                        f"{pearl} HP Bonus +{self.hp:,}\n"
+                        f"{pearl} Final Damage {self.fd:,}%")
+        for ability_data in card_data[1:]:
+            if "X" in ability_data[0]:
+                stat_string += f'\n{pearl} {ability_data[0].replace("X", str(ability_data[1] * self.num_stars))}'
+            else:
+                stat_string += f"\n{pearl} {ability_data[0]} {ability_data[1] * self.num_stars}%"
+        return stat_string
 
     def synthesize_tarot(self):
         new_qty = self.card_qty - 1
         self.set_tarot_field("card_qty", new_qty)
         random_num = random.randint(1, 100)
-        success = False
-        match self.num_stars:
-            case 1:
-                if random_num <= 50:
-                    success = True
-            case 2:
-                if random_num <= 30:
-                    success = True
-            case 3:
-                if random_num <= 15:
-                    success = True
-            case 4:
-                if random_num <= 5:
-                    success = True
-        if success:
-            self.num_stars += 1
-            self.set_tarot_field("num_stars", self.num_stars)
-            outcome = "Synthesis Success!"
-        else:
-            outcome = "Synthesis Failed!"
-        return outcome
+        success_rate = synthesis_success_rate[self.num_stars]
+        if random_num > success_rate:
+            return "Synthesis Failed!", "One of the cards dissipates."
+        self.num_stars += 1
+        self.set_tarot_field("num_stars", self.num_stars)
+        return "Synthesis Success!", "The two cards combine into one."
 
     def set_tarot_field(self, field_name, field_value):
-        tarot_check = check_tarot(self.player_id, self.card_name, self.card_variant)
+        tarot_check = check_tarot(self.player_id, self.card_name)
         if tarot_check:
             try:
                 engine_url = mydb.get_engine_url()
                 engine = sqlalchemy.create_engine(engine_url)
                 pandora_db = engine.connect()
                 query = text(f"UPDATE TarotInventory SET {field_name} = :input_1 "
-                             f"WHERE player_id = :player_check AND card_numeral = :numeral_check "
-                             f"AND card_variant = :variant_check")
+                             f"WHERE player_id = :player_check AND card_numeral = :numeral_check ")
                 query = query.bindparams(input_1=field_value, player_check=self.player_id,
-                                         numeral_check=self.card_numeral, variant_check=self.card_variant)
+                                         numeral_check=self.card_numeral)
                 pandora_db.execute(query)
                 pandora_db.close()
                 engine.dispose()
@@ -432,7 +423,7 @@ class TarotCard:
                 print(error)
 
     def add_tarot_card(self):
-        tarot_check = check_tarot(self.player_id, self.card_name, self.card_variant)
+        tarot_check = check_tarot(self.player_id, self.card_name)
         try:
             engine_url = mydb.get_engine_url()
             engine = sqlalchemy.create_engine(engine_url)
@@ -440,13 +431,12 @@ class TarotCard:
             if tarot_check:
                 already_exists = True
             else:
-                query = text("INSERT INTO TarotInventory (player_id, card_numeral, card_variant, "
+                query = text("INSERT INTO TarotInventory (player_id, card_numeral, "
                              "card_name, card_qty, num_stars, card_enhancement) "
-                             "VALUES (:input_1, :input_2, :input_3, :input_4, "
-                             ":input_5, :input_6, :input_7)")
-                query = query.bindparams(input_1=self.player_id, input_2=self.card_numeral, input_3=self.card_variant,
-                                         input_4=self.card_name, input_5=self.card_qty, input_6=self.num_stars,
-                                         input_7=self.card_enhancement)
+                             "VALUES (:input_1, :input_2, :input_3, :input_4, :input_5, :input_6)")
+                query = query.bindparams(input_1=self.player_id, input_2=self.card_numeral,
+                                         input_3=self.card_name, input_4=self.card_qty,
+                                         input_5=self.num_stars, input_6=self.card_enhancement)
             pandora_db.execute(query)
             pandora_db.close()
             engine.dispose()
@@ -454,110 +444,69 @@ class TarotCard:
             print(error)
 
 
-def get_tarot_tier(card_name):
-    for idx, x in enumerate(paragon_list):
-        if card_name in x:
-            tarot_tier = idx + 1
-            return tarot_tier
-
-
-def create_tarot_embed(tarot_card):
-    gear_colour, gear_emoji = inventory.get_gear_tier_colours(tarot_card.card_tier)
-    display_stars = ""
-    for x in range(tarot_card.num_stars):
-        display_stars += globalitems.star_icon
-    for y in range((5 - tarot_card.num_stars)):
-        display_stars += "<:ebstar2:1144826056222724106>"
-    card_title = f"{tarot_card.card_numeral} - {tarot_card.card_name}"
-    if tarot_card.card_variant == 1:
-        card_title += " [Standard]"
-    else:
-        card_title += " [Premium]"
-    tarot_embed = discord.Embed(colour=gear_colour,
-                                title=card_title,
-                                description=display_stars)
-    base_damage = tarot_card.get_base_damage()
-    tarot_embed.add_field(name=f"",
-                          value=f"Base Damage: {base_damage:,} - {base_damage:,}",
-                          inline=False)
-    tarot_embed.add_field(name=f"",
-                          value=tarot_card.display_tarot_bonus_stat(),
-                          inline=False)
-    tarot_embed.set_image(url=tarot_card.card_image_link)
-    return tarot_embed
-
-
-def check_tarot(player_id, card_name, card_variant):
+def check_tarot(player_id, card_name):
+    selected_tarot = None
     try:
         engine_url = mydb.get_engine_url()
         engine = sqlalchemy.create_engine(engine_url)
         pandora_db = engine.connect()
         query = text("SELECT * FROM TarotInventory WHERE player_id = :id_check "
-                     "AND card_name = :card_check AND card_variant = :card_variant")
-        query = query.bindparams(id_check=player_id, card_check=card_name, card_variant=card_variant)
+                     "AND card_name = :card_check")
+        query = query.bindparams(id_check=player_id, card_check=card_name)
         df = pd.read_sql(query, pandora_db)
         pandora_db.close()
         engine.dispose()
         if len(df.index) != 0:
             player_id = int(df['player_id'].values[0])
             card_numeral = str(df['card_numeral'].values[0])
-            card_variant = int(df['card_variant'].values[0])
-            card_name = str(df['card_name'].values[0])
             card_qty = int(df['card_qty'].values[0])
             num_stars = int(df['num_stars'].values[0])
             card_enhancement = int(df['card_enhancement'].values[0])
-            selected_tarot = TarotCard(player_id, card_numeral, card_variant, card_name, card_qty,
-                                       num_stars, card_enhancement)
-            selected_tarot.card_tier = get_tarot_tier(selected_tarot.card_name)
-        else:
-            selected_tarot = None
+            selected_tarot = TarotCard(player_id, card_numeral, card_qty, num_stars, card_enhancement)
     except exc.SQLAlchemyError as error:
         print(error)
-        selected_tarot = None
     return selected_tarot
 
 
-def tarot_numeral_list(position):
-    card_num_list = ["0", "I", "II", "III", "IV", "V", "VI", "VII", "VIII", "IX", "X",
-                     "XI", "XII", "XIII", "XIV", "XV", "XVI", "XVII", "XVIII", "XIX", "XX", "XXI", "XXX"]
-    return card_num_list[position]
+def tarot_menu_embed(player_object, card_numeral):
+    # Pull the card information
+    tarot_card = check_tarot(player_object.player_id, card_dict[card_numeral][0])
+    if tarot_card is None:
+        tarot_card = TarotCard(player_object.player_id, card_numeral, 0, 0, 0)
+    # Build the card embed message.
+    embed_msg = tarot_card.create_tarot_embed()
+    embed_msg.add_field(name=f"", value=f"Quantity: {tarot_card.card_qty}", inline=False)
+    embed_msg.set_image(url=tarot_card.card_image_link)
+    return embed_msg
 
 
-def get_number_by_numeral(roman_numeral):
-    card_num_list = ["0", "I", "II", "III", "IV", "V", "VI", "VII", "VIII", "IX", "X",
-                     "XI", "XII", "XIII", "XIV", "XV", "XVI", "XVII", "XVIII", "XIX", "XX", "XXI", "XXX"]
-    return card_num_list.index(roman_numeral)
+def get_index_by_key(numeral):
+    keys_list = list(card_dict.keys())
+    key_index = keys_list.index(numeral)
+    return key_index
 
 
-def tarot_card_list(position):
-    card_name_list = ["Karma, The Reflection", "Runa, The Magic", "Pandora, The Celestial", "Oblivia, The Void",
-                      "Akasha, The Infinite", "Arkaya, The Duality", "Kama, The Love", "Astratha, The Dimensional",
-                      "Tyra, The Behemoth", "Alaya, The Memory", "Chrona, The Temporal", "Nua, The Heavens",
-                      "Rua, The Abyss", "Thana, The Death", "Arcelia, The Clarity", "Diabla, The Primordial",
-                      "Aurora, The Fortress", "Nova, The Star", "Luna, The Moon", "Luma, The Sun",
-                      "Aria, The Requiem", "Ultima, The Creation", "Eleuia, The Wish"]
-    return card_name_list[position]
-
-
-def get_number_by_tarot(card_name):
-    card_name_list = ["Karma, The Reflection", "Runa, The Magic", "Pandora, The Celestial", "Oblivia, The Void",
-                      "Akasha, The Infinite", "Arkaya, The Duality", "Kama, The Love", "Astratha, The Dimensional",
-                      "Tyra, The Behemoth", "Alaya, The Memory", "Chrona, The Temporal", "Nua, The Heavens",
-                      "Rua, The Abyss", "Thana, The Death", "Arcelia, The Clarity", "Diabla, The Primordial",
-                      "Aurora, The Fortress", "Nova, The Star", "Luna, The Moon", "Luma, The Sun",
-                      "Aria, The Requiem", "Ultima, The Creation", "Eleuia, The Wish"]
-    position = card_name_list.index(card_name)
-    return position
+def get_key_by_index(key_index):
+    keys_list = list(card_dict.keys())
+    key_value = keys_list[key_index]
+    return key_value
 
 
 def get_resonance(card_num):
-    selected_tarot = tarot_card_list(card_num)
-    tarot_name = selected_tarot.split(", ")[1:]
-    resonance = ' '.join(tarot_name)
-    return resonance
+    resonance_list = ['The Reflection', 'The Magic', 'The Celestial', 'The Void', 'The Infinite',
+                      'The Duality', 'The Love', 'The Dragon', 'The Behemoth', 'The Memory',
+                      'The Temporal', 'The Heavens', 'The Abyss', 'The Death', 'The Clarity',
+                      'The Primordial', 'The Fortress', 'The Star', 'The Moon', 'The Sun',
+                      'The Requiem', 'The Creation', 'The Creation', 'The Changeling', 'The Pathwalker',
+                      'The Soulweaver', 'The Scribe', 'The Oracle', 'The Adjudicator', 'The Lotus',
+                      'The Wish']
+    if card_num == -1:
+        random.choice(resonance_list)
+    return resonance_list[card_num]
 
 
 def collection_check(player_id):
+    collection_count = 0
     try:
         engine_url = mydb.get_engine_url()
         engine = sqlalchemy.create_engine(engine_url)
@@ -569,9 +518,40 @@ def collection_check(player_id):
         engine.dispose()
         if len(df.index) != 0:
             collection_count = df.shape[0]
-        else:
-            collection_count = 0
     except exc.SQLAlchemyError as error:
         print(error)
-        collection_count = 0
     return collection_count
+
+
+def binding_ritual(player_object, essence_type, success_rate):
+    essence_id = f'Essence{essence_type}'
+    essence_stock = inventory.check_stock(player_object, essence_id)
+    loot_item = inventory.BasicItem(essence_id)
+    embed_msg = tarot_menu_embed(player_object, essence_type)
+    # Confirm stock is available
+    if essence_stock == 0:
+        description_msg = f"Out of stock: {loot_item.item_emoji}!"
+        embed_msg.add_field(name="Ritual Failed!", value=description_msg)
+        return embed_msg
+    # Pay the cost and attempt the binding.
+    inventory.update_stock(player_object, essence_id, -1)
+    random_roll = random.randint(1, 100)
+    if random_roll > success_rate:
+        description_msg = "The essence dissipates."
+        embed_msg.add_field(name="Ritual Failed!", value=description_msg)
+        return embed_msg
+    # Update the tarot inventory.
+    card_name = card_dict[essence_type][0]
+    tarot_check = check_tarot(player_object.player_id, card_name)
+    if tarot_check:
+        new_qty = tarot_check.card_qty + 1
+        tarot_check.set_tarot_field("card_qty", new_qty)
+    else:
+        new_tarot = TarotCard(player_object.player_id, essence_type, 1, 1, 0)
+        new_tarot.add_tarot_card()
+    embed_msg = tarot_menu_embed(player_object, essence_type)
+    description_msg = "The sealed tarot card has been added to your collection."
+    embed_msg.add_field(name="Ritual Successful!", value=description_msg)
+    return embed_msg
+
+

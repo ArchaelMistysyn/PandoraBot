@@ -51,10 +51,7 @@ def award_loot(boss_object, player_list, exp_amount, coin_amount):
         # Check essence drops
         tarot_qty = 0
         if ' - ' in boss_object.boss_name:
-            if boss_object.player_id == 0:
-                attempts = 5
-            else:
-                attempts = 1
+            attempts = 5 if boss_object.player_id == 0 else 1
             for y in range(0, attempts):
                 tarot_check_num = random.randint(1, 100)
                 if tarot_check_num <= 20:

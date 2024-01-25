@@ -398,8 +398,7 @@ class CustomItem:
                           }
         self.item_name = random.choice(gem_names_dict[self.item_tier])
         if self.item_tier >= 6:
-            random_resonance = random.randint(0, 22)
-            resonance = tarot.get_resonance(random_resonance)
+            resonance = tarot.get_resonance(-1)
             if self.item_tier != 7:
                 self.item_name = f"{self.item_name} - {resonance}"
 
@@ -648,7 +647,7 @@ def inventory_add_custom_item(item):
         query = text("SELECT * FROM CustomInventory WHERE player_id = :player_check AND item_type = :item_check")
         query = query.bindparams(player_check=item.player_owner, item_check=item.item_type)
         check_df = pd.read_sql(query, pandora_db)
-        if len(check_df) >= 30:
+        if len(check_df) > 30:
             result_id = 0
         else:
             query = text("INSERT INTO CustomInventory "

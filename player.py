@@ -1,6 +1,8 @@
 import pandas as pd
 import csv
 from csv import DictReader
+
+import insignia
 import inventory
 import combat
 import math
@@ -24,7 +26,7 @@ import itemrolls
 import globalitems
 from unidecode import unidecode
 
-path_names = ["Storms", "Frostfire", "Horizon", "Eclipse", "Stars", "Confluence"]
+path_names = ["Storms", "Frostfire", "Horizon", "Eclipse", "Stars", "Confluence", "Solitude"]
 glyph_data = {
             "Storms": ["Cyclone", "Critical Application +1", 20,
                        "Vortex", "Critical Application +1", 40,
@@ -76,7 +78,7 @@ class PlayerProfile:
         self.player_coins, self.player_stamina, self.vouch_points = 0, 0, 0
 
         # Initialize player gear/stats info.
-        self.player_stats, self.gear_points = [0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0]
+        self.player_stats, self.gear_points = [0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0]
         self.player_glyphs = ""
         self.player_equipped = [0, 0, 0, 0, 0]
         self.equipped_tarot, self.insignia = "", ""
@@ -132,7 +134,7 @@ class PlayerProfile:
 
     def reset_multipliers(self):
         self.player_damage, self.player_total_damage = 0.0, 0.0
-        self.gear_points = [0, 0, 0, 0, 0, 0]
+        self.gear_points = [0, 0, 0, 0, 0, 0, 0]
 
         # Initialize elemental stats.
         self.elemental_damage = [0, 0, 0, 0, 0, 0, 0, 0, 0]
@@ -340,7 +342,7 @@ class PlayerProfile:
         self.player_quest = 1
         self.player_lvl = 1
         self.player_stamina = 5000
-        player_stats = "0;0;0;0;0;0"
+        player_stats = "0;0;0;0;0;0;0"
         equipped_gear = "0;0;0;0;0"
         try:
             engine_url = mydb.get_engine_url()
@@ -571,11 +573,7 @@ class PlayerProfile:
             if e_item[y]:
                 self.unique_ability_multipliers(e_item[y])
         if self.equipped_tarot != "":
-            tarot_info = self.equipped_tarot.split(";")
-            e_tarot = tarot.check_tarot(self.player_id, tarot.tarot_card_list(int(tarot_info[0])),
-                                        int(tarot_info[1]))
-            base_damage = e_tarot.get_base_damage()
-            self.player_damage += base_damage
+            e_tarot = tarot.check_tarot(self.player_id, tarot.card_dict[self.equipped_tarot][0])
             self.assign_tarot_values(e_tarot)
         if self.insignia != "":
             self.assign_insignia_values(self.insignia)
@@ -759,144 +757,52 @@ class PlayerProfile:
         return self.player_total_damage
 
     def assign_insignia_values(self, insignia_code):
-        temp_elements = insignia_code.split(";")
+        # Data handling.
+        temp_code = insignia_code.split(";")
+        temp_elements, mutation_tier = temp_code[:9], int(temp_code[-1])
+        insignia_stars = self.player_echelon + mutation_tier
+        mutation_adjust = max(1, mutation_tier)
         element_list = list(map(int, temp_elements))
         num_elements = element_list.count(1)
-        self.final_damage += self.player_lvl * 0.01
+        # Apply bonus stats.
+        self.final_damage += self.player_lvl * 0.01 * mutation_adjust
         self.attack_speed += self.player_echelon * 0.1
+        self.hp_bonus += insignia.insignia_hp_list[insignia_stars]
+        # Apply Elemental Penetration
         if num_elements != 9:
             selected_elements_list = [ind for ind, x in enumerate(element_list) if x == 1]
             for y in selected_elements_list:
-                self.elemental_penetration[y] += (150 / num_elements + 25 * self.player_echelon) * 0.01
+                self.elemental_penetration[y] += insignia.insignia_multiplier_list[num_elements][0]
+                self.elemental_penetration[y] += (insignia.insignia_multiplier_list[num_elements][1]
+                                                  * insignia_stars * mutation_adjust)
+        # Omni exception for faster runtime and separate stat assignment.
         else:
-            self.all_elemental_penetration += 0.25 + 0.25 * self.player_echelon
-        self.hp_bonus += 500 * self.player_echelon
+            self.all_elemental_penetration += insignia.insignia_multiplier_list[num_elements][0] * 0.01
+            self.all_elemental_penetration += (insignia.insignia_multiplier_list[num_elements][1]
+                                               * insignia_stars * mutation_adjust * 0.01)
 
     def assign_tarot_values(self, tarot_card):
-        card_num = tarot.get_number_by_tarot(tarot_card.card_name)
+        card_data = tarot.card_stat_dict[tarot_card.card_numeral]
+        # Apply Path bonuses
+        path_bonus = tarot.path_point_values[tarot_card.num_stars]
+        if card_data[0] != "All":
+            self.player_stats[card_data[0]] += path_bonus
+        else:
+            self.player_stats = [path + path_bonus for path in self.player_stats]
+        # Apply modifier bonuses
+        self.player_damage += tarot_card.damage
+        self.hp_bonus += tarot_card.hp
+        self.final_damage += tarot_card.fd * 0.01
         card_multiplier = tarot_card.num_stars * 0.01
-        match card_num:
-            case 0:
-                if tarot_card.card_variant == 1:
-                    self.elemental_resistance[5] += card_multiplier * 15
-                else:
-                    self.elemental_multiplier[5] += card_multiplier * 25
-            case 1:
-                if tarot_card.card_variant == 1:
-                    self.elemental_resistance[0] += card_multiplier * 10
-                    self.elemental_resistance[5] += card_multiplier * 10
-                else:
-                    self.elemental_multiplier[0] += card_multiplier * 15
-                    self.elemental_multiplier[5] += card_multiplier * 15
-            case 2:
-                if tarot_card.card_variant == 1:
-                    self.elemental_penetration[8] += card_multiplier * 25
-                else:
-                    self.elemental_curse[8] += card_multiplier * 30
-            case 3:
-                if tarot_card.card_variant == 1:
-                    self.defence_penetration += card_multiplier * 25
-                else:
-                    self.attack_speed += card_multiplier * 10
-            case 4:
-                if tarot_card.card_variant == 1:
-                    self.critical_multiplier += card_multiplier * 30
-                else:
-                    self.critical_penetration += card_multiplier * 40
-            case 5:
-                if tarot_card.card_variant == 1:
-                    self.elemental_penetration[2] += card_multiplier * 25
-                else:
-                    self.elemental_curse[2] += card_multiplier * 30
-            case 6:
-                if tarot_card.card_variant == 1:
-                    self.all_elemental_resistance += card_multiplier * 10
-                else:
-                    self.banes[5] += card_multiplier * 40
-            case 7:
-                if tarot_card.card_variant == 1:
-                    self.ultimate_multiplier += card_multiplier * 25
-                else:
-                    self.ultimate_penetration += card_multiplier * 30
-            case 8:
-                if tarot_card.card_variant == 1:
-                    self.bleed_multiplier += card_multiplier * 25
-                else:
-                    self.bleed_penetration += card_multiplier * 30
-            case 9:
-                if tarot_card.card_variant == 1:
-                    self.elemental_resistance[2] += card_multiplier * 15
-                else:
-                    self.elemental_multiplier[2] += card_multiplier * 25
-            case 10:
-                if tarot_card.card_variant == 1:
-                    self.combo_multiplier += card_multiplier * 25
-                else:
-                    self.combo_penetration += card_multiplier * 30
-            case 11:
-                if tarot_card.card_variant == 1:
-                    self.elemental_penetration[7] += card_multiplier * 25
-                else:
-                    self.elemental_curse[7] += card_multiplier * 30
-            case 12:
-                if tarot_card.card_variant == 1:
-                    self.elemental_penetration[6] += card_multiplier * 25
-                else:
-                    self.elemental_curse[6] += card_multiplier * 30
-            case 13:
-                if tarot_card.card_variant == 1:
-                    self.elemental_penetration[5] += card_multiplier * 25
-                else:
-                    self.elemental_curse[5] += card_multiplier * 30
-            case 14:
-                if tarot_card.card_variant == 1:
-                    self.elemental_penetration[1] += card_multiplier * 25
-                else:
-                    self.elemental_curse[1] += card_multiplier * 30
-            case 15:
-                if tarot_card.card_variant == 1:
-                    self.elemental_penetration[0] += card_multiplier * 15
-                    self.elemental_penetration[5] += card_multiplier * 15
-                else:
-                    self.elemental_curse[0] += card_multiplier * 20
-                    self.elemental_curse[5] += card_multiplier * 20
-            case 16:
-                if tarot_card.card_variant == 1:
-                    self.damage_mitigation += card_multiplier * 15
-                else:
-                    self.banes[6] += card_multiplier * 10
-            case 17:
-                if tarot_card.card_variant == 1:
-                    self.elemental_resistance[8] += card_multiplier * 15
-                else:
-                    self.elemental_multiplier[8] += card_multiplier * 25
-            case 18:
-                if tarot_card.card_variant == 1:
-                    self.elemental_resistance[6] += card_multiplier * 15
-                else:
-                    self.elemental_multiplier[6] += card_multiplier * 25
-            case 19:
-                if tarot_card.card_variant == 1:
-                    self.elemental_resistance[7] += card_multiplier * 15
-                else:
-                    self.elemental_multiplier[7] += card_multiplier * 25
-            case 20:
-                if tarot_card.card_variant == 1:
-                    self.elemental_multiplier[4] += card_multiplier * 15
-                    self.elemental_multiplier[3] += card_multiplier * 15
-                else:
-                    self.elemental_penetration[4] += card_multiplier * 20
-                    self.elemental_penetration[3] += card_multiplier * 20
-            case 21:
-                if tarot_card.card_variant == 1:
-                    self.elemental_resistance[3] += card_multiplier * 15
-                else:
-                    self.elemental_multiplier[3] += card_multiplier * 25
-            case 22:
-                if tarot_card.card_variant == 1:
-                    self.all_elemental_curse += card_multiplier * 30
-                else:
-                    self.aura += card_multiplier * 40
+        for bonus_roll in card_data[1:]:
+            attribute_name, attribute_position = bonus_roll[2], bonus_roll[3]
+            if "application" not in attribute_name:
+                attribute_value = (bonus_roll[1] * card_multiplier)
+            if attribute_position is None:
+                setattr(self, attribute_name, getattr(self, attribute_name) + attribute_value)
+            else:
+                target_list = getattr(self, attribute_name)
+                target_list[attribute_position] += attribute_value
 
     def equip(self, selected_item) -> str:
         try:

@@ -48,7 +48,8 @@ t5_hp_bar_full = ["<:HP_Bar_Full_03:1176053423049822219>", "<:HP_Bar_Full_04:117
                   "<:HP_Bar_Full_17:1176053370876870659>"]
 hp_bar_dict = {1: [t5_hp_bar_full, t5_hp_bar_empty], 2: [t5_hp_bar_full, t5_hp_bar_empty],
                3: [t5_hp_bar_full, t5_hp_bar_empty], 4: [t5_hp_bar_full, t5_hp_bar_empty],
-               5: [t5_hp_bar_full, t5_hp_bar_empty], 6: [t5_hp_bar_full, t5_hp_bar_empty]}
+               5: [t5_hp_bar_full, t5_hp_bar_empty], 6: [t5_hp_bar_full, t5_hp_bar_empty],
+               7: [t5_hp_bar_full, t5_hp_bar_empty]}
 
 
 class CombatTracker:
@@ -62,6 +63,7 @@ class CombatTracker:
         self.time_damage = 0
         self.player_cHP = 0
         self.bleed_tracker = 0.0
+        self.highest_damage = 0.0
 
 
 def run_cycle(combat_tracker, active_boss, player_object, method):
@@ -77,8 +79,7 @@ def run_cycle(combat_tracker, active_boss, player_object, method):
                 boss_damage_element = active_boss.boss_element
             else:
                 boss_damage_element = random.randint(0, 8)
-            boss_adjuster = int(active_boss.boss_lvl / 10 + 1)
-            boss_damage = random.randint(100 * boss_adjuster, 250 * boss_adjuster)
+            boss_damage = random.randint(100 * active_boss.boss_lvl, 250 * active_boss.boss_lvl)
             boss_damage -= int(boss_damage * player_object.elemental_resistance[boss_damage_element])
             boss_damage -= int(boss_damage * player_object.damage_mitigation * 0.01)
             combat_tracker.player_cHP -= boss_damage
@@ -215,6 +216,8 @@ def run_solo_cycle(combat_tracker, active_boss, player_object):
     hit_field = ""
     for hit in hit_list:
         hit_field += f"{hit[1]}\n"
+        if hit[0] > combat_tracker.highest_damage:
+            combat_tracker.highest_damage = hit[0]
     embed_msg.add_field(name="", value=hit_field, inline=False)
     return embed_msg
 

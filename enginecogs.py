@@ -9,6 +9,7 @@ import asyncio
 import random
 import loot
 import menus
+import leaderboards
 from discord.ext.commands import Bot
 from discord.ext import commands, tasks
 
@@ -75,6 +76,8 @@ class SoloCog(commands.Cog):
                 is_alive = await self.bot.solo_boss(self.combat_tracker, self.player_object, self.active_boss,
                                                     self.channel_id, self.sent_message, self.channel_object)
                 if not is_alive:
+                    if self.active_boss.boss_name == "XXVIII - Yubelle, Adjudicator of the True Laws":
+                        leaderboards.update_leaderboard(self.combat_tracker, self.player_object)
                     self.cog_unload()
         else:
             combat.toggle_flag(self.player_object)

@@ -16,7 +16,7 @@ import adventure
 import inventory
 import bosses
 import random
-
+import leaderboards
 import itemdata
 import itemicons
 import itemrolls
@@ -171,6 +171,9 @@ def run_discord_bot():
                         await ctx.send("Admin item task completed.")
                     else:
                         await ctx.send("Only Archael can run this command.")
+                if backdoor == "rerank_leaderboard":
+                    leaderboards.rerank_leaderboard()
+                    await ctx.send("Admin item task completed.")
             else:
                 await ctx.send("Only testers can use this command.")
 
@@ -294,12 +297,11 @@ def run_discord_bot():
             else:
                 player_object.get_equipped()
                 if player_object.equipped_tarot != "":
-                    tarot_info = player_object.equipped_tarot.split(";")
                     e_tarot = tarot.check_tarot(player_object.player_id,
-                                                tarot.tarot_card_list(int(tarot_info[0])), int(tarot_info[1]))
+                                                tarot.card_dict[player_object.equipped_tarot][0])
                 else:
-                    e_tarot = tarot.TarotCard(player_object.player_id, "II", 1,
-                                              "Pandora, The Celestial", 0, 0, 0)
+                    e_tarot = tarot.TarotCard(player_object.player_id, "II",
+                                              0, 0, 0)
                 manifest_description = ""
                 embed_msg = discord.Embed(colour=colour)
                 if player_object.equipped_tarot != "":
@@ -318,12 +320,7 @@ def run_discord_bot():
                                             " Let's divide and conquer. I'll handle the task for you. What would you"
                                             " like me to help with?")
                 embed_msg.description = manifest_description
-                if player_object.player_echelon < 2:
-                    new_view = adventure.ManifestView1(player_object, embed_msg, e_tarot, colour, num_hours)
-                elif player_object.player_echelon < 4:
-                    new_view = adventure.ManifestView2(player_object, embed_msg, e_tarot, colour, num_hours)
-                else:
-                    new_view = adventure.ManifestView3(player_object, embed_msg, e_tarot, colour, num_hours)
+                new_view = adventure.ManifestView(player_object, embed_msg, e_tarot, colour, num_hours)
                 await ctx.send(embed=embed_msg, view=new_view)
 
     @set_command_category('game', 5)
@@ -579,20 +576,20 @@ def run_discord_bot():
             await ctx.defer()
             user = ctx.author
             player_object = player.get_player_by_name(user)
-            if player_object.player_class != "":
-                if start_location in range(0, 23):
-                    completion_count = tarot.collection_check(player_object.player_id)
-                    embed_msg = discord.Embed(colour=discord.Colour.magenta(),
-                                              title=f"{player_object.player_username}'s Tarot Collection",
-                                              description=f"Completion Total: {completion_count} / 46")
-                    embed_msg.set_image(url="")
-                    tarot_view = tarot.CollectionView(player_object, embed_msg, start_location)
-                    await ctx.send(embed=embed_msg, view=tarot_view)
-                else:
-                    await ctx.send("Please enter a valid start location from 0-22 or leave the start location blank.")
-            else:
+            if player_object.player_class == "":
                 embed_msg = unregistered_message()
                 await ctx.send(embed=embed_msg)
+                return
+            if start_location not in range(0, 31):
+                await ctx.send("Please enter a valid start location from 0-30 or leave the start location blank.")
+                return
+            completion_count = tarot.collection_check(player_object.player_id)
+            embed_msg = discord.Embed(colour=discord.Colour.magenta(),
+                                      title=f"{player_object.player_username}'s Tarot Collection",
+                                      description=f"Completion Total: {completion_count} / 31")
+            embed_msg.set_image(url="")
+            tarot_view = tarot.CollectionView(player_object, start_location)
+            await ctx.send(embed=embed_msg, view=tarot_view)
 
     @set_command_category('gear', 4)
     @pandora_bot.hybrid_command(name='engrave', help="Engrave an insignia on your soul.")
@@ -638,21 +635,21 @@ def run_discord_bot():
             def can_meld(input_gem_id, command_user):
                 if not inventory.if_custom_exists(input_gem_id):
                     description = f"Gem id not recognized.\nID: {input_gem_id}"
-                    return False, description, None
+                    return False, None, description
                 gem_object = inventory.read_custom_item(input_gem_id)
                 if gem_object.item_tier < 5 or gem_object.item_tier >= 7:
                     description = f"Gem is not eligible for melding.\nID: {input_gem_id}"
-                    return False, description, None
+                    return False, None, description
                 if gem_object.player_owner != command_user.player_id:
                     item_owner = player.get_player_by_id(gem_object.player_owner)
                     description = f"Owned by: {item_owner.player_username}"
-                    return False, description, None
+                    return False, None, description
                 if gem_object.player_owner == -1:
                     seller_id = bazaar.get_seller_by_item(input_gem_id)
                     seller_object = player.get_player_by_id(seller_id)
                     description = (f"Gem item currently listed for sale by: {seller_object.player_username}"
                                    f"\nID: {input_gem_id}")
-                    return False, description, None
+                    return False, None, description
                 return True, gem_object, None
 
             # Handle eligibility.
@@ -892,25 +889,6 @@ def run_discord_bot():
                 embed_msg = unregistered_message()
                 await ctx.send(embed=embed_msg)
 
-    @set_command_category('craft', 2)
-    @pandora_bot.hybrid_command(name='bind', help="Perform a binding ritual on an essence.")
-    @app_commands.guilds(discord.Object(id=1011375205999968427))
-    async def bind_ritual(ctx):
-        if any(ctx.channel.id in sl for sl in globalitems.global_server_channels):
-            await ctx.defer()
-            user = ctx.author
-            player_object = player.get_player_by_name(user)
-            if player_object.player_class != "":
-                embed_msg = discord.Embed(colour=discord.Colour.magenta(),
-                                          title="Pandora's Binding Ritual",
-                                          description="Let me know if you've acquired any new essences!")
-                embed_msg.set_image(url="")
-                bind_view = menus.BindingTierView(player_object)
-                await ctx.send(embed=embed_msg, view=bind_view)
-            else:
-                embed_msg = unregistered_message()
-                await ctx.send(embed=embed_msg)
-
     @pandora_bot.hybrid_command(name='testing', help="Testing Command.")
     @app_commands.guilds(discord.Object(id=1011375205999968427))
     async def testing(ctx):
@@ -922,7 +900,7 @@ def run_discord_bot():
         print(embed_msg.thumbnail.url)
         await ctx.send(embed=embed_msg)
 
-    @set_command_category('craft', 3)
+    @set_command_category('craft', 2)
     @pandora_bot.hybrid_command(name='infuse', help="Infuse items using alchemy.")
     @app_commands.guilds(discord.Object(id=1011375205999968427))
     async def infusion(ctx):
@@ -942,7 +920,7 @@ def run_discord_bot():
                 await ctx.send(embed=embed_msg)
 
         # Crafting Commands
-    @set_command_category('craft', 4)
+    @set_command_category('craft', 3)
     @pandora_bot.hybrid_command(name='purify', help="Perform void purification.")
     @app_commands.guilds(discord.Object(id=1011375205999968427))
     async def void_purification(ctx):
@@ -971,7 +949,7 @@ def run_discord_bot():
             embed_msg = unregistered_message()
             await ctx.send(embed=embed_msg)
 
-    @set_command_category('craft', 5)
+    @set_command_category('craft', 4)
     @pandora_bot.hybrid_command(name='fountain', help="Go to the ???")
     @app_commands.guilds(discord.Object(id=1011375205999968427))
     async def fountain(ctx):
@@ -1001,7 +979,7 @@ def run_discord_bot():
                 embed_msg = unregistered_message()
                 await ctx.send(embed=embed_msg)
 
-    @set_command_category('craft', 6)
+    @set_command_category('craft', 5)
     @pandora_bot.hybrid_command(name='scribe', help="Speak with ??? in the plane of the arbiters.")
     @app_commands.guilds(discord.Object(id=1011375205999968427))
     async def scribe(ctx):
@@ -1130,7 +1108,19 @@ def run_discord_bot():
         else:
             await ctx.send(f"Target user {target_name} is not registered")
 
-    @set_command_category('info', 5)
+    @set_command_category('info', 4)
+    @pandora_bot.hybrid_command(name='leaderboard', help="View the leaderboard.")
+    @app_commands.guilds(discord.Object(id=1011375205999968427))
+    async def leaderboard(ctx):
+        if any(ctx.channel.id in sl for sl in globalitems.global_server_channels):
+            await ctx.defer()
+            command_user = ctx.author
+            player_object = player.get_player_by_name(command_user)
+            embed_msg = leaderboards.display_leaderboard("DPS", player_object.player_id)
+            new_view = leaderboards.LeaderbaordView(player_object)
+            await ctx.send(embed=embed_msg, view=new_view)
+
+    @set_command_category('info', 6)
     @pandora_bot.command(name='credits', help="Displays the game credits.")
     @app_commands.guilds(discord.Object(id=1011375205999968427))
     async def credits_list(ctx):

@@ -78,7 +78,7 @@ token_data = [
      'An ancient token. To one who knows its true purpose the value of this item is immeasurable.', 250000, ""],
     [None, 'Oracle Token', 100, 6, '<a:elootitem:1144477550379274322>',
      'An ancient token. ???.', 100000, ""],
-    [None, '??? Token', 100, 7, '<a:elootitem:1144477550379274322>',
+    [None, 'Adjudicator Token', 100, 7, '<a:elootitem:1144477550379274322>',
      'An ancient token. ???.', 500000, ""]
 ]
 itemdata_dict = build_item_dict(itemdata_dict, token_data, 1)
@@ -310,6 +310,14 @@ essence_data = [
     ['EssenceXIX', 'Essence of The Sun', 10, 2, '<a:elootitem:1144477550379274322>', None, 0, ""],
     ['EssenceXX', 'Essence of The Requiem', 10, 2, '<a:elootitem:1144477550379274322>', None, 0, ""],
     ['EssenceXXI', 'Essence of The Creation', 10, 2, '<a:elootitem:1144477550379274322>', None, 0, ""],
+    ['EssenceXXII', 'Essence of The Creation', 10, 2, '<a:elootitem:1144477550379274322>', None, 0, ""],
+    ['EssenceXXIII', 'Essence of The Changeling', 10, 2, '<a:elootitem:1144477550379274322>', None, 0, ""],
+    ['EssenceXXIV', 'Essence of The Pathwalker', 10, 2, '<a:elootitem:1144477550379274322>', None, 0, ""],
+    ['EssenceXXV', 'Essence of The Soulweaver', 10, 2, '<a:elootitem:1144477550379274322>', None, 0, ""],
+    ['EssenceXXVI', 'Essence of The Scribe', 10, 2, '<a:elootitem:1144477550379274322>', None, 0, ""],
+    ['EssenceXXVII', 'Essence of The Oracle', 10, 2, '<a:elootitem:1144477550379274322>', None, 0, ""],
+    ['EssenceXXVIII', 'Essence of The Adjudicator', 10, 2, '<a:elootitem:1144477550379274322>', None, 0, ""],
+    ['EssenceXXIX', 'Essence of The Lotus', 10, 2, '<a:elootitem:1144477550379274322>', None, 0, ""],
     ['EssenceXXX', 'Essence of The Wish', 10, 6, '<a:elootitem:1144477550379274322>', None, 0, ""]
 ]
 for index, row in enumerate(essence_data[1:]):
@@ -336,6 +344,18 @@ lotus_data = [
     [None, 'Lotus of Revelations', 100, 7, '<a:eorigin:1145520263954440313>',
      '???', 0, ""],
     [None, 'Lotus of Eternity', 100, 7, '<a:eorigin:1145520263954440313>',
+     '???', 0, ""],
+    [None, 'Lotus of Abundance', 100, 7, '<a:eorigin:1145520263954440313>',
+     '???', 0, ""],
+    [None, 'Lotus of Serenity', 100, 7, '<a:eorigin:1145520263954440313>',
+     '???', 0, ""],
+    [None, 'Lotus of ???', 100, 7, '<a:eorigin:1145520263954440313>',
+     '???', 0, ""],
+    [None, 'Lotus of Gravity', 100, 7, '<a:eorigin:1145520263954440313>',
+     '???', 0, ""],
+    [None, 'Lotus of Nightmares', 100, 7, '<a:eorigin:1145520263954440313>',
+     '???', 0, ""],
+    [None, 'Divine Lotus', 100, 7, '<a:eorigin:1145520263954440313>',
      '???', 0, ""]
 ]
 itemdata_dict = build_item_dict(itemdata_dict, lotus_data, 1)
