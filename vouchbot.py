@@ -77,7 +77,7 @@ def run_discord_bot():
     async def vouch(ctx, user: discord.User):
         if user.id == ctx.author.id:
             await ctx.send("You cannot vouch for yourself.")
-        command_user = player.get_player_by_name(ctx.author)
+        command_user = player.get_player_by_discord(ctx.author.id)
         if command_user.player_class != "":
             difference, method = command_user.check_cooldown("vouch")
             run_command = False
@@ -93,7 +93,7 @@ def run_discord_bot():
                 run_command = True
             if run_command:
                 command_user.set_cooldown("vouch", "")
-                player_object = player.get_player_by_name(user.name)
+                player_object = player.get_player_by_discord(user.id)
                 if player_object.player_class != "":
                     role_points = {
                         1011375497265033216: 20,  # Owner role ID
@@ -121,7 +121,7 @@ def run_discord_bot():
     @vouch_bot.hybrid_command(name='vcheck', help="Check the vouches of a user.")
     @app_commands.guilds(discord.Object(id=1011375205999968427))
     async def vouch(ctx, user: discord.User):
-        selected_user = player.get_player_by_name(user.name)
+        selected_user = player.get_player_by_discord(user.id)
         if selected_user.player_class != "":
             num_vouches = selected_user.vouch_points
         else:

@@ -60,7 +60,7 @@ class BInventoryView(discord.ui.View):
     )
     async def inventory_callback(self, interaction: discord.Interaction, inventory_select: discord.ui.Select):
         try:
-            if interaction.user.name == self.user.player_name:
+            if interaction.user.id == self.user.discord_id:
                 inventory_title = f'{self.user.player_username}\'s {inventory_select.values[0]} Inventory:\n'
                 player_inventory = display_binventory(self.user.player_id, inventory_select.values[0])
 
@@ -74,7 +74,7 @@ class BInventoryView(discord.ui.View):
     @discord.ui.button(label="Gear", style=discord.ButtonStyle.blurple, emoji="✅")
     async def toggle_callback(self, interaction: discord.Interaction, button: discord.Button):
         try:
-            if interaction.user.name == self.user.player_name:
+            if interaction.user.id == self.user.discord_id:
                 new_view = CInventoryView(self.user)
                 inventory_title = f'{self.user.player_username}\'s Equipment:\n'
                 player_inventory = display_cinventory(self.user.player_id, "W")
@@ -112,7 +112,7 @@ class CInventoryView(discord.ui.View):
     )
     async def inventory_callback(self, interaction: discord.Interaction, inventory_select: discord.ui.Select):
         try:
-            if interaction.user.name == self.user.player_name:
+            if interaction.user.id == self.user.discord_id:
                 inventory_title = f'{self.user.player_username}\'s Inventory:\n'
                 player_inventory = display_cinventory(self.user.player_id, inventory_select.values[0])
 
@@ -126,7 +126,7 @@ class CInventoryView(discord.ui.View):
     @discord.ui.button(label="Items", style=discord.ButtonStyle.blurple, emoji="✅")
     async def toggle_callback(self, interaction: discord.Interaction, button: discord.Button):
         try:
-            if interaction.user.name == self.user.player_name:
+            if interaction.user.id == self.user.discord_id:
                 new_view = BInventoryView(self.user)
                 inventory_title = f'{self.user.player_username}\'s Inventory:\n'
                 player_inventory = display_binventory(self.user.player_id, "Crafting")
@@ -424,7 +424,7 @@ class CustomItem:
         item_title = f'{self.item_name} '
         item_title = item_title.ljust(46, "᲼")
         self.update_damage()
-        display_stars, item_rolls, base_type, aux_suffix = "", "", "", ""
+        item_rolls, base_type, aux_suffix = "", "", ""
         # Set the thumbnail image.
         thumb_img = self.get_citem_thumbnail()
         # Set the base stat text.
@@ -442,11 +442,7 @@ class CustomItem:
         else:
             item_rolls += f"{get_gem_stat_message(self.item_bonus_stat)}"
         rolls_msg = itemrolls.display_rolls(self, roll_change_list)
-        for x in range(self.item_num_stars):
-            display_stars += globalitems.star_icon
-        if self.item_num_stars < 5:
-            for y in range((5 - self.item_num_stars)):
-                display_stars += "<:ebstar2:1144826056222724106>"
+        display_stars = globalitems.display_stars(self.item_num_stars)
         item_types = ""
         if self.item_type != "D":
             item_types = f'{globalitems.class_icon_dict[self.item_damage_type]}'
@@ -471,9 +467,7 @@ class CustomItem:
         damage_max = str(gem_max + self.item_damage_max)
         damage_bonus = f'Base Damage: {int(damage_min):,}'
         damage_bonus += f' - {int(damage_max):,}'
-        embed_msg = discord.Embed(colour=tier_colour,
-                                  title=item_title,
-                                  description=display_stars)
+        embed_msg = discord.Embed(colour=tier_colour, title=item_title, description=display_stars)
         embed_msg.add_field(name=item_types, value=damage_bonus, inline=False)
         embed_msg.add_field(name="Item Rolls", value=item_rolls, inline=False)
         if rolls_msg != "":
@@ -772,7 +766,7 @@ def display_binventory(player_id, method):
 
 def get_gem_stat_message(gem_bonus_code):
     bonus_stat_details = gem_bonus_code.split(";")
-    path_name = player.path_names[int(bonus_stat_details[0])]
+    path_name = globalitems.path_names[int(bonus_stat_details[0])]
     stat_message = f"Path of {path_name} +{bonus_stat_details[1]}"
     return stat_message
 

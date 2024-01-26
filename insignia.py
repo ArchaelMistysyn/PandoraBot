@@ -37,12 +37,7 @@ def display_insignia(player_object, insignia_code):
     item_rolls += f"\n{pearl} Attack Speed {player_object.player_echelon * 10:,}%"
 
     # Build the embed message.
-    display_stars = ""
-    for x in range(insignia_stars):
-        display_stars += globalitems.star_icon
-    if player_object.player_echelon < 5:
-        for y in range((5 - player_object.player_echelon)):
-            display_stars += "<:ebstar2:1144826056222724106>"
+    display_stars = globalitems.display_stars(insignia_stars)
     insignia_name = f"{insignia_name_list[num_elements]} Insignia [{insignia_prefix[insignia_stars - 1]}]"
     bonus = insignia_multiplier_list[num_elements][0] + insignia_multiplier_list[num_elements][1] * insignia_stars
     if num_elements == 9:
@@ -80,7 +75,7 @@ class InsigniaView(discord.ui.View):
 
     async def insignia_select_callback(self, interaction: discord.Interaction):
         try:
-            if interaction.user.name == self.player_user.player_name:
+            if interaction.user.id == self.player_user.discord_id:
                 num_elements = int(interaction.data['values'][0])
                 token_item = inventory.BasicItem("Token2")
                 embed_msg = discord.Embed(colour=discord.Colour.dark_orange(),
@@ -149,7 +144,7 @@ class ElementSelectView(discord.ui.View):
 
     async def element_select_callback(self, interaction: discord.Interaction):
         try:
-            if interaction.user.name == self.player_user.player_name:
+            if interaction.user.id == self.player_user.discord_id:
                 selected_element = int(interaction.data['values'][0])
                 if not self.embed:
                     current_selection = self.current_selection
@@ -192,7 +187,7 @@ class ConfirmSelectionView(discord.ui.View):
     @discord.ui.button(label="Engrave", style=discord.ButtonStyle.success, emoji="🔯")
     async def engrave(self, interaction: discord.Interaction, button: discord.Button):
         try:
-            if interaction.user.name != self.player_user.player_name:
+            if interaction.user.id != self.player_user.discord_id:
                 return
             if self.embed_msg:
                 await interaction.response.edit_message(embed=self.embed_msg, view=None)
@@ -284,7 +279,7 @@ class ConfirmSelectionView(discord.ui.View):
     @discord.ui.button(label="Reselect", style=discord.ButtonStyle.blurple, emoji="↩️")
     async def reselect_callback(self, interaction: discord.Interaction, button: discord.Button):
         try:
-            if interaction.user.name == self.player_user.player_name:
+            if interaction.user.id == self.player_user.discord_id:
                 engrave_msg = "My patience wears thin. Tell me, what kind of power do you seek?"
                 embed_msg = discord.Embed(colour=discord.Colour.dark_orange(),
                                           title="Isolde, Soulweaver of the True Laws", description=engrave_msg)
@@ -311,4 +306,30 @@ def payment_embed(player_object, token_cost, current_selection):
     secondary_stock = inventory.check_stock(player_object, secondary_item.item_id)
     cost_msg += f"{secondary_item.item_emoji} {secondary_item.item_name}: {secondary_stock} / 1"
     return cost_msg
+
+
+def assign_insignia_values(player_object):
+    # Data handling.
+    temp_code = player_object.insignia.split(";")
+    temp_elements, mutation_tier = temp_code[:9], int(temp_code[-1])
+    insignia_stars = player_object.player_echelon + mutation_tier
+    mutation_adjust = max(1, mutation_tier)
+    element_list = list(map(int, temp_elements))
+    num_elements = element_list.count(1)
+    # Apply bonus stats.
+    player_object.final_damage += player_object.player_lvl * 0.01 * mutation_adjust
+    player_object.attack_speed += player_object.player_echelon * 0.1
+    player_object.hp_bonus += insignia_hp_list[insignia_stars]
+    # Apply Elemental Penetration
+    if num_elements != 9:
+        selected_elements_list = [ind for ind, x in enumerate(element_list) if x == 1]
+        for y in selected_elements_list:
+            player_object.elemental_penetration[y] += insignia_multiplier_list[num_elements][0] * 0.01
+            player_object.elemental_penetration[y] += (insignia_multiplier_list[num_elements][1]
+                                                       * insignia_stars * mutation_adjust * 0.01)
+    # Omni exception for faster runtime and separate stat assignment.
+    else:
+        player_object.all_elemental_penetration += insignia_multiplier_list[num_elements][0] * 0.01
+        player_object.all_elemental_penetration += (insignia_multiplier_list[num_elements][1]
+                                                    * insignia_stars * mutation_adjust * 0.01)
 

@@ -152,7 +152,7 @@ class InfuseView(discord.ui.View):
 
     async def select_callback(self, interaction: discord.Interaction):
         try:
-            if interaction.user.name == self.player_object.player_name:
+            if interaction.user.id == self.player_object.discord_id:
                 selected_category = interaction.data['values'][0]
                 embed_msg = discord.Embed(
                     colour=discord.Colour.magenta(),
@@ -191,7 +191,7 @@ class SelectRecipeView(discord.ui.View):
 
     async def recipe_callback(self, interaction: discord.Interaction):
         try:
-            if interaction.user.name == self.player_object.player_name:
+            if interaction.user.id == self.player_object.discord_id:
                 reload_player = player.get_player_by_id(self.player_object.player_id)
                 selected_option = interaction.data['values'][0]
                 recipe_object = RecipeObject(self.category, selected_option)
@@ -236,7 +236,7 @@ class CraftView(discord.ui.View):
     @discord.ui.button(label="Infuse 1", style=discord.ButtonStyle.success, emoji="1️⃣")
     async def infuse_1(self, interaction: discord.Interaction, button: discord.Button):
         try:
-            if interaction.user.name == self.player_user.player_name:
+            if interaction.user.id == self.player_user.discord_id:
                 embed_msg, new_view = self.run_button(1)
                 await interaction.response.edit_message(embed=embed_msg, view=new_view)
         except Exception as e:
@@ -245,7 +245,7 @@ class CraftView(discord.ui.View):
     @discord.ui.button(label="Infuse 5", style=discord.ButtonStyle.success, emoji="5️⃣")
     async def infuse_5(self, interaction: discord.Interaction, button: discord.Button):
         try:
-            if interaction.user.name == self.player_user.player_name:
+            if interaction.user.id == self.player_user.discord_id:
                 embed_msg, new_view = self.run_button(5)
                 await interaction.response.edit_message(embed=embed_msg, view=new_view)
         except Exception as e:
@@ -254,7 +254,7 @@ class CraftView(discord.ui.View):
     @discord.ui.button(label="Infuse 10", style=discord.ButtonStyle.success, emoji="🔟")
     async def infuse_10(self, interaction: discord.Interaction, button: discord.Button):
         try:
-            if interaction.user.name == self.player_user.player_name:
+            if interaction.user.id == self.player_user.discord_id:
                 embed_msg, new_view = self.run_button(10)
                 await interaction.response.edit_message(embed=embed_msg, view=new_view)
         except Exception as e:
@@ -263,7 +263,7 @@ class CraftView(discord.ui.View):
     @discord.ui.button(label="Reselect", style=discord.ButtonStyle.blurple, emoji="↩️")
     async def reselect_callback(self, interaction: discord.Interaction, button: discord.Button):
         try:
-            if interaction.user.name == self.player_user.player_name:
+            if interaction.user.id == self.player_user.discord_id:
                 embed_msg = discord.Embed(colour=discord.Colour.dark_orange(),
                                           title="Black Market",
                                           description="Everything has a price.")

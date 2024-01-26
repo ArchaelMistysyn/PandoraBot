@@ -45,7 +45,7 @@ class TierSelectView(discord.ui.View):
     )
     async def tier_select_callback(self, interaction: discord.Interaction, tier_select: discord.ui.Select):
         try:
-            if interaction.user.name == self.player_user.player_name:
+            if interaction.user.id == self.player_user.discord_id:
                 selected_type = tier_select.values[0]
                 if selected_type == "Fae Cores":
                     selected_tier = 0
@@ -91,7 +91,7 @@ class ShopView(discord.ui.View):
 
     async def shop_callback(self, interaction: discord.Interaction):
         try:
-            if interaction.user.name == self.player_user.player_name:
+            if interaction.user.id == self.player_user.discord_id:
                 embed_msg, purchase_view = show_item(self.player_user, interaction.data['values'][0])
                 await interaction.response.edit_message(embed=embed_msg, view=purchase_view)
         except Exception as e:
@@ -140,7 +140,7 @@ class PurchaseView(discord.ui.View):
     @discord.ui.button(label="Buy 1", style=discord.ButtonStyle.success, emoji="1️⃣")
     async def buy_one(self, interaction: discord.Interaction, button: discord.Button):
         try:
-            if interaction.user.name == self.player_user.player_name:
+            if interaction.user.id == self.player_user.discord_id:
                 embed_msg, new_view = self.handle_purchase(1)
                 await interaction.response.edit_message(embed=embed_msg, view=new_view)
         except Exception as e:
@@ -149,7 +149,7 @@ class PurchaseView(discord.ui.View):
     @discord.ui.button(label="Buy 10", style=discord.ButtonStyle.success, emoji="🔟")
     async def buy_ten(self, interaction: discord.Interaction, button: discord.Button):
         try:
-            if interaction.user.name == self.player_user.player_name:
+            if interaction.user.id == self.player_user.discord_id:
                 embed_msg, new_view = self.handle_purchase(10)
                 await interaction.response.edit_message(embed=embed_msg, view=new_view)
         except Exception as e:
@@ -158,7 +158,7 @@ class PurchaseView(discord.ui.View):
     @discord.ui.button(label="Buy 100", style=discord.ButtonStyle.success, emoji="💯")
     async def buy_hundred(self, interaction: discord.Interaction, button: discord.Button):
         try:
-            if interaction.user.name == self.player_user.player_name:
+            if interaction.user.id == self.player_user.discord_id:
                 embed_msg, new_view = self.handle_purchase(100)
                 await interaction.response.edit_message(embed=embed_msg, view=new_view)
         except Exception as e:
@@ -167,7 +167,7 @@ class PurchaseView(discord.ui.View):
     @discord.ui.button(label="Reselect", style=discord.ButtonStyle.blurple, emoji="↩️")
     async def reselect_callback(self, interaction: discord.Interaction, button: discord.Button):
         try:
-            if interaction.user.name == self.player_user.player_name:
+            if interaction.user.id == self.player_user.discord_id:
                 embed_msg = discord.Embed(colour=discord.Colour.dark_orange(),
                                           title="Black Market",
                                           description="Everything has a price.")

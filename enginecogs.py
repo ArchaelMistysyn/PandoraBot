@@ -50,13 +50,14 @@ class RaidCog(commands.Cog):
 
 
 class SoloCog(commands.Cog):
-    def __init__(self, bot, player_object, active_boss, channel_id, sent_message, channel_object):
+    def __init__(self, bot, player_object, active_boss, channel_id, sent_message, ctx_object):
         self.bot = bot
         self.player_object = player_object
         self.active_boss = active_boss
         self.channel_id = channel_id
         self.sent_message = sent_message
-        self.channel_object = channel_object
+        self.ctx_object = ctx_object
+        self.channel_object = ctx_object.channel
         self.combat_tracker = combat.CombatTracker()
         self.combat_tracker.player_cHP = player_object.player_mHP
         self.lock = asyncio.Lock()
@@ -77,7 +78,8 @@ class SoloCog(commands.Cog):
                                                     self.channel_id, self.sent_message, self.channel_object)
                 if not is_alive:
                     if self.active_boss.boss_name == "XXVIII - Yubelle, Adjudicator of the True Laws":
-                        leaderboards.update_leaderboard(self.combat_tracker, self.player_object)
+                        await leaderboards.update_leaderboard(self.combat_tracker,
+                                                              self.player_object, self.ctx_object)
                     self.cog_unload()
         else:
             combat.toggle_flag(self.player_object)
@@ -235,7 +237,7 @@ class PvPCog(commands.Cog):
         await self.handle_pvp_ultimate(role, combatant, tracker, combo_count, hit_list)
 
     async def handle_pvp_ultimate(self, role, combatant, tracker, combo_count, hit_list):
-        attacker, defender = self.set_roles(role)
+        attacker, defender = self.set_combat_roles(role)
         if tracker[attacker].charges >= 20:
             hit_damage, critical_type = combat.pvp_attack(combatant[attacker], combatant[defender])
             combo_count[attacker] += 1 + combatant[attacker].combo_application
@@ -257,7 +259,7 @@ class PvPCog(commands.Cog):
                 await self.handle_pvp_bleed(role, combatant, tracker, hit_list, True)
 
     async def handle_pvp_bleed(self, role, combatant, tracker, hit_list, is_ultimate):
-        attacker, defender = self.set_roles(role)
+        attacker, defender = self.set_combat_roles(role)
         bleed_damage, bleed_type = combat.pvp_bleed_damage(combatant[attacker], combatant[defender])
         bleed_damage *= (tracker[attacker].bleed_tracker + 1)
         if is_ultimate:
@@ -272,11 +274,11 @@ class PvPCog(commands.Cog):
             hit_list.append([scaled_damage, hit_msg])
             tracker[defender].player_cHP -= scaled_damage
 
-    def set_roles(self, role):
+    def set_combat_roles(self, role):
         return role[0], role[1]
 
     def scale_damage(self, role, combatants, hit_damage):
-        attacker, defender = self.set_roles(role)
+        attacker, defender = self.set_combat_roles(role)
         reduction = (combatants[defender].player_mHP // 100) * 0.002
         damage = (len(str(hit_damage)) - 1) * 0.02
         string_damage = str(hit_damage)

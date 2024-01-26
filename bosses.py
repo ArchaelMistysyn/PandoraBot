@@ -277,8 +277,12 @@ def spawn_boss(channel_id, player_id, new_boss_tier, selected_boss_type, boss_le
         else:
             # Create the boss object.
             boss_type_num = boss_list.index(selected_boss_type)
+
+            # Handle boss level exceptions:
+            if selected_boss_type == "Paragon" and new_boss_tier == 6:
+                boss_level = 200
             if selected_boss_type == "Arbiter":
-                boss_level = 99
+                boss_level = 300 if new_boss_tier != 7 else 500
             boss_object = CurrentBoss(boss_type_num, selected_boss_type, new_boss_tier, boss_level)
 
             # Assign elemental weaknesses.

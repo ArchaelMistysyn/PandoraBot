@@ -321,7 +321,7 @@ class MapSelectView(discord.ui.View):
     )
     async def map_select_callback(self, interaction: discord.Interaction, map_select: discord.ui.Select):
         try:
-            if interaction.user.name == self.player_user.player_name:
+            if interaction.user.id == self.player_user.discord_id:
                 selected_map = map_select.values[0]
                 selected_tier = map_tier_dict[selected_map]
                 if self.player_user.player_echelon >= (selected_tier - 1):
@@ -353,7 +353,7 @@ class EmbarkView(discord.ui.View):
     @discord.ui.button(label="Embark", style=discord.ButtonStyle.success, emoji="⚔️")
     async def embark_callback(self, interaction: discord.Interaction, map_select: discord.ui.Select):
         try:
-            if interaction.user.name == self.player_user.player_name:
+            if interaction.user.id == self.player_user.discord_id:
                 if not self.paid:
                     reload_user = player.get_player_by_id(self.player_user.player_id)
                     if reload_user.spend_stamina((200 + self.selected_tier * 50)):
@@ -384,7 +384,7 @@ class TransitionView(discord.ui.View):
     @discord.ui.button(label="Proceed", style=discord.ButtonStyle.blurple, emoji="⬆️")
     async def proceed_callback(self, interaction: discord.Interaction, button: discord.Button):
         try:
-            if interaction.user.name == self.expedition.player_object.player_name:
+            if interaction.user.id == self.expedition.player_object.discord_id:
                 if not self.embed:
                     self.embed, self.new_view = self.expedition.display_next_room()
                     self.expedition.current_room_num += 1
@@ -404,7 +404,7 @@ class HealRoomView(discord.ui.View):
     @discord.ui.button(label="Short Rest", style=discord.ButtonStyle.blurple, emoji="➕")
     async def short_rest_callback(self, interaction: discord.Interaction, button: discord.Button):
         try:
-            if interaction.user.name == self.expedition.player_object.player_name:
+            if interaction.user.id == self.expedition.player_object.discord_id:
                 if not self.embed:
                     active_room = self.expedition.current_room
                     self.embed = active_room.embed
@@ -433,7 +433,7 @@ class HealRoomView(discord.ui.View):
     @discord.ui.button(label="Long Rest", style=discord.ButtonStyle.blurple, emoji="➕")
     async def long_rest_callback(self, interaction: discord.Interaction, button: discord.Button):
         try:
-            if interaction.user.name == self.expedition.player_object.player_name:
+            if interaction.user.id == self.expedition.player_object.discord_id:
                 if not self.embed:
                     active_room = self.expedition.current_room
                     self.embed = active_room.embed
@@ -503,7 +503,7 @@ class MonsterRoomView(discord.ui.View):
 
     async def stealth_callback(self, interaction: discord.Interaction, button: discord.Button):
         try:
-            if interaction.user.name == self.expedition.player_object.player_name:
+            if interaction.user.id == self.expedition.player_object.discord_id:
                 if not self.embed:
                     self.embed = self.active_room.embed
                     self.embed.clear_fields()
@@ -540,7 +540,7 @@ class MonsterRoomView(discord.ui.View):
 
     async def fight_callback(self, interaction: discord.Interaction, button: discord.Button):
         try:
-            if interaction.user.name == self.expedition.player_object.player_name:
+            if interaction.user.id == self.expedition.player_object.discord_id:
                 if not self.embed:
                     self.embed = self.active_room.embed
                     self.embed.clear_fields()
@@ -607,7 +607,7 @@ class TrapRoomView(discord.ui.View):
 
     async def salvage_callback(self, interaction: discord.Interaction, button: discord.Button):
         try:
-            if interaction.user.name == self.expedition.player_object.player_name:
+            if interaction.user.id == self.expedition.player_object.discord_id:
                 if not self.embed:
                     self.embed = self.active_room.embed
                     self.embed.clear_fields()
@@ -622,7 +622,7 @@ class TrapRoomView(discord.ui.View):
 
     async def bypass_callback(self, interaction: discord.Interaction, button: discord.Button):
         try:
-            if interaction.user.name == self.expedition.player_object.player_name:
+            if interaction.user.id == self.expedition.player_object.discord_id:
                 if not self.embed:
                     self.embed, self.new_view = self.expedition.display_next_room()
                     self.expedition.current_room_num += 1
@@ -654,7 +654,7 @@ class EpitaphRoomView(discord.ui.View):
 
     async def search_callback(self, interaction: discord.Interaction, button: discord.Button):
         try:
-            if interaction.user.name == self.expedition.player_object.player_name:
+            if interaction.user.id == self.expedition.player_object.discord_id:
                 if not self.embed:
                     self.embed = self.active_room.embed
                     self.embed.clear_fields()
@@ -672,7 +672,7 @@ class EpitaphRoomView(discord.ui.View):
 
     async def decipher_callback(self, interaction: discord.Interaction, button: discord.Button):
         try:
-            if interaction.user.name == self.expedition.player_object.player_name:
+            if interaction.user.id == self.expedition.player_object.discord_id:
                 if not self.embed:
                     self.embed = self.active_room.embed
                     self.embed.clear_fields()
@@ -744,7 +744,7 @@ class SelectionRoomView(discord.ui.View):
 
     async def option_callback(self, interaction: discord.Interaction, button: discord.Button):
         try:
-            if interaction.user.name == self.expedition.player_object.player_name:
+            if interaction.user.id == self.expedition.player_object.discord_id:
                 if not self.embed:
                     button_id = int(button.custom_id)
                     self.embed = self.active_room.embed
@@ -761,7 +761,7 @@ class SelectionRoomView(discord.ui.View):
 
     async def speed_callback(self, interaction: discord.Interaction, button: discord.Button):
         try:
-            if interaction.user.name == self.expedition.player_object.player_name:
+            if interaction.user.id == self.expedition.player_object.discord_id:
                 if not self.embed:
                     self.embed = self.active_room.embed
                     self.embed.clear_fields()
@@ -791,7 +791,7 @@ class StatueRoomView(discord.ui.View):
     @discord.ui.button(label="Pray", style=discord.ButtonStyle.blurple, emoji="⚔️")
     async def pray_callback(self, interaction: discord.Interaction, button: discord.Button):
         try:
-            if interaction.user.name == self.expedition.player_object.player_name:
+            if interaction.user.id == self.expedition.player_object.discord_id:
                 if not self.embed:
                     active_room = self.expedition.current_room
                     self.embed = active_room.embed
@@ -852,7 +852,7 @@ class StatueRoomView(discord.ui.View):
     @discord.ui.button(label="Destroy", style=discord.ButtonStyle.blurple, emoji="⚔️")
     async def destroy_callback(self, interaction: discord.Interaction, button: discord.Button):
         try:
-            if interaction.user.name == self.expedition.player_object.player_name:
+            if interaction.user.id == self.expedition.player_object.discord_id:
                 if not self.embed:
                     active_room = self.expedition.current_room
                     self.embed = active_room.embed
@@ -888,7 +888,7 @@ class TreasureRoomView(discord.ui.View):
     @discord.ui.button(label="Open Chest", style=discord.ButtonStyle.success, emoji="⚔️")
     async def chest_callback(self, interaction: discord.Interaction, map_select: discord.ui.Select):
         try:
-            if interaction.user.name == self.expedition.player_object.player_name:
+            if interaction.user.id == self.expedition.player_object.discord_id:
                 if not self.embed:
                     active_room = self.expedition.current_room
                     self.embed = active_room.embed
@@ -935,7 +935,7 @@ class ItemView(discord.ui.View):
     @discord.ui.button(label="Claim Item", style=discord.ButtonStyle.blurple, emoji="➕")
     async def claim_callback(self, interaction: discord.Interaction, button: discord.Button):
         try:
-            if interaction.user.name == self.expedition.player_object.player_name:
+            if interaction.user.id == self.expedition.player_object.discord_id:
                 if not self.embed:
                     if not inventory.if_custom_exists(self.item.item_id):
                         result_id = inventory.inventory_add_custom_item(self.item)
@@ -954,7 +954,7 @@ class ItemView(discord.ui.View):
     @discord.ui.button(label="Sell Item", style=discord.ButtonStyle.success, emoji="💲")
     async def sell_callback(self, interaction: discord.Interaction, button: discord.Button):
         try:
-            if interaction.user.name == self.expedition.player_object.player_name:
+            if interaction.user.id == self.expedition.player_object.discord_id:
                 if not self.embed:
                     self.new_view = TransitionView(self.expedition)
                     sell_value = self.item.item_tier * 500
@@ -1002,7 +1002,7 @@ class TrialRoomView(discord.ui.View):
 
     async def option1_callback(self, interaction: discord.Interaction, button: discord.Button):
         try:
-            if interaction.user.name == self.expedition.player_object.player_name:
+            if interaction.user.id == self.expedition.player_object.discord_id:
                 if not self.embed:
                     reload_player = player.get_player_by_id(self.expedition.player_object.player_id)
                     self.embed = self.run_option_button(reload_player, 1)
@@ -1013,7 +1013,7 @@ class TrialRoomView(discord.ui.View):
 
     async def option2_callback(self, interaction: discord.Interaction, button: discord.Button):
         try:
-            if interaction.user.name == self.expedition.player_object.player_name:
+            if interaction.user.id == self.expedition.player_object.discord_id:
                 if not self.embed:
                     reload_player = player.get_player_by_id(self.expedition.player_object.player_id)
                     self.embed = self.run_option_button(reload_player, 2)
@@ -1024,7 +1024,7 @@ class TrialRoomView(discord.ui.View):
 
     async def option3_callback(self, interaction: discord.Interaction, button: discord.Button):
         try:
-            if interaction.user.name == self.expedition.player_object.player_name:
+            if interaction.user.id == self.expedition.player_object.discord_id:
                 if not self.embed:
                     reload_player = player.get_player_by_id(self.expedition.player_object.player_id)
                     self.embed = self.run_option_button(reload_player, 3)
@@ -1115,7 +1115,7 @@ class CrystalRoomView(discord.ui.View):
 
     async def option1_callback(self, interaction: discord.Interaction, button: discord.Button):
         try:
-            if interaction.user.name == self.expedition.player_object.player_name:
+            if interaction.user.id == self.expedition.player_object.discord_id:
                 if not self.embed:
                     self.embed = self.run_option_button(0)
                     self.new_view = TransitionView(self.expedition)
@@ -1125,7 +1125,7 @@ class CrystalRoomView(discord.ui.View):
 
     async def option2_callback(self, interaction: discord.Interaction, button: discord.Button):
         try:
-            if interaction.user.name == self.expedition.player_object.player_name:
+            if interaction.user.id == self.expedition.player_object.discord_id:
                 if not self.embed:
                     self.embed = self.run_option_button(1)
                     self.new_view = TransitionView(self.expedition)
@@ -1191,7 +1191,7 @@ class SanctuaryRoomView(discord.ui.View):
 
     async def option1_callback(self, interaction: discord.Interaction, button: discord.Button):
         try:
-            if interaction.user.name == self.expedition.player_object.player_name:
+            if interaction.user.id == self.expedition.player_object.discord_id:
                 if not self.embed:
                     self.embed = self.run_option_button(0)
                     self.new_view = TransitionView(self.expedition)
@@ -1201,7 +1201,7 @@ class SanctuaryRoomView(discord.ui.View):
 
     async def option2_callback(self, interaction: discord.Interaction, button: discord.Button):
         try:
-            if interaction.user.name == self.expedition.player_object.player_name:
+            if interaction.user.id == self.expedition.player_object.discord_id:
                 if not self.embed:
                     self.embed = self.run_option_button(1)
                     self.new_view = TransitionView(self.expedition)
@@ -1211,7 +1211,7 @@ class SanctuaryRoomView(discord.ui.View):
 
     async def option3_callback(self, interaction: discord.Interaction, button: discord.Button):
         try:
-            if interaction.user.name == self.expedition.player_object.player_name:
+            if interaction.user.id == self.expedition.player_object.discord_id:
                 if not self.embed:
                     self.embed = self.run_option_button(2)
                     self.new_view = TransitionView(self.expedition)
@@ -1271,7 +1271,7 @@ class DragonRoomView(discord.ui.View):
 
     async def option1_callback(self, interaction: discord.Interaction, button: discord.Button):
         try:
-            if interaction.user.name == self.expedition.player_object.player_name:
+            if interaction.user.id == self.expedition.player_object.discord_id:
                 if not self.embed:
                     self.embed = self.run_option_button(1)
                 await interaction.response.edit_message(embed=self.embed, view=self.new_view)
@@ -1280,7 +1280,7 @@ class DragonRoomView(discord.ui.View):
 
     async def option2_callback(self, interaction: discord.Interaction, button: discord.Button):
         try:
-            if interaction.user.name == self.expedition.player_object.player_name:
+            if interaction.user.id == self.expedition.player_object.discord_id:
                 if not self.embed:
                     self.embed = self.run_option_button(2)
                 await interaction.response.edit_message(embed=self.embed, view=self.new_view)
@@ -1289,7 +1289,7 @@ class DragonRoomView(discord.ui.View):
 
     async def option3_callback(self, interaction: discord.Interaction, button: discord.Button):
         try:
-            if interaction.user.name == self.expedition.player_object.player_name:
+            if interaction.user.id == self.expedition.player_object.discord_id:
                 if not self.embed:
                     self.embed = self.run_option_button(3)
                 await interaction.response.edit_message(embed=self.embed, view=self.new_view)
@@ -1369,7 +1369,7 @@ class GoldenRoomView(discord.ui.View):
 
     async def jewellery_callback(self, interaction: discord.Interaction, button: discord.Button):
         try:
-            if interaction.user.name == self.expedition.player_object.player_name:
+            if interaction.user.id == self.expedition.player_object.discord_id:
                 if not self.embed:
                     self.embed = self.active_room.embed
                     self.embed.clear_fields()
@@ -1387,7 +1387,7 @@ class GoldenRoomView(discord.ui.View):
 
     async def collect_callback(self, interaction: discord.Interaction, button: discord.Button):
         try:
-            if interaction.user.name == self.expedition.player_object.player_name:
+            if interaction.user.id == self.expedition.player_object.discord_id:
                 if not self.embed:
                     active_room = self.expedition.current_room
                     if self.room_type == "jackpot_room":

@@ -148,7 +148,7 @@ class SearchTierView(discord.ui.View):
 
     async def tier_select_callback(self, interaction: discord.Interaction):
         try:
-            if interaction.user.name == self.player_user.player_name:
+            if interaction.user.id == self.player_user.discord_id:
                 selected_option = interaction.data['values'][0]
                 new_view = SearchCardView(self.player_user, int(selected_option))
                 await interaction.response.edit_message(view=new_view)
@@ -177,7 +177,7 @@ class SearchCardView(discord.ui.View):
 
     async def card_select_callback(self, interaction: discord.Interaction):
         try:
-            if interaction.user.name == self.player_user.player_name:
+            if interaction.user.id == self.player_user.discord_id:
                 selected_numeral = interaction.data['values'][0]
                 selected_card = get_index_by_key(selected_numeral)
                 new_embed = tarot_menu_embed(self.player_user, selected_numeral)
@@ -196,7 +196,7 @@ class CollectionView(discord.ui.View):
     @discord.ui.button(label="View Collection", style=discord.ButtonStyle.blurple)
     async def view_collection(self, interaction: discord.Interaction, button: discord.Button):
         try:
-            if interaction.user.name == self.player_user.player_name:
+            if interaction.user.id == self.player_user.discord_id:
                 selected_numeral = get_key_by_index(self.current_position)
                 new_msg = tarot_menu_embed(self.player_user, selected_numeral)
                 new_view = TarotView(self.player_user, self.current_position)
@@ -207,7 +207,7 @@ class CollectionView(discord.ui.View):
     @discord.ui.button(label="Search Card", style=discord.ButtonStyle.blurple, emoji="🔎")
     async def search_collection(self, interaction: discord.Interaction, button: discord.Button):
         try:
-            if interaction.user.name == self.player_user.player_name:
+            if interaction.user.id == self.player_user.discord_id:
                 new_view = SearchTierView(self.player_user)
                 await interaction.response.edit_message(view=new_view)
         except Exception as e:
@@ -263,7 +263,7 @@ class TarotView(discord.ui.View):
     @discord.ui.button(label="Previous", style=discord.ButtonStyle.blurple, row=1)
     async def previous_card(self, interaction: discord.Interaction, button: discord.Button):
         try:
-            if interaction.user.name == self.player_user.player_name:
+            if interaction.user.id == self.player_user.discord_id:
                 new_msg = self.cycle_tarot(-1)
                 reload_view = TarotView(self.player_user, self.current_position)
                 await interaction.response.edit_message(embed=new_msg, view=reload_view)
@@ -273,7 +273,7 @@ class TarotView(discord.ui.View):
     @discord.ui.button(label="Search", style=discord.ButtonStyle.blurple, emoji="🔎", row=1)
     async def search_card(self, interaction: discord.Interaction, button: discord.Button):
         try:
-            if interaction.user.name == self.player_user.player_name:
+            if interaction.user.id == self.player_user.discord_id:
                 completion_count = collection_check(self.player_user.player_id)
                 embed_msg = discord.Embed(colour=discord.Colour.magenta(),
                                           title=f"{self.player_user.player_username}'s Tarot Collection",
@@ -287,7 +287,7 @@ class TarotView(discord.ui.View):
     @discord.ui.button(label="Next", style=discord.ButtonStyle.blurple, row=1)
     async def next_card(self, interaction: discord.Interaction, button: discord.Button):
         try:
-            if interaction.user.name == self.player_user.player_name:
+            if interaction.user.id == self.player_user.discord_id:
                 new_msg = self.cycle_tarot(1)
                 reload_view = TarotView(self.player_user, self.current_position)
                 await interaction.response.edit_message(embed=new_msg, view=reload_view)
@@ -297,7 +297,7 @@ class TarotView(discord.ui.View):
     @discord.ui.button(label="Equip", style=discord.ButtonStyle.success, row=2)
     async def equip(self, interaction: discord.Interaction, button: discord.Button):
         try:
-            if interaction.user.name == self.player_user.player_name:
+            if interaction.user.id == self.player_user.discord_id:
                 embed_msg = tarot_menu_embed(self.player_user, self.selected_numeral)
                 active_card = check_tarot(self.player_user.player_id, card_dict[self.selected_numeral][0])
                 if active_card:
@@ -315,7 +315,7 @@ class TarotView(discord.ui.View):
     @discord.ui.button(label="Bind", style=discord.ButtonStyle.success, row=2)
     async def attempt_bind(self, interaction: discord.Interaction, button: discord.Button):
         try:
-            if interaction.user.name == self.player_user.player_name:
+            if interaction.user.id == self.player_user.discord_id:
                 if not self.embed:
                     self.embed = binding_ritual(self.player_user, self.selected_numeral, self.bind_success_rate)
                 reload_view = TarotView(self.player_user, self.current_position)
@@ -326,7 +326,7 @@ class TarotView(discord.ui.View):
     @discord.ui.button(label="Synthesis", style=discord.ButtonStyle.success, row=2)
     async def synthesize(self, interaction: discord.Interaction, button: discord.Button):
         try:
-            if interaction.user.name == self.player_user.player_name:
+            if interaction.user.id == self.player_user.discord_id:
                 active_card = check_tarot(self.player_user.player_id, card_dict[self.selected_numeral][0])
                 if not self.embed:
                     self.embed = tarot_menu_embed(self.player_user, self.selected_numeral)
@@ -366,11 +366,7 @@ class TarotCard:
 
     def create_tarot_embed(self):
         gear_colour, gear_emoji = inventory.get_gear_tier_colours(self.num_stars)
-        display_stars = ""
-        for x in range(self.num_stars):
-            display_stars += globalitems.star_icon
-        for y in range((5 - self.num_stars)):
-            display_stars += "<:ebstar2:1144826056222724106>"
+        display_stars = globalitems.display_stars(self.num_stars)
         card_title = f"{self.card_numeral} - {self.card_name}"
         card_title += f" [{card_variant[self.num_stars]}]"
         tarot_embed = discord.Embed(colour=gear_colour, title=card_title, description=display_stars)
@@ -382,7 +378,7 @@ class TarotCard:
     def display_tarot_stats(self):
         card_data = card_stat_dict[self.card_numeral]
         pearl = itemrolls.augment_icons[self.num_stars - 1]
-        path_string = f"Path of {player.path_names[card_data[0]]}" if card_data[0] != "All" else "All Paths"
+        path_string = f"Path of {globalitems.path_names[card_data[0]]}" if card_data[0] != "All" else "All Paths"
         stat_string = f"{path_string} +{path_point_values[self.num_stars]}\n"
         stat_string += (f"{pearl} Base Damage {self.damage:,} - {self.damage:,}\n"
                         f"{pearl} HP Bonus +{self.hp:,}\n"
@@ -393,6 +389,29 @@ class TarotCard:
             else:
                 stat_string += f"\n{pearl} {ability_data[0]} {ability_data[1] * self.num_stars}%"
         return stat_string
+
+    def assign_tarot_values(self, player_object):
+        card_data = card_stat_dict[self.card_numeral]
+        # Apply Path bonuses
+        path_bonus = path_point_values[self.num_stars]
+        if card_data[0] != "All":
+            player_object.gear_points[card_data[0]] += path_bonus
+        else:
+            player_object.gear_points = [path + path_bonus for path in player_object.gear_points]
+        # Apply modifier bonuses
+        player_object.player_damage += self.damage
+        player_object.hp_bonus += self.hp
+        player_object.final_damage += self.fd * 0.01
+        card_multiplier = self.num_stars * 0.01
+        for bonus_roll in card_data[1:]:
+            attribute_name, attribute_position = bonus_roll[2], bonus_roll[3]
+            if "application" not in attribute_name:
+                attribute_value = (bonus_roll[1] * card_multiplier)
+            if attribute_position is None:
+                setattr(player_object, attribute_name, getattr(player_object, attribute_name) + attribute_value)
+            else:
+                target_list = getattr(player_object, attribute_name)
+                target_list[attribute_position] += attribute_value
 
     def synthesize_tarot(self):
         new_qty = self.card_qty - 1

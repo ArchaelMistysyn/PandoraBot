@@ -119,12 +119,7 @@ def show_bazaar_items():
                 else:
                     item_main_info = f"{item_damage}"
 
-                display_stars = ""
-                for x in range(item_num_stars):
-                    display_stars += "<:estar1:1143756443967819906>"
-                for y in range((5 - item_num_stars)):
-                    display_stars += "<:ebstar2:1144826056222724106>"
-
+                display_stars = globalitems.display_stars(item_num_stars)
                 item_types = f'{item_damage_type}'
                 for idz, z in enumerate(item_elements):
                     if z == 1:

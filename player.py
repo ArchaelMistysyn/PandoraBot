@@ -23,55 +23,15 @@ from datetime import datetime as dt
 import quest
 import tarot
 import itemrolls
+import skillpaths
 import globalitems
-from unidecode import unidecode
-
-path_names = ["Storms", "Frostfire", "Horizon", "Eclipse", "Stars", "Confluence", "Solitude"]
-glyph_data = {
-            "Storms": ["Cyclone", "Critical Application +1", 20,
-                       "Vortex", "Critical Application +1", 40,
-                       "Tempest", "Critical Application +1", 60,
-                       "Maelstrom", "Critical Application +2", 80],
-            "Frostfire": ["Iceburn", "Grants Cascade Damage", 20,
-                          "Glacial Flame", "Grants Cascade Penetration", 40,
-                          "Snowy Blaze", "Grants Cascade Curse", 60,
-                          "Subzero Inferno", "Triple your fire/ice damage, penetration, and curse", 80],
-            "Horizon": ["Red Skies", "Bleed Application +1", 20,
-                        "Vermilion Dawn", "Bleed Application +1", 40,
-                        "Scarlet Sunset", "Bleed Application +1", 60,
-                        "Ruby Tears", "Bleed Application +2", 80],
-            "Eclipse": ["Umbra", "Ultimate Application +1", 20,
-                        "Shadowfall", "Ultimate Application +1", 40,
-                        "Eventide", "Ultimate Application +1", 60,
-                        "Twilight", "Basic Skills are affected by Ultimate Damage and Penetration multipliers", 80],
-            "Stars": ["Nebulas", "Basic Attack 1 Base Damage +50%", 20,
-                      "Galaxies", "Basic Attack 2 Base Damage +75%", 40,
-                      "Superclusters", "Basic Attack 3 Base Damage +100%", 60,
-                      "Universes", "Basic Attack 3 Base Damage +150%", 80],
-            "Confluence": ["Unity", "Elemental Overflow +2", 20,
-                           "Harmony", "Elemental Overflow +2", 40,
-                           "Synergy", "Elemental Overflow +2", 60,
-                           "Equilibrium", "Elemental Overflow +3", 80],
-            "Time": ["a", "Temporal Application +1", 20,
-                     "b", "Temporal Application +1", 40,
-                     "c", "Temporal Application +1", 60,
-                     "d", "Temporal Application +2", 80]
-        }
-
-
-def normalize_username(unfiltered_username):
-    if any(ord(char) > 127 for char in unfiltered_username):
-        normalized_username = unidecode(unfiltered_username)
-    else:
-        normalized_username = unfiltered_username
-    return normalized_username
 
 
 class PlayerProfile:
     def __init__(self):
 
         # Initialize player base info.
-        self.player_id, self.player_name, self.player_username = 0, "", ""
+        self.player_id, self.discord_id, self.player_username = 0, 0, ""
         self.player_exp, self.player_lvl, self.player_echelon = 0, 0, 0
         self.player_class = ""
         self.player_quest = 0
@@ -101,7 +61,7 @@ class PlayerProfile:
         self.aura = 0.0
 
         # Initialize class specialization stats.
-        self.glyph_of_eclipse = False
+        self.unique_glyph_ability = [False, False, False, False, False, False, False]
         self.temporal_application = 0
         self.elemental_capacity, self.elemental_application = 3, 0
         self.bleed_multiplier, self.bleed_penetration, self.bleed_application = 0.0, 0.0, 0
@@ -129,9 +89,6 @@ class PlayerProfile:
         self.elemental_resistance = [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
         self.all_elemental_resistance = 0.1
 
-    def __str__(self):
-        return str(self.player_name)
-
     def reset_multipliers(self):
         self.player_damage, self.player_total_damage = 0.0, 0.0
         self.gear_points = [0, 0, 0, 0, 0, 0, 0]
@@ -146,7 +103,7 @@ class PlayerProfile:
         self.aura = 0.0
 
         # Initialize class specialization stats.
-        self.glyph_of_eclipse = False
+        self.unique_glyph_ability = [False, False, False, False, False, False, False]
         self.temporal_application = 0
         self.elemental_capacity, self.elemental_application = 3, 0
         self.bleed_multiplier, self.bleed_penetration, self.bleed_application = 0.0, 0.0, 0
@@ -175,60 +132,28 @@ class PlayerProfile:
         self.all_elemental_resistance = 0.1
 
     def get_player_stats(self, method):
-        # Construct the header.
+        # Construct the base embed.
         echelon_colour = inventory.get_gear_tier_colours(self.player_echelon)
-        resources = f'<:estamina:1145534039684562994> {self.player_username}\'s stamina: '
-        resources += str(self.player_stamina)
+        resources = f'<:estamina:1145534039684562994> {self.player_username}\'s stamina: {self.player_stamina:,}'
         resources += f'\nLotus Coins: {self.player_coins:,}'
-        exp = f'Level: {self.player_lvl} Exp: ({self.player_exp:,} / '
-        exp += f'{get_max_exp(self.player_lvl)})'
+        exp = f'Level: {self.player_lvl} Exp: ({self.player_exp:,} / {get_max_exp(self.player_lvl):,}'
         id_msg = f'User ID: {self.player_id}\nClass: {globalitems.class_icon_dict[self.player_class]}'
+        embed_msg = discord.Embed(colour=echelon_colour[0], title=self.player_username, description=id_msg)
+        embed_msg.add_field(name=exp, value=resources, inline=False)
+        embed_msg.set_thumbnail(url=f"{get_thumbnail_by_class(self.player_class)}")
 
         # Initialize the values.
         self.get_player_multipliers()
-        element_multipliers = []
-        spread = []
         title_msg, stats = "", ""
-        second_title, second_msg = "", ""
         temp_embed = None
 
-        # Create the embed data.
-        if method == 1:
+        if method in [1, 2]:
+            # Offensive Stat Display.
             title_msg = "Offensive Stats"
             stats = f"Item Base Damage: {int(round(self.player_damage)):,}"
             stats += f"\nAttack Speed: {round(math.floor(self.attack_speed * 10) / 10, 1)} / min"
-            for x in range(9):
-                total_multi = (1 + self.elemental_multiplier[x]) * (1 + self.elemental_penetration[x])
-                total_multi *= (1 + self.elemental_curse[x]) * (1 + self.aura) * self.elemental_conversion[x]
-                element_multipliers.append((x, total_multi * 100))
-            spread = sorted(element_multipliers, key=lambda k: k[1], reverse=True)
-            for y, total_multi in spread:
-                temp_icon = globalitems.global_element_list[y]
-                stats += f"\n{temp_icon} Total Damage: {int(round(total_multi)):,}%"
-            if self.player_equipped[0] != 0:
-                second_title = "Damage Spread"
-                e_weapon = inventory.read_custom_item(self.player_equipped[0])
-                used_elements = []
-                used_multipliers = []
-                if self.elemental_capacity < 9:
-                    temp_element_list = combat.limit_elements(self, e_weapon)
-                else:
-                    temp_element_list = e_weapon.item_elements.copy()
-                for i, is_used in enumerate(temp_element_list):
-                    if is_used:
-                        used_elements.append(globalitems.global_element_list[i])
-                        used_multipliers.append(element_multipliers[i][1] / 100)
-                used_elements, used_multipliers = zip(*sorted(zip(used_elements, used_multipliers),
-                                                              key=lambda e: e[1], reverse=True))
-                if used_multipliers:
-                    total_contribution = sum(used_multipliers)
-                    for index, (element, multiplier) in enumerate(zip(used_elements, used_multipliers), 1):
-                        contribution = round((multiplier / total_contribution) * 100)
-                        second_msg += f"{element} {int(contribution)}% "
-                        if index % 3 == 0:
-                            second_msg += "\n"
-        elif method == 2:
-            title_msg = "Elemental Breakdown"
+
+            # Calculate the damage spread.
             element_breakdown = []
             for x in range(9):
                 total_multi = (1 + self.elemental_multiplier[x]) * (1 + self.elemental_penetration[x])
@@ -240,74 +165,106 @@ class PlayerProfile:
                 temp_dmg_str = f"(Dmg: {int(round(self.elemental_multiplier[z] * 100)):,}%)"
                 temp_pen_str = f"(Pen: {int(round(self.elemental_penetration[z] * 100)):,}%)"
                 temp_curse_str = f"(Curse: {int(round(self.elemental_curse[z] * 100)):,}%)"
-                stats += f"{temp_icon} {temp_dmg_str} - {temp_pen_str} - {temp_curse_str}\n"
-            stats += f"Elemental Details: (Cap: {self.elemental_capacity}) - (App: {self.elemental_application}) - "
-            stats += f"(FRC: {self.elemental_application * 5 + int(round(self.specialty_rate[3] * 100))}%)"
-            second_title = "Special Breakdown"
-            second_msg = f"Critical Chance: (Reg: {int(round(self.critical_chance))}%) - "
-            second_msg += f"(OMG: {self.critical_application * 10 + int(round(self.specialty_rate[2] * 100))}%)"
-            second_msg += f"\nCritical Multiplier: (Dmg: {int(round(self.critical_multiplier * 100))}%) - "
-            second_msg += f"(Pen: {int(round(self.critical_penetration * 100))}%) - "
-            second_msg += f"(App: {self.critical_application})"
-            second_msg += f"\nBleed Multiplier: (Dmg: {int(round(self.bleed_multiplier * 100))}%) - "
-            second_msg += f"(Pen: {int(round(self.bleed_penetration * 100))}%) - "
-            second_msg += f"(HPR: {self.bleed_application * 5 + int(round(self.specialty_rate[1] * 100))}%) - "
-            second_msg += f"(App: {self.bleed_application})"
-            second_msg += f"\nCombo Multiplier: (Dmg: {int(round(self.combo_multiplier * 100))}%) - "
-            second_msg += f"(Pen: {int(round(self.combo_penetration * 100))}%) - "
-            second_msg += f"(App: {self.combo_application})"
-            second_msg += f"\nUltimate Multiplier: (Dmg: {int(round(self.ultimate_multiplier * 100))}%) - "
-            second_msg += f"(Pen: {int(round(self.ultimate_penetration * 100))}%) - "
-            second_msg += f"(App: {self.ultimate_application})"
-            second_msg += f"\nTime Multiplier: (Dmg: {(self.temporal_application + 1) * 100}%) - "
-            second_msg += f"(LCK: {self.temporal_application * 5 + int(round(self.specialty_rate[4] * 100))}%) - "
-            second_msg += f"(App: {self.temporal_application})"
-            second_msg += f"\nBloom: (Dmg: {int(round(self.bloom_multiplier * 100)):,}%) - "
-            second_msg += f"(BLM: {int(round(self.specialty_rate[0] * 100))}%)"
-        elif method == 3:
+                if method == 1:
+                    stats += f"\n{temp_icon} Total Damage: {int(round(total_multi)):,}%"
+                if method == 2:
+                    stats += f"{temp_icon} {temp_dmg_str} - {temp_pen_str} - {temp_curse_str}\n"
+            embed_msg.add_field(name=title_msg, value=stats, inline=False)
+
+            if method == 1:
+                # Construct the damage spread field.
+                if self.player_equipped[0] != 0:
+                    title_msg, stats = "Damage Spread", ""
+                    e_weapon = inventory.read_custom_item(self.player_equipped[0])
+                    used_elements, used_multipliers = [], []
+                    temp_element_list = combat.limit_elements(self, e_weapon)
+                    # Build the list of used elements/multipliers.
+                    for i, is_used in enumerate(temp_element_list):
+                        if is_used:
+                            used_elements.append(globalitems.global_element_list[i])
+                            used_multipliers.append(element_breakdown[i][1] / 100)
+                    used_elements, used_multipliers = zip(*sorted(zip(used_elements, used_multipliers),
+                                                                  key=lambda e: e[1], reverse=True))
+                    # Build the breakdown message.
+                    if used_multipliers:
+                        total_contribution = sum(used_multipliers)
+                        for index, (element, multiplier) in enumerate(zip(used_elements, used_multipliers), 1):
+                            contribution = round((multiplier / total_contribution) * 100)
+                            stats += f"{element} {int(contribution)}% "
+                            if index % 3 == 0:
+                                stats += "\n"
+                        embed_msg.add_field(name=title_msg, value=stats, inline=False)
+                return embed_msg
+            if method == 2:
+                # Stat Breakdown Display.
+                def set_section(header, tag_list, value_list):
+                    section_string = f"\n{header}: "
+                    for tag_index, (tag, value) in enumerate(zip(tag_list, value_list)):
+                        section_string += f"({tag}: {value}%)"
+                        if (tag_index + 1) < len(tag_list):
+                            section_string += " - "
+                    return f"{section_string}"
+                title_msg = "Elemental Breakdown"
+                stats += set_section("Elemental Details", ["Cap", "App", "FRC"],
+                                     [self.elemental_capacity, self.elemental_application,
+                                     (self.elemental_application * 5 + show_num(self.specialty_rate[3]))])
+                stats = set_section("Critical Details", ["CRT", "Dmg", "Pen", "App", "OMG"],
+                                     [show_num(self.critical_chance, 0), show_num(self.critical_multiplier),
+                                      show_num(self.critical_penetration),
+                                      (self.critical_application * 10 + show_num(self.specialty_rate[2]))])
+                stats += set_section("Combo Details", ["Dmg", "Pen", "App"],
+                                     [show_num(self.combo_multiplier), show_num(self.combo_penetration),
+                                      self.combo_application])
+                stats += set_section("Ultimate Details", ["Dmg", "Pen", "App"],
+                                     [show_num(self.ultimate_multiplier), show_num(self.ultimate_penetration),
+                                      self.ultimate_application])
+                stats += set_section("Bleed Details", ["Dmg", "Pen", "App", "HPR"],
+                                     [show_num(self.bleed_multiplier), show_num(self.bleed_penetration),
+                                      self.bleed_application,
+                                     (self.bleed_application * 10 + show_num(self.specialty_rate[1]))])
+                stats += set_section("Time Details", ["Dmg", "App", "LCK"],
+                                     [((self.temporal_application + 1) * 100), self.temporal_application,
+                                      (self.temporal_application * 5 + show_num(self.specialty_rate[4]))])
+                stats += set_section("Bloom Details", ["BLM", "Dmg"],
+                                     [show_num(self.specialty_rate[0]), show_num(self.bloom_multiplier)])
+                embed_msg.add_field(name=title_msg, value=stats, inline=False)
+                return embed_msg
+        if method == 3:
+            # Defensive display.
             title_msg = "Defensive Stats"
             stats = f"Player HP: {self.player_mHP:,}"
             for idy, y in enumerate(self.elemental_resistance):
-                stats += f"\n{globalitems.global_element_list[idy]} Resistance: {int(y * 100)}%"
-            stats += f"\nDamage Mitigation: {int(round(self.damage_mitigation))}%"
-        elif method == 4:
+                stats += f"\n{globalitems.global_element_list[idy]} Resistance: {show_num(y)}%"
+            stats += f"\nDamage Mitigation: {show_num(self.damage_mitigation, 0)}%"
+            embed_msg.add_field(name=title_msg, value=stats, inline=False)
+            return embed_msg
+        if method == 4:
+            # Multiplier Display.
             title_msg = "Multipliers"
             for idh, h in enumerate(self.banes):
-                if idh < 5:
-                    stats += f"\n{bosses.boss_list[idh]} Bane: {int(h * 100)}%"
-                elif idh == 5:
-                    stats += f"\nHuman Bane: {int(h * 100)}%"
-            stats += f"\nClass Mastery: {int(round(self.class_multiplier * 100))}%"
-            stats += f"\nFinal Damage: {int(round(self.final_damage * 100))}%"
-            stats += f"\nDefence Penetration: {int(round(self.defence_penetration * 100))}%"
-            stats += f"\nOmni Aura: {int(round(self.aura * 100))}%"
-        else:
+                stats += f"\n{bosses.boss_list[idh]} Bane: {show_num(h)}%" if idh < 5 else f"\nHuman Bane: {show_num(h)}%"
+            stats += f"\nClass Mastery: {show_num(self.class_multiplier)}%"
+            stats += f"\nFinal Damage: {show_num(self.final_damage)}%"
+            stats += f"\nDefence Penetration: {show_num(self.defence_penetration)}%"
+            stats += f"\nOmni Aura: {show_num(self.aura)}%"
+            embed_msg.add_field(name=title_msg, value=stats, inline=False)
+            return embed_msg
+        if method == 5:
+            # Points Display.
             temp_embed = self.create_path_embed()
-
-        # Finalize the embed.
-        embed_msg = discord.Embed(colour=echelon_colour[0],
-                                  title=self.player_username,
-                                  description=id_msg)
-        embed_msg.add_field(name=exp, value=resources, inline=False)
-        embed_msg.add_field(name=title_msg, value=stats, inline=False)
-        # Handle secondary fields.
-        if second_title != "":
-            embed_msg.add_field(name=second_title, value=second_msg, inline=False)
-        # Handle points page exception fields.
-        if temp_embed is not None:
-            for field in temp_embed.fields[:-1]:
-                embed_msg.add_field(name=field.name, value=field.value, inline=field.inline)
-            for path_index, path_type in enumerate(path_names):
+            if temp_embed is not None:
+                for field in temp_embed.fields[:-1]:
+                    embed_msg.add_field(name=field.name, value=field.value, inline=field.inline)
+            embed_msg.add_field(name=title_msg, value=stats, inline=False)
+            return embed_msg
+        if method == 6:
+            # Glyph Display.
+            embed_msg.add_field(name=f"{self.player_username}'s Glyphs (Above tier 1)", value="", inline=False)
+            for path_index, path_type in enumerate(globalitems.path_names):
                 total_points = self.player_stats[path_index] + self.gear_points[path_index]
-                if total_points != 0:
-                    glyph_data_list = glyph_data.get(path_type, [])
-                    for name, details, value in zip(glyph_data_list[::3], glyph_data_list[1::3], glyph_data_list[2::3]):
-                        if total_points >= value:
-                            glyph_name = f"Glyph of {name} - {value} Points"
-                            embed_msg.add_field(name=glyph_name, value=f"{details}", inline=False)
-        thumbnail_url = get_thumbnail_by_class(self.player_class)
-        embed_msg.set_thumbnail(url=thumbnail_url)
-        return embed_msg
+                if total_points >= 20:
+                    embed_msg = skillpaths.display_glyph(path_type, total_points, embed_msg)
+            return embed_msg
 
     def set_player_field(self, field_name, field_value):
         try:
@@ -337,7 +294,8 @@ class PlayerProfile:
         equipped_gear = ";".join(map(str, self.player_equipped))
         self.set_player_field("player_equipped", equipped_gear)
 
-    def add_new_player(self, selected_class):
+    def add_new_player(self, selected_class, discord_id):
+        self.discord_id = discord_id
         self.player_class = selected_class
         self.player_quest = 1
         self.player_lvl = 1
@@ -348,12 +306,12 @@ class PlayerProfile:
             engine_url = mydb.get_engine_url()
             engine = sqlalchemy.create_engine(engine_url)
             pandora_db = engine.connect()
-            query = text("SELECT * FROM PlayerList WHERE player_name = :player_check")
-            query = query.bindparams(player_check=self.player_name)
+            query = text("SELECT * FROM PlayerList WHERE discord_id = :id_check")
+            query = query.bindparams(id_check=self.discord_id)
             df = pd.read_sql(query, pandora_db)
 
             if len(df.index) != 0:
-                response = f"Player {self.player_name} is already registered."
+                response = f"Player with discord ID: ({self.discord_id}) is already registered."
             else:
                 query = text("SELECT * FROM PlayerList WHERE player_username = :username_check")
                 query = query.bindparams(username_check=self.player_username)
@@ -363,14 +321,14 @@ class PlayerProfile:
                     response = f"Username {self.player_username} is taken. Please pick a new username."
                 else:
                     query = text("INSERT INTO PlayerList "
-                                 "(player_name, player_username, player_lvl, player_exp, player_echelon, player_quest, "
-                                 "player_stamina, player_class, player_coins, player_stats, "
+                                 "(discord_id, player_username, player_lvl, player_exp, player_echelon, "
+                                 "player_quest, player_stamina, player_class, player_coins, player_stats, "
                                  "player_glyphs, player_equipped, player_equip_tarot, player_equip_insignia, "
                                  "vouch_points) "
                                  "VALUES (:input_1, :input_2, :input_3, :input_4, :input_5, :input_6,"
                                  ":input_7, :input_8, :input_9, :input_10, :input_11, :input_12, :input_13, "
                                  ":input_14, :input_15)")
-                    query = query.bindparams(input_1=str(self.player_name), input_2=str(self.player_username),
+                    query = query.bindparams(input_1=str(self.discord_id), input_2=str(self.player_username),
                                              input_3=int(self.player_lvl), input_4=int(self.player_exp),
                                              input_5=int(self.player_echelon), input_6=int(self.player_quest),
                                              input_7=int(self.player_stamina), input_8=str(self.player_class),
@@ -379,9 +337,9 @@ class PlayerProfile:
                                              input_13=str(self.equipped_tarot), input_14=str(self.insignia),
                                              input_15=int(self.vouch_points))
                     pandora_db.execute(query)
-                    response = f"Player {self.player_name} has been registered to play. Welcome {self.player_username}!"
+                    response = f"Player registration completed!\n Welcome {self.player_username}!"
                     response += f"\nPlease use the !quest command to proceed."
-                    registered_player = get_player_by_name(self.player_name)
+                    registered_player = get_player_by_discord(self.discord_id)
                     query = text("INSERT INTO QuestTokens (player_id, token_1, token_3) "
                                  "VALUES(:player_id, :input_1, :input_2)")
                     query = query.bindparams(player_id=registered_player.player_id, input_1=1, input_2=1)
@@ -459,7 +417,7 @@ class PlayerProfile:
 
     def allocate_points(self, selected_path, num_change):
         path_type = selected_path.split(" ")[-1]
-        path_location = path_names.index(path_type)
+        path_location = globalitems.path_names.index(path_type)
         spent_points = sum(self.player_stats)
         available_points = self.player_lvl - spent_points
         if available_points >= num_change:
@@ -472,8 +430,8 @@ class PlayerProfile:
         return response
 
     def reset_skill_points(self):
-        self.player_stats = [0, 0, 0, 0, 0, 0]
-        reset_points = "0;0;0;0;0;0"
+        self.player_stats = [0, 0, 0, 0, 0, 0, 0]
+        reset_points = "0;0;0;0;0;0;0"
         self.set_player_field("player_stats", reset_points)
 
     def create_path_embed(self):
@@ -481,7 +439,7 @@ class PlayerProfile:
         points_msg = "Your shiny toys are useless if you don't know how to use them."
         embed = discord.Embed(color=colour, title="Avalon, Pathwalker of the True Laws", description=points_msg)
         embed.add_field(name=f"{self.player_username}'s Skill Points", value="", inline=False)
-        for path_label, points, gear_points in zip(path_names, self.player_stats, self.gear_points):
+        for path_label, points, gear_points in zip(globalitems.path_names, self.player_stats, self.gear_points):
             value_msg = f"Points: {points}"
             if gear_points > 0:
                 value_msg += f" (+{gear_points})"
@@ -493,33 +451,23 @@ class PlayerProfile:
 
     def build_points_embed(self, selected_path):
         colour, icon = inventory.get_gear_tier_colours(self.player_echelon)
-        embed = discord.Embed(color=colour, title=f"{selected_path}", description="")
-        perks = {
-            "Storms": ["Water Damage: 5%", "Lightning Damage: 5%", "Water Resistance: 1%", "Lightning Resistance: 1%",
-                       "Critical Damage: 3%"],
-            "Frostfire": ["Ice Damage: 5%", "Fire Damage: 5%", "Ice Resistance: 1%", "Fire Resistance: 1%",
-                          "Class Mastery: 1%"],
-            "Horizon": ["Earth Damage: 5%", "Wind Damage: 5%", "Earth Resistance: 1%", "Wind Resistance: 1%",
-                        "Bleed Damage: 10%"],
-            "Eclipse": ["Dark Damage: 5%", "Light Damage: 5%", "Dark Resistance: 1%", "Light Resistance: 1%",
-                        "Ultimate Damage: 10%"],
-            "Stars": ["Celestial Damage: 7%", "Celestial Resistance: 1%", "Combo Damage: 3%"],
-            "Time": ["???%"],
-            "Confluence": ["Omni Aura 1%"]
-        }
-
+        embed = discord.Embed(color=colour, title=f"{selected_path}", description="Stats per point:\n")
+        
         path_type = selected_path.split(" ")[-1]
-        embed.description = "Stats per point:\n" + '\n'.join(perks[path_type])
-        points_field = self.player_stats[path_names.index(path_type)]
-        gear_points = self.gear_points[path_names.index(path_type)]
+        for modifier in skillpaths.path_perks[path_type]:
+            embed.description += f'{modifier[0].replace("X", str(modifier[1]))}\n'
+
+        # Calculate the points.
+        points_field = self.player_stats[globalitems.path_names.index(path_type)]
+        gear_points = self.gear_points[globalitems.path_names.index(path_type)]
         points_msg = f"{self.player_username}'s {selected_path} points: {points_field}"
         total_points = points_field + gear_points
         if gear_points > 0:
             points_msg += f" (+{gear_points})"
         embed.add_field(name="", value=points_msg, inline=False)
-        glyph_data_list = glyph_data.get(path_type, [])
-        for name, details, value in zip(glyph_data_list[::3], glyph_data_list[1::3], glyph_data_list[2::3]):
-            embed.add_field(name=f"Glyph of {name} - {value} Points", value=f"{details}", inline=False)
+
+        # Build the embed.
+        embed = skillpaths.display_glyph(path_type, total_points, embed)
         spent_points = sum(self.player_stats)
         remaining_points = self.player_lvl - spent_points
         embed.add_field(name="", value=f"Remaining Points: {remaining_points}", inline=False)
@@ -574,14 +522,16 @@ class PlayerProfile:
                 self.unique_ability_multipliers(e_item[y])
         if self.equipped_tarot != "":
             e_tarot = tarot.check_tarot(self.player_id, tarot.card_dict[self.equipped_tarot][0])
-            self.assign_tarot_values(e_tarot)
+            e_tarot.assign_tarot_values(self)
         if self.insignia != "":
-            self.assign_insignia_values(self.insignia)
+            insignia.assign_insignia_values(self)
 
         # Path Multipliers
         total_points = [x + y for x, y in zip(self.player_stats, self.gear_points)]
-        thresholds = [20, 40, 60, 80]
-        increments = [1, 1, 1, 2]
+        unique_breakpoints = [80, 80, 80, 80, 100, 80, 100]
+        for glyph, (points, unique_breakpoint) in enumerate(zip(total_points, unique_breakpoints)):
+            if points >= unique_breakpoint:
+                self.unique_glyph_ability[glyph] = True
 
         # Storm Path
         storm_bonus = total_points[0]
@@ -590,9 +540,7 @@ class PlayerProfile:
         self.elemental_resistance[1] += 0.01 * storm_bonus
         self.elemental_resistance[2] += 0.01 * storm_bonus
         self.critical_multiplier += 0.03 * storm_bonus
-        for threshold, increment in zip(thresholds, increments):
-            if storm_bonus >= threshold:
-                self.critical_application += increment
+        self.critical_application += storm_bonus // 20
 
         # Horizon Path
         horizon_bonus = total_points[2]
@@ -601,9 +549,7 @@ class PlayerProfile:
         self.elemental_resistance[3] += 0.01 * horizon_bonus
         self.elemental_resistance[4] += 0.01 * horizon_bonus
         self.bleed_multiplier += 0.1 * horizon_bonus
-        for threshold, increment in zip(thresholds, increments):
-            if horizon_bonus >= threshold:
-                self.bleed_application += increment
+        self.bleed_application += horizon_bonus // 20
 
         # Frostfire Path
         frostfire_bonus = total_points[1]
@@ -620,29 +566,32 @@ class PlayerProfile:
         self.elemental_resistance[6] += 0.01 * eclipse_bonus
         self.elemental_resistance[7] += 0.01 * eclipse_bonus
         self.ultimate_multiplier += 0.1 * eclipse_bonus
-        for threshold, increment in zip(thresholds, increments):
-            if eclipse_bonus >= threshold:
-                if eclipse_bonus >= 80:
-                    self.glyph_of_eclipse = True
-                else:
-                    self.ultimate_application += increment
+        self.ultimate_application += eclipse_bonus // 20
+        if eclipse_bonus >= 100:
+            self.skill_base_damage_bonus[3] += 3
 
         # Confluence Path
         confluence_bonus = total_points[5]
         self.aura += 0.01 * confluence_bonus
-        for threshold, increment in zip(thresholds, increments):
-            if confluence_bonus >= threshold:
-                self.elemental_application += increment + 1
+        self.all_elemental_curse += 0.01 * confluence_bonus
+        self.elemental_application += 2 * confluence_bonus // 20
+        if confluence_bonus >= 80:
+            self.all_elemental_multiplier *= 2
+        if confluence_bonus >= 100:
+            self.all_elemental_penetration *= 2
+            self.all_elemental_curse *= 2
 
         # Star Path
-        star_increments = [0.5, 0.75, 1, 1.5]
         star_bonus = total_points[4]
         self.elemental_multiplier[8] += 0.07 * star_bonus
         self.elemental_resistance[8] += 0.01 * star_bonus
         self.combo_multiplier += 0.03 * star_bonus
-        for index, (threshold, increment) in enumerate(zip(thresholds, star_increments)):
-            if star_bonus >= threshold:
-                self.skill_base_damage_bonus[index] += increment
+        star_skill_bonus = 0.25 * star_bonus // 20
+        self.skill_base_damage_bonus[0] += star_skill_bonus
+        if star_bonus >= 80:
+            self.skill_base_damage_bonus[1] += star_skill_bonus
+        if star_bonus >= 100:
+            self.skill_base_damage_bonus[2] += star_skill_bonus
 
         # Application Calculations
         base_critical_chance += self.critical_application * 5
@@ -668,29 +617,45 @@ class PlayerProfile:
         self.class_multiplier *= match_count
 
         # Frostfire Path
-        def apply_cascade(bonus, data_list, cascade_breakpoint):
-            if bonus >= cascade_breakpoint:
-                temp_list = data_list.copy()
-                temp_list[0], temp_list[5] = 0, 0
-                highest_index = temp_list.index(max(temp_list))
-                data_list[highest_index] += data_list[0] + data_list[5]
-
+        def apply_cascade(bonus, data_list):
+            temp_list = data_list.copy()
+            temp_list[0], temp_list[5] = 0, 0
+            highest_index = temp_list.index(max(temp_list))
+            data_list[highest_index] += data_list[0] + data_list[5]
+        # self.??? += 0.01 * frostfire_bonus
         if frostfire_bonus >= 80:
+            apply_cascade(self.elemental_multiplier, frostfire_bonus)
+            apply_cascade(self.elemental_penetration, frostfire_bonus)
+            apply_cascade(self.elemental_curse, frostfire_bonus)
+        if frostfire_bonus >= 100:
             self.elemental_multiplier[0] *= 3
             self.elemental_multiplier[5] *= 3
             self.elemental_penetration[0] *= 3
             self.elemental_penetration[5] *= 3
             self.elemental_curse[0] *= 3
             self.elemental_curse[5] *= 3
-        apply_cascade(frostfire_bonus, self.elemental_multiplier, 20)
-        apply_cascade(frostfire_bonus, self.elemental_penetration, 40)
-        apply_cascade(frostfire_bonus, self.elemental_curse, 60)
+
+        # Solitude Path
+        def apply_singularity(data_list, bonus):
+            highest_index = data_list.index(max(data_list))
+            data_list[highest_index] += bonus
+
+        solitude_bonus = total_points[6] * 2 if total_points[6] >= 100 else total_points[6]
+        apply_singularity(self.elemental_multiplier, (0.10 * solitude_bonus))
+        apply_singularity(self.elemental_penetration, (0.05 * solitude_bonus))
+        apply_singularity(self.elemental_curse, (0.01 * solitude_bonus))
+        self.temporal_application += solitude_bonus // 20
 
         # Elemental Calculations
         if self.elemental_application > 0:
             self.elemental_capacity += self.elemental_application
             if self.elemental_capacity > 9:
                 self.elemental_capacity = 9
+        # Hard limitation exceptions.
+        if frostfire_bonus >= 80:
+            self.elemental_capacity = 3
+        if solitude_bonus >= 100:
+            self.elemental_capacity = 1
 
         # Apply omni multipliers.
         for x in range(9):
@@ -745,7 +710,7 @@ class PlayerProfile:
                 penetration_multi = 1 + self.elemental_penetration[idx]
                 self.elemental_damage[idx] *= resist_multi * penetration_multi * self.elemental_conversion[idx]
         subtotal_damage = sum(self.elemental_damage) * (1 + boss_object.aura)
-        subtotal_damage *= combat.boss_true_mitigation(boss_object)
+        subtotal_damage *= combat.boss_true_mitigation(boss_object.boss_lvl)
         adjusted_damage = int(subtotal_damage)
         return adjusted_damage
 
@@ -755,54 +720,6 @@ class PlayerProfile:
         self.player_total_damage = self.boss_adjustments(player_damage, boss_object, e_weapon)
         self.player_total_damage *= (1 + self.bleed_multiplier)
         return self.player_total_damage
-
-    def assign_insignia_values(self, insignia_code):
-        # Data handling.
-        temp_code = insignia_code.split(";")
-        temp_elements, mutation_tier = temp_code[:9], int(temp_code[-1])
-        insignia_stars = self.player_echelon + mutation_tier
-        mutation_adjust = max(1, mutation_tier)
-        element_list = list(map(int, temp_elements))
-        num_elements = element_list.count(1)
-        # Apply bonus stats.
-        self.final_damage += self.player_lvl * 0.01 * mutation_adjust
-        self.attack_speed += self.player_echelon * 0.1
-        self.hp_bonus += insignia.insignia_hp_list[insignia_stars]
-        # Apply Elemental Penetration
-        if num_elements != 9:
-            selected_elements_list = [ind for ind, x in enumerate(element_list) if x == 1]
-            for y in selected_elements_list:
-                self.elemental_penetration[y] += insignia.insignia_multiplier_list[num_elements][0]
-                self.elemental_penetration[y] += (insignia.insignia_multiplier_list[num_elements][1]
-                                                  * insignia_stars * mutation_adjust)
-        # Omni exception for faster runtime and separate stat assignment.
-        else:
-            self.all_elemental_penetration += insignia.insignia_multiplier_list[num_elements][0] * 0.01
-            self.all_elemental_penetration += (insignia.insignia_multiplier_list[num_elements][1]
-                                               * insignia_stars * mutation_adjust * 0.01)
-
-    def assign_tarot_values(self, tarot_card):
-        card_data = tarot.card_stat_dict[tarot_card.card_numeral]
-        # Apply Path bonuses
-        path_bonus = tarot.path_point_values[tarot_card.num_stars]
-        if card_data[0] != "All":
-            self.player_stats[card_data[0]] += path_bonus
-        else:
-            self.player_stats = [path + path_bonus for path in self.player_stats]
-        # Apply modifier bonuses
-        self.player_damage += tarot_card.damage
-        self.hp_bonus += tarot_card.hp
-        self.final_damage += tarot_card.fd * 0.01
-        card_multiplier = tarot_card.num_stars * 0.01
-        for bonus_roll in card_data[1:]:
-            attribute_name, attribute_position = bonus_roll[2], bonus_roll[3]
-            if "application" not in attribute_name:
-                attribute_value = (bonus_roll[1] * card_multiplier)
-            if attribute_position is None:
-                setattr(self, attribute_name, getattr(self, attribute_name) + attribute_value)
-            else:
-                target_list = getattr(self, attribute_name)
-                target_list[attribute_position] += attribute_value
 
     def equip(self, selected_item) -> str:
         try:
@@ -996,10 +913,8 @@ def check_username(new_name: str):
     except mysql.connector.Error as err:
         print("Database Error: {}".format(err))
     if len(df) != 0:
-        can_proceed = False
-    else:
-        can_proceed = True
-    return can_proceed
+        return False
+    return True
 
 
 def get_player_by_id(player_id: int) -> PlayerProfile:
@@ -1015,7 +930,7 @@ def get_player_by_id(player_id: int) -> PlayerProfile:
         engine.dispose()
         if len(df.index) != 0:
             target_player.player_id = int(df["player_id"].values[0])
-            target_player.player_name = str(df["player_name"].values[0])
+            target_player.discord_id = int(df["discord_id"].values[0])
             target_player.player_username = str(df["player_username"].values[0])
             target_player.player_lvl = int(df["player_lvl"].values[0])
             target_player.player_exp = int(df["player_exp"].values[0])
@@ -1028,25 +943,23 @@ def get_player_by_id(player_id: int) -> PlayerProfile:
             target_player.get_equipped()
     except mysql.connector.Error as err:
         print("Database Error: {}".format(err))
-        target_player.player_name = player_name
     return target_player
 
 
-def get_player_by_name(player_name) -> PlayerProfile:
+def get_player_by_discord(discord_id) -> PlayerProfile:
     target_player = PlayerProfile()
-    normalized_player_name = normalize_username(str(player_name))
     try:
         engine_url = mydb.get_engine_url()
         engine = sqlalchemy.create_engine(engine_url)
         pandora_db = engine.connect()
-        query = text("SELECT * FROM PlayerList WHERE player_name = :player_check")
-        query = query.bindparams(player_check=normalized_player_name)
+        query = text("SELECT * FROM PlayerList WHERE discord_id = :id_check")
+        query = query.bindparams(id_check=str(discord_id))
         df = pd.read_sql(query, pandora_db)
         pandora_db.close()
         engine.dispose()
         if len(df.index) != 0:
-            target_player.player_name = str(df["player_name"].values[0])
             target_player.player_id = int(df["player_id"].values[0])
+            target_player.discord_id = int(df["discord_id"].values[0])
             target_player.player_username = str(df["player_username"].values[0])
             target_player.player_lvl = int(df["player_lvl"].values[0])
             target_player.player_exp = int(df["player_exp"].values[0])
@@ -1059,7 +972,6 @@ def get_player_by_name(player_name) -> PlayerProfile:
             target_player.get_equipped()
     except mysql.connector.Error as err:
         print("Database Error: {}".format(err))
-        target_player.player_name = normalized_player_name
     return target_player
 
 
@@ -1078,7 +990,7 @@ def get_players_by_echelon(player_echelon):
             for index, row in player_df.iterrows():
                 target_player = PlayerProfile()
                 target_player.player_id = int(row["player_id"])
-                target_player.player_name = str(row["player_name"])
+                target_player.discord_id = int(row["discord_id"])
                 target_player.player_username = str(row["player_username"])
                 target_player.player_lvl = int(row["player_lvl"])
                 target_player.player_exp = int(row["player_exp"])
@@ -1128,7 +1040,7 @@ def get_all_users():
             for index, row in df.iterrows():
                 target_player = PlayerProfile()
                 target_player.player_id = int(row["player_id"])
-                target_player.player_name = str(row["player_name"])
+                target_player.discord_id = int(row["discord_id"])
                 target_player.player_username = str(row["player_username"])
                 target_player.player_lvl = int(row["player_lvl"])
                 target_player.player_exp = int(row["player_exp"])
@@ -1158,6 +1070,10 @@ def checkNaN(test_string):
         return result
     except Exception as e:
         return False
+
+
+def show_num(input_number, adjust=100):
+    return int(round(input_number * adjust))
 
 
 def get_thumbnail_by_class(class_name):

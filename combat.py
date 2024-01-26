@@ -295,8 +295,12 @@ def check_lock(player_object, combat_tracker, damage):
         lock_rate = 5 * player_object.temporal_application + int(round(player_object.specialty_rate[4] * 100))
         random_lock_chance = random.randint(1, 100)
         if random_lock_chance <= lock_rate:
-            combat_tracker.time_lock = player_object.temporal_application + 1
-            status_msg = "TIME LOCK"
+            if player_object.unique_glyph_ability[6]:
+                damage *= damage * (player_object.temporal_application + 1)
+                status_msg = "TIME SHATTER"
+            else:
+                combat_tracker.time_lock = player_object.temporal_application + 1
+                status_msg = "TIME LOCK"
     elif combat_tracker.time_lock > 0:
         combat_tracker.time_lock -= 1
         combat_tracker.time_damage += damage
@@ -324,9 +328,9 @@ def boss_defences(method, player_object, boss_object, location):
     return type_multiplier
 
 
-def boss_true_mitigation(boss_object):
-    mitigation_multiplier = 1 - (boss_object.boss_lvl * 0.01)
-    return mitigation_multiplier
+def boss_true_mitigation(boss_level):
+    a, b, c = 1, 0.5, 0.1
+    return a - (a - b) * boss_level / 99 if boss_level <= 99 else b - (b - c) * (boss_level - 100) / 899
 
 
 def critical_check(player_object, player_damage, num_elements):
@@ -371,7 +375,7 @@ def skill_adjuster(player_object, combat_tracker, hit_damage,
         damage = int(hit_damage * combo_multiplier * (1 + player_object.skill_base_damage_bonus[2]))
         skill_name = class_skill_list[2]
         charges_gained = 1 + player_object.ultimate_application
-    if not is_ultimate and player_object.glyph_of_eclipse:
+    if not is_ultimate and player_object.unique_glyph_ability[3]:
         ultimate_multiplier = (1 + player_object.ultimate_multiplier) * (1 + player_object.ultimate_penetration)
         damage = int(hit_damage * ultimate_multiplier)
     combat_tracker.charges += charges_gained
@@ -433,7 +437,7 @@ def get_random_opponent(player_echelon):
     if player_list:
         opponent_object = random.choice(player_list)
     else:
-        opponent_object = player.get_player_by_name("mistysyn")
+        opponent_object = player.get_player_by_id(9)
     opponent_object.get_equipped()
     return opponent_object
 
@@ -481,6 +485,8 @@ def toggle_flag(player_object):
 def limit_elements(player_object, e_weapon):
     elemental_breakdown = []
     temp_list = e_weapon.item_elements.copy()
+    if player_object.elemental_capacity == 9:
+        return temp_list
     for x, is_used in enumerate(temp_list):
         if is_used:
             temp_total = player_object.elemental_multiplier[x] * player_object.elemental_penetration[x]

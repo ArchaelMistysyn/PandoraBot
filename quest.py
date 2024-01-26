@@ -191,7 +191,7 @@ class QuestView(discord.ui.View):
     @discord.ui.button(label="Hand In", style=discord.ButtonStyle.blurple, emoji="⚔️")
     async def hand_in(self, interaction: discord.Interaction, button: discord.Button):
         try:
-            if interaction.user.name == self.player_object.player_name:
+            if interaction.user.id == self.player_object.discord_id:
                 if not self.embed_msg:
                     reload_player = player.get_player_by_id(self.player_object.player_id)
                     self.embed_msg, is_completed = self.quest_object.hand_in(reload_player)
@@ -220,7 +220,7 @@ class RewardView(discord.ui.View):
     @discord.ui.button(label="Next Quest", style=discord.ButtonStyle.blurple, emoji="⚔️")
     async def next_quest(self, interaction: discord.Interaction, button: discord.Button):
         try:
-            if interaction.user.name == self.player_object.player_name:
+            if interaction.user.id == self.player_object.discord_id:
                 end_quest = 30
                 if self.player_object.player_quest <= end_quest:
                     current_quest = self.player_object.player_quest

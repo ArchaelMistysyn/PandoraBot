@@ -38,7 +38,7 @@ class RaidView(discord.ui.View):
 
     @discord.ui.button(label="Join the raid!", style=discord.ButtonStyle.success, emoji="⚔️")
     async def raid_callback(self, interaction: discord.Interaction, raid_select: discord.ui.Select):
-        clicked_by = player.get_player_by_name(str(interaction.user))
+        clicked_by = player.get_player_by_discord(interaction.user.id)
         outcome = clicked_by.player_username
         echelon_req = globalitems.channel_echelon_dict[self.channel_num]
         if clicked_by.player_echelon == echelon_req:
@@ -119,8 +119,8 @@ def run_discord_bot():
                 async def run_raid_task(pass_raid_channel_id, pass_x, pass_raid_channel):
                     await raid_task(pass_raid_channel_id, pass_x, pass_raid_channel)
 
-                async def run_solo_boss_task(pass_player_object, pass_y, pass_command_channel_id, pass_cmd_channel):
-                    await solo_boss_task(pass_player_object, pass_y, pass_command_channel_id, pass_cmd_channel)
+                async def run_solo_boss_task(pass_player_object, pass_y, pass_command_channel_id, ctx_object):
+                    await solo_boss_task(pass_player_object, pass_y, pass_command_channel_id, ctx_object)
 
                 for server in globalitems.global_server_channels:
                     command_channel_id = server[0]
@@ -132,7 +132,7 @@ def run_discord_bot():
                     restore_boss_list = bosses.restore_solo_bosses(command_channel_id)
                     for idy, y in enumerate(restore_boss_list):
                         player_object = player.get_player_by_id(y.player_id)
-                        asyncio.create_task(run_solo_boss_task(player_object, y, command_channel_id, cmd_channel))
+                        asyncio.create_task(run_solo_boss_task(player_object, y, command_channel_id, ctx))
                 print("Initialized Bosses")
             except Exception as e:
                 print(e)
@@ -187,11 +187,11 @@ def run_discord_bot():
             return False
 
     @engine_bot.event
-    async def solo_boss_task(player_object, active_boss, channel_id, channel_object):
+    async def solo_boss_task(player_object, active_boss, channel_id, ctx_object):
         embed_msg = active_boss.create_boss_embed(0)
-        sent_message = await channel_object.send(embed=embed_msg)
+        sent_message = await ctx_object.channel.send(embed=embed_msg)
         player_object.get_player_multipliers()
-        solo_cog = enginecogs.SoloCog(engine_bot, player_object, active_boss, channel_id, sent_message, channel_object)
+        solo_cog = enginecogs.SoloCog(engine_bot, player_object, active_boss, channel_id, sent_message, ctx_object)
         await solo_cog.run()
 
     @engine_bot.event
@@ -219,8 +219,7 @@ def run_discord_bot():
     async def abandon(ctx):
         channel_id = ctx.channel.id
         if any(channel_id in sl for sl in globalitems.global_server_channels):
-            player_name = ctx.author
-            player_object = player.get_player_by_name(player_name)
+            player_object = player.get_player_by_discord(ctx.author.id)
             await ctx.defer()
             if player_object.player_class != "":
                 existing_id = bosses.get_raid_id(channel_id, player_object.player_id)
@@ -242,8 +241,7 @@ def run_discord_bot():
         channel_id = ctx.channel.id
         if any(channel_id in sl for sl in globalitems.global_server_channels):
             await ctx.defer()
-            player_name = ctx.author
-            player_object = player.get_player_by_name(player_name)
+            player_object = player.get_player_by_discord(ctx.author.id)
 
             # Confirm if the command can be run.
             if player_object.player_class == "":
@@ -271,15 +269,14 @@ def run_discord_bot():
                                             boss_type, player_object.player_lvl, 0)
             active_boss.player_id = player_object.player_id
             embed_msg = active_boss.create_boss_embed(0)
-            channel_object = ctx.channel
             spawn_msg = f"{player_object.player_username} has spawned a tier {active_boss.boss_tier} boss!"
             await ctx.send(spawn_msg)
-            sent_message = await channel_object.send(embed=embed_msg)
+            sent_message = await ctx.channel.send(embed=embed_msg)
 
             # Run the boss cog.
             async def run_solo_cog():
                 return enginecogs.SoloCog(engine_bot, player_object, active_boss, channel_id,
-                                          sent_message, channel_object)
+                                          sent_message, ctx)
 
             solo_cog = await run_solo_cog()
             task = asyncio.create_task(solo_cog.run())
@@ -291,8 +288,7 @@ def run_discord_bot():
         channel_id = ctx.channel.id
         if any(channel_id in sl for sl in globalitems.global_server_channels):
             await ctx.defer()
-            player_name = ctx.author
-            player_object = player.get_player_by_name(player_name)
+            player_object = player.get_player_by_discord(ctx.author.id)
 
             # Confirm if the command can be run.
             if token_version not in range(1, 6):
@@ -343,15 +339,14 @@ def run_discord_bot():
                                             boss_type, player_object.player_lvl, 0)
             active_boss.player_id = player_object.player_id
             embed_msg = active_boss.create_boss_embed(0)
-            channel_object = ctx.channel
             spawn_msg = f"{player_object.player_username} has spawned a tier {active_boss.boss_tier} boss!"
             await ctx.send(spawn_msg)
             player_object.get_player_multipliers()
-            sent_message = await channel_object.send(embed=embed_msg)
+            sent_message = await ctx.channel.send(embed=embed_msg)
 
             async def run_solo_cog():
                 return enginecogs.SoloCog(engine_bot, player_object, active_boss, channel_id,
-                                          sent_message, channel_object)
+                                          sent_message, ctx)
 
             solo_cog = await run_solo_cog()
             task = asyncio.create_task(solo_cog.run())
@@ -363,8 +358,7 @@ def run_discord_bot():
         channel_id = ctx.channel.id
         if any(channel_id in sl for sl in globalitems.global_server_channels):
             await ctx.defer()
-            player_name = ctx.author
-            player_object = player.get_player_by_name(player_name)
+            player_object = player.get_player_by_discord(ctx.author.id)
             if player_object.player_class != "":
                 if player_object.player_echelon >= 1:
                     opponent_player = combat.get_random_opponent(player_object.player_echelon)

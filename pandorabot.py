@@ -152,7 +152,7 @@ def run_discord_bot():
             achievement_list = []
             roles_list = [r.name for r in user.roles]
             if "Passcard - Pandora Tester" in roles_list:
-                player_object = player.get_player_by_name(user)
+                player_object = player.get_player_by_discord(user.id)
                 if backdoor == "stamina_hack":
                     player_object.set_player_field("player_stamina", int(value))
                 if backdoor == "item_hack":
@@ -172,17 +172,10 @@ def run_discord_bot():
                     else:
                         await ctx.send("Only Archael can run this command.")
                 if backdoor == "rerank_leaderboard":
-                    leaderboards.rerank_leaderboard()
+                    await leaderboards.rerank_leaderboard(ctx)
                     await ctx.send("Admin item task completed.")
             else:
                 await ctx.send("Only testers can use this command.")
-
-    @pandora_bot.event
-    async def on_user_update(before, after):
-        if before.name != after.name:
-            temp_player = player.get_player_by_name(before.name)
-            temp_player.player_name = after.name
-            temp_player.set_player_field("player_name", after.name)
 
     # Game Commands
     @set_command_category('game', 0)
@@ -191,8 +184,7 @@ def run_discord_bot():
     async def expedition(ctx):
         if any(ctx.channel.id in sl for sl in globalitems.global_server_channels):
             await ctx.defer()
-            player_name = str(ctx.author)
-            player_object = player.get_player_by_name(player_name)
+            player_object = player.get_player_by_discord(ctx.author.id)
             if player_object.player_class != "":
                 embed_msg = discord.Embed(colour=discord.Colour.dark_orange(),
                                           title="Map Exploration",
@@ -210,8 +202,7 @@ def run_discord_bot():
     async def story_quest(ctx):
         if any(ctx.channel.id in sl for sl in globalitems.global_server_channels):
             await ctx.defer()
-            user = ctx.author
-            player_object = player.get_player_by_name(str(user))
+            player_object = player.get_player_by_discord(ctx.author.id)
             current_quest = player_object.player_quest
             if current_quest != 0:
                 current_quest = player_object.player_quest
@@ -235,7 +226,7 @@ def run_discord_bot():
         if any(ctx.channel.id in sl for sl in globalitems.global_server_channels):
             await ctx.defer()
             user = ctx.author
-            player_object = player.get_player_by_name(user)
+            player_object = player.get_player_by_discord(user.id)
             if player_object.player_class != "":
                 embed_msg = player_object.create_stamina_embed()
                 stamina_view = menus.StaminaView(player_object)
@@ -252,7 +243,7 @@ def run_discord_bot():
         if any(channel_id in sl for sl in globalitems.global_server_channels):
             await ctx.defer()
             user = ctx.author
-            player_object = player.get_player_by_name(user)
+            player_object = player.get_player_by_discord(user.id)
             if player_object.player_class != "":
                 existing_id = bosses.get_raid_id(channel_id, player_object.player_id)
                 if existing_id == 0:
@@ -273,7 +264,7 @@ def run_discord_bot():
     async def manifest(ctx):
         if any(ctx.channel.id in sl for sl in globalitems.global_server_channels):
             await ctx.defer()
-            player_object = player.get_player_by_name(str(ctx.author))
+            player_object = player.get_player_by_discord(ctx.author.id)
             if player_object.player_class == "":
                 embed_msg = unregistered_message()
                 await ctx.send(embed=embed_msg)
@@ -308,11 +299,7 @@ def run_discord_bot():
                     embed_msg.set_image(url=e_tarot.card_image_link)
                     embed_msg.title = f"Echo of {e_tarot.card_name}"
                     manifest_description = "What do you need me to help you with?"
-                    display_stars = ""
-                    for x in range(e_tarot.num_stars):
-                        display_stars += "<:estar1:1143756443967819906>"
-                    for y in range((5 - e_tarot.num_stars)):
-                        display_stars += "<:ebstar2:1144826056222724106>"
+                    display_stars = globalitems.display_stars(e_tarot.num_stars)
                     manifest_description += f"\nSelected Tarot Rating: {display_stars}"
                 else:
                     embed_msg.title = "Pandora, The Celestial"
@@ -329,7 +316,7 @@ def run_discord_bot():
     async def crate(ctx):
         await ctx.defer()
         if any(ctx.channel.id in sl for sl in globalitems.global_server_channels):
-            player_object = player.get_player_by_name(str(ctx.author))
+            player_object = player.get_player_by_discord(ctx.author.id)
             if player_object.player_class != "":
                 crate_id = "Crate"
                 crate_stock = inventory.check_stock(player_object, crate_id)
@@ -360,7 +347,7 @@ def run_discord_bot():
     async def trove(ctx, trove_tier: int):
         if any(ctx.channel.id in sl for sl in globalitems.global_server_channels):
             await ctx.defer()
-            player_object = player.get_player_by_name(str(ctx.author))
+            player_object = player.get_player_by_discord(ctx.author.id)
             if player_object.player_class != "":
                 if trove_tier in range(1, 5):
                     trove_id = f"Trove{trove_tier}"
@@ -395,8 +382,7 @@ def run_discord_bot():
         channel_id = ctx.channel.id
         if any(channel_id in sl for sl in globalitems.global_server_channels):
             await ctx.defer()
-            player_name = ctx.author
-            player_object = player.get_player_by_name(player_name)
+            player_object = player.get_player_by_discord(ctx.author.id)
             if player_object.player_class != "":
                 existing_id = bosses.get_raid_id(channel_id, player_object.player_id)
                 if existing_id == 0:
@@ -418,7 +404,7 @@ def run_discord_bot():
         if any(ctx.channel.id in sl for sl in globalitems.global_server_channels):
             mysmiria_title = "Mysmiria, Changeling of the True Laws"
             await ctx.defer()
-            existing_user = player.get_player_by_name(ctx.author)
+            existing_user = player.get_player_by_discord(ctx.author.id)
             if existing_user.player_class == "":
                 embed_msg = unregistered_message()
                 await ctx.send(embed=embed_msg)
@@ -479,9 +465,9 @@ def run_discord_bot():
     async def gear(ctx, user: discord.User = None):
         await ctx.defer()
         if any(ctx.channel.id in sl for sl in globalitems.global_server_channels):
-            player_object = player.get_player_by_name(str(ctx.author))
+            player_object = player.get_player_by_discord(ctx.author.id)
             if user:
-                target_user = player.get_player_by_name(str(user.name))
+                target_user = player.get_player_by_discord(user.id)
             else:
                 target_user = player_object
             if target_user.player_class != "":
@@ -505,7 +491,7 @@ def run_discord_bot():
     async def inv(ctx):
         if any(ctx.channel.id in sl for sl in globalitems.global_server_channels):
             await ctx.defer()
-            player_object = player.get_player_by_name(str(ctx.author))
+            player_object = player.get_player_by_discord(ctx.author.id)
             if player_object.player_class != "":
                 inventory_view = inventory.BInventoryView(player_object)
                 inventory_title = f'{player_object.player_username}\'s Crafting Inventory:\n'
@@ -529,7 +515,7 @@ def run_discord_bot():
                                       title="An item with this ID does not exist.",
                                       description=f"Inputted ID: {item_id}")
             new_view = None
-            player_object = player.get_player_by_name(str(ctx.author))
+            player_object = player.get_player_by_discord(ctx.author.id)
             if player_object.player_class == "":
                 embed_msg = unregistered_message()
                 await ctx.send(embed=embed_msg, view=item_view)
@@ -575,7 +561,7 @@ def run_discord_bot():
         if any(ctx.channel.id in sl for sl in globalitems.global_server_channels):
             await ctx.defer()
             user = ctx.author
-            player_object = player.get_player_by_name(user)
+            player_object = player.get_player_by_discord(user.id)
             if player_object.player_class == "":
                 embed_msg = unregistered_message()
                 await ctx.send(embed=embed_msg)
@@ -597,7 +583,7 @@ def run_discord_bot():
     async def engrave(ctx):
         await ctx.defer()
         if any(ctx.channel.id in sl for sl in globalitems.global_server_channels):
-            player_object = player.get_player_by_name(str(ctx.author))
+            player_object = player.get_player_by_discord(ctx.author.id)
             if player_object.player_class != "":
                 engrave_msg = "You've come a long way from home child. Tell me, what kind of power do you seek?"
                 embed_msg = discord.Embed(colour=discord.Colour.dark_orange(),
@@ -619,7 +605,7 @@ def run_discord_bot():
             embed_msg = discord.Embed(colour=discord.Colour.blurple(), title="Kazyth, Lifeblood of the True Laws",
                                       description="")
             new_view = None
-            player_object = player.get_player_by_name(str(ctx.author))
+            player_object = player.get_player_by_discord(ctx.author.id)
             if player_object.player_class == "":
                 embed_msg = unregistered_message()
                 await ctx.send(embed=embed_msg, view=item_view)
@@ -670,7 +656,7 @@ def run_discord_bot():
                                      "taken lightly. Have you come prepared to bear the guilt for such blasphemy?\n")
             path_location = int(gem_1.item_bonus_stat[0])
             target_tier = gem_1.item_tier if gem_1.item_tier != gem_2.item_tier else (gem_1.item_tier + 1)
-            target_info = f"\nTarget Tier: {target_tier}\nTarget Path: {player.path_names[path_location]}"
+            target_info = f"\nTarget Tier: {target_tier}\nTarget Path: {globalitems.path_names[path_location]}"
             embed_msg.add_field(name="", value=target_info, inline=False)
             primary_gem_info = itemrolls.display_rolls(gem_1)
             embed_msg.add_field(name=f"Primary Gem - ID: {base_gem_id}", value=primary_gem_info, inline=False)
@@ -698,7 +684,7 @@ def run_discord_bot():
         if any(ctx.channel.id in sl for sl in globalitems.global_server_channels):
             await ctx.defer()
             user = ctx.author
-            player_object = player.get_player_by_name(user)
+            player_object = player.get_player_by_discord(user.id)
             if player_object.player_class != "":
                 if not player.checkNaN(item_id) and not player.checkNaN(cost):
                     num_listings = bazaar.check_num_listings(player_object)
@@ -731,7 +717,7 @@ def run_discord_bot():
         if any(ctx.channel.id in sl for sl in globalitems.global_server_channels):
             await ctx.defer()
             user = ctx.author
-            player_object = player.get_player_by_name(user)
+            player_object = player.get_player_by_discord(user.id)
             if player_object.player_class != "":
                 if inventory.if_custom_exists(item_id):
                     selected_item = inventory.read_custom_item(item_id)
@@ -754,7 +740,7 @@ def run_discord_bot():
         if any(ctx.channel.id in sl for sl in globalitems.global_server_channels):
             await ctx.defer()
             user = ctx.author
-            player_object = player.get_player_by_name(user)
+            player_object = player.get_player_by_discord(user.id)
             if player_object.player_class != "":
                 num_items = bazaar.retrieve_items(player_object.player_id)
                 await ctx.send(f"{num_items} unsold items retrieved.")
@@ -768,7 +754,7 @@ def run_discord_bot():
     async def view_bazaar(ctx):
         if any(ctx.channel.id in sl for sl in globalitems.global_server_channels):
             await ctx.defer()
-            player_object = player.get_player_by_name(str(ctx.author))
+            player_object = player.get_player_by_discord(ctx.author.id)
             if player_object.player_class != "":
                 embed_msg = bazaar.show_bazaar_items()
                 bazaar_view = None
@@ -783,8 +769,7 @@ def run_discord_bot():
     async def black_market(ctx):
         if any(ctx.channel.id in sl for sl in globalitems.global_server_channels):
             await ctx.defer()
-            player_name = str(ctx.author)
-            player_object = player.get_player_by_name(player_name)
+            player_object = player.get_player_by_discord(ctx.author.id)
             if player_object.player_class != "":
                 embed_msg = discord.Embed(colour=discord.Colour.dark_orange(),
                                           title="Black Market",
@@ -802,14 +787,14 @@ def run_discord_bot():
     async def give(ctx, item_id: int, receiving_player: discord.User):
         if any(ctx.channel.id in sl for sl in globalitems.global_server_channels):
             await ctx.defer()
-            player_object = player.get_player_by_name(str(ctx.author))
+            player_object = player.get_player_by_discord(ctx.author.id)
             if player_object.player_class != "":
                 selected_item = inventory.read_custom_item(item_id)
                 if selected_item:
                     response = player_object.check_equipped(selected_item)
                     if response == "":
                         embed_msg = selected_item.create_citem_embed()
-                        target_player_object = player.get_player_by_name(receiving_player.name)
+                        target_player_object = player.get_player_by_discord(receiving_player.id)
                         if player.check_user_exists(target_player_object.player_id):
                             owner_check = selected_item.player_owner
                             if selected_item.player_owner == -1:
@@ -841,7 +826,7 @@ def run_discord_bot():
     async def purge(ctx, tier: int):
         if any(ctx.channel.id in sl for sl in globalitems.global_server_channels):
             await ctx.defer()
-            existing_user = player.get_player_by_name(ctx.author)
+            existing_user = player.get_player_by_discord(ctx.author.id)
             if tier in range(1, 7):
                 result, coin_total = inventory.purge(existing_user, tier)
                 message = f"{result} items sold.\n {globalitems.coin_icon} {coin_total}x lotus coins acquired."
@@ -857,7 +842,7 @@ def run_discord_bot():
         if any(ctx.channel.id in sl for sl in globalitems.global_server_channels):
             await ctx.defer()
             user = ctx.author
-            player_object = player.get_player_by_name(user)
+            player_object = player.get_player_by_discord(user.id)
             if player_object.player_class != "":
                 player_object.get_equipped()
                 embed_msg = discord.Embed(colour=discord.Colour.blurple(),
@@ -876,8 +861,7 @@ def run_discord_bot():
     async def refinery(ctx):
         if any(ctx.channel.id in sl for sl in globalitems.global_server_channels):
             await ctx.defer()
-            player_name = str(ctx.author)
-            player_object = player.get_player_by_name(player_name)
+            player_object = player.get_player_by_discord(ctx.author.id)
             if player_object.player_class != "":
                 embed_msg = discord.Embed(colour=discord.Colour.dark_orange(),
                                           title='Refinery',
@@ -907,7 +891,7 @@ def run_discord_bot():
         if any(ctx.channel.id in sl for sl in globalitems.global_server_channels):
             await ctx.defer()
             user = ctx.author
-            player_object = player.get_player_by_name(user)
+            player_object = player.get_player_by_discord(user.id)
             if player_object.player_class != "":
                 embed_msg = discord.Embed(colour=discord.Colour.magenta(),
                                           title="Cloaked Alchemist, Sangam",
@@ -926,7 +910,7 @@ def run_discord_bot():
     async def void_purification(ctx):
         await ctx.defer()
         user = ctx.author
-        player_object = player.get_player_by_name(user)
+        player_object = player.get_player_by_discord(user.id)
         if player_object.player_class != "":
             player_object.get_equipped()
             e_weapon = inventory.read_custom_item(player_object.player_equipped[0])
@@ -956,7 +940,7 @@ def run_discord_bot():
         if any(ctx.channel.id in sl for sl in globalitems.global_server_channels):
             await ctx.defer()
             user = ctx.author
-            player_object = player.get_player_by_name(user)
+            player_object = player.get_player_by_discord(user.id)
             if player_object.player_class != "":
                 player_object.get_equipped()
                 e_weapon = inventory.read_custom_item(player_object.player_equipped[0])
@@ -986,7 +970,7 @@ def run_discord_bot():
         if any(ctx.channel.id in sl for sl in globalitems.global_server_channels):
             await ctx.defer()
             user = ctx.author
-            player_object = player.get_player_by_name(user)
+            player_object = player.get_player_by_discord(user.id)
             if player_object.player_class != "":
                 player_object.get_equipped()
                 e_weapon = inventory.read_custom_item(player_object.player_equipped[0])
@@ -1051,8 +1035,7 @@ def run_discord_bot():
             embed_msg = discord.Embed(colour=discord.Colour.dark_teal(),
                                       title="Register - Select Class",
                                       description=register_msg)
-            player_name = str(user)
-            class_view = menus.ClassSelect(player_name, username)
+            class_view = menus.ClassSelect(user.id, username)
             await ctx.send(embed=embed_msg, view=class_view)
 
     @set_command_category('info', 2)
@@ -1075,9 +1058,9 @@ def run_discord_bot():
         if any(ctx.channel.id in sl for sl in globalitems.global_server_channels):
             await ctx.defer()
             command_user = ctx.author
-            player_object = player.get_player_by_name(command_user)
+            player_object = player.get_player_by_discord(command_user.id)
             if user:
-                target_user = player.get_player_by_name(user.name)
+                target_user = player.get_player_by_discord(user.id)
             else:
                 target_user = player_object
             if target_user.player_class != "":
@@ -1095,12 +1078,12 @@ def run_discord_bot():
         command_user = ctx.author
         achv_list = []
         if user:
-            target_name = user.name
+            target_id = user.id
             achv_list = [role.name for role in user.roles if "Holder" in role.name or "Herrscher" in role.name]
         else:
-            target_name = command_user.name
+            target_id = command_user.id
             achv_list = [role.name for role in command_user.roles if "Holder" in role.name or "Herrscher" in role.name]
-        target_user = player.get_player_by_name(target_name)
+        target_user = player.get_player_by_discord(target_id)
         if target_user.player_class != "":
             filepath = pilengine.get_player_profile(target_user, achv_list)
             file_object = discord.File(filepath)
@@ -1114,8 +1097,7 @@ def run_discord_bot():
     async def leaderboard(ctx):
         if any(ctx.channel.id in sl for sl in globalitems.global_server_channels):
             await ctx.defer()
-            command_user = ctx.author
-            player_object = player.get_player_by_name(command_user)
+            player_object = player.get_player_by_discord(ctx.author.id)
             embed_msg = leaderboards.display_leaderboard("DPS", player_object.player_id)
             new_view = leaderboards.LeaderbaordView(player_object)
             await ctx.send(embed=embed_msg, view=new_view)

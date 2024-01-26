@@ -39,7 +39,7 @@ class LeaderbaordView(discord.ui.View):
             print(e)
 
 
-def update_leaderboard(combat_tracker, player_object):
+async def update_leaderboard(combat_tracker, player_object, ctx_object):
     try:
         engine_url = mydb.get_engine_url()
         engine = sqlalchemy.create_engine(engine_url)
@@ -52,7 +52,6 @@ def update_leaderboard(combat_tracker, player_object):
         true_dps = int(combat_tracker.total_dps / combat_tracker.total_cycles)
         high_dmg = combat_tracker.highest_damage
         now = dt.now()
-
         if len(df) != 0:
             # Update DPS ranking.
             if true_dps > int(df['player_dps'].values[0]):
@@ -63,7 +62,7 @@ def update_leaderboard(combat_tracker, player_object):
                 pandora_db.execute(query)
             # Update Damage ranking.
             if high_dmg > int(df['player_damage'].values[0]):
-                query = text(f"UPDATE Leaderboard SET player_damage = :new_dmg, dps_record_time = :current_time "
+                query = text(f"UPDATE Leaderboard SET player_damage = :new_dmg, damage_record_time = :current_time "
                              f"WHERE player_id = :player_check")
                 query = query.bindparams(new_dmg=high_dmg, current_time=now, player_check=player_object.player_id)
                 pandora_db.execute(query)
@@ -80,12 +79,12 @@ def update_leaderboard(combat_tracker, player_object):
         pandora_db.close()
         engine.dispose()
 
-        rerank_leaderboard()
+        await rerank_leaderboard(ctx_object)
     except mysql.connector.Error as err:
         print("Database Error: {}".format(err))
 
 
-def rerank_leaderboard():
+async def rerank_leaderboard(ctx_object):
     try:
         engine_url = mydb.get_engine_url()
         engine = sqlalchemy.create_engine(engine_url)
@@ -102,6 +101,41 @@ def rerank_leaderboard():
         dps_df = pd.read_sql(dps_query, pandora_db)
         dps_df['player_dps_rank'] = range(1, len(dps_df) + 1)
         dps_df = dps_df[['player_id', 'player_dps_rank']]
+
+        # Retrieve the current roles for rank 1 players
+        query = text("SELECT player_id, player_damage_rank, player_dps_rank "
+                     "FROM Leaderboard WHERE player_damage_rank = 1 OR player_dps_rank = 1")
+        original_df = pd.read_sql(query, pandora_db)
+
+        # Handle rank changes and role assignment.
+        async def handle_rank_changes(ctx, original_id, new_id, role_name, notification_msg):
+            if original_id != new_id:
+                role_object = discord.utils.get(ctx.guild.roles, name=role_name)
+                # Assign the role to the new top ranker.
+                new_player_object = player.get_player_by_id(new_id)
+                new_user = ctx.guild.get_member(new_player_object.discord_id)
+                await new_user.add_roles(role_object)
+                await ctx_object.send(f"{new_player_object.player_username} {notification_msg}")
+                # If previous ranker exists remove their role.
+                if original_id != -1:
+                    original_player_object = player.get_player_by_id(original_id)
+                    original_user = ctx.guild.get_member(original_player_object.discord_id)
+                    if original_user and new_user and role_object:
+                        await original_user.remove_roles(role_object)
+
+        original_damage_id, original_dps_id = -1, -1
+        if len(original_df[original_df['player_damage_rank'] == 1]) != 0:
+            original_damage_id = int(original_df[original_df['player_damage_rank'] == 1]['player_id'].values[0])
+        if len(original_df[original_df['player_dps_rank'] == 1]) != 0:
+            original_dps_id = int(original_df[original_df['player_dps_rank'] == 1]['player_id'].values[0])
+        new_damage_id = int(damage_df[damage_df['player_damage_rank'] == 1]['player_id'].values[0])
+        new_dps_id = int(dps_df[dps_df['player_dps_rank'] == 1]['player_id'].values[0])
+        damage_role = "Ranking Title - Damage Rank #1"
+        damage_message = "has slain Yubelle with the #1 Damage Rank."
+        await handle_rank_changes(ctx_object, original_damage_id, new_damage_id, damage_role, damage_message)
+        dps_role = "Ranking Title - DPS Rank #1"
+        dps_message = "has slain Yubelle with the #1 DPS Rank."
+        await handle_rank_changes(ctx_object, original_dps_id, new_dps_id, dps_role, dps_message)
 
         # Update the ranks in the database for DPS leaderboard
         combined_df = pd.merge(damage_df, dps_df, on='player_id')

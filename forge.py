@@ -78,7 +78,7 @@ class SelectView(discord.ui.View):
     async def select_callback(self, interaction: discord.Interaction):
         try:
             item_select = interaction.data['values'][0]
-            if interaction.user.name == self.player_object.player_name:
+            if interaction.user.id == self.player_object.discord_id:
                 location = inventory.reverse_item_dict[item_select]
                 selected_item = self.player_object.player_equipped[location]
                 if selected_item != 0:
@@ -164,7 +164,7 @@ class PurifyView(discord.ui.View):
 
     async def purify_callback(self, interaction: discord.Interaction, button: discord.Button):
         try:
-            if interaction.user.name == self.player_object.player_name:
+            if interaction.user.id == self.player_object.discord_id:
                 if not self.embed:
                     result_msg = ""
                     self.embed, self.selected_item = run_button(self.player_object, self.selected_item,
@@ -176,7 +176,7 @@ class PurifyView(discord.ui.View):
 
     async def reselect_callback(self, interaction: discord.Interaction, button: discord.Button):
         try:
-            if interaction.user.name == self.player_object.player_name:
+            if interaction.user.id == self.player_object.discord_id:
                 if not self.embed:
                     entry_msg = (
                         "Within this cave resides the true abyss. Only a greater darkness can cleanse the void "
@@ -287,7 +287,7 @@ class ForgeView(discord.ui.View):
     async def forge_callback(self, interaction: discord.Interaction):
         try:
             selected_option = interaction.data['values'][0]
-            if interaction.user.name == self.player_object.player_name:
+            if interaction.user.id == self.player_object.discord_id:
                 if selected_option in ["Enhance", "Implant Element"] and self.selected_item.item_tier < 6:
                     new_view = SubSelectView(self.player_object, self.selected_item,
                                              selected_option, self.permission)
@@ -344,7 +344,7 @@ class SubSelectView(discord.ui.View):
         method_select = int(interaction.data['values'][0])
         hammer_select = method_select if self.menu_type == "Fusion" else -1
         try:
-            if interaction.user.name == self.player_object.player_name:
+            if interaction.user.id == self.player_object.discord_id:
                 new_view = UpgradeView(self.player_object, self.selected_item, self.method,
                                        hammer_select, method_select, self.permission)
                 await interaction.response.edit_message(view=new_view)
@@ -473,7 +473,7 @@ class UpgradeView(discord.ui.View):
 
     async def button_callback(self, button_interaction: discord.Interaction, button: discord.Button):
         try:
-            if button_interaction.user.name == self.player_object.player_name:
+            if button_interaction.user.id == self.player_object.discord_id:
                 button_id = int(button.custom_id)
                 if self.selected_item.item_tier < 5 or len(self.material_id_list[button_id]) == 1:
                     material_id = self.material_id_list[button_id][0]
@@ -489,7 +489,7 @@ class UpgradeView(discord.ui.View):
 
     async def reselect_callback(self, button_interaction: discord.Interaction, button: discord.Button):
         try:
-            if button_interaction.user.name == self.player_object.player_name:
+            if button_interaction.user.id == self.player_object.discord_id:
                 new_view = SelectView(self.player_object, self.permission)
                 await button_interaction.response.edit_message(view=new_view)
         except Exception as e:
@@ -923,7 +923,7 @@ class RefSelectView(discord.ui.View):
     )
     async def ref_select_callback(self, interaction: discord.Interaction, ref_select: discord.ui.Select):
         try:
-            if interaction.user.name == self.player_user.player_name:
+            if interaction.user.id == self.player_user.discord_id:
                 selected_type = self.item_dict[ref_select.values[0]]
                 new_view = RefineItemView(self.player_user, selected_type)
                 await interaction.response.edit_message(view=new_view)
@@ -977,7 +977,7 @@ class RefineItemView(discord.ui.View):
 
     async def selected_callback(self, interaction: discord.Interaction, button: discord.Button):
         try:
-            if interaction.user.name == self.player_user.player_name:
+            if interaction.user.id == self.player_user.discord_id:
                 if not self.embed:
                     button_id = int(button.custom_id)
                     selected_tier = self.menu_details[3][button_id]
@@ -990,7 +990,7 @@ class RefineItemView(discord.ui.View):
 
     async def reselect_callback(self, interaction: discord.Interaction, button: discord.Button):
         try:
-            if interaction.user.name == self.player_user.player_name:
+            if interaction.user.id == self.player_user.discord_id:
                 new_view = RefSelectView(self.player_user)
                 new_embed = discord.Embed(colour=discord.Colour.dark_orange(),
                                           title='Refinery',
@@ -1045,7 +1045,7 @@ class MeldView(discord.ui.View):
     @discord.ui.button(style=discord.ButtonStyle.blurple)
     async def meld_gems(self, interaction: discord.Interaction, button: discord.Button):
         try:
-            if interaction.user.name == self.player_object.player_name:
+            if interaction.user.id == self.player_object.discord_id:
                 if not self.embed:
                     # Reload the data.
                     self.player_object = player.get_player_by_id(self.player_object.player_id)

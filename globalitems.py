@@ -22,6 +22,7 @@ path_icon = ["<a:eenergy:1145534127349706772>", "<a:eenergy:1145534127349706772>
              "<a:eenergy:1145534127349706772>", "<a:eenergy:1145534127349706772>", "<a:eenergy:1145534127349706772>"]
 
 star_icon = "<:Star_PinkBlue:1179736203013140480>"
+blank_star_icon = "<:ebstar2:1144826056222724106>"
 
 # Global role list
 role_list = ["Player Echelon 1", "Player Echelon 2", "Player Echelon 3", "Player Echelon 4", "Player Echelon 5 (MAX)"]
@@ -45,6 +46,7 @@ element_celestial = "<:e9:1179726302480183396>"
 omni_icon = "🌈"
 global_element_list = [element_fire, element_water, element_lightning, element_earth, element_wind, element_ice,
                        element_dark, element_light, element_celestial]
+path_names = ["Storms", "Frostfire", "Horizon", "Eclipse", "Stars", "Confluence", "Solitude"]
 element_names = ["Fire", "Water", "Lightning", "Earth", "Wind", "Ice", "Shadow", "Light", "Celestial"]
 element_special_names = ["Volcanic", "Aquatic", "Voltaic", "Seismic", "Sonic", "Arctic", "Lunar", "Solar", "Cosmic"]
 tier_5_ability_dict = {"Elemental Overflow": 2, "Specialist's Mastery": 0.1, "Curse of Immortality": True,
@@ -59,7 +61,6 @@ void_ability_dict = {"Void Application (Overflow)": "Elemental Overflow",
                      "Void Application (Bloom)": "Blooming Vitality",
                      "Void Application (Overdrive)": "Ultimate Overdrive",
                      "Void Application (Unravel)": "Unravel"}
-
 reverse_void_ability_dict = {v: k for k, v in void_ability_dict.items()}
 
 not_owned_icon = "https://kyleportfolio.ca/botimages/profilecards/noachv.png"
@@ -114,3 +115,12 @@ def display_hp(current_hp, max_hp):
     max_hp_converted = number_conversion(max_hp)
     hp_msg = f"{current_hp_converted} / {max_hp_converted}"
     return hp_msg
+
+
+def display_stars(num_stars):
+    stars_msg = ""
+    for x in range(num_stars):
+        stars_msg += star_icon
+    for y in range(max(0, (7 - num_stars))):
+        stars_msg += blank_star_icon
+    return stars_msg

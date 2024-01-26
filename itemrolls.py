@@ -183,7 +183,7 @@ class SelectRollsView(discord.ui.View):
 
     async def count_callback(self, interaction: discord.Interaction):
         try:
-            if interaction.user.name == self.player_object.player_name:
+            if interaction.user.id == self.player_object.discord_id:
                 if not self.embed:
                     roll_count = int(interaction.data['values'][0])
                     self.embed = discord.Embed(
@@ -230,7 +230,7 @@ class SkillSelectView(discord.ui.View):
 
     async def skill_callback(self, interaction: discord.Interaction):
         try:
-            if interaction.user.name == self.player_object.player_name:
+            if interaction.user.id == self.player_object.discord_id:
                 if not self.embed:
                     selected_skill = str(interaction.data['values'][0])
                     self.selected_skills.append(selected_skill)
@@ -284,7 +284,7 @@ class SkillPurchaseView(discord.ui.View):
 
     @discord.ui.button(label="Inscribe", style=discord.ButtonStyle.green)
     async def inscribe_callback(self, interaction: discord.Interaction, button: discord.ui.Button):
-        if interaction.user.name == self.player_object.player_name:
+        if interaction.user.id == self.player_object.discord_id:
             if not self.embed:
                 reload_player = player.get_player_by_id(self.player_object.player_id)
                 custom_cost = cost_list[self.total_rolls - 1]
@@ -336,7 +336,7 @@ class SkillPurchaseView(discord.ui.View):
     @discord.ui.button(label="Cancel", style=discord.ButtonStyle.red)
     async def cancel_callback(self, interaction: discord.Interaction, button: discord.ui.Button):
         try:
-            if interaction.user.name == self.player_object.player_name:
+            if interaction.user.id == self.player_object.discord_id:
                 cancellation_embed = discord.Embed(
                     title="Vexia, Scribe of the True Laws",
                     description="Come back when you've made up your mind.",
