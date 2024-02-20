@@ -1,8 +1,16 @@
+# General imports
 from PIL import Image, ImageFont, ImageDraw, ImageOps, ImageFilter
 import requests
-import player
 import os
+
+# Data imports
 import globalitems
+import sharedmethods
+
+# Core imports
+import player
+
+image_path = 'C:\\Users\\GamerTech\\PycharmProjects\\PandoraBot\\'
 
 echelon_0 = "https://kyleportfolio.ca/botimages/roleicon/echelon1.png"
 echelon_1 = "https://kyleportfolio.ca/botimages/roleicon/echelon1.png"
@@ -15,14 +23,6 @@ special_icon = "https://kyleportfolio.ca/botimages/roleicon/exclusivenoflare.png
 special_iconflare = "https://kyleportfolio.ca/botimages/roleicon/exclusiveflare.png"
 rank_url_list = [echelon_0, echelon_1, echelon_2, echelon_3, echelon_4, echelon_5, echelon_5flare,
                  special_icon, special_iconflare]
-frame_url_list = ["https://kyleportfolio.ca/botimages/iconframes/Icon_border_Bronze.png",
-                  "https://kyleportfolio.ca/botimages/iconframes/Icon_border_Bronze.png",
-                  "https://kyleportfolio.ca/botimages/iconframes/Icon_border_Silver.png",
-                  "https://kyleportfolio.ca/botimages/iconframes/Icon_border_SilverPurple.png",
-                  "https://kyleportfolio.ca/botimages/iconframes/Icon_border_Goldblue.png",
-                  "https://kyleportfolio.ca/botimages/iconframes/Icon_border_Goldred.png",
-                  "https://kyleportfolio.ca/botimages/iconframes/Icon_border_Pink.png",
-                  "https://kyleportfolio.ca/botimages/iconframes/Icon_border_Black.png"]
 generic_frame_url = "https://kyleportfolio.ca/botimages/iconframes/Iconframe.png"
 
 rank_colour = ["Green", "Blue", "Purple", "Gold", "Red", "Magenta"]
@@ -55,7 +55,7 @@ class RankCard:
         self.fill_colour = "black"
         echelon = self.user.player_echelon
         card_loc, metal_loc, wing_loc, exp_bar_loc, icon_loc, frame_loc = (
-            echelon, echelon, echelon, echelon, echelon, echelon)
+            echelon // 2, echelon // 2, echelon // 2, echelon // 2, echelon // 2, echelon // 2)
         if "Exclusive Title Holder" in achievement_list:
             self.fill_colour = "white"
             card_loc, metal_loc, wing_loc, exp_bar_loc = 6, 6, 6, 6
@@ -81,14 +81,14 @@ class RankCard:
         self.wing = wing_gem_url_list[wing_loc]
         self.exp_bar = exp_bar_url_list[exp_bar_loc]
         self.role_icon = rank_url_list[icon_loc]
-        self.frame_icon = frame_url_list[frame_loc]
-        self.class_icon = player.get_thumbnail_by_class(self.user.player_class)
+        self.frame_icon = globalitems.frame_icon_list[frame_loc]
+        self.class_icon = sharedmethods.get_thumbnail_by_class(self.user.player_class)
         self.fill_percent = round(self.user.player_exp / player.get_max_exp(self.user.player_lvl), 2)
 
 
-def get_player_profile(player_object, achievement_list):
-    rank_card = RankCard(player_object, achievement_list)
-    image_path = 'C:\\Users\\GamerTech\\PycharmProjects\\PandoraBot\\profilecard'
+def get_player_profile(player_obj, achievement_list):
+    rank_card = RankCard(player_obj, achievement_list)
+    temp_path = f'{image_path}profilecard'
     font_url = "https://kyleportfolio.ca//botimages/profilecards/fonts/"
     level_font_url = "aerolite/Aerolite.otf"
     # level_font_url = "oranienbaum/Oranienbaum.ttf"
@@ -112,7 +112,7 @@ def get_player_profile(player_object, achievement_list):
     title_font = ImageFont.truetype(font_file, 54)
     level_font = ImageFont.truetype(level_font_file, 40)
 
-    title_text = player_object.player_username
+    title_text = player_obj.player_username
     title_text = title_text.center(10)
     image_editable = ImageDraw.Draw(result)
     fill_colour = rank_card.fill_colour
@@ -145,12 +145,12 @@ def get_player_profile(player_object, achievement_list):
     result.paste(exp_bar_result, (exp_bar_start, 0), mask=exp_bar_result)
 
     # Level and Exp Text
-    level_text = f"{player_object.player_lvl}"
+    level_text = f"{player_obj.player_lvl}"
     level_text_position = (90, 230)
     image_editable.text(level_text_position, level_text, fill=fill_colour, font=level_font)
 
     # Save File
-    file_path = f"{image_path}\\ProfileCard{player_object.player_id}.png"
+    file_path = f"{temp_path}ProfileCard{player_obj.player_id}.png"
     result.save(file_path)
     return file_path
 
@@ -162,3 +162,29 @@ def generate_exp_bar(exp_bar_image, exp_bar_start, exp_bar_end, fill_percent):
     exp_bar_result = Image.new("RGBA", exp_bar_cropped.size)
     exp_bar_result.paste(exp_bar_cropped, (0, 0), mask=exp_bar_cropped)
     return exp_bar_result
+
+
+def generate_and_combine_images(item_type, start_tier=1, end_tier=8, fetch_type=False):
+    if fetch_type:
+        item_type = globalitems.gear_category_dict[item_type]
+    # Ensure image is currently available.
+    availability_list = ["Sword", "Bow", "Threads", "Armour", "Wings", "Amulet"]
+    if item_type not in globalitems.availability_list:
+        return 0
+    for item_tier in range(start_tier, end_tier + 1):
+        # Handle the urls and paths.
+        frame_url = globalitems.frame_icon_list[item_tier - 1]
+        icon_url = f"https://kyleportfolio.ca/botimages/itemicons/{item_type}/{item_type}{item_tier}.png"
+        output_dir, file_name = f'{image_path}itemicons\\{item_type}\\', f"Framed_{item_type}_{item_tier}.png"
+        file_path = f"{output_dir}{file_name}"
+        # Load and size the images.
+        frame = Image.open(requests.get(frame_url, stream=True).raw)
+        frame.thumbnail((105, 105), Image.Resampling.LANCZOS)
+        icon = Image.open(requests.get(icon_url, stream=True).raw)
+        # Construct the new image
+        result = Image.new("RGBA", (105, 105))
+        result.paste(frame, (0, 0), frame)
+        result.paste(icon, (17, 16), icon)
+        result.save(file_path, format="PNG")
+    return end_tier + 1 - start_tier
+

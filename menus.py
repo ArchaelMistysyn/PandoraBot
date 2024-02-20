@@ -14,9 +14,11 @@ import bosses
 import globalitems
 import insignia
 import combat
+import pact
+import skillpaths
 
 starter_guide = "1. Use /quest to progress through the quest."
-starter_guide += "\n2. Use /map to farm for tier 1-4 Weapons, Armour, and Accessories."
+starter_guide += "\n2. Use /map to farm for tier 1-4 Weapons, Armour, and Amulets."
 starter_guide += " Maps are also a great source of EXP."
 starter_guide += "\n3. Use /inv to check your inventory. Click Gear to check your gear."
 starter_guide += "\n4. Use /display [item id] to view, sell, inlay, and equip items."
@@ -40,8 +42,8 @@ intermediate_guide += "\n9. Use /bazaar, /sell, /give, and /buy to trade items."
 
 
 advanced_guide = "1. Use /Summon and spend summoning items to fight powerful opponents!"
-advanced_guide += "\n2. After clearing quest 23 you can use /purify to upgrade items past tier 5."
-advanced_guide += "\n3. After clearing quest 26 you can use /fountain to upgrade tier 6 and higher items."
+advanced_guide += "\n2. After clearing quest 41 you can use /abyss to upgrade items past tier 5."
+advanced_guide += "\n3. After clearing quest 45 you can use /fountain to upgrade tier 7 and higher items."
 advanced_guide += "\n4. You can use /scribe to create perfect items."
 advanced_guide += "\n5. You can use /meld to combine and upgrade dragon heart gems."
 advanced_guide += "\n6. Search for the rare lotus items."
@@ -152,8 +154,8 @@ class InlaySelectView(discord.ui.View):
                 emoji="<a:eenergy:1145534127349706772>", label="Armour",
                 description="Inlay gem in your armour", value="1"),
             discord.SelectOption(
-                emoji="<a:eenergy:1145534127349706772>", label="Accessory",
-                description="Inlay gem in your accessory", value="2"),
+                emoji="<a:eenergy:1145534127349706772>", label="Amulet",
+                description="Inlay gem in your Amulet", value="2"),
             discord.SelectOption(
                 emoji="<a:eenergy:1145534127349706772>", label="Wings",
                 description="Inlay gem in your wing", value="3"),
@@ -170,7 +172,7 @@ class InlaySelectView(discord.ui.View):
                 embed_msg = discord.Embed(colour=discord.Colour.dark_orange(),
                                           title="Inlay Failed.",
                                           description="No item equipped in this slot")
-                self.player_user.get_equipped()
+                self.player_user = player.get_player_by_id(self.player_user.player_id)
                 # Confirm an item is equipped in the selected slot.
                 if self.player_user.player_equipped[selected_type] == 0:
                     await interaction.response.edit_message(embed=embed_msg)
@@ -273,16 +275,21 @@ class StaminaView(discord.ui.View):
             print(e)
 
 
-def use_stamina_potion(player_object, item_id, restore_amount):
-    potion_stock = inventory.check_stock(player_object, item_id)
+def use_stamina_potion(player_obj, item_id, restore_amount):
+    potion_stock = inventory.check_stock(player_obj, item_id)
     if potion_stock > 0:
-        inventory.update_stock(player_object, item_id, -1)
-        player_object.player_stamina += restore_amount
-        if player_object.player_stamina > 5000:
-            player_object.player_stamina = 5000
-        player_object.set_player_field("player_stamina", player_object.player_stamina)
-    embed_msg = player_object.create_stamina_embed()
+        pact_object = pact.Pact(player_obj.pact)
+        max_stamina = 5000 if pact_object.pact_variant != "Sloth" else 2500
+        inventory.update_stock(player_obj, item_id, -1)
+        player_obj.player_stamina += restore_amount
+        if player_obj.player_stamina > max_stamina:
+            player_obj.player_stamina = max_stamina
+        player_obj.set_player_field("player_stamina", player_obj.player_stamina)
+    embed_msg = player_obj.create_stamina_embed()
     return embed_msg
+
+
+gear_button_list = ["Weapon", "Armour", "Vambraces", "Amulet", "Wing", "Crest", "Pact", "Insignia", "Tarot"]
 
 
 class GearView(discord.ui.View):
@@ -295,102 +302,84 @@ class GearView(discord.ui.View):
         self.previous_button.label = self.get_positional_label(-1)
         self.next_button.label = self.get_positional_label(1)
 
-        if self.current_position <= 4:
+        if self.current_position <= 5:
             toggle_type = "Gem" if self.view_type == "Gear" else "Gear"
             self.toggle_view_button.label = f"Toggle View ({toggle_type})"
         else:
             self.remove_item(self.children[1])
 
     def get_positional_label(self, direction):
-        gear_button_list = ["Weapon", "Armour", "Accessory", "Wing", "Crest", "Tarot", "Insignia"]
-        max_position = 6 if self.view_type == "Gear" else 4
+        max_position = 8 if self.view_type == "Gear" else 5
         new_position = (self.current_position + direction) % (max_position + 1)
         button_label = gear_button_list[new_position]
-        if self.view_type == "Gem":
-            button_label += " Gem"
-        return button_label
+        return f"{button_label} Gem" if self.view_type == "Gem" else button_label
 
     def cycle_gear(self, direction):
-        reload_user = player.get_player_by_id(self.target_user.player_id)
-        no_item = False
-        max_position = 6 if self.view_type == "Gear" else 4
+        self.player_user = player.get_player_by_id(self.target_user.player_id)
+        max_position = 8 if self.view_type == "Gear" else 5
         self.current_position = (self.current_position + direction) % (max_position + 1)
 
-        # Handle gear positions.
-        if self.current_position <= 4:
-            item_type = inventory.item_type_dict[self.current_position]
-            selected_item = reload_user.player_equipped[self.current_position]
-            if selected_item == 0:
-                no_item = True
-            else:
-                # Handle the view variations.
-                equipped_item = inventory.read_custom_item(selected_item)
-                if self.view_type == "Gem":
-                    if equipped_item.item_inlaid_gem_id == 0:
-                        no_item = True
-                    else:
-                        equipped_gem = inventory.read_custom_item(equipped_item.item_inlaid_gem_id)
-                        new_msg = equipped_gem.create_citem_embed()
-                else:
-                    new_msg = equipped_item.create_citem_embed()
-
-        # Handle tarot position
-        elif self.current_position == 5:
-            item_type = "Tarot"
-            tarot_item = reload_user.equipped_tarot
-            if tarot_item == "":
-                no_item = True
-            else:
-                tarot_card = tarot.check_tarot(reload_user.player_id, tarot.card_dict[reload_user.equipped_tarot][0])
-                new_msg = tarot_card.create_tarot_embed()
-        # Handle insignia position
-        else:
-            item_type = "Insignia"
-            insignia_item = reload_user.insignia
-            if insignia_item == "":
-                no_item = True
-            else:
-                new_msg = insignia.display_insignia(reload_user, insignia_item)
-
-        # Build the output
-        if no_item:
-            no_item = item_type.lower()
-            gem_msg = "" if self.view_type == "Gear" else " Gem"
-            new_msg = discord.Embed(colour=discord.Colour.dark_gray(),
-                                    title=f"Equipped {item_type}{gem_msg}",
+        # Build no item return message
+        item_type = gear_button_list[self.current_position]
+        no_item = item_type.lower()
+        gem_msg = "" if self.view_type == "Gear" else " Gem"
+        no_item_msg = discord.Embed(colour=discord.Colour.dark_gray(), title=f"Equipped {item_type}{gem_msg}",
                                     description=f"No {no_item}{gem_msg.lower()} is equipped")
-        return new_msg
+        # Handle gear positions.
+        if self.current_position <= 5:
+            item_type = inventory.item_type_dict[self.current_position]
+            selected_item = self.player_user.player_equipped[self.current_position]
+            if selected_item == 0:
+                return no_item_msg
+            # Handle the view variations.
+            equipped_item = inventory.read_custom_item(selected_item)
+            if self.view_type == "Gem":
+                if equipped_item.item_inlaid_gem_id == 0:
+                    return no_item_msg
+                equipped_gem = inventory.read_custom_item(equipped_item.item_inlaid_gem_id)
+                return equipped_gem.create_citem_embed()
+            return equipped_item.create_citem_embed()
+
+        # Handle tarot position.
+        elif self.current_position == 8:
+            tarot_item = self.player_user.equipped_tarot
+            if tarot_item == "":
+                return no_item_msg
+            tarot_card = tarot.check_tarot(self.player_user.player_id, tarot.card_dict[self.player_user.equipped_tarot][0])
+            return tarot_card.create_tarot_embed()
+        # Handle insignia position.
+        if self.current_position == 7:
+            insignia_item = self.player_user.insignia
+            if insignia_item == "":
+                return no_item_msg
+            return insignia.display_insignia(self.player_user, insignia_item)
+        # Handle pact position.
+        if self.current_position == 6:
+            if self.player_user.pact == "":
+                return no_item_msg
+            return pact.display_pact(self.player_user)
 
     @discord.ui.button(style=discord.ButtonStyle.blurple, emoji="⬅️")
     async def previous_button(self, interaction: discord.Interaction, button: discord.Button):
-        try:
-            if interaction.user.id == self.player_user.discord_id:
-                new_msg = self.cycle_gear(-1)
-                new_view = GearView(self.player_user, self.target_user, self.current_position, self.view_type)
-                await interaction.response.edit_message(embed=new_msg, view=new_view)
-        except Exception as e:
-            print(e)
+        if interaction.user.id == self.player_user.discord_id:
+            new_msg = self.cycle_gear(-1)
+            new_view = GearView(self.player_user, self.target_user, self.current_position, self.view_type)
+            await interaction.response.edit_message(embed=new_msg, view=new_view)
 
     @discord.ui.button(style=discord.ButtonStyle.success)
     async def toggle_view_button(self, interaction: discord.Interaction, button: discord.Button):
-        try:
-            if interaction.user.id == self.player_user.discord_id:
-                self.view_type = "Gear" if self.view_type == "Gem" else "Gem"
-                new_msg = self.cycle_gear(0)
-                new_view = GearView(self.player_user, self.target_user, self.current_position, self.view_type)
-                await interaction.response.edit_message(embed=new_msg, view=new_view)
-        except Exception as e:
-            print(e)
+        if interaction.user.id == self.player_user.discord_id:
+            self.view_type = "Gear" if self.view_type == "Gem" else "Gem"
+            new_msg = self.cycle_gear(0)
+            new_view = GearView(self.player_user, self.target_user, self.current_position, self.view_type)
+            await interaction.response.edit_message(embed=new_msg, view=new_view)
 
     @discord.ui.button(style=discord.ButtonStyle.blurple, emoji="➡️")
     async def next_button(self, interaction: discord.Interaction, button: discord.Button):
-        try:
-            if interaction.user.id == self.player_user.discord_id:
-                new_msg = self.cycle_gear(1)
-                new_view = GearView(self.player_user, self.target_user, self.current_position, self.view_type)
-                await interaction.response.edit_message(embed=new_msg, view=new_view)
-        except Exception as e:
-            print(e)
+        if interaction.user.id == self.player_user.discord_id:
+            new_msg = self.cycle_gear(1)
+            new_view = GearView(self.player_user, self.target_user, self.current_position, self.view_type)
+            await interaction.response.edit_message(embed=new_msg, view=new_view)
 
 
 class ManageCustomItemView(discord.ui.View):
@@ -420,30 +409,24 @@ class ManageCustomItemView(discord.ui.View):
 
     @discord.ui.button(label="Sell", style=discord.ButtonStyle.success, emoji="💲")
     async def sell_item(self, interaction: discord.Interaction, button: discord.Button):
-        try:
-            if interaction.user.id == self.player_user.discord_id:
-                selected_item = inventory.read_custom_item(self.selected_item.item_id)
-                if not self.stored_embed:
-                    if selected_item.player_owner == self.player_user.player_id:
-                        embed_msg = selected_item.create_citem_embed()
-                        new_embed = inventory.sell(self.player_user, selected_item, embed_msg)
-                        self.stored_embed = new_embed
-                    else:
-                        new_embed = selected_item.create_citem_embed()
-                        new_embed.add_field(name="Cannot Sell Item!",
-                                            value="Item is not owned or currently listed on the bazaar.",
-                                            inline=False)
+        if interaction.user.id == self.player_user.discord_id:
+            selected_item = inventory.read_custom_item(self.selected_item.item_id)
+            if not self.stored_embed:
+                if selected_item.player_owner == self.player_user.player_id:
+                    embed_msg = selected_item.create_citem_embed()
+                    new_embed = inventory.sell(self.player_user, selected_item, embed_msg)
+                    self.stored_embed = new_embed
                 else:
-                    new_embed = self.stored_embed
-                await interaction.response.edit_message(embed=new_embed, view=None)
-        except Exception as e:
-            print(e)
+                    new_embed = selected_item.create_citem_embed()
+                    new_embed.add_field(name="Cannot Sell Item!",
+                                        value="Item is not owned or currently listed on the bazaar.", inline=False)
+            else:
+                new_embed = self.stored_embed
+            await interaction.response.edit_message(embed=new_embed, view=None)
 
 
 def create_error_embed(error_msg):
-    embed_msg = discord.Embed(colour=discord.Colour.dark_orange(),
-                              title="Error",
-                              description=error_msg)
+    embed_msg = discord.Embed(colour=discord.Colour.dark_orange(), title="Error", description=error_msg)
     return embed_msg
 
 
@@ -475,36 +458,31 @@ class ClassSelect(discord.ui.View):
         ]
     )
     async def class_callback(self, interaction: discord.Interaction, class_select: discord.ui.Select):
-        try:
-            if interaction.user.id == self.discord_id:
-                new_player = player.PlayerProfile()
-                new_player.player_username = self.username
-                chosen_class = class_select.values[0]
-                response = new_player.add_new_player(chosen_class, interaction.user.id)
-                chosen_class_role = f"Class Role - {chosen_class}"
-                add_role = discord.utils.get(interaction.guild.roles, name=chosen_class_role)
-                remove_role = discord.utils.get(interaction.guild.roles, name="Class Role - Rat")
-                await interaction.user.add_roles(add_role)
-                await asyncio.sleep(1)
-                await interaction.user.remove_roles(remove_role)
-                embed_msg = discord.Embed(colour=discord.Colour.dark_teal(), title="Register", description=response)
-                await interaction.response.edit_message(embed=embed_msg, view=None)
-        except Exception as e:
-            print("An exception occurred in class_callback:")
-            print(f"Exception type: {type(e).__name__}")
-            print(f"Exception message: {e}")
+        if interaction.user.id != self.discord_id:
+            return
+        new_player = player.PlayerProfile()
+        new_player.player_username = self.username
+        chosen_class = class_select.values[0]
+        msg = new_player.add_new_player(chosen_class, interaction.user.id)
+        chosen_class_role = f"Class Role - {chosen_class}"
+        add_role = discord.utils.get(interaction.guild.roles, name=chosen_class_role)
+        remove_role = discord.utils.get(interaction.guild.roles, name="Class Role - Rat")
+        await interaction.user.add_roles(add_role)
+        await asyncio.sleep(1)
+        await interaction.user.remove_roles(remove_role)
+        embed_msg = discord.Embed(colour=discord.Colour.dark_teal(), title="Registration Complete!", description=msg)
+        await interaction.response.edit_message(embed=embed_msg, view=None)
 
 
 class ClassChangeView(discord.ui.View):
-    def __init__(self, player_object):
+    def __init__(self, player_obj):
         super().__init__(timeout=None)
-        self.player_object = player_object
+        self.player_obj = player_obj
         self.embed = False
 
     @discord.ui.select(
         placeholder="Select a new class!",
-        min_values=1,
-        max_values=1,
+        min_values=1, max_values=1,
         options=[
             discord.SelectOption(
                 emoji=globalitems.class_icon_list[0], label="Knight", description="The Valiant Knight"),
@@ -523,32 +501,26 @@ class ClassChangeView(discord.ui.View):
         ]
     )
     async def change_callback(self, interaction: discord.Interaction, class_select: discord.ui.Select):
-        try:
-            if interaction.user.id == self.player_object.discord_id:
-                if not self.embed:
-                    reload_player = player.get_player_by_id(self.player_object.player_id)
-                    current_class = reload_player.player_class
-                    chosen_class = class_select.values[0]
-                    token_stock = inventory.check_stock(reload_player, "Token1")
-                    if token_stock >= 1:
-                        token_stock = inventory.update_stock(reload_player, "Token1", -1)
-                        reload_player.set_player_field("player_class", chosen_class)
-                        add_role = discord.utils.get(interaction.guild.roles, name=f"Class Role - {chosen_class}")
-                        remove_role = discord.utils.get(interaction.guild.roles, name=f"Class Role - {current_class}")
-                        await interaction.user.add_roles(add_role)
-                        await asyncio.sleep(1)
-                        await interaction.user.remove_roles(remove_role)
-                        response = f"{reload_player.player_username} you are a {chosen_class} now."
-                    else:
-                        response = "It seems you are not prepared. You must bring me a pathchanger token."
-                    self.embed = discord.Embed(colour=discord.Colour.dark_teal(),
-                                               title="Mysmiria, The Changer",
-                                               description=response)
-                await interaction.response.edit_message(embed=self.embed, view=None)
-        except Exception as e:
-            print("An exception occurred in change_callback:")
-            print(f"Exception type: {type(e).__name__}")
-            print(f"Exception message: {e}")
+        if interaction.user.id == self.player_obj.discord_id:
+            if not self.embed:
+                reload_player = player.get_player_by_id(self.player_obj.player_id)
+                current_class = reload_player.player_class
+                chosen_class = class_select.values[0]
+                token_stock = inventory.check_stock(reload_player, "Token1")
+                if token_stock >= 50:
+                    token_stock = inventory.update_stock(reload_player, "Token1", -50)
+                    reload_player.set_player_field("player_class", chosen_class)
+                    add_role = discord.utils.get(interaction.guild.roles, name=f"Class Role - {chosen_class}")
+                    remove_role = discord.utils.get(interaction.guild.roles, name=f"Class Role - {current_class}")
+                    await interaction.user.add_roles(add_role)
+                    await asyncio.sleep(1)
+                    await interaction.user.remove_roles(remove_role)
+                    response = f"{reload_player.player_username} you are a {chosen_class} now."
+                else:
+                    response = "Not enough tokens. I refuse."
+                self.embed = discord.Embed(colour=discord.Colour.dark_teal(),
+                                           title="Mysmir, The Changer", description=response)
+            await interaction.response.edit_message(embed=self.embed, view=None)
 
 
 class StatView(discord.ui.View):
@@ -618,10 +590,10 @@ class BuyView(discord.ui.View):
 
 
 class PointsView(discord.ui.View):
-    def __init__(self, player_object):
+    def __init__(self, player_obj):
         super().__init__()
         self.path_names = globalitems.path_names
-        self.player_object = player_object
+        self.player_obj = player_obj
 
     @discord.ui.select(
         placeholder="Select a Path",
@@ -647,103 +619,99 @@ class PointsView(discord.ui.View):
         ]
     )
     async def path_select_callback(self, interaction: discord.Interaction, select: discord.ui.Select):
-        if interaction.user.id == self.player_object.discord_id:
-            self.player_object = player.get_player_by_id(self.player_object.player_id)
-            self.player_object.get_player_multipliers()
+        if interaction.user.id == self.player_obj.discord_id:
+            self.player_obj.reload_player()
             selected_path = select.values[0]
             if selected_path == "Reset":
                 token_object = inventory.BasicItem("Token3")
-                token_cost = sum(self.player_object.player_stats) // 10
-                token_stock = inventory.check_stock(self.player_object, "Token3")
+                token_cost = sum(self.player_obj.player_stats) // 10
+                token_stock = inventory.check_stock(self.player_obj, "Token3")
                 response = (f"The farther you are, the harder it is to go back to the start.\nReset Cost:\n "
                             f"{token_object.item_emoji} {token_object.item_name}: {token_stock} / {token_cost}")
                 embed_msg = discord.Embed(colour=discord.Colour.dark_orange(),
                                           title="Avalon, Pathwalker of the True Laws",
                                           description=response)
-                new_view = ResetView(self.player_object)
+                new_view = ResetView(self.player_obj)
             else:
-                embed_msg = self.player_object.build_points_embed(selected_path)
-                new_view = PointsMenu(self.player_object, selected_path)
+                embed_msg = skillpaths.build_points_embed(self.player_obj, selected_path)
+                new_view = PointsMenu(self.player_obj, selected_path)
             await interaction.response.edit_message(embed=embed_msg, view=new_view)
 
 
 class PointsMenu(discord.ui.View):
-    def __init__(self, player_object, selected_path):
+    def __init__(self, player_obj, selected_path):
         super().__init__()
-        self.player_object = player_object
+        self.player_obj = player_obj
         self.selected_path = selected_path
         self.embed_msg = None
         self.view = None
 
     @discord.ui.button(emoji="1️⃣", label="Allocate 1", style=discord.ButtonStyle.primary)
     async def add_one_point(self, interaction: discord.Interaction, button: discord.ui.Button):
-        if interaction.user.id == self.player_object.discord_id:
+        if interaction.user.id == self.player_obj.discord_id:
             self.allocate_callback(1)
             await interaction.response.edit_message(embed=self.embed_msg, view=self.view)
 
     @discord.ui.button(emoji="5️⃣", label="Allocate 5", style=discord.ButtonStyle.primary)
     async def add_five_points(self, interaction: discord.Interaction, button: discord.ui.Button):
-        if interaction.user.id == self.player_object.discord_id:
+        if interaction.user.id == self.player_obj.discord_id:
             self.allocate_callback(5)
             await interaction.response.edit_message(embed=self.embed_msg, view=self.view)
 
     @discord.ui.button(emoji="🔟", label="Allocate 10", style=discord.ButtonStyle.primary)
     async def add_ten_points(self, interaction: discord.Interaction, button: discord.ui.Button):
-        if interaction.user.id == self.player_object.discord_id:
+        if interaction.user.id == self.player_obj.discord_id:
             self.allocate_callback(10)
             await interaction.response.edit_message(embed=self.embed_msg, view=self.view)
 
     def allocate_callback(self, num_points):
         if not self.embed_msg:
-            self.player_object = player.get_player_by_id(self.player_object.player_id)
-            self.player_object.get_player_multipliers()
-            response = self.player_object.allocate_points(self.selected_path, num_points)
-            self.embed_msg = self.player_object.build_points_embed(self.selected_path)
+            self.player_obj.reload_player()
+            response = skillpaths.allocate_points(self.player_obj, self.selected_path, num_points)
+            self.embed_msg = skillpaths.build_points_embed(self.player_obj, self.selected_path)
             self.embed_msg.add_field(name="", value=response, inline=False)
-            self.view = PointsMenu(self.player_object, self.selected_path)
+            self.view = PointsMenu(self.player_obj, self.selected_path)
 
     @discord.ui.button(label="Reselect", style=discord.ButtonStyle.secondary)
     async def reselect_path_button(self, interaction: discord.Interaction, button: discord.ui.Button):
-        if interaction.user.id == self.player_object.discord_id:
-            reload_player = player.get_player_by_id(self.player_object.player_id)
-            embed_msg = reload_player.create_path_embed()
-            points_view = PointsView(reload_player)
+        if interaction.user.id == self.player_obj.discord_id:
+            self.player_obj = player.get_player_by_id(self.player_obj.player_id)
+            embed_msg = skillpaths.create_path_embed(self.player_obj)
+            points_view = PointsView(self.player_obj)
             await interaction.response.edit_message(embed=embed_msg, view=points_view)
 
 
 class ResetView(discord.ui.View):
-    def __init__(self, player_object):
+    def __init__(self, player_obj):
         super().__init__()
-        self.player_object = player_object
+        self.player_obj = player_obj
         self.embed_msg = None
 
     @discord.ui.button(label="Confirm Reset", style=discord.ButtonStyle.danger)
     async def confirm_reset_button(self, interaction: discord.Interaction, button: discord.ui.Button):
-        if interaction.user.id == self.player_object.discord_id:
+        if interaction.user.id == self.player_obj.discord_id:
             if not self.embed_msg:
-                self.player_object = player.get_player_by_id(self.player_object.player_id)
-                self.player_object.get_player_multipliers()
-                token_cost = sum(self.player_object.player_stats) // 10
-                token_stock = inventory.check_stock(self.player_object, "Token3")
+                self.player_obj.reload_player()
+                token_cost = sum(self.player_obj.player_stats) // 10
+                token_stock = inventory.check_stock(self.player_obj, "Token3")
                 if token_stock >= token_cost:
-                    inventory.update_stock(self.player_object, "Token3", -1)
-                    self.player_object.reset_skill_points()
+                    inventory.update_stock(self.player_obj, "Token3", -1)
+                    self.player_obj.reset_skill_points()
                     result_msg = "ALL SKILL POINTS RESET!"
                 else:
                     result_msg = "Come back when you have a token."
-                self.embed_msg = self.player_object.create_path_embed()
-                self.player_object.get_player_multipliers()
+                self.player_obj.reload_player()
+                self.embed_msg = skillpaths.create_path_embed(self.player_obj)
                 self.embed_msg.add_field(name=result_msg, value="", inline=False)
-            points_view = PointsView(self.player_object)
+            points_view = PointsView(self.player_obj)
             await interaction.response.edit_message(embed=self.embed_msg, view=points_view)
 
     @discord.ui.button(label="Reselect", style=discord.ButtonStyle.secondary)
     async def reselect_path_button(self, interaction: discord.Interaction, button: discord.ui.Button):
-        if interaction.user.id == self.player_object.discord_id:
-            self.player_object = player.get_player_by_id(self.player_object.player_id)
-            self.player_object.get_player_multipliers()
-            embed_msg = self.player_object.create_path_embed()
-            points_view = PointsView(self.player_object)
+        if interaction.user.id == self.player_obj.discord_id:
+            self.player_obj.reload_player()
+            embed_msg = skillpaths.create_path_embed(self.player_obj)
+            points_view = PointsView(self.player_obj)
             if self.embed_msg:
                 embed_msg.add_field(name="ALL SKILL POINTS RESET!", value="", inline=False)
             await interaction.response.edit_message(embed=embed_msg, view=points_view)

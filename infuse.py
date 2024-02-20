@@ -19,68 +19,51 @@ import itemdata
 recipe_dict = {
     "Heavenly Infusion": {
         "Heavenly Ore (Crude)": ["Ore1", 50, "Stone1", 10, 75, "Ore5"],
-        "Heavenly Soul (Light)": ["Soul1", 50, "Stone1", 10, 75, "Soul5"],
         "Heavenly Ore (Cosmite)": ["Ore2", 20, "Stone2", 10, 75, "Ore5"],
-        "Heavenly Soul (Luminous)": ["Soul2", 20, "Stone2", 10, 75, "Soul5"],
         "Heavenly Ore (Celestite)": ["Ore3", 10, "Stone3", 10, 75, "Ore5"],
-        "Heavenly Soul (Lucent)": ["Soul3", 10, "Stone3", 10, 75, "Soul5"],
-        "Heavenly Ore (Crystallite)": ["Ore4", 2, "Stone4", 10, 75, "Ore5"],
-        "Heavenly Soul (Lustrous)": ["Soul4", 2, "Stone4", 10, 75, "Soul5"],
-        "Astral Hammer": ["Hammer1", 1, "Heart1", 1, 90, "Hammer2"]},
+        "Heavenly Ore (Crystallite)": ["Ore4", 2, "Stone4", 10, 75, "Ore5"]},
 
     "Elemental Infusion": {
-        "Elemental Origin (Fire)": ["OriginZ", 1, "Fae0", 100, 80, "Origin0"],
-        "Elemental Origin (Water)": ["OriginZ", 1, "Fae1", 100, 80, "Origin1"],
-        "Elemental Origin (Lightning)": ["OriginZ", 1, "Fae2", 100, 80, "Origin2"],
-        "Elemental Origin (Earth)": ["OriginZ", 1, "Fae3", 100, 80, "Origin3"],
-        "Elemental Origin (Wind)": ["OriginZ", 1, "Fae4", 100, 80, "Origin4"],
-        "Elemental Origin (Ice)": ["OriginZ", 1, "Fae5", 100, 80, "Origin5"],
-        "Elemental Origin (Shadow)": ["OriginZ", 1, "Fae6", 100, 80, "Origin6"],
-        "Elemental Origin (Light)": ["OriginZ", 1, "Fae7", 100, 80, "Origin7"],
-        "Elemental Origin (Celestial)": ["OriginZ", 1, "Fae8", 100, 80, "Origin8"]},
-
-    "Fabled Infusion": {
-        "Fabled Core": ["Stone5", 25, "Heart1", 1, 90, "Core1"],
-        "Fabled Matrix": ["Matrix1", 1, "Core1", 1, 90, "Matrix2"],
-        "Fabled Flame": ["Flame1", 1, "Core1", 1, 90, "Flame2"],
-        "Fabled Pearl": ["Pearl1", 1, "Core1", 1, 90, "Pearl2"],
-        "Fabled Hammer (Star Hammer)": ["Hammer1", 1, "Core1", 1, 90, "Hammer3"],
-        "Fabled Hammer (Astral Hammer)": ["Hammer2", 1, "Core1", 1, 90, "Hammer3"],
-        "Unrefined Fabled Item (Weapon)": ["Fragment1", 200, "Core1", 5, 100, "Fabled1"],
-        "Unrefined Fabled Item (Armour)": ["Fragment2", 100, "Core1", 2, 100, "Fabled2"],
-        "Unrefined Fabled Item (Accessory)": ["Fragment3", 100, "Core1", 2, 100, "Fabled3"],
-        "Unrefined Fabled Item (Wing)": ["Unrefined1", 50, "Core1", 2, 100, "Fabled4"],
-        "Unrefined Fabled Item (Crest)": ["Unrefined3", 50, "Core1", 2, 100, "Fabled5"],
-        "Unrefined Fabled Item (Gem)": ["Unrefined2", 25, "Core1", 1, 100, "Fabled6"]},
+        "Elemental Origin (Fire)": ["OriginZ", 1, "Fae0", 500, 80, "Origin0"],
+        "Elemental Origin (Water)": ["OriginZ", 1, "Fae1", 500, 80, "Origin1"],
+        "Elemental Origin (Lightning)": ["OriginZ", 1, "Fae2", 500, 80, "Origin2"],
+        "Elemental Origin (Earth)": ["OriginZ", 1, "Fae3", 500, 80, "Origin3"],
+        "Elemental Origin (Wind)": ["OriginZ", 1, "Fae4", 500, 80, "Origin4"],
+        "Elemental Origin (Ice)": ["OriginZ", 1, "Fae5", 500, 80, "Origin5"],
+        "Elemental Origin (Shadow)": ["OriginZ", 1, "Fae6", 500, 80, "Origin6"],
+        "Elemental Origin (Light)": ["OriginZ", 1, "Fae7", 500, 80, "Origin7"],
+        "Elemental Origin (Celestial)": ["OriginZ", 1, "Fae8", 500, 80, "Origin8"]},
 
     "Void Infusion": {
-        "Void Core": ["Traces1", 1, "Core1", 1, 90, "Core2"],
-        "Void Pearl": ["Traces1", 1, "Pearl2", 1, 90, "Pearl3"],
-        "Void Flame": ["Traces1", 1, "Flame2", 1, 90, "Flame3"],
-        "Void Origin": ["Traces1", 1, "OriginZ", 1, 90, "OriginV"],
-        "Crystallized Void": ["Traces1", 1, "Crystal1", 1, 10, "Crystal2"]},
+        "Void Core": ["Fragment1", 50, "Heart1", 1, 50, "Core1"],
+        "Void Pearl": ["Pearl1", 1, "Core1", 1, 90, "Pearl2"],
+        "Void Hammer": ["Hammer1", 1, "Core1", 1, 90, "Hammer2"],
+        "Unrefined Void Item (Weapon)": ["Crystal1", 1, "Core1", 10, 99, "Void1"],
+        "Unrefined Void Item (Armour)": ["Scrap", 100, "Core1", 5, 99, "Void2"],
+        "Unrefined Void Item (Amulet)": ["Scrap", 100, "Core1", 5, 99, "Void3"],
+        "Unrefined Void Item (Wing)": ["Unrefined1", 10, "Core1", 5, 99, "Void4"],
+        "Unrefined Void Item (Crest)": ["Unrefined3", 10, "Core1", 5, 99, "Void5"],
+        "Crystallized Void": ["Core1", 2, "Fragment1", 25, 25, "Crystal1"]},
 
     "Wish Infusion": {
-        "Fragmentized Wish (Weapon)": ["Fragment1", 10, "Stone4", 1, 100, "FragmentM"],
-        "Fragmentized Wish (Armour)": ["Fragment2", 10, "Stone4", 1, 100, "FragmentM"],
-        "Fragmentized Wish (Accessory)": ["Fragment3", 10, "Stone4", 1, 100, "FragmentM"],
-        "Crystallized Wish": ["FragmentM", 50, "Stone5", 10, 100, "Crystal1"],
-        "Wish Core": ["Crystal1", 5, "Core1", 1, 50, "Core3"],
-        "Unrefined Wish Item (Gem)": ["Unrefined2", 50, "Crystal1", 1, 100, "Unrefined4"],
-        "Unrefined Wish Item (Weapon)": ["Crystal1", 5, "Heart1", 10, 100, "Unrefined5"]},
+        "Wish Core": ["Core1", 1, "Fragment2", 5, 50, "Core2"],
+        "Radiant Heart": ["Stone5", 1, "Fragment2", 1, 1, "Heart1"],
+        "Fragmentized Wish (Scrap)": ["Scrap", 50, "Stone4", 1, 100, "Fragment2"],
+        "Crystallized Wish": ["Core2", 2, "Fragment2", 25, 25, "Crystal2"]},
 
-    "Miracle Infusion": {
-        "Miracle Origin": ["Heart2", 1, "OriginZ", 1, 100, "OriginM"],
-        "Miracle Ore": ["Crystal1", 1, "Ore5", 2, 100, "Ore6"],
-        "Miracle Soul": ["Crystal1", 1, "Soul5", 2, 100, "Soul6"],
-        "Miracle Flame": ["FragmentM", 5, "Flame1", 20, 100, "Flame4"],
-        "Miracle Matrix": ["Crystal1", 1, "Matrix1", 50, 100, "Matrix3"],
-        "Miracle Pearl": ["FragmentM", 5, "Pearl1", 1, 100, "Pearl4"],
-        "Miracle Hammer": ["FragmentM", 10, "Hammer1", 1, 100, "Hammer4"],
-        "Miracle Heart": ["Crystal1", 1, "Heart1", 1, 100, "Heart2"]},
+    "Abyss Infusion": {
+        "Abyss Core": ["Core2", 1, "Fragment3", 50, 50, "Core4"],
+        "Chaos Heart": ["Stone5", 1, "Fragment3", 1, 1, "Heart2"],
+        "Abyss Flame": ["Flame1", 10, "Heart2", 1, 10, "Flame2"],
+        "Crystallized Abyss": ["Core3", 2, "Fragment3", 25, 25, "Crystal3"]},
 
-    "Lotus Infusion": {
-        "Lotus of Miracles": ["Heart2", 99, "FragmentM", 99, 99, "Lotus2"]}
+    "Divine Infusion": {
+        "Divinity Core (Fragment)": ["Core3", 1, "Fragment4", 50, 50, "Core4"],
+        "Divinity Core (Radiant)": ["OriginZ", 1, "Heart1", 1, 1, "Core4"],
+        "Divinity Core (Chaos)": ["OriginZ", 1, "Heart2", 1, 1, "Core4"],
+        "Crystallized Divinity": ["Core4", 2, "Fragment4", 25, 25, "Crystal4"],
+        "Lotus of Serenity": ["Heart1", 99, "Fragment2", 99, 99, "Lotus2"],
+        "Twin Rings of Divergent Stars": ["DarkStar", 1, "LightStar", 1, 100, "TwinRings"]}
 }
 
 
@@ -96,44 +79,44 @@ class RecipeObject:
         self.success_rate = recipe_info[4]
         self.outcome_item = inventory.BasicItem(recipe_info[5])
 
-    def create_cost_embed(self, player_object):
-        stock_1 = inventory.check_stock(player_object, self.cost_item_1.item_id)
-        stock_2 = inventory.check_stock(player_object, self.cost_item_2.item_id)
+    def create_cost_embed(self, player_obj):
+        stock_1 = inventory.check_stock(player_obj, self.cost_item_1.item_id)
+        stock_2 = inventory.check_stock(player_obj, self.cost_item_2.item_id)
         cost_title = f"{self.recipe_name} Infusion Cost"
         cost_info = f"{self.cost_item_1.item_emoji} {self.cost_item_1.item_name}: {stock_1} / {self.cost_qty_1}"
         cost_info += f"\n{self.cost_item_2.item_emoji} {self.cost_item_2.item_name}: {stock_2} / {self.cost_qty_2}"
         cost_embed = discord.Embed(colour=discord.Colour.dark_orange(), title=cost_title, description=cost_info)
         return cost_embed
 
-    def can_afford(self, player_object, num_crafts):
+    def can_afford(self, player_obj, num_crafts):
         can_proceed = False
-        stock_1 = inventory.check_stock(player_object, self.cost_item_1.item_id)
-        stock_2 = inventory.check_stock(player_object, self.cost_item_2.item_id)
+        stock_1 = inventory.check_stock(player_obj, self.cost_item_1.item_id)
+        stock_2 = inventory.check_stock(player_obj, self.cost_item_2.item_id)
         if stock_1 >= num_crafts * self.cost_qty_1 and stock_2 >= self.cost_qty_2:
             can_proceed = True
         return can_proceed
 
-    def perform_infusion(self, player_object, num_crafts):
+    def perform_infusion(self, player_obj, num_crafts):
         result = 0
         total_cost_1 = 0 - (num_crafts * self.cost_qty_1)
         total_cost_2 = 0 - (num_crafts * self.cost_qty_2)
-        inventory.update_stock(player_object, self.cost_item_1.item_id, total_cost_1)
-        inventory.update_stock(player_object, self.cost_item_2.item_id, total_cost_2)
-        print(f"{player_object.player_username}: infusion paid")
+        inventory.update_stock(player_obj, self.cost_item_1.item_id, total_cost_1)
+        inventory.update_stock(player_obj, self.cost_item_2.item_id, total_cost_2)
+        print(f"{player_obj.player_username}: infusion paid")
         for x in range(num_crafts):
             random_attempt = random.randint(1, 100)
-            print(f"{player_object.player_username}: infusion roll: {random_attempt} / {self.success_rate}")
+            print(f"{player_obj.player_username}: infusion roll: {random_attempt} / {self.success_rate}")
             if random_attempt <= self.success_rate:
-                inventory.update_stock(player_object, self.outcome_item.item_id, 1)
+                inventory.update_stock(player_obj, self.outcome_item.item_id, 1)
                 result += 1
         return result
 
 
 class InfuseView(discord.ui.View):
-    def __init__(self, player_object):
+    def __init__(self, player_obj):
         super().__init__(timeout=None)
         self.selected_item = None
-        self.player_object = player_object
+        self.player_obj = player_obj
         self.value = None
 
         # Build the option menu dynamically based on recipe categories.
@@ -152,23 +135,23 @@ class InfuseView(discord.ui.View):
 
     async def select_callback(self, interaction: discord.Interaction):
         try:
-            if interaction.user.id == self.player_object.discord_id:
+            if interaction.user.id == self.player_obj.discord_id:
                 selected_category = interaction.data['values'][0]
                 embed_msg = discord.Embed(
                     colour=discord.Colour.magenta(),
                     title="Cloaked Alchemist, Sangam",
                     description="Alright, what do you need?"
                 )
-                new_view = SelectRecipeView(self.player_object, selected_category)
+                new_view = SelectRecipeView(self.player_obj, selected_category)
                 await interaction.response.edit_message(embed=embed_msg, view=new_view)
         except Exception as e:
             print(e)
 
 
 class SelectRecipeView(discord.ui.View):
-    def __init__(self, player_object, category):
+    def __init__(self, player_obj, category):
         super().__init__(timeout=None)
-        self.player_object = player_object
+        self.player_obj = player_obj
         self.category = category
 
         # Build the option menu dynamically based on the category's recipes.
@@ -191,8 +174,8 @@ class SelectRecipeView(discord.ui.View):
 
     async def recipe_callback(self, interaction: discord.Interaction):
         try:
-            if interaction.user.id == self.player_object.discord_id:
-                reload_player = player.get_player_by_id(self.player_object.player_id)
+            if interaction.user.id == self.player_obj.discord_id:
+                reload_player = player.get_player_by_id(self.player_obj.player_id)
                 selected_option = interaction.data['values'][0]
                 recipe_object = RecipeObject(self.category, selected_option)
                 embed_msg = recipe_object.create_cost_embed(reload_player)

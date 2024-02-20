@@ -93,8 +93,8 @@ def run_discord_bot():
                 run_command = True
             if run_command:
                 command_user.set_cooldown("vouch", "")
-                player_object = player.get_player_by_discord(user.id)
-                if player_object.player_class != "":
+                player_obj = player.get_player_by_discord(user.id)
+                if player_obj.player_class != "":
                     role_points = {
                         1011375497265033216: 20,  # Owner role ID
                         1134301246648488097: 10,  # Administrator role ID
@@ -105,8 +105,8 @@ def run_discord_bot():
                     user_roles = [role.id for role in ctx.author.roles]
                     highest_role_id = max(user_roles, key=lambda role_id: role_points.get(role_id, default_points))
                     num_points = role_points.get(highest_role_id, default_points)
-                    new_points = num_points + player_object.vouch_points
-                    player_object.set_player_field("vouch_points", new_points)
+                    new_points = num_points + player_obj.vouch_points
+                    player_obj.set_player_field("vouch_points", new_points)
                     if new_points >= 1000:
                         trusted_rat_role = discord.utils.get(ctx.guild.roles, name='Trusted Rat')
                         if trusted_rat_role not in user.roles:

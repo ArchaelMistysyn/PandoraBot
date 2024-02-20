@@ -1,39 +1,48 @@
+# General imports
 import discord
 from discord.ext import commands, tasks
 from discord.ext.commands import Bot
 from discord.ui import Button, View
 from discord import app_commands
 import asyncio
-import csv
 import pandas as pd
-import mysql.connector
-from mysql.connector.errors import Error
 import sys
+import random
 from datetime import datetime as dt, timedelta
 
+# Data imports
 import globalitems
-import adventure
-import inventory
-import bosses
-import random
-import leaderboards
+import sharedmethods
 import itemdata
-import itemicons
-import itemrolls
-import loot
-import forge
+
+# Core imports
 import player
-import combat
-import menus
 import quest
+import inventory
+import menus
+
+# Misc imports
+import leaderboards
+import skillpaths
+import pilengine
+import adventure
+
+# Item/crafting imports
+import loot
+import itemrolls
 import tarot
+import insignia
+import forge
+
+# Trade imports
 import market
 import bazaar
-import insignia
 import infuse
-import pilengine
+
+# Cog imports
 import pandoracogs
 
+guild_id = 1011375205999968427
 
 # Get Bot Token
 token_info = None
@@ -41,12 +50,6 @@ with open("pandora_bot_token.txt", 'r') as token_file:
     for line in token_file:
         token_info = line
 TOKEN = token_info
-
-# Initialize database
-db_info = None
-with open("bot_db_login.txt", 'r') as data_file:
-    for line in data_file:
-        db_info = line.split(";")
 
 
 class PandoraBot(commands.Bot):
@@ -62,25 +65,17 @@ def run_discord_bot():
         def __init__(self, category):
             self.category = category
 
+    @pandora_bot.event
+    async def on_ready():
+        print(f'{pandora_bot.user} Online!')
+        pandoracogs.StaminaCog(pandora_bot)
+        pandora_bot.help_command = CustomHelpCommand()
+
     def set_command_category(category, command_position):
         def decorator(func):
-            func.category_type = category
-            func.position = command_position
+            func.category_type, func.position = category, command_position
             return func
         return decorator
-
-    async def on_command_error(ctx, error):
-        if isinstance(error, commands.CommandOnCooldown):
-            seconds = error.retry_after
-            minutes = seconds / 60
-            hours = int(minutes / 60)
-            await ctx.send(f'This command is on a {hours} hour cooldown')
-        elif isinstance(error, commands.MaxConcurrencyReached):
-            await ctx.send('You are at your command limit for this command')
-        elif isinstance(error, commands.CommandNotFound):
-            pass
-        else:
-            await ctx.reply(error, ephemeral=True)
 
     async def on_shutdown():
         print("Pandora Bot Off")
@@ -89,12 +84,6 @@ def run_discord_bot():
             await engine_bot.session.close()
         except KeyboardInterrupt:
             sys.exit(0)
-
-    @pandora_bot.event
-    async def on_ready():
-        print(f'{pandora_bot.user} Online!')
-        pandoracogs.StaminaCog(pandora_bot)
-        pandora_bot.help_command = CustomHelpCommand()
 
     class CustomHelpCommand(commands.DefaultHelpCommand):
         def __init__(self):
@@ -108,7 +97,7 @@ def run_discord_bot():
 
         async def send_command_help(self, command):
             # Customize the help message when !help <command> is used
-            embed = discord.Embed(title=f"Help for (!{command.name}) Command")
+            embed = discord.Embed(title=f"Help for (/{command.name}) Command")
             embed.add_field(name="Usage", value=f"```{self.get_command_signature(command)}```", inline=False)
             embed.add_field(name="Description", value=command.help, inline=False)
 
@@ -116,327 +105,265 @@ def run_discord_bot():
 
     # Admin Commands
     @set_command_category('admin', 0)
-    @pandora_bot.command(name='sync', help="Archael Only")
+    @pandora_bot.command(name='sync', help="Bot Admin Only!")
     async def sync(ctx):
-        if ctx.message.author.id == 185530717638230016:
-            try:
-                synced = await pandora_bot.tree.sync(guild=discord.Object(id=1011375205999968427))
-                print(f"Pandora Bot Synced! {len(synced)} command(s)")
-                await ctx.send('commands synced!')
-            except Exception as e:
-                print(e)
-        else:
-            await ctx.send('You must be the owner to use this command!')
+        if ctx.message.author.id not in globalitems.bot_admin_ids:
+            await ctx.send('Bot Admin Only!')
+            return
+        synced = await pandora_bot.tree.sync(guild=discord.Object(id=guild_id))
+        print(f"Pandora Bot Synced! {len(synced)} command(s)")
+        await ctx.send('commands synced!')
 
     @set_command_category('admin', 1)
-    @pandora_bot.command(name='reset_sync', help="Archael Only")
+    @pandora_bot.command(name='reset_sync', help="Bot Admin Only!")
     async def reset_sync(ctx):
-        if ctx.message.author.id == 185530717638230016:
-            try:
-                global_sync = await pandora_bot.tree.sync(guild=None)
-                print(f"Pandora Bot Synced! {len(global_sync)} global command(s)")
-                synced = await pandora_bot.tree.sync(guild=discord.Object(id=1011375205999968427))
-                print(f"Pandora Bot Synced! {len(synced)} command(s)")
-                await ctx.send('commands synced!')
-            except Exception as e:
-                print(e)
-        else:
-            await ctx.send('You must be the owner to use this command!')
+        if ctx.message.author.id not in globalitems.bot_admin_ids:
+            await ctx.send('Bot Admin Only!')
+            return
+        global_sync = await pandora_bot.tree.sync(guild=None)
+        print(f"Pandora Bot Synced! {len(global_sync)} global command(s)")
+        synced = await pandora_bot.tree.sync(guild=discord.Object(id=guild_id))
+        print(f"Pandora Bot Synced! {len(synced)} command(s)")
+        await ctx.send('Pandora Bot commands synced!')
 
     @set_command_category('admin', 2)
     @pandora_bot.command(name='admin', help="Tester Only")
-    @app_commands.guilds(discord.Object(id=1011375205999968427))
+    @app_commands.guilds(discord.Object(id=guild_id))
     async def admin(ctx, backdoor, value="0"):
-        if any(ctx.channel.id in sl for sl in globalitems.global_server_channels):
-            user = ctx.author
-            achievement_list = []
-            roles_list = [r.name for r in user.roles]
-            if "Passcard - Pandora Tester" in roles_list:
-                player_object = player.get_player_by_discord(user.id)
-                if backdoor == "stamina_hack":
-                    player_object.set_player_field("player_stamina", int(value))
-                if backdoor == "item_hack":
-                    inventory.update_stock(player_object, value, 10)
-                if backdoor == "coin_hack":
-                    player_object.set_player_field("player_coins", int(value))
-                if backdoor == "item_hack_all":
-                    if ctx.message.author.id == 185530717638230016:
-                        inventory.max_all_items(player_object.player_id, int(value))
-                        await ctx.send("Admin item task completed.")
-                    else:
-                        await ctx.send("Only Archael can run this command.")
-                if backdoor == "refresh_item_names":
-                    if ctx.message.author.id == 185530717638230016:
-                        inventory.refresh_item_names()
-                        await ctx.send("Admin item task completed.")
-                    else:
-                        await ctx.send("Only Archael can run this command.")
-                if backdoor == "rerank_leaderboard":
-                    await leaderboards.rerank_leaderboard(ctx)
-                    await ctx.send("Admin item task completed.")
+        count = 1
+        player_obj = await sharedmethods.check_registration(ctx)
+        if player_obj is None:
+            return
+        user = ctx.author
+        achievement_list = []
+        roles_list = [r.name for r in user.roles]
+        if "Passcard - Pandora Tester" not in roles_list:
+            await ctx.send("Only testers can use this command.")
+            return
+        if backdoor == "stamina_hack":
+            player_obj.set_player_field("player_stamina", int(value))
+        elif backdoor == "item_hack":
+            inventory.update_stock(player_obj, value, 10)
+        elif backdoor == "coin_hack":
+            _ = player_obj.adjust_coins(int(value))
+        elif backdoor == "item_hack_all":
+            if ctx.message.author.id == 185530717638230016:
+                inventory.max_all_items(player_obj.player_id, int(value))
             else:
-                await ctx.send("Only testers can use this command.")
+                await ctx.send("Bot Admin Only!")
+                return
+        elif backdoor == "rerank_leaderboard":
+            await leaderboards.rerank_leaderboard(ctx)
+        elif backdoor == "merge_icon_images":
+            count = 0
+            for (_, low_types), high_types in zip(globalitems.category_names.items(), globalitems.weapon_list_high):
+                for _, name in low_types.items():
+                    count += pilengine.generate_and_combine_images(name, end_tier=4)
+                for name in high_types:
+                    count += pilengine.generate_and_combine_images(name, start_tier=5, fetch_type=True)
+            non_weapon_list = ["Armour", "Vambraces", "Amulet", "Wings", "Crest", "Jewel"]
+            for gear_type in non_weapon_list:
+                count += pilengine.generate_and_combine_images(gear_type)
+        await ctx.send(f"Admin item task completed. Task Count: {count}")
 
     # Game Commands
     @set_command_category('game', 0)
     @pandora_bot.hybrid_command(name='map', help="Explore! Stamina Cost: 200 + 50/map tier")
-    @app_commands.guilds(discord.Object(id=1011375205999968427))
+    @app_commands.guilds(discord.Object(id=guild_id))
     async def expedition(ctx):
-        if any(ctx.channel.id in sl for sl in globalitems.global_server_channels):
-            await ctx.defer()
-            player_object = player.get_player_by_discord(ctx.author.id)
-            if player_object.player_class != "":
-                embed_msg = discord.Embed(colour=discord.Colour.dark_orange(),
-                                          title="Map Exploration",
-                                          description="Please select an expedition.")
-                embed_msg.set_image(url="")
-                map_select_view = adventure.MapSelectView(player_object, embed_msg)
-                await ctx.send(embed=embed_msg, view=map_select_view)
-            else:
-                embed_msg = unregistered_message()
-                await ctx.send(embed=embed_msg)
+        player_obj = await sharedmethods.check_registration(ctx)
+        if player_obj is None:
+            return
+        embed_msg = discord.Embed(colour=discord.Colour.dark_orange(),
+                                  title="Map Exploration", description="Please select an expedition.")
+        embed_msg.set_image(url="")
+        map_select_view = adventure.MapSelectView(ctx, player_obj, embed_msg)
+        await ctx.send(embed=embed_msg, view=map_select_view)
 
     @set_command_category('game', 1)
-    @pandora_bot.hybrid_command(name='quest', help="Check and hand in quests.")
-    @app_commands.guilds(discord.Object(id=1011375205999968427))
+    @pandora_bot.hybrid_command(name='quest', help="Check and hand-in quests.")
+    @app_commands.guilds(discord.Object(id=guild_id))
     async def story_quest(ctx):
-        if any(ctx.channel.id in sl for sl in globalitems.global_server_channels):
-            await ctx.defer()
-            player_object = player.get_player_by_discord(ctx.author.id)
-            current_quest = player_object.player_quest
-            if current_quest != 0:
-                current_quest = player_object.player_quest
-                quest_object = quest.get_quest(current_quest, player_object)
-                quest_message = quest_object.get_quest_embed(player_object)
-                quest_view = quest.QuestView(player_object, quest_object)
-                await ctx.send(embed=quest_message, view=quest_view)
-            elif current_quest > 30:
-                embed_msg = discord.Embed(colour=discord.Colour.dark_teal(),
-                                          title="Quests",
-                                          description="All quests completed!")
-                await ctx.send(embed=embed_msg)
-            else:
-                embed_msg = unregistered_message()
-                await ctx.send(embed=embed_msg)
+        player_obj = await sharedmethods.check_registration(ctx)
+        if player_obj is None:
+            return
+        current_quest = player_obj.player_quest
+        if current_quest <= 55:
+            quest_object = quest.quest_list[player_obj.player_quest]
+            quest_message = quest_object.get_quest_embed(player_obj)
+            quest_view = quest.QuestView(ctx, player_obj, quest_object)
+            await ctx.send(embed=quest_message, view=quest_view)
+            return
+        embed_msg = discord.Embed(colour=discord.Colour.dark_teal(), title="Quests", description="All Clear!")
+        await ctx.send(embed=embed_msg)
 
     @set_command_category('game', 2)
     @pandora_bot.hybrid_command(name='stamina', help="Display your stamina and use potions.")
-    @app_commands.guilds(discord.Object(id=1011375205999968427))
+    @app_commands.guilds(discord.Object(id=guild_id))
     async def stamina(ctx):
-        if any(ctx.channel.id in sl for sl in globalitems.global_server_channels):
-            await ctx.defer()
-            user = ctx.author
-            player_object = player.get_player_by_discord(user.id)
-            if player_object.player_class != "":
-                embed_msg = player_object.create_stamina_embed()
-                stamina_view = menus.StaminaView(player_object)
-                await ctx.send(embed=embed_msg, view=stamina_view)
-            else:
-                embed_msg = unregistered_message()
-                await ctx.send(embed=embed_msg)
+        player_obj = await sharedmethods.check_registration(ctx)
+        if player_obj is None:
+            return
+        embed_msg = player_obj.create_stamina_embed()
+        stamina_view = menus.StaminaView(player_obj)
+        await ctx.send(embed=embed_msg, view=stamina_view)
 
     @set_command_category('game', 3)
     @pandora_bot.hybrid_command(name='points', help="Assign your skill points.")
-    @app_commands.guilds(discord.Object(id=1011375205999968427))
+    @app_commands.guilds(discord.Object(id=guild_id))
     async def points(ctx):
-        channel_id = ctx.channel.id
-        if any(channel_id in sl for sl in globalitems.global_server_channels):
-            await ctx.defer()
-            user = ctx.author
-            player_object = player.get_player_by_discord(user.id)
-            if player_object.player_class != "":
-                existing_id = bosses.get_raid_id(channel_id, player_object.player_id)
-                if existing_id == 0:
-                    player_object.get_player_multipliers()
-                    embed_msg = player_object.create_path_embed()
-                    points_view = menus.PointsView(player_object)
-                    await ctx.send(embed=embed_msg, view=points_view)
-                else:
-                    await ctx.send("You cannot speak to the pathwalker while in combat.")
-            else:
-                embed_msg = unregistered_message()
-                await ctx.send(embed=embed_msg)
+        player_obj = await sharedmethods.check_registration(ctx)
+        if player_obj is None:
+            return
+        embed_msg = skillpaths.create_path_embed(player_obj)
+        if player_obj.player_quest == 17:
+            quest.assign_unique_tokens(player_obj, "Arbiter")
+        points_view = menus.PointsView(player_obj)
+        await ctx.send(embed=embed_msg, view=points_view)
 
     @set_command_category('game', 4)
-    @pandora_bot.hybrid_command(name='manifest',
-                                help="Manifest the echo of a bound paragon to perform a task. Cost: 500 Stamina")
-    @app_commands.guilds(discord.Object(id=1011375205999968427))
+    @pandora_bot.hybrid_command(name='manifest', help="Manifest an echo to perform a task. Cost: 500 Stamina")
+    @app_commands.guilds(discord.Object(id=guild_id))
     async def manifest(ctx):
-        if any(ctx.channel.id in sl for sl in globalitems.global_server_channels):
-            await ctx.defer()
-            player_object = player.get_player_by_discord(ctx.author.id)
-            if player_object.player_class == "":
-                embed_msg = unregistered_message()
-                await ctx.send(embed=embed_msg)
-                return
-            difference, method_info = player_object.check_cooldown("manifest")
-            colour, icon = inventory.get_gear_tier_colours(player_object.player_echelon)
-            num_hours = 6 + player_object.player_echelon
-            if difference:
-                wait_time = timedelta(hours=num_hours)
-                cooldown = wait_time - difference
-                if difference <= wait_time:
-                    cooldown_timer = int(cooldown.total_seconds() / 60 / 60)
-                    time_msg = f"Your manifestation will return in {cooldown_timer} hours."
-                    embed_msg = discord.Embed(colour=colour,
-                                              title="Echo Manifestation",
-                                              description=time_msg)
-                else:
-                    player_object.clear_cooldown("manifest")
-                    embed_msg = adventure.build_manifest_return_embed(player_object, method_info, colour)
-                await ctx.send(embed=embed_msg)
+        player_obj = await sharedmethods.check_registration(ctx)
+        if player_obj is None:
+            return
+        difference, method_info = player_obj.check_cooldown("manifest")
+        colour, _ = sharedmethods.get_gear_tier_colours(player_obj.player_echelon)
+        num_hours = 14 + (player_obj.player_echelon * 2)
+
+        # Handle existing cooldown.
+        if difference:
+            wait_time = timedelta(hours=num_hours)
+            cooldown = wait_time - difference
+            if difference <= wait_time:
+                cooldown_timer = int(cooldown.total_seconds() / 60 / 60)
+                time_msg = f"Your manifestation will return in {cooldown_timer} hours."
+                embed_msg = discord.Embed(colour=colour, title="Echo Manifestation", description=time_msg)
             else:
-                player_object.get_equipped()
-                if player_object.equipped_tarot != "":
-                    e_tarot = tarot.check_tarot(player_object.player_id,
-                                                tarot.card_dict[player_object.equipped_tarot][0])
-                else:
-                    e_tarot = tarot.TarotCard(player_object.player_id, "II",
-                                              0, 0, 0)
-                manifest_description = ""
-                embed_msg = discord.Embed(colour=colour)
-                if player_object.equipped_tarot != "":
-                    embed_msg.set_image(url=e_tarot.card_image_link)
-                    embed_msg.title = f"Echo of {e_tarot.card_name}"
-                    manifest_description = "What do you need me to help you with?"
-                    display_stars = globalitems.display_stars(e_tarot.num_stars)
-                    manifest_description += f"\nSelected Tarot Rating: {display_stars}"
-                else:
-                    embed_msg.title = "Pandora, The Celestial"
-                    manifest_description = ("You don't seem to have any tarot cards set to perform echo manifestation."
-                                            " Let's divide and conquer. I'll handle the task for you. What would you"
-                                            " like me to help with?")
-                embed_msg.description = manifest_description
-                new_view = adventure.ManifestView(player_object, embed_msg, e_tarot, colour, num_hours)
-                await ctx.send(embed=embed_msg, view=new_view)
+                player_obj.clear_cooldown("manifest")
+                embed_msg = await adventure.build_manifest_return_embed(ctx, player_obj, method_info, colour)
+            await ctx.send(embed=embed_msg)
+            return
+
+        # Load card or handle proxy. Build the embed.
+        embed_msg = discord.Embed(colour=colour)
+        e_tarot = tarot.TarotCard(player_obj.player_id, "II", 0, 0, 0)
+        if player_obj.equipped_tarot != "":
+            e_tarot = tarot.check_tarot(player_obj.player_id, tarot.card_dict[player_obj.equipped_tarot][0])
+            embed_msg.set_image(url=e_tarot.card_image_link)
+            embed_msg.title = f"Echo of {e_tarot.card_name}"
+            embed_msg.description = "What do you need me to help you with?"
+            display_stars = sharedmethods.display_stars(e_tarot.num_stars)
+            embed_msg.description += f"\nSelected Tarot Rating: {display_stars}"
+        embed_msg.title = "Pandora, The Celestial"
+        embed_msg.description = ("You don't seem to have any tarot cards set to perform echo manifestation. "
+                                 "Let's divide and conquer. I'll handle the task for you. What would you "
+                                 "like me to help with?")
+        new_view = adventure.ManifestView(player_obj, embed_msg, e_tarot, colour, num_hours)
+        await ctx.send(embed=embed_msg, view=new_view)
 
     @set_command_category('game', 5)
     @pandora_bot.hybrid_command(name='crate', help="Open a crate.")
-    @app_commands.guilds(discord.Object(id=1011375205999968427))
+    @app_commands.guilds(discord.Object(id=guild_id))
     async def crate(ctx):
-        await ctx.defer()
-        if any(ctx.channel.id in sl for sl in globalitems.global_server_channels):
-            player_object = player.get_player_by_discord(ctx.author.id)
-            if player_object.player_class != "":
-                crate_id = "Crate"
-                crate_stock = inventory.check_stock(player_object, crate_id)
-                if crate_stock >= 1:
-                    inventory.update_stock(player_object, crate_id, -1)
-                    embed_msg = discord.Embed(colour=discord.Colour.dark_teal(),
-                                              title=f"{player_object.player_username}: Opening Crate!",
-                                              description="What could be inside?")
-                    reward_id, quantity = loot.generate_random_item()
-                    loot_item = inventory.BasicItem(reward_id)
-                    inventory.update_stock(player_object, reward_id, quantity)
-                    message = await open_lootbox(ctx, embed_msg, loot_item.item_tier)
-                    loot_description = f"{loot_item.item_emoji} {quantity}x {loot_item.item_name}"
-                    embed_msg = discord.Embed(colour=discord.Colour.dark_teal(),
-                                              title=f"{player_object.player_username}: Crate Opened!",
-                                              description=loot_description)
-                    await message.edit(embed=embed_msg)
-                else:
-                    loot_item = inventory.BasicItem(crate_id)
-                    await ctx.send(f"Out of stock: {loot_item.item_emoji}!")
-            else:
-                embed_msg = unregistered_message()
-                await ctx.send(embed=embed_msg)
+        player_obj = await sharedmethods.check_registration(ctx)
+        if player_obj is None:
+            return
+        crate_id = "Crate"
+        crate_stock = inventory.check_stock(player_obj, crate_id)
+        if crate_stock <= 0:
+            loot_item = inventory.BasicItem(crate_id)
+            await ctx.send(f"Out of stock: {loot_item.item_emoji}!")
+            return
+        inventory.update_stock(player_obj, crate_id, -1)
+        embed_msg = discord.Embed(colour=discord.Colour.dark_teal(),
+                                  title=f"{player_obj.player_username}: Opening Crate!",
+                                  description="What could be inside?")
+        reward_object, quantity = loot.generate_random_item()
+        inventory.update_stock(player_obj, reward_object.item_id, quantity)
+        message = await open_lootbox(ctx, embed_msg, reward_object.item_tier)
+        loot_description = f"{reward_object.item_emoji} {quantity}x {reward_object.item_name}"
+        embed_msg = discord.Embed(colour=discord.Colour.dark_teal(),
+                                  title=f"{player_obj.player_username}: Crate Opened!", description=loot_description)
+        await message.edit(embed=embed_msg)
+        if "Lotus" in reward_object.item_id or reward_object.item_id in ["DarkStar", "LightStar"]:
+            await sharedmethods.send_notification(ctx, player_obj, "Item", reward_object.item_id)
 
     @set_command_category('game', 6)
     @pandora_bot.hybrid_command(name='trove', help="Open a trove!")
-    @app_commands.guilds(discord.Object(id=1011375205999968427))
+    @app_commands.guilds(discord.Object(id=guild_id))
     async def trove(ctx, trove_tier: int):
-        if any(ctx.channel.id in sl for sl in globalitems.global_server_channels):
-            await ctx.defer()
-            player_object = player.get_player_by_discord(ctx.author.id)
-            if player_object.player_class != "":
-                if trove_tier in range(1, 5):
-                    trove_id = f"Trove{trove_tier}"
-                    loot_item = inventory.BasicItem(trove_id)
-                    trove_stock = inventory.check_stock(player_object, trove_id)
-                    if trove_stock >= 1:
-                        inventory.update_stock(player_object, trove_id, -1)
-                        embed_msg = discord.Embed(colour=discord.Colour.dark_teal(),
-                                                  title=f"{player_object.player_username}: Opening {loot_item.item_name}!",
-                                                  description="Feeling lucky today?")
-                        reward_coins = loot.generate_trove_reward(trove_tier)
-                        player_object.player_coins += reward_coins
-                        player_object.set_player_field("player_coins", player_object.player_coins)
-                        message = await open_lootbox(ctx, embed_msg, trove_tier)
-                        loot_description = f"{globalitems.coin_icon} {reward_coins:,}x Lotus Coins!"
-                        embed_msg = discord.Embed(colour=discord.Colour.dark_teal(),
-                                                  title=f"{player_object.player_username}: Trove Opened!",
-                                                  description=loot_description)
-                        await message.edit(embed=embed_msg)
-                    else:
-                        await ctx.send(f"Out of stock: {loot_item.item_emoji}!")
-                else:
-                    await ctx.send(f"Please enter a valid tier.")
-            else:
-                embed_msg = unregistered_message()
-                await ctx.send(embed=embed_msg)
+        player_obj = await sharedmethods.check_registration(ctx)
+        if player_obj is None:
+            return
+        if trove_tier not in range(1, 9):
+            await ctx.send(f"Please enter a valid tier.")
+            return
+        trove_id = f"Trove{trove_tier}"
+        loot_item = inventory.BasicItem(trove_id)
+        trove_stock = inventory.check_stock(player_obj, trove_id)
+        if trove_stock <= 0:
+            await ctx.send(f"Out of stock: {loot_item.item_emoji}!")
+            return
+        inventory.update_stock(player_obj, trove_id, -1)
+        embed_msg = discord.Embed(colour=discord.Colour.dark_teal(),
+                                  title=f"{player_obj.player_username}: Opening {loot_item.item_name}!",
+                                  description="Feeling lucky today?")
+        reward_coins = loot.generate_trove_reward(trove_tier)
+        coin_msg = player_obj.adjust_coins(reward_coins)
+        message = await open_lootbox(ctx, embed_msg, trove_tier)
+        loot_description = f"{globalitems.coin_icon} {coin_msg} lotus coins!"
+        embed_msg = discord.Embed(colour=discord.Colour.dark_teal(),
+                                  title=f"{player_obj.player_username}: Trove Opened!", description=loot_description)
+        await message.edit(embed=embed_msg)
 
     @set_command_category('game', 7)
     @pandora_bot.hybrid_command(name='changer', help="Change your class.")
-    @app_commands.guilds(discord.Object(id=1011375205999968427))
+    @app_commands.guilds(discord.Object(id=guild_id))
     async def changer(ctx):
-        channel_id = ctx.channel.id
-        if any(channel_id in sl for sl in globalitems.global_server_channels):
-            await ctx.defer()
-            player_object = player.get_player_by_discord(ctx.author.id)
-            if player_object.player_class != "":
-                existing_id = bosses.get_raid_id(channel_id, player_object.player_id)
-                if existing_id == 0:
-                    embed_msg = discord.Embed(colour=discord.Colour.dark_orange(),
-                                              title="Mysmiria, Changeling of the True Laws",
-                                              description="Bring me a token and even you can be rewritten.")
-                    new_view = menus.ClassChangeView(player_object)
-                    await ctx.send(embed=embed_msg, view=new_view)
-                else:
-                    await ctx.send("You cannot speak to the changeling while in combat.")
-            else:
-                embed_msg = unregistered_message()
-                await ctx.send(embed=embed_msg)
+        player_obj = await sharedmethods.check_registration(ctx)
+        if player_obj is None:
+            return
+        stock = inventory.check_stock(player_obj, "Token1")
+        description = f"Bring me enough tokens and even you can be rewritten.\n{stock} / 50"
+        embed_msg = discord.Embed(colour=discord.Colour.dark_orange(),
+                                  title="Mysmir, Changeling of the True Laws", description=description)
+        new_view = menus.ClassChangeView(player_obj)
+        await ctx.send(embed=embed_msg, view=new_view)
 
     @set_command_category('game', 8)
     @pandora_bot.hybrid_command(name='who', help="Set a new username.")
-    @app_commands.guilds(discord.Object(id=1011375205999968427))
+    @app_commands.guilds(discord.Object(id=guild_id))
     async def who(ctx, new_username: str):
-        if any(ctx.channel.id in sl for sl in globalitems.global_server_channels):
-            mysmiria_title = "Mysmiria, Changeling of the True Laws"
-            await ctx.defer()
-            existing_user = player.get_player_by_discord(ctx.author.id)
-            if existing_user.player_class == "":
-                embed_msg = unregistered_message()
-                await ctx.send(embed=embed_msg)
-                return
-            if not new_username.isalpha():
-                embed_msg = discord.Embed(colour=discord.Colour.dark_orange(), title=mysmiria_title,
-                                          description="This name is unacceptable. I refuse.")
-                await ctx.send(embed=embed_msg)
-                return
-            if not player.check_username(new_username):
-                embed_msg = discord.Embed(colour=discord.Colour.dark_orange(), title=mysmiria_title,
-                                          description="This name belongs to another. I refuse.")
-                await ctx.send(embed=embed_msg)
-                return
-            if len(new_username) > 10:
-                embed_msg = discord.Embed(colour=discord.Colour.dark_orange(), title=mysmiria_title,
-                                          description="This name is too long. I refuse.")
-                await ctx.send(embed=embed_msg)
-                return
-            token_stock = inventory.check_stock(existing_user, "Token1")
-            if token_stock < 1:
-                embed_msg = discord.Embed(colour=discord.Colour.dark_orange(), title=mysmiria_title,
-                                          description="I will only help those with a token. I refuse.")
-                await ctx.send(embed=embed_msg)
-                return
-            else:
-                inventory.update_stock(existing_user, "Token1", -1)
-                existing_user.player_username = new_username
-                existing_user.set_player_field("player_username", new_username)
-                embed_msg = discord.Embed(colour=discord.Colour.dark_orange(), title=mysmiria_title,
-                                          description=f'{existing_user.player_username} you say? Fine, I accept.')
-                await ctx.send(embed=embed_msg)
+        player_obj = await sharedmethods.check_registration(ctx)
+        if player_obj is None:
+            return
+        Mysmir_title = "Mysmir, Changeling of the True Laws"
+        embed_msg = discord.Embed(colour=discord.Colour.dark_orange(), title=Mysmir_title, description="")
+        if not new_username.isalpha():
+            embed_msg.description = "This name is unacceptable. I refuse."
+            await ctx.send(embed=embed_msg)
+            return
+        if not player.check_username(new_username):
+            embed_msg.description = "This name belongs to another. I refuse."
+            await ctx.send(embed=embed_msg)
+            return
+        if len(new_username) > 10:
+            embed_msg.description = "This name is too long. I refuse."
+            await ctx.send(embed=embed_msg)
+            return
+        token_stock = inventory.check_stock(player_obj, "Token1")
+        if token_stock < 50:
+            embed_msg.description = f"I will only help those with sufficient tokens. I refuse.\n{token_stock} / 50"
+            await ctx.send(embed=embed_msg)
+            return
+        else:
+            inventory.update_stock(player_obj, "Token1", -50)
+            player_obj.player_username = new_username
+            player_obj.set_player_field("player_username", new_username)
+            embed_msg.description = f'{player_obj.player_username} you say? Fine, I accept.'
+            await ctx.send(embed=embed_msg)
 
     @pandora_bot.event
     async def open_lootbox(ctx, embed_msg, item_tier):
@@ -444,7 +371,7 @@ def run_discord_bot():
         opening_chest = ""
         for t in range(1, item_tier + 1):
             opening_chest += "♦️"
-            tier_colour, tier_icon = inventory.get_gear_tier_colours(t)
+            tier_colour, tier_icon = sharedmethods.get_gear_tier_colours(t)
             embed_msg.add_field(name="", value=opening_chest)
             await message.edit(embed=embed_msg)
             await asyncio.sleep(1)
@@ -461,544 +388,467 @@ def run_discord_bot():
     # Gear commands
     @set_command_category('gear', 0)
     @pandora_bot.hybrid_command(name='gear', help="Display your equipped gear items.")
-    @app_commands.guilds(discord.Object(id=1011375205999968427))
+    @app_commands.guilds(discord.Object(id=guild_id))
     async def gear(ctx, user: discord.User = None):
-        await ctx.defer()
-        if any(ctx.channel.id in sl for sl in globalitems.global_server_channels):
-            player_object = player.get_player_by_discord(ctx.author.id)
-            if user:
-                target_user = player.get_player_by_discord(user.id)
-            else:
-                target_user = player_object
-            if target_user.player_class != "":
-                target_user.get_equipped()
-                if target_user.player_equipped[0] != 0:
-                    equipped_item = inventory.read_custom_item(target_user.player_equipped[0])
-                    embed_msg = equipped_item.create_citem_embed()
-                    gear_view = menus.GearView(player_object, target_user, 0, "Gear")
-                else:
-                    embed_msg = discord.Embed(colour=discord.Colour.dark_gray(),
-                                              title="Equipped weapon",
-                                              description="No weapon is equipped")
-                    gear_view = None
-                await ctx.send(embed=embed_msg, view=gear_view)
-            else:
-                await ctx.send("Target user is not registered.")
+        player_obj = await sharedmethods.check_registration(ctx)
+        if player_obj is None:
+            return
+        target_user = player.get_player_by_discord(user.id) if user else player_obj
+        if target_user.player_class == "":
+            await ctx.send("Target user is not registered.")
+            return
+        if target_user.player_equipped[0] == 0:
+            embed_msg = discord.Embed(colour=discord.Colour.dark_gray(),
+                                      title="Equipped weapon", description="No weapon is equipped")
+            await ctx.send(embed=embed_msg)
+            return
+        equipped_item = inventory.read_custom_item(target_user.player_equipped[0])
+        embed_msg = equipped_item.create_citem_embed()
+        gear_view = menus.GearView(player_obj, target_user, 0, "Gear")
+        await ctx.send(embed=embed_msg, view=gear_view)
 
     @set_command_category('gear', 1)
     @pandora_bot.hybrid_command(name='inv', help="Display your item and gear inventories.")
-    @app_commands.guilds(discord.Object(id=1011375205999968427))
+    @app_commands.guilds(discord.Object(id=guild_id))
     async def inv(ctx):
-        if any(ctx.channel.id in sl for sl in globalitems.global_server_channels):
-            await ctx.defer()
-            player_object = player.get_player_by_discord(ctx.author.id)
-            if player_object.player_class != "":
-                inventory_view = inventory.BInventoryView(player_object)
-                inventory_title = f'{player_object.player_username}\'s Crafting Inventory:\n'
-                player_inventory = inventory.display_binventory(player_object.player_id, "Crafting")
-                embed_msg = discord.Embed(colour=discord.Colour.dark_orange(),
-                                          title=inventory_title,
-                                          description=player_inventory)
-                await ctx.send(embed=embed_msg, view=inventory_view)
-            else:
-                embed_msg = unregistered_message()
-                await ctx.send(embed=embed_msg)
+        player_obj = await sharedmethods.check_registration(ctx)
+        if player_obj is None:
+            return
+        inventory_view = inventory.BInventoryView(player_obj)
+        inv_title = f'{player_obj.player_username}\'s Crafting Inventory:\n'
+        player_inventory = inventory.display_binventory(player_obj.player_id, "Crafting")
+        embed_msg = discord.Embed(colour=discord.Colour.dark_orange(), title=inv_title, description=player_inventory)
+        await ctx.send(embed=embed_msg, view=inventory_view)
 
     @set_command_category('gear', 2)
     @pandora_bot.hybrid_command(name='display', help="Display a specific item.")
-    @app_commands.guilds(discord.Object(id=1011375205999968427))
+    @app_commands.guilds(discord.Object(id=guild_id))
     async def display_item(ctx, item_id: str):
-        if any(ctx.channel.id in sl for sl in globalitems.global_server_channels):
-            await ctx.defer()
-            # Assign default outputs.
-            embed_msg = discord.Embed(colour=discord.Colour.dark_orange(),
-                                      title="An item with this ID does not exist.",
-                                      description=f"Inputted ID: {item_id}")
-            new_view = None
-            player_object = player.get_player_by_discord(ctx.author.id)
-            if player_object.player_class == "":
-                embed_msg = unregistered_message()
-                await ctx.send(embed=embed_msg, view=item_view)
-                return
-            if item_id.isnumeric():
-                gear_id = int(item_id)
-                # Check the item exists
-                if not inventory.if_custom_exists(gear_id):
-                    await ctx.send(embed=embed_msg)
-                    return
-                selected_item = inventory.read_custom_item(gear_id)
-                embed_msg = selected_item.create_citem_embed()
-                # Check if item is on the bazaar.
-                if selected_item.player_owner == -1:
-                    seller_id = bazaar.get_seller_by_item(gear_id)
-                    seller_object = player.get_player_by_id(seller_id)
-                    owner_msg = f"Listed for sale by: {seller_object.player_username}"
-                    embed_msg.add_field(name="", value=owner_msg)
-                    await ctx.send(embed=embed_msg)
-                    return
-                item_owner = player.get_player_by_id(selected_item.player_owner)
-                owner_msg = f"Owned by: {item_owner.player_username}"
-                embed_msg.add_field(name="", value=owner_msg)
-                # Confirm ownership.
-                if player_object.player_id == selected_item.player_owner:
-                    new_view = menus.ManageCustomItemView(player_object, selected_item)
-                await ctx.send(embed=embed_msg, view=new_view)
-            elif item_id.isalnum():
-                # Check if item exists
-                if item_id not in itemdata.itemdata_dict:
-                    await ctx.send(embed=embed_msg)
-                    return
-                selected_item = inventory.BasicItem(item_id)
-                embed_msg = selected_item.create_bitem_embed(player_object)
-                # item_view = menus.ManageBasicItem(player_object, selected_item)
+        player_obj = await sharedmethods.check_registration(ctx)
+        if player_obj is None:
+            return
+        # Assign default outputs.
+        embed_msg = discord.Embed(colour=discord.Colour.dark_orange(),
+                                  title="An item with this ID does not exist.", description=f"Inputted ID: {item_id}")
+        if item_id.isnumeric():
+            gear_id = int(item_id)
+            # Check the item exists
+            if not inventory.if_custom_exists(gear_id):
                 await ctx.send(embed=embed_msg)
                 return
+            selected_item = inventory.read_custom_item(gear_id)
+            embed_msg = selected_item.create_citem_embed()
+            # Check if item is on the bazaar.
+            if selected_item.player_owner == -1:
+                seller_id = bazaar.get_seller_by_item(gear_id)
+                seller_object = player.get_player_by_id(seller_id)
+                owner_msg = f"Listed for sale by: {seller_object.player_username}"
+                embed_msg.add_field(name="", value=owner_msg)
+                await ctx.send(embed=embed_msg)
+                return
+            item_owner = player.get_player_by_id(selected_item.player_owner)
+            owner_msg = f"Owned by: {item_owner.player_username}"
+            embed_msg.add_field(name="", value=owner_msg)
+            # Confirm ownership.
+            new_view = None
+            if player_obj.player_id == selected_item.player_owner:
+                new_view = menus.ManageCustomItemView(player_obj, selected_item)
+            await ctx.send(embed=embed_msg, view=new_view)
+        elif item_id.isalnum():
+            # Check if item exists
+            if item_id not in itemdata.itemdata_dict:
+                await ctx.send(embed=embed_msg)
+                return
+            selected_item = inventory.BasicItem(item_id)
+            embed_msg = selected_item.create_bitem_embed(player_obj)
+            # item_view = menus.ManageBasicItem(player_obj, selected_item)
+            await ctx.send(embed=embed_msg)
+            return
 
     @set_command_category('gear', 3)
     @pandora_bot.hybrid_command(name='tarot', help="View your tarot collection.")
-    @app_commands.guilds(discord.Object(id=1011375205999968427))
+    @app_commands.guilds(discord.Object(id=guild_id))
     async def tarot_collection(ctx, start_location: int = 0):
-        if any(ctx.channel.id in sl for sl in globalitems.global_server_channels):
-            await ctx.defer()
-            user = ctx.author
-            player_object = player.get_player_by_discord(user.id)
-            if player_object.player_class == "":
-                embed_msg = unregistered_message()
-                await ctx.send(embed=embed_msg)
-                return
-            if start_location not in range(0, 31):
-                await ctx.send("Please enter a valid start location from 0-30 or leave the start location blank.")
-                return
-            completion_count = tarot.collection_check(player_object.player_id)
-            embed_msg = discord.Embed(colour=discord.Colour.magenta(),
-                                      title=f"{player_object.player_username}'s Tarot Collection",
-                                      description=f"Completion Total: {completion_count} / 31")
-            embed_msg.set_image(url="")
-            tarot_view = tarot.CollectionView(player_object, start_location)
-            await ctx.send(embed=embed_msg, view=tarot_view)
+        player_obj = await sharedmethods.check_registration(ctx)
+        if player_obj is None:
+            return
+        if start_location not in range(0, 31):
+            await ctx.send("Please enter a valid start location from 0-30 or leave the start location blank.")
+            return
+        completion_count = tarot.collection_check(player_obj)
+        embed_msg = discord.Embed(colour=discord.Colour.magenta(),
+                                  title=f"{player_obj.player_username}'s Tarot Collection",
+                                  description=f"Completion Total: {completion_count} / 31")
+        embed_msg.set_image(url="")
+        tarot_view = tarot.CollectionView(player_obj, start_location)
+        await ctx.send(embed=embed_msg, view=tarot_view)
 
     @set_command_category('gear', 4)
     @pandora_bot.hybrid_command(name='engrave', help="Engrave an insignia on your soul.")
-    @app_commands.guilds(discord.Object(id=1011375205999968427))
+    @app_commands.guilds(discord.Object(id=guild_id))
     async def engrave(ctx):
-        await ctx.defer()
-        if any(ctx.channel.id in sl for sl in globalitems.global_server_channels):
-            player_object = player.get_player_by_discord(ctx.author.id)
-            if player_object.player_class != "":
-                engrave_msg = "You've come a long way from home child. Tell me, what kind of power do you seek?"
-                embed_msg = discord.Embed(colour=discord.Colour.dark_orange(),
-                                          title="Isolde, Soulweaver of the True Laws",
-                                          description=engrave_msg)
-                insignia_view = insignia.InsigniaView(player_object)
-                await ctx.send(embed=embed_msg, view=insignia_view)
-            else:
-                embed_msg = unregistered_message()
-                await ctx.send(embed=embed_msg)
+        player_obj = await sharedmethods.check_registration(ctx)
+        if player_obj is None:
+            return
+        if player_obj.player_quest == 17:
+            quest.assign_unique_tokens(player_obj, "Arbiter")
+        if player_obj.player_quest < 20:
+            engrave_msg = "I'm pretty sure you can't handle my threads. This is no place for the weak."
+            embed_msg = discord.Embed(colour=discord.Colour.dark_orange(),
+                                      title="Isolde, Soulweaver of the True Laws", description=engrave_msg)
+            await ctx.send(embed=embed_msg)
+            return
+        engrave_msg = "You've come a long way from home child. Tell me, what kind of power do you seek?"
+        embed_msg = discord.Embed(colour=discord.Colour.dark_orange(),
+                                  title="Isolde, Soulweaver of the True Laws", description=engrave_msg)
+        insignia_view = insignia.InsigniaView(player_obj)
+        await ctx.send(embed=embed_msg, view=insignia_view)
 
     @set_command_category('gear', 5)
-    @pandora_bot.hybrid_command(name='meld', help="Meld tier 5/6 dragon heart gems.")
-    @app_commands.guilds(discord.Object(id=1011375205999968427))
+    @pandora_bot.hybrid_command(name='meld', help="Meld tier 5+ heart jewels.")
+    @app_commands.guilds(discord.Object(id=guild_id))
     async def meld_item(ctx, base_gem_id: int, secondary_gem_id: int):
-        if any(ctx.channel.id in sl for sl in globalitems.global_server_channels):
-            await ctx.defer()
-            # Initialize default embed
-            embed_msg = discord.Embed(colour=discord.Colour.blurple(), title="Kazyth, Lifeblood of the True Laws",
-                                      description="")
-            new_view = None
-            player_object = player.get_player_by_discord(ctx.author.id)
-            if player_object.player_class == "":
-                embed_msg = unregistered_message()
-                await ctx.send(embed=embed_msg, view=item_view)
-                return
+        player_obj = await sharedmethods.check_registration(ctx)
+        if player_obj is None:
+            return
+        # Initialize default embed
+        embed_msg = discord.Embed(colour=discord.Colour.blurple(), title="Kazyth, Lifeblood of the True Laws",
+                                  description="")
+        if player_obj.player_quest < 44:
+            denial_msg = "Tread carefully adventurer. Drawing too much attention to yourself can prove fatal."
+            embed_msg = discord.Embed(colour=discord.Colour.blurple(), title="???", description=denial_msg)
+            await ctx.send(embed=embed_msg)
+            return
+        if player_obj.player_quest == 44:
+            quest.assign_unique_tokens(player_obj, "Meld")
 
-            if player_object.player_quest < 12:
-                denial_msg = "Tread carefully adventurer. Drawing too much attention to yourself can prove fatal."
-                embed_msg = discord.Embed(colour=discord.Colour.blurple(), title="???", description=denial_msg)
-                await ctx.send(embed=embed_msg, view=new_view)
-                return
+        # Confirm gems are valid.
+        def can_meld(input_gem_id, command_user):
+            if not inventory.if_custom_exists(input_gem_id):
+                description = f"Gem id not recognized.\nID: {input_gem_id}"
+                return False, None, description
+            gem_object = inventory.read_custom_item(input_gem_id)
+            if gem_object.item_tier < 5 or gem_object.item_tier > 8:
+                description = f"Gem is not eligible for melding.\nID: {input_gem_id}"
+                return False, None, description
+            if gem_object.player_owner != command_user.player_id:
+                item_owner = player.get_player_by_id(gem_object.player_owner)
+                description = f"Owned by: {item_owner.player_username}"
+                return False, None, description
+            if gem_object.player_owner == -1:
+                seller_id = bazaar.get_seller_by_item(input_gem_id)
+                seller_object = player.get_player_by_id(seller_id)
+                description = (f"Jewel item currently listed for sale by: {seller_object.player_username}"
+                               f"\nID: {input_gem_id}")
+                return False, None, description
+            return True, gem_object, None
 
-            # Confirm gems are valid.
-            def can_meld(input_gem_id, command_user):
-                if not inventory.if_custom_exists(input_gem_id):
-                    description = f"Gem id not recognized.\nID: {input_gem_id}"
-                    return False, None, description
-                gem_object = inventory.read_custom_item(input_gem_id)
-                if gem_object.item_tier < 5 or gem_object.item_tier >= 7:
-                    description = f"Gem is not eligible for melding.\nID: {input_gem_id}"
-                    return False, None, description
-                if gem_object.player_owner != command_user.player_id:
-                    item_owner = player.get_player_by_id(gem_object.player_owner)
-                    description = f"Owned by: {item_owner.player_username}"
-                    return False, None, description
-                if gem_object.player_owner == -1:
-                    seller_id = bazaar.get_seller_by_item(input_gem_id)
-                    seller_object = player.get_player_by_id(seller_id)
-                    description = (f"Gem item currently listed for sale by: {seller_object.player_username}"
-                                   f"\nID: {input_gem_id}")
-                    return False, None, description
-                return True, gem_object, None
-
-            # Handle eligibility.
-            is_eligible, gem_1, embed_message = can_meld(base_gem_id, player_object)
-            if not is_eligible:
-                embed_msg.description = embed_message
-                await ctx.send(embed=embed_msg, view=new_view)
-                return
-            is_eligible, gem_2, embed_message = can_meld(secondary_gem_id, player_object)
-            if not is_eligible:
-                embed_msg.description = embed_message
-                await ctx.send(embed=embed_msg, view=new_view)
-                return
-
-            # Build the meld details display.
-            embed_msg.description = ("A dragon's heart gem continues to beat long after extraction. This is the "
-                                     "reason they exude great power. Refining living things is not a request to be "
-                                     "taken lightly. Have you come prepared to bear the guilt for such blasphemy?\n")
-            path_location = int(gem_1.item_bonus_stat[0])
-            target_tier = gem_1.item_tier if gem_1.item_tier != gem_2.item_tier else (gem_1.item_tier + 1)
-            target_info = f"\nTarget Tier: {target_tier}\nTarget Path: {globalitems.path_names[path_location]}"
-            embed_msg.add_field(name="", value=target_info, inline=False)
-            primary_gem_info = itemrolls.display_rolls(gem_1)
-            embed_msg.add_field(name=f"Primary Gem - ID: {base_gem_id}", value=primary_gem_info, inline=False)
-            embed_msg.add_field(name="", value="------------------------------", inline=False)
-            secondary_gem_info = itemrolls.display_rolls(gem_2)
-            embed_msg.add_field(name=f"Secondary Gem - ID: {secondary_gem_id}", value=secondary_gem_info, inline=False)
-
-            # Build the cost display.
-            cost_map = {(5, 5): 5, (5, 6): 2, (6, 5): 3, (6, 6): 10}
-            stock = inventory.check_stock(player_object, "Token4")
-            token_object = inventory.BasicItem("Token4")
-            cost = cost_map[(gem_1.item_tier, gem_2.item_tier)]
-            cost_msg = f"{token_object.item_emoji} {token_object.item_name}: {stock}/{cost}"
-            embed_msg.add_field(name="Token Cost", value=cost_msg, inline=False)
-
-            # Display the view.
-            new_view = forge.MeldView(player_object, gem_1, gem_2, cost)
+        # Handle eligibility.
+        is_eligible, gem_1, embed_message = can_meld(base_gem_id, player_obj)
+        if not is_eligible:
+            embed_msg.description = embed_message
             await ctx.send(embed=embed_msg, view=new_view)
+            return
+        is_eligible, gem_2, embed_message = can_meld(secondary_gem_id, player_obj)
+        if not is_eligible:
+            embed_msg.description = embed_message
+            await ctx.send(embed=embed_msg, view=new_view)
+            return
+        # Build the meld details display.
+        embed_msg.description = ("The heart gem of great beings continues to beat long after extraction. This is the "
+                                 "real reason they exude great power. Refining living things is not a request to be "
+                                 "taken lightly. Will you bear the sins of such blasphemy?\n")
+        path_location = int(gem_1.item_bonus_stat[0])
+        target_tier = gem_1.item_tier if gem_1.item_tier != gem_2.item_tier else (gem_1.item_tier + 1)
+        target_info = f"\nTarget Tier: {target_tier}\nTarget Path: {globalitems.path_names[path_location]}"
+        embed_msg.add_field(name="", value=target_info, inline=False)
+        primary_gem_info = itemrolls.display_rolls(gem_1)
+        embed_msg.add_field(name=f"Primary Jewel - ID: {base_gem_id}", value=primary_gem_info, inline=False)
+        embed_msg.add_field(name="", value="------------------------------", inline=False)
+        secondary_gem_info = itemrolls.display_rolls(gem_2)
+        embed_msg.add_field(name=f"Secondary Jewel - ID: {secondary_gem_id}", value=secondary_gem_info, inline=False)
+        # Build the cost display.
+        stock, token_object = inventory.check_stock(player_obj, "Token4"), inventory.BasicItem("Token4")
+        cost = gem_1.item_tier + gem_2.item_tier - 8
+        cost_msg = f"{token_object.item_emoji} {token_object.item_name}: {stock}/{cost}"
+        embed_msg.add_field(name="Token Cost", value=cost_msg, inline=False)
+        # Display the view.
+        new_view = forge.MeldView(player_obj, gem_1, gem_2, cost)
+        await ctx.send(embed=embed_msg, view=new_view)
 
     # Trading Commands
     @set_command_category('trade', 0)
     @pandora_bot.hybrid_command(name='sell', help="List a gear item for sale in the bazaar.")
-    @app_commands.guilds(discord.Object(id=1011375205999968427))
+    @app_commands.guilds(discord.Object(id=guild_id))
     async def sell(ctx, item_id: int, cost: int):
-        if any(ctx.channel.id in sl for sl in globalitems.global_server_channels):
-            await ctx.defer()
-            user = ctx.author
-            player_object = player.get_player_by_discord(user.id)
-            if player_object.player_class != "":
-                if not player.checkNaN(item_id) and not player.checkNaN(cost):
-                    num_listings = bazaar.check_num_listings(player_object)
-                    if num_listings < 6:
-                        if inventory.if_custom_exists(item_id):
-                            selected_item = inventory.read_custom_item(item_id)
-                            if selected_item.item_tier > 3:
-                                response = player_object.check_equipped(selected_item)
-                                if response == "":
-                                    bazaar.list_custom_item(selected_item, cost)
-                                    await ctx.send(f"Item {item_id} has been listed for {cost} lotus coins.")
-                                else:
-                                    await ctx.send(response)
-                            else:
-                                await ctx.send(f"Only tier 4 or higher gear items can be listed at the Bazaar.")
-                        else:
-                            await ctx.send(f"Item {item_id} could not be listed.")
-                    else:
-                        await ctx.send("Already at maximum allowed listings.")
-                else:
-                    await ctx.send(f"Invalid inputs, please enter numeric values only.")
-            else:
-                embed_msg = unregistered_message()
-                await ctx.send(embed=embed_msg)
+        player_obj = await sharedmethods.check_registration(ctx)
+        if player_obj is None:
+            return
+        if not item_id.isnumeric() or not cost.isnumeric():
+            await ctx.send(f"Invalid inputs, please enter numeric values only.")
+            return
+        num_listings = bazaar.check_num_listings(player_obj)
+        if num_listings >= 5:
+            await ctx.send("Already at maximum allowed listings.")
+            return
+        if not inventory.if_custom_exists(item_id):
+            await ctx.send(f"Item {item_id} could not be listed.")
+            return
+        selected_item = inventory.read_custom_item(item_id)
+        if selected_item.item_tier < 5:
+            await ctx.send(f"Only tier 5 or higher gear items can be listed at the Bazaar.")
+            return
+        response = player_obj.check_equipped(selected_item)
+        if response != "":
+            await ctx.send(response)
+            return
+        bazaar.list_custom_item(selected_item, cost)
+        await ctx.send(f"Item {item_id} has been listed for {cost} lotus coins.")
 
     @set_command_category('trade', 1)
     @pandora_bot.hybrid_command(name='buy', help="Buy an item that is listed on the Bazaar.")
-    @app_commands.guilds(discord.Object(id=1011375205999968427))
+    @app_commands.guilds(discord.Object(id=guild_id))
     async def buy(ctx, item_id: int):
-        if any(ctx.channel.id in sl for sl in globalitems.global_server_channels):
-            await ctx.defer()
-            user = ctx.author
-            player_object = player.get_player_by_discord(user.id)
-            if player_object.player_class != "":
-                if inventory.if_custom_exists(item_id):
-                    selected_item = inventory.read_custom_item(item_id)
-                    if selected_item.player_owner == -1:
-                        embed_msg = selected_item.create_citem_embed()
-                        buy_view = menus.BuyView(player_object, selected_item)
-                        await ctx.send(embed=embed_msg, view=buy_view)
-                    else:
-                        await ctx.send(f"Item {item_id} is not for sale.")
-                else:
-                    await ctx.send(f"Item {item_id} does not exist.")
-            else:
-                embed_msg = unregistered_message()
-                await ctx.send(embed=embed_msg)
+        player_obj = await sharedmethods.check_registration(ctx)
+        if player_obj is None:
+            return
+        if not inventory.if_custom_exists(item_id):
+            await ctx.send(f"Item {item_id} does not exist.")
+            return
+        selected_item = inventory.read_custom_item(item_id)
+        if selected_item.player_owner != -1:
+            await ctx.send(f"Item {item_id} is not for sale.")
+            return
+        embed_msg = selected_item.create_citem_embed()
+        buy_view = menus.BuyView(player_obj, selected_item)
+        await ctx.send(embed=embed_msg, view=buy_view)
 
     @set_command_category('trade', 2)
     @pandora_bot.hybrid_command(name='retrieve', help="Retrieve your items listed on the Bazaar.")
-    @app_commands.guilds(discord.Object(id=1011375205999968427))
+    @app_commands.guilds(discord.Object(id=guild_id))
     async def retrieve(ctx):
-        if any(ctx.channel.id in sl for sl in globalitems.global_server_channels):
-            await ctx.defer()
-            user = ctx.author
-            player_object = player.get_player_by_discord(user.id)
-            if player_object.player_class != "":
-                num_items = bazaar.retrieve_items(player_object.player_id)
-                await ctx.send(f"{num_items} unsold items retrieved.")
-            else:
-                embed_msg = unregistered_message()
-                await ctx.send(embed=embed_msg)
+        player_obj = await sharedmethods.check_registration(ctx)
+        if player_obj is None:
+            return
+        num_items = bazaar.retrieve_items(player_obj.player_id)
+        await ctx.send(f"{num_items} unsold items retrieved.")
 
     @set_command_category('trade', 3)
     @pandora_bot.hybrid_command(name='bazaar', help="View the Bazaar.")
-    @app_commands.guilds(discord.Object(id=1011375205999968427))
+    @app_commands.guilds(discord.Object(id=guild_id))
     async def view_bazaar(ctx):
-        if any(ctx.channel.id in sl for sl in globalitems.global_server_channels):
-            await ctx.defer()
-            player_object = player.get_player_by_discord(ctx.author.id)
-            if player_object.player_class != "":
-                embed_msg = bazaar.show_bazaar_items()
-                bazaar_view = None
-                await ctx.send(embed=embed_msg, view=bazaar_view)
-            else:
-                embed_msg = unregistered_message()
-                await ctx.send(embed=embed_msg)
+        player_obj = await sharedmethods.check_registration(ctx)
+        if player_obj is None:
+            return
+        embed_msg = bazaar.show_bazaar_items()
+        bazaar_view = None  # Not yet implemented
+        await ctx.send(embed=embed_msg, view=bazaar_view)
 
     @set_command_category('trade', 4)
     @pandora_bot.hybrid_command(name='market', help="Visit the black market item shop.")
-    @app_commands.guilds(discord.Object(id=1011375205999968427))
+    @app_commands.guilds(discord.Object(id=guild_id))
     async def black_market(ctx):
-        if any(ctx.channel.id in sl for sl in globalitems.global_server_channels):
-            await ctx.defer()
-            player_object = player.get_player_by_discord(ctx.author.id)
-            if player_object.player_class != "":
-                embed_msg = discord.Embed(colour=discord.Colour.dark_orange(),
-                                          title="Black Market",
-                                          description="Everything has a price.")
-                embed_msg.set_image(url="")
-                market_select_view = market.TierSelectView(player_object)
-                await ctx.send(embed=embed_msg, view=market_select_view)
-            else:
-                embed_msg = unregistered_message()
-                await ctx.send(embed=embed_msg)
+        player_obj = await sharedmethods.check_registration(ctx)
+        if player_obj is None:
+            return
+        if player_obj.player_quest == 11:
+            quest.assign_unique_tokens(player_obj, "Town")
+        embed_msg = discord.Embed(colour=discord.Colour.dark_orange(),
+                                  title="Black Market", description="Everything has a price.")
+        embed_msg.set_image(url="")
+        market_select_view = market.TierSelectView(player_obj)
+        await ctx.send(embed=embed_msg, view=market_select_view)
 
     @set_command_category('trade', 5)
     @pandora_bot.hybrid_command(name='give', help="Transfer ownership of a gear item.")
-    @app_commands.guilds(discord.Object(id=1011375205999968427))
+    @app_commands.guilds(discord.Object(id=guild_id))
     async def give(ctx, item_id: int, receiving_player: discord.User):
-        if any(ctx.channel.id in sl for sl in globalitems.global_server_channels):
-            await ctx.defer()
-            player_object = player.get_player_by_discord(ctx.author.id)
-            if player_object.player_class != "":
-                selected_item = inventory.read_custom_item(item_id)
-                if selected_item:
-                    response = player_object.check_equipped(selected_item)
-                    if response == "":
-                        embed_msg = selected_item.create_citem_embed()
-                        target_player_object = player.get_player_by_discord(receiving_player.id)
-                        if player.check_user_exists(target_player_object.player_id):
-                            owner_check = selected_item.player_owner
-                            if selected_item.player_owner == -1:
-                                owner_check = bazaar.get_seller_by_item(item_id)
-                            if player_object.player_id == owner_check:
-
-                                selected_item.give_item(target_player_object.player_id)
-                                embed_title = "Item Transfer Complete!"
-                                embed_description = f"User: {target_player_object.player_username} has received item: {item_id}"
-                        else:
-                            embed_title = "Target user is not registered."
-                            embed_description = f"Unregistered users cannot receive items."
-                    else:
-                        embed_title = f"Item {item_id} could not be transferred."
-                        embed_description = response
-                else:
-                    embed_title = f"Item {item_id} could not be transferred."
-                    embed_description = response
-                embed_msg = discord.Embed(colour=discord.Colour.dark_orange(),
-                                          title=embed_title,
-                                          description=embed_description)
-            else:
-                embed_msg = unregistered_message()
-            await ctx.send(embed=embed_msg)
+        # Confirm registration and allowed channel.
+        player_obj = await sharedmethods.check_registration(ctx)
+        if player_obj is None:
+            return
+        # Load item. Check transfer eligibility (Item must exist)
+        selected_item = inventory.read_custom_item(item_id)
+        if selected_item is None:
+            await ctx.send(f"Transfer Incomplete! Item ID: {item_id} not found!")
+            return
+        # Check transfer eligibility (Item cannot be equipped)
+        check_result = player_obj.check_equipped(selected_item)
+        if check_result != "":
+            await ctx.send(f"Transfer Incomplete! {check_result}")
+            return
+        # Check transfer eligibility (Target user must be registered)
+        target_player = player.get_player_by_discord(receiving_player.id)
+        if target_player is None:
+            await ctx.send(f"Transfer Incomplete! Target user {receiving_player.name} is not registered.")
+            return
+        # Check transfer eligibility (Item cannot be listed)
+        if selected_item.player_owner == -1:
+            await ctx.send(f"Transfer Incomplete! Item ID: {item_id} is currently being listed.")
+            return
+        # Check transfer eligibility (Ownership)
+        owner_id = bazaar.get_seller_by_item(item_id)
+        owner_player = player.get_player_by_id(owner_id)
+        if player_obj.player_id != owner_check:
+            await ctx.send(f"Transfer Incomplete! Item ID: {item_id} owned by {owner_player.player_username}.")
+            return
+        # Transfer and display item.
+        selected_item.give_item(target_player.player_id)
+        header, message = "Transfer Complete!", f"{target_player.player_username} has received Item ID: {item_id}!"
+        embed_msg = selected_item.create_citem_embed()
+        embed_msg.add_field(name=header, value=message, inline=False)
+        await ctx.send(embed=embed_msg)
 
     @set_command_category('trade', 6)
     @pandora_bot.hybrid_command(name='purge', help="Sells all gear in or below a tier.")
-    @app_commands.guilds(discord.Object(id=1011375205999968427))
+    @app_commands.guilds(discord.Object(id=guild_id))
     async def purge(ctx, tier: int):
-        if any(ctx.channel.id in sl for sl in globalitems.global_server_channels):
-            await ctx.defer()
-            existing_user = player.get_player_by_discord(ctx.author.id)
-            if tier in range(1, 7):
-                result, coin_total = inventory.purge(existing_user, tier)
-                message = f"{result} items sold.\n {globalitems.coin_icon} {coin_total}x lotus coins acquired."
-            else:
-                message = "The tier must be between 1 and 6."
-            await ctx.send(message)
+        player_obj = await sharedmethods.check_registration(ctx)
+        if player_obj is None:
+            return
+        if tier not in range(1, 9):
+            await ctx.send("The tier must be between 1 and 8.")
+            return
+        result, coin_total = inventory.purge(player_obj, tier)
+        await ctx.send(f"{result} items sold.\n {globalitems.coin_icon} {coin_total}x lotus coins acquired.")
 
     # Crafting Commands
     @set_command_category('craft', 0)
     @pandora_bot.hybrid_command(name='forge', help="Go to Pandora's Celestial Forge")
-    @app_commands.guilds(discord.Object(id=1011375205999968427))
+    @app_commands.guilds(discord.Object(id=guild_id))
     async def celestial_forge(ctx):
-        if any(ctx.channel.id in sl for sl in globalitems.global_server_channels):
-            await ctx.defer()
-            user = ctx.author
-            player_object = player.get_player_by_discord(user.id)
-            if player_object.player_class != "":
-                player_object.get_equipped()
-                embed_msg = discord.Embed(colour=discord.Colour.blurple(),
-                                          title="Pandora's Celestial Forge",
-                                          description="Let me know what you'd like me to upgrade today!")
-                embed_msg.set_image(url="https://i.ibb.co/QjWDYG3/forge.jpg")
-                forge_view = forge.SelectView(player_object, "celestial")
-                await ctx.send(embed=embed_msg, view=forge_view)
-            else:
-                embed_msg = unregistered_message()
-                await ctx.send(embed=embed_msg)
+        player_obj = await sharedmethods.check_registration(ctx)
+        if player_obj is None:
+            return
+        embed_msg = discord.Embed(colour=discord.Colour.blurple(), title="Pandora's Celestial Forge",
+                                  description="Let me know what you'd like me to upgrade today!")
+        embed_msg.set_image(url="https://i.ibb.co/QjWDYG3/forge.jpg")
+        if player_obj.player_quest == 11:
+            quest.assign_unique_tokens(player_obj, "Town")
+        forge_view = forge.SelectView(player_obj, "celestial")
+        await ctx.send(embed=embed_msg, view=forge_view)
 
     @set_command_category('craft', 1)
     @pandora_bot.hybrid_command(name='refinery', help="Go to the refinery.")
-    @app_commands.guilds(discord.Object(id=1011375205999968427))
+    @app_commands.guilds(discord.Object(id=guild_id))
     async def refinery(ctx):
-        if any(ctx.channel.id in sl for sl in globalitems.global_server_channels):
-            await ctx.defer()
-            player_object = player.get_player_by_discord(ctx.author.id)
-            if player_object.player_class != "":
-                embed_msg = discord.Embed(colour=discord.Colour.dark_orange(),
-                                          title='Refinery',
-                                          description="Please select the item to refine")
-                embed_msg.set_image(url="https://i.ibb.co/QjWDYG3/forge.jpg")
-                ref_view = forge.RefSelectView(player_object)
-                await ctx.send(embed=embed_msg, view=ref_view)
-            else:
-                embed_msg = unregistered_message()
-                await ctx.send(embed=embed_msg)
-
-    @pandora_bot.hybrid_command(name='testing', help="Testing Command.")
-    @app_commands.guilds(discord.Object(id=1011375205999968427))
-    async def testing(ctx):
-        chosen_thumbnail = random.choice(itemicons.item_icon_dict["W"])
-        embed_msg = discord.Embed(colour=discord.Colour.dark_teal(),
-                                  title="This command is for testing purposes.",
-                                  description=f"Thumbnail URL: {chosen_thumbnail}")
-        embed_msg.set_thumbnail(url=chosen_thumbnail)
-        print(embed_msg.thumbnail.url)
-        await ctx.send(embed=embed_msg)
+        player_obj = await sharedmethods.check_registration(ctx)
+        if player_obj is None:
+            return
+        embed_msg = discord.Embed(colour=discord.Colour.dark_orange(),
+                                  title='Refinery', description="Please select the item to refine")
+        embed_msg.set_image(url="https://i.ibb.co/QjWDYG3/forge.jpg")
+        if player_obj.player_quest == 11:
+            quest.assign_unique_tokens(player_obj, "Town")
+        ref_view = forge.RefSelectView(player_obj)
+        await ctx.send(embed=embed_msg, view=ref_view)
 
     @set_command_category('craft', 2)
     @pandora_bot.hybrid_command(name='infuse', help="Infuse items using alchemy.")
-    @app_commands.guilds(discord.Object(id=1011375205999968427))
+    @app_commands.guilds(discord.Object(id=guild_id))
     async def infusion(ctx):
-        if any(ctx.channel.id in sl for sl in globalitems.global_server_channels):
-            await ctx.defer()
-            user = ctx.author
-            player_object = player.get_player_by_discord(user.id)
-            if player_object.player_class != "":
-                embed_msg = discord.Embed(colour=discord.Colour.magenta(),
-                                          title="Cloaked Alchemist, Sangam",
-                                          description="I can make anything, if you bring the right stuff.")
-                embed_msg.set_image(url="")
-                infuse_view = infuse.InfuseView(player_object)
-                await ctx.send(embed=embed_msg, view=infuse_view)
-            else:
-                embed_msg = unregistered_message()
-                await ctx.send(embed=embed_msg)
+        player_obj = await sharedmethods.check_registration(ctx)
+        if player_obj is None:
+            return
+        embed_msg = discord.Embed(colour=discord.Colour.magenta(), title="Cloaked Alchemist, Sangam",
+                                  description="I can make anything, if you bring the right stuff.")
+        embed_msg.set_image(url="")
+        infuse_view = infuse.InfuseView(player_obj)
+        await ctx.send(embed=embed_msg, view=infuse_view)
 
         # Crafting Commands
     @set_command_category('craft', 3)
-    @pandora_bot.hybrid_command(name='purify', help="Perform void purification.")
-    @app_commands.guilds(discord.Object(id=1011375205999968427))
+    @pandora_bot.hybrid_command(name='abyss', help="Go to the ???")
+    @app_commands.guilds(discord.Object(id=guild_id))
     async def void_purification(ctx):
-        await ctx.defer()
-        user = ctx.author
-        player_object = player.get_player_by_discord(user.id)
-        if player_object.player_class != "":
-            player_object.get_equipped()
-            e_weapon = inventory.read_custom_item(player_object.player_equipped[0])
-            if player_object.player_quest >= 24:
-                entry_msg = ("Within this cave resides the true abyss. Only a greater darkness can cleanse the void "
-                             "and reveal the true form. The costs will be steep, I trust you came prepared. "
-                             "Nothing can save you down there.")
-                embed_msg = discord.Embed(colour=discord.Colour.blurple(),
-                                          title="Echo of Oblivia",
-                                          description=entry_msg)
-                embed_msg.set_image(url="https://i.ibb.co/QjWDYG3/forge.jpg")
-                new_view = forge.SelectView(player_object, "purify")
-            else:
-                embed_msg = discord.Embed(colour=discord.Colour.blurple(),
-                                          title="???",
-                                          description="A great darkness clouds your path. Entry is impossible.")
-                new_view = None
-            await ctx.send(embed=embed_msg, view=new_view)
-        else:
-            embed_msg = unregistered_message()
+        player_obj = await sharedmethods.check_registration(ctx)
+        if player_obj is None:
+            return
+        e_weapon = inventory.read_custom_item(player_obj.player_equipped[0])
+        if player_obj.player_quest < 42:
+            embed_msg = discord.Embed(colour=discord.Colour.blurple(), title="???",
+                                      description="A great darkness clouds your path. Entry is impossible.")
             await ctx.send(embed=embed_msg)
+            return
+        if player_obj.player_quest == 42:
+            quest.assign_unique_tokens(player_obj, "Abyss")
+        entry_msg = ("Within this cavern resides the true abyss. The taint of the void can only be purified "
+                     "through a more powerful darkness. I trust you have come prepared. "
+                     "The cost to reveal the true nature of your items will be immeasurably steep. "
+                     "Take great caution, there is nothing which can save you down there.")
+        embed_msg = discord.Embed(colour=discord.Colour.blurple(), title="Echo of Oblivia", description=entry_msg)
+        embed_msg.set_image(url="https://i.ibb.co/QjWDYG3/forge.jpg")
+        new_view = forge.SelectView(player_obj, "purify")
+        await ctx.send(embed=embed_msg, view=new_view)
 
     @set_command_category('craft', 4)
     @pandora_bot.hybrid_command(name='fountain', help="Go to the ???")
-    @app_commands.guilds(discord.Object(id=1011375205999968427))
+    @app_commands.guilds(discord.Object(id=guild_id))
     async def fountain(ctx):
-        if any(ctx.channel.id in sl for sl in globalitems.global_server_channels):
-            await ctx.defer()
-            user = ctx.author
-            player_object = player.get_player_by_discord(user.id)
-            if player_object.player_class != "":
-                player_object.get_equipped()
-                e_weapon = inventory.read_custom_item(player_object.player_equipped[0])
-                if player_object.player_quest >= 27:
-                    entry_msg = ("You who has defiled my wish now seek to realize your own. Just ahead resides the "
-                                 "fountain of genesis, origin of all. The power you still covet can be acquired here. "
-                                 "Go now, I am no longer qualified to stand in your path.")
-                    embed_msg = discord.Embed(colour=discord.Colour.blurple(),
-                                              title="Echo of Eleuia",
-                                              description=entry_msg)
-                    embed_msg.set_image(url="https://i.ibb.co/QjWDYG3/forge.jpg")
-                    new_view = forge.SelectView(player_object, "miracle")
-                else:
-                    embed_msg = discord.Embed(colour=discord.Colour.blurple(),
-                                              title="???",
-                                              description="A powerful light emanates from within. Entry is impossible.")
-                    new_view = None
-                await ctx.send(embed=embed_msg, view=new_view)
-            else:
-                embed_msg = unregistered_message()
-                await ctx.send(embed=embed_msg)
+        player_obj = await sharedmethods.check_registration(ctx)
+        if player_obj is None:
+            return
+        e_weapon = inventory.read_custom_item(player_obj.player_equipped[0])
+        if player_obj.player_quest < 45:
+            embed_msg = discord.Embed(colour=discord.Colour.blurple(), title="???",
+                                      description="A powerful light emanates from within. Entry is impossible.")
+            await ctx.send(embed=embed_msg)
+            return
+        entry_msg = ("You who has defiled my wish now seek to realize your own. Just ahead resides the "
+                     "fountain of genesis, origin of all. The power you still covet can be acquired here. "
+                     "Go, I am no longer qualified to stand in your path.")
+        embed_msg = discord.Embed(colour=discord.Colour.blurple(), title="Echo of Eleuia", description=entry_msg)
+        embed_msg.set_image(url="https://i.ibb.co/QjWDYG3/forge.jpg")
+        new_view = forge.SelectView(player_obj, "miracle")
+        await ctx.send(embed=embed_msg, view=new_view)
 
     @set_command_category('craft', 5)
-    @pandora_bot.hybrid_command(name='scribe', help="Speak with ??? in the plane of the arbiters.")
-    @app_commands.guilds(discord.Object(id=1011375205999968427))
+    @pandora_bot.hybrid_command(name='scribe', help="Speak with ??? in the divine plane.")
+    @app_commands.guilds(discord.Object(id=guild_id))
     async def scribe(ctx):
-        if any(ctx.channel.id in sl for sl in globalitems.global_server_channels):
-            await ctx.defer()
-            user = ctx.author
-            player_object = player.get_player_by_discord(user.id)
-            if player_object.player_class != "":
-                player_object.get_equipped()
-                e_weapon = inventory.read_custom_item(player_object.player_equipped[0])
-                if player_object.player_quest >= 23:
-                    entry_msg = ("I have taken quite a liking to you, but the plane of the True Laws is absolute. "
-                                 "With my permission you can exist here and without it you do not. "
-                                 "\nI grant you passage because of the futility of your actions. "
-                                 "\nI will record your attempts. I will even help you. Your failure is already written.")
-                    embed_msg = discord.Embed(colour=discord.Colour.blurple(),
-                                              title="Vexia, Scribe of the True Laws",
-                                              description=entry_msg)
-                    embed_msg.set_image(url="https://i.ibb.co/QjWDYG3/forge.jpg")
-                    new_view = forge.SelectView(player_object, "custom")
-                else:
-                    denial_msg = "Without the grace of the True Laws your entry is denied."
-                    embed_msg = discord.Embed(colour=discord.Colour.blurple(),
-                                              title="???",
-                                              description=denial_msg)
-                    new_view = None
-                await ctx.send(embed=embed_msg, view=new_view)
-            else:
-                embed_msg = unregistered_message()
-                await ctx.send(embed=embed_msg)
+        player_obj = await sharedmethods.check_registration(ctx)
+        if player_obj is None:
+            return
+        e_weapon = inventory.read_custom_item(player_obj.player_equipped[0])
+        if player_obj.player_quest < 46:
+            denial_msg = "Without the grace of the arbiters your entry is denied."
+            embed_msg = discord.Embed(colour=discord.Colour.blurple(), title="???", description=denial_msg)
+            await ctx.send(embed=embed_msg)
+            return
+        entry_msg = ("You are the first recorded mortal to enter the divine plane. "
+                     "I will grant you passage because of the futility of your actions. "
+                     "I will record your attempts and perhaps even assist you. "
+                     "\nThe oracle has already foretold your failure. Now it need only be written into truth.")
+        embed_msg = discord.Embed(colour=discord.Colour.blurple(), title="Vexia, Scribe of the True Laws",
+                                  description=entry_msg)
+        embed_msg.set_image(url="https://i.ibb.co/QjWDYG3/forge.jpg")
+        new_view = forge.SelectView(player_obj, "custom")
+        await ctx.send(embed=embed_msg, view=new_view)
+
+    @pandora_bot.hybrid_command(name='sanctuary', help="Speak with ??? in the lotus sanctuary.")
+    @app_commands.guilds(discord.Object(id=guild_id))
+    async def sanctuary(ctx):
+        player_obj = await sharedmethods.check_registration(ctx)
+        if player_obj is None:
+            return
+        if player_obj.player_quest < 48:
+            denial_msg = "The sanctuary radiates with divinity. Entry is impossible."
+            embed_msg = discord.Embed(colour=discord.Colour.blurple(), title="???", description=denial_msg)
+            await ctx.send(embed=embed_msg)
+            return
+        entry_msg = ("Have you come to desecrate my holy gardens once more? Well, I suppose it no longer matters, "
+                     "I know you will find what you desire even without my guidance. "
+                     "If you sever the divine lotus, then I suppose the rest are nothing but pretty flowers.")
+        embed_msg = discord.Embed(colour=discord.Colour.blurple(), title="Fleur, Oracle of the True Laws",
+                                  description=entry_msg)
+        embed_msg.set_image(url="")
+        new_view = market.LotusSelectView(player_obj)
+        await ctx.send(embed=embed_msg, view=new_view)
 
     # Info commands
     @set_command_category('info', 0)
     @pandora_bot.hybrid_command(name='info', help="Display the help menu.")
-    @app_commands.guilds(discord.Object(id=1011375205999968427))
+    @app_commands.guilds(discord.Object(id=guild_id))
     async def help_menu(ctx):
         await ctx.defer()
         embed = discord.Embed(title="Help Command Menu")
@@ -1008,131 +858,119 @@ def run_discord_bot():
 
     @set_command_category('info', 1)
     @pandora_bot.hybrid_command(name='register', help="Register a new user.")
-    @app_commands.guilds(discord.Object(id=1011375205999968427))
+    @app_commands.guilds(discord.Object(id=guild_id))
     async def play(ctx, username: str):
-        if any(ctx.channel.id in sl for sl in globalitems.global_server_channels):
-            await ctx.defer()
-            user = ctx.author
-            if not username.isalpha():
-                await ctx.send("Please enter a valid username.")
-                return
-            if not player.check_username(username):
-                await ctx.send("Username already in use.")
-                return
-            if len(username) > 10:
-                await ctx.send("Please enter a username 10 or less characters.")
-                return
-            register_msg = ('In an ancient ruin you come across an empty room in which sits a peculiar box. '
-                            'Hesitating at first you consider the possibility of a trap or mimic. '
-                            'Without a trap in sight you reach forward and open the box.\n'
-                            'A flurry of souls flood the room and leak out into the corridor. '
-                            'One pauses and speaks softly into your mind. '
-                            '"Everything begins and ends with a wish. What do you wish to be?" '
-                            'You think it for only a second and the voice responds with a playful laugh, '
-                            '"Let it be so." Then the voice disappears without a trace. '
-                            'Silence falls and then all that remains is an '
-                            'otherworldly girl staring at you in confusion.')
-            embed_msg = discord.Embed(colour=discord.Colour.dark_teal(),
-                                      title="Register - Select Class",
-                                      description=register_msg)
-            class_view = menus.ClassSelect(user.id, username)
-            await ctx.send(embed=embed_msg, view=class_view)
+        if not any(ctx.channel.id in sl for sl in globalitems.global_server_channels):
+            return
+        await ctx.defer()
+        check_player = player.get_player_by_discord(ctx.author.id)
+        if check_player is not None:
+            await ctx.send("You are already registered.")
+            return
+        if not username.isalpha():
+            await ctx.send("Please enter a valid username.")
+            return
+        if not player.check_username(username):
+            await ctx.send("Username already in use.")
+            return
+        if len(username) > 10:
+            await ctx.send("Please enter a username 10 or less characters.")
+            return
+        register_msg = ('In an ancient ruin, you come across an empty room in which sits a peculiar box. '
+                        'Hesitating at first you consider the possibility of a trap or mimic. '
+                        'Without a trap in sight, you reach forward and open the box.\n'
+                        'A flurry of souls flood the room and spill out into the corridor. '
+                        'One pauses and speaks softly into your mind. '
+                        '"Everything begins and ends with a wish. What do you wish to be?" '
+                        'You think it for only a second and the voice responds with a playful laugh, '
+                        '"Let it be so." Then the voice disappears without a trace. '
+                        'Silence falls and then all that remains is an '
+                        'otherworldly girl staring at you in confusion.')
+        embed_msg = discord.Embed(colour=discord.Colour.dark_teal(), title="Register - Select Class",
+                                  description=register_msg)
+        class_view = menus.ClassSelect(ctx.author.id, username)
+        await ctx.send(embed=embed_msg, view=class_view)
 
     @set_command_category('info', 2)
     @pandora_bot.hybrid_command(name='guide', help="Display basic starter guide.")
-    @app_commands.guilds(discord.Object(id=1011375205999968427))
+    @app_commands.guilds(discord.Object(id=guild_id))
     async def guide(ctx):
-        if any(ctx.channel.id in sl for sl in globalitems.global_server_channels):
-            await ctx.defer()
-            embed_msg = discord.Embed(colour=discord.Colour.dark_teal(),
-                                      title=menus.guide_dict[0][0],
-                                      description=menus.guide_dict[0][1])
-            current_guide = "Beginner"
-            guide_view = menus.GuideMenu()
-            await ctx.send(embed=embed_msg, view=guide_view)
+        if not any(ctx.channel.id in sl for sl in globalitems.global_server_channels):
+            return
+        await ctx.defer()
+        embed_msg = discord.Embed(colour=discord.Colour.dark_teal(),
+                                  title=menus.guide_dict[0][0], description=menus.guide_dict[0][1])
+        current_guide = "Beginner"
+        guide_view = menus.GuideMenu()
+        await ctx.send(embed=embed_msg, view=guide_view)
 
     @set_command_category('info', 3)
     @pandora_bot.hybrid_command(name='stats', help="Display your stats page.")
-    @app_commands.guilds(discord.Object(id=1011375205999968427))
+    @app_commands.guilds(discord.Object(id=guild_id))
     async def stats(ctx, user: discord.User = None):
-        if any(ctx.channel.id in sl for sl in globalitems.global_server_channels):
-            await ctx.defer()
-            command_user = ctx.author
-            player_object = player.get_player_by_discord(command_user.id)
-            if user:
-                target_user = player.get_player_by_discord(user.id)
-            else:
-                target_user = player_object
-            if target_user.player_class != "":
-                embed_msg = target_user.get_player_stats(1)
-                stat_view = menus.StatView(player_object, target_user)
-                await ctx.send(embed=embed_msg, view=stat_view)
-            else:
-                await ctx.send("Selected user is not registered.")
+        player_obj = await sharedmethods.check_registration(ctx)
+        if player_obj is None:
+            return
+        target_user = player_obj if user is None else player.get_player_by_discord(user.id)
+        if target_user.player_class == "":
+            await ctx.send("Selected user is not registered.")
+            return
+        embed_msg = target_user.get_player_stats(1)
+        stat_view = menus.StatView(player_obj, target_user)
+        await ctx.send(embed=embed_msg, view=stat_view)
 
     @set_command_category('info', 4)
     @pandora_bot.hybrid_command(name='profile', help="View profile rank card.")
-    @app_commands.guilds(discord.Object(id=1011375205999968427))
+    @app_commands.guilds(discord.Object(id=guild_id))
     async def profile(ctx, user: discord.User = None):
         await ctx.defer()
         command_user = ctx.author
         achv_list = []
-        if user:
+        target_id, user_object = command_user.id, command_user
+        if user is not None:
+            target_id, user_object = user.id, user
             target_id = user.id
-            achv_list = [role.name for role in user.roles if "Holder" in role.name or "Herrscher" in role.name]
-        else:
-            target_id = command_user.id
-            achv_list = [role.name for role in command_user.roles if "Holder" in role.name or "Herrscher" in role.name]
+        achv_list = [role.name for role in user_object.roles if "Holder" in role.name or "Herrscher" in role.name]
         target_user = player.get_player_by_discord(target_id)
-        if target_user.player_class != "":
-            filepath = pilengine.get_player_profile(target_user, achv_list)
-            file_object = discord.File(filepath)
-            await ctx.send(file=file_object)
-        else:
-            await ctx.send(f"Target user {target_name} is not registered")
+        if target_user.player_class == "":
+            await ctx.send(f"Target user {user_object.name} is not registered.")
+            return
+        filepath = pilengine.get_player_profile(target_user, achv_list)
+        file_object = discord.File(filepath)
+        await ctx.send(file=file_object)
 
     @set_command_category('info', 4)
     @pandora_bot.hybrid_command(name='leaderboard', help="View the leaderboard.")
-    @app_commands.guilds(discord.Object(id=1011375205999968427))
+    @app_commands.guilds(discord.Object(id=guild_id))
     async def leaderboard(ctx):
-        if any(ctx.channel.id in sl for sl in globalitems.global_server_channels):
-            await ctx.defer()
-            player_object = player.get_player_by_discord(ctx.author.id)
-            embed_msg = leaderboards.display_leaderboard("DPS", player_object.player_id)
-            new_view = leaderboards.LeaderbaordView(player_object)
-            await ctx.send(embed=embed_msg, view=new_view)
+        await ctx.defer()
+        player_obj = player.get_player_by_discord(ctx.author.id)
+        embed_msg = leaderboards.display_leaderboard("DPS", player_obj.player_id)
+        new_view = leaderboards.LeaderbaordView(player_obj)
+        await ctx.send(embed=embed_msg, view=new_view)
 
     @set_command_category('info', 6)
     @pandora_bot.command(name='credits', help="Displays the game credits.")
-    @app_commands.guilds(discord.Object(id=1011375205999968427))
+    @app_commands.guilds(discord.Object(id=guild_id))
     async def credits_list(ctx):
-        if any(ctx.channel.id in sl for sl in globalitems.global_server_channels):
-            await ctx.defer()
-            credit_list = "Game created by: Kyle Mistysyn (Archael)"
-            # Artists
-            credit_list += "\nNong Dit @Nong Dit - Frame Artist (Fiverr)"
-            credit_list += "\nAztra.studio @Artherrera - Emoji/Icon Artist (Fiverr)"
-            credit_list += "\nLabs @labcornerr - Emoji/Icon Artist (Fiverr)"
-            credit_list += "\nVolff - Photoshop Assistance"
-            # Programming
-            credit_list += "\nBahamutt - Programming Assistance"
-            credit_list += "\nPota - Programming Assistance"
-            # Testers
-            credit_list += "\nZweii - Alpha Tester"
-            credit_list += "\nSoulViper - Alpha Tester"
-            credit_list += "\nKaelen - Alpha Tester"
-            credit_list += "\nVolff - Alpha Tester"
-            embed_msg = discord.Embed(colour=discord.Colour.light_gray(),
-                                      title="Credits",
-                                      description=credit_list)
-            embed_msg.set_image(url="https://i.ibb.co/QjWDYG3/forge.jpg")
-            await ctx.send(embed=embed_msg)
-
-    def unregistered_message():
-        register_embed = discord.Embed(colour=discord.Colour.dark_teal(),
-                                       title="Unregistered",
-                                       description="Please register using !register to play.")
-        return register_embed
+        await ctx.defer()
+        credit_list = "Game created by: Kyle Mistysyn (Archael)"
+        # Artists
+        credit_list += "\nNong Dit @Nong Dit - Frame Artist (Fiverr)"
+        credit_list += "\nAztra.studio @Artherrera - Emoji/Icon Artist (Fiverr)"
+        credit_list += "\nLabs @labcornerr - Emoji/Icon Artist (Fiverr)"
+        credit_list += "\nVolff - Photoshop Assistance"
+        # Programming
+        credit_list += "\nBahamutt - Programming Assistance"
+        credit_list += "\nPota - Programming Assistance"
+        # Testers
+        credit_list += "\nZweii - Alpha Tester"
+        credit_list += "\nSoulViper - Alpha Tester"
+        credit_list += "\nKaelen - Alpha Tester"
+        credit_list += "\nVolff - Alpha Tester"
+        embed_msg = discord.Embed(colour=discord.Colour.light_gray(), title="Credits", description=credit_list)
+        embed_msg.set_image(url="https://i.ibb.co/QjWDYG3/forge.jpg")
+        await ctx.send(embed=embed_msg)
 
     def build_category_dict():
         temp_dict = {}

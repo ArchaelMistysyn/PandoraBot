@@ -1,241 +1,191 @@
-import mysql.connector
-from mysql.connector.errors import Error
-import sqlalchemy
-from sqlalchemy import text
-import mysql
-import pymysql
-from sqlalchemy import exc
+# General imports
 import pandas as pd
-import inventory
-import loot
-import mydb
 import discord
-import player
-import tarot
+
+# Data imports
 import globalitems
+import sharedmethods
+import questdata
+import mydb
+
+# Core imports
+import player
+import inventory
+
+# Item/crafting imports
+import loot
+import tarot
 
 
 class Quest:
-    def __init__(self, quest_num, quest_title, story_message, cost, token_num, item_handin, quest_message,
-                 award_exp, award_coins, award_item, award_qty, award_role):
-        self.quest_num = quest_num
-        self.quest_title = quest_title
+    def __init__(self, quest_num, quest_type, quest_title, story_message,
+                 cost, token_num, item_handin, quest_message,
+                 award_item, award_qty, award_role):
+        self.quest_num, self.quest_type = quest_num, quest_type
         self.story_message = story_message
-        if ";" in self.story_message:
-            msg_split = self.story_message.split(";")
-            self.story_message = f"{msg_split[0]}\n\n{msg_split[1]}"
-        self.cost = cost
-        self.token_num = token_num
-        self.item_handin = item_handin
+        self.cost, self.token_num, self.item_handin = cost, token_num, item_handin
         self.quest_message = quest_message
-        self.quest_output = ""
-        self.award_exp = award_exp
-        self.award_coins = award_coins
-        self.award_item = award_item
-        self.award_qty = award_qty
-        self.award_role = award_role
+        quest_section = (self.quest_num // 5) + 1
+        self.award_exp, self.award_coins = quest_section * 1000, quest_section * 5000
+        self.award_item, self.award_qty, self.award_role = award_item, award_qty, award_role
+        self.quest_title = f"#{self.quest_num}: {quest_title}"
 
-    def set_quest_output(self, progress_count):
-        fake_level_tokens = get_fake_level_tokens(self.quest_num)
-        self.quest_output = (f"{self.quest_message}: "
-                             f"{progress_count + fake_level_tokens} / {self.cost + fake_level_tokens}")
-
-    def hand_in(self, player_object):
-        progress_count = 0
-        is_completed = False
-        if self.token_num == -1:
-            progress_count = inventory.check_stock(player_object, self.item_handin)
-            if progress_count >= self.cost:
-                inventory.update_stock(player_object, self.item_handin, (0 - self.cost))
-                is_completed = True
-        elif self.token_num == 0:
-            progress_count = tarot.collection_check(player_object.player_id)
-            if progress_count == 46:
-                is_completed = True
-        elif self.token_num == 7:
-            if player_object.player_equipped[3] != 0:
-                e_wing = inventory.read_custom_item(player_object.player_equipped[3])
-                if e_wing.item_tier == 4:
-                    is_completed = True
-                    progress_count = 1
-        elif self.token_num == 8:
-            if player_object.player_equipped[4] != 0:
-                is_completed = True
-                progress_count = 1
-        else:
-            progress_count = player_object.check_tokens(self.token_num)
-            if progress_count >= self.cost:
-                player_object.update_tokens(self.quest_num, (0 - self.cost))
-                is_completed = True
+    async def hand_in(self, ctx_object, player_obj):
+        is_completed, progress_count = self.calculate_progress(player_obj)
         if is_completed:
-            player_object.player_quest += 1
-            player_object.set_player_field("player_quest", player_object.player_quest)
-            player_object.player_exp += self.award_exp
-            player_object.player_coins += self.award_coins
-            player_object.set_player_field("player_exp", player_object.player_exp)
-            player_object.set_player_field("player_coins", player_object.player_coins)
-            reward_list = f"{globalitems.exp_icon} {self.award_exp}x Exp\n"
-            reward_list += f"{globalitems.coin_icon} {self.award_coins}x Lotus Coins\n"
-            if self.award_item != "":
-                inventory.update_stock(player_object, self.award_item, self.award_qty)
-                loot_item = inventory.BasicItem(self.award_item)
-                reward_list += f"{loot_item.item_emoji} {self.award_qty}x {loot_item.item_name}\n"
-            if self.award_role != "":
-                reward_list += f"New Role Achieved: {self.award_role}!"
-                player_object.player_echelon += 1
-                player_object.set_player_field("player_echelon", player_object.player_echelon)
-            embed_msg = discord.Embed(colour=discord.Colour.dark_teal(),
-                                      title="QUEST COMPLETED!",
-                                      description=reward_list)
-        else:
-            self.set_quest_output(progress_count)
-            embed_msg = discord.Embed(colour=discord.Colour.dark_teal(),
-                                      title=self.quest_title,
-                                      description=self.story_message)
+            embed_msg = await self.handle_completion(ctx_object, player_obj, progress_count)
+            return embed_msg, is_completed
+        # Handle incomplete quest hand-in.
+        embed_msg = discord.Embed(colour=discord.Colour.dark_teal(),
+                                  title=self.quest_title, description=self.story_message)
+        progress_msg = f"{self.quest_message}: {progress_count} / {self.cost}"
+        embed_msg.add_field(name="Quest Incomplete", value=progress_msg, inline=False)
         return embed_msg, is_completed
 
-    def get_quest_embed(self, player_object):
-        progress_count = 0
-        if self.token_num == -1:
-            progress_count = inventory.check_stock(player_object, self.item_handin)
-        elif self.token_num == 0:
-            progress_count = tarot.collection_check(player_object.player_id)
-        elif self.token_num == 7:
-            if player_object.player_equipped[3] != 0:
-                e_wing = inventory.read_custom_item(player_object.player_equipped[3])
-                if e_wing.item_tier == 4:
-                    progress_count = 1
-        elif self.token_num == 8:
-            if player_object.player_equipped[4] != 0:
-                progress_count = 1
-        else:
-            progress_count = player_object.check_tokens(self.token_num)
-        self.set_quest_output(progress_count)
-        quest_embed = discord.Embed(colour=discord.Colour.dark_teal(),
-                                    title=self.quest_title,
-                                    description=self.story_message)
-        quest_embed.add_field(name=f"Quest", value=self.quest_output, inline=False)
+    def calculate_progress(self, player_obj):
+        # Handle Specific Quest Exceptions
+        if player_obj.player_quest == 20:
+            return False, 0 if player_obj.insignia == "" else True, 1
+        elif player_obj.player_quest == 21:
+            return False, 0 if player_obj.pact == "" else True, 1
+        elif player_obj.player_quest == 22:
+            return False, 0 if player_obj.player_equipped[2] == 0 else True, 1
+        elif player_obj.player_quest == 28:
+            return False, 0 if player_obj.player_equipped[5] == 0 else True, 1
+        elif player_obj.player_quest == 31:
+            return False, 0 if player_obj.equipped_tarot == "" else True, 1
+        elif player_obj.player_quest == 51:
+            collection_count = tarot.collection_check(player_obj)
+            return True, collection_count if collection_count == 31 else False, collection_count
+
+        # Token, Feature Token, or Boss Token Quests.
+        if self.quest_type == 0 or self.quest_type == 3:
+            progress_count = player_obj.quest_tokens[self.token_num]
+            return progress_count >= self.cost, progress_count
+        # Level Quests.
+        if self.quest_type == 1:
+            current_level = player_obj.player_lvl
+            return True, current_level if current_level >= self.cost else False, current_level
+        # Hand-In Quests.
+        if self.quest_type == 2:
+            progress_count = inventory.check_stock(player_obj, self.item_handin)
+            return progress_count >= self.cost, progress_count
+
+    async def handle_completion(self, ctx_object, player_obj, progress_count):
+        # Update player data. Handle EXP/Coin Awards.
+        player_obj.player_quest += 1
+        player_obj.set_player_field("player_quest", player_obj.player_quest)
+        exp_msg, lvl_change = player_obj.adjust_exp(self.award_exp)
+        coin_msg = player_obj.adjust_coins(self.award_coins)
+        rewards = f"{globalitems.exp_icon} {exp_msg} EXP\n"
+        rewards += f"{globalitems.coin_icon} {coin_msg} Lotus Coins\n"
+        if lvl_change != 0:
+            await sharedmethods.send_notification(ctx_object, player_obj, "Level", lvl_change)
+        # Handle Item/Role Awards.
+        if self.award_item:
+            inventory.update_stock(player_obj, self.award_item, self.award_qty)
+            loot_item = inventory.BasicItem(self.award_item)
+            rewards += f"{loot_item.item_emoji} {self.award_qty}x {loot_item.item_name}\n"
+        if "Lotus" in loot_item.item_id or loot_item.item_id in ["DarkStar", "LightStar"]:
+            await sharedmethods.send_notification(ctx_object, player_obj, "Item", loot_item.item_id)
+        if self.award_role:
+            rewards += f"New Role Achieved: {self.award_role}!"
+            player_obj.player_echelon += 1
+            player_obj.set_player_field("player_echelon", player_obj.player_echelon)
+            await sharedmethods.send_notification(ctx_object, player_obj, "Achievement", self.award_role)
+        return discord.Embed(colour=discord.Colour.dark_teal(), title="QUEST COMPLETED!", description=rewards)
+
+    def get_quest_embed(self, player_obj):
+        is_completed, progress_count = self.calculate_progress(player_obj)
+        quest_details = f"{self.quest_message}: {progress_count} / {self.cost}"
+        quest_embed = discord.Embed(colour=discord.Colour.dark_teal(), title=self.quest_title, description="")
+        quest_giver = "Pandora, The Celestial"
+        if player_obj.player_quest in range(49, 54):
+            quest_giver = "Echo of __Eleuia, The Wish__"
+        quest_embed.add_field(name=quest_giver, value=self.story_message, inline=False)
+        quest_embed.add_field(name=f"Quest Details", value=quest_details, inline=False)
         return quest_embed
 
 
-def get_quest(quest_num, player_user):
-    return quest_list[quest_num - 1]
-
-
-def assign_tokens(player_object, boss_object):
-    boss_quest_dict = {"XVI - Aurora, The Fortress": 9, "VII - Astratha, The Dimensional": 12,
-                       "VIII - Tyra, The Behemoth": 13, "II - Pandora, The Celestial": 21,
-                       "III - Oblivia, The Void": 23, "IV - Akasha, The Infinite": 24, "XXX - Eleuia, The Wish": 26}
-    if boss_object.boss_name in boss_quest_dict:
-        player_object.update_tokens(boss_quest_dict[boss_object.boss_name], 1)
-
-
-def get_fake_level_tokens(quest_num):
-    fake_tokens = 0
-    match quest_num:
-        case 8:
-            fake_tokens = 10
-        case 10:
-            fake_tokens = 20
-        case 14:
-            fake_tokens = 30
-        case 20:
-            fake_tokens = 50
-        case 22:
-            fake_tokens = 60
-        case 25:
-            fake_tokens = 70
-        case 27:
-            fake_tokens = 80
-        case 28:
-            fake_tokens = 90
-        case 29:
-            fake_tokens = 95
-        case _:
-            fake_tokens = 0
-    return fake_tokens
+def assign_unique_tokens(player_obj, token_string):
+    token_quest_dict = {
+        # Boss Tokens
+        "XVI - Aurora, The Fortress": 4, "VII - Astratha, The Dimensional": 6, "VIII - Tyra, The Behemoth": 8,
+        "II - Pandora, The Celestial": 0, "III - Oblivia, The Void": 15, "IV - Akasha, The Infinite": 16,
+        "XXV - Eleuia, The Wish": 19,
+        "XXVIII - Fleur, Oracle of the True Laws": 20, "XXIX - Yubelle, Adjudicator of the True Laws": 21,
+        "XXX - Amaryllis, Incarnate of the Divine Lotus [Challenger]": 22,
+        "XXX - Amaryllis, Incarnate of the Divine Lotus [Usurper]": 23,
+        "XXX - Amaryllis, Incarnate of the Divine Lotus [Samsara]": 24,
+        # Feature Tokens
+        "Register": 1, "Map": 2, "Town": 5, "Arbiter": 7, "Insignia": 8, "Contract": 9, "Vambraces": 10,
+        "Crest": 12, "Tarot": 13, "Gauntlet": 15, "Abyss": 18, "Meld": 19, "Tarot Completion": 24
+    }
+    if token_string in token_quest_dict:
+        player_obj.update_tokens(token_quest_dict[token_string], 1)
 
 
 def initialize_quest_list():
-    filename = "questlist.csv"
-    df = pd.read_csv(filename)
-    df['award_role'] = df['award_role'].fillna("")
-    main_quest = []
-    if len(df.index) != 0:
-        for index, row in df.iterrows():
-            quest_num = int(row['quest_num'])
-            quest_title = f"{quest_num}: {str(row['quest_title'])}"
-            story_message = str(row['story_message'])
-            cost = int(row['cost_num'])
-            token_num = int(row['token_num'])
-            item_handin = str(row['item_handin'])
-            quest_message = str(row['quest_message'])
-            award_exp = int(row['award_exp'])
-            award_coins = int(row['award_coins'])
-            award_item = str(row['award_item'])
-            award_qty = int(row['award_qty'])
-            award_role = str(row['award_role'])
-            current_quest = Quest(quest_num, quest_title, story_message, cost, token_num, item_handin, quest_message,
-                                  award_exp, award_coins, award_item, award_qty, award_role)
-            main_quest.append(current_quest)
-    return main_quest
+    quest_object_list = [None]
+    for quest_num, values in questdata.quests_data.items():
+        current_quest = Quest(quest_num, *values)
+        quest_object_list.append(current_quest)
+    return quest_object_list
 
 
 class QuestView(discord.ui.View):
-    def __init__(self, player_user, quest_object):
+    def __init__(self, ctx_object, player_user, quest_object):
         super().__init__(timeout=None)
-        self.player_object = player_user
+        self.ctx_object = ctx_object
+        self.player_obj = player_user
         self.quest_object = quest_object
         self.embed_msg = None
 
     @discord.ui.button(label="Hand In", style=discord.ButtonStyle.blurple, emoji="⚔️")
-    async def hand_in(self, interaction: discord.Interaction, button: discord.Button):
-        try:
-            if interaction.user.id == self.player_object.discord_id:
-                if not self.embed_msg:
-                    reload_player = player.get_player_by_id(self.player_object.player_id)
-                    self.embed_msg, is_completed = self.quest_object.hand_in(reload_player)
-                    if is_completed:
-                        reward_view = RewardView(reload_player)
-                        if self.quest_object.award_role != "":
-                            add_role = discord.utils.get(interaction.guild.roles, name=self.quest_object.award_role)
-                            await interaction.user.add_roles(add_role)
-                            if reload_player.player_echelon >= 2:
-                                previous_rolename = globalitems.role_list[(reload_player.player_echelon - 2)]
-                                remove_role = discord.utils.get(interaction.guild.roles, name=previous_rolename)
-                                await interaction.user.remove_roles(remove_role)
-                    else:
-                        self.embed_msg.add_field(name="", value="Quest is not yet completed!", inline=False)
-                        reward_view = None
-                await interaction.response.edit_message(embed=self.embed_msg, view=reward_view)
-        except Exception as e:
-            print(e)
+    async def handin_callback(self, interaction: discord.Interaction, button: discord.Button):
+        if interaction.user.id != self.player_obj.discord_id:
+            return
+        if not self.embed_msg:
+            self.player_obj.reload_player()
+            self.embed_msg, is_completed = await self.quest_object.hand_in(self.ctx_object, self.player_obj)
+            if not is_completed:
+                self.embed_msg.add_field(name="", value="Quest is not completed!", inline=False)
+                quest_view = QuestView(self.ctx_object, self.player_obj, self.quest_object)
+                await interaction.response.edit_message(embed=self.embed_msg, view=quest_view)
+                return
+            # Handle completed quest.
+            reward_view = RewardView(self.ctx_object, self.player_obj)
+            if self.quest_object.award_role is not None:
+                add_role = discord.utils.get(interaction.guild.roles, name=self.quest_object.award_role)
+                await interaction.user.add_roles(add_role)
+                if self.player_obj.player_echelon >= 2:
+                    previous_rolename = globalitems.role_list[(self.player_obj.player_echelon - 2)]
+                    remove_role = discord.utils.get(interaction.guild.roles, name=previous_rolename)
+                    await interaction.user.remove_roles(remove_role)
+            await interaction.response.edit_message(embed=self.embed_msg, view=reward_view)
 
 
 class RewardView(discord.ui.View):
-    def __init__(self, player_user):
+    def __init__(self, ctx_object, player_user):
         super().__init__(timeout=None)
-        self.player_object = player_user
+        self.ctx_object = ctx_object
+        self.player_obj = player_user
 
     @discord.ui.button(label="Next Quest", style=discord.ButtonStyle.blurple, emoji="⚔️")
     async def next_quest(self, interaction: discord.Interaction, button: discord.Button):
-        try:
-            if interaction.user.id == self.player_object.discord_id:
-                end_quest = 30
-                if self.player_object.player_quest <= end_quest:
-                    current_quest = self.player_object.player_quest
-                    quest_object = get_quest(current_quest, self.player_object)
-                    embed_msg = quest_object.get_quest_embed(self.player_object)
-                    quest_view = QuestView(self.player_object, quest_object)
-                else:
-                    embed_msg = discord.Embed(colour=discord.Colour.dark_teal(),
-                                              title="All quests completed!",
-                                              description="")
-                    quest_view = None
-                await interaction.response.edit_message(embed=embed_msg, view=quest_view)
-        except Exception as e:
-            print(e)
+        if interaction.user.id != self.player_obj.discord_id:
+            return
+        if self.player_obj.player_quest > 55:
+            embed_msg = discord.Embed(colour=discord.Colour.dark_teal(), title="All Clear!", description="")
+            await interaction.response.edit_message(embed=embed_msg, view=None)
+            return
+        current_quest = self.player_obj.player_quest
+        quest_object = quest_list[self.player_obj.player_quest]
+        embed_msg = quest_object.get_quest_embed(self.player_obj)
+        quest_view = QuestView(self.ctx_object, self.player_obj, quest_object)
+        await interaction.response.edit_message(embed=embed_msg, view=quest_view)
 
 
+# Initialize the quest list.
 quest_list = initialize_quest_list()
 

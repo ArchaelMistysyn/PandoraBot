@@ -1,4 +1,4 @@
-player_id,item_id,item_name,item_elements,item_damage_type,item_enhancement,item_base_tier,item_blessing_tier,item_material_tier,item_type,item_num_stars,item_prefix_values,item_suffix_values,item_bonus_stat,item_base_dmg_min,item_base_dmg_max,item_num_sockets,item_inlaid_gem_id
+player_id,item_id,item_name,item_elements,item_damage_type,item_enhancement,item_base_tier,item_quality_tier,item_material_tier,item_type,item_num_stars,item_prefix_values,item_suffix_values,item_bonus_stat,item_base_dmg_min,item_base_dmg_max,item_num_sockets,item_inlaid_gem_id
 10001,W1,+100 Divine Voidcrystal Whale,<:ef:1141653475059572779>;<:eg:1141653474480767016>;<:ek:1141653468080242748>;<:em:1141647050342146118>;<:el:1141653466343800883>;<:ej:1141653469938339971>;<:eh:1141653473528664126>;<:ei:1141653471154671698>;<:ee:1141653476816986193>,<:cD:1150195280969478254>,100,4,Divine,Voidcrystal,Whale,5,P41;P43,S44;S41,1.5,500,500,1,D63
 10001,Y2,+0 Sparkling Crude Bracelet,,<:cD:1150195280969478254>,0,4,Sparkling,Crude,Bracelet,1,,,Perfect Counter,500,500,0,
 10001,A3,+0 Inert Iron Mail,,<:cD:1150195280969478254>,0,3,Inert,Iron,Mail,1,,,15,100,250,0,

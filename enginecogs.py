@@ -39,29 +39,26 @@ class RaidCog(commands.Cog):
                                                 self.sent_message, self.channel_object)
             if not is_alive:
                 bosses.clear_boss_info(self.channel_id, 0)
-                level, boss_type, boss_tier = bosses.get_boss_details(self.channel_num)
+                level, boss_type, boss_tier = bosses.get_raid_boss_details(self.channel_num)
                 active_boss = bosses.spawn_boss(self.channel_id, 0, boss_tier, boss_type, level, self.channel_num)
                 self.active_boss = active_boss
                 self.combat_tracker_list = []
-                embed_msg = active_boss.create_boss_embed(0)
+                embed_msg = active_boss.create_boss_embed()
                 raid_button = battleengine.RaidView(self.channel_num)
                 sent_message = await self.channel_object.send(embed=embed_msg, view=raid_button)
                 self.sent_message = sent_message
 
 
 class SoloCog(commands.Cog):
-    def __init__(self, bot, player_object, active_boss, channel_id, sent_message, ctx_object):
+    def __init__(self, bot, player_obj, active_boss, channel_id, sent_message, ctx_object, gauntlet=False):
         self.bot = bot
-        self.player_object = player_object
-        self.active_boss = active_boss
-        self.channel_id = channel_id
-        self.sent_message = sent_message
-        self.ctx_object = ctx_object
-        self.channel_object = ctx_object.channel
-        self.combat_tracker = combat.CombatTracker()
-        self.combat_tracker.player_cHP = player_object.player_mHP
+        self.player_obj, self.active_boss = player_obj, active_boss
+        self.channel_id, self.sent_message = channel_id, sent_message
+        self.ctx_object, self.channel_object = ctx_object, ctx_object.channel
+        self.combat_tracker = combat.CombatTracker(player_obj)
+        self.gauntlet = gauntlet
         self.lock = asyncio.Lock()
-        print(f"{self.player_object.player_username}: SoloCog Running")
+        print(f"{self.player_obj.player_username}: SoloCog Running")
 
     async def run(self):
         self.solo_manager.start()
@@ -71,21 +68,21 @@ class SoloCog(commands.Cog):
 
     @tasks.loop(seconds=60)
     async def solo_manager(self):
-        if not combat.check_flag(self.player_object):
-            print(f"Running {self.player_object.player_username} solo cycle")
+        if not combat.check_flag(self.player_obj):
+            print(f"Running {self.player_obj.player_username} solo cycle")
             async with self.lock:
-                is_alive = await self.bot.solo_boss(self.combat_tracker, self.player_object, self.active_boss,
-                                                    self.channel_id, self.sent_message, self.channel_object)
+                is_alive = await self.bot.solo_boss(self.combat_tracker, self.player_obj, self.active_boss,
+                                                    self.channel_id, self.sent_message, self.channel_object,
+                                                    gauntlet=self.gauntlet)
                 if not is_alive:
-                    if self.active_boss.boss_name == "XXVIII - Yubelle, Adjudicator of the True Laws":
-                        await leaderboards.update_leaderboard(self.combat_tracker,
-                                                              self.player_object, self.ctx_object)
+                    if "XXX" in self.active_boss.boss_name:
+                        await leaderboards.update_leaderboard(self.combat_tracker, self.player_obj, self.ctx_object)
                     self.cog_unload()
         else:
-            combat.toggle_flag(self.player_object)
-            bosses.clear_boss_info(self.channel_id, self.player_object.player_id)
+            combat.toggle_flag(self.player_obj)
+            bosses.clear_boss_info(self.channel_id, self.player_obj.player_id)
             self.cog_unload()
-            print(f"{self.player_object.player_username}: SoloCog Abandoned")
+            print(f"{self.player_obj.player_username}: SoloCog Abandoned")
 
 
 class PvPCog(commands.Cog):
@@ -96,14 +93,13 @@ class PvPCog(commands.Cog):
         self.channel_id = channel_id
         self.sent_message = sent_message
         self.channel_object = channel_object
-        self.combat_tracker1 = combat.CombatTracker()
-        self.combat_tracker2 = combat.CombatTracker()
+        self.combat_tracker1 = combat.CombatTracker(self.player1)
+        self.combat_tracker2 = combat.CombatTracker(self.player2)
         self.combat_tracker1.player_cHP = self.player1.player_mHP
         self.combat_tracker2.player_cHP = self.player2.player_mHP
-        self.colour, icon = inventory.get_gear_tier_colours(self.player1.player_echelon)
+        self.colour, _ = sharedmethods.get_gear_tier_colours(self.player1.player_echelon)
         self.hit_list = []
         self.lock = asyncio.Lock()
-        print(f"Arena PvP: {self.player1.player_username} vs {self.player2.player_username}")
 
     async def run(self):
         self.pvp_manager.start()
@@ -150,9 +146,9 @@ class PvPCog(commands.Cog):
             inventory.update_stock(self.player1, "Crate", quantity)
             loot_msg = f"{self.player1.player_username} {loot_item.item_emoji} {quantity}x crates acquired!"
         if ended:
-            exp_msg = f"{globalitems.exp_icon} {exp_amount}x EXP acquired!"
-            self.player1.set_player_field("player_exp", exp_amount)
-            pvp_embed.add_field(name=result_message, value=exp_msg, inline=False)
+            exp_msg = self.player1.adjust_exp(exp_amount)
+            exp_description = f"{globalitems.exp_icon} {exp_msg} EXP acquired!"
+            pvp_embed.add_field(name=result_message, value=exp_description, inline=False)
             pvp_embed.add_field(name="", value=loot_msg, inline=False)
             await self.sent_message.edit(embed=pvp_embed)
             self.cog_unload()
@@ -160,14 +156,10 @@ class PvPCog(commands.Cog):
             await self.sent_message.edit(embed=pvp_embed)
 
     async def update_combat_embed(self, hit_list):
-        pvp_embed = discord.Embed(
-            title="Arena PvP",
-            description="",
-            color=self.colour
-        )
+        pvp_embed = discord.Embed(title="Arena PvP", description="", color=self.colour)
         # pvp_embed.set_thumbnail(url="")
-        player_1_hp_msg = f"{globalitems.display_hp(self.combat_tracker1.player_cHP, self.player1.player_mHP)}"
-        player_2_hp_msg = f"{globalitems.display_hp(self.combat_tracker2.player_cHP, self.player2.player_mHP)}"
+        player_1_hp_msg = f"{sharedmethods.display_hp(self.combat_tracker1.player_cHP, self.player1.player_mHP)}"
+        player_2_hp_msg = f"{sharedmethods.display_hp(self.combat_tracker2.player_cHP, self.player2.player_mHP)}"
         pvp_embed.add_field(name=self.player1.player_username, value=player_1_hp_msg, inline=True)
         pvp_embed.add_field(name=self.player2.player_username, value=player_2_hp_msg, inline=True)
         battle_msg = f"Cycle Count: {self.combat_tracker1.total_cycles}"
@@ -206,12 +198,9 @@ class PvPCog(commands.Cog):
     async def handle_pvp_attack(self, combo_count, attack_counter, player_interval, hit_list):
         combatant = [self.player1, self.player2]
         tracker = [self.combat_tracker1, self.combat_tracker2]
+        attacker, defender = 1, 0
         if attack_counter[0] <= attack_counter[1]:
-            attacker = 0
-            defender = 1
-        else:
-            attacker = 1
-            defender = 0
+            attacker, defender = 0, 1
         role = [attacker, defender]
         hit_damage, critical_type = combat.pvp_attack(combatant[attacker], combatant[defender])
         combo_count[attacker] += 1 + combatant[attacker].combo_application
@@ -220,7 +209,7 @@ class PvPCog(commands.Cog):
         scaled_damage = self.scale_damage(role, combatant, hit_damage)
         scaled_damage, status_msg = combat.check_lock(combatant[attacker], tracker[attacker], scaled_damage)
         scaled_damage, second_msg = combat.check_bloom(combatant[attacker], scaled_damage)
-        hit_msg = f"{combatant[attacker].player_username} - {combo_count[attacker]}x Combo: {skill_name} {globalitems.number_conversion(scaled_damage)}"
+        hit_msg = f"{combatant[attacker].player_username} - {combo_count[attacker]}x Combo: {skill_name} {sharedmethods.number_conversion(scaled_damage)}"
         if status_msg != "":
             hit_msg += f" *{status_msg}*"
         if second_msg != "":
@@ -246,7 +235,7 @@ class PvPCog(commands.Cog):
             scaled_damage = self.scale_damage(role, combatant, hit_damage)
             scaled_damage, status_msg = combat.check_lock(combatant[attacker], tracker[attacker], scaled_damage)
             scaled_damage, second_msg = combat.check_bloom(combatant[attacker], scaled_damage)
-            hit_msg = f"{combatant[attacker].player_username} - Ultimate: {skill_name} {globalitems.number_conversion(scaled_damage)}"
+            hit_msg = f"{combatant[attacker].player_username} - Ultimate: {skill_name} {sharedmethods.number_conversion(scaled_damage)}"
             if status_msg != "":
                 hit_msg += f" *{status_msg}*"
             if second_msg != "":
@@ -269,7 +258,7 @@ class PvPCog(commands.Cog):
             bleed_msg = "Blood Rupture"
             bleed_damage *= 0.75
         scaled_damage = self.scale_damage(role, combatant, bleed_damage)
-        hit_msg = f"{combatant[attacker].player_username} - {bleed_msg}: {globalitems.number_conversion(scaled_damage)} *{bleed_type}*"
+        hit_msg = f"{combatant[attacker].player_username} - {bleed_msg}: {sharedmethods.number_conversion(scaled_damage)} *{bleed_type}*"
         for x in range(combatant[attacker].bleed_application):
             hit_list.append([scaled_damage, hit_msg])
             tracker[defender].player_cHP -= scaled_damage
