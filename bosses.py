@@ -150,11 +150,10 @@ class CurrentBoss:
             case "Dragon":
                 temp_name_split = self.boss_name.split()
                 boss_element = temp_name_split[1]
+                self.boss_element = 8
                 if boss_tier != 4:
                     self.boss_element = globalitems.element_names.index(boss_element)
                     self.boss_name += " Dragon"
-                else:
-                    self.boss_element = 8
             case "Demon":
                 if boss_tier != 4:
                     boss_colour, self.boss_element = get_boss_descriptor(boss_type)
@@ -341,20 +340,20 @@ def get_boss_descriptor(boss_type):
     return boss_descriptor, boss_element
 
 
-def add_participating_player(channel_id, player_id):
+def add_participating_player(channel_id, player_obj):
     raid_id = get_raid_id(channel_id, 0)
     pandora_db = mydb.start_engine()
     # Check if player is already part of the raid
     raw_query = "SELECT * FROM RaidPlayers WHERE raid_id = :id_check AND player_id = :player_check"
-    df_check = pandora_db.run_query(raw_query, True, params={'id_check': raid_id, 'player_check': player_id})
+    df_check = pandora_db.run_query(raw_query, True, params={'id_check': raid_id, 'player_check': player_obj.player_id})
     if len(df_check.index) != 0:
         pandora_db.close_engine()
         return " is already in the raid."
     # Add player to the raid
     raw_query = "INSERT INTO RaidPlayers (raid_id, player_id, player_dps) VALUES(:raid_id, :player_id, :player_dps)"
-    pandora_db.run_query(raw_query, params={'raid_id': raid_id, 'player_id': player_id, 'player_dps': 0})
+    pandora_db.run_query(raw_query, params={'raid_id': raid_id, 'player_id': player_obj.player_id, 'player_dps': 0})
     pandora_db.close_engine()
-    return " joined the raid"
+    return f"{player_obj.player_username} joined the raid"
 
 
 def update_player_damage(channel_id, player_id, player_damage):

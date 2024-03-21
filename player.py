@@ -36,6 +36,7 @@ class PlayerProfile:
         self.player_quest, self.quest_tokens = 0, [0 for x in range(30)]
         self.quest_tokens[1] = 1
         self.player_coins, self.player_stamina, self.vouch_points = 0, 0, 0
+        self.luck_bonus = 0
 
         # Initialize player gear/stats info.
         self.player_stats, self.gear_points = [0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0]
@@ -91,7 +92,7 @@ class PlayerProfile:
 
     def get_player_stats(self, method):
         # Construct the base embed.
-        echelon_colour, _ = sharedmethods.get_gear_tier_colours(self.player_echelon)
+        echelon_colour, _ = sharedmethods.get_gear_tier_colours((self.player_echelon + 1) // 2)
         resources = f'<:estamina:1145534039684562994> {self.player_username}\'s stamina: {self.player_stamina:,}'
         resources += f'\n{globalitems.coin_icon} Lotus Coins: {self.player_coins:,}'
         exp = f'Level: {self.player_lvl} Exp: ({self.player_exp:,} / {get_max_exp(self.player_lvl):,})'
@@ -105,11 +106,11 @@ class PlayerProfile:
         temp_embed = None
 
         if method in [1, 2]:
-            # Offensive Stat Display.
-            title_msg = "Offensive Stats"
-            stats = f"Item Base Damage: {int(round(self.player_damage)):,}"
-            stats += f"\nAttack Speed: {round(math.floor(self.attack_speed * 10) / 10, 1)} / min"
-
+            if method == 1:
+                # Offensive Stat Display.
+                title_msg = "Offensive Stats"
+                stats = f"Item Base Damage: {int(round(self.player_damage)):,}"
+                stats += f"\nAttack Speed: {round(math.floor(self.attack_speed * 10) / 10, 1)} / min"
             # Calculate the damage spread.
             element_breakdown = []
             for x in range(9):
@@ -125,10 +126,9 @@ class PlayerProfile:
                 if method == 1:
                     stats += f"\n{temp_icon} Total Damage: {int(round(total_multi)):,}%"
                 if method == 2:
-                    stats += f"{temp_icon} {temp_dmg_str} - {temp_pen_str} - {temp_curse_str}\n"
-            embed_msg.add_field(name=title_msg, value=stats, inline=False)
-
+                    stats += f"\n{temp_icon} {temp_dmg_str} - {temp_pen_str} - {temp_curse_str}"
             if method == 1:
+                embed_msg.add_field(name=title_msg, value=stats, inline=False)
                 # Construct the damage spread field.
                 if self.player_equipped[0] != 0:
                     title_msg, stats = "Damage Spread", ""
@@ -157,35 +157,37 @@ class PlayerProfile:
                 def set_section(header, tag_list, value_list):
                     section_string = f"\n{header}: "
                     for tag_index, (tag, value) in enumerate(zip(tag_list, value_list)):
-                        if tag != "App":
-                            extension = "%"
+                        extension = "%" if tag not in ["App", "Cap"] else ""
                         section_string += f"({tag}: {value}{extension})"
                         if (tag_index + 1) < len(tag_list):
                             section_string += " - "
                     return f"{section_string}"
+
                 title_msg = "Elemental Breakdown"
+                embed_msg.add_field(name=title_msg, value=stats, inline=False)
+                title_msg, stats = "Application Details", ""
                 stats += set_section("Elemental Details", ["Cap", "App", "FRC"],
-                                     [self.elemental_capacity, self.elemental_application,
-                                     (self.elemental_application * 5 + show_num(self.specialty_rate[3]))])
-                stats = set_section("Critical Details", ["CRT", "Dmg", "Pen", "App", "OMG"],
-                                     [show_num(self.critical_chance, 0), show_num(self.critical_multiplier),
-                                      show_num(self.critical_penetration), show_num(self.critical_application),
-                                      (self.critical_application * 10 + show_num(self.specialty_rate[2]))])
+                                       [self.elemental_capacity, self.elemental_application,
+                                        (self.elemental_application * 5 + show_num(self.specialty_rate[3]))])
+                stats += set_section("Critical Details", ["CRT", "Dmg", "Pen", "App", "OMG"],
+                                       [show_num(self.critical_chance, 0), show_num(self.critical_multiplier),
+                                        show_num(self.critical_penetration), show_num(self.critical_application),
+                                        (self.critical_application * 10 + show_num(self.specialty_rate[2]))])
                 stats += set_section("Combo Details", ["Dmg", "Pen", "App"],
-                                     [show_num(self.combo_multiplier), show_num(self.combo_penetration),
-                                      self.combo_application])
+                                       [show_num(self.combo_multiplier), show_num(self.combo_penetration),
+                                        self.combo_application])
                 stats += set_section("Ultimate Details", ["Dmg", "Pen", "App"],
-                                     [show_num(self.ultimate_multiplier), show_num(self.ultimate_penetration),
-                                      self.ultimate_application])
+                                       [show_num(self.ultimate_multiplier), show_num(self.ultimate_penetration),
+                                        self.ultimate_application])
                 stats += set_section("Bleed Details", ["Dmg", "Pen", "App", "HPR"],
-                                     [show_num(self.bleed_multiplier), show_num(self.bleed_penetration),
-                                      self.bleed_application,
-                                     (self.bleed_application * 10 + show_num(self.specialty_rate[1]))])
+                                       [show_num(self.bleed_multiplier), show_num(self.bleed_penetration),
+                                        self.bleed_application,
+                                        (self.bleed_application * 10 + show_num(self.specialty_rate[1]))])
                 stats += set_section("Time Details", ["Dmg", "App", "LCK"],
-                                     [((self.temporal_application + 1) * 100), self.temporal_application,
-                                      (self.temporal_application * 5 + show_num(self.specialty_rate[4]))])
+                                       [((self.temporal_application + 1) * 100), self.temporal_application,
+                                        (self.temporal_application * 5 + show_num(self.specialty_rate[4]))])
                 stats += set_section("Bloom Details", ["BLM", "Dmg"],
-                                     [show_num(self.specialty_rate[0]), show_num(self.bloom_multiplier)])
+                                       [show_num(self.specialty_rate[0]), show_num(self.bloom_multiplier)])
                 embed_msg.add_field(name=title_msg, value=stats, inline=False)
                 return embed_msg
         if method == 3:
@@ -317,10 +319,8 @@ class PlayerProfile:
         pandora_db.close_engine()
         return f"Welcome {self.player_username}!\nUse /quest to begin."
 
-    def update_tokens(self, quest_num, change):
-        current_quest = quest.quest_list[quest_num]
-        new_token_count = self.quest_tokens[current_quest.token_num] + change
-        self.quest_tokens[current_quest.token_num] = new_token_count
+    def update_tokens(self, token_num):
+        self.quest_tokens[token_num] += 1
         quest_tokens = ";".join(map(str, self.quest_tokens))
         pandora_db = mydb.start_engine()
         raw_query = f"UPDATE PlayerList SET quest_tokens = :field_value WHERE player_id = :player_check"
@@ -530,7 +530,7 @@ class PlayerProfile:
         if item.item_id in self.player_equipped:
             return f"Item {item.item_id} is equipped."
         elif item.item_type in inventory.item_loc_dict:
-            if item.item_type == "D":
+            if "D" in item.item_type:
                 for x in self.player_equipped:
                     if x != 0:
                         e_item = inventory.read_custom_item(x)
@@ -563,13 +563,13 @@ class PlayerProfile:
             setattr(self, current_ability[0], current_ability[1])
         else:
             keywords = item.item_bonus_stat.split()
-            element_position = globalitems.element_special_names.index(keywords[0])
             if item.item_type == "Y":
                 if keywords[0] in globalitems.boss_list:
                     self.banes[globalitems.boss_list.index(keywords[0])] += 0.5
                 elif keywords[0] == "Human":
                     self.banes[5] += 0.5
                 return
+            element_position = globalitems.element_special_names.index(keywords[0])
             if item.item_type == "G":
                 self.elemental_multiplier[element_position] += 0.25
                 return
@@ -665,8 +665,10 @@ def df_to_player(row):
         temp.player_username = str(row["player_username"].values[0])
         temp.player_lvl, temp.player_exp = int(row['player_lvl'].values[0]), int(row['player_exp'].values[0])
         temp_string = str(row['quest_tokens'].values[0])
-        temp.player_echelon, temp.player_quest = int(row['player_echelon'].values[0]), int(row['player_quest'].values[0])
-        temp.player_stamina, temp.player_coins = int(row['player_stamina'].values[0]), int(row['player_coins'].values[0])
+        temp.player_echelon, temp.player_quest = int(row['player_echelon'].values[0]), int(
+            row['player_quest'].values[0])
+        temp.player_stamina, temp.player_coins = int(row['player_stamina'].values[0]), int(
+            row['player_coins'].values[0])
         temp.player_class = str(row['player_class'].values[0])
         temp.vouch_points = int(row['vouch_points'].values[0])
     string_list = temp_string.split(';')

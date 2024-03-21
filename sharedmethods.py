@@ -1,7 +1,10 @@
-# General imports
-import globalitems
+# General import
 import discord
 from discord.utils import get
+import pandas as pd
+
+# Data imports
+import globalitems
 
 # Core imports
 import player
@@ -27,12 +30,12 @@ async def send_notification(ctx_object, player_obj, notification_type, value):
     channel_object = discord.utils.get(channels, id=globalitems.channel_list[0])
     match notification_type:
         case "Level":
-            message = f"{player_obj.player_username} Level Up: Level {player_obj.player_lvl}!"
+            message = f"{player_obj.player_username} - Level Up: Level {player_obj.player_lvl}!"
         case "Achievement":
-            message = f"{player_obj.player_username} Achievement Acquired: {value}!"
+            message = f"{player_obj.player_username} - Achievement Acquired: {value}!"
         case "Item":
             item = inventory.BasicItem(value)
-            message = f"{player_obj.player_username} Rare Item Acquired: {item.item_name}"
+            message = f"{player_obj.player_username} - Ultra Rare Item Acquired: {item.item_name}"
         case _:
             pass
     await channel_object.send(message)
@@ -57,7 +60,7 @@ def get_gear_thumbnail(item):
         item_tag = "Wings"
     elif item.item_type == "C":
         item_tag = "Crest"
-    elif item.item_type == "D":
+    elif "D" in item.item_type:
         item_tag = "Jewel"
     # Ensure image is currently available.
     if item_tag not in globalitems.availability_list:
@@ -66,20 +69,14 @@ def get_gear_thumbnail(item):
 
 
 def get_gear_tier_colours(base_tier):
-    # Hex color codes for each tier: [Dark Gray, Green, Blue, Purple, Gold, Red, Pink, White, Black]
-    tier_colors = {0: 0x2C2F33, 1: 0x43B581, 2: 0x3498DB, 3: 0x9B59B6, 4: 0xF1C40F,
-                   5: 0xCC0000, 6: 0xE91E63, 7: 0xFFFFFF, 8: 0x000000, 9: 0x000000}
-    return tier_colors[base_tier], globalitems.augment_icons[max(8, min(0, base_tier - 1))]
+    return globalitems.tier_colors[base_tier], globalitems.augment_icons[min(8, max(0, base_tier - 1))]
 
 
 def reset_all_cooldowns():
-    try:
-        pandora_db = mydb.start_engine()
-        raw_query = "DELETE FROM CommandCooldowns"
-        pandora_db.run_query(raw_query)
-        pandora_db.close_engine()
-    except mysql.connector.Error as err:
-        print("Database Error: {}".format(err))
+    pandora_db = mydb.start_engine()
+    raw_query = "DELETE FROM CommandCooldowns"
+    pandora_db.run_query(raw_query)
+    pandora_db.close_engine()
 
 
 def display_hp(current_hp, max_hp):
@@ -114,6 +111,13 @@ def generate_ramping_reward(success_rate, decay_rate, total_steps):
     return current_step
 
 
+def get_stock_msg(item_object, quantity, cost=1):
+    stock_details = f"{item_object.item_emoji} {quantity}x {item_object.item_name}"
+    if quantity < cost:
+        return f'Insufficient Stock: {stock_details}'
+    return f'Remaining Stock: {stock_details}'
+
+
 def number_conversion(input_number):
     labels = ['', 'K', 'M', 'B', 'T', 'Q', 'Qt',
               'Z', 'Z+', 'Z++', 'Z+++', 'ZZ', 'ZZ+', 'ZZ++', 'ZZ+++',
@@ -130,4 +134,12 @@ def number_conversion(input_number):
     if idx != 0:
         number_msg = f"**{number_msg} {labels[idx]}**"
     return number_msg
+
+
+def list_to_batch(player_obj, item_list):
+    labels = ['player_id', 'item_id', 'item_qty']
+    batch_df = pd.DataFrame(columns=labels)
+    for item_id, item_qty in item_list:
+        batch_df.loc[len(batch_df)] = [player_obj.player_id, item_id, item_qty]
+    return batch_df
 

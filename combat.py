@@ -37,16 +37,8 @@ hp_bar_dict = {1: [t5_hp_bar_full, t5_hp_bar_empty], 2: [t5_hp_bar_full, t5_hp_b
                5: [t5_hp_bar_full, t5_hp_bar_empty], 6: [t5_hp_bar_full, t5_hp_bar_empty],
                7: [t5_hp_bar_full, t5_hp_bar_empty]}
 
-quality_damage_map = {
-    (4, 1): "Prelude", (1, 2): "Fabled", (1, 3): "Heroic", (1, 4): "Mythic", (1, 5): "Legendary",
-    (5, 1): "Prelude", (2, 2): "Abject", (2, 3): "Hollow", (2, 4): "Abyssal", (2, 5): "Emptiness",
-    (6, 1): "Prelude", (3, 2): "Opalescent", (3, 3): "Prismatic", (3, 4): "Resplendent", (3, 5): "Iridescent",
-    (7, 1): "Prelude", (4, 2): "Tainted", (4, 3): "Cursed", (4, 4): "Corrupt", (4, 5): "Fallen",
-    (8, 1): "Prelude", (5, 2): "Majestic", (5, 3): "Sanctified", (5, 4): "Radiant", (5, 5): "Transcendent",
-}
-
 boss_attack_dict = {
-    "Dragon": ["Tearing [ELEMENT] Claws", "[ELEMENT] Wing Blast", "Amplified [ELEMENT] Breath"],
+    "Dragon": ["[ELEMENT] Claw Slash", "[ELEMENT] Wing Blast", "Amplified [ELEMENT] Breath"],
     "Demon": ["Dark Flame", "Abyss Bolt", "Blood Deluge"],
     "Paragon": ["Essence Strike", "Essence Shock", "Essence Destruction"],
     "Arbiter": ["Decree Of Pain", "Revoke Control", "Invoke Authority"],
@@ -91,24 +83,27 @@ class CombatTracker:
         self.player_cHP = player_obj.player_mHP
         self.charges, self.remaining_hits = 0, 0
         self.total_dps, self.highest_damage = 0, 0.0
-        self.player_recovery, self.hp_regen = player_obj.recovery, int(player_obj.hp_regen * player_obj.player_mHP)
+        self.recovery, self.hp_regen = player_obj.recovery, int(player_obj.hp_regen * player_obj.player_mHP)
         self.total_cycles, self.stun_cycles = 0, 0
+        self.status_type, status_recovery = "", ""
         self.time_lock, self.time_damage = 0, 0
         self.bleed_tracker = 0.0
 
 
 def run_cycle(combat_tracker, boss_obj, player_obj, method):
-    class_skill_list = globalitems.skill_names_dict[player_obj.player_class]
     hit_list, total_damage = [], 0
     player_alive, boss_alive = True, True
 
     # Check stun cycles/recovery.
     if combat_tracker.stun_cycles > 0:
         combat_tracker.stun_cycles -= 1
-        battle_msg = f"{player_obj.player_username} is recovering!"
+        battle_msg = (f"{player_obj.player_username} is {combat_tracker.status_type}! "
+                      f"Duration: {combat_tracker.stun_cycles} cycles")
         if combat_tracker.stun_cycles == 0:
-            battle_msg = f"{player_obj.player_username} has recovered!"
-            combat_tracker.player_cHP = player_obj.player_mHP
+            battle_msg = f"{player_obj.player_username} has recovered from {combat_tracker.status_recovery}!"
+            if combat_tracker.status_type == "stunned":
+                combat_tracker.player_cHP = player_obj.player_mHP
+            status_type = ""
         return hit_list, battle_msg, player_alive, boss_alive, total_damage
     # The boss takes action.
     player_alive, boss_action_msg = handle_boss_action(combat_tracker, boss_obj, player_obj)
@@ -125,8 +120,6 @@ def run_cycle(combat_tracker, boss_obj, player_obj, method):
         combat_tracker.remaining_hits -= 1
     for x in range(hits_per_cycle):
         hit_list.append(hit_boss(combat_tracker, boss_obj, player_obj, combo_count))
-        for b in range(player_obj.bleed_application):
-            hit_list.append(trigger_bleed_boss(combat_tracker, boss_obj, player_obj))
         combo_count += 1
         combat_tracker.charges += player_obj.ultimate_application
         if combat_tracker.charges >= 20:
@@ -137,11 +130,14 @@ def run_cycle(combat_tracker, boss_obj, player_obj, method):
         if not boss_obj.calculate_hp():
             boss_alive = False
             break
+    for b in range(player_obj.bleed_application):
+        hit_list.append(trigger_bleed_boss(combat_tracker, boss_obj, player_obj))
 
     # Compile messages
     total_damage = sum(hit[0] for hit in hit_list)
     combat_tracker.total_dps += total_damage
-    battle_msg = f"{player_obj.player_username} - HP: {sharedmethods.display_hp(combat_tracker.player_cHP, player_obj.player_mHP)}"
+    battle_msg = f"{player_obj.player_username} - [HP: {sharedmethods.display_hp(combat_tracker.player_cHP, player_obj.player_mHP)}]"
+    battle_msg += f" - [Recovery: {combat_tracker.recovery}]"
     if method == "Solo":
         battle_msg = f"{boss_action_msg}{battle_msg}"
     return hit_list, battle_msg, player_alive, boss_alive, total_damage
@@ -150,29 +146,29 @@ def run_cycle(combat_tracker, boss_obj, player_obj, method):
 def handle_boss_action(combat_tracker, boss_obj, player_obj):
     boss_msg = ""
     is_alive = True
-    if boss_obj.boss_type_num >= 2:
+    if boss_obj.boss_type_num >= 1:
         # Handle boss attacks.
         boss_element = boss_obj.boss_element if boss_obj.boss_element != 9 else random.randint(0, 8)
-        specific_key = [key for key in boss_attack_exceptions if boss_obj.boss_name in key]
+        specific_key = [key for key in boss_attack_exceptions if key in boss_obj.boss_name]
         if specific_key:
             skill_list = boss_attack_dict[specific_key[0]]
         else:
             skill_list = boss_attack_dict[boss_obj.boss_type]
-        target_index = random.randint(0, len(skills) - 1)
+        target_index = random.randint(0, len(skill_list) - 1)
         skill = skill_list[target_index]
-        if "ELEMENT" in skill:
-            skill.replace("ELEMENT", globalitems.element_names[boss_element])
-        base_set = [250, 250] if "_" in skill else [100, 250]
+        if "[ELEMENT]" in skill:
+            skill = skill.replace("[ELEMENT]", globalitems.element_special_names[boss_element])
+        base_set = [100, 100] if "_" in skill else [25, 50]
         bypass_immortal = True if "**" in skill else False
         skill_bonus = skill_multiplier_list[target_index]
         # Handle boss enrage.
-        if boss_obj.boss_type_num >= 3:
+        if boss_obj.boss_type_num >= 2 and boss_obj.boss_cHP <= int(boss_obj.boss_mHP / 2):
             base_set = [2 * value for value in base_set]
         damage_set = [base_set[0] * boss_obj.boss_level * skill_bonus, base_set[1] * boss_obj.boss_level * skill_bonus]
         is_alive, damage = take_combat_damage(player_obj, combat_tracker, damage_set, boss_element, bypass_immortal)
         boss_msg += f"{boss_obj.boss_name} uses {skill} dealing {sharedmethods.number_conversion(damage)} damage!\n"
     # Handle boss regen.
-    if boss_obj.boss_type_num >= 4:
+    if boss_obj.boss_type_num >= 3:
         boss_healing = int(0.001 * boss_obj.boss_tier * boss_obj.boss_mHP)
         boss_obj.boss_cHP += boss_healing
         if boss_obj.boss_cHP >= boss_obj.boss_mHP:
@@ -197,7 +193,9 @@ def take_combat_damage(player_obj, combat_tracker, damage_set, dmg_element, bypa
         return True, damage
     if combat_tracker.recovery > 0:
         combat_tracker.player_cHP = 0
+        combat_tracker.recovery -= 1
         combat_tracker.stun_cycles = max(1, 10 - player_obj.recovery)
+        combat_tracker.status_type,  combat_tracker.status_recovery = "stunned", "stun"
         return True, damage
     return False, damage
 
@@ -206,7 +204,7 @@ def hit_boss(combat_tracker, boss_obj, player_obj, combo_count, hit_type="Regula
     extension = ""
     update_bleed(combat_tracker, player_obj)
     hit_damage, critical_type = player_obj.get_player_boss_damage(boss_obj)
-    damage, skill_name = skill_adjuster(player_obj, combat_tracker, hit_damage, combo_count, False)
+    damage, skill_name = skill_adjuster(player_obj, combat_tracker, hit_damage, combo_count, (hit_type == "Ultimate"))
     if damage >= boss_obj.damage_cap != -1:
         damage = boss_obj.damage_cap
         extension = " *LIMIT*"
@@ -215,9 +213,7 @@ def hit_boss(combat_tracker, boss_obj, player_obj, combo_count, hit_type="Regula
     hit_msg = f"{combo_count}x Combo: {skill_name} {sharedmethods.number_conversion(damage)}{extension}"
     if hit_type == "Ultimate":
         hit_msg = f"Ultimate: {skill_name} {sharedmethods.number_conversion(damage)}{extension}"
-    hit_extension = f"{status_msg}{second_msg}{critical_type}"
-    if hit_extension != "":
-        hit_msg += f" *{hit_extension}*"
+    hit_msg += f"{status_msg}{second_msg}{critical_type}"
     boss_obj.boss_cHP -= damage
     return [damage, hit_msg]
 
@@ -233,7 +229,9 @@ def trigger_bleed_boss(combat_tracker, boss_obj, player_obj, hit_type="Normal"):
         extension = " *LIMIT*"
     keyword = "Sanguine" if hit_type == "Ultimate" else "Blood"
     bleed_msg = f"{keyword} Rupture: {sharedmethods.number_conversion(damage)}{extension} *{bleed_type}*"
-    return [int(damage * (1 + player_obj.bleed_penetration)), bleed_msg]
+    damage = int(damage * (1 + player_obj.bleed_penetration))
+    boss_obj.boss_cHP -= damage
+    return [damage, bleed_msg]
 
 
 def update_bleed(combat_tracker, player_obj):
@@ -249,10 +247,9 @@ def run_solo_cycle(combat_tracker, boss_obj, player_obj):
                                                                              "Solo")
     combat_tracker.total_cycles += 1
     total_dps = int(combat_tracker.total_dps / combat_tracker.total_cycles)
-    if boss_alive:
-        embed_msg = boss_obj.create_boss_embed(total_dps)
-        embed_msg.add_field(name="", value=battle_msg, inline=False)
-    else:
+    embed_msg = boss_obj.create_boss_embed(total_dps)
+    embed_msg.add_field(name="", value=battle_msg, inline=False)
+    if not boss_alive:
         embed_msg = boss_obj.create_boss_embed(total_dps)
         if boss_obj.boss_tier >= 4:
             quest.assign_unique_tokens(player_obj, boss_obj.boss_name)
@@ -283,7 +280,7 @@ def check_bloom(player_obj, input_damage):
     random_num = random.randint(1, 100)
     if random_num <= int(round(player_obj.specialty_rate[0] * 100)):
         damage = int(damage * player_obj.bloom_multiplier)
-        status_msg = " BLOOM"
+        status_msg = " *BLOOM*"
     return damage, status_msg
 
 
@@ -295,10 +292,10 @@ def check_lock(player_obj, combat_tracker, damage):
         if random_lock_chance <= lock_rate:
             if player_obj.unique_glyph_ability[6]:
                 damage *= damage * (player_obj.temporal_application + 1)
-                status_msg = " TIME SHATTER"
+                status_msg = " *TIME SHATTER*"
             else:
                 combat_tracker.time_lock = player_obj.temporal_application + 1
-                status_msg = " TIME LOCK"
+                status_msg = " *TIME LOCK*"
     elif combat_tracker.time_lock > 0:
         combat_tracker.time_lock -= 1
         combat_tracker.time_damage += damage
@@ -320,7 +317,7 @@ def boss_defences(method, player_obj, boss_object, location):
             curse_penalty = boss_object.curse_debuffs[location]
             type_multiplier += curse_penalty
     else:
-        location = globalitems.class_name_list.index(player_obj.player_class)
+        location = globalitems.class_names.index(player_obj.player_class)
         if boss_object.boss_typeweak[location] == 1:
             type_multiplier = 1
     return type_multiplier
@@ -336,24 +333,23 @@ def critical_check(player_obj, player_damage, num_elements):
     random_num = random.randint(1, 100)
     if random_num <= (player_obj.elemental_application * 5 + int(round(player_obj.specialty_rate[3] * 100))):
         player_damage *= num_elements
-        critical_type = " FRACTAL"
+        critical_type = " *FRACTA*L"
     elif random_num < player_obj.critical_chance:
         player_damage *= (1 + player_obj.critical_multiplier)
         omega_chance = player_obj.critical_application * 3 + int(round(player_obj.specialty_rate[2] * 100))
         omega_check = random.randint(1, 100)
         if omega_check <= omega_chance:
-            critical_type = " OMEGA CRITICAL"
+            critical_type = " *OMEGA CRITICAL*"
             player_damage *= (1 + player_obj.critical_multiplier)
         else:
-            critical_type = " CRITICAL"
+            critical_type = " *CRITICAL*"
         player_damage *= (1 + player_obj.critical_penetration)
     else:
         critical_type = ""
     return player_damage, critical_type
 
 
-def skill_adjuster(player_obj, combat_tracker, hit_damage,
-                   combo_count, is_ultimate):
+def skill_adjuster(player_obj, combat_tracker, hit_damage, combo_count, is_ultimate):
     class_skill_list = globalitems.skill_names_dict[player_obj.player_class]
     combo_multiplier = (1 + (player_obj.combo_multiplier * combo_count)) * (1 + player_obj.combo_penetration)
     if is_ultimate:

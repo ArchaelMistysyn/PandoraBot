@@ -35,32 +35,36 @@ recipe_dict = {
         "Elemental Origin (Celestial)": ["OriginZ", 1, "Fae8", 500, 80, "Origin8"]},
 
     "Void Infusion": {
-        "Void Core": ["Fragment1", 50, "Heart1", 1, 50, "Core1"],
+        "Void Core": ["Fragment1", 10, "Heart1", 1, 95, "Core1"],
+        "Fragmentized Void": ["Scrap", 5, "Stone5", 1, 100, "Fragment1"],
         "Void Pearl": ["Pearl1", 1, "Core1", 1, 90, "Pearl2"],
         "Void Hammer": ["Hammer1", 1, "Core1", 1, 90, "Hammer2"],
         "Unrefined Void Item (Weapon)": ["Crystal1", 1, "Core1", 10, 99, "Void1"],
         "Unrefined Void Item (Armour)": ["Scrap", 100, "Core1", 5, 99, "Void2"],
-        "Unrefined Void Item (Amulet)": ["Scrap", 100, "Core1", 5, 99, "Void3"],
-        "Unrefined Void Item (Wing)": ["Unrefined1", 10, "Core1", 5, 99, "Void4"],
-        "Unrefined Void Item (Crest)": ["Unrefined3", 10, "Core1", 5, 99, "Void5"],
+        "Unrefined Void Item (Vambraces)": ["Unrefined2", 10, "Core1", 5, 99, "Void3"],
+        "Unrefined Void Item (Amulet)": ["Scrap", 100, "Core1", 5, 99, "Void4"],
+        "Unrefined Void Item (Wing)": ["Unrefined1", 10, "Core1", 5, 99, "Void5"],
+        "Unrefined Void Item (Crest)": ["Unrefined3", 10, "Core1", 5, 99, "Void6"],
         "Crystallized Void": ["Core1", 2, "Fragment1", 25, 25, "Crystal1"]},
 
     "Wish Infusion": {
-        "Wish Core": ["Core1", 1, "Fragment2", 5, 50, "Core2"],
-        "Radiant Heart": ["Stone5", 1, "Fragment2", 1, 1, "Heart1"],
-        "Fragmentized Wish (Scrap)": ["Scrap", 50, "Stone4", 1, 100, "Fragment2"],
+        "Wish Core": ["Core1", 1, "Fragment2", 10, 95, "Core2"],
+        "Fragmentized Wish": ["Scrap", 5, "Fragment1", 5, 100, "Fragment2"],
+        "Radiant Heart": ["Stone5", 1, "Fragment2", 1, 5, "Heart1"],
         "Crystallized Wish": ["Core2", 2, "Fragment2", 25, 25, "Crystal2"]},
 
     "Abyss Infusion": {
-        "Abyss Core": ["Core2", 1, "Fragment3", 50, 50, "Core4"],
-        "Chaos Heart": ["Stone5", 1, "Fragment3", 1, 1, "Heart2"],
+        "Abyss Core": ["Core2", 1, "Fragment3", 20, 95, "Core4"],
+        "Fragmentized Abyss": ["Scrap", 5, "Fragment2", 5, 100, "Fragment3"],
+        "Chaos Heart": ["Stone5", 1, "Fragment3", 1, 5, "Heart2"],
         "Abyss Flame": ["Flame1", 10, "Heart2", 1, 10, "Flame2"],
         "Crystallized Abyss": ["Core3", 2, "Fragment3", 25, 25, "Crystal3"]},
 
     "Divine Infusion": {
-        "Divinity Core (Fragment)": ["Core3", 1, "Fragment4", 50, 50, "Core4"],
+        "Divinity Core (Fragment)": ["Core3", 1, "Fragment4", 20, 95, "Core4"],
         "Divinity Core (Radiant)": ["OriginZ", 1, "Heart1", 1, 1, "Core4"],
         "Divinity Core (Chaos)": ["OriginZ", 1, "Heart2", 1, 1, "Core4"],
+        "Fragmentized Divinity": ["Scrap", 5, "Fragment3", 5, 100, "Fragment4"],
         "Crystallized Divinity": ["Core4", 2, "Fragment4", 25, 25, "Crystal4"],
         "Lotus of Serenity": ["Heart1", 99, "Fragment2", 99, 99, "Lotus2"],
         "Twin Rings of Divergent Stars": ["DarkStar", 1, "LightStar", 1, 100, "TwinRings"]}
@@ -190,67 +194,55 @@ class CraftView(discord.ui.View):
         super().__init__(timeout=None)
         self.player_user = player_user
         self.recipe_object = recipe_object
-        self.is_paid = False
+        self.embed_msg, self.new_view = None, None
 
-    def run_button(self, selected_qty):
-        reload_player = player.get_player_by_id(self.player_user.player_id)
+    async def run_button(self, interaction, selected_qty):
+        if interaction.user.id != self.player_user.discord_id:
+            return
+        self.player_user.reload_player()
         embed_title = "Cloaked Alchemist, Sangam"
-        if self.recipe_object.can_afford(reload_player, selected_qty):
-            if not self.is_paid:
-                result = self.recipe_object.perform_infusion(reload_player, selected_qty)
-                self.is_paid = True
-            if result > 0:
-                outcome_item = self.recipe_object.outcome_item
-                embed_description = "Infusion Successful!"
-                embed_description += f"\n{outcome_item.item_emoji} {result}x {outcome_item.item_name}"
-            else:
-                embed_description = "Infusion Failed! I guess it's just not your day today."
-            embed_msg = discord.Embed(colour=discord.Colour.dark_orange(),
-                                      title=embed_title,
-                                      description=embed_description)
-            new_view = CraftView(reload_player, self.recipe_object)
-        else:
-            embed_msg = discord.Embed(colour=discord.Colour.dark_orange(),
-                                      title="Not Enough Materials!",
+        if self.embed_msg is not None:
+            await interaction.response.edit_message(embed=self.embed_msg, view=self.new_view)
+            return
+        # Handle cannot afford response
+        if not self.recipe_object.can_afford(self.player_user, selected_qty):
+            embed_msg = discord.Embed(colour=discord.Colour.dark_orange(), title="Not Enough Materials!",
                                       description="Please come back when you have more materials.")
-            new_view = InfuseView(reload_player)
-        return embed_msg, new_view
+            new_view = InfuseView(self.player_user)
+            await interaction.response.edit_message(embed=embed_msg, view=new_view)
+            return
+        # Handle can afford response
+        result = self.recipe_object.perform_infusion(self.player_user, selected_qty)
+        self.new_view = CraftView(self.player_user, self.recipe_object)
+        if result > 0:
+            outcome_item = self.recipe_object.outcome_item
+            embed_description = f"Infusion Successful!\n{outcome_item.item_emoji} {result:,}x {outcome_item.item_name}"
+            self.embed_msg = discord.Embed(colour=discord.Colour.dark_orange(), title=embed_title, description=embed_description)
+            await interaction.response.edit_message(embed=self.embed_msg, view=self.new_view)
+            return
+        # Handle failure
+        embed_description = "Infusion Failed! I guess it's just not your day today."
+        embed_msg = discord.Embed(colour=discord.Colour.dark_orange(), title=embed_title, description=embed_description)
+        new_view = CraftView(reload_player, self.recipe_object)
+        await interaction.response.edit_message(embed=self.embed_msg, view=self.new_view)
 
     @discord.ui.button(label="Infuse 1", style=discord.ButtonStyle.success, emoji="1️⃣")
     async def infuse_1(self, interaction: discord.Interaction, button: discord.Button):
-        try:
-            if interaction.user.id == self.player_user.discord_id:
-                embed_msg, new_view = self.run_button(1)
-                await interaction.response.edit_message(embed=embed_msg, view=new_view)
-        except Exception as e:
-            print(e)
+        await self.run_button(interaction, 1)
 
     @discord.ui.button(label="Infuse 5", style=discord.ButtonStyle.success, emoji="5️⃣")
     async def infuse_5(self, interaction: discord.Interaction, button: discord.Button):
-        try:
-            if interaction.user.id == self.player_user.discord_id:
-                embed_msg, new_view = self.run_button(5)
-                await interaction.response.edit_message(embed=embed_msg, view=new_view)
-        except Exception as e:
-            print(e)
+        await self.run_button(interaction, 5)
 
     @discord.ui.button(label="Infuse 10", style=discord.ButtonStyle.success, emoji="🔟")
     async def infuse_10(self, interaction: discord.Interaction, button: discord.Button):
-        try:
-            if interaction.user.id == self.player_user.discord_id:
-                embed_msg, new_view = self.run_button(10)
-                await interaction.response.edit_message(embed=embed_msg, view=new_view)
-        except Exception as e:
-            print(e)
+        await self.run_button(interaction, 10)
 
     @discord.ui.button(label="Reselect", style=discord.ButtonStyle.blurple, emoji="↩️")
     async def reselect_callback(self, interaction: discord.Interaction, button: discord.Button):
-        try:
-            if interaction.user.id == self.player_user.discord_id:
-                embed_msg = discord.Embed(colour=discord.Colour.dark_orange(),
-                                          title="Black Market",
-                                          description="Everything has a price.")
-                new_view = InfuseView(self.player_user)
-                await interaction.response.edit_message(embed=embed_msg, view=new_view)
-        except Exception as e:
-            print(e)
+        if interaction.user.id != self.player_user.discord_id:
+            return
+        embed_msg = discord.Embed(colour=discord.Colour.dark_orange(),
+                                  title="Black Market", description="Everything has a price.")
+        new_view = InfuseView(self.player_user)
+        await interaction.response.edit_message(embed=embed_msg, view=new_view)

@@ -1,9 +1,18 @@
+# General imports
 import discord
+
+# Data imports
 import globalitems
+import sharedmethods
+
+# Core imports
 import inventory
+
+# Item/crafting imports
 import itemrolls
 
-pact_variants = {"Wrath": [["Attack Speed Bonus", "Elemental Capacity"], ["Mitigation Bonus", "Base Luck"]],
+
+pact_variants = {"Wrath": [["Attack Speed Bonus", "Elemental Capacity"], ["Mitigation Bonus", "Luck Bonus"]],
                  "Sloth": [["Recovery", "Max HP"], ["Attack Speed", "Max Stamina"]],
                  "Greed": [["Specialty Rate Bonus", "Coin Acquisition"], ["Charge Generation", "EXP Acquisition"]],
                  "Gluttony": [["Charge Generation", "EXP Acquisition"], ["Elemental Capacity", "Coin Acquisition"]],
@@ -30,10 +39,10 @@ class Pact:
         self.pact_demon = demon_variants[self.pact_tier]
         self.pact_variant = pact_data[1]
         self.pact_name = f"{self.pact_demon} Pact [{self.pact_variant}]"
-        for bonus_index, bonus in enumerate(pact_variants[self.pact_variant][0]):
-            self.pact_bonuses += f"Double {bonus[bonus_index]}\n"
-        for penalty_index, penalty in enumerate(pact_variants[self.pact_variant][1]):
-            self.pact_bonuses += f"Halve {penalty[penalty_index]}\n"
+        for bonus in pact_variants[self.pact_variant][0]:
+            self.pact_bonuses += f"Double {bonus}\n"
+        for penalty in pact_variants[self.pact_variant][1]:
+            self.pact_bonuses += f"Halve {penalty}\n"
         self.roll_1 = itemrolls.ItemRoll(f"{self.pact_tier}-damage-13")
         self.roll_2 = itemrolls.ItemRoll(f"{self.pact_tier}-unique-4-s")
         self.pact_bonuses += f"{self.roll_1.roll_msg}\n{self.roll_2.roll_msg}"
@@ -48,7 +57,7 @@ def assign_pact_values(player_obj):
         case "Wrath":
             player_obj.attack_speed *= 2
             player_obj.elemental_capacity *= 2
-            player_obj.luck = int(round(player_obj.luck / 2))
+            player_obj.luck_bonus = int(round(player_obj.luck_bonus / 2))
             player_obj.mitigation_bonus = int(round(player_obj.mitigation_bonus / 2))
         case "Sloth":
             player_obj.player_mHP *= 2
@@ -62,7 +71,7 @@ def assign_pact_values(player_obj):
             player_obj.elemental_capacity = int(round(player_obj.elemental_capacity / 2))
         case "Envy":
             player_obj.final_damage *= 2
-            player_obj.luck *= 2
+            player_obj.luck_bonus *= 2
             player_obj.player_mHP = int(round(player_obj.player_mHP / 2))
             player_obj.recovery = int(round(player_obj.recovery / 2))
         case "Pride":

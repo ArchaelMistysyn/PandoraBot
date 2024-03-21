@@ -1,11 +1,14 @@
-import pandorabot
-import player
+# General imports
 import discord
 from discord.ext.commands import Bot
 from discord.ext import commands, tasks
-import menus
-import pact
 import asyncio
+
+# Core imports
+import player
+
+# Item/crafting imports
+import pact
 
 
 class StaminaCog(commands.Cog):

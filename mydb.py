@@ -25,12 +25,13 @@ class Database:
                 output = pd.read_sql(query, self.database, params=params)
                 return output
             # Handle query with no return value
-            execution_params = params if params is not None else {}
             if batch and params is not None:
                 with self.database.begin() as trans:
-                    trans.execute(query, execution_params)
-                return
-            self.database.execute(query, execution_params)
+                    for param_set in params:
+                        self.database.execute(query, param_set)
+            else:
+                execution_params = params if params is not None else {}
+                self.database.execute(query, execution_params)
         except mysql.connector.Error as err:
             print("Database Error: {}".format(err))
 

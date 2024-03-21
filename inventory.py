@@ -13,10 +13,8 @@ import itemdata
 
 # Core imports
 import player
-import quest
 import inventory
 import mydb
-import combat
 
 # Item/crafting imports
 import loot
@@ -25,12 +23,14 @@ import tarot
 
 
 # Inventory Dictionaries.
-custom_item_dict = {"W": "Weapon", "A": "Armour", "V": "Vambraces", "Y": "Amulet", "G": "Wing", "C": "Crest",
+custom_item_dict = {"W": "Weapon", "A": "Armour", "V": "Vambraces",
+                    "Y": "Amulet", "G": "Wings", "C": "Crest", "D": "Gems",
                     "D1": "Dragon Heart Gem", "D2": "Demon Heart Gem", "D3": "Paragon Heart Gem",
                     "D4": "Arbiter Heart Gem", "D5": "Incarnate Heart Gem", "T": "Tarot Card"}
 item_loc_dict = {'W': 0, 'A': 1, 'V': 2, 'Y': 3, 'G': 4, 'C': 5, 'D': 6}
-item_type_dict = {0: "Weapon", 1: "Armour", 2: "Vambraces", 3: "Amulet", 4: "Wings", 5: "Crest"}
+item_type_dict = {0: "Weapon", 1: "Armour", 2: "Vambraces", 3: "Amulet", 4: "Wings", 5: "Crest", 6: "Gems"}
 reverse_item_dict = {v: k for k, v in item_type_dict.items()}
+reverse_item_loc_dict = {v: k for k, v in item_loc_dict.items()}
 
 # Name Keyword Dictionaries.
 tier_keywords = {0: "Error", 1: "Lesser", 2: "Greater", 3: "Superior", 4: "Crystal",
@@ -68,33 +68,33 @@ class BInventoryView(discord.ui.View):
             discord.SelectOption(
                 emoji="<a:eenergy:1145534127349706772>", label="Unprocessed", description="Unprocessed Items"),
             discord.SelectOption(
-                emoji="<a:eenergy:1145534127349706772>", label="Misc", description="Misc Items")
+                emoji="<a:eenergy:1145534127349706772>", label="Essences", description="Essence Items"),
+            discord.SelectOption(
+                emoji="<a:eenergy:1145534127349706772>", label="Summoning", description="Summoning Items"),
+            discord.SelectOption(
+                emoji="<a:eenergy:1145534127349706772>", label="Misc", description="Misc Items"),
+            discord.SelectOption(
+                emoji="<a:eenergy:1145534127349706772>", label="Ultra Rare", description="Unprocessed Items")
         ]
     )
     async def inventory_callback(self, interaction: discord.Interaction, inventory_select: discord.ui.Select):
-        try:
-            if interaction.user.id == self.user.discord_id:
-                inventory_title = f'{self.user.player_username}\'s {inventory_select.values[0]} Inventory:\n'
-                player_inventory = display_binventory(self.user.player_id, inventory_select.values[0])
+        if interaction.user.id == self.user.discord_id:
+            inventory_title = f'{self.user.player_username}\'s {inventory_select.values[0]} Inventory:\n'
+            player_inventory = display_binventory(self.user.player_id, inventory_select.values[0])
 
-                new_embed = discord.Embed(colour=discord.Colour.dark_orange(),
-                                          title=inventory_title, description=player_inventory)
-                await interaction.response.edit_message(embed=new_embed)
-        except Exception as e:
-            print(e)
+            new_embed = discord.Embed(colour=discord.Colour.dark_orange(),
+                                      title=inventory_title, description=player_inventory)
+            await interaction.response.edit_message(embed=new_embed)
 
     @discord.ui.button(label="Gear", style=discord.ButtonStyle.blurple, emoji="✅")
     async def toggle_callback(self, interaction: discord.Interaction, button: discord.Button):
-        try:
-            if interaction.user.id == self.user.discord_id:
-                new_view = CInventoryView(self.user)
-                inventory_title = f'{self.user.player_username}\'s Equipment:\n'
-                player_inventory = display_cinventory(self.user.player_id, "W")
-                new_embed = discord.Embed(colour=discord.Colour.dark_orange(),
-                                          title=inventory_title, description=player_inventory)
-                await interaction.response.edit_message(embed=new_embed, view=new_view)
-        except Exception as e:
-            print(e)
+        if interaction.user.id == self.user.discord_id:
+            new_view = CInventoryView(self.user)
+            inventory_title = f'{self.user.player_username}\'s Equipment:\n'
+            player_inventory = display_cinventory(self.user.player_id, "W")
+            new_embed = discord.Embed(colour=discord.Colour.dark_orange(),
+                                      title=inventory_title, description=player_inventory)
+            await interaction.response.edit_message(embed=new_embed, view=new_view)
 
 
 class CInventoryView(discord.ui.View):
@@ -103,9 +103,9 @@ class CInventoryView(discord.ui.View):
         self.user = user
         select_options = [
             discord.SelectOption(
-                emoji="<a:eenergy:1145534127349706772>", label=custom_item_dict[key], value=item_type_dict[value],
+                emoji="<a:eenergy:1145534127349706772>", label=custom_item_dict[key], value=reverse_item_loc_dict[value],
                 description=f"{custom_item_dict[key]} storage"
-            ) for key, value in list(item_loc_dict.items())[:-1]
+            ) for key, value in list(item_loc_dict.items())
         ]
         self.select_menu = discord.ui.Select(
             placeholder="Select crafting base.", min_values=1, max_values=1, options=select_options)
@@ -150,12 +150,12 @@ class CustomItem:
 
         # Initialize associated default values.
         self.item_num_rolls, self.item_roll_values = 0, []
-        self.item_base_stat, self.item_bonus_stat = 0, ""
+        self.item_base_stat, self.item_bonus_stat = 0.0, ""
         self.item_damage_min, self.item_damage_max = 0, 0
         self.item_num_sockets, self.item_inlaid_gem_id = 0, 0
 
         # Generate an item type and base.
-        self.item_damage_type = random.choice(list(globalitems.class_name_list))
+        self.item_damage_type = random.choice(list(globalitems.class_names))
         self.item_base_type = ""
         self.generate_base()
 
@@ -235,9 +235,9 @@ class CustomItem:
             'id_check': int(self.item_id),
             'input_1': int(self.player_owner),'input_2': str(self.item_type), 'input_3': str(self.item_name),
             'input_4': str(self.item_damage_type), 'input_5': str(item_elements), 'input_6': int(self.item_enhancement),
-            'input_7': int(self.item_tier), 'input_8': str(self.item_quality_tier),
+            'input_7': int(self.item_tier), 'input_8': int(self.item_quality_tier),
             'input_9': str(self.item_base_type), 'input_10': str(item_roll_values),
-            'input_11': int(self.item_base_stat), 'input_12': str(self.item_bonus_stat),
+            'input_11': str(self.item_base_stat), 'input_12': str(self.item_bonus_stat),
             'input_13': int(self.base_damage_min), 'input_14': int(self.base_damage_max),
             'input_15': int(self.item_num_sockets), 'input_16': int(self.item_inlaid_gem_id)
         }
@@ -253,7 +253,7 @@ class CustomItem:
         if (self.item_damage_type == "Summoner" or self.item_damage_type == "Rider") and self.item_type == "W":
             target_list = summon_tier_keywords
         tier_keyword = target_list[self.item_tier]
-        quality_name = combat.quality_damage_map[max(4, self.item_tier), self.item_quality_tier]
+        quality_name = globalitems.quality_damage_map[max(4, self.item_tier), self.item_quality_tier]
         item_name = f"+{self.item_enhancement} {tier_keyword} {self.item_base_type} [{quality_name}]"
         self.item_name = item_name
 
@@ -272,10 +272,11 @@ class CustomItem:
         # Handle weapon items.
         if self.item_type == "W":
             self.set_base_attack_speed()
-            class_checker = globalitems.class_name_list.index(self.item_damage_type)
-            target_list = globalitems.weapon_list_low[class_checker][self.item_tier - 1]
+            class_checker = globalitems.class_names.index(self.item_damage_type)
             if self.item_tier >= 5:
                 target_list = globalitems.weapon_list_high[class_checker]
+            else:
+                target_list = globalitems.weapon_list_low[class_checker][self.item_tier - 1]
             self.item_base_type = random.choice(target_list)
             return
 
@@ -284,13 +285,13 @@ class CustomItem:
         match self.item_type:
             case "A":
                 self.set_base_damage_mitigation()
-                self.item_base_type = armour_base_dict[max(5, self.item_tier)]
+                self.item_base_type = armour_base_dict[min(5, self.item_tier)]
             case "V":
                 self.item_base_type = "Vambraces"
             case "Y":
                 self.item_base_type = "Amulet" if self.item_tier >= 5 else "Necklace"
             case "G":
-                self.item_base_type = wing_tier_variants[(self.item_tier - 2)]
+                self.item_base_type = wing_base_dict[self.item_tier]
             case "C":
                 self.item_base_type = random.choice(crest_base_list)
                 if self.item_tier >= 5:
@@ -340,9 +341,9 @@ class CustomItem:
             e_gem = read_custom_item(gem_id)
             if e_gem is not None:
                 e_gem = read_custom_item(gem_id)
-                display_stars += f" Socket: {globalitems.augment_icons[e_gem.item_tier]} {gem_id}"
+                display_stars += f" Socket: {globalitems.augment_icons[e_gem.item_tier]} ({gem_id})"
                 gem_min, gem_max = e_gem.item_damage_min, e_gem.item_damage_max
-            elif self.item_num_sockets == 0:
+            elif self.item_num_sockets != 0:
                 display_stars += " Socket: <:esocket:1148387477615300740>"
         damage_min, damage_max = str(gem_min + self.item_damage_min), str(gem_max + self.item_damage_max)
         damage_bonus = f'Base Damage: {int(damage_min):,} - {int(damage_max):,}'
@@ -358,15 +359,19 @@ class CustomItem:
             embed_msg.set_thumbnail(url=thumbnail_url)
         else:
             frame_url = globalitems.frame_icon_list[self.item_tier - 1]
+            frame_url = frame_url.replace("[EXT]", globalitems.frame_extension[0])
             embed_msg.set_thumbnail(url=frame_url)
         return embed_msg
 
     def update_damage(self):
+        if "D" in self.item_type:
+            self.item_damage_min, self.item_damage_max = self.base_damage_min, self.base_damage_max
+            return
         # calculate item's damage per hit
         enh_multiplier = 1 + self.item_enhancement * (0.01 * self.item_tier)
         quality_damage = 1 + (self.item_quality_tier * 0.2)
-        self.item_damage_min = int((self.base_damage_min + quality_damage) * enh_multiplier)
-        self.item_damage_max = int((self.base_damage_max + quality_damage) * enh_multiplier)
+        self.item_damage_min = int(self.base_damage_min * quality_damage * enh_multiplier)
+        self.item_damage_max = int(self.base_damage_max * quality_damage * enh_multiplier)
 
     def give_item(self, new_owner):
         self.player_owner = new_owner
@@ -444,11 +449,10 @@ def read_custom_item(item_id):
     item.item_quality_tier, item.item_base_type = int(df['item_quality_tier'].values[0]), str(df['item_base_type'].values[0])
     item.item_roll_values = list(df['item_roll_values'].values[0].split(';'))
     item.item_num_rolls = len(item.item_roll_values)
-    item.item_base_stat, item.item_bonus_stat = int(df['item_base_stat'].values[0]), str(df['item_bonus_stat'].values[0])
+    item.item_base_stat, item.item_bonus_stat = float(df['item_base_stat'].values[0]), str(df['item_bonus_stat'].values[0])
     item.base_damage_min, item.base_damage_max = int(df['item_base_dmg_min'].values[0]), int(df['item_base_dmg_max'].values[0])
     item.item_num_sockets, item.item_inlaid_gem_id = int(df['item_num_sockets'].values[0]), int(df['item_inlaid_gem_id'].values[0])
-    if "D" not in item.item_type:
-        item.update_damage()
+    item.update_damage()
     return item
 
 
@@ -466,7 +470,7 @@ def get_tier_damage(item_tier, item_type):
     return min(temp_damage), max(temp_damage)
 
 
-def inventory_add_custom_item(item):
+def add_custom_item(item):
     # Item element string.
     item_elements = ""
     for x in item.item_elements:
@@ -541,11 +545,14 @@ def display_cinventory(player_id, item_type) -> str:
 
 def display_binventory(player_id, method):
     regex_dict = {
-        "Crafting": "^(Matrix|Hammer|Pearl|Origin|Lotus|Star)",
+        "Crafting": "^(Matrix|Hammer|Pearl|Origin)",
         "Cores": "^(Fae|Core)",
-        "Materials": "^(Scrap|Fragment|Ore|Heart|Crystal)",
-        "Unprocessed": "^(Essence|Unrefined|Gem|Jewel|Void)",
-        "Misc": "^(Potion|Trove|Crate|Stone|Token|Summon)"
+        "Materials": "^(Scrap|Ore|Heart|Fragment|Crystal)",
+        "Unprocessed": "^(Unrefined|Gem|Jewel|Void)",
+        "Essences": "^(Essence)",
+        "Summoning": "^(Compass|Summon)",
+        "Misc": "^(Potion|Trove|Crate|Stone|Token)",
+        "Ultra Rare": "^(Lotus|Star)"
     }
     player_inventory = ""
     pandora_db = mydb.start_engine()
@@ -604,31 +611,49 @@ def check_stock(player_obj, item_id):
     return player_stock
 
 
-def update_stock(player_obj, item_id, change):
+def update_stock(player_obj, item_id, change, batch=None):
     pandora_db = mydb.start_engine()
+    if batch is not None:
+        raw_query = ("INSERT INTO BasicInventory (player_id, item_id, item_qty) "
+                     "VALUES (:player_id, :item_id, :item_qty) "
+                     "ON DUPLICATE KEY UPDATE item_qty = item_qty + VALUES(item_qty);")
+        batch_params = batch.to_dict('records')
+        pandora_db.run_query(raw_query, batch=True, params=batch_params)
+        pandora_db.close_engine()
+        return
+    if player_obj is None or item_id is None or change is None:
+        return
     raw_query = ("SELECT item_qty FROM BasicInventory "
                  "WHERE player_id = :id_check AND item_id = :item_check")
     df = pandora_db.run_query(raw_query, True, params={'id_check': player_obj.player_id, 'item_check': item_id})
     raw_query = ("INSERT INTO BasicInventory (player_id, item_id, item_qty) "
                  "VALUES(:player_check, :item_check, :new_qty)")
+    player_stock = change
     if len(df.index) != 0:
         player_stock = int(df['item_qty'].values[0]) + change
         raw_query = ("UPDATE BasicInventory SET item_qty = :new_qty "
                      "WHERE player_id = :player_check AND item_id = :item_check")
-    player_stock = max(change, 0)
+    player_stock = max(player_stock, 0)
     params = {'new_qty': player_stock, 'player_check': player_obj.player_id, 'item_check': item_id}
     pandora_db.run_query(raw_query, params=params)
     pandora_db.close_engine()
 
 
 def try_refine(player_owner, item_type, selected_tier):
-    # Refine max tier 4 item.
+    # Handle flat-tier refinement (Tier 5+ non-gems)
+    if "D" not in item_type and selected_tier >= 5:
+        is_success = False
+        if item_type == "W" or random.randint(1, 100) <= 80:
+            is_success = True
+        new_item = inventory.CustomItem(player_owner, item_type, selected_tier)
+        return new_item, is_success
+    # Refine max tier 4 item
     if selected_tier == 4:
         new_tier = generate_random_tier()
         is_success = True if new_tier != 1 else False
         new_item = inventory.CustomItem(player_owner, item_type, new_tier)
         return new_item, is_success
-    # Refine max tier 8 item.
+    # Refine max tier 8 item
     new_tier = generate_random_tier(min_tier=selected_tier, max_tier=8)
     is_success = True if random.randint(1, 100) <= 75 else False
     new_item = inventory.CustomItem(player_owner, item_type, new_tier)
@@ -678,26 +703,27 @@ def purge(player_obj, tier):
             if e_item.item_inlaid_gem_id != 0:
                 inlaid_gem_list.append(e_item.item_inlaid_gem_id)
     exclusion_list += inlaid_gem_list
-    raw_query = ("SELECT item_tier FROM CustomInventory "
-                 "WHERE player_id = :id_check AND item_tier <= :tier_check AND item_id NOT IN (:excluded_ids)")
-    params = {'id_check': player_obj.player_id, 'tier_check': tier, 'excluded_ids': tuple(exclusion_list)}
+    params = {'id_check': player_obj.player_id, 'tier_check': tier}
+    exclusion_ids = ', '.join([str(item_id) for item_id in exclusion_list])
+    raw_query = (f"SELECT item_tier FROM CustomInventory "
+                 f"WHERE player_id = :id_check AND item_tier <= :tier_check AND item_id NOT IN ({exclusion_ids})")
     df = pandora_db.run_query(raw_query, return_value=True, params=params)
-    raw_query = ("DELETE FROM CustomInventory "
-                 "WHERE player_id = :id_check AND item_tier <= :tier_check AND item_id NOT IN (:excluded_ids)")
-    params = {'id_check': player_obj.player_id, 'tier_check': tier, 'excluded_ids': tuple(exclusion_list)}
-    pandora_db.run_query(raw_query, params=params)
+    delete_query = (f"DELETE FROM CustomInventory "
+                    f"WHERE player_id = :id_check AND item_tier <= :tier_check AND item_id NOT IN ({exclusion_ids})")
+    pandora_db.run_query(delete_query, params=params)
     pandora_db.close_engine()
     result = len(df)
+    coin_total = 0
     for item_tier in df['item_tier']:
         coin_total += inventory.sell_value_by_tier[int(item_tier)]
-    return result, coin_total
+    coin_msg = player_obj.adjust_coins(coin_total)
+    return f"{player_obj.username} sold {result} items and received {globalitems.coin_icon} {coin_msg} lotus coins"
 
 
 def full_inventory_embed(lost_item, embed_colour):
     item_type = custom_item_dict[lost_item.item_type]
-    embed_msg = discord.Embed(colour=embed_colour, title="Inventory Full!",
-                              description=f"Please make space in your {item_type} inventory.")
-    return embed_msg
+    return discord.Embed(colour=embed_colour, title="Inventory Full!",
+                         description=f"Please make space in your {item_type} inventory.")
 
 
 def max_all_items(player_id, quantity):

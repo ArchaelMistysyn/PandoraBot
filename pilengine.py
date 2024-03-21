@@ -53,14 +53,14 @@ class RankCard:
     def __init__(self, user, achievement_list):
         self.user = user
         self.fill_colour = "black"
-        echelon = self.user.player_echelon
+        echelon = (self.user.player_echelon + 1) // 2
         card_loc, metal_loc, wing_loc, exp_bar_loc, icon_loc, frame_loc = (
-            echelon // 2, echelon // 2, echelon // 2, echelon // 2, echelon // 2, echelon // 2)
+            echelon, echelon, echelon, echelon, echelon, echelon)
         if "Exclusive Title Holder" in achievement_list:
             self.fill_colour = "white"
             card_loc, metal_loc, wing_loc, exp_bar_loc = 6, 6, 6, 6
             icon_loc, frame_loc = 7, 7
-            # Check if titleholder is eschelon 5.
+            # Check if titleholder is echelon 5.
             if echelon == 5:
                 card_loc = 5
                 exp_bar_loc = 5
@@ -70,10 +70,10 @@ class RankCard:
                 icon_loc = 8
         # Check if non titleholder is subscriber
         elif "Herrscher - Subscriber" in achievement_list:
-            frame_loc = 6
+            frame_loc = 5
             if echelon < 5:
                 card_loc, exp_bar_loc, wing_loc = 7, 7, 7
-            # Check if subscriber is eschelon 5.
+            # Check if subscriber is echelon 5.
             elif echelon == 5:
                 icon_loc = 6
         self.cardBG = rank_card_url_list[card_loc]
@@ -82,13 +82,14 @@ class RankCard:
         self.exp_bar = exp_bar_url_list[exp_bar_loc]
         self.role_icon = rank_url_list[icon_loc]
         self.frame_icon = globalitems.frame_icon_list[frame_loc]
+        self.frame_icon = self.frame_icon.replace("[EXT]", globalitems.frame_extension[1])
         self.class_icon = sharedmethods.get_thumbnail_by_class(self.user.player_class)
         self.fill_percent = round(self.user.player_exp / player.get_max_exp(self.user.player_lvl), 2)
 
 
 def get_player_profile(player_obj, achievement_list):
     rank_card = RankCard(player_obj, achievement_list)
-    temp_path = f'{image_path}profilecard'
+    temp_path = f'{image_path}profilecard\\'
     font_url = "https://kyleportfolio.ca//botimages/profilecards/fonts/"
     level_font_url = "aerolite/Aerolite.otf"
     # level_font_url = "oranienbaum/Oranienbaum.ttf"
@@ -174,15 +175,14 @@ def generate_and_combine_images(item_type, start_tier=1, end_tier=8, fetch_type=
     for item_tier in range(start_tier, end_tier + 1):
         # Handle the urls and paths.
         frame_url = globalitems.frame_icon_list[item_tier - 1]
+        frame_url = frame_url.replace("[EXT]", globalitems.frame_extension[0])
         icon_url = f"https://kyleportfolio.ca/botimages/itemicons/{item_type}/{item_type}{item_tier}.png"
         output_dir, file_name = f'{image_path}itemicons\\{item_type}\\', f"Framed_{item_type}_{item_tier}.png"
         file_path = f"{output_dir}{file_name}"
-        # Load and size the images.
         frame = Image.open(requests.get(frame_url, stream=True).raw)
-        frame.thumbnail((105, 105), Image.Resampling.LANCZOS)
         icon = Image.open(requests.get(icon_url, stream=True).raw)
         # Construct the new image
-        result = Image.new("RGBA", (105, 105))
+        result = Image.new("RGBA", (106, 106))
         result.paste(frame, (0, 0), frame)
         result.paste(icon, (17, 16), icon)
         result.save(file_path, format="PNG")

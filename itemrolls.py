@@ -368,20 +368,21 @@ class ItemRoll:
         roll_adjust = 0.01 * self.roll_tier
         if self.roll_category != "unique":
             category_dict = item_roll_master_dict[self.roll_category]
-            current_dict = category_dict[0]
-            current_roll = current_dict[self.roll_code]
+            current = category_dict[0]
+            current_roll = current[self.roll_code]
             self.roll_value = current_roll[1] * roll_adjust
             self.roll_msg = f"{current_roll[0]} {int(round(self.roll_value * 100))}%"
-        else:
-            self.roll_code += f"-{roll_details[3]}"
-            current_dict = unique_rolls[roll_details[3]][0]
-            current_roll = current_dict[self.roll_code]
-            self.roll_value = current_roll[1] * roll_adjust
-            temp_msg = f"{current_roll[0]}"
-            if "X" in temp_msg:
-                self.roll_msg = temp_msg.replace("X", str(int(round(self.roll_value * 100))))
-            else:
-                self.roll_msg = f"{temp_msg} {int(round(self.roll_value * 100))}%"
+            self.roll_name = current_roll[0]
+            return
+        # Handle unique roll
+        self.roll_code += f"-{roll_details[3]}"
+        current = unique_skill_rolls if roll_details[3] in globalitems.class_names else unique_rolls[roll_details[3]][0]
+        current_roll = current[self.roll_code]
+        self.roll_value = current_roll[1] * roll_adjust
+        temp_msg = f"{current_roll[0]}"
+        self.roll_msg = f"{temp_msg} {int(round(self.roll_value * 100))}%"
+        if "X" in temp_msg:
+            self.roll_msg = temp_msg.replace("X", str(int(round(self.roll_value * 100))))
         self.roll_name = current_roll[0]
 
 
@@ -496,11 +497,11 @@ def check_augment(selected_item):
     # Calculate the number of augments
     for roll in selected_item.item_roll_values:
         current_roll = ItemRoll(roll)
-        aug_total += roll.roll_tier - 1
+        aug_total += current_roll.roll_tier
     return aug_total
 
 
-def add_augment(selected_item, method):
+def add_augment(selected_item):
     rolls_copy = selected_item.item_roll_values.copy()
     random.shuffle(rolls_copy)
     selected_id = ""
@@ -509,8 +510,7 @@ def add_augment(selected_item, method):
     for roll in rolls_copy:
         current_roll = ItemRoll(roll)
         selected_tier = current_roll.roll_tier
-        if ((current_roll.roll_tier < 4 and method == 0) or
-                (current_roll.roll_tier < 5 and method == 1) or current_roll.roll_tier < 6 and method == 2):
+        if current_roll.roll_tier < selected_item.item_tier:
             selected_id = roll
             break
     # If a roll was selected then upgrade the tier.

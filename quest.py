@@ -22,6 +22,7 @@ class Quest:
                  cost, token_num, item_handin, quest_message,
                  award_item, award_qty, award_role):
         self.quest_num, self.quest_type = quest_num, quest_type
+        self.colour = globalitems.tier_colors[(min(8, quest_num // 5))]
         self.story_message = story_message
         self.cost, self.token_num, self.item_handin = cost, token_num, item_handin
         self.quest_message = quest_message
@@ -36,8 +37,7 @@ class Quest:
             embed_msg = await self.handle_completion(ctx_object, player_obj, progress_count)
             return embed_msg, is_completed
         # Handle incomplete quest hand-in.
-        embed_msg = discord.Embed(colour=discord.Colour.dark_teal(),
-                                  title=self.quest_title, description=self.story_message)
+        embed_msg = discord.Embed(colour=self.colour, title=self.quest_title, description=self.story_message)
         progress_msg = f"{self.quest_message}: {progress_count} / {self.cost}"
         embed_msg.add_field(name="Quest Incomplete", value=progress_msg, inline=False)
         return embed_msg, is_completed
@@ -45,31 +45,31 @@ class Quest:
     def calculate_progress(self, player_obj):
         # Handle Specific Quest Exceptions
         if player_obj.player_quest == 20:
-            return False, 0 if player_obj.insignia == "" else True, 1
+            return (False, 0) if player_obj.insignia == "" else (True, 1)
         elif player_obj.player_quest == 21:
-            return False, 0 if player_obj.pact == "" else True, 1
+            return (False, 0) if player_obj.pact == "" else (True, 1)
         elif player_obj.player_quest == 22:
-            return False, 0 if player_obj.player_equipped[2] == 0 else True, 1
+            return (False, 0) if player_obj.player_equipped[2] == 0 else True, 1
         elif player_obj.player_quest == 28:
-            return False, 0 if player_obj.player_equipped[5] == 0 else True, 1
+            return (False, 0) if player_obj.player_equipped[5] == 0 else True, 1
         elif player_obj.player_quest == 31:
-            return False, 0 if player_obj.equipped_tarot == "" else True, 1
+            return (False, 0) if player_obj.equipped_tarot == "" else (True, 1)
         elif player_obj.player_quest == 51:
             collection_count = tarot.collection_check(player_obj)
-            return True, collection_count if collection_count == 31 else False, collection_count
+            return (True, collection_count) if collection_count == 31 else (False, collection_count)
 
         # Token, Feature Token, or Boss Token Quests.
         if self.quest_type == 0 or self.quest_type == 3:
             progress_count = player_obj.quest_tokens[self.token_num]
-            return progress_count >= self.cost, progress_count
+            return (progress_count >= self.cost), progress_count
         # Level Quests.
         if self.quest_type == 1:
             current_level = player_obj.player_lvl
-            return True, current_level if current_level >= self.cost else False, current_level
+            return (True, current_level) if current_level >= self.cost else (False, current_level)
         # Hand-In Quests.
         if self.quest_type == 2:
             progress_count = inventory.check_stock(player_obj, self.item_handin)
-            return progress_count >= self.cost, progress_count
+            return (progress_count >= self.cost), progress_count
 
     async def handle_completion(self, ctx_object, player_obj, progress_count):
         # Update player data. Handle EXP/Coin Awards.
@@ -93,12 +93,12 @@ class Quest:
             player_obj.player_echelon += 1
             player_obj.set_player_field("player_echelon", player_obj.player_echelon)
             await sharedmethods.send_notification(ctx_object, player_obj, "Achievement", self.award_role)
-        return discord.Embed(colour=discord.Colour.dark_teal(), title="QUEST COMPLETED!", description=rewards)
+        return discord.Embed(colour=self.colour, title="QUEST COMPLETED!", description=rewards)
 
     def get_quest_embed(self, player_obj):
         is_completed, progress_count = self.calculate_progress(player_obj)
         quest_details = f"{self.quest_message}: {progress_count} / {self.cost}"
-        quest_embed = discord.Embed(colour=discord.Colour.dark_teal(), title=self.quest_title, description="")
+        quest_embed = discord.Embed(colour=self.colour, title=self.quest_title, description="")
         quest_giver = "Pandora, The Celestial"
         if player_obj.player_quest in range(49, 54):
             quest_giver = "Echo of __Eleuia, The Wish__"
@@ -110,8 +110,8 @@ class Quest:
 def assign_unique_tokens(player_obj, token_string):
     token_quest_dict = {
         # Boss Tokens
-        "XVI - Aurora, The Fortress": 4, "VII - Astratha, The Dimensional": 6, "VIII - Tyra, The Behemoth": 8,
-        "II - Pandora, The Celestial": 0, "III - Oblivia, The Void": 15, "IV - Akasha, The Infinite": 16,
+        "XVI - Aurora, The Fortress": 4, "VII - Astratha, The Dimensional": 6, "VIII - Tyra, The Behemoth": 11,
+        "II - Pandora, The Celestial": 14, "III - Oblivia, The Void": 15, "IV - Akasha, The Infinite": 16,
         "XXV - Eleuia, The Wish": 19,
         "XXVIII - Fleur, Oracle of the True Laws": 20, "XXIX - Yubelle, Adjudicator of the True Laws": 21,
         "XXX - Amaryllis, Incarnate of the Divine Lotus [Challenger]": 22,
@@ -122,7 +122,7 @@ def assign_unique_tokens(player_obj, token_string):
         "Crest": 12, "Tarot": 13, "Gauntlet": 15, "Abyss": 18, "Meld": 19, "Tarot Completion": 24
     }
     if token_string in token_quest_dict:
-        player_obj.update_tokens(token_quest_dict[token_string], 1)
+        player_obj.update_tokens(token_quest_dict[token_string])
 
 
 def initialize_quest_list():
@@ -139,30 +139,32 @@ class QuestView(discord.ui.View):
         self.ctx_object = ctx_object
         self.player_obj = player_user
         self.quest_object = quest_object
-        self.embed_msg = None
+        self.embed_msg, self.new_view = None, None
 
     @discord.ui.button(label="Hand In", style=discord.ButtonStyle.blurple, emoji="⚔️")
     async def handin_callback(self, interaction: discord.Interaction, button: discord.Button):
         if interaction.user.id != self.player_obj.discord_id:
             return
-        if not self.embed_msg:
-            self.player_obj.reload_player()
-            self.embed_msg, is_completed = await self.quest_object.hand_in(self.ctx_object, self.player_obj)
-            if not is_completed:
-                self.embed_msg.add_field(name="", value="Quest is not completed!", inline=False)
-                quest_view = QuestView(self.ctx_object, self.player_obj, self.quest_object)
-                await interaction.response.edit_message(embed=self.embed_msg, view=quest_view)
-                return
-            # Handle completed quest.
-            reward_view = RewardView(self.ctx_object, self.player_obj)
-            if self.quest_object.award_role is not None:
-                add_role = discord.utils.get(interaction.guild.roles, name=self.quest_object.award_role)
-                await interaction.user.add_roles(add_role)
-                if self.player_obj.player_echelon >= 2:
-                    previous_rolename = globalitems.role_list[(self.player_obj.player_echelon - 2)]
-                    remove_role = discord.utils.get(interaction.guild.roles, name=previous_rolename)
-                    await interaction.user.remove_roles(remove_role)
-            await interaction.response.edit_message(embed=self.embed_msg, view=reward_view)
+        if self.embed_msg is not None:
+            await interaction.response.edit_message(embed=self.embed_msg, view=self.new_view)
+            return
+        self.player_obj.reload_player()
+        self.embed_msg, is_completed = await self.quest_object.hand_in(self.ctx_object, self.player_obj)
+        if not is_completed:
+            self.embed_msg.add_field(name="", value="Quest is not completed!", inline=False)
+            quest_view = QuestView(self.ctx_object, self.player_obj, self.quest_object)
+            await interaction.response.edit_message(embed=self.embed_msg, view=quest_view)
+            return
+        # Handle completed quest.
+        self.new_view = RewardView(self.ctx_object, self.player_obj)
+        if self.quest_object.award_role is not None:
+            add_role = discord.utils.get(interaction.guild.roles, name=self.quest_object.award_role)
+            await interaction.user.add_roles(add_role)
+            if self.player_obj.player_echelon >= 2:
+                previous_rolename = f"Echelon {self.player_obj.player_echelon - 1}"
+                remove_role = discord.utils.get(interaction.guild.roles, name=previous_rolename)
+                await interaction.user.remove_roles(remove_role)
+        await interaction.response.edit_message(embed=self.embed_msg, view=self.new_view)
 
 
 class RewardView(discord.ui.View):
@@ -176,7 +178,7 @@ class RewardView(discord.ui.View):
         if interaction.user.id != self.player_obj.discord_id:
             return
         if self.player_obj.player_quest > 55:
-            embed_msg = discord.Embed(colour=discord.Colour.dark_teal(), title="All Clear!", description="")
+            embed_msg = discord.Embed(colour=discord.Colour.gold(), title="All Clear!", description="")
             await interaction.response.edit_message(embed=embed_msg, view=None)
             return
         current_quest = self.player_obj.player_quest

@@ -230,7 +230,7 @@ def run_discord_bot():
             return
         difference, method_info = player_obj.check_cooldown("manifest")
         colour, _ = sharedmethods.get_gear_tier_colours(player_obj.player_echelon)
-        num_hours = 14 + (player_obj.player_echelon * 2)
+        num_hours = 14 + player_obj.player_echelon
 
         # Handle existing cooldown.
         if difference:
@@ -249,73 +249,126 @@ def run_discord_bot():
         # Load card or handle proxy. Build the embed.
         embed_msg = discord.Embed(colour=colour)
         e_tarot = tarot.TarotCard(player_obj.player_id, "II", 0, 0, 0)
-        if player_obj.equipped_tarot != "":
-            e_tarot = tarot.check_tarot(player_obj.player_id, tarot.card_dict[player_obj.equipped_tarot][0])
-            embed_msg.set_image(url=e_tarot.card_image_link)
-            embed_msg.title = f"Echo of {e_tarot.card_name}"
-            embed_msg.description = "What do you need me to help you with?"
-            display_stars = sharedmethods.display_stars(e_tarot.num_stars)
-            embed_msg.description += f"\nSelected Tarot Rating: {display_stars}"
-        embed_msg.title = "Pandora, The Celestial"
-        embed_msg.description = ("You don't seem to have any tarot cards set to perform echo manifestation. "
-                                 "Let's divide and conquer. I'll handle the task for you. What would you "
-                                 "like me to help with?")
+        if player_obj.equipped_tarot == "":
+            embed_msg.title = "Pandora, The Celestial"
+            embed_msg.description = ("You don't seem to have any tarot cards set to perform echo manifestation. "
+                                     "Let's divide and conquer. I'll handle the task for you. What would you "
+                                     "like me to help with?")
+            new_view = adventure.ManifestView(player_obj, embed_msg, e_tarot, colour, num_hours)
+            await ctx.send(embed=embed_msg, view=new_view)
+            return
+        e_tarot = tarot.check_tarot(player_obj.player_id, tarot.card_dict[player_obj.equipped_tarot][0])
+        embed_msg.set_image(url=e_tarot.card_image_link)
+        embed_msg.title = f"Echo of {e_tarot.card_name}"
+        embed_msg.description = "What do you need me to help you with?"
+        display_stars = sharedmethods.display_stars(e_tarot.num_stars)
+        embed_msg.description += f"\nSelected Tarot Rating: {display_stars}"
         new_view = adventure.ManifestView(player_obj, embed_msg, e_tarot, colour, num_hours)
         await ctx.send(embed=embed_msg, view=new_view)
 
     @set_command_category('game', 5)
-    @pandora_bot.hybrid_command(name='crate', help="Open a crate.")
+    @pandora_bot.hybrid_command(name='crate', help="Open crates.")
     @app_commands.guilds(discord.Object(id=guild_id))
-    async def crate(ctx):
+    async def crate(ctx, quantity="1"):
         player_obj = await sharedmethods.check_registration(ctx)
         if player_obj is None:
             return
         crate_id = "Crate"
         crate_stock = inventory.check_stock(player_obj, crate_id)
-        if crate_stock <= 0:
-            loot_item = inventory.BasicItem(crate_id)
-            await ctx.send(f"Out of stock: {loot_item.item_emoji}!")
+        if not quantity.isnumeric():
+            if quantity != "all":
+                await ctx.send("Enter a valid number or 'all' in the quantity field.")
+                return
+            quantity = crate_stock
+        else:
+            quantity = int(quantity)
+        if quantity <= 0:
+            await ctx.send("Enter a valid number or 'all' in the quantity field.")
             return
-        inventory.update_stock(player_obj, crate_id, -1)
+        if crate_stock < quantity:
+            loot_item = inventory.BasicItem(crate_id)
+            stock_msg = sharedmethods.get_stock_msg(loot_item, crate_stock, quantity)
+            await ctx.send(stock_msg)
+            return
+        inventory.update_stock(player_obj, crate_id, (-1 * quantity))
+        extension = f"Crate{'s' if quantity > 1 else ''}"
+        title_msg = f"{player_obj.player_username}: Opening {quantity} {extension}!"
+        embed_msg = discord.Embed(colour=discord.Colour.dark_teal(), title=title_msg, description="Feeling lucky?")
+        reward_list = loot.generate_random_item(quantity=quantity)
+        loot_description, highest_tier = "", 1
+        for (reward_id, item_qty) in reward_list:
+            reward_object = inventory.BasicItem(reward_id)
+            highest_tier = max(highest_tier, reward_object.item_tier)
+            loot_description += f"{reward_object.item_emoji} {item_qty}x {reward_object.item_name}\n"
+            if "Lotus" in reward_object.item_id or reward_object.item_id in ["DarkStar", "LightStar"]:
+                await sharedmethods.send_notification(ctx, player_obj, "Item", reward_object.item_id)
+        # Update the data and messages.
+        batch_df = sharedmethods.list_to_batch(player_obj, reward_list)
+        inventory.update_stock(None, None, None, batch=batch_df)
+
+        async def open_lootbox(ctx_object, embed, item_tier):
+            sent_msg = await ctx_object.send(embed=embed_msg)
+            opening_chest = ""
+            for t in range(1, item_tier + 1):
+                embed.clear_fields()
+                tier_colour, tier_icon = sharedmethods.get_gear_tier_colours(t)
+                opening_chest += tier_icon
+                embed.add_field(name="", value=opening_chest)
+                await sent_msg.edit(embed=embed)
+                await asyncio.sleep(1)
+            return sent_msg
+
+        message = await open_lootbox(ctx, embed_msg, highest_tier)
         embed_msg = discord.Embed(colour=discord.Colour.dark_teal(),
-                                  title=f"{player_obj.player_username}: Opening Crate!",
-                                  description="What could be inside?")
-        reward_object, quantity = loot.generate_random_item()
-        inventory.update_stock(player_obj, reward_object.item_id, quantity)
-        message = await open_lootbox(ctx, embed_msg, reward_object.item_tier)
-        loot_description = f"{reward_object.item_emoji} {quantity}x {reward_object.item_name}"
-        embed_msg = discord.Embed(colour=discord.Colour.dark_teal(),
-                                  title=f"{player_obj.player_username}: Crate Opened!", description=loot_description)
+                                  title=f"{player_obj.player_username}: {quantity} {extension} Opened!",
+                                  description=loot_description)
         await message.edit(embed=embed_msg)
-        if "Lotus" in reward_object.item_id or reward_object.item_id in ["DarkStar", "LightStar"]:
-            await sharedmethods.send_notification(ctx, player_obj, "Item", reward_object.item_id)
 
     @set_command_category('game', 6)
-    @pandora_bot.hybrid_command(name='trove', help="Open a trove!")
+    @pandora_bot.hybrid_command(name='trove', help="Open all troves!")
     @app_commands.guilds(discord.Object(id=guild_id))
-    async def trove(ctx, trove_tier: int):
+    async def trove(ctx):
         player_obj = await sharedmethods.check_registration(ctx)
         if player_obj is None:
             return
-        if trove_tier not in range(1, 9):
-            await ctx.send(f"Please enter a valid tier.")
+        trove_details = []
+        total_stock = 0
+        # Get the trove data.
+        for trove_tier in range(8):
+            trove_id = f"Trove{trove_tier + 1}"
+            stock_count = inventory.check_stock(player_obj, trove_id)
+            total_stock += stock_count
+            trove_details.append((trove_id, (-1 * stock_count)))
+        # Check that there are troves before consuming the trove items.
+        if total_stock <= 0:
+            await ctx.send(f"No troves in inventory.")
             return
-        trove_id = f"Trove{trove_tier}"
-        loot_item = inventory.BasicItem(trove_id)
-        trove_stock = inventory.check_stock(player_obj, trove_id)
-        if trove_stock <= 0:
-            await ctx.send(f"Out of stock: {loot_item.item_emoji}!")
-            return
-        inventory.update_stock(player_obj, trove_id, -1)
-        embed_msg = discord.Embed(colour=discord.Colour.dark_teal(),
-                                  title=f"{player_obj.player_username}: Opening {loot_item.item_name}!",
-                                  description="Feeling lucky today?")
-        reward_coins = loot.generate_trove_reward(trove_tier)
-        coin_msg = player_obj.adjust_coins(reward_coins)
-        message = await open_lootbox(ctx, embed_msg, trove_tier)
-        loot_description = f"{globalitems.coin_icon} {coin_msg} lotus coins!"
-        embed_msg = discord.Embed(colour=discord.Colour.dark_teal(),
-                                  title=f"{player_obj.player_username}: Trove Opened!", description=loot_description)
+        trove_df = sharedmethods.list_to_batch(player_obj, trove_details)
+        inventory.update_stock(None, None, None, batch=trove_df)
+        # Build the message.
+        extension = f"Trove{'s' if total_stock > 1 else ''}"
+        title_msg = f"{player_obj.player_username}: Opening {total_stock:,} {extension}!"
+        embed_msg = discord.Embed(colour=discord.Colour.dark_teal(), title=title_msg,  description="Feeling lucky?")
+        message = await ctx.send(embed=embed_msg)
+        # Handle the opening.
+        reward_coins = 0
+        for trove_index, (trove_id, trove_qty) in enumerate(trove_details):
+            if trove_qty != 0:
+                _, tier_icon = sharedmethods.get_gear_tier_colours(trove_index + 1)
+                loot_msg = tier_icon
+                trove_object = inventory.BasicItem(trove_id)
+                trove_coins, trove_msg = loot.generate_trove_reward(trove_object, abs(trove_qty))
+                reward_coins += trove_coins
+                coin_msg = player_obj.adjust_coins(trove_coins)
+                loot_msg += f" {trove_msg}{globalitems.coin_icon} {coin_msg} lotus coins!\n"
+                embed_msg.add_field(name="", value=loot_msg, inline=False)
+                await message.edit(embed=embed_msg)
+                await asyncio.sleep(2)
+        # Finalize the output.
+        title_msg = f"{player_obj.player_username}: {total_stock:,} {extension} Opened!"
+        loot_msg = f"TOTAL: {globalitems.coin_icon} {reward_coins:,}x lotus coins!\n"
+        embed_msg.title = title_msg
+        embed_msg.add_field(name="", value=loot_msg, inline=False)
         await message.edit(embed=embed_msg)
 
     @set_command_category('game', 7)
@@ -364,26 +417,6 @@ def run_discord_bot():
             player_obj.set_player_field("player_username", new_username)
             embed_msg.description = f'{player_obj.player_username} you say? Fine, I accept.'
             await ctx.send(embed=embed_msg)
-
-    @pandora_bot.event
-    async def open_lootbox(ctx, embed_msg, item_tier):
-        message = await ctx.send(embed=embed_msg)
-        opening_chest = ""
-        for t in range(1, item_tier + 1):
-            opening_chest += "♦️"
-            tier_colour, tier_icon = sharedmethods.get_gear_tier_colours(t)
-            embed_msg.add_field(name="", value=opening_chest)
-            await message.edit(embed=embed_msg)
-            await asyncio.sleep(1)
-            embed_msg.clear_fields()
-            opening_chest += tier_icon
-            embed_msg.add_field(name="", value=opening_chest)
-            await message.edit(embed=embed_msg)
-            await asyncio.sleep(1)
-            embed_msg.clear_fields()
-        await asyncio.sleep(1)
-        embed_msg.clear_fields()
-        return message
 
     # Gear commands
     @set_command_category('gear', 0)
@@ -584,9 +617,6 @@ def run_discord_bot():
         player_obj = await sharedmethods.check_registration(ctx)
         if player_obj is None:
             return
-        if not item_id.isnumeric() or not cost.isnumeric():
-            await ctx.send(f"Invalid inputs, please enter numeric values only.")
-            return
         num_listings = bazaar.check_num_listings(player_obj)
         if num_listings >= 5:
             await ctx.send("Already at maximum allowed listings.")
@@ -709,8 +739,8 @@ def run_discord_bot():
         if tier not in range(1, 9):
             await ctx.send("The tier must be between 1 and 8.")
             return
-        result, coin_total = inventory.purge(player_obj, tier)
-        await ctx.send(f"{result} items sold.\n {globalitems.coin_icon} {coin_total}x lotus coins acquired.")
+        result_msg = inventory.purge(player_obj, tier)
+        await ctx.send(result_msg)
 
     # Crafting Commands
     @set_command_category('craft', 0)

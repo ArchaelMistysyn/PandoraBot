@@ -9,13 +9,15 @@ date_formatting = '%Y-%m-%d %H:%M:%S'
 # Discord Menu Button Colours
 button_colour_list = [discord.ButtonStyle.red, discord.ButtonStyle.green,
                       discord.ButtonStyle.blurple, discord.ButtonStyle.secondary]
+# Hex color codes for each tier: [Dark Gray, Green, Blue, Purple, Gold, Red, Pink, White, Black]
+tier_colors = {0: 0x2C2F33, 1: 0x43B581, 2: 0x3498DB, 3: 0x9B59B6, 4: 0xF1C40F,
+               5: 0xCC0000, 6: 0xE91E63, 7: 0xFFFFFF, 8: 0x000000, 9: 0x000000}
 
 # BOT DATA
 # Discord Lists
 bot_admin_ids = [185530717638230016]
 channel_list = [1157937444931514408, 1157934010090131458, 1157935203394785291, 1157935449462013972, 1157935876853211186]
 global_server_channels = [channel_list]
-role_list = ["Player Echelon 1", "Player Echelon 2", "Player Echelon 3", "Player Echelon 4", "Player Echelon 5 (MAX)"]
 
 # ICON DATA
 # General Icons
@@ -26,20 +28,21 @@ class_icon_dict = {"Knight": "<:cK:1179727526290010183>", "Ranger": "<:cB:117972
                    "Mage": "<:cM:1179727559173345280>", "Assassin": "<:cA:1179727392101634109>",
                    "Weaver": "<:cW:1179727433881092126>",
                    "Rider": "<:cR:1179727415157731388>", "Summoner": "<:cS:1179727626890399815>"}
-class_name_list = list(class_icon_dict.keys())
-class_icon_list = [class_icon_dict[class_name] for class_name in class_name_list]
+class_names = list(class_icon_dict.keys())
+class_icon_list = [class_icon_dict[class_name] for class_name in class_names]
 # Path Icons
 path_icon = ["<a:eenergy:1145534127349706772>", "<a:eenergy:1145534127349706772>", "<a:eenergy:1145534127349706772>",
              "<a:eenergy:1145534127349706772>", "<a:eenergy:1145534127349706772>", "<a:eenergy:1145534127349706772>"]
 # Icon Frames
-frame_icon_list = ["https://kyleportfolio.ca/botimages/iconframes/Icon_border_Bronze.png",
-                   "https://kyleportfolio.ca/botimages/iconframes/Icon_border_Silver.png",
-                   "https://kyleportfolio.ca/botimages/iconframes/Icon_border_SilverPurple.png",
-                   "https://kyleportfolio.ca/botimages/iconframes/Icon_border_Goldblue.png",
-                   "https://kyleportfolio.ca/botimages/iconframes/Icon_border_Goldred.png",
-                   "https://kyleportfolio.ca/botimages/iconframes/Icon_border_Pink.png",
-                   "https://kyleportfolio.ca/botimages/iconframes/Icon_border_Black.png",
-                   "https://kyleportfolio.ca/botimages/iconframes/Icon_border_Black.png"]
+frame_icon_list = ["https://kyleportfolio.ca/botimages/iconframes/Icon_Border_[EXT]/Icon_border_Bronze_[EXT].png",
+                   "https://kyleportfolio.ca/botimages/iconframes/Icon_Border_[EXT]/Icon_border_Silver_[EXT].png",
+                   "https://kyleportfolio.ca/botimages/iconframes/Icon_Border_[EXT]/Icon_border_SilverPurple_[EXT].png",
+                   "https://kyleportfolio.ca/botimages/iconframes/Icon_Border_[EXT]/Icon_border_Goldblue_[EXT].png",
+                   "https://kyleportfolio.ca/botimages/iconframes/Icon_Border_[EXT]/Icon_border_Goldred_[EXT].png",
+                   "https://kyleportfolio.ca/botimages/iconframes/Icon_Border_[EXT]/Icon_border_Pink_[EXT].png",
+                   "https://kyleportfolio.ca/botimages/iconframes/Icon_Border_[EXT]/Icon_border_Black_[EXT].png",
+                   "https://kyleportfolio.ca/botimages/iconframes/Icon_Border_[EXT]/Icon_border_white_[EXT].png"]
+frame_extension = ["106px", "1484px"]
 # Star Icons
 star_icon = ["<:SB:1201563579330076682>", "<:S1:1201563573202206910>", "<:S2:1201563575433576488>",
              "<:S3:1201563576494731285>", "<:S4:1201563578327633981>", "<:S5:1201815874978189362>",
@@ -123,8 +126,8 @@ weapon_list_high = [
     ["Rod", "Codex"],
     ["Bloodletter", "Talons"],
     ["Threads"],
-    ["Underworld-Usurper Cerberus", "Time-Transgressor Dragon"],
-    ["Sky-Sovereign Manta", "Eon-Eater Leviathan"]
+    ["Cerberus", "Dragon"],
+    ["Sky Manta", "Leviathan"]
 ]
 # Build Category Dictionary
 category_names = {
@@ -147,3 +150,11 @@ for class_index, (low_type, high_type) in enumerate(zip(weapon_list_low, weapon_
         if idx in categories:
             gear_category_dict[variant] = categories[idx]
 
+# Quality Map
+quality_damage_map = {
+    (4, 1): "Prelude", (4, 2): "Fabled", (4, 3): "Heroic", (4, 4): "Mythic", (4, 5): "Legendary",
+    (5, 1): "Prelude", (5, 2): "Abject", (5, 3): "Hollow", (5, 4): "Abyssal", (5, 5): "Emptiness",
+    (6, 1): "Prelude", (6, 2): "Opalescent", (6, 3): "Prismatic", (6, 4): "Resplendent", (6, 5): "Iridescent",
+    (7, 1): "Prelude", (7, 2): "Tainted", (7, 3): "Cursed", (7, 4): "Corrupt", (7, 5): "Fallen",
+    (8, 1): "Prelude", (8, 2): "Majestic", (8, 3): "Sanctified", (8, 4): "Radiant", (8, 5): "Transcendent",
+}

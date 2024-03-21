@@ -1,4 +1,7 @@
+# General imports
 import discord
+
+# Data imports
 import globalitems
 import sharedmethods
 
@@ -75,18 +78,16 @@ def allocate_points(player_obj, selected_path, num_change):
     path_location = globalitems.path_names.index(path_type)
     spent_points = sum(player_obj.player_stats)
     available_points = player_obj.player_lvl - spent_points
-    if available_points >= num_change:
-        player_obj.player_stats[path_location] += num_change
-        condensed_stats = ';'.join(map(str, player_obj.player_stats))
-        player_obj.set_player_field("player_stats", condensed_stats)
-        response = "Skill point has been allocated!"
-    else:
-        response = "Not enough remaining skill points to allocate!"
-    return response
+    if available_points < num_change:
+        return "Not enough remaining skill points to allocate!"
+    player_obj.player_stats[path_location] += num_change
+    condensed_stats = ';'.join(map(str, player_obj.player_stats))
+    player_obj.set_player_field("player_stats", condensed_stats)
+    return "Skill point has been allocated!"
 
 
 def create_path_embed(player_obj):
-    colour, _ = sharedmethods.get_gear_tier_colours(player_obj.player_echelon)
+    colour, _ = sharedmethods.get_gear_tier_colours((player_obj.player_echelon + 1) // 2)
     points_msg = "Your shiny toys are useless if you don't know how to use them."
     embed = discord.Embed(color=colour, title="Avalon, Pathwalker of the True Laws", description=points_msg)
     embed.add_field(name=f"{player_obj.player_username}'s Skill Points", value="", inline=False)
@@ -102,7 +103,7 @@ def create_path_embed(player_obj):
 
 
 def build_points_embed(player_obj, selected_path):
-    colour, _ = sharedmethods.get_gear_tier_colours(player_obj.player_echelon)
+    colour, _ = sharedmethods.get_gear_tier_colours((player_obj.player_echelon + 1) // 2)
     embed = discord.Embed(color=colour, title=f"{selected_path}", description="Stats per point:\n")
 
     path_type = selected_path.split(" ")[-1]

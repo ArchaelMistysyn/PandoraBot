@@ -60,24 +60,19 @@ boss_loot_dict = {
 incarnate_attempts_dict = {700: 1, 800: 2, 999: 5}
 
 
-def update_loot_and_df(player_obj, item_id, quantity, loot_msg, counter, df_change):
+def update_loot_and_df(player_obj, item_id, quantity, loot_msg, counter, batch_df):
     temp_item = inventory.BasicItem(item_id)
-    loot_msg[counter] += f"{item_object.item_emoji} {quantity}x {item_object.item_name}\n"
-    df_change.loc[len(df_change)] = [player_obj.player_id, item_object.item_id, quantity]
-    return loot_msg, df_change
+    loot_msg[counter] += f"{temp_item.item_emoji} {quantity}x {temp_item.item_name}\n"
+    batch_df.loc[len(batch_df)] = [player_obj.player_id, temp_item.item_id, quantity]
+    return loot_msg, batch_df
 
 
 async def create_loot_embed(current_embed, active_boss, player_list, ctx=None, loot_multiplier=1, gauntlet=False):
-    # Calculate the base exp and coins. Calculate level bonuses.
-    exp_amount = (active_boss.boss_tier * 250) + (active_boss.boss_type_num * 100)
-    level_bonus = random.randint((active_boss.boss_level * 25), (active_boss.boss_level * 100))
-    exp_amount += level_bonus
-    coin_amount = active_boss.boss_type_num * active_boss.boss_tier * 250
-    coin_amount += int(level_bonus / 10)
-    # Raid boss awards 5x exp and coins, regular boss awards 2x exp and coins.
-    exp_coin_bonus = 2 if active_boss.player_id == 0 else loot_multiplier
-    exp_amount *= exp_coin_bonus
-    coin_amount *= exp_coin_bonus
+    tier_bonus, type_bonus = active_boss.boss_tier * 100, (active_boss.boss_type_num + 1) * 100
+    level_bonus = random.randint(active_boss.boss_level, (active_boss.boss_level * 10))
+    multiplier_bonus = 2 if active_boss.player_id != 0 else loot_multiplier
+    total = (1000 + tier_bonus + type_bonus + level_bonus) * multiplier_bonus
+    exp_amount, coin_amount = total, total
     # Build and return the loot output.
     loot_output = await award_loot(active_boss, player_list, exp_amount, coin_amount, loot_multiplier, gauntlet, ctx)
     for counter, loot_section in enumerate(loot_output):
@@ -91,39 +86,40 @@ async def award_loot(boss_object, player_list, exp_amount, coin_amount, loot_mul
     boss_tier = boss_object.boss_tier
     loot_msg = []
     labels = ['player_id', 'item_id', 'item_qty']
-    df_change = pd.DataFrame(columns=labels)
+    batch_df = pd.DataFrame(columns=labels)
     for counter, x in enumerate(player_list):
         # Handle coins and exp.
         temp_player = player.get_player_by_id(x)
-        temp_coin_amount = coin_amount + temp_player.player_lvl
-        coin_msg = temp_player.adjust_coins(temp_coin_amount)
+        coin_msg = temp_player.adjust_coins(coin_amount)
         exp_msg, lvl_change = temp_player.adjust_exp(exp_amount)
         if lvl_change != 0 and boss_object.player_id != 0:
-            await sharedmethods.send_notification(self.expedition.ctx_object, temp_player, "Level", lvl_change)
-        loot_msg.append(f"{globalitems.exp_icon} {exp_msg}\n{globalitems.coin_icon} {coin_msg}\n")
+            await sharedmethods.send_notification(ctx, temp_player, "Level", lvl_change)
+        base_reward_msg = f"{globalitems.exp_icon} {exp_msg} EXP\n"
+        base_reward_msg += f"{globalitems.coin_icon} {coin_msg} lotus coins\n"
+        loot_msg.append(base_reward_msg)
 
         # Check unscaled drops.
         core_element = boss_object.boss_element if boss_object.boss_element != 9 else random.randint(0, 8)
-        fae_id, fae_qty = f"Fae{core_element}", random.randint(1, min(100, boss_object.boss_level))
-        fae_qty = loot_multiplier
-        loot_msg, df_change = update_loot_and_df(temp_player, fae_id, fae_qty, loot_msg, counter, df_change)
+        fae_id, fae_qty = f"Fae{core_element}", random.randint(5, max(5, min(100, boss_object.boss_level)))
+        fae_qty *= loot_multiplier
+        loot_msg, batch_df = update_loot_and_df(temp_player, fae_id, fae_qty, loot_msg, counter, batch_df)
         if boss_object.player_id == 0 and is_dropped(75):
-            loot_msg, df_change = update_loot_and_df(temp_player, "Stone5", 1,
-                                                     loot_msg, counter, df_change)
+            loot_msg, batch_df = update_loot_and_df(temp_player, "Stone5", 1,
+                                                    loot_msg, counter, batch_df)
         # Check essence drops.
         if ' - ' in boss_object.boss_name:
             card_qty = sum(is_dropped(20) for attempt in range(loot_multiplier))
             if card_qty > 0:
                 numeral = boss_object.boss_name.split(" ", 1)
-                loot_msg, df_change = update_loot_and_df(temp_player, f"Essence{numeral[0]}",
-                                                         card_qty, loot_msg, counter, df_change)
+                loot_msg, batch_df = update_loot_and_df(temp_player, f"Essence{numeral[0]}",
+                                                         card_qty, loot_msg, counter, batch_df)
         # Check gauntlet drops.
         if gauntlet:
             if "XXVIII" in boss_object.boss_name and is_dropped(5):
-                loot_msg, df_change = update_loot_and_df(temp_player, f"Lotus9", 1, loot_msg, counter, df_change)
+                loot_msg, batch_df = update_loot_and_df(temp_player, f"Lotus9", 1, loot_msg, counter, batch_df)
                 await sharedmethods.send_notification(ctx, temp_player, "Item", "Lotus9")
             elif "XXV" in boss_object.boss_name and is_dropped(5):
-                loot_msg, df_change = update_loot_and_df(temp_player, f"Lotus8", 1, loot_msg, counter, df_change)
+                loot_msg, batch_df = update_loot_and_df(temp_player, f"Lotus8", 1, loot_msg, counter, batch_df)
                 await sharedmethods.send_notification(ctx, temp_player, "Item", "Lotus8")
 
         # Handle boss drops.
@@ -132,17 +128,11 @@ async def award_loot(boss_object, player_list, exp_amount, coin_amount, loot_mul
         for _, drop_id, drop_rate in possible_loot:
             qty = sum(is_dropped(drop_rate) for attempt in range(loot_multiplier))
             if qty > 0:
-                loot_msg, df_change = update_loot_and_df(temp_player, loot_item, qty, loot_msg, counter, df_change)
+                loot_msg, batch_df = update_loot_and_df(temp_player, drop_id, qty, loot_msg, counter, batch_df)
                 if "Lotus" in drop_id or drop_id in ["DarkStar", "LightStar"]:
                     await sharedmethods.send_notification(ctx, temp_player, "Item", drop_id)
     # Update the database.
-    pandora_db = mydb.start_engine()
-    df_params = df_change.to_dict('records')
-    base_query = ('''INSERT INTO BasicInventory (player_id, item_id, item_qty)
-                  VALUES (:player_id, :item_id, :item_qty)
-                  ON DUPLICATE KEY UPDATE item_qty = item_qty + VALUES(item_qty);''')
-    pandora_db.run_query(query, batch=True, params=df_params)
-    pandora_db.close_engine()
+    inventory.update_stock(None, None, None, batch=batch_df)
     return loot_msg
 
 
@@ -151,41 +141,51 @@ def is_dropped(drop_rate):
     return True if random_num <= int(round((drop_rate * 100))) else False
 
 
-def generate_random_item():
+def generate_random_item(quantity=1):
     # Initialize the quantity and data.
+    rewards = {}
     quantity_table = [1, 1, 1, 1, 1, 1, 2, 2, 2, 3]
     probability_rewards = [
         [10, None, "Lotus"], [1, "DarkStar", None], [1, "LightStar", None],
-        [100, None, "Essence"], [18, "Trove8", None], [100, None, "Origin"], [50, None, "Core"], [50, None, "Crystal"],
+        [100, None, "Essence"], [3, "Trove8", None], [100, None, "Origin"], [50, None, "Core"], [50, None, "Crystal"],
         [100, None, "Token"], [100, None, "Jewel"], [50, None, "Heart"], [200, None, "Summon"], [50, "Compass", None],
-        [50, "Ore6", None], [50, "Trove7", None],  [70, "Trove6", None],
+        [50, "Ore6", None], [8, "Trove7", None],  [10, "Trove6", None],
         [200, "Pearl2", None], [200, "Hammer2", None], [500, "Pearl1", None], [500, "Hammer1", None],
-        [100, "Trove5", None],  [100, "Trove4", None], [100, "Trove3", None],
-        [100, "Trove2", None], [100, "Trove1", None], [500, None, "Gem"], [100, "Ore5", None],
+        [50, "Trove5", None],  [70, "Trove4", None], [100, "Trove3", None],
+        [150, "Trove2", None], [250, "Trove1", None], [500, None, "Gem"], [100, "Ore5", None],
         [500, None, "Fragment"], [500, "Flame1", None], [1000, "Matrix1", None], [1000, None, "Potion"],
         [250, "Ore4", None], [250, "Ore3", None], [250, "Ore2", None], [250, "Ore1", None],
         [2500, None, "Fae"]
     ]
-    random_reward = random.randint(1, 10000)  # sum(item[0] for item in probability_rewards)
+    max_reward = 10000  # sum(item[0] for item in probability_rewards)
     # Assign a reward id based on the probability, set id, or id prefix.
-    current_breakpoint = 0
-    for item in probability_rewards:
-        current_breakpoint += item[0]
-        if random_reward <= current_breakpoint:
-            reward_id = item[1]
-            if prefix is not None:
-                reward_types = [key for key in itemdata.itemdata_dict.keys() if key is not None and prefix in key]
-                reward_id = random.choice(reward_types)
-            break
-    # Handle quantity
-    reward = inventory.BasicItem(reward_id)
-    quantity = 1 if reward.item_tier >= 4 else random.choice(quantity_table)
-    if "Fae" in reward_id:
-        quantity = random.randint(5, (50 * quantity))
-    return reward, quantity
+    for _ in range(quantity):
+        current_breakpoint = 0
+        for item in probability_rewards:
+            current_breakpoint += item[0]
+            if random.randint(1, max_reward) <= current_breakpoint:
+                reward_id, prefix = item[1], item[2]
+                if prefix is not None:
+                    reward_types = [key for key in itemdata.itemdata_dict.keys() if key is not None and prefix in key]
+                    reward_id = random.choice(reward_types)
+                break
+        # Handle quantity exceptions
+        reward = inventory.BasicItem(reward_id)
+        item_qty = 1 if reward.item_tier >= 4 else random.choice(quantity_table)
+        if "Fae" in reward_id:
+            item_qty = random.randint(5, (50 * item_qty))
+        # Update quantity on duplicate entries
+        if reward_id in rewards:
+            rewards[reward_id] += item_qty
+        else:
+            rewards[reward_id] = item_qty
+    return [(reward_id, qty) for reward_id, qty in rewards.items()]
 
 
-def generate_trove_reward(item_tier):
-    bounds = itemdata.trove_rewards[item_tier]
-    num_coins = random.randint(bounds[0], bounds[1])
-    return num_coins
+def generate_trove_reward(trove_object, trove_stock):
+    num_coins, trove_msg = 0, ""
+    bounds = itemdata.trove_rewards[trove_object.item_tier]
+    for _ in range(trove_stock):
+        num_coins += random.randint(bounds[0], bounds[1])
+    trove_msg += f"{trove_object.item_emoji} {trove_stock}x {trove_object.item_name} opened: "
+    return num_coins, trove_msg

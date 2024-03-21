@@ -1,3 +1,4 @@
+# General import
 import discord
 from discord.ext import commands, tasks
 from discord.ext.commands import Bot
@@ -9,15 +10,21 @@ import sys
 import random
 from datetime import datetime as dt, timedelta
 
+# Data imports
+import globalitems
+import sharedmethods
+
+# Core imports
 import inventory
 import player
-import bosses
-import globalitems
 import quest
-import sharedmethods
-import menus
-import enginecogs
+import bosses
 import combat
+
+# Cog imports
+import enginecogs
+
+# Item/crafting imports
 import loot
 
 
@@ -39,12 +46,12 @@ class RaidView(discord.ui.View):
     async def raid_callback(self, interaction: discord.Interaction, raid_select: discord.ui.Select):
         clicked_by = player.get_player_by_discord(interaction.user.id)
         outcome = clicked_by.player_username
-        echelon_req = [self.channel_num * 2 - 1, self.channel_num * 2]
+        echelon_req = [self.channel_num * 2 + 1, self.channel_num * 2 + 2]
         if clicked_by.player_echelon not in echelon_req:
             outcome = f"{clicked_by.player_username} is not echelon {echelon_req} and cannot join this raid."
             await interaction.response.send_message(outcome)
             return
-        outcome = bosses.add_participating_player(interaction.channel.id, clicked_by.player_id)
+        outcome = bosses.add_participating_player(interaction.channel.id, clicked_by)
         await interaction.response.send_message(outcome)
 
 
@@ -198,6 +205,8 @@ def run_discord_bot():
         embed, player_alive = combat.run_solo_cycle(combat_tracker, active_boss, player_obj)
         bosses.update_boss_cHP(channel_id, active_boss.player_id, active_boss.boss_cHP)
         if not player_alive:
+            await sent_message.edit(embed=embed)
+            bosses.clear_boss_info(channel_id, player_obj.player_id)
             return False
         if active_boss.calculate_hp():
             await sent_message.edit(embed=embed)
@@ -219,8 +228,8 @@ def run_discord_bot():
             loot_bonus = 5 if gauntlet else 1
             if "XXX" in active_boss.boss_name:
                 loot_bonus = loot.incarnate_attempts_dict[active_boss.boss_level]
-            loot_embed = awaitloot.create_loot_embed(embed, active_boss, player_list, ctx=ctx_object,
-                                                     loot_multiplier=loot_bonus, gauntlet=gauntlet)
+            loot_embed = await loot.create_loot_embed(embed, active_boss, player_list, ctx=ctx_object,
+                                                      loot_multiplier=loot_bonus, gauntlet=gauntlet)
             bosses.clear_boss_info(channel_id, player_obj.player_id)
             await ctx_object.send(embed=loot_embed)
             return False
@@ -259,6 +268,11 @@ def run_discord_bot():
             return
 
         # Spawn the boss.
+        max_spawn = 2
+        if player_obj.player_echelon == 0:
+            max_spawn = 0
+        elif player_obj.player_echelon == 1:
+            max_spawn = 1
         max_spawn = min(player_obj.player_echelon, 2)
         spawned_boss = random.randint(0, max_spawn)
         boss_type = globalitems.boss_list[spawned_boss]
@@ -435,12 +449,13 @@ def run_discord_bot():
             await ctx.send(f"Out of Stock: {token_item.item_emoji} {token_item.item_name}.")
             return
         inventory.update_stock(player_obj, token_id, -1)
-        if token_version in [1, 4]:
-            new_boss_tier, boss_type = bosses.get_random_bosstier(3)
-        elif token_version == 4:
-            new_boss_tier, boss_type = 6, 3
-        elif token_version == 5:
-            new_boss_tier, boss_type = 7, 4
+        # Set the boss tier and type
+        boss_type = "Paragon" if token_version < 4 else "Arbiter"
+        boss_tier_dict = {2: 5, 3: 6, 5: 7}
+        if token_version in boss_tier_dict.keys():
+            new_boss_tier = boss_tier_dict[token_version]
+        else:
+            new_boss_tier, boss_type = bosses.get_random_bosstier(boss_type)
         active_boss = bosses.spawn_boss(ctx.channel.id, player_obj.player_id, new_boss_tier,
                                         boss_type, player_obj.player_lvl, 0)
         active_boss.player_id = player_obj.player_id

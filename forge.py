@@ -6,6 +6,7 @@ import asyncio
 
 # Data imports
 import globalitems
+import sharedmethods
 import mydb
 
 # Core imports
@@ -16,7 +17,6 @@ import menus
 # Item/crafting imports
 import itemrolls
 import loot
-
 
 hammer_icon = "<:ehammer:1145520259248427069>"
 void_icon = "<a:evoid:1145520260573827134>"
@@ -34,7 +34,8 @@ class SelectView(discord.ui.View):
         self.value = None
         select_options = [
             discord.SelectOption(
-                emoji="<a:eenergy:1145534127349706772>", label=key, description=f"Equipped {key.lower()}"
+                emoji="<a:eenergy:1145534127349706772>", label=inventory.custom_item_dict[key],
+                description=f"Equipped {inventory.custom_item_dict[key].lower()}"
             ) for key, value in list(inventory.item_loc_dict.items())[:-1]
         ]
         self.select_menu = discord.ui.Select(
@@ -133,7 +134,7 @@ class PurifyView(discord.ui.View):
             return
         if not self.embed:
             self.embed, self.selected_item = run_button(self.player_obj, self.selected_item,
-                                                                   self.material, "Purify")
+                                                        self.material, "Purify")
             self.new_view = PurifyView(self.player_obj, self.selected_item)
         await interaction.response.edit_message(embed=self.embed, view=self.new_view)
 
@@ -210,38 +211,43 @@ class SubSelectView(discord.ui.View):
         self.method = method
         self.permission = permission
 
-        def build_select_option(i, option, craft_method, item_tier):
-            if craft_method == "Element":
+        def build_select_option(i, option, craft_method, item_tier, cost_qty):
+            if craft_method in ["Fae", "Origin"]:
                 label, emoji = f"{option} Enhancement", globalitems.global_element_list[i]
-                item_1 = inventory.BasicItem(f"Fae{i}")
-                description = f"Cost 1: {item_1.item_name}. "
+                item_1 = inventory.BasicItem(f"{craft_method}{i}")
+                description = f"{cost_qty}x {item_1.item_name} "
                 if item_tier >= 5:
                     item_2 = inventory.BasicItem(f"Fragment{item_tier - 4}")
-                    description += f"Cost 2: {item_2.item_name}"
+                    description += f"+ 1x {item_2.item_name}"
             elif craft_method == "Fusion":
                 description_list = ["Add/Reroll", "Reroll defensive", "Reroll All", "Reroll damage",
                                     "Reroll penetration", "Reroll curse", "Reroll unique"]
                 item_variant = 1 if item_tier < 6 else 2
                 item_1 = inventory.BasicItem(f"Hammer{item_variant}")
-                description = f"{description_list[i]}. "
-                description += f"Cost 1: 1x {item_1.item_name}. "
+                description = f"{description_list[i]}: "
+                description += f"{cost_qty}x {item_1.item_name} "
                 item_2 = None
                 if i >= 3:
                     item_2 = inventory.BasicItem(f"Fragment{i - 2}")
                 elif i >= 1:
                     item_2 = inventory.BasicItem(f"Heart{i}")
-                if item_2 is not None:
-                    description += f"Cost 2: 1x {item_2.item_name}."
+                if item_2 is not None and item_tier >= 5:
+                    description += f"+ 1x {item_2.item_name}"
                 label, emoji = f"{option} Fusion", hammer_icon
             return discord.SelectOption(emoji=emoji, label=label, value=str(i), description=description)
 
-        if self.method in ["Enhance", "Implant Element"]:
-            self.menu_type = "Element"
+        quantity = 1
+        if self.method == "Enhance":
+            self.menu_type = "Fae"
+            selected_list = globalitems.element_names
+            quantity = 10
+        elif self.method == "Implant Element":
+            self.menu_type = "Origin"
             selected_list = globalitems.element_names
         else:
             self.menu_type = "Fusion"
             selected_list = ["Star", "Radiant", "Chaos", "Void", "Wish", "Abyss", "Divine"]
-        options = [build_select_option(i, option, self.menu_type, self.selected_item.item_tier)
+        options = [build_select_option(i, option, self.menu_type, self.selected_item.item_tier, quantity)
                    for i, option in enumerate(selected_list)]
         self.select_menu = discord.ui.Select(placeholder="Select the crafting method to use.",
                                              min_values=1, max_values=1, options=options)
@@ -281,7 +287,7 @@ class UpgradeView(discord.ui.View):
                                    "Void Fusion (Damage)", "Wish Fusion (Penetration)", "Abyss Fusion (Curse)",
                                    "Divine Fusion (Unique)"],
                                ["any fusion", "defensive fusion", "all fusion", "damage fusion",
-                                "penetration fusion", "curse fusion", "unique fusion"], [hammer_icon]],
+                                "penetration fusion", "curse fusion", "unique fusion"], ["Hammer1"]],
             "Implant Element": [1, [f"Implant ({globalitems.element_names[self.element]})"], ["Implant"],
                                 [f"Origin{self.element}"]]
         }
@@ -299,15 +305,19 @@ class UpgradeView(discord.ui.View):
 
         # Construct the buttons.
         for button_count in range(self.menu_details[0]):
-            button_num = button_count
             if self.hammer_type != -1:
                 button_num = self.hammer_type
-            is_maxed, success_rate = check_maxed(self.selected_item, self.method[button_num],
-                                                 self.material_id[button_num][0], self.element)
-            button_label, button_emoji = self.menu_details[1][button_num], self.material_id[button_num]
+                material_id = self.material_id[0]
+            else:
+                button_num = button_count
+                material_id = self.material_id[button_num]
+            is_maxed, success_rate = check_maxed(self.selected_item, self.method[button_num], material_id, self.element)
+            temp_material = inventory.BasicItem(material_id)
+            button_label, button_emoji = self.menu_details[1][button_num], temp_material.item_emoji
             button_style = globalitems.button_colour_list[1]
-            button_label += f" ({success_rate}%)"
-            if is_maxed:
+            if not is_maxed:
+                button_label += f" ({success_rate}%)"
+            else:
                 button_style = globalitems.button_colour_list[3]
                 button_label += " [MAX]"
 
@@ -348,7 +358,7 @@ class UpgradeView(discord.ui.View):
         button_id = int(button.custom_id)
         material_id = self.material_id[0] if self.menu_type == "Astral Augment" else self.material_id[button_id]
         embed_msg, self.selected_item = run_button(self.player_obj, self.selected_item,
-                                                         material_id, self.method[button_id])
+                                                   material_id, self.method[button_id])
         new_view = UpgradeView(self.player_obj, self.selected_item, self.menu_type, self.hammer_type,
                                self.element, self.permission)
         await button_interaction.response.edit_message(embed=embed_msg, view=new_view)
@@ -370,11 +380,10 @@ def run_button(player_obj, selected_item, material_id, method):
                    3: "Item not eligible",
                    4: "This element cannot be used",
                    5: f"Success! The item evolved to tier {reload_item.item_tier}!"}
+    item_stock = inventory.check_stock(player_obj, loot_item.item_id)
+    outcome = sharedmethods.get_stock_msg(loot_item, item_stock, cost)
     if result in result_dict:
         outcome = result_dict[result]
-    else:
-        outcome = "Out of Stock:" if cost == 1 else "Not Enough Stock:"
-        outcome += f" {loot_item.item_emoji}"
     new_embed_msg = reload_item.create_citem_embed()
     new_embed_msg.add_field(name=outcome, value="", inline=False)
     return new_embed_msg, reload_item
@@ -389,16 +398,18 @@ def check_maxed(target_item, method, material_id, element):
             if target_item.item_enhancement >= max_enhancement[(target_item.item_tier - 1)]:
                 return True, 0
             return False, success_rate
+        case "ReforgveA" | "ReforgeV":
+            return False, success_rate
         case "Reinforce":
             success_rate = 100 - target_item.item_quality_tier * 10
-            return True, 0 if target_item.item_quality_tier == 5 else False, success_rate
+            return (True, 0) if target_item.item_quality_tier == 5 else (False, success_rate)
         case "Open":
-            return True, 0 if target_item.item_num_sockets == 1 else False, success_rate
+            return (True, 0) if target_item.item_num_sockets == 1 else (False, success_rate)
         case "Attunement":
             check_aug = itemrolls.check_augment(target_item)
-            return True, 0 if check_aug == target_item.item_tier * 6 else False, success_rate
+            return (True, 0) if check_aug == target_item.item_tier * 6 else (False, success_rate)
         case "Implant":
-            return True, 0 if target_item.item_elements[element] == 1 else False, success_rate
+            return (True, 0) if target_item.item_elements[element] == 1 else (False, success_rate)
         case _:
             return False, success_rate
 
@@ -442,9 +453,9 @@ def craft_item(player_obj, selected_item, material_item, method):
             outcome = enhance_item(player_obj, selected_item, cost_list, success_check)
         case "Reinforce":
             outcome = reinforce_item(player_obj, selected_item, cost_list, success_check)
-        case "Hellfire":
+        case "ReforgeA":
             outcome = reforge_item(player_obj, selected_item, cost_list, success_rate, success_check, "Hell")
-        case "Abyssfire":
+        case "ReforgeV":
             outcome = reforge_item(player_obj, selected_item, cost_list, success_rate, success_check, "Abyss")
         case "Open":
             outcome = open_item(player_obj, selected_item, cost_list, success_rate, success_check)
@@ -467,9 +478,10 @@ def update_crafted_item(selected_item):
     selected_item.update_stored_item()
 
 
-def handle_craft_costs(player_obj, cost_list, cost_1=-1, cost_2=-1):
-    inventory.update_stock(player_obj, cost_list[0].item_id, cost_1)
-    inventory.update_stock(player_obj, cost_list[1].item_id, cost_2)
+def handle_craft_costs(player_obj, cost_list, cost_1=1, cost_2=1):
+    inventory.update_stock(player_obj, cost_list[0].item_id, -1 * cost_1)
+    if len(cost_list) > 1:
+        inventory.update_stock(player_obj, cost_list[1].item_id, -1 * cost_2)
 
 
 def enhance_item(player_obj, selected_item, cost_list, success_check):
@@ -480,8 +492,8 @@ def enhance_item(player_obj, selected_item, cost_list, success_check):
     # Check if the material being used is eligible.
     element_location = 0
     if selected_item.item_tier < 6:
-        element_location = int(material_item.item_id[3])
-    if selected_item.item_elements[element_location] != 1 and selected_item.item_tier < 6:
+        element_location = int(cost_list[0].item_id[3])
+    if selected_item.item_elements[element_location] != 1:
         return 3
     # Material is consumed. Attempts to enhance the item.
     handle_craft_costs(player_obj, cost_list, cost_1=10)
@@ -524,7 +536,7 @@ def reforge_item(player_obj, selected_item, cost_list, success_rate, success_che
     # Material is consumed. Attempts to re-roll and update the item.
     handle_craft_costs(player_obj, cost_list)
     if success_check <= success_rate:
-        selected_item.reforge_stats(void_roll=(method == "Abyss"))
+        selected_item.reforge_stats(unlock=(method == "Abyss"))
         update_crafted_item(selected_item)
         return 1
     return 0
@@ -537,28 +549,25 @@ def modify_item_rolls(player_obj, selected_item, cost_list, success_rate, succes
         if method != "any":
             return 3
         # Material is consumed. Attempts to add a roll to the item.
+        handle_craft_costs(player_obj, cost_list)
         if success_check <= success_rate:
-            handle_craft_costs(player_obj, cost_list)
-            if success_check <= success_rate:
-                itemrolls.add_roll(selected_item, 1)
-                outcome = 1
+            itemrolls.add_roll(selected_item, 1)
+            outcome = 1
     elif method == "any":
         # Material is consumed. Attempts to re-roll the item.
+        handle_craft_costs(player_obj, cost_list)
         if success_check <= success_rate:
-            handle_craft_costs(player_obj, cost_list)
-            if success_check <= success_rate:
-                itemrolls.reroll_roll(selected_item, method)
-                outcome = 1
+            itemrolls.reroll_roll(selected_item, method)
+            outcome = 1
     else:
         # Check eligibility for which methods can be used on the item.
         if method not in itemrolls.roll_structure_dict[selected_item.item_type] and method != "all":
             return 3
         # Material is consumed. Attempts to re-roll the item.
+        handle_craft_costs(player_obj, cost_list)
         if success_check <= success_rate:
-            handle_craft_costs(player_obj, cost_list)
-            if success_check <= success_rate:
-                itemrolls.reroll_roll(selected_item, method)
-                outcome = 1
+            itemrolls.reroll_roll(selected_item, method)
+            outcome = 1
     # Update the item if applicable.
     if outcome == 1:
         update_crafted_item(selected_item)
@@ -577,7 +586,7 @@ def attune_item(player_obj, selected_item, cost_list, success_rate, success_chec
     # Material is consumed. Attempts to add an augment.
     handle_craft_costs(player_obj, cost_list)
     if success_check <= success_rate:
-        itemrolls.add_augment(selected_item, method)
+        itemrolls.add_augment(selected_item)
         update_crafted_item(selected_item)
         return 1
     return 0
@@ -589,7 +598,7 @@ def implant_item(player_obj, selected_item, cost_list, success_rate, success_che
     if sum(selected_item.item_elements) == 9:
         return 2
     # Determine the element to add.
-    check_element = material_item.item_id[6]
+    check_element = cost_list[0].item_id[6]
     selected_element = int(check_element)
     # Confirm if the element already exists.
     if selected_item.item_elements[selected_element] == 1:
@@ -629,8 +638,8 @@ class RefSelectView(discord.ui.View):
     def __init__(self, player_user):
         super().__init__(timeout=None)
         self.player_user = player_user
-        self.item_dict = {"Weapon": "W", "Armour": "A", "Amulet": "Y",
-                          "Dragon Wing": "G", "Paragon Crest": "C", "Dragon Gem": "D"}
+        self.item_dict = {"Weapon": "W", "Armour": "A", "Vambraces": "V", "Amulet": "Y",
+                          "Dragon Wing": "G", "Paragon Crest": "C", "Gem": "Gem", "Jewel": "Jewel"}
 
     @discord.ui.select(
         placeholder="Select crafting method!",
@@ -641,6 +650,8 @@ class RefSelectView(discord.ui.View):
                 emoji="<a:eenergy:1145534127349706772>", label="Weapon", description="Refine weapons."),
             discord.SelectOption(
                 emoji="<a:eenergy:1145534127349706772>", label="Armour", description="Refine armours."),
+            discord.SelectOption(
+                emoji="<a:eenergy:1145534127349706772>", label="Vambraces", description="Refine vambraces."),
             discord.SelectOption(
                 emoji="<a:eenergy:1145534127349706772>", label="Amulet", description="Refine amulets."),
             discord.SelectOption(
@@ -654,33 +665,31 @@ class RefSelectView(discord.ui.View):
         ]
     )
     async def ref_select_callback(self, interaction: discord.Interaction, ref_select: discord.ui.Select):
-        try:
-            if interaction.user.id == self.player_user.discord_id:
-                selected_type = self.item_dict[ref_select.values[0]]
-                new_view = RefineItemView(self.player_user, selected_type)
-                await interaction.response.edit_message(view=new_view)
-        except Exception as e:
-            print(e)
+        if interaction.user.id == self.player_user.discord_id:
+            selected_type = self.item_dict[ref_select.values[0]]
+            new_view = RefineItemView(self.player_user, selected_type)
+            await interaction.response.edit_message(view=new_view)
 
 
 class RefineItemView(discord.ui.View):
     def __init__(self, player_user, selected_type):
         super().__init__(timeout=None)
         menu_dict = {
-            "W": [2, ["Void"], ["✅"], [5], ["Void1"]],
-            "A": [1, ["Void"], ["✅"], [5], ["Void2"]],
-            "V": [1, ["Void"], ["✅"], [5], ["Void3"]],
-            "Y": [1, ["Void"], ["✅"], [5], ["Void4"]],
-            "G": [2, ["Wing", "Void"], ["✅", "✅"], [4, 5], ["Unrefined1", "Void5"]],
-            "C": [2, ["Crest", "Void"], ["✅", "✅"], [4, 5], ["Unrefined3", "Void6"]],
-            "Gem": [3, ["Dragon", "Demon", "Paragon"], ["✅", "✅", "✅"],
+            "W": [1, ["Void (100%)"], ["✅"], [5], ["Void1"]],
+            "A": [1, ["Void (80%)"], ["✅"], [5], ["Void2"]],
+            "V": [2, ["Vambraces (75%)", "Void (80%)"], ["✅", "✅"], [4, 5], ["Unrefined2", "Void3"]],
+            "Y": [1, ["Void (80%)"], ["✅"], [5], ["Void4"]],
+            "G": [2, ["Wing (75%)", "Void (80%)"], ["✅", "✅"], [4, 5], ["Unrefined1", "Void5"]],
+            "C": [2, ["Crest (75%)", "Void (80%)"], ["✅", "✅"], [4, 5], ["Unrefined3", "Void6"]],
+            "Gem": [3, ["Dragon (75%)", "Demon (75%)", "Paragon (75%)"], ["✅", "✅", "✅"],
                     [4, 4, 4], ["Gem1", "Gem2", "Gem3"]],
-            "Jewel": [5, ["Dragon", "Demon", "Paragon", "Arbiter", "Incarnate"], ["✅", "✅", "✅", "✅", "✅"],
+            "Jewel": [5, ["Dragon (50%)", "Demon (50%)", "Paragon (50%)", "Arbiter (50%)", "Incarnate (50%)"],
+                      ["✅", "✅", "✅", "✅", "✅"],
                       [5, 5, 5, 6, 7], ["Jewel1", "Jewel2", "Jewel3", "Jewel4", "Jewel5"]]
         }
         self.selected_type = selected_type
         self.player_user = player_user
-        self.embed = None, None
+        self.embed, self.new_view = None, None
         self.menu_details = menu_dict[self.selected_type]
         for button_num in range(self.menu_details[0]):
             button_object = self.children[button_num]
@@ -719,19 +728,16 @@ class RefineItemView(discord.ui.View):
         await self.reselect_callback(interaction, button)
 
     async def selected_callback(self, interaction: discord.Interaction, button: discord.Button):
-        try:
-            if interaction.user.id == self.player_user.discord_id:
-                if not self.embed:
-                    button_id = int(button.custom_id)
-                    selected_tier = self.menu_details[3][button_id]
-                    required_material = self.menu_details[4][button_id]
-                    # Handle gem type exceptions.
-                    item_type = f"D{button_id}" if self.selected_type in ["Gem", "Jewel"] else self.selected_type
-                    self.embed = refine_item(self.player_user, item_type, selected_tier, required_material)
-                new_view = RefineItemView(self.player_user, self.selected_type)
-                await interaction.response.edit_message(embed=self.embed, view=new_view)
-        except Exception as e:
-            print(e)
+        if interaction.user.id == self.player_user.discord_id:
+            if not self.embed:
+                button_id = int(button.custom_id)
+                selected_tier = self.menu_details[3][button_id]
+                required_material = self.menu_details[4][button_id]
+                # Handle gem type exceptions.
+                item_type = f"D{button_id + 1}" if self.selected_type in ["Gem", "Jewel"] else self.selected_type
+                self.embed = refine_item(self.player_user, item_type, selected_tier, required_material)
+            new_view = RefineItemView(self.player_user, self.selected_type)
+            await interaction.response.edit_message(embed=self.embed, view=new_view)
 
     async def reselect_callback(self, interaction: discord.Interaction, button: discord.Button):
         if interaction.user.id != self.player_user.discord_id:
@@ -743,27 +749,25 @@ class RefineItemView(discord.ui.View):
         await interaction.response.edit_message(embed=new_embed, view=new_view)
 
 
-def refine_item(player_user, selected_type, selected_tier, required_material):
+def refine_item(player_user, selected_type, selected_tier, required_material, cost=1):
     # Check if player has stock.
-    if inventory.check_stock(player_user, required_material) == 0:
-        loot_item = inventory.BasicItem(required_material)
-        stock_message = f'Out of Stock: {loot_item.item_emoji}!'
-        embed_msg = discord.Embed(colour=discord.Colour.red(), title="Cannot Refine!", description=stock_message)
-        return embed_msg
+    loot_item = inventory.BasicItem(required_material)
+    item_stock = inventory.check_stock(player_user, required_material)
+    if item_stock == 0:
+        stock_message = sharedmethods.get_stock_msg(loot_item, item_stock)
+        return discord.Embed(colour=discord.Colour.red(), title="Cannot Refine!", description=stock_message)
     # Pay the cost and attempt to refine.
-    inventory.update_stock(player_user, required_material, -1)
+    inventory.update_stock(player_user, required_material, (cost * -1))
     new_item, is_success = inventory.try_refine(player_user.player_id, selected_type, selected_tier)
     if not is_success:
-        embed_msg = discord.Embed(colour=discord.Colour.red(), title="Refinement Failed! The item is destroyed",
-                                  description="Try Again?")
-        return embed_msg
-    result_id = inventory.inventory_add_custom_item(new_item)
+        stock_message = sharedmethods.get_stock_msg(loot_item, (item_stock - cost))
+        return discord.Embed(colour=discord.Colour.red(), title="Refinement Failed! The item is destroyed",
+                             description=stock_message)
+    result_id = inventory.add_custom_item(new_item)
     # Check if inventory is full.
     if result_id == 0:
-        embed_msg = inventory.full_inventory_embed(new_item, discord.Colour.red())
-        return embed_msg
-    embed_msg = new_item.create_citem_embed()
-    return embed_msg
+        return inventory.full_inventory_embed(new_item, discord.Colour.red())
+    return new_item.create_citem_embed()
 
 
 class MeldView(discord.ui.View):

@@ -1,12 +1,21 @@
-import itemrolls
-import loot
-import inventory
-import player
-import pandorabot
+# General imports
 import discord
 import random
-import globalitems
 from functools import reduce
+
+# Data imports
+import globalitems
+import sharedmethods
+
+# Core imports
+import player
+import inventory
+
+# Item/crafting imports
+import itemrolls
+import loot
+
+
 insignia_name_list = [None, "Monolith", "Dyadic", "Trinity", "Tetradic", "Pentagram",
                       None, None, None, "Refraction"]
 insignia_description_list = [None, "One element: ", "Two elements: ", "Three elements: ",
@@ -23,7 +32,7 @@ def display_insignia(player_obj, insignia_code):
     # Extract insignia data
     temp_code = insignia_code.split(";")
     temp_elements, mutation_tier = temp_code[:9], int(temp_code[-1])
-    insignia_stars = player_obj.player_echelon // 2 + mutation_tier
+    insignia_stars = (player_obj.player_echelon + 1) // 2 + mutation_tier
     mutation_adjust = max(1, mutation_tier)
     element_list = list(map(int, temp_elements))
     num_elements = element_list.count(1)
@@ -140,29 +149,25 @@ class ElementSelectView(discord.ui.View):
         self.add_item(self.select_menu)
 
     async def element_select_callback(self, interaction: discord.Interaction):
-        try:
-            if interaction.user.id == self.player_user.discord_id:
-                selected_element = int(interaction.data['values'][0])
-                if not self.embed:
-                    current_selection = self.current_selection
-                    current_selection[selected_element] = 1
-                    num_selected = self.num_selected + 1
-                    if num_selected == self.num_elements:
-                        new_view = ConfirmSelectionView(self.player_user, num_selected, current_selection)
-                        self.embed = discord.Embed(colour=discord.Colour.dark_orange(),
-                                                   title="Isolde, Soulweaver of the True Laws",
-                                                   description="How entertaining. I am willing to engrave your soul, "
-                                                               "but my services are as expensive as they are painful.")
-                        cost_msg = payment_embed(self.player_user, self.num_elements, self.current_selection)
-                        self.embed.add_field(name="Cost:", value=cost_msg, inline=False)
-                    else:
-                        new_view = ElementSelectView(self.player_user, self.num_elements, num_selected, current_selection)
-                        self.embed = discord.Embed(colour=discord.Colour.dark_orange(),
-                                                   title="Isolde, Soulweaver of the True Laws",
-                                                   description="What is the next desired affinity?")
-                await interaction.response.edit_message(embed=self.embed, view=new_view)
-        except Exception as e:
-            print(e)
+        title_msg = "Isolde, Soulweaver of the True Laws"
+        if interaction.user.id == self.player_user.discord_id:
+            selected_element = int(interaction.data['values'][0])
+            if not self.embed:
+                current_selection = self.current_selection
+                current_selection[selected_element] = 1
+                num_selected = self.num_selected + 1
+                if num_selected == self.num_elements:
+                    new_view = ConfirmSelectionView(self.player_user, num_selected, current_selection)
+                    self.embed = discord.Embed(colour=discord.Colour.dark_orange(), title=title_msg,
+                                               description="How entertaining. I am willing to engrave your soul, "
+                                                           "but my services are as expensive as they are painful.")
+                    cost_msg = payment_embed(self.player_user, self.num_elements, self.current_selection)
+                    self.embed.add_field(name="Cost:", value=cost_msg, inline=False)
+                else:
+                    new_view = ElementSelectView(self.player_user, self.num_elements, num_selected, current_selection)
+                    self.embed = discord.Embed(colour=discord.Colour.dark_orange(),
+                                               title=title_msg, description="What is the next desired affinity?")
+            await interaction.response.edit_message(embed=self.embed, view=new_view)
 
 
 class ConfirmSelectionView(discord.ui.View):
@@ -171,7 +176,7 @@ class ConfirmSelectionView(discord.ui.View):
         self.player_user = player_user
         self.num_selected = num_selected
         self.current_selection = current_selection
-        mutation_tier = int(self.player_user.insignia[-1])
+        mutation_tier = int(self.player_user.insignia[-1]) if self.player_user.insignia != "" else 0
         self.mutation_rate = mutation_upgrade_data[mutation_tier][1]
         if self.current_selection == "mutation":
             if mutation_tier < 3:
@@ -184,95 +189,92 @@ class ConfirmSelectionView(discord.ui.View):
 
     @discord.ui.button(label="Engrave", style=discord.ButtonStyle.success, emoji="🔯")
     async def engrave(self, interaction: discord.Interaction, button: discord.Button):
-        try:
-            if interaction.user.id != self.player_user.discord_id:
-                return
-            if self.embed_msg:
-                await interaction.response.edit_message(embed=self.embed_msg, view=None)
-                return
+        if interaction.user.id != self.player_user.discord_id:
+            return
+        if self.embed_msg:
+            await interaction.response.edit_message(embed=self.embed_msg, view=None)
+            return
 
-            # Initialize the data.
-            self.player_user = player.get_player_by_id(self.player_user.player_id)
-            token_stock = inventory.check_stock(self.player_user, "Token2")
-            title_msg = "Isolde, Soulweaver of the True Laws"
-            self.embed_msg = discord.Embed(colour=discord.Colour.dark_orange(), title=title_msg, description="")
+        # Initialize the data.
+        self.player_user = player.get_player_by_id(self.player_user.player_id)
+        token_stock = inventory.check_stock(self.player_user, "Token2")
+        title_msg = "Isolde, Soulweaver of the True Laws"
+        self.embed_msg = discord.Embed(colour=discord.Colour.dark_orange(), title=title_msg, description="")
 
-            # Handle regular engravings.
-            if self.current_selection != "mutation":
-                # Confirm the token cost can be paid.
-                token_cost = self.num_selected
-                if token_cost > token_stock:
-                    self.embed_msg.description = ("Such gall to request my services without a sufficient offering. "
-                                                  "Bring me tokens or don't come back.")
-                    await interaction.response.edit_message(embed=self.embed_msg, view=None)
-                    return
-
-                # Confirm the material core cost can be paid.
-                selected_elements_list = [ind for ind, y in enumerate(self.current_selection) if y == 1]
-                for x in selected_elements_list:
-                    fae_check = inventory.check_stock(self.player_user, f"Fae{x}")
-                    if fae_check < 100:
-                        self.embed_msg.description = ("Weaving requires a lot of fae energy. "
-                                                      "I'll need you to bring me more cores.")
-                        await interaction.response.edit_message(embed=self.embed_msg, view=None)
-                        return
-
-                # Pay the costs and engrave the insignia.
-                inventory.update_stock(self.player_user, "Token2", (token_cost * -1))
-                for z in selected_elements_list:
-                    inventory.update_stock(self.player_user, f"Fae{z}", -100)
-                delim = ";"
-                insignia_code = reduce(lambda full, new: str(full) + delim + str(new), self.current_selection)
-                insignia_code += ";0"
-                self.embed_msg = display_insignia(self.player_user, insignia_code)
-                self.player_user.set_player_field("player_equip_insignia", insignia_code)
-                await interaction.response.edit_message(embed=self.embed_msg, view=None)
-                return
-
-            # Reconfirm mutation eligibility.
-            mutation_tier = int(self.player_user.insignia[-1])
-            if mutation_tier >= 3:
-                self.embed_msg.description = "There's nothing further I can do to improve your soul through mutation."
-                await interaction.response.edit_message(embed=self.embed_msg, view=None)
-                return
-
+        # Handle regular engravings.
+        if self.current_selection != "mutation":
             # Confirm the token cost can be paid.
-            token_cost = mutation_upgrade_data[mutation_tier][0]
+            token_cost = self.num_selected
             if token_cost > token_stock:
                 self.embed_msg.description = ("Such gall to request my services without a sufficient offering. "
                                               "Bring me tokens or don't come back.")
                 await interaction.response.edit_message(embed=self.embed_msg, view=None)
                 return
 
-            # Confirm the secondary cost can be paid.
-            secondary_item = inventory.BasicItem(mutation_cost_list[mutation_tier])
-            secondary_stock = inventory.check_stock(self.player_user, secondary_item.item_id)
-            if secondary_stock < 1:
-                self.embed_msg.description = ("Such gall to request my services without a sufficient offering. "
-                                              "Bring me tokens or don't come back.")
-                await interaction.response.edit_message(embed=self.embed_msg, view=None)
-                return
+            # Confirm the material core cost can be paid.
+            selected_elements_list = [ind for ind, y in enumerate(self.current_selection) if y == 1]
+            for x in selected_elements_list:
+                fae_check = inventory.check_stock(self.player_user, f"Fae{x}")
+                if fae_check < 100:
+                    self.embed_msg.description = ("Weaving requires a lot of fae energy. "
+                                                  "I'll need you to bring me more cores.")
+                    await interaction.response.edit_message(embed=self.embed_msg, view=None)
+                    return
 
-            # Handle unsuccessful mutation.
-            if random.randint(1, 100) > self.mutation_rate:
-                self.embed_msg.description = "The mutation failed, but I managed to keep your soul intact."
-                cost_msg = payment_embed(self.player_user, token_cost, mutation_cost_list[mutation_tier])
-                self.embed_msg.add_field(name="Cost:", value=cost_msg, inline=False)
-                reload_view = ConfirmSelectionView(self.player_user, 0, "mutation")
-                await interaction.response.edit_message(embed=self.embed_msg, view=reload_view)
-                return
-
-            # Pay the costs and handle the successful mutation.
+            # Pay the costs and engrave the insignia.
             inventory.update_stock(self.player_user, "Token2", (token_cost * -1))
-            inventory.update_stock(self.player_user, secondary_item.item_id, -1)
-            new_tier = int(self.player_user.insignia[-1]) + 1
-            self.player_user.insignia = f"{self.player_user.insignia[:-1]}{new_tier}"
-            self.player_user.set_player_field("player_equip_insignia", self.player_user.insignia)
-            self.embed_msg = display_insignia(self.player_user, self.player_user.insignia)
+            for z in selected_elements_list:
+                inventory.update_stock(self.player_user, f"Fae{z}", -100)
+            delim = ";"
+            insignia_code = reduce(lambda full, new: str(full) + delim + str(new), self.current_selection)
+            insignia_code += ";0"
+            self.embed_msg = display_insignia(self.player_user, insignia_code)
+            self.player_user.set_player_field("player_equip_insignia", insignia_code)
+            await interaction.response.edit_message(embed=self.embed_msg, view=None)
+            return
+
+        # Reconfirm mutation eligibility.
+        mutation_tier = int(self.player_user.insignia[-1])
+        if mutation_tier >= 3:
+            self.embed_msg.description = "There's nothing further I can do to improve your soul through mutation."
+            await interaction.response.edit_message(embed=self.embed_msg, view=None)
+            return
+
+        # Confirm the token cost can be paid.
+        token_cost = mutation_upgrade_data[mutation_tier][0]
+        if token_cost > token_stock:
+            self.embed_msg.description = ("Such gall to request my services without a sufficient offering. "
+                                          "Bring me tokens or don't come back.")
+            await interaction.response.edit_message(embed=self.embed_msg, view=None)
+            return
+
+        # Confirm the secondary cost can be paid.
+        secondary_item = inventory.BasicItem(mutation_cost_list[mutation_tier])
+        secondary_stock = inventory.check_stock(self.player_user, secondary_item.item_id)
+        if secondary_stock < 1:
+            self.embed_msg.description = ("Such gall to request my services without a sufficient offering. "
+                                          "Bring me tokens or don't come back.")
+            await interaction.response.edit_message(embed=self.embed_msg, view=None)
+            return
+
+        # Handle unsuccessful mutation.
+        if random.randint(1, 100) > self.mutation_rate:
+            self.embed_msg.description = "The mutation failed, but I managed to keep your soul intact."
+            cost_msg = payment_embed(self.player_user, token_cost, mutation_cost_list[mutation_tier])
+            self.embed_msg.add_field(name="Cost:", value=cost_msg, inline=False)
             reload_view = ConfirmSelectionView(self.player_user, 0, "mutation")
             await interaction.response.edit_message(embed=self.embed_msg, view=reload_view)
-        except Exception as e:
-            print(e)
+            return
+
+        # Pay the costs and handle the successful mutation.
+        inventory.update_stock(self.player_user, "Token2", (token_cost * -1))
+        inventory.update_stock(self.player_user, secondary_item.item_id, -1)
+        new_tier = int(self.player_user.insignia[-1]) + 1
+        self.player_user.insignia = f"{self.player_user.insignia[:-1]}{new_tier}"
+        self.player_user.set_player_field("player_equip_insignia", self.player_user.insignia)
+        self.embed_msg = display_insignia(self.player_user, self.player_user.insignia)
+        reload_view = ConfirmSelectionView(self.player_user, 0, "mutation")
+        await interaction.response.edit_message(embed=self.embed_msg, view=reload_view)
 
     @discord.ui.button(label="Reselect", style=discord.ButtonStyle.blurple, emoji="↩️")
     async def reselect_callback(self, interaction: discord.Interaction, button: discord.Button):
@@ -312,13 +314,14 @@ def assign_insignia_values(player_obj):
     # Data handling.
     temp_code = player_obj.insignia.split(";")
     temp_elements, mutation_tier = temp_code[:9], int(temp_code[-1])
-    insignia_stars = player_obj.player_echelon // 2 + mutation_tier
+    insignia_stars = (player_obj.player_echelon + 1) // 2 + mutation_tier
     mutation_adjust = max(1, mutation_tier)
     element_list = list(map(int, temp_elements))
     num_elements = element_list.count(1)
     # Apply bonus stats.
     player_obj.final_damage += player_obj.player_lvl * 0.01 * mutation_adjust
     player_obj.attack_speed += insignia_stars * 0.1
+    player_obj.luck_bonus += insignia_stars
     player_obj.hp_bonus += insignia_hp_list[insignia_stars]
     # Apply Elemental Penetration
     if num_elements != 9:

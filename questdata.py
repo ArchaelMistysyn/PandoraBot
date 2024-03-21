@@ -186,7 +186,7 @@ quests_data = {
          "Equip a pair of Demon Vambraces",
          'Crate', 5, None],
 
-    23: [2, "Body and Mind",
+    23: [1, "Body and Mind",
          "You've become very strong very quickly. "
          "Take care to ensure you are keeping up both physically and mentally with the powers you are wielding. "
          "\nWe'll continue your training at dawn.",
@@ -194,7 +194,7 @@ quests_data = {
          "Breakthrough to level 45",
          'Crate', 5, None],
 
-    24: [2, "The Journey Continues",
+    24: [1, "The Journey Continues",
          "No need to rush. We've got lots of time to prepare before the other paragons can cross into this world."
          "Take your time, gather your strength."
          "\nThere is no such thing as an easy challenge.",
@@ -209,7 +209,7 @@ quests_data = {
          "Defeat the Demon Paragon",
          'OriginZ', 1, 'Echelon 5'],
 
-    26: [2, "Crossing Of Worlds",
+    26: [1, "Crossing Of Worlds",
          "Tyra may be gone, but the floodgates have opened. We failed to stop him from opening the celestial rift. "
          "My power is not enough to close it. We have to cross over and stop the paragons. "
          "\nWe've come this far. You will go with me won't you?",
@@ -232,7 +232,7 @@ quests_data = {
          "Equip a Paragon Crest",
          'Crate', 5, None],
 
-    29: [2, "Cultivate Divinity (Part 1)",
+    29: [1, "Cultivate Divinity (Part 1)",
          "By taking in this power you have now become a deity yourself. "
          "As the stars begin to become part of your domain so too will you find yourself becoming one with celestia. "
          "You need to spend time gathering your essence and cultivating your divinity. "
@@ -258,7 +258,7 @@ quests_data = {
          "Equip a tarot card with /tarot.",
          'Essence0', 5, None],
 
-    32: [2, "Cultivate Divinity (Part 2)",
+    32: [1, "Cultivate Divinity (Part 2)",
          "The temptations of those you channel within yourself will take over if you spend too long in such a state. "
          "Use this power carefully and make sure to collect yourself regularly."
          "\nThis power is a double edged sword if used incorrectly.",
@@ -274,7 +274,7 @@ quests_data = {
          "Retrieve 10 Paragon Stones",
          'Crate', 5, None],
 
-    34: [2, "Cultivate Divinity (Part 3)",
+    34: [1, "Cultivate Divinity (Part 3)",
          "Something's not right. Stay here, gather yourself. "
          "Please await my return and do not try to follow me. I won't be gone long. "
          "\nI promise.",
@@ -289,7 +289,7 @@ quests_data = {
          "Defeat II - Pandora, The Celestial",
          'EssenceII', 3, 'Echelon 7'],
 
-    36: [2, "Cultivate Divinity (Part 4)",
+    36: [1, "Cultivate Divinity (Part 4)",
          "Remarkable. I could not have imagined you would be able to sever Oblivia's hold over me. "
          "\nThank you. For saving me.",
          75, None, None,

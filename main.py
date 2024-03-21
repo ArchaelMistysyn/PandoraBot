@@ -1,9 +1,14 @@
+# General imports
 import discord
 import multiprocessing
+
+# Bot imports
 import pandorabot
 import eleuiabot
 import battleengine
 import vouchbot
+
+# Logging imports
 import logging
 
 logging.getLogger('discord').setLevel(logging.WARNING)

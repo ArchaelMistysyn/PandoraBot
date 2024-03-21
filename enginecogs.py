@@ -1,17 +1,28 @@
-import battleengine
-import bosses
-import globalitems
-import inventory
-import player
-import combat
+# General imports
 import discord
-import asyncio
-import random
-import loot
-import menus
-import leaderboards
 from discord.ext.commands import Bot
 from discord.ext import commands, tasks
+import asyncio
+import random
+
+# Bot imports
+import battleengine
+
+# Data Imports
+import globalitems
+import leaderboards
+
+# Core imports
+import player
+import inventory
+import menus
+
+# Combat imports
+import combat
+import bosses
+
+# Item/crafting imports
+import loot
 
 
 class RaidCog(commands.Cog):

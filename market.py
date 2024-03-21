@@ -116,8 +116,8 @@ class PurchaseView(discord.ui.View):
             inventory.update_stock(self.player_obj, self.selected_item.item_id, quantity)
             self.is_paid = True
         embed_title = "Purchase Successful!"
-        embed_description = (f"Purchased {self.selected_item.item_emoji} {quantity:,} {self.selected_item.item_name}"
-                             f"x.\nRemaining: {globalitems.coin_icon} {self.player_obj.player_coins:,}x lotus coins.")
+        embed_description = (f"Purchased {self.selected_item.item_emoji} {quantity:,}x {self.selected_item.item_name}"
+                             f"\nRemaining: {globalitems.coin_icon} {self.player_obj.player_coins:,}x lotus coins")
         embed_msg = discord.Embed(colour=discord.Colour.dark_orange(), title=embed_title, description=embed_description)
         new_view = PurchaseView(self.player_obj, self.selected_item)
         return embed_msg, new_view

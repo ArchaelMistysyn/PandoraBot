@@ -1,14 +1,22 @@
+# General imports
 import discord
 import random
+import pandas as pd
 
+# Data imports
+import globalitems
+import sharedmethods
 import itemdata
-import itemrolls
+
+# Core imports
 import player
 import inventory
-import mydb
-import pandas as pd
 import pilengine
-import globalitems
+import mydb
+
+# Item/crafting imports
+import itemrolls
+
 
 card_dict = {
     "0": ["Karma, The Reflection", 1],
@@ -481,7 +489,10 @@ def tarot_menu_embed(player_obj, card_numeral):
         tarot_card = TarotCard(player_obj.player_id, card_numeral, 0, 0, 0)
     # Build the card embed message.
     embed_msg = tarot_card.create_tarot_embed()
-    embed_msg.add_field(name=f"", value=f"Quantity: {tarot_card.card_qty}", inline=False)
+    loot_item = inventory.BasicItem(f"Essence{card_numeral}")
+    essence_stock = inventory.check_stock(player_obj, loot_item.item_id)
+    description = f"Card Quantity: {tarot_card.card_qty}\nEssence Quantity: {essence_stock}"
+    embed_msg.add_field(name=f"", value=description, inline=False)
     embed_msg.set_image(url=tarot_card.card_image_link)
     return embed_msg
 
@@ -529,8 +540,8 @@ def binding_ritual(player_obj, essence_type, success_rate):
     embed_msg = tarot_menu_embed(player_obj, essence_type)
     # Confirm stock is available
     if essence_stock == 0:
-        description_msg = f"Out of stock: {loot_item.item_emoji}!"
-        embed_msg.add_field(name="Ritual Failed!", value=description_msg)
+        stock_msg = sharedmethods.get_stock_msg(loot_item, essence_stock)
+        embed_msg.add_field(name="Ritual Failed!", value=stock_msg)
         return embed_msg
     # Pay the cost and attempt the binding.
     inventory.update_stock(player_obj, essence_id, -1)
