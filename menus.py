@@ -159,14 +159,17 @@ class InlaySelectView(discord.ui.View):
                 emoji="<a:eenergy:1145534127349706772>", label="Armour",
                 description="Inlay gem in your armour", value="1"),
             discord.SelectOption(
+                emoji="<a:eenergy:1145534127349706772>", label="Vambraces",
+                description="Inlay gem in your vambraces", value="2"),
+            discord.SelectOption(
                 emoji="<a:eenergy:1145534127349706772>", label="Amulet",
-                description="Inlay gem in your Amulet", value="2"),
+                description="Inlay gem in your amulet", value="3"),
             discord.SelectOption(
                 emoji="<a:eenergy:1145534127349706772>", label="Wings",
-                description="Inlay gem in your wing", value="3"),
+                description="Inlay gem in your wing", value="4"),
             discord.SelectOption(
                 emoji="<a:eenergy:1145534127349706772>", label="Crest",
-                description="Inlay gem in your crest", value="4")
+                description="Inlay gem in your crest", value="5")
         ]
     )
     async def inlay_select_callback(self, interaction: discord.Interaction, inlay_select: discord.ui.Select):

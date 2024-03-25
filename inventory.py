@@ -176,7 +176,7 @@ class CustomItem:
         if self.item_type == "A":
             self.set_base_damage_mitigation()
         if self.item_tier >= 5 and unlock:
-            available = [key for key in globalitems.rare_ability_dict.keys() if key != self.item.item_bonus_stat]
+            available = [key for key in globalitems.rare_ability_dict.keys() if key != self.item_bonus_stat]
             self.item_bonus_stat = random.choice(available)
             return
         if self.item_tier < 5:
@@ -341,7 +341,7 @@ class CustomItem:
             e_gem = read_custom_item(gem_id)
             if e_gem is not None:
                 e_gem = read_custom_item(gem_id)
-                display_stars += f" Socket: {globalitems.augment_icons[e_gem.item_tier]} ({gem_id})"
+                display_stars += f" Socket: {globalitems.augment_icons[e_gem.item_tier - 1]} ({gem_id})"
                 gem_min, gem_max = e_gem.item_damage_min, e_gem.item_damage_max
             elif self.item_num_sockets != 0:
                 display_stars += " Socket: <:esocket:1148387477615300740>"
@@ -717,7 +717,7 @@ def purge(player_obj, tier):
     for item_tier in df['item_tier']:
         coin_total += inventory.sell_value_by_tier[int(item_tier)]
     coin_msg = player_obj.adjust_coins(coin_total)
-    return f"{player_obj.username} sold {result} items and received {globalitems.coin_icon} {coin_msg} lotus coins"
+    return f"{player_obj.player_username} sold {result} items and received {globalitems.coin_icon} {coin_msg} lotus coins"
 
 
 def full_inventory_embed(lost_item, embed_colour):

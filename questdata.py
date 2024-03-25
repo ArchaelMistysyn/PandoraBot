@@ -384,7 +384,7 @@ quests_data = {
          "\nIf we're lucky she's already foreseen her demise.",
          95, 21, None,
          "Defeat XXVIII - Fleur, Oracle of the True Laws",
-         'Summon5', 5, None],
+         'Summon3', 5, None],
 
     48: [3, "A God's Judgement",
          "Only Yubelle remains to protect the Divine Lotus and bring judgement upon us for opposing it."

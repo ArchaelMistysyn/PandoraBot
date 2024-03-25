@@ -111,8 +111,12 @@ def generate_ramping_reward(success_rate, decay_rate, total_steps):
     return current_step
 
 
+def reward_message(item_obj, qty=1):
+    return f"{item_obj.item_emoji} {qty:,}x {item_obj.item_name}"
+
+
 def get_stock_msg(item_object, quantity, cost=1):
-    stock_details = f"{item_object.item_emoji} {quantity}x {item_object.item_name}"
+    stock_details = reward_message(item_object, quantity)
     if quantity < cost:
         return f'Insufficient Stock: {stock_details}'
     return f'Remaining Stock: {stock_details}'

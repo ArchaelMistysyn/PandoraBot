@@ -18,7 +18,6 @@ import menus
 import itemrolls
 import loot
 
-hammer_icon = "<:ehammer:1145520259248427069>"
 void_icon = "<a:evoid:1145520260573827134>"
 item_type_lotus_dict = {"W": "Lotus9", "A": "Lotus5", "V": "Lotus2",
                         "Y": "Lotus1", "G": "Lotus3", "C": "Lotus6"}
@@ -168,7 +167,8 @@ class ForgeView(discord.ui.View):
                         "description": "Reforge an item with a new ability and base stats."},
             "Attune": {"emoji": "<:eprl:1148390531345432647>", "label": "Cosmic Attunement",
                        "description": "Upgrade item rolls."},
-            "Augment": {"emoji": hammer_icon, "label": "Astral Augment", "description": "Add/Modify item rolls."},
+            "Augment": {"emoji": "<:ehammer:1145520259248427069>", "label": "Astral Augment",
+                        "description": "Add/Modify item rolls."},
             "Implant": {"emoji": "<a:eorigin:1145520263954440313>", "label": "Implant Element",
                         "description": "Gain new elements."},
         }
@@ -223,7 +223,7 @@ class SubSelectView(discord.ui.View):
                 description_list = ["Add/Reroll", "Reroll defensive", "Reroll All", "Reroll damage",
                                     "Reroll penetration", "Reroll curse", "Reroll unique"]
                 item_variant = 1 if item_tier < 6 else 2
-                item_1 = inventory.BasicItem(f"Hammer{item_variant}")
+                item_1 = inventory.BasicItem("Hammer")
                 description = f"{description_list[i]}: "
                 description += f"{cost_qty}x {item_1.item_name} "
                 item_2 = None
@@ -233,7 +233,7 @@ class SubSelectView(discord.ui.View):
                     item_2 = inventory.BasicItem(f"Heart{i}")
                 if item_2 is not None and item_tier >= 5:
                     description += f"+ 1x {item_2.item_name}"
-                label, emoji = f"{option} Fusion", hammer_icon
+                label, emoji = f"{option} Fusion", item_1.item_emoji
             return discord.SelectOption(emoji=emoji, label=label, value=str(i), description=description)
 
         quantity = 1
@@ -282,26 +282,18 @@ class UpgradeView(discord.ui.View):
             "Upgrade": [1, ["Reinforce"], ["Reinforce"], ["Ore5"]],
             "Reforge": [3, ["Create Socket", "Hellfire", "Abyssfire"], ["Open", "ReforgeA", "ReforgeV"],
                         ["Matrix1", "Flame1", "Flame2"]],
-            "Cosmic Attunement": [1, ["Attune"], ["Attunement"], ["Pearl1"]],
+            "Cosmic Attunement": [1, ["Attune"], ["Attunement"], ["Pearl"]],
             "Astral Augment": [1, ["Star Fusion (Add/Reroll)", "Radiant Fusion (Defensive)", "Chaos Fusion (All)",
                                    "Void Fusion (Damage)", "Wish Fusion (Penetration)", "Abyss Fusion (Curse)",
                                    "Divine Fusion (Unique)"],
                                ["any fusion", "defensive fusion", "all fusion", "damage fusion",
-                                "penetration fusion", "curse fusion", "unique fusion"], ["Hammer1"]],
+                                "penetration fusion", "curse fusion", "unique fusion"], ["Hammer"]],
             "Implant Element": [1, [f"Implant ({globalitems.element_names[self.element]})"], ["Implant"],
                                 [f"Origin{self.element}"]]
-        }
-        item_exceptions_dict = {"Upgrade": [7, "Ore6"],
-                                "Cosmic Attunement": [5, "Pearl2"], "Astral Augment": [5, "Hammer2"]
-
         }
         self.menu_details = method_dict[self.menu_type]
         self.method = self.menu_details[2]
         self.material_id = self.menu_details[3]
-        # Handle Emoji Exceptions
-        if self.menu_type in item_exceptions_dict:
-            if self.selected_item.item_tier >= item_exceptions_dict[self.menu_type][0]:
-                self.material_id[0] = item_exceptions_dict[self.menu_type][1]
 
         # Construct the buttons.
         for button_count in range(self.menu_details[0]):

@@ -17,7 +17,7 @@ import inventory
 boss_loot_dict = {
     "All": [
         [0, "Crate", 10], [0, "Matrix1", 15],
-        [0, "Hammer1", 20], [0, "Pearl1", 10], [0, "Heart1", 2], [0, "Heart2", 1],
+        [0, "Hammer", 20], [0, "Pearl", 10], [0, "Heart1", 2], [0, "Heart2", 1],
         [1, "Ore1", 25], [2, "Ore2", 25], [3, "Ore3", 25], [4, "Ore4", 25],
         [1, "Potion1", 5], [2, "Potion2", 5], [3, "Potion3", 5], [4, "Potion4", 5],
         [5, "Potion4", 10], [6, "Potion4", 15], [7, "Potion4", 25],
@@ -27,24 +27,24 @@ boss_loot_dict = {
         [6, "Crystal1", 2], [6, "Crystal2", 0.1],  [7, "Crystal1", 5], [7, "Crystal2", 0.2]
     ],
     "Fortress": [
-        [0, "Scrap", 100], [0, "Summon1", 5], [0, "Stone1", 75],
+        [0, "Scrap", 100], [0, "Stone1", 50],
         [0, "Trove1", 5], [0, "Trove2", 1], [0, "Trove3", 0.1], [0, "Trove4", 0.01]
     ],
     "Dragon": [
-        [0, "Summon2", 5], [0, "Unrefined1", 25], [0, "Stone2", 75],
+        [0, "Unrefined1", 25], [0, "Stone2", 40],
         [1, "Gem1", 10], [2, "Gem1", 20], [3, "Gem1", 30], [4, "Jewel1", 40]
     ],
     "Demon": [
-        [0, "Summon3", 5], [0, "Flame1", 10], [0, "Stone3", 75], [0, "Core1", 3],
+        [0, "Flame1", 10], [0, "Stone3", 35], [0, "Core1", 3],
         [1, "Gem2", 10], [2, "Gem2", 20], [3, "Gem2", 30], [4, "Jewel2", 40]
     ],
     "Paragon": [
-        [0, "Summon4", 5], [0, "Unrefined3", 25], [0, "Stone4", 75], [0, "Core1", 5],
+        [0, "Summon1", 5], [0, "Summon2", 1], [0, "Unrefined3", 25], [0, "Stone4", 30], [0, "Core1", 5],
         [1, "Gem3", 10], [2, "Gem3", 20], [3, "Gem3", 30],
         [4, "Jewel3", 40], [5, "Jewel3", 50], [6, "Jewel3", 60]
     ],
     "Arbiter": [
-        [0, "Summon5", 5], [0, "Stone6", 75], [7, "Lotus4", 1],
+        [0, "Summon3", 5], [0, "Stone6", 25], [7, "Lotus4", 1],
         [1, "Token1", 5], [2, "Token2", 5], [3, "Token3", 5], [4, "Token4", 5],
         [5, "Token5", 5], [6, "Token6", 5], [7, "Token7", 5],
         [1, "Jewel4", 10], [2, "Jewel4", 20], [3, "Jewel4", 30], [4, "Jewel4", 40],
@@ -149,10 +149,10 @@ def generate_random_item(quantity=1):
         [10, None, "Lotus"], [1, "DarkStar", None], [1, "LightStar", None],
         [100, None, "Essence"], [3, "Trove8", None], [100, None, "Origin"], [50, None, "Core"], [50, None, "Crystal"],
         [100, None, "Token"], [100, None, "Jewel"], [50, None, "Heart"], [200, None, "Summon"], [50, "Compass", None],
-        [50, "Ore6", None], [8, "Trove7", None],  [10, "Trove6", None],
-        [200, "Pearl2", None], [200, "Hammer2", None], [500, "Pearl1", None], [500, "Hammer1", None],
+        [8, "Trove7", None],  [10, "Trove6", None],
+        [200, "Pearl", None], [200, "Hammer", None], [700, "Pearl", None], [700, "Hammer", None],
         [50, "Trove5", None],  [70, "Trove4", None], [100, "Trove3", None],
-        [150, "Trove2", None], [250, "Trove1", None], [500, None, "Gem"], [100, "Ore5", None],
+        [150, "Trove2", None], [250, "Trove1", None], [500, None, "Gem"], [150, "Ore5", None],
         [500, None, "Fragment"], [500, "Flame1", None], [1000, "Matrix1", None], [1000, None, "Potion"],
         [250, "Ore4", None], [250, "Ore3", None], [250, "Ore2", None], [250, "Ore1", None],
         [2500, None, "Fae"]

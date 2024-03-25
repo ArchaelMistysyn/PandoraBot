@@ -81,15 +81,11 @@ itemdata_dict = build_item_dict(itemdata_dict, token_data, 1)
 # Summoning List Data
 summon_data = [
     "Summon",
-    [None, 'Summoning Sigil', 100, 4, '<a:elootitem:1144477550379274322>',
-     'Perform a summoning ritual to summon a tier 1-4 paragon solo boss.', 10000, ""],
     [None, 'Summoning Relic', 100, 5, '<a:elootitem:1144477550379274322>',
-     'Perform a summoning ritual to summon a tier 4-5 paragon solo boss.', 50000, ""],
+     'Perform a summoning ritual to summon a tier 5 paragon solo boss.', 50000, ""],
     [None, 'Summoning Artifact', 100, 6, '<a:elootitem:1144477550379274322>',
      'Perform a summoning ritual to summon a tier 6 paragon solo boss.', 100000, ""],
-    [None, 'Summoning Crystal', 100, 7, '<a:elootitem:1144477550379274322>',
-     'Perform a summoning ritual to summon a tier 1-6 arbiter solo boss.', 250000, ""],
-    [None, 'Summoning Prism', 100, 8, '<a:elootitem:1144477550379274322>',
+    [None, 'Summoning Prism', 100, 7, '<a:elootitem:1144477550379274322>',
      'Perform a summoning ritual to summon a tier 7 arbiter solo boss.', 500000, ""]
 ]
 itemdata_dict = build_item_dict(itemdata_dict, summon_data, 1)
@@ -151,22 +147,11 @@ ore_data = [
     [None, 'Cosmite Ore', 5, 2, '<:eore:1145534835507593236>', None, 5000, ""],
     [None, 'Celestite Ore', 10, 3, '<:eore:1145534835507593236>', None, 10000, ""],
     [None, 'Crystallite Ore', 50, 4, '<:eore:1145534835507593236>', None, 50000, ""],
-    [None, 'Heavenly Ore', 100, 5, '<:eore:1145534835507593236>', None, 100000, ""],
-    [None, 'Abyss Ore', 100, 7, '<:eore:1145534835507593236>', None, 250000, ""]
+    [None, 'Heavenly Ore', 100, 5, '<:eore:1145534835507593236>', None, 0, ""]
 ]
 for row in ore_data[1:]:
     row[5] = f'Ore with {row[2]}% purity. Used for reinforcing gear items. Increasing the quality.'
 itemdata_dict = build_item_dict(itemdata_dict, ore_data, 1)
-
-# Hammer List Data
-hammer_data = [
-    "Hammer",
-    [None, 'Astral Hammer', 33, 2, '<:ehammer:1145520259248427069>',
-     'Used to reroll specific item rolls. Works on tier 4 and lower gear items.', 50000, ""],
-    [None, 'Void Hammer', 50, 5, '<:ehammer:1145520259248427069>',
-     'Used to add or reroll item rolls. Works on tier 6 and abov gear items.', 100000, ""]
-]
-itemdata_dict = build_item_dict(itemdata_dict, hammer_data, 1)
 
 # Matrix List Data
 matrix_data = [
@@ -175,16 +160,6 @@ matrix_data = [
      '5% Chance to add a socket to a gear item.', 5000, ""]
 ]
 itemdata_dict = build_item_dict(itemdata_dict, matrix_data, 1)
-
-# Pearl List Data
-pearl_data = [
-    "Pearl",
-    [None, 'Stellar Pearl', 75, 4, '<:eprl:1148390531345432647>',
-     'Augments an item roll. Increases the tier by 1.', 50000, ""],
-    [None, 'Void Pearl', 95, 6, '<:eprl:1148390531345432647>',
-     'Augments an item roll of a tier 5 or higher item. Increases the tier by 1.', 0, ""]
-]
-itemdata_dict = build_item_dict(itemdata_dict, pearl_data, 1)
 
 # Flame Items
 flame_data = [
@@ -230,11 +205,11 @@ itemdata_dict = build_item_dict(itemdata_dict, unrefined_fabled_data, 1)
 unrefined_misc_data = [
     "Unrefined",
     [None, 'Unrefined Dragon Wings', 75, 4, '<a:elootitem:1144477550379274322>',
-     'Refine for 75% chance to receive tier 2-4 dragon wings.', 25000, ""],
+     'Refine for 75% chance to receive tier 2-4 dragon wings.', 0, ""],
     [None, 'Unrefined Demon Vambraces', 75, 4, '<a:elootitem:1144477550379274322>',
-     'Refine for 75% chance to receive a tier 2-4 demon vambraces.', 25000, ""],
+     'Refine for 75% chance to receive a tier 2-4 demon vambraces.', 0, ""],
     [None, 'Unrefined Paragon Crest', 75, 4, '<a:elootitem:1144477550379274322>',
-     'Refine for 75% chance to receive a tier 2-4 paragon crest.', 25000, ""]
+     'Refine for 75% chance to receive a tier 2-4 paragon crest.', 0, ""]
 ]
 itemdata_dict = build_item_dict(itemdata_dict, unrefined_misc_data, 1)
 
@@ -242,11 +217,11 @@ itemdata_dict = build_item_dict(itemdata_dict, unrefined_misc_data, 1)
 unrefined_gem_data = [
     "Gem",
     [None, 'Unrefined Dragon Gem', 75, 3, '<a:elootitem:1144477550379274322>',
-     'Refine for 75% chance to receive tier 2-4 dragon gem.', 30000, ""],
+     'Refine for 75% chance to receive tier 2-4 dragon gem.', 0, ""],
     [None, 'Unrefined Demon Gem', 75, 4, '<a:elootitem:1144477550379274322>',
-     'Refine for 75% chance to receive a tier 2-4 demon gem.', 40000, ""],
+     'Refine for 75% chance to receive a tier 2-4 demon gem.', 0, ""],
     [None, 'Unrefined Paragon Gem', 75, 5, '<a:elootitem:1144477550379274322>',
-     'Refine for 75% chance to receive a tier 2-4 paragon gem.', 50000, ""]
+     'Refine for 75% chance to receive a tier 2-4 paragon gem.', 0, ""]
 ]
 itemdata_dict = build_item_dict(itemdata_dict, unrefined_gem_data, 1)
 
@@ -254,15 +229,15 @@ itemdata_dict = build_item_dict(itemdata_dict, unrefined_gem_data, 1)
 unrefined_jewel_data = [
     "Jewel",
     [None, 'Unrefined Dragon Jewel', 75, 5, '<a:elootitem:1144477550379274322>',
-     'Refine for 50% chance to receive tier 5-8 dragon jewel.', 100000, ""],
+     'Refine for 50% chance to receive tier 5-8 dragon jewel.', 0, ""],
     [None, 'Unrefined Demon Jewel', 75, 5, '<a:elootitem:1144477550379274322>',
-     'Refine for 50% chance to receive a tier 5-8 demon jewel.', 150000, ""],
+     'Refine for 50% chance to receive a tier 5-8 demon jewel.', 0, ""],
     [None, 'Unrefined Paragon Jewel', 75, 6, '<a:elootitem:1144477550379274322>',
-     'Refine for 50% chance to receive a tier 5-8 paragon jewel.', 250000, ""],
+     'Refine for 50% chance to receive a tier 5-8 paragon jewel.', 0, ""],
     [None, 'Unrefined Arbiter Jewel', 75, 7, '<a:elootitem:1144477550379274322>',
-     'Refine for 50% chance to receive a tier 6-8 arbiter jewel.', 500000, ""],
+     'Refine for 50% chance to receive a tier 6-8 arbiter jewel.', 0, ""],
     [None, 'Unrefined Incarnate Jewel', 75, 8, '<a:elootitem:1144477550379274322>',
-     'Refine for 50% chance to receive a tier 7-8 incarnate jewel.', 1000000, ""]
+     'Refine for 50% chance to receive a tier 7-8 incarnate jewel.', 0, ""]
 ]
 itemdata_dict = build_item_dict(itemdata_dict, unrefined_jewel_data, 1)
 
@@ -310,13 +285,13 @@ itemdata_dict = build_item_dict(itemdata_dict, essence_data, 1)
 crystallized_data = [
     "Crystal",
     [None, 'Crystallized Void', 100, 5, '<a:evoid:1145520260573827134>',
-     'Used to craft tier 5 weapons.', 500000, ""],
+     'Used to craft tier 5 weapons.', 0, ""],
     [None, 'Crystallized Wish', 100, 6, '<a:evoid:1145520260573827134>',
-     'UUsed to upgrade weapons to tier 6.', 1000000, ""],
+     'UUsed to upgrade weapons to tier 6.', 0, ""],
     [None, 'Crystallized Abyss', 100, 7, '<a:evoid:1145520260573827134>',
-     'Used to upgrade weapons to tier 7.', 10000000, ""],
+     'Used to upgrade weapons to tier 7.', 0, ""],
     [None, 'Crystallized Divinity', 100, 8, '<a:evoid:1145520260573827134>',
-     'Used to upgrade weapons to tier 8.', 100000000, ""]
+     'Used to upgrade weapons to tier 8.', 0, ""]
 ]
 itemdata_dict = build_item_dict(itemdata_dict, crystallized_data, 1)
 
@@ -371,7 +346,11 @@ itemdata_dict = build_item_dict(itemdata_dict, heart_data, 1)
 uncategorized_data = [
     None,
     ['OriginZ', 'Origin Catalyst', 100, 5, '<a:eorigin:1145520263954440313>',
-     'Used for elemental infusion.', 100000, ""],
+     'Used for elemental infusion.', 500000, ""],
+    ["Hammer", 'Astral Hammer', 33, 2, '<:ehammer:1145520259248427069>',
+     'Used to reroll specific item rolls. Works on tier 4 and lower gear items.', 50000, ""],
+    ["Pearl", 'Stellar Pearl', 75, 4, '<:eprl:1148390531345432647>',
+     'Augments an item roll. Increases the tier by 1.', 50000, ""],
     ['Crate', 'Crate', 100, 1, '<a:elootitem:1144477550379274322>',
      'Contains a random item.', 50000, ""],
     ['Scrap', 'Equipment Scrap', 100, 1, '<a:elootitem:1144477550379274322>',

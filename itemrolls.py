@@ -155,9 +155,9 @@ Amulet_unique_rolls = {
 }
 
 unique_skill_rolls = {}
-for roll_index, (class_name, skills) in enumerate(globalitems.skill_names_dict.items()):
+for roll_num, (class_name, skills) in enumerate(globalitems.skill_names_dict.items()):
     for index, skill_name in enumerate(skills):
-        key = f"unique-{roll_index}-{class_name}"
+        key = f"unique-{roll_num}-{class_name}"
         unique_skill_rolls[key] = [f"{skill_name} Damage", 10, 1, [["skill_base_damage_bonus", index]]]
 
 unique_rolls = {
@@ -427,39 +427,42 @@ def add_roll(selected_item, num_rolls):
 
 
 def reroll_roll(selected_item, method_type):
+    # Handle full reroll
     if method_type == "all":
-        selected_item.item_num_rolls = 0
-        selected_item.item_roll_values = []
+        tier_list = [ItemRoll(roll_id).roll_tier for roll_id in selected_item.item_roll_values]
+        selected_item.item_num_rolls, selected_item.item_roll_values = 0, []
         add_roll(selected_item, 6)
+        selected_item.item_roll_values = [f"{tier_list[i]}-{ItemRoll(roll_id).roll_code}"
+                                          for i, roll_id in enumerate(selected_item.item_roll_values)]
+        return
+
+    # Handle single reroll
+    method = random.choice(roll_structure_dict[selected_item.item_type]) if method_type == "any" else method_type
+    exclusions_list, exclusions_weighting = [], []
+    max_count = roll_structure_dict[selected_item.item_type].count(method)
+    target_count = random.randint(1, max_count)
+
+    # Determine the roll list and total weighting based on method
+    if method == "unique":
+        roll_list, total_weighting = handle_unique(selected_item)
     else:
-        exclusions_list = []
-        exclusions_weighting = []
-        method = random.choice(roll_structure_dict[selected_item.item_type]) if method_type == "any" else method_type
-        # Determine the target roll index based on the structure.
-        max_count = roll_structure_dict[selected_item.item_type].count(method)
-        target_count = random.randint(1, max_count)
-        # Build the list of available options from the exclusions.
-        if method == "unique":
-            roll_list, total_weighting = handle_unique(selected_item)
-        else:
-            roll_list = item_roll_master_dict[method][0]
-            total_weighting = item_roll_master_dict[method][1]
-        matches_count = 0
-        for roll_index, roll_id in enumerate(selected_item.item_roll_values):
-            current_roll = ItemRoll(roll_id)
-            if current_roll.roll_category == method:
-                matches_count += 1
-                exclusions_list.append(current_roll.roll_code)
-                roll_weighting = roll_list[current_roll.roll_code][2]
-                exclusions_weighting.append(roll_weighting)
-                if matches_count == target_count:
-                    original_roll_tier = current_roll.roll_tier
-                    original_roll_location = roll_index
-        available_rolls = [roll for roll in roll_list if roll not in exclusions_list]
-        # Select and set a new roll.
-        selected_roll_code = select_roll(total_weighting, exclusions_weighting, available_rolls, roll_list)
-        new_roll_id = f"{original_roll_tier}-{selected_roll_code}"
-        selected_item.item_roll_values[original_roll_location] = new_roll_id
+        roll_list, total_weighting = item_roll_master_dict[method][0], item_roll_master_dict[method][1]
+
+    # Build the list of exclusions and identify the roll to be replaced
+    for roll_index, roll_id in enumerate(selected_item.item_roll_values):
+        current_roll = ItemRoll(roll_id)
+        if current_roll.roll_category != method:
+            continue
+        exclusions_list.append(current_roll.roll_code)
+        roll_weighting = roll_list[current_roll.roll_code][2]
+        exclusions_weighting.append(roll_weighting)
+        if len(exclusions_list) == target_count:
+            original_roll_tier, original_roll_location = current_roll.roll_tier, roll_index
+    available_rolls = [roll for roll in roll_list if roll not in exclusions_list]
+    # Select and set a new roll.
+    selected_roll_code = select_roll(total_weighting, exclusions_weighting, available_rolls, roll_list)
+    new_roll_id = f"{original_roll_tier}-{selected_roll_code}"
+    selected_item.item_roll_values[original_roll_location] = new_roll_id
 
 
 def handle_unique(selected_item):

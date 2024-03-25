@@ -34,6 +34,9 @@ class Quest:
     async def hand_in(self, ctx_object, player_obj):
         is_completed, progress_count = self.calculate_progress(player_obj)
         if is_completed:
+            # Pay cost if required
+            if self.quest_type == 2:
+                inventory.update_stock(player_obj, self.item_handin, self.cost)
             embed_msg = await self.handle_completion(ctx_object, player_obj, progress_count)
             return embed_msg, is_completed
         # Handle incomplete quest hand-in.
@@ -151,9 +154,10 @@ class QuestView(discord.ui.View):
         self.player_obj.reload_player()
         self.embed_msg, is_completed = await self.quest_object.hand_in(self.ctx_object, self.player_obj)
         if not is_completed:
-            self.embed_msg.add_field(name="", value="Quest is not completed!", inline=False)
+            temp_embed = self.embed_msg
+            temp_embed.add_field(name="", value="Quest is not completed!", inline=False)
             quest_view = QuestView(self.ctx_object, self.player_obj, self.quest_object)
-            await interaction.response.edit_message(embed=self.embed_msg, view=quest_view)
+            await interaction.response.edit_message(embed=temp_embed, view=quest_view)
             return
         # Handle completed quest.
         self.new_view = RewardView(self.ctx_object, self.player_obj)

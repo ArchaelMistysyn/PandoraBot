@@ -16,27 +16,6 @@ combat_command_list = [("solo", "Challenge a solo boss. Stamina Cost: 200", 0),
                        ("arena", "Enter pvp combat with another player.", 1),
                        ("abandon", "Abandon an active solo encounter.", 2)]
 
-t5_hp_bar_empty = ["<:HP_Bar_Empty_03:1176059083204337744>", "<:HP_Bar_Empty_04:1176059084840124458>",
-                   "<:HP_Bar_Empty_05:1176059085951606856>", "<:HP_Bar_Empty_06:1176059046617428039>",
-                   "<:HP_Bar_Empty_07:1176059047607287888>", "<:HP_Bar_Empty_08:1176059049293393930>",
-                   "<:HP_Bar_Empty_09:1176059050186788934>", "<:HP_Bar_Empty_10:1176059050979512370>",
-                   "<:HP_Bar_Empty_11:1176059052325879879>", "<:HP_Bar_Empty_12:1176059019119558776>",
-                   "<:HP_Bar_Empty_13:1176059020365266995>", "<:HP_Bar_Empty_14:1176059021724237895>",
-                   "<:HP_Bar_Empty_15:1176059022802161694>", "<:HP_Bar_Empty_16:1176059023599075328>",
-                   "<:HP_Bar_Empty_17:1176059025721393162>"]
-t5_hp_bar_full = ["<:HP_Bar_Full_03:1176053423049822219>", "<:HP_Bar_Full_04:1176053419346235403>",
-                  "<:HP_Bar_Full_05:1176053420914905139>", "<:HP_Bar_Full_06:1176053422127054888>",
-                  "<:HP_Bar_Full_07:1176053399561711626>", "<:HP_Bar_Full_08:1176053401029718036>",
-                  "<:HP_Bar_Full_09:1176053402132820048>", "<:HP_Bar_Full_10:1176053403193987133>",
-                  "<:HP_Bar_Full_11:1176056919396470824>", "<:HP_Bar_Full_12:1176053365298450526>",
-                  "<:HP_Bar_Full_13:1176053366321852416>", "<:HP_Bar_Full_14:1176053367563362354>",
-                  "<:HP_Bar_Full_15:1176053368293175346>", "<:HP_Bar_Full_16:1176053369320775761>",
-                  "<:HP_Bar_Full_17:1176053370876870659>"]
-hp_bar_dict = {1: [t5_hp_bar_full, t5_hp_bar_empty], 2: [t5_hp_bar_full, t5_hp_bar_empty],
-               3: [t5_hp_bar_full, t5_hp_bar_empty], 4: [t5_hp_bar_full, t5_hp_bar_empty],
-               5: [t5_hp_bar_full, t5_hp_bar_empty], 6: [t5_hp_bar_full, t5_hp_bar_empty],
-               7: [t5_hp_bar_full, t5_hp_bar_empty]}
-
 boss_attack_dict = {
     "Dragon": ["[ELEMENT] Claw Slash", "[ELEMENT] Wing Blast", "Amplified [ELEMENT] Breath"],
     "Demon": ["Dark Flame", "Abyss Bolt", "Blood Deluge"],

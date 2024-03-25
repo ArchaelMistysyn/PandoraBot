@@ -37,8 +37,6 @@ recipe_dict = {
     "Void Infusion": {
         "Void Core": ["Fragment1", 10, "Heart1", 1, 95, "Core1"],
         "Fragmentized Void": ["Scrap", 5, "Stone5", 1, 100, "Fragment1"],
-        "Void Pearl": ["Pearl1", 1, "Core1", 1, 90, "Pearl2"],
-        "Void Hammer": ["Hammer1", 1, "Core1", 1, 90, "Hammer2"],
         "Unrefined Void Item (Weapon)": ["Crystal1", 1, "Core1", 10, 99, "Void1"],
         "Unrefined Void Item (Armour)": ["Scrap", 100, "Core1", 5, 99, "Void2"],
         "Unrefined Void Item (Vambraces)": ["Unrefined2", 10, "Core1", 5, 99, "Void3"],
@@ -89,6 +87,7 @@ class RecipeObject:
         cost_title = f"{self.recipe_name} Infusion Cost"
         cost_info = f"{self.cost_item_1.item_emoji} {self.cost_item_1.item_name}: {stock_1} / {self.cost_qty_1}"
         cost_info += f"\n{self.cost_item_2.item_emoji} {self.cost_item_2.item_name}: {stock_2} / {self.cost_qty_2}"
+        cost_info += f"\nSuccess Rate: {self.success_rate}%"
         cost_embed = discord.Embed(colour=discord.Colour.dark_orange(), title=cost_title, description=cost_info)
         return cost_embed
 
@@ -96,7 +95,7 @@ class RecipeObject:
         can_proceed = False
         stock_1 = inventory.check_stock(player_obj, self.cost_item_1.item_id)
         stock_2 = inventory.check_stock(player_obj, self.cost_item_2.item_id)
-        if stock_1 >= num_crafts * self.cost_qty_1 and stock_2 >= self.cost_qty_2:
+        if stock_1 >= num_crafts * self.cost_qty_1 and stock_2 >= num_crafts * self.cost_qty_2:
             can_proceed = True
         return can_proceed
 
@@ -106,10 +105,8 @@ class RecipeObject:
         total_cost_2 = 0 - (num_crafts * self.cost_qty_2)
         inventory.update_stock(player_obj, self.cost_item_1.item_id, total_cost_1)
         inventory.update_stock(player_obj, self.cost_item_2.item_id, total_cost_2)
-        print(f"{player_obj.player_username}: infusion paid")
         for x in range(num_crafts):
             random_attempt = random.randint(1, 100)
-            print(f"{player_obj.player_username}: infusion roll: {random_attempt} / {self.success_rate}")
             if random_attempt <= self.success_rate:
                 inventory.update_stock(player_obj, self.outcome_item.item_id, 1)
                 result += 1
@@ -223,7 +220,7 @@ class CraftView(discord.ui.View):
         # Handle failure
         embed_description = "Infusion Failed! I guess it's just not your day today."
         embed_msg = discord.Embed(colour=discord.Colour.dark_orange(), title=embed_title, description=embed_description)
-        new_view = CraftView(reload_player, self.recipe_object)
+        new_view = CraftView(self.player_user, self.recipe_object)
         await interaction.response.edit_message(embed=self.embed_msg, view=self.new_view)
 
     @discord.ui.button(label="Infuse 1", style=discord.ButtonStyle.success, emoji="1️⃣")

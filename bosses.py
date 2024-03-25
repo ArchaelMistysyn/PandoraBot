@@ -1,19 +1,22 @@
+# General imports
 import discord
-from discord.ext import commands
-import csv
 import random
-import pandas as pd
-from PIL import Image, ImageFont, ImageDraw, ImageEnhance
 
+# Data imports
 import globalitems
 import sharedmethods
+
+# Core imports
 import player
-import bosses
-import os
-import combat
 import mydb
 
-fortress_data = pd.read_csv("fortressname.csv")
+fortress_variants = [['Devouring', 0], ['Vengeful', 0], ['Blighted', 1], ['Plagued', 1],
+                     ['Writhing', 2], ['Agony', 2], ['Overgrown', 3], ['Man-Eating', 3],
+                     ['Shrieking', 4], ['Howling', 4]]
+fortress_types = ['Nirvana', 'Paradise', 'Arcadia', 'Eden', 'Dream',
+                  'Elysium', 'Sanctuary', 'Domain', 'Oblivion', 'Cradle']
+
+demon_colours = ["Crimson", "Azure", "Violet", "Bronze", "Jade", "Ivory", "Stygian", "Gold", "Rose"]
 
 
 # Boss class
@@ -54,7 +57,7 @@ class CurrentBoss:
         # Set boss hp
         if not self.calculate_hp():
             self.boss_cHP = 0
-        hp_bar_icons = combat.hp_bar_dict[self.boss_tier]
+        hp_bar_icons = globalitems.hp_bar_dict[self.boss_tier]
         boss_hp = f'{life_emoji} ({sharedmethods.display_hp(int(self.boss_cHP), int(self.boss_mHP))})'
         bar_length = 0
         if int(self.boss_cHP) >= 1:
@@ -330,11 +333,9 @@ def get_element(chosen_weakness):
 def get_boss_descriptor(boss_type):
     match boss_type:
         case "Fortress":
-            boss_info = random.choice(fortress_data.fortress_name_a).split(";")
-            boss_descriptor, boss_element = str(boss_info[0]), int(boss_info[1])
-            boss_descriptor += f" {str(random.choice(fortress_data.fortress_name_b))}, "
+            boss_descriptor, boss_element = random.choice(fortress_variants)
+            boss_descriptor += f" {random.choice(fortress_types)}, "
         case "Demon":
-            demon_colours = ["Crimson", "Azure", "Violet", "Bronze", "Jade", "Ivory", "Stygian", "Gold", "Rose"]
             boss_element = random.randint(0, 8)
             boss_descriptor = demon_colours[boss_element]
     return boss_descriptor, boss_element
@@ -416,7 +417,7 @@ def get_raid_id(channel_id, player_id, return_multiple=False):
 def create_dead_boss_embed(channel_id, active_boss, dps):
     active_boss.boss_cHP = 0
     dead_embed = active_boss.create_boss_embed(dps)
-    player_list, damage_list = bosses.get_damage_list(channel_id)
+    player_list, damage_list = get_damage_list(channel_id)
     output_list = ""
     for idx, x in enumerate(player_list):
         player_obj = player.get_player_by_id(x)

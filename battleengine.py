@@ -250,9 +250,35 @@ def run_discord_bot():
         combat.toggle_flag(player_obj)
         await ctx.send("You have flagged to abandon the encounter.")
 
-    @engine_bot.hybrid_command(name='solo', help="Challenge a solo boss. Stamina Cost: 200")
+    @engine_bot.hybrid_command(name='fortress', help="Challenge a fortress boss. Cost: 1 Fortress Stone + 200 Stamina")
     @app_commands.guilds(discord.Object(id=1011375205999968427))
-    async def solo(ctx):
+    async def fortress(ctx):
+        await solo(ctx, boss_type="Fortress")
+
+    @engine_bot.hybrid_command(name='dragon', help="Challenge a dragon boss. Cost: 1 Dragon Stone + 200 Stamina")
+    @app_commands.guilds(discord.Object(id=1011375205999968427))
+    async def dragon(ctx):
+        await solo(ctx, boss_type="Dragon")
+
+    @engine_bot.hybrid_command(name='demon', help="Challenge a demon boss. Cost: 1 Demon Stone + 200 Stamina")
+    @app_commands.guilds(discord.Object(id=1011375205999968427))
+    async def demon(ctx):
+        await solo(ctx, boss_type="Demon")
+
+    @engine_bot.hybrid_command(name='paragon', help="Challenge a paragon boss. Cost: 1 Paragon Stone + 200 Stamina")
+    @app_commands.guilds(discord.Object(id=1011375205999968427))
+    async def paragon(ctx):
+        await solo(ctx, boss_type="Paragon")
+
+    @engine_bot.hybrid_command(name='arbiter', help="Challenge a paragon boss. Cost: 1 Arbiter Stone + 200 Stamina")
+    @app_commands.guilds(discord.Object(id=1011375205999968427))
+    async def arbiter(ctx):
+        await solo(ctx, boss_type="Arbiter")
+
+    @engine_bot.hybrid_command(name='solo',
+                               help="Options: [Random/Fortress/Dragon/Demon/Paragon/Arbiter]. Stamina Cost: 200")
+    @app_commands.guilds(discord.Object(id=1011375205999968427))
+    async def solo(ctx, boss_type="random"):
         player_obj = await sharedmethods.check_registration(ctx)
         if player_obj is None:
             return
@@ -267,15 +293,33 @@ def run_discord_bot():
             await ctx.send("Not enough stamina.")
             return
 
-        # Spawn the boss.
-        max_spawn = 2
-        if player_obj.player_echelon == 0:
-            max_spawn = 0
-        elif player_obj.player_echelon == 1:
-            max_spawn = 1
-        max_spawn = min(player_obj.player_echelon, 2)
-        spawned_boss = random.randint(0, max_spawn)
-        boss_type = globalitems.boss_list[spawned_boss]
+        # Determine the restrictions
+        spawn_dict = {0: 0, 1: 1, 3: 2, 5: 3, 9: 4}
+        highest_key = max(key for key in spawn_dict if key <= player_obj.player_echelon)
+        max_spawn = spawn_dict[highest_key]
+
+        # Handle boss type selection
+        boss_type = boss_type.capitalize()
+        if boss_type == "Random":
+            spawned_boss = random.randint(0, max_spawn)
+            boss_type = globalitems.boss_list[spawned_boss]
+        else:
+            if boss_type not in globalitems.boss_list:
+                await ctx.send("Boss type not recognized. Please select [Random/Fortress/Dragon/Demon/Paragon/Arbiter].")
+                return
+            spawned_boss = globalitems.boss_list.index(boss_type)
+            if spawned_boss > max_spawn:
+                await ctx.send("Your echelon is not high enough to challenge this boss type.")
+                return
+            stone_id = f"Stone{spawned_boss}" if spawned_boss <= 4 else 6
+            stone_obj = inventory.BasicItem(stone_id)
+            stone_stock = inventory.check_stock(player_obj, stone_obj.item_id)
+            if stone_stock < 1:
+                await ctx.send(sharedmethods.get_stock_msg(stone_obj, stone_stock))
+                return
+            inventory.update_stock(player_obj, stone_obj.item_id, -1)
+
+        # Spawn the boss
         new_boss_tier, boss_type = bosses.get_random_bosstier(boss_type)
         active_boss = bosses.spawn_boss(ctx.channel.id, player_obj.player_id, new_boss_tier,
                                         boss_type, player_obj.player_lvl, 0)
@@ -417,26 +461,20 @@ def run_discord_bot():
         player_obj = await sharedmethods.check_registration(ctx)
         if player_obj is None:
             return
-        if token_version not in range(1, 6):
-            await ctx.send("Selected token not between 1 and 5.")
+        if token_version not in range(1, 4):
+            await ctx.send("Selected token not between 1 and 3.")
             return
         if player_obj.player_equipped[0] == 0:
             await ctx.send("You must have a weapon equipped.")
             return
-        if (player_obj.player_echelon < 9 or player_obj.player_quest < 48) and token_version == 5:
+        if (player_obj.player_echelon < 9 or player_obj.player_quest < 48) and token_version == 3:
             await ctx.send("You must be player echelon 9 and complete quest 47 to challenge the high arbiter.")
             return
-        if player_obj.player_echelon < 9 and token_version == 4:
-            await ctx.send("You must be player echelon 9 to challenge an arbiter.")
-            return
-        if player_obj.player_echelon < 8 and token_version == 3:
+        if player_obj.player_echelon < 8 and token_version == 2:
             await ctx.send("You must be player echelon 8 to challenge the paragon sovereign.")
             return
-        elif player_obj.player_echelon < 7 and token_version == 2:
+        elif player_obj.player_echelon < 7 and token_version == 1:
             await ctx.send("You must be player echelon 7 to challenge a superior paragon.")
-            return
-        elif player_obj.player_echelon < 5:
-            await ctx.send("You must be player echelon 5 to challenge a paragon.")
             return
         existing_id = bosses.get_raid_id(ctx.channel.id, player_obj.player_id)
         if existing_id != 0:
@@ -446,16 +484,12 @@ def run_discord_bot():
         token_item = inventory.BasicItem(token_id)
         player_stock = inventory.check_stock(player_obj, token_id)
         if player_stock <= 0:
-            await ctx.send(f"Out of Stock: {token_item.item_emoji} {token_item.item_name}.")
+            await ctx.send(sharedmethods.get_stock_msg(token_item, player_stock))
             return
         inventory.update_stock(player_obj, token_id, -1)
         # Set the boss tier and type
-        boss_type = "Paragon" if token_version < 4 else "Arbiter"
-        boss_tier_dict = {2: 5, 3: 6, 5: 7}
-        if token_version in boss_tier_dict.keys():
-            new_boss_tier = boss_tier_dict[token_version]
-        else:
-            new_boss_tier, boss_type = bosses.get_random_bosstier(boss_type)
+        boss_type = "Paragon" if token_version < 3 else "Arbiter"
+        new_boss_tier = boss_tier_dict[4 + token_version]
         active_boss = bosses.spawn_boss(ctx.channel.id, player_obj.player_id, new_boss_tier,
                                         boss_type, player_obj.player_lvl, 0)
         active_boss.player_id = player_obj.player_id
