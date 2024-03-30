@@ -83,6 +83,7 @@ class Quest:
         rewards = f"{globalitems.exp_icon} {exp_msg} EXP\n"
         rewards += f"{globalitems.coin_icon} {coin_msg} Lotus Coins\n"
         if lvl_change != 0:
+            print("IN!")
             await sharedmethods.send_notification(ctx_object, player_obj, "Level", lvl_change)
         # Handle Item/Role Awards.
         if self.award_item:
@@ -114,7 +115,7 @@ def assign_unique_tokens(player_obj, token_string):
     token_quest_dict = {
         # Boss Tokens
         "XVI - Aurora, The Fortress": 4, "VII - Astratha, The Dimensional": 6, "VIII - Tyra, The Behemoth": 11,
-        "II - Pandora, The Celestial": 14, "III - Oblivia, The Void": 15, "IV - Akasha, The Infinite": 16,
+        "II - Pandora, The Celestial": 14, "III - Oblivia, The Void": 16, "IV - Akasha, The Infinite": 17,
         "XXV - Eleuia, The Wish": 19,
         "XXVIII - Fleur, Oracle of the True Laws": 20, "XXIX - Yubelle, Adjudicator of the True Laws": 21,
         "XXX - Amaryllis, Incarnate of the Divine Lotus [Challenger]": 22,
@@ -125,7 +126,9 @@ def assign_unique_tokens(player_obj, token_string):
         "Crest": 12, "Tarot": 13, "Gauntlet": 15, "Abyss": 18, "Meld": 19, "Tarot Completion": 24
     }
     if token_string in token_quest_dict:
-        player_obj.update_tokens(token_quest_dict[token_string])
+        player_obj.quest_tokens[token_quest_dict[token_string]] += 1
+        quest_tokens = ";".join(map(str, player_obj.quest_tokens))
+        player_obj.set_player_field("quest_tokens", quest_tokens)
 
 
 def initialize_quest_list():
@@ -152,14 +155,14 @@ class QuestView(discord.ui.View):
             await interaction.response.edit_message(embed=self.embed_msg, view=self.new_view)
             return
         self.player_obj.reload_player()
-        self.embed_msg, is_completed = await self.quest_object.hand_in(self.ctx_object, self.player_obj)
+        temp_embed, is_completed = await self.quest_object.hand_in(self.ctx_object, self.player_obj)
         if not is_completed:
-            temp_embed = self.embed_msg
             temp_embed.add_field(name="", value="Quest is not completed!", inline=False)
             quest_view = QuestView(self.ctx_object, self.player_obj, self.quest_object)
             await interaction.response.edit_message(embed=temp_embed, view=quest_view)
             return
         # Handle completed quest.
+        self.embed_msg = temp_embed
         self.new_view = RewardView(self.ctx_object, self.player_obj)
         if self.quest_object.award_role is not None:
             add_role = discord.utils.get(interaction.guild.roles, name=self.quest_object.award_role)

@@ -202,37 +202,42 @@ def run_discord_bot():
         active_boss.reset_modifiers()
         active_boss.curse_debuffs = player_obj.elemental_curse
         active_boss.aura = player_obj.aura
-        embed, player_alive = combat.run_solo_cycle(combat_tracker, active_boss, player_obj)
+        embed, player_alive, boss_alive = combat.run_solo_cycle(combat_tracker, active_boss, player_obj)
         bosses.update_boss_cHP(channel_id, active_boss.player_id, active_boss.boss_cHP)
         if not player_alive:
             await sent_message.edit(embed=embed)
             bosses.clear_boss_info(channel_id, player_obj.player_id)
             return False
-        if active_boss.calculate_hp():
+        if boss_alive:
             await sent_message.edit(embed=embed)
             return True
-        else:
-            if gauntlet and active_boss.boss_tier != 6:
-                bosses.clear_boss_info(channel_id, player_obj.player_id)
-                boss_type = random.choice(["Paragon", "Arbiter"])
-                if active_boss.boss_tier < 4:
-                    boss_type = random.choice(["Fortress", "Dragon", "Demon", "Paragon"])
-                active_boss = bosses.spawn_boss(channel_id, player_obj.player_id, active_boss.boss_tier + 1,
-                                                boss_type, player_obj.player_lvl, 0, gauntlet=gauntlet)
-                active_boss.player_id = player_obj.player_id
-                embed = active_boss.create_boss_embed(dps=int(combat_tracker.total_dps / combat_tracker.total_cycles))
-                await sent_message.edit(embed=embed)
-                return True
-            await sent_message.edit(embed=embed)
-            player_list = [player_obj.player_id]
-            loot_bonus = 5 if gauntlet else 1
-            if "XXX" in active_boss.boss_name:
-                loot_bonus = loot.incarnate_attempts_dict[active_boss.boss_level]
-            loot_embed = await loot.create_loot_embed(embed, active_boss, player_list, ctx=ctx_object,
-                                                      loot_multiplier=loot_bonus, gauntlet=gauntlet)
+        if active_boss.boss_tier >= 4:
+            quest.assign_unique_tokens(player_obj, active_boss.boss_name)
+        if gauntlet and active_boss.boss_tier != 6:
             bosses.clear_boss_info(channel_id, player_obj.player_id)
-            await ctx_object.send(embed=loot_embed)
+            boss_type = random.choice(["Paragon", "Arbiter"])
+            if active_boss.boss_tier < 4:
+                boss_type = random.choice(["Fortress", "Dragon", "Demon", "Paragon"])
+            active_boss = bosses.spawn_boss(channel_id, player_obj.player_id, active_boss.boss_tier + 1,
+                                            boss_type, player_obj.player_lvl, 0, gauntlet=gauntlet)
+            active_boss.player_id = player_obj.player_id
+            embed = active_boss.create_boss_embed(dps=int(combat_tracker.total_dps / combat_tracker.total_cycles))
+            await sent_message.edit(embed=embed)
+            return True
+        # Handle dead boss
+        player_list = [player_obj.player_id]
+        loot_bonus = 5 if gauntlet else 1
+        if "XXX" in active_boss.boss_name:
+            loot_bonus = loot.incarnate_attempts_dict[active_boss.boss_level]
+        loot_embed = await loot.create_loot_embed(embed, active_boss, player_list, ctx=ctx_object,
+                                                  loot_multiplier=loot_bonus, gauntlet=gauntlet)
+        bosses.clear_boss_info(channel_id, player_obj.player_id)
+        if combat_tracker.total_cycles <= 5:
+            await sent_message.edit(embed=loot_embed)
             return False
+        await sent_message.edit(embed=embed)
+        await ctx_object.send(embed=loot_embed)
+        return False
 
     @engine_bot.hybrid_command(name='abandon', help="Abandon an active solo encounter.")
     @app_commands.guilds(discord.Object(id=1011375205999968427))
@@ -311,7 +316,7 @@ def run_discord_bot():
             if spawned_boss > max_spawn:
                 await ctx.send("Your echelon is not high enough to challenge this boss type.")
                 return
-            stone_id = f"Stone{spawned_boss}" if spawned_boss <= 4 else 6
+            stone_id = f"Stone{spawned_boss + 1}" if spawned_boss <= 3 else "Stone6"
             stone_obj = inventory.BasicItem(stone_id)
             stone_stock = inventory.check_stock(player_obj, stone_obj.item_id)
             if stone_stock < 1:
@@ -446,7 +451,7 @@ def run_discord_bot():
         inventory.update_stock(player_obj, "Compass", -1)
         quest.assign_unique_tokens(player_obj, "Gauntlet")
         active_boss = bosses.spawn_boss(ctx.channel.id, player_obj.player_id, 1,
-                                        boss_type, player_obj.player_lvl, 0, gauntlet=True)
+                                        "Fortress", player_obj.player_lvl, 0, gauntlet=True)
         active_boss.player_id = player_obj.player_id
         await ctx.send(f"{player_obj.player_username} has entered the Spire of Illusions!")
         embed_msg = active_boss.create_boss_embed()
@@ -489,7 +494,7 @@ def run_discord_bot():
         inventory.update_stock(player_obj, token_id, -1)
         # Set the boss tier and type
         boss_type = "Paragon" if token_version < 3 else "Arbiter"
-        new_boss_tier = boss_tier_dict[4 + token_version]
+        new_boss_tier = 4 + token_version
         active_boss = bosses.spawn_boss(ctx.channel.id, player_obj.player_id, new_boss_tier,
                                         boss_type, player_obj.player_lvl, 0)
         active_boss.player_id = player_obj.player_id

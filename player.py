@@ -167,27 +167,27 @@ class PlayerProfile:
                 embed_msg.add_field(name=title_msg, value=stats, inline=False)
                 title_msg, stats = "Application Details", ""
                 stats += set_section("Elemental Details", ["Cap", "App", "FRC"],
-                                       [self.elemental_capacity, self.elemental_application,
-                                        (self.elemental_application * 5 + show_num(self.specialty_rate[3]))])
+                                     [self.elemental_capacity, self.elemental_application,
+                                     (self.elemental_application * 5 + show_num(self.specialty_rate[3]))])
                 stats += set_section("Critical Details", ["CRT", "Dmg", "Pen", "App", "OMG"],
-                                       [show_num(self.critical_chance, 0), show_num(self.critical_multiplier),
-                                        show_num(self.critical_penetration), show_num(self.critical_application),
-                                        (self.critical_application * 10 + show_num(self.specialty_rate[2]))])
+                                     [show_num(self.critical_chance, 1), show_num(self.critical_multiplier),
+                                     show_num(self.critical_penetration), show_num(self.critical_application),
+                                     (self.critical_application * 10 + show_num(self.specialty_rate[2]))])
                 stats += set_section("Combo Details", ["Dmg", "Pen", "App"],
-                                       [show_num(self.combo_multiplier), show_num(self.combo_penetration),
-                                        self.combo_application])
+                                     [show_num(self.combo_multiplier), show_num(self.combo_penetration),
+                                     self.combo_application])
                 stats += set_section("Ultimate Details", ["Dmg", "Pen", "App"],
-                                       [show_num(self.ultimate_multiplier), show_num(self.ultimate_penetration),
-                                        self.ultimate_application])
+                                     [show_num(self.ultimate_multiplier), show_num(self.ultimate_penetration),
+                                     self.ultimate_application])
                 stats += set_section("Bleed Details", ["Dmg", "Pen", "App", "HPR"],
-                                       [show_num(self.bleed_multiplier), show_num(self.bleed_penetration),
-                                        self.bleed_application,
-                                        (self.bleed_application * 10 + show_num(self.specialty_rate[1]))])
+                                     [show_num(self.bleed_multiplier), show_num(self.bleed_penetration),
+                                     self.bleed_application,
+                                     (self.bleed_application * 10 + show_num(self.specialty_rate[1]))])
                 stats += set_section("Time Details", ["Dmg", "App", "LCK"],
-                                       [((self.temporal_application + 1) * 100), self.temporal_application,
-                                        (self.temporal_application * 5 + show_num(self.specialty_rate[4]))])
+                                     [((self.temporal_application + 1) * 100), self.temporal_application,
+                                     (self.temporal_application * 5 + show_num(self.specialty_rate[4]))])
                 stats += set_section("Bloom Details", ["BLM", "Dmg"],
-                                       [show_num(self.specialty_rate[0]), show_num(self.bloom_multiplier)])
+                                     [show_num(self.specialty_rate[0]), show_num(self.bloom_multiplier)])
                 embed_msg.add_field(name=title_msg, value=stats, inline=False)
                 return embed_msg
         if method == 3:
@@ -196,7 +196,7 @@ class PlayerProfile:
             stats = f"Player HP: {self.player_mHP:,}\nRecovery: {self.recovery}"
             for idy, y in enumerate(self.elemental_resistance):
                 stats += f"\n{globalitems.global_element_list[idy]} Resistance: {show_num(y)}%"
-            stats += f"\nDamage Mitigation: {show_num(self.damage_mitigation, 0)}%"
+            stats += f"\nDamage Mitigation: {show_num(self.damage_mitigation, 1)}%"
             embed_msg.add_field(name=title_msg, value=stats, inline=False)
             return embed_msg
         if method == 4:
@@ -227,12 +227,10 @@ class PlayerProfile:
                     embed_msg = skillpaths.display_glyph(path_type, total_points, embed_msg)
             return embed_msg
 
-    def adjust_coins(self, coin_change, reduction=False):
+    def adjust_coins(self, coin_change, reduction=False, apply_pact=True):
         adjust_msg = ""
-        if reduction:
-            coin_change *= -1
-            change_message = f"{coin_change:,}x"
-        else:
+        coin_change *= -1 if reduction else 1
+        if apply_pact and not reduction:
             pact_object = pact.Pact(self.pact)
             if pact_object.pact_variant == "Greed":
                 coin_change *= 2
@@ -240,20 +238,21 @@ class PlayerProfile:
             elif pact_object.pact_variant == "Gluttony":
                 coin_change = int(round(coin_change / 2))
                 adjust_msg = " [Gluttony Penalty]"
-            change_message = f"{coin_change:,}x{adjust_msg}"
+        change_message = f"{coin_change:,}x{adjust_msg}"
         self.player_coins += coin_change
         self.set_player_field("player_coins", self.player_coins)
         return change_message
 
-    def adjust_exp(self, exp_change):
-        pact_object = pact.Pact(self.pact)
+    def adjust_exp(self, exp_change, apply_pact=True):
         adjust_msg = ""
-        if pact_object.pact_variant == "Gluttony":
-            exp_change *= 2
-            adjust_msg = " [Gluttony Bonus]"
-        elif pact_object.pact_variant == "Greed":
-            exp_change = int(round(exp_change / 2))
-            adjust_msg = " [Greed Penalty]"
+        if apply_pact:
+            pact_object = pact.Pact(self.pact)
+            if pact_object.pact_variant == "Gluttony":
+                exp_change *= 2
+                adjust_msg = " [Gluttony Bonus]"
+            elif pact_object.pact_variant == "Greed":
+                exp_change = int(round(exp_change / 2))
+                adjust_msg = " [Greed Penalty]"
         self.player_exp += exp_change
         # Handle Levels
         max_exp = get_max_exp(self.player_lvl)
@@ -318,15 +317,6 @@ class PlayerProfile:
         registered_player = get_player_by_discord(self.discord_id)
         pandora_db.close_engine()
         return f"Welcome {self.player_username}!\nUse /quest to begin."
-
-    def update_tokens(self, token_num):
-        self.quest_tokens[token_num] += 1
-        quest_tokens = ";".join(map(str, self.quest_tokens))
-        pandora_db = mydb.start_engine()
-        raw_query = f"UPDATE PlayerList SET quest_tokens = :field_value WHERE player_id = :player_check"
-        params = {'field_value': quest_tokens, 'player_check': self.player_id}
-        pandora_db.run_query(raw_query, params=params)
-        pandora_db.close_engine()
 
     def spend_stamina(self, cost) -> bool:
         is_spent = False
@@ -393,7 +383,7 @@ class PlayerProfile:
             if self.player_class == "Rider":
                 base_attack_speed *= 1.25
         if e_item[1]:
-            base_damage_mitigation = float(e_item[1].item_base_stat)
+            base_damage_mitigation = e_item[1].item_base_stat
         for y in range(1, 5):
             if e_item[y]:
                 self.unique_ability_multipliers(e_item[y])

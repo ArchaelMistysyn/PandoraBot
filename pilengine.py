@@ -47,42 +47,34 @@ metal_url_list = [f"{profile_url}{metal_url}Bronze.png", f"{profile_url}{metal_u
                   f"{profile_url}{metal_url}Silver.png", f"{profile_url}{metal_url}SilverPlus.png",
                   f"{profile_url}{metal_url}Gold.png", f"{profile_url}{metal_url}GoldPlus.png",
                   f"{profile_url}{metal_url}Stygian.png"]
+url_dict = {'cardBG': rank_card_url_list, 'metal': metal_url_list, 'wing': wing_gem_url_list,
+            'exp_bar': exp_bar_url_list, 'role_icon': rank_url_list, 'frame_icon': globalitems.frame_icon_list}
+
+# Load Resources
+font_url = "https://kyleportfolio.ca//botimages/profilecards/fonts/"
+level_font_url = "aerolite/Aerolite.otf"
+name_font = "blackchancery/BLKCHCRY.TTF"
+# level_font_url = "oranienbaum/Oranienbaum.ttf"
+name_font_file = requests.get((font_url + name_font), stream=True).raw
+level_font_file = requests.get((font_url + level_font_url), stream=True).raw
 
 
 class RankCard:
     def __init__(self, user, achievement_list):
-        self.user = user
+        self.user, self.echelon = user, user.player_echelon
+        loc = [self.echelon for _ in range(6)]
         self.fill_colour = "black"
-        echelon = (self.user.player_echelon + 1) // 2
-        card_loc, metal_loc, wing_loc, exp_bar_loc, icon_loc, frame_loc = (
-            echelon, echelon, echelon, echelon, echelon, echelon)
         if "Exclusive Title Holder" in achievement_list:
             self.fill_colour = "white"
-            card_loc, metal_loc, wing_loc, exp_bar_loc = 6, 6, 6, 6
-            icon_loc, frame_loc = 7, 7
-            # Check if titleholder is echelon 5.
-            if echelon == 5:
-                card_loc = 5
-                exp_bar_loc = 5
-                wing_loc = 5
-            # Check if titleholder is subscriber.
-            if "Herrscher - Subscriber" in achievement_list:
-                icon_loc = 8
-        # Check if non titleholder is subscriber
+            loc = [6, 6, 6, 6, 7, 7] if self.echelon != 5 else [5, 6, 5, 5, 7, 7]
+            loc[4] = 8 if "Herrscher - Subscriber" in achievement_list else loc[4]
         elif "Herrscher - Subscriber" in achievement_list:
-            frame_loc = 5
-            if echelon < 5:
-                card_loc, exp_bar_loc, wing_loc = 7, 7, 7
-            # Check if subscriber is echelon 5.
-            elif echelon == 5:
-                icon_loc = 6
-        self.cardBG = rank_card_url_list[card_loc]
-        self.metal = metal_url_list[metal_loc]
-        self.wing = wing_gem_url_list[wing_loc]
-        self.exp_bar = exp_bar_url_list[exp_bar_loc]
-        self.role_icon = rank_url_list[icon_loc]
-        self.frame_icon = globalitems.frame_icon_list[frame_loc]
-        self.frame_icon = self.frame_icon.replace("[EXT]", globalitems.frame_extension[1])
+            loc = [7, 7, 7, 7, 6, 5] if self.echelon < 5 else [5, 5, 5, 5, 6, 5]
+        for attr, url_list in url_dict.items():
+            if attr != 'frame_icon':
+                index = loc[list(url_dict.keys()).index(attr)]
+            setattr(self, attr, url_list[index])
+        self.frame_icon = globalitems.frame_icon_list[loc[5]].replace("[EXT]", globalitems.frame_extension[1])
         self.class_icon = sharedmethods.get_thumbnail_by_class(self.user.player_class)
         self.fill_percent = round(self.user.player_exp / player.get_max_exp(self.user.player_lvl), 2)
 
@@ -90,12 +82,6 @@ class RankCard:
 def get_player_profile(player_obj, achievement_list):
     rank_card = RankCard(player_obj, achievement_list)
     temp_path = f'{image_path}profilecard\\'
-    font_url = "https://kyleportfolio.ca//botimages/profilecards/fonts/"
-    level_font_url = "aerolite/Aerolite.otf"
-    # level_font_url = "oranienbaum/Oranienbaum.ttf"
-    chosen_font = "blackchancery/BLKCHCRY.TTF"
-    font_file = requests.get((font_url + chosen_font), stream=True).raw
-    level_font_file = requests.get((font_url + level_font_url), stream=True).raw
     cardBG = Image.open(requests.get(rank_card.cardBG, stream=True).raw)
     metal = Image.open(requests.get(rank_card.metal, stream=True).raw)
     wing = Image.open(requests.get(rank_card.wing, stream=True).raw)
@@ -110,7 +96,7 @@ def get_player_profile(player_obj, achievement_list):
     result.paste(wing, (0, 0), wing)
 
     # Username
-    title_font = ImageFont.truetype(font_file, 54)
+    title_font = ImageFont.truetype(name_font_file, 54)
     level_font = ImageFont.truetype(level_font_file, 40)
 
     title_text = player_obj.player_username
@@ -187,4 +173,38 @@ def generate_and_combine_images(item_type, start_tier=1, end_tier=8, fetch_type=
         result.paste(icon, (17, 16), icon)
         result.save(file_path, format="PNG")
     return end_tier + 1 - start_tier
+
+
+def build_notification(player_obj, message, notification_type, item=None):
+    # Initializations.
+    width, height = 800, 200
+    background_color = hex_to_rgba(globalitems.tier_colors[player_obj.player_echelon])
+    result = Image.new('RGBA', (width, height), background_color + (255,))
+    image_editable = ImageDraw.Draw(result)
+
+    # Apply Title and Message Text.
+    title = f"Congratulations {player_obj.player_username}!"
+    title_font_object = ImageFont.truetype(level_font_file, 72)
+    font_object = ImageFont.truetype(name_font_file, 60)
+    image_editable.text((25, 25), title, fill="Black", font=title_font_object)
+    image_editable.text((200, height // 2 - 10), message, fill="Black", font=font_object)
+
+    # Example Icon Loading.
+    icon_size = (124, 124)
+    icon_url = sharedmethods.get_thumbnail_by_class(player_obj.player_class)
+    class_icon = Image.open(requests.get(icon_url, stream=True).raw)
+    class_icon = class_icon.resize(icon_size)
+    result.paste(class_icon, (50, 75), mask=class_icon)
+
+    # Save and return image.
+    file_path = f'{image_path}notification\\Notification{player_obj.player_id}.png'
+    result.save(file_path)
+    return file_path
+
+
+def hex_to_rgba(hex_value, alpha=255):
+    red = (hex_value >> 16) & 0xFF
+    green = (hex_value >> 8) & 0xFF
+    blue = hex_value & 0xFF
+    return red, green, blue
 

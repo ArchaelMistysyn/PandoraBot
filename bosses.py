@@ -92,7 +92,7 @@ class CurrentBoss:
         fortress_names = [fortress_list_t1, fortress_list_t2, fortress_list_t3, fortress_list_t4]
 
         # Dragon names
-        dragon_list_t1 = [("Zelphyros, Wind", ""), ("Sahjvadiir, Earth", "")]
+        dragon_list_t1 = [("Zelphyros, Wind", ""), ("Sahjvadiir, Earth", ""), ("Cyries'vael, Ice", "")]
         dragon_list_t2 = [("Arkadrya, Lightning", ""), ("Phyyratha, Fire", ""), ("Elyssrya, Water", "")]
         dragon_list_t3 = [("Y'thana, Light", ""), ("Rahk'vath, Shadow", "")]
         dragon_list_t4 = [("VII - Astratha, The Dimensional", "")]

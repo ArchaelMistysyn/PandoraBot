@@ -36,28 +36,27 @@ class RaidCog(commands.Cog):
         self.combat_tracker_list = []
         self.lock = asyncio.Lock()
         self.raid_manager.start()
-        print(f"Channel #{self.channel_num}: RaidCog Running")
 
     def cog_unload(self):
         self.raid_manager.cancel()
 
     @tasks.loop(seconds=60)
     async def raid_manager(self):
-        print(f"Running channel {self.channel_num} raid cycle")
         async with self.lock:
             is_alive = await self.bot.raid_boss(self.combat_tracker_list, self.active_boss,
                                                 self.channel_id, self.channel_num,
                                                 self.sent_message, self.channel_object)
-            if not is_alive:
-                bosses.clear_boss_info(self.channel_id, 0)
-                level, boss_type, boss_tier = bosses.get_raid_boss_details(self.channel_num)
-                active_boss = bosses.spawn_boss(self.channel_id, 0, boss_tier, boss_type, level, self.channel_num)
-                self.active_boss = active_boss
-                self.combat_tracker_list = []
-                embed_msg = active_boss.create_boss_embed()
-                raid_button = battleengine.RaidView(self.channel_num)
-                sent_message = await self.channel_object.send(embed=embed_msg, view=raid_button)
-                self.sent_message = sent_message
+            if is_alive:
+                return
+            bosses.clear_boss_info(self.channel_id, 0)
+            level, boss_type, boss_tier = bosses.get_raid_boss_details(self.channel_num)
+            active_boss = bosses.spawn_boss(self.channel_id, 0, boss_tier, boss_type, level, self.channel_num)
+            self.active_boss = active_boss
+            self.combat_tracker_list = []
+            embed_msg = active_boss.create_boss_embed()
+            raid_button = battleengine.RaidView(self.channel_num)
+            sent_message = await self.channel_object.send(embed=embed_msg, view=raid_button)
+            self.sent_message = sent_message
 
 
 class SoloCog(commands.Cog):
@@ -69,7 +68,6 @@ class SoloCog(commands.Cog):
         self.combat_tracker = combat.CombatTracker(player_obj)
         self.gauntlet = gauntlet
         self.lock = asyncio.Lock()
-        print(f"{self.player_obj.player_username}: SoloCog Running")
 
     async def run(self):
         self.solo_manager.start()
@@ -79,21 +77,21 @@ class SoloCog(commands.Cog):
 
     @tasks.loop(seconds=60)
     async def solo_manager(self):
-        if not combat.check_flag(self.player_obj):
-            print(f"Running {self.player_obj.player_username} solo cycle")
-            async with self.lock:
-                is_alive = await self.bot.solo_boss(self.combat_tracker, self.player_obj, self.active_boss,
-                                                    self.channel_id, self.sent_message, self.channel_object,
-                                                    gauntlet=self.gauntlet)
-                if not is_alive:
-                    if "XXX" in self.active_boss.boss_name:
-                        await leaderboards.update_leaderboard(self.combat_tracker, self.player_obj, self.ctx_object)
-                    self.cog_unload()
-        else:
-            combat.toggle_flag(self.player_obj)
-            bosses.clear_boss_info(self.channel_id, self.player_obj.player_id)
+        async with self.lock:
+            # Handle abandon
+            if combat.check_flag(self.player_obj):
+                combat.toggle_flag(self.player_obj)
+                bosses.clear_boss_info(self.channel_id, self.player_obj.player_id)
+                self.cog_unload()
+                return
+            is_alive = await self.bot.solo_boss(self.combat_tracker, self.player_obj, self.active_boss,
+                                                self.channel_id, self.sent_message, self.channel_object,
+                                                gauntlet=self.gauntlet)
+            if is_alive:
+                return
+            if "XXX" in self.active_boss.boss_name:
+                await leaderboards.update_leaderboard(self.combat_tracker, self.player_obj, self.ctx_object)
             self.cog_unload()
-            print(f"{self.player_obj.player_username}: SoloCog Abandoned")
 
 
 class PvPCog(commands.Cog):
@@ -120,7 +118,6 @@ class PvPCog(commands.Cog):
 
     @tasks.loop(seconds=30)
     async def pvp_manager(self):
-        print(f"Arena PvP: {self.player1.player_username} vs {self.player2.player_username} cycle")
         async with self.lock:
             await self.run_pvp_cycle()
 

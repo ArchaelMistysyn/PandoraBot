@@ -537,9 +537,9 @@ def binding_ritual(player_obj, essence_type, success_rate):
     essence_id = f'Essence{essence_type}'
     essence_stock = inventory.check_stock(player_obj, essence_id)
     loot_item = inventory.BasicItem(essence_id)
-    embed_msg = tarot_menu_embed(player_obj, essence_type)
     # Confirm stock is available
     if essence_stock == 0:
+        embed_msg = tarot_menu_embed(player_obj, essence_type)
         stock_msg = sharedmethods.get_stock_msg(loot_item, essence_stock)
         embed_msg.add_field(name="Ritual Failed!", value=stock_msg)
         return embed_msg
@@ -547,6 +547,7 @@ def binding_ritual(player_obj, essence_type, success_rate):
     inventory.update_stock(player_obj, essence_id, -1)
     random_roll = random.randint(1, 100)
     if random_roll > success_rate:
+        embed_msg = tarot_menu_embed(player_obj, essence_type)
         description_msg = "The essence dissipates."
         embed_msg.add_field(name="Ritual Failed!", value=description_msg)
         return embed_msg

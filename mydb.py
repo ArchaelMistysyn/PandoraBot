@@ -53,3 +53,9 @@ def start_engine():
     except mysql.connector.Error as err:
         print("Database Error: {}".format(err))
         return None
+
+
+def run_single_query(raw_query, return_value=False, batch=False, params=None):
+    pandora_db = start_engine()
+    pandora_db.run_query(raw_query, return_value=return_value, batch=batch, params=params)
+    pandora_db.close_engine()

@@ -27,24 +27,24 @@ boss_loot_dict = {
         [6, "Crystal1", 2], [6, "Crystal2", 0.1],  [7, "Crystal1", 5], [7, "Crystal2", 0.2]
     ],
     "Fortress": [
-        [0, "Scrap", 100], [0, "Stone1", 50],
+        [0, "Scrap", 100], [0, "Stone1", 60],
         [0, "Trove1", 5], [0, "Trove2", 1], [0, "Trove3", 0.1], [0, "Trove4", 0.01]
     ],
     "Dragon": [
-        [0, "Unrefined1", 25], [0, "Stone2", 40],
+        [0, "Unrefined1", 25], [0, "Stone2", 55],
         [1, "Gem1", 10], [2, "Gem1", 20], [3, "Gem1", 30], [4, "Jewel1", 40]
     ],
     "Demon": [
-        [0, "Flame1", 10], [0, "Stone3", 35], [0, "Core1", 3],
+        [0, "Flame1", 10], [0, "Stone3", 50], [0, "Core1", 3],
         [1, "Gem2", 10], [2, "Gem2", 20], [3, "Gem2", 30], [4, "Jewel2", 40]
     ],
     "Paragon": [
-        [0, "Summon1", 5], [0, "Summon2", 1], [0, "Unrefined3", 25], [0, "Stone4", 30], [0, "Core1", 5],
+        [0, "Summon1", 5], [0, "Summon2", 1], [0, "Unrefined3", 25], [0, "Stone4", 45], [0, "Core1", 5],
         [1, "Gem3", 10], [2, "Gem3", 20], [3, "Gem3", 30],
         [4, "Jewel3", 40], [5, "Jewel3", 50], [6, "Jewel3", 60]
     ],
     "Arbiter": [
-        [0, "Summon3", 5], [0, "Stone6", 25], [7, "Lotus4", 1],
+        [0, "Summon3", 5], [0, "Stone6", 40], [7, "Lotus4", 1],
         [1, "Token1", 5], [2, "Token2", 5], [3, "Token3", 5], [4, "Token4", 5],
         [5, "Token5", 5], [6, "Token6", 5], [7, "Token7", 5],
         [1, "Jewel4", 10], [2, "Jewel4", 20], [3, "Jewel4", 30], [4, "Jewel4", 40],
@@ -68,11 +68,11 @@ def update_loot_and_df(player_obj, item_id, quantity, loot_msg, counter, batch_d
 
 
 async def create_loot_embed(current_embed, active_boss, player_list, ctx=None, loot_multiplier=1, gauntlet=False):
-    tier_bonus, type_bonus = active_boss.boss_tier * 100, (active_boss.boss_type_num + 1) * 100
+    type_bonus = (active_boss.boss_type_num + 1) * 100
     level_bonus = random.randint(active_boss.boss_level, (active_boss.boss_level * 10))
     multiplier_bonus = 2 if active_boss.player_id != 0 else loot_multiplier
-    total = (1000 + tier_bonus + type_bonus + level_bonus) * multiplier_bonus
-    exp_amount, coin_amount = total, total
+    total = (1000 + type_bonus + level_bonus) * multiplier_bonus
+    exp_amount, coin_amount = total, total * active_boss.boss_tier
     # Build and return the loot output.
     loot_output = await award_loot(active_boss, player_list, exp_amount, coin_amount, loot_multiplier, gauntlet, ctx)
     for counter, loot_section in enumerate(loot_output):
@@ -112,9 +112,10 @@ async def award_loot(boss_object, player_list, exp_amount, coin_amount, loot_mul
             if card_qty > 0:
                 numeral = boss_object.boss_name.split(" ", 1)
                 loot_msg, batch_df = update_loot_and_df(temp_player, f"Essence{numeral[0]}",
-                                                         card_qty, loot_msg, counter, batch_df)
+                                                        card_qty, loot_msg, counter, batch_df)
         # Check gauntlet drops.
         if gauntlet:
+            loot_msg, batch_df = update_loot_and_df(temp_player, f"Shard", 1, loot_msg, counter, batch_df)
             if "XXVIII" in boss_object.boss_name and is_dropped(5):
                 loot_msg, batch_df = update_loot_and_df(temp_player, f"Lotus9", 1, loot_msg, counter, batch_df)
                 await sharedmethods.send_notification(ctx, temp_player, "Item", "Lotus9")

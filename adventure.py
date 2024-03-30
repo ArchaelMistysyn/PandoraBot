@@ -168,6 +168,11 @@ class Room:
                 trial_type = adventuredata.trial_variants_dict[self.variant]
                 title = f"Trial of {self.variant}"
                 description = f"{trial_type[0]}\n{', '.join(trial_type[1])}"
+                temp_player = player.get_player_by_id(expedition.player_obj.discord_id)
+                if variant == "Greed":
+                    description += f"\nCurrent Coins: {globalitems.coin_icon} {temp_player.player_coins:,}x"
+                elif variant == "Soul":
+                    description += f"\nCurrent Stamina: {globalitems.stamina_icon} {temp_player.player_stamina:,}"
             case "boss_shrine":
                 self.variant = "Greater " if random_check <= (5 * expedition.luck) else ""
                 target_list = globalitems.boss_list[1:-2] if self.variant == "" else globalitems.boss_list[1:-1]
@@ -661,7 +666,7 @@ class AdventureRoomView(discord.ui.View):
             return False, output_msg
 
         async def greed_callback():
-            cost = adventuredata.greed_cost_list[(variant - 1)]
+            cost = adventuredata.greed_cost_list[variant]
             if temp_player.player_coins >= cost:
                 cost_msg = temp_player.adjust_coins(cost, True)
                 return True, f"Sacrificed {cost_msg} lotus coins\nRemaining: {temp_player.player_coins}\nGained +{reward} luck!"
@@ -1024,7 +1029,7 @@ async def handle_hunt(ctx_object, player_obj, success_rate):
     # Build the result dict.
     for _ in range(player_obj.player_echelon + 5):
         if random.randint(1, 100) <= success_rate:
-            enemy_num = random.randint(0, 14) + random.randint(0, player_obj.player_echelon)
+            enemy_num = random.randint(0, 9) + random.randint(0, player_obj.player_echelon)
             random_enemy = list(monster_dict.keys())[enemy_num]
             temp_dict[random_enemy] = temp_dict.get(random_enemy, 0) + 1
     temp_dict = dict(sorted(temp_dict.items(), key=lambda m: monster_dict.get(m[0], 0) * m[1], reverse=True))

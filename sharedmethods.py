@@ -28,17 +28,20 @@ async def check_registration(ctx):
 async def send_notification(ctx_object, player_obj, notification_type, value):
     channels = ctx_object.guild.channels
     channel_object = discord.utils.get(channels, id=globalitems.channel_list[0])
+    item = None
     match notification_type:
         case "Level":
-            message = f"{player_obj.player_username} - Level Up: Level {player_obj.player_lvl}!"
+            message = f"Level Up: {player_obj.player_lvl}"
         case "Achievement":
-            message = f"{player_obj.player_username} - Achievement Acquired: {value}!"
+            message = f"Achievement Acquired: {value}"
         case "Item":
             item = inventory.BasicItem(value)
-            message = f"{player_obj.player_username} - Ultra Rare Item Acquired: {item.item_name}"
+            message = f"Ultra Rare Item Acquired: {item.item_name}"
         case _:
             pass
-    await channel_object.send(message)
+    filepath = pilengine.build_notification(player_obj, message, notification_type, item=item)
+    file_object = discord.File(filepath)
+    await ctx_object.send(file=file_object)
 
 
 def get_thumbnail_by_class(class_name):
@@ -47,21 +50,12 @@ def get_thumbnail_by_class(class_name):
 
 
 def get_gear_thumbnail(item):
+    tag_dict = {"A": "Armour", "V": "Vambraces", "Y": "Amulet", "G": "Wings", "C": "Crest"}
     item_tag = item.item_base_type
     if item.item_tier <= 4 and item.item_type == "W":
         item_tag = globalitems.gear_category_dict[item.item_base_type]
-    elif item.item_type == "A":
-        item_tag = "Armour"
-    elif item.item_type == "V":
-        item_tag = "Vambraces"
-    elif item.item_type == "Y":
-        item_tag = "Amulet"
-    elif item.item_type == "G":
-        item_tag = "Wings"
-    elif item.item_type == "C":
-        item_tag = "Crest"
-    elif "D" in item.item_type:
-        item_tag = "Jewel"
+    else:
+        item_tag = "Jewel" if "D" in item.item_type else tag_dict[item.item_type]
     # Ensure image is currently available.
     if item_tag not in globalitems.availability_list:
         return None

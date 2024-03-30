@@ -274,6 +274,7 @@ def run_discord_bot():
         if player_obj is None:
             return
         crate_id = "Crate"
+        loot_item = inventory.BasicItem(crate_id)
         crate_stock = inventory.check_stock(player_obj, crate_id)
         if not quantity.isnumeric():
             if quantity != "all":
@@ -283,10 +284,9 @@ def run_discord_bot():
         else:
             quantity = int(quantity)
         if quantity <= 0:
-            await ctx.send("Enter a valid number or 'all' in the quantity field.")
+            await ctx.send(sharedmethods.get_stock_msg(loot_item, 0))
             return
         if crate_stock < quantity:
-            loot_item = inventory.BasicItem(crate_id)
             stock_msg = sharedmethods.get_stock_msg(loot_item, crate_stock, quantity)
             await ctx.send(stock_msg)
             return
@@ -372,51 +372,25 @@ def run_discord_bot():
         await message.edit(embed=embed_msg)
 
     @set_command_category('game', 7)
-    @pandora_bot.hybrid_command(name='changer', help="Change your class.")
+    @pandora_bot.hybrid_command(name='sanctuary', help="Speak with ??? in the lotus sanctuary.")
     @app_commands.guilds(discord.Object(id=guild_id))
-    async def changer(ctx):
+    async def sanctuary(ctx):
         player_obj = await sharedmethods.check_registration(ctx)
         if player_obj is None:
             return
-        stock = inventory.check_stock(player_obj, "Token1")
-        description = f"Bring me enough tokens and even you can be rewritten.\n{stock} / 50"
-        embed_msg = discord.Embed(colour=discord.Colour.dark_orange(),
-                                  title="Mysmir, Changeling of the True Laws", description=description)
-        new_view = menus.ClassChangeView(player_obj)
+        if player_obj.player_quest < 48:
+            denial_msg = "The sanctuary radiates with divinity. Entry is impossible."
+            embed_msg = discord.Embed(colour=discord.Colour.blurple(), title="???", description=denial_msg)
+            await ctx.send(embed=embed_msg)
+            return
+        entry_msg = ("Have you come to desecrate my holy gardens once more? Well, I suppose it no longer matters, "
+                     "I know you will find what you desire even without my guidance. "
+                     "If you sever the divine lotus, then I suppose the rest are nothing but pretty flowers.")
+        embed_msg = discord.Embed(colour=discord.Colour.blurple(), title="Fleur, Oracle of the True Laws",
+                                  description=entry_msg)
+        embed_msg.set_image(url="")
+        new_view = market.LotusSelectView(player_obj)
         await ctx.send(embed=embed_msg, view=new_view)
-
-    @set_command_category('game', 8)
-    @pandora_bot.hybrid_command(name='who', help="Set a new username.")
-    @app_commands.guilds(discord.Object(id=guild_id))
-    async def who(ctx, new_username: str):
-        player_obj = await sharedmethods.check_registration(ctx)
-        if player_obj is None:
-            return
-        Mysmir_title = "Mysmir, Changeling of the True Laws"
-        embed_msg = discord.Embed(colour=discord.Colour.dark_orange(), title=Mysmir_title, description="")
-        if not new_username.isalpha():
-            embed_msg.description = "This name is unacceptable. I refuse."
-            await ctx.send(embed=embed_msg)
-            return
-        if not player.check_username(new_username):
-            embed_msg.description = "This name belongs to another. I refuse."
-            await ctx.send(embed=embed_msg)
-            return
-        if len(new_username) > 10:
-            embed_msg.description = "This name is too long. I refuse."
-            await ctx.send(embed=embed_msg)
-            return
-        token_stock = inventory.check_stock(player_obj, "Token1")
-        if token_stock < 50:
-            embed_msg.description = f"I will only help those with sufficient tokens. I refuse.\n{token_stock} / 50"
-            await ctx.send(embed=embed_msg)
-            return
-        else:
-            inventory.update_stock(player_obj, "Token1", -50)
-            player_obj.player_username = new_username
-            player_obj.set_player_field("player_username", new_username)
-            embed_msg.description = f'{player_obj.player_username} you say? Fine, I accept.'
-            await ctx.send(embed=embed_msg)
 
     # Gear commands
     @set_command_category('gear', 0)
@@ -730,16 +704,20 @@ def run_discord_bot():
         await ctx.send(embed=embed_msg)
 
     @set_command_category('trade', 6)
-    @pandora_bot.hybrid_command(name='purge', help="Sells all gear in or below a tier.")
+    @pandora_bot.hybrid_command(name='purge', help="Sells all gear in or below a tier. "
+                                "Types: [Weapon, Armour, Vambraces, Amulet, Wings, Crest, Gems]")
     @app_commands.guilds(discord.Object(id=guild_id))
-    async def purge(ctx, tier: int):
+    async def purge(ctx, item_type: str, tier: int):
         player_obj = await sharedmethods.check_registration(ctx)
         if player_obj is None:
             return
         if tier not in range(1, 9):
             await ctx.send("The tier must be between 1 and 8.")
             return
-        result_msg = inventory.purge(player_obj, tier)
+        if item_type not in ["Weapon", "Armour", "Vambraces", "Amulet", "Wings", "Crest", "Gems"]:
+            await ctx.send("Valid Types: [Weapon, Armour, Vambraces, Amulet, Wings, Crest, Gems]")
+            return
+        result_msg = inventory.purge(player_obj, item_type, tier)
         await ctx.send(result_msg)
 
     # Crafting Commands
@@ -812,27 +790,6 @@ def run_discord_bot():
         await ctx.send(embed=embed_msg, view=new_view)
 
     @set_command_category('craft', 4)
-    @pandora_bot.hybrid_command(name='fountain', help="Go to the ???")
-    @app_commands.guilds(discord.Object(id=guild_id))
-    async def fountain(ctx):
-        player_obj = await sharedmethods.check_registration(ctx)
-        if player_obj is None:
-            return
-        e_weapon = inventory.read_custom_item(player_obj.player_equipped[0])
-        if player_obj.player_quest < 45:
-            embed_msg = discord.Embed(colour=discord.Colour.blurple(), title="???",
-                                      description="A powerful light emanates from within. Entry is impossible.")
-            await ctx.send(embed=embed_msg)
-            return
-        entry_msg = ("You who has defiled my wish now seek to realize your own. Just ahead resides the "
-                     "fountain of genesis, origin of all. The power you still covet can be acquired here. "
-                     "Go, I am no longer qualified to stand in your path.")
-        embed_msg = discord.Embed(colour=discord.Colour.blurple(), title="Echo of Eleuia", description=entry_msg)
-        embed_msg.set_image(url="https://i.ibb.co/QjWDYG3/forge.jpg")
-        new_view = forge.SelectView(player_obj, "miracle")
-        await ctx.send(embed=embed_msg, view=new_view)
-
-    @set_command_category('craft', 5)
     @pandora_bot.hybrid_command(name='scribe', help="Speak with ??? in the divine plane.")
     @app_commands.guilds(discord.Object(id=guild_id))
     async def scribe(ctx):
@@ -853,26 +810,6 @@ def run_discord_bot():
                                   description=entry_msg)
         embed_msg.set_image(url="https://i.ibb.co/QjWDYG3/forge.jpg")
         new_view = forge.SelectView(player_obj, "custom")
-        await ctx.send(embed=embed_msg, view=new_view)
-
-    @pandora_bot.hybrid_command(name='sanctuary', help="Speak with ??? in the lotus sanctuary.")
-    @app_commands.guilds(discord.Object(id=guild_id))
-    async def sanctuary(ctx):
-        player_obj = await sharedmethods.check_registration(ctx)
-        if player_obj is None:
-            return
-        if player_obj.player_quest < 48:
-            denial_msg = "The sanctuary radiates with divinity. Entry is impossible."
-            embed_msg = discord.Embed(colour=discord.Colour.blurple(), title="???", description=denial_msg)
-            await ctx.send(embed=embed_msg)
-            return
-        entry_msg = ("Have you come to desecrate my holy gardens once more? Well, I suppose it no longer matters, "
-                     "I know you will find what you desire even without my guidance. "
-                     "If you sever the divine lotus, then I suppose the rest are nothing but pretty flowers.")
-        embed_msg = discord.Embed(colour=discord.Colour.blurple(), title="Fleur, Oracle of the True Laws",
-                                  description=entry_msg)
-        embed_msg.set_image(url="")
-        new_view = market.LotusSelectView(player_obj)
         await ctx.send(embed=embed_msg, view=new_view)
 
     # Info commands
@@ -979,7 +916,54 @@ def run_discord_bot():
         new_view = leaderboards.LeaderbaordView(player_obj)
         await ctx.send(embed=embed_msg, view=new_view)
 
+    @set_command_category('info', 5)
+    @pandora_bot.hybrid_command(name='changer', help="Change your class.")
+    @app_commands.guilds(discord.Object(id=guild_id))
+    async def changer(ctx):
+        player_obj = await sharedmethods.check_registration(ctx)
+        if player_obj is None:
+            return
+        stock = inventory.check_stock(player_obj, "Token1")
+        description = f"Bring me enough tokens and even you can be rewritten.\n{stock} / 50"
+        embed_msg = discord.Embed(colour=discord.Colour.dark_orange(),
+                                  title="Mysmir, Changeling of the True Laws", description=description)
+        new_view = menus.ClassChangeView(player_obj)
+        await ctx.send(embed=embed_msg, view=new_view)
+
     @set_command_category('info', 6)
+    @pandora_bot.hybrid_command(name='who', help="Set a new username.")
+    @app_commands.guilds(discord.Object(id=guild_id))
+    async def who(ctx, new_username: str):
+        player_obj = await sharedmethods.check_registration(ctx)
+        if player_obj is None:
+            return
+        Mysmir_title = "Mysmir, Changeling of the True Laws"
+        embed_msg = discord.Embed(colour=discord.Colour.dark_orange(), title=Mysmir_title, description="")
+        if not new_username.isalpha():
+            embed_msg.description = "This name is unacceptable. I refuse."
+            await ctx.send(embed=embed_msg)
+            return
+        if not player.check_username(new_username):
+            embed_msg.description = "This name belongs to another. I refuse."
+            await ctx.send(embed=embed_msg)
+            return
+        if len(new_username) > 10:
+            embed_msg.description = "This name is too long. I refuse."
+            await ctx.send(embed=embed_msg)
+            return
+        token_stock = inventory.check_stock(player_obj, "Token1")
+        if token_stock < 50:
+            embed_msg.description = f"I will only help those with sufficient tokens. I refuse.\n{token_stock} / 50"
+            await ctx.send(embed=embed_msg)
+            return
+        else:
+            inventory.update_stock(player_obj, "Token1", -50)
+            player_obj.player_username = new_username
+            player_obj.set_player_field("player_username", new_username)
+            embed_msg.description = f'{player_obj.player_username} you say? Fine, I accept.'
+            await ctx.send(embed=embed_msg)
+
+    @set_command_category('info', 8)
     @pandora_bot.command(name='credits', help="Displays the game credits.")
     @app_commands.guilds(discord.Object(id=guild_id))
     async def credits_list(ctx):

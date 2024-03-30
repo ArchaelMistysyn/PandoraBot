@@ -251,7 +251,7 @@ variant_details_dict = {
                    "Or will you corrupt it with dark magic destroying the soul."]
 }
 
-trial_variants_dict = {"Offering": ["Pay with your life.", ["Pain (10%)", "Blood (20%)", "Death (30%)"],
+trial_variants_dict = {"Offering": ["Pay with your life.", ["Pain (10%)", "Blood (30%)", "Death (50%)"],
                                     ["🗡️", "💧", "💀"]],
                        "Greed": ["Pay with your wealth.", ["Poor (1,000)", "Affluent (5,000)", "Rich (10,000)"],
                                  ["💸", "💍", "👑"]],
@@ -280,7 +280,7 @@ jackpot_levels = [
 ]
 
 selection_pools = [
-    ["Hammer", "Ore1", "Trove1", "Potion1", "Scrap", "ESS"],
+    ["Hammer", "Pearl", "Ore1", "Trove1", "Potion1", "Scrap", "ESS"],
     ["Hammer", "Pearl", "Ore2", "Token1", "Trove2", "Flame1", "Matrix1", "Trove2", "Summon1", "Potion2", "ESS"],
     ["Hammer", "Pearl", "Ore3", "Token2", "Trove3", "Stone4", "Gem1", "Gem2", "Gem3", "Potion3", "ESS"],
     ["Hammer", "Pearl", "Ore4", "Token3", "Token4", "Trove4", "Summon1", "Core1", "Jewel1", "Jewel2", "Potion4", "ESS"],

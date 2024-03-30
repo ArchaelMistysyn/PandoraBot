@@ -140,14 +140,11 @@ class CustomItem:
     def __init__(self, player_owner, item_type, item_tier):
         # initialize input data.
         self.player_owner = player_owner
-        self.item_type = item_type
-        self.item_tier = item_tier
-
+        self.item_type, self.item_tier = item_type, item_tier
         # Initialize single default values
         self.item_id, self.item_name = 0, ""
         self.item_enhancement, self.item_quality_tier = 0, 1
         self.item_elements = [0, 0, 0, 0, 0, 0, 0, 0, 0]
-
         # Initialize associated default values.
         self.item_num_rolls, self.item_roll_values = 0, []
         self.item_base_stat, self.item_bonus_stat = 0.0, ""
@@ -158,11 +155,9 @@ class CustomItem:
         self.item_damage_type = random.choice(list(globalitems.class_names))
         self.item_base_type = ""
         self.generate_base()
-
         # Generate base damage.
         self.base_damage_min, self.base_damage_max = get_tier_damage(self.item_tier, self.item_type)
         self.update_damage()
-
         # Set the item name.
         self.set_item_name()
 
@@ -692,7 +687,7 @@ def delete_item(user_object, item):
     pandora_db.close_engine()
 
 
-def purge(player_obj, tier):
+def purge(player_obj, item_type, tier):
     pandora_db = mydb.start_engine()
     player_obj.get_equipped()
     exclusion_list = player_obj.player_equipped
@@ -703,13 +698,16 @@ def purge(player_obj, tier):
             if e_item.item_inlaid_gem_id != 0:
                 inlaid_gem_list.append(e_item.item_inlaid_gem_id)
     exclusion_list += inlaid_gem_list
-    params = {'id_check': player_obj.player_id, 'tier_check': tier}
+    type_check = item_loc_dict[reverse_item_dict[item_type]]
+    params = {'id_check': player_obj.player_id, 'tier_check': tier, 'type_check': type_check}
     exclusion_ids = ', '.join([str(item_id) for item_id in exclusion_list])
     raw_query = (f"SELECT item_tier FROM CustomInventory "
-                 f"WHERE player_id = :id_check AND item_tier <= :tier_check AND item_id NOT IN ({exclusion_ids})")
+                 f"WHERE player_id = :id_check AND item_tier <= :tier_check "
+                 f"AND item_id NOT IN ({exclusion_ids}) AND item_type = :type_check")
     df = pandora_db.run_query(raw_query, return_value=True, params=params)
     delete_query = (f"DELETE FROM CustomInventory "
-                    f"WHERE player_id = :id_check AND item_tier <= :tier_check AND item_id NOT IN ({exclusion_ids})")
+                    f"WHERE player_id = :id_check AND item_tier <= :tier_check "
+                    f"AND item_id NOT IN ({exclusion_ids}) AND item_type = :type_check")
     pandora_db.run_query(delete_query, params=params)
     pandora_db.close_engine()
     result = len(df)
@@ -717,7 +715,7 @@ def purge(player_obj, tier):
     for item_tier in df['item_tier']:
         coin_total += inventory.sell_value_by_tier[int(item_tier)]
     coin_msg = player_obj.adjust_coins(coin_total)
-    return f"{player_obj.player_username} sold {result} items and received {globalitems.coin_icon} {coin_msg} lotus coins"
+    return f"{player_obj.player_username} sold {result} items and received {coin_msg} lotus coins"
 
 
 def full_inventory_embed(lost_item, embed_colour):

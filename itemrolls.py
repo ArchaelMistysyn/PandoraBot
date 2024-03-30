@@ -579,7 +579,7 @@ def handle_roll_exceptions(player_obj, selected_roll, selected_data):
 
 def assign_item_element_stats(player_obj, equipped_item):
     associated_stats = {
-        "A": [player_obj.elemental_resistance, 0.15],
+        "A": [player_obj.elemental_resistance, 0.1], "V": [player_obj.elemental_resistance, 0.1],
         "Y": [player_obj.elemental_damage, 0.25],
         "G": [player_obj.elemental_penetration, 0.15],
         "C": [player_obj.elemental_curse, 0.1],

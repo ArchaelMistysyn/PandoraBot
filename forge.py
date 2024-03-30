@@ -57,17 +57,9 @@ class SelectView(discord.ui.View):
         self.selected_item = inventory.read_custom_item(selected_item)
         # Handle the Forge view.
         if self.method == "celestial":
-            # Confirm eligibility.
-            if self.selected_item.item_tier >= 6:
-                key_msg = ("I've never seen anything like this. I'm sorry, this item resonates with power "
-                           "beyond that of the stars. You will need to find another method of reforging it.")
-                embed_msg = discord.Embed(colour=discord.Colour.magenta(),
-                                          title="Pandora, The Celestial", description=key_msg)
-                await interaction.response.edit_message(embed=embed_msg, view=None)
-                return
             # Display the View.
             embed_msg = self.selected_item.create_citem_embed()
-            new_view = ForgeView(self.player_obj, self.selected_item, self.method)
+            new_view = ForgeView(self.player_obj, self.selected_item)
             await interaction.response.edit_message(embed=embed_msg, view=new_view)
 
         # Handle the Purify view.
@@ -151,11 +143,10 @@ class PurifyView(discord.ui.View):
 
 
 class ForgeView(discord.ui.View):
-    def __init__(self, player_obj, selected_item, permission):
+    def __init__(self, player_obj, selected_item):
         super().__init__(timeout=None)
         self.selected_item = selected_item
         self.player_obj = player_obj
-        self.permission = permission
 
         # Build the option menu.
         options_dict = {
@@ -186,30 +177,29 @@ class ForgeView(discord.ui.View):
             return
         # Handle Element Selections
         if selected_option in ["Enhance", "Implant Element"]:
-            new_view = SubSelectView(self.player_obj, self.selected_item, selected_option, self.permission)
+            new_view = SubSelectView(self.player_obj, self.selected_item, selected_option)
             await interaction.response.edit_message(view=new_view)
             return
 
         # Handle hammer methods.
         if "Augment" in selected_option:
-            new_view = UpgradeView(self.player_obj, self.selected_item, selected_option, 0, 0, self.permission)
+            new_view = UpgradeView(self.player_obj, self.selected_item, selected_option, 0, 0)
             if self.selected_item.item_num_rolls == 6:
-                new_view = SubSelectView(self.player_obj, self.selected_item, selected_option, self.permission)
+                new_view = SubSelectView(self.player_obj, self.selected_item, selected_option)
             await interaction.response.edit_message(view=new_view)
             return
 
         # Handle all other upgrade options.
-        new_view = UpgradeView(self.player_obj, self.selected_item, selected_option, -1, 0, self.permission)
+        new_view = UpgradeView(self.player_obj, self.selected_item, selected_option, -1, 0)
         await interaction.response.edit_message(view=new_view)
 
 
 class SubSelectView(discord.ui.View):
-    def __init__(self, player_obj, selected_item, method, permission):
+    def __init__(self, player_obj, selected_item, method):
         super().__init__(timeout=None)
         self.selected_item = selected_item
         self.player_obj = player_obj
         self.method = method
-        self.permission = permission
 
         def build_select_option(i, option, craft_method, item_tier, cost_qty):
             if craft_method in ["Fae", "Origin"]:
@@ -259,22 +249,21 @@ class SubSelectView(discord.ui.View):
         hammer_select = method_select if self.menu_type == "Fusion" else -1
         if interaction.user.id != self.player_obj.discord_id:
             return
-        new_view = UpgradeView(self.player_obj, self.selected_item, self.method,
-                               hammer_select, method_select, self.permission)
+        new_view = UpgradeView(self.player_obj, self.selected_item, self.method, hammer_select, method_select)
         await interaction.response.edit_message(view=new_view)
 
 
 # Regular Crafting
 class UpgradeView(discord.ui.View):
-    def __init__(self, player_obj, selected_item, menu_type, hammer_type, element, permission):
+    def __init__(self, player_obj, selected_item, menu_type, hammer_type, element):
         super().__init__(timeout=None)
         self.selected_item = selected_item
         self.player_obj = player_obj
         self.menu_type = menu_type
         self.hammer_type = hammer_type
         self.element = element
-        self.permission = permission
-        self.reselect.emoji = "↩️"
+        self.change_method.emoji = "↩️"
+        self.change_base.emoji = "↩️"
 
         # Method: num_buttons, button_names, button_emojis, material_ids, crafting_method
         method_dict = {
@@ -323,7 +312,7 @@ class UpgradeView(discord.ui.View):
         # Remove unused buttons.
         buttons_to_remove = []
         for button_index, button_object in enumerate(self.children):
-            if button_index >= self.menu_details[0] and button_index != (len(self.children) - 1):
+            if self.menu_details[0] <= button_index < (len(self.children) - 2):
                 buttons_to_remove.append(button_object)
         for button_object in buttons_to_remove:
             self.remove_item(button_object)
@@ -340,9 +329,13 @@ class UpgradeView(discord.ui.View):
     async def button3(self, interaction: discord.Interaction, button: discord.Button):
         await self.button_callback(interaction, button)
 
-    @discord.ui.button(label="Reselect", style=discord.ButtonStyle.blurple, row=2)
-    async def reselect(self, interaction: discord.Interaction, button: discord.Button):
-        await self.reselect_callback(interaction, button)
+    @discord.ui.button(label="Change Base", style=discord.ButtonStyle.blurple, row=2)
+    async def change_base(self, interaction: discord.Interaction, button: discord.Button):
+        await self.reselect_callback(interaction, button, "change_base")
+
+    @discord.ui.button(label="Change Method", style=discord.ButtonStyle.blurple, row=2)
+    async def change_method(self, interaction: discord.Interaction, button: discord.Button):
+        await self.reselect_callback(interaction, button, "change_method")
 
     async def button_callback(self, button_interaction: discord.Interaction, button: discord.Button):
         if button_interaction.user.id != self.player_obj.discord_id:
@@ -351,15 +344,20 @@ class UpgradeView(discord.ui.View):
         material_id = self.material_id[0] if self.menu_type == "Astral Augment" else self.material_id[button_id]
         embed_msg, self.selected_item = run_button(self.player_obj, self.selected_item,
                                                    material_id, self.method[button_id])
-        new_view = UpgradeView(self.player_obj, self.selected_item, self.menu_type, self.hammer_type,
-                               self.element, self.permission)
+        new_view = UpgradeView(self.player_obj, self.selected_item, self.menu_type, self.hammer_type, self.element)
         await button_interaction.response.edit_message(embed=embed_msg, view=new_view)
 
-    async def reselect_callback(self, button_interaction: discord.Interaction, button: discord.Button):
+    async def reselect_callback(self, button_interaction: discord.Interaction, button: discord.Button, method):
         if button_interaction.user.id != self.player_obj.discord_id:
             return
-        new_view = SelectView(self.player_obj, self.permission)
-        await button_interaction.response.edit_message(view=new_view)
+        reload_item = inventory.read_custom_item(self.selected_item.item_id)
+        if reload_item is not None:
+            if method == "change_method":
+                new_view = ForgeView(self.player_obj, reload_item)
+            else:
+                new_view = SelectView(self.player_obj, "celestial")
+            embed_msg = reload_item.create_citem_embed()
+            await button_interaction.response.edit_message(embed=embed_msg, view=new_view)
 
 
 def run_button(player_obj, selected_item, material_id, method):
