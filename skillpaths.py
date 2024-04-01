@@ -77,7 +77,7 @@ def allocate_points(player_obj, selected_path, num_change):
     path_type = selected_path.split(" ")[-1]
     path_location = globalitems.path_names.index(path_type)
     spent_points = sum(player_obj.player_stats)
-    available_points = player_obj.player_lvl - spent_points
+    available_points = player_obj.player_level - spent_points
     if available_points < num_change:
         return "Not enough remaining skill points to allocate!"
     player_obj.player_stats[path_location] += num_change
@@ -97,7 +97,7 @@ def create_path_embed(player_obj):
             value_msg += f" (+{gear_points})"
         embed.add_field(name=f"Path of {path_label}", value=value_msg, inline=True)
     spent_points = sum(player_obj.player_stats)
-    remaining_points = player_obj.player_lvl - spent_points
+    remaining_points = player_obj.player_level - spent_points
     embed.add_field(name=f"Unspent Points: {remaining_points}", value="", inline=False)
     return embed
 
@@ -122,7 +122,7 @@ def build_points_embed(player_obj, selected_path):
     # Build the embed.
     embed = display_glyph(path_type, total_points, embed)
     spent_points = sum(player_obj.player_stats)
-    remaining_points = player_obj.player_lvl - spent_points
+    remaining_points = player_obj.player_level - spent_points
     embed.add_field(name="", value=f"Remaining Points: {remaining_points}", inline=False)
     return embed
     

@@ -18,6 +18,7 @@ tier_colors = {0: 0x2C2F33, 1: 0x43B581, 2: 0x3498DB, 3: 0x9B59B6, 4: 0xF1C40F,
 bot_admin_ids = [185530717638230016]
 channel_list = [1157937444931514408, 1157934010090131458, 1157935203394785291, 1157935449462013972, 1157935876853211186]
 global_server_channels = [channel_list]
+GM_id_dict = {185530717638230016: "Archael", 141837266866667520: "Zweii", 353090154044325906: "Viper"}
 
 # ICON DATA
 # General Icons
@@ -181,3 +182,7 @@ hp_bar_dict = {1: [t5_hp_bar_full, t5_hp_bar_empty], 2: [t5_hp_bar_full, t5_hp_b
                3: [t5_hp_bar_full, t5_hp_bar_empty], 4: [t5_hp_bar_full, t5_hp_bar_empty],
                5: [t5_hp_bar_full, t5_hp_bar_empty], 6: [t5_hp_bar_full, t5_hp_bar_empty],
                7: [t5_hp_bar_full, t5_hp_bar_empty]}
+
+# Messages
+abyss_msg = ("Within this cavern resides the true abyss. The taint of the void can only be purified "
+             "through a more powerful darkness. Take great caution, there is nothing which can save you down there.")

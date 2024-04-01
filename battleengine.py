@@ -207,23 +207,25 @@ def run_discord_bot():
         if not player_alive:
             await sent_message.edit(embed=embed)
             bosses.clear_boss_info(channel_id, player_obj.player_id)
-            return False
+            return False, active_boss
         if boss_alive:
             await sent_message.edit(embed=embed)
-            return True
+            return True, active_boss
         if active_boss.boss_tier >= 4:
             quest.assign_unique_tokens(player_obj, active_boss.boss_name)
+        extension = " [Gauntlet]" if gauntlet else ""
         if gauntlet and active_boss.boss_tier != 6:
             bosses.clear_boss_info(channel_id, player_obj.player_id)
             boss_type = random.choice(["Paragon", "Arbiter"])
             if active_boss.boss_tier < 4:
                 boss_type = random.choice(["Fortress", "Dragon", "Demon", "Paragon"])
             active_boss = bosses.spawn_boss(channel_id, player_obj.player_id, active_boss.boss_tier + 1,
-                                            boss_type, player_obj.player_lvl, 0, gauntlet=gauntlet)
+                                            boss_type, player_obj.player_level, 0, gauntlet=gauntlet)
             active_boss.player_id = player_obj.player_id
-            embed = active_boss.create_boss_embed(dps=int(combat_tracker.total_dps / combat_tracker.total_cycles))
+            current_dps = int(combat_tracker.total_dps / combat_tracker.total_cycles)
+            embed = active_boss.create_boss_embed(dps=current_dps, extension=extension)
             await sent_message.edit(embed=embed)
-            return True
+            return True, active_boss
         # Handle dead boss
         player_list = [player_obj.player_id]
         loot_bonus = 5 if gauntlet else 1
@@ -234,10 +236,10 @@ def run_discord_bot():
         bosses.clear_boss_info(channel_id, player_obj.player_id)
         if combat_tracker.total_cycles <= 5:
             await sent_message.edit(embed=loot_embed)
-            return False
+            return False, active_boss
         await sent_message.edit(embed=embed)
         await ctx_object.send(embed=loot_embed)
-        return False
+        return False, active_boss
 
     @engine_bot.hybrid_command(name='abandon', help="Abandon an active solo encounter.")
     @app_commands.guilds(discord.Object(id=1011375205999968427))
@@ -327,7 +329,7 @@ def run_discord_bot():
         # Spawn the boss
         new_boss_tier, boss_type = bosses.get_random_bosstier(boss_type)
         active_boss = bosses.spawn_boss(ctx.channel.id, player_obj.player_id, new_boss_tier,
-                                        boss_type, player_obj.player_lvl, 0)
+                                        boss_type, player_obj.player_level, 0)
         active_boss.player_id = player_obj.player_id
         embed_msg = active_boss.create_boss_embed()
         spawn_msg = f"{player_obj.player_username} has spawned a tier {active_boss.boss_tier} boss!"
@@ -416,14 +418,13 @@ def run_discord_bot():
                 embed_msg.description = "The echo falls silent and fades away alongside the light of the torches."
                 await interaction.response.edit_message(embed=embed_msg, view=None)
                 return
-            boss_level = 600 + 100 * difficulty
+            boss_level = 300 if difficulty == 1 else 600 if difficulty == 2 else 999
             inventory.update_stock(self.player_obj, self.lotus_object.item_id, -1)
-            active_boss = bosses.spawn_boss(self.ctx.channel.id, self.player_obj.player_id,
-                                            8, 5, boss_level, 0)
-            embed_msg = active_boss.create_boss_embed()
+            boss_obj = bosses.spawn_boss(self.ctx.channel.id, self.player_obj.player_id, 8, 5, boss_level, 0)
+            label_list = {0: " [Challenger]", 1: " [Usurper]", 2: " [Samsara]"}
+            embed_msg = boss_obj.create_boss_embed(extension=label_list[difficulty])
             await interaction.response.edit_message(embed=embed_msg, view=None)
-            solo_cog = await run_solo_cog(self.player_obj, active_boss,
-                                          self.ctx.channel.id, self.sent_message, self.ctx)
+            solo_cog = await run_solo_cog(self.player_obj, boss_obj, self.ctx.channel.id, self.sent_message, self.ctx)
             task = asyncio.create_task(solo_cog.run())
             await task
 
@@ -451,10 +452,10 @@ def run_discord_bot():
         inventory.update_stock(player_obj, "Compass", -1)
         quest.assign_unique_tokens(player_obj, "Gauntlet")
         active_boss = bosses.spawn_boss(ctx.channel.id, player_obj.player_id, 1,
-                                        "Fortress", player_obj.player_lvl, 0, gauntlet=True)
+                                        "Fortress", player_obj.player_level, 0, gauntlet=True)
         active_boss.player_id = player_obj.player_id
         await ctx.send(f"{player_obj.player_username} has entered the Spire of Illusions!")
-        embed_msg = active_boss.create_boss_embed()
+        embed_msg = active_boss.create_boss_embed(extension=" [Gauntlet]")
         sent_message = await ctx.channel.send(embed=embed_msg)
         gauntlet_cog = await run_solo_cog(player_obj, active_boss, ctx.channel.id, sent_message, ctx, gauntlet=True)
         task = asyncio.create_task(gauntlet_cog.run())
@@ -496,7 +497,7 @@ def run_discord_bot():
         boss_type = "Paragon" if token_version < 3 else "Arbiter"
         new_boss_tier = 4 + token_version
         active_boss = bosses.spawn_boss(ctx.channel.id, player_obj.player_id, new_boss_tier,
-                                        boss_type, player_obj.player_lvl, 0)
+                                        boss_type, player_obj.player_level, 0)
         active_boss.player_id = player_obj.player_id
         spawn_msg = f"{player_obj.player_username} has summoned a tier {active_boss.boss_tier} boss!"
         await ctx.send(spawn_msg)

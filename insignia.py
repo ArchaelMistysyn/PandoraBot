@@ -42,7 +42,7 @@ def display_insignia(player_obj, insignia_code):
     hp_bonus = insignia_hp_list[insignia_stars]
     item_rolls = f"{pearl} HP Bonus +{hp_bonus:,}"
     item_rolls += f"\n{pearl} Luck +{insignia_stars}"
-    item_rolls += f"\n{pearl} Final Damage {player_obj.player_lvl * mutation_adjust:,}%"
+    item_rolls += f"\n{pearl} Final Damage {player_obj.player_level * mutation_adjust:,}%"
     item_rolls += f"\n{pearl} Attack Speed {insignia_stars * 10:,}%"
 
     # Build the embed message.
@@ -319,7 +319,7 @@ def assign_insignia_values(player_obj):
     element_list = list(map(int, temp_elements))
     num_elements = element_list.count(1)
     # Apply bonus stats.
-    player_obj.final_damage += player_obj.player_lvl * 0.01 * mutation_adjust
+    player_obj.final_damage += player_obj.player_level * 0.01 * mutation_adjust
     player_obj.attack_speed += insignia_stars * 0.1
     player_obj.luck_bonus += insignia_stars
     player_obj.hp_bonus += insignia_hp_list[insignia_stars]

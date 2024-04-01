@@ -104,57 +104,93 @@ def run_discord_bot():
             await self.get_destination().send(embed=embed)
 
     # Admin Commands
+    async def admin_verification(ctx_object, return_target=None, auth="GameAdmin"):
+        auth_dict = {"GameAdmin": globalitems.GM_id_dict.keys(), "Archael": globalitems.bot_admin_ids}
+        if ctx_object.author.id not in auth_dict[auth]:
+            await ctx.send("Only game admins can use this command.")
+            return True, None, None
+        player_obj = await sharedmethods.check_registration(ctx_object)
+        if player_obj is None:
+            return True, None, None
+        target_player = player_obj
+        if return_target is not None:
+            target_player = player.get_player_by_discord(return_target.id)
+        if target_player.player_id == 0:
+            await ctx.send(f"Selected user is not registered.")
+            return True, None, None
+        return False, player_obj, target_player
+
+    async def validate_admin_inputs(item_id, value, id_check="nocheck", value_check="nocheck"):
+        if (id_check == "nongear" and item_id == "") or (id_check == "gear" and item_id == 0):
+            await ctx.send(f"Item ID not recognized.")
+            return True
+        if (value_check == "numeric" and not value.isnumeric()) or (value_check == "alpha" and not value.isalnum()):
+            await ctx.send(f"Value {value} must be a(n) {value_check} data type.")
+            return True
+        return False
+
     @set_command_category('admin', 0)
     @pandora_bot.command(name='sync', help="Bot Admin Only!")
-    async def sync(ctx):
-        if ctx.message.author.id not in globalitems.bot_admin_ids:
-            await ctx.send('Bot Admin Only!')
+    async def sync(ctx, method="default"):
+        trigger_return, _, _ = await admin_verification(ctx)
+        if trigger_return:
             return
-        synced = await pandora_bot.tree.sync(guild=discord.Object(id=guild_id))
-        print(f"Pandora Bot Synced! {len(synced)} command(s)")
-        await ctx.send('commands synced!')
-
-    @set_command_category('admin', 1)
-    @pandora_bot.command(name='reset_sync', help="Bot Admin Only!")
-    async def reset_sync(ctx):
-        if ctx.message.author.id not in globalitems.bot_admin_ids:
-            await ctx.send('Bot Admin Only!')
-            return
-        global_sync = await pandora_bot.tree.sync(guild=None)
-        print(f"Pandora Bot Synced! {len(global_sync)} global command(s)")
+        if method == "reset":
+            global_sync = await pandora_bot.tree.sync(guild=None)
+            print(f"Pandora Bot Synced! {len(global_sync)} global command(s)")
         synced = await pandora_bot.tree.sync(guild=discord.Object(id=guild_id))
         print(f"Pandora Bot Synced! {len(synced)} command(s)")
         await ctx.send('Pandora Bot commands synced!')
 
-    @set_command_category('admin', 2)
-    @pandora_bot.command(name='admin', help="Tester Only")
-    @app_commands.guilds(discord.Object(id=guild_id))
-    async def admin(ctx, backdoor, value="0"):
-        count = 1
-        player_obj = await sharedmethods.check_registration(ctx)
-        if player_obj is None:
+    @set_command_category('admin', 1)
+    @pandora_bot.hybrid_command(name='itemmanager', help="Admin item commands")
+    @app_commands.guilds(discord.Object(id=1011375205999968427))
+    async def ItemManager(ctx, method="", target_user: discord.User = None, item_id="", value="0"):
+        trigger_return, player_obj, target_player = await admin_verification(ctx, return_target=target_user)
+        if trigger_return:
             return
-        user = ctx.author
-        achievement_list = []
-        roles_list = [r.name for r in user.roles]
-        if "Passcard - Pandora Tester" not in roles_list:
-            await ctx.send("Only testers can use this command.")
-            return
-        if backdoor == "stamina_hack":
-            player_obj.set_player_field("player_stamina", int(value))
-        elif backdoor == "item_hack":
-            inventory.update_stock(player_obj, value, 10)
-        elif backdoor == "coin_hack":
-            _ = player_obj.adjust_coins(int(value))
-        elif backdoor == "item_hack_all":
-            if ctx.message.author.id == 185530717638230016:
-                inventory.max_all_items(player_obj.player_id, int(value))
-            else:
-                await ctx.send("Bot Admin Only!")
+        if method == "SetQTY":
+            target_item = inventory.BasicItem(item_id)
+            if await validate_admin_inputs(target_item.item_id, value, id_check="nongear", value_check="numeric"):
                 return
-        elif backdoor == "rerank_leaderboard":
+            stock = inventory.check_stock(target_player, target_item)
+            inventory.update_stock(target_player, target_item, (int(value) - stock))
+        if method == "Delete":
+            target_item = inventory.read_custom_item(item_id)
+            if await validate_admin_inputs(target_item.item_id, None, id_check="gear"):
+                return
+            target_player.unequip(target_item)
+            inventory.delete_item(target_player, target_item)
+        await ctx.send('Admin task completed.')
+
+    @set_command_category('admin', 2)
+    @pandora_bot.hybrid_command(name='playermanager', help="Admin player commands")
+    @app_commands.guilds(discord.Object(id=1011375205999968427))
+    async def PlayerManager(ctx, method="", target_user: discord.User = None, value="0"):
+        trigger_return, player_obj, target_player = await admin_verification(ctx, return_target=target_user)
+        if trigger_return:
+            return
+        if method in ["coins", "level", "echelon", "quest", "exp"]:
+            if await validate_admin_inputs(None, value, value_check="numeric"):
+                return
+            target_player.set_player_field(f"player_{method}", int(value))
+        elif method in ["class", "name"]:
+            if await validate_admin_inputs(None, value, value_check="alpha"):
+                return
+            target_player.set_player_field(f"player_{method}", int(value))
+        await ctx.send('Admin task completed.')
+
+    @set_command_category('admin', 3)
+    @pandora_bot.hybrid_command(name='archcommand', help="Admin player commands")
+    @app_commands.guilds(discord.Object(id=1011375205999968427))
+    async def ArchCommand(ctx, keyword="", value="0"):
+        trigger_return, _, _ = await admin_verification(ctx, auth="Archael")
+        if trigger_return:
+            return
+        if keyword == "LBrerank":
             await leaderboards.rerank_leaderboard(ctx)
-        elif backdoor == "merge_icon_images":
+            await ctx.send(f"Admin leaderboard task completed.")
+        elif keyword == "MergeIcons":
             count = 0
             for (_, low_types), high_types in zip(globalitems.category_names.items(), globalitems.weapon_list_high):
                 for _, name in low_types.items():
@@ -164,7 +200,7 @@ def run_discord_bot():
             non_weapon_list = ["Armour", "Vambraces", "Amulet", "Wings", "Crest", "Jewel"]
             for gear_type in non_weapon_list:
                 count += pilengine.generate_and_combine_images(gear_type)
-        await ctx.send(f"Admin item task completed. Task Count: {count}")
+            await ctx.send(f"Admin item task completed. Task Count: {count}")
 
     # Game Commands
     @set_command_category('game', 0)
@@ -174,8 +210,8 @@ def run_discord_bot():
         player_obj = await sharedmethods.check_registration(ctx)
         if player_obj is None:
             return
-        embed_msg = discord.Embed(colour=discord.Colour.dark_orange(),
-                                  title="Map Exploration", description="Please select an expedition.")
+        title, description = "Map Exploration", "Please select an expedition."
+        embed_msg = discord.Embed(colour=discord.Colour.dark_orange(), title=title, description=description)
         embed_msg.set_image(url="")
         map_select_view = adventure.MapSelectView(ctx, player_obj, embed_msg)
         await ctx.send(embed=embed_msg, view=map_select_view)
@@ -521,12 +557,12 @@ def run_discord_bot():
         # Initialize default embed
         embed_msg = discord.Embed(colour=discord.Colour.blurple(), title="Kazyth, Lifeblood of the True Laws",
                                   description="")
-        if player_obj.player_quest < 44:
+        if player_obj.player_quest < 42:
             denial_msg = "Tread carefully adventurer. Drawing too much attention to yourself can prove fatal."
             embed_msg = discord.Embed(colour=discord.Colour.blurple(), title="???", description=denial_msg)
             await ctx.send(embed=embed_msg)
             return
-        if player_obj.player_quest == 44:
+        if player_obj.player_quest == 42:
             quest.assign_unique_tokens(player_obj, "Meld")
 
         # Confirm gems are valid.
@@ -773,18 +809,14 @@ def run_discord_bot():
         if player_obj is None:
             return
         e_weapon = inventory.read_custom_item(player_obj.player_equipped[0])
-        if player_obj.player_quest < 42:
+        if player_obj.player_quest < 38:
             embed_msg = discord.Embed(colour=discord.Colour.blurple(), title="???",
                                       description="A great darkness clouds your path. Entry is impossible.")
             await ctx.send(embed=embed_msg)
             return
-        if player_obj.player_quest == 42:
+        if player_obj.player_quest == 38:
             quest.assign_unique_tokens(player_obj, "Abyss")
-        entry_msg = ("Within this cavern resides the true abyss. The taint of the void can only be purified "
-                     "through a more powerful darkness. I trust you have come prepared. "
-                     "The cost to reveal the true nature of your items will be immeasurably steep. "
-                     "Take great caution, there is nothing which can save you down there.")
-        embed_msg = discord.Embed(colour=discord.Colour.blurple(), title="Echo of Oblivia", description=entry_msg)
+        embed_msg = discord.Embed(colour=discord.Colour.blurple(), title="Echo of Oblivia", description=globalitems.abyss_msg)
         embed_msg.set_image(url="https://i.ibb.co/QjWDYG3/forge.jpg")
         new_view = forge.SelectView(player_obj, "purify")
         await ctx.send(embed=embed_msg, view=new_view)

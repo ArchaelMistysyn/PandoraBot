@@ -168,8 +168,8 @@ class Room:
                 trial_type = adventuredata.trial_variants_dict[self.variant]
                 title = f"Trial of {self.variant}"
                 description = f"{trial_type[0]}\n{', '.join(trial_type[1])}"
-                temp_player = player.get_player_by_id(expedition.player_obj.discord_id)
-                if variant == "Greed":
+                temp_player = player.get_player_by_discord(expedition.player_obj.discord_id)
+                if self.variant == "Greed":
                     description += f"\nCurrent Coins: {globalitems.coin_icon} {temp_player.player_coins:,}x"
                 elif variant == "Soul":
                     description += f"\nCurrent Stamina: {globalitems.stamina_icon} {temp_player.player_stamina:,}"
@@ -990,9 +990,9 @@ def check_essence(selected_items, pool_tier):
 
 monster_dict = {
     "slime": 50, "bat": 100, "spider": 200, "wolf": 300, "goblin": 400,
-    "skeleton": 500, "faerie": 600, "ogre": 700, "harpy": 800, "wraith": 900,
+    "skeleton": 500, "faerie": 600, "ogre": 700, "harpy": 800, "fiend": 900,
     "lamia": 1000, "lich": 1500, "teyeger": 2000, "minotaur": 2500, "basilisk": 3000,
-    "wyrm": 3500, "phoenix": 4000, "chimaera": 4500, "hydra": 5000, "dragon": 9999
+    "sky manta": 3500, "phoenix": 4000, "chimaera": 4500, "hydra": 5000, "dragon": 9999
 }
 gem_list = [("Rock", 1), ("Bronze Chunk", 500), ("Silver Chunk", 1000),
             ("Gold Ore", 5000), ("Platinum Ore", 10000), ("Bismuth Ore", 20000),

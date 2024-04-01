@@ -77,16 +77,16 @@ card_stat_dict = {
                   "XVIII": [3, ["Shadow Penetration", 20, "elemental_penetration", 6],
                             ["Light Penetration", 20, "elemental_penetration", 7]],
                   # Greater Path Cards
-                  "XX": [0, ["Water Penetration", 0, "elemental_penetration", 0],
-                         ["Lightning Penetration", 0, "elemental_penetration", 2]],
+                  "XX": [0, ["Water Penetration", 20, "elemental_penetration", 0],
+                         ["Lightning Penetration", 20, "elemental_penetration", 2]],
                   "XV": [1, ["Ice Penetration", 20, "elemental_penetration", 5],
                          ["Fire Penetration", 20, "elemental_penetration", 0]],
-                  "XIX": [2, ["Earth Penetration", 0, "elemental_penetration", 3],
-                          ["Wind Penetration", 0, "elemental_penetration", 4]],
+                  "XIX": [2, ["Earth Penetration", 20, "elemental_penetration", 3],
+                          ["Wind Penetration", 20, "elemental_penetration", 4]],
                   "V": [3, ["Shadow Penetration", 20, "elemental_penetration", 6],
                         ["Light Penetration", 20, "elemental_penetration", 7]],
-                  "II": [4, ["Celestial Penetration", 0, "elemental_penetration", 8],
-                         ["Celestial Curse", 0, "elemental_curse", 8]],
+                  "II": [4, ["Celestial Penetration", 20, "elemental_penetration", 8],
+                         ["Celestial Curse", 15, "elemental_curse", 8]],
                   "XXI": [6, ["Temporal Application", 1, "temporal_application", None],
                           ["Elemental Overflow", 1, "elemental_application", None]],
                   # Bane Cards
@@ -407,7 +407,9 @@ class TarotCard:
             if "X" in ability_data[0]:
                 stat_string += f'\n{pearl} {ability_data[0].replace("X", str(ability_data[1] * self.num_stars))}'
             else:
-                stat_string += f"\n{pearl} {ability_data[0]} {ability_data[1] * self.num_stars}%"
+                stat_string += f"\n{pearl} {ability_data[0]}"
+                bonus = ability_data[1] * self.num_stars
+                stat_string += f" +{bonus}" if "Application" in ability_data[0] else f" {bonus}%"
         return stat_string
 
     def assign_tarot_values(self, player_obj):

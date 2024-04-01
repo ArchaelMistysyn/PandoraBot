@@ -76,7 +76,7 @@ class RankCard:
             setattr(self, attr, url_list[index])
         self.frame_icon = globalitems.frame_icon_list[loc[5]].replace("[EXT]", globalitems.frame_extension[1])
         self.class_icon = sharedmethods.get_thumbnail_by_class(self.user.player_class)
-        self.fill_percent = round(self.user.player_exp / player.get_max_exp(self.user.player_lvl), 2)
+        self.fill_percent = round(self.user.player_exp / player.get_max_exp(self.user.player_level), 2)
 
 
 def get_player_profile(player_obj, achievement_list):
@@ -132,7 +132,7 @@ def get_player_profile(player_obj, achievement_list):
     result.paste(exp_bar_result, (exp_bar_start, 0), mask=exp_bar_result)
 
     # Level and Exp Text
-    level_text = f"{player_obj.player_lvl}"
+    level_text = f"{player_obj.player_level}"
     level_text_position = (90, 230)
     image_editable.text(level_text_position, level_text, fill=fill_colour, font=level_font)
 

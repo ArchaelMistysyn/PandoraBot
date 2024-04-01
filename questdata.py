@@ -296,25 +296,7 @@ quests_data = {
          "Breakthrough to level 75",
          'Crate', 5, None],
 
-    37: [0, "Spire of Illusions",
-         "The High Three all have abilities with boundless potential. In search of a way to supress or overcome "
-         "their overwhelming advantage we will go to the Spire of Illusions. Here where your enemy is your "
-         "imagination you will be able to truly gauge the immeasurable power they hold."
-         "\nIt's also where my real hammer is sealed. You'll help me get it back right? ",
-         1, 15, None,
-         "Attempt the Spire of Illusions with /gauntlet",
-         'Shard', 5, None],
-
-    38: [1, "Cultivate Divinity (Part 5)",
-         "I can't believe they shattered my precious hammer. "
-         "I know it's not your fault, I'm sorry for getting mad at you earlier. "
-         "If you find any more pieces let me know. "
-         "\nMaybe one day I'll be able to reforge it.",
-         80, None, None,
-         "Breakthrough to level 80",
-         'Crate', 5, None],
-
-    39: [3, "Charge Into Terminus",
+    37: [3, "Charge Into Terminus",
          "The void is an annihilator of all. "
          "To conquer the power of a black hole is an impossibility. "
          "\nI trust that you will find a way.",
@@ -322,43 +304,58 @@ quests_data = {
          "Defeat III - Oblivia, The Void",
          'EssenceIII', 3, None],
 
+    38: [0, "The True Abyss",
+         "During your battle, Oblivia opened the Gateway of the True Abyss. Before we can challenge Eleuia "
+         "and bring an end to her games we must seal the gate."
+         "\nPerhaps in those depths we may find the power we seek.",
+         1, 18, None,
+         "Visit the Gateway of the True Abyss using /abyss",
+         'Core3', 1, None],
+
+    39: [1, "Cultivate Divinity (Part 5)",
+         "Oblivia is right. We're approaching the limits of what I can forge for you. "
+         "You need further improvements to your equipment if it's going to be able to keep pace with you. "
+         "\nI'll do my best to keep you safe from the pull of the abyss whilst you temper your gear.",
+         80, None, None,
+         "Breakthrough to level 80",
+         'Crate', 5, None],
+
     40: [3, "Challenge The Omniscia",
-         "To overcome destruction is a miracle. Now you must claim authority over creation."
+         "Akasha has come. To overcome destruction is a miracle. Now you must claim authority over creation."
          "\nCreate a second miracle my child of the stars.",
          1, 17, None,
          "Defeat IV - Akasha, The Infinite",
          'EssenceIV', 3, 'Echelon 8'],
 
     41: [1, "The Endgame Beyond",
-         "The creation from emptiness and destruction through abundance. "
-         "Your creation of a twin miracle has awarded you sovereignty over the stars."
-         "\nEleuia can't ignore you as a threat any longer.",
-         85, None, None,
-         "Breakthrough to level 85",
-         'Crate', 5, None],
-
-    42: [0, "The True Abyss",
-         "During your earlier battle, Oblivia opened the Gateway of the True Abyss. Before we can challenge Eleuia "
-         "and bring an end to her games we must ensure to take control over the gateway and seal it if necessary."
-         "\nPerhaps we may also find something there to help us defeat her.",
-         1, 18, None,
-         "Visit the Gateway of the True Abyss using /abyss",
-         'Core3', 1, None],
-
-    43: [1, "Cultivate Divinity (Part 6)",
-         "Oblivia is right. We're approaching the limits of what I can forge for you. "
-         "You need further improvements to your equipment in new ways if it's going to be able to keep pace with you. "
-         "\nI'll do my best to keep you safe from the pull of the abyss whilst you temper your gear.",
+         "You are the harbinger of two miracles and have earned sovereignty over the stars."
+         "\nEleuia won't ignore you as a threat any longer.",
          90, None, None,
          "Breakthrough to level 90",
          'Crate', 5, None],
 
-    44: [0, "A Justified Blasphemy",
+    42: [0, "A Justified Blasphemy",
          "We should probably try visiting some of the other arbiters. "
          "There will surely be more repercussions, but if we can't stop Eleuia the outcome will be far worse."
          "\nLet's go pay Kazyth a visit.",
          1, 19, None,
-         "Use /meld to have the affinity of two gems appraised",
+         "Use /meld to have the affinity of two jewels appraised",
+         'Crate', 5, None],
+
+    43: [0, "Spire of Illusions",
+         "To overcome Eleuia's boundless power and overwhelming advantage we will go to the Spire of Illusions. "
+         "Only by facing the imaginary, will you be able to safely prepare for the battle ahead. "
+         "\nIt's also where my legendary hammer is sealed. You'll help me get it back right? ",
+         1, 15, None,
+         "Attempt the Spire of Illusions with /gauntlet",
+         'Shard', 5, None],
+
+    44: [1, "Cultivate Divinity (Part 6)",
+         "I can't believe they shattered my precious hammer. "
+         "I know it's not your fault, I'm sorry for getting mad at you earlier. If you find more shards let me know. "
+         "\nMaybe one day I'll be able to reforge it.",
+         90, None, None,
+         "Breakthrough to level 90",
          'Crate', 5, None],
 
     45: [3, "Ending A Wish",

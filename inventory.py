@@ -722,20 +722,3 @@ def full_inventory_embed(lost_item, embed_colour):
     item_type = custom_item_dict[lost_item.item_type]
     return discord.Embed(colour=embed_colour, title="Inventory Full!",
                          description=f"Please make space in your {item_type} inventory.")
-
-
-def max_all_items(player_id, quantity):
-    pandora_db = mydb.start_engine()
-    # Clear the inventory.
-    raw_query = "DELETE FROM BasicInventory WHERE player_id = :id_check"
-    pandora_db.run_query(raw_query, params={'id_check': player_id})
-    # Build the item list.
-    insert_values = ','.join(
-        f"('{player_id}', '{item_id}', {quantity})" for item_id in itemdata.itemdata_dict.keys()
-    )
-    # Add quantity to all items in the inventory.
-    raw_query = f"INSERT INTO BasicInventory (player_id, item_id, item_qty) VALUES :values"
-    pandora_db.run_query(raw_query, params={'values': insert_values})
-    pandora_db.close_engine()
-
-

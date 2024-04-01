@@ -40,7 +40,7 @@ class CurrentBoss:
     def calculate_hp(self) -> bool:
         return self.boss_cHP > 0
 
-    def create_boss_embed(self, dps=0):
+    def create_boss_embed(self, dps=0, extension=""):
         # img_link = self.boss_image
         img_link = "https://i.ibb.co/0ngNM7h/castle.png"
         tier_colour_dict = {
@@ -52,7 +52,7 @@ class CurrentBoss:
         life_emoji = tier_info[1]
         # Set boss details
         dps_msg = f"{sharedmethods.number_conversion(dps)} / min"
-        boss_title = f'{self.boss_name}'
+        boss_title = f'{self.boss_name}{extension}'
         boss_field = f'Tier {self.boss_tier} {self.boss_type} - Level {self.boss_level}'
         # Set boss hp
         if not self.calculate_hp():
@@ -224,17 +224,9 @@ def spawn_boss(channel_id, player_id, new_boss_tier, selected_boss_type, boss_le
         if boss_object.boss_tier <= 4:
             boss_object.damage_cap = (10 ** int(boss_level / 10 + 4) - 1)
         return boss_object
-
     # Create the boss object if it doesn't exist.
     boss_type_num = globalitems.boss_list.index(selected_boss_type)
-
-    # Handle boss level exceptions:
-    if selected_boss_type == "Paragon" and new_boss_tier == 6:
-        boss_level = 200
-    elif selected_boss_type == "Arbiter":
-        boss_level = 300 if new_boss_tier != 7 else 500
-    elif boss_level == 900:
-        boss_level = 999
+    boss_level += 10 if new_boss_tier == 6 or selected_boss_type == "Arbiter" else 20 if new_boss_tier == 7 else 0
     boss_object = CurrentBoss(boss_type_num, selected_boss_type, new_boss_tier, boss_level)
 
     # Assign elemental weaknesses.
@@ -254,27 +246,12 @@ def spawn_boss(channel_id, player_id, new_boss_tier, selected_boss_type, boss_le
     boss_typeweak = boss_typeweak.rstrip(';')
 
     # Set boss hp and damage cap.
-    level_check = (min(boss_level, 100))
-    subtotal_hp = 10 ** (level_check // 10 + 5)
-    total_hp = int(subtotal_hp)
-    if gauntlet:
-        total_hp *= 10
-    boss_object.damage_cap = (10 ** int(level_check / 10 + 4) - 1)
-    # Eleuia Magnitude 1 HP
-    if new_boss_tier == 6 and boss_object.boss_type != "Arbiter":
-        total_hp *= 10
-    # Arbiter magnitude 3 HP
-    elif boss_object.boss_type == "Arbiter":
-        total_hp *= 1000
-        # Yubelle magnitude 4 HP
-        if new_boss_tier == 7:
-            total_hp *= 10
-    boss_object.damage_cap = (10 ** int(level_check / 10 + 4) - 1)
-    # Incarnate Magnitude 6/9/12 HP
+    total_hp = int(10 ** (boss_object.boss_level // 10 + 5))
+    if boss_object.boss_level >= 100:
+        multiplier_count = (boss_object.boss_level - 100) // 100 + 1
+        total_hp *= (10 ** multiplier_count)
+    boss_object.damage_cap = (total_hp / 10) - 1
     if boss_object.boss_type == "Incarnate":
-        total_hp *= 1000000
-        incarnate_hp_dict = {700: 1000000, 800: 1000000000, 999: 1000000000000}
-        total_hp *= incarnate_hp_dict[boss_level]
         boss_object.damage_cap = -1
 
     # Increase raid boss hp and damage cap.
@@ -414,9 +391,9 @@ def get_raid_id(channel_id, player_id, return_multiple=False):
     return int(df_check['raid_id'].values[0])
 
 
-def create_dead_boss_embed(channel_id, active_boss, dps):
+def create_dead_boss_embed(channel_id, active_boss, dps, extension=""):
     active_boss.boss_cHP = 0
-    dead_embed = active_boss.create_boss_embed(dps)
+    dead_embed = active_boss.create_boss_embed(dps, extension=extension)
     player_list, damage_list = get_damage_list(channel_id)
     output_list = ""
     for idx, x in enumerate(player_list):

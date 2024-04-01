@@ -65,11 +65,10 @@ class SelectView(discord.ui.View):
         # Handle the Purify view.
         if self.method == "purify":
             # Confirm eligibility.
-            if self.selected_item.item_tier < 7:
-                key_msg = ("This item does not meet the qualifications for void purification. "
-                           "Soaking it in the true abyss would only erase it.")
-                embed_msg = discord.Embed(colour=discord.Colour.magenta(),
-                                          title="Oblivia, The Void", description=key_msg)
+            if self.selected_item.item_tier < 5:
+                msg = ("This item does not meet the qualifications for void purification. "
+                       "Soaking it in the true abyss would only erase it.")
+                embed_msg = discord.Embed(colour=discord.Colour.magenta(), title="Oblivia, The Void", description=msg)
                 await interaction.response.edit_message(embed=embed_msg, view=None)
                 return
             # Display the view.
@@ -125,7 +124,7 @@ class PurifyView(discord.ui.View):
             return
         if not self.embed:
             self.embed, self.selected_item = run_button(self.player_obj, self.selected_item,
-                                                        self.material, "Purify")
+                                                        self.material.item_id, "Purify")
             self.new_view = PurifyView(self.player_obj, self.selected_item)
         await interaction.response.edit_message(embed=self.embed, view=self.new_view)
 
@@ -133,11 +132,7 @@ class PurifyView(discord.ui.View):
         if interaction.user.id != self.player_obj.discord_id:
             return
         if not self.embed:
-            entry_msg = (
-                "Within this cave resides the true abyss. Only a greater darkness can cleanse the void "
-                "and reveal the true form. The costs will be steep, I trust you came prepared. "
-                "Nothing can save you down there.")
-            self.embed = discord.Embed(colour=discord.Colour.blurple(), title="Echo of Oblivia", description=entry_msg)
+            self.embed = discord.Embed(colour=discord.Colour.blurple(), title="Echo of Oblivia", description=globalitems.abyss_msg)
             self.new_view = SelectView(self.player_obj, "purify")
         await interaction.response.edit_message(embed=self.embed, view=self.new_view)
 
@@ -342,8 +337,7 @@ class UpgradeView(discord.ui.View):
             return
         button_id = int(button.custom_id)
         material_id = self.material_id[0] if self.menu_type == "Astral Augment" else self.material_id[button_id]
-        embed_msg, self.selected_item = run_button(self.player_obj, self.selected_item,
-                                                   material_id, self.method[button_id])
+        embed_msg, self.selected_item = run_button(self.player_obj, self.selected_item, material_id, self.method[button_id])
         new_view = UpgradeView(self.player_obj, self.selected_item, self.menu_type, self.hammer_type, self.element)
         await button_interaction.response.edit_message(embed=embed_msg, view=new_view)
 
@@ -364,10 +358,7 @@ def run_button(player_obj, selected_item, material_id, method):
     loot_item = inventory.BasicItem(material_id)
     reload_item = inventory.read_custom_item(selected_item.item_id)
     result, cost = craft_item(player_obj, reload_item, loot_item, method)
-    result_dict = {0: "Failed!",
-                   1: "Success!",
-                   2: "Cannot upgrade further.",
-                   3: "Item not eligible",
+    result_dict = {0: "Failed!", 1: "Success!", 2: "Cannot upgrade further.", 3: "Item not eligible",
                    4: "This element cannot be used",
                    5: f"Success! The item evolved to tier {reload_item.item_tier}!"}
     item_stock = inventory.check_stock(player_obj, loot_item.item_id)
@@ -433,7 +424,7 @@ def craft_item(player_obj, selected_item, material_item, method):
 
     if secondary_item is not None:
         secondary_stock = inventory.check_stock(player_obj, secondary_item.item_id)
-        if player_stock < 1:
+        if secondary_stock < 1:
             return secondary_item.item_id, 1
         cost_list.append(secondary_item)
 

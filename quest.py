@@ -67,7 +67,7 @@ class Quest:
             return (progress_count >= self.cost), progress_count
         # Level Quests.
         if self.quest_type == 1:
-            current_level = player_obj.player_lvl
+            current_level = player_obj.player_level
             return (True, current_level) if current_level >= self.cost else (False, current_level)
         # Hand-In Quests.
         if self.quest_type == 2:

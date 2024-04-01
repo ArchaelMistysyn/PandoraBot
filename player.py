@@ -31,7 +31,7 @@ class PlayerProfile:
 
         # Initialize player base info.
         self.player_id, self.discord_id, self.player_username = 0, 0, ""
-        self.player_exp, self.player_lvl, self.player_echelon = 0, 0, 0
+        self.player_exp, self.player_level, self.player_echelon = 0, 0, 0
         self.player_class = ""
         self.player_quest, self.quest_tokens = 0, [0 for x in range(30)]
         self.quest_tokens[1] = 1
@@ -95,7 +95,7 @@ class PlayerProfile:
         echelon_colour, _ = sharedmethods.get_gear_tier_colours((self.player_echelon + 1) // 2)
         resources = f'<:estamina:1145534039684562994> {self.player_username}\'s stamina: {self.player_stamina:,}'
         resources += f'\n{globalitems.coin_icon} Lotus Coins: {self.player_coins:,}'
-        exp = f'Level: {self.player_lvl} Exp: ({self.player_exp:,} / {get_max_exp(self.player_lvl):,})'
+        exp = f'Level: {self.player_level} Exp: ({self.player_exp:,} / {get_max_exp(self.player_level):,})'
         id_msg = f'User ID: {self.player_id}\nClass: {globalitems.class_icon_dict[self.player_class]}'
         embed_msg = discord.Embed(colour=echelon_colour, title=self.player_username, description=id_msg)
         embed_msg.add_field(name=exp, value=resources, inline=False)
@@ -255,15 +255,22 @@ class PlayerProfile:
                 adjust_msg = " [Greed Penalty]"
         self.player_exp += exp_change
         # Handle Levels
-        max_exp = get_max_exp(self.player_lvl)
+        max_exp = get_max_exp(self.player_level)
         level_increase = 0
-        while self.player_exp > max_exp and self.player_lvl < 999:
+        max_level = 100
+        if self.player_quest > 53:
+            max_level = 999
+        elif self.player_quest > 52:
+            max_level = 200
+        elif self.player_quest > 50:
+            max_level = 150
+        while self.player_exp > max_exp and self.player_level < max_level:
             self.player_exp -= max_exp
             level_increase += 1
-        self.player_lvl += level_increase
+        self.player_level += level_increase
         change_message = "" if level_increase == 0 else f"(Level +{level_increase}) "
         change_message += f"{exp_change:,}x{adjust_msg}"
-        self.set_player_field("player_lvl", self.player_lvl)
+        self.set_player_field("player_level", self.player_level)
         self.set_player_field("player_exp", self.player_exp)
         return change_message, level_increase
 
@@ -284,7 +291,7 @@ class PlayerProfile:
     def add_new_player(self, selected_class, discord_id):
         self.discord_id = discord_id
         self.player_class = selected_class
-        self.player_quest, self.player_lvl = 1, 1
+        self.player_quest, self.player_level = 1, 1
         self.player_stamina = 5000
         player_stats, equipped_gear = "0;0;0;0;0;0;0", "0;0;0;0;0;0"
         quest_tokens = ";".join(map(str, self.quest_tokens))
@@ -299,14 +306,14 @@ class PlayerProfile:
         if len(df.index) != 0:
             return f"Username {self.player_username} is taken. Please pick a new username."
         raw_query = ("INSERT INTO PlayerList "
-                     "(discord_id, player_username, player_lvl, player_exp, player_echelon, player_quest, "
+                     "(discord_id, player_username, player_level, player_exp, player_echelon, player_quest, "
                      "quest_tokens, player_stamina, player_class, player_coins, player_stats, player_equipped, "
                      "player_equip_tarot, player_equip_insignia, player_equip_pact, vouch_points) "
                      "VALUES (:input_1, :input_2, :input_3, :input_4, :input_5, :input_6,"
                      ":input_7, :input_8, :input_9, :input_10, :input_11, :input_12, :input_13, "
                      ":input_14, :input_15, :input_16)")
         params = {
-            'input_1': str(self.discord_id), 'input_2': str(self.player_username), 'input_3': int(self.player_lvl),
+            'input_1': str(self.discord_id), 'input_2': str(self.player_username), 'input_3': int(self.player_level),
             'input_4': int(self.player_exp), 'input_5': int(self.player_echelon),
             'input_6': int(self.player_quest), 'input_7': quest_tokens,
             'input_8': int(self.player_stamina), 'input_9': str(self.player_class), 'input_10': int(self.player_coins),
@@ -355,7 +362,7 @@ class PlayerProfile:
         base_attack_speed = 1.0
         base_damage_mitigation = 0.0
         base_player_hp = 1000
-        base_player_hp += 10 * self.player_lvl
+        base_player_hp += 10 * self.player_level
 
         # Class Multipliers
         class_multipliers = {
@@ -499,8 +506,7 @@ class PlayerProfile:
         self.player_total_damage *= (1 + self.bleed_multiplier)
         return self.player_total_damage
 
-    def equip(self, selected_item) -> str:
-        pandora_db = mydb.start_engine()
+    def equip(self, selected_item):
         if selected_item.item_type not in ["W", "A", "V", "Y", "G", "C"]:
             response = "Item is not equipable."
             return response
@@ -510,26 +516,39 @@ class PlayerProfile:
         self.player_equipped[location] = selected_item.item_id
         equipped_gear = ";".join(map(str, self.player_equipped))
         raw_query = f"UPDATE PlayerList SET player_equipped = :input_1 WHERE player_id = :player_check"
-        pandora_db.run_query(raw_query, params={'player_check': int(self.player_id), 'input_1': equipped_gear})
-        pandora_db.close_engine()
+        mydb.run_single_query(raw_query, params={'player_check': int(self.player_id), 'input_1': equipped_gear})
         return f"{item_type} {selected_item.item_id} is now equipped."
+
+    def unequip(self, selected_item):
+        # Unequip non-gem gear items
+        if "D" not in selected_item.item_type:
+            location = inventory.item_loc_dict[selected_item.item_type]
+            self.player_equipped[location] = 0
+            equipped_gear = ";".join(map(str, self.player_equipped))
+            raw_query = f"UPDATE PlayerList SET player_equipped = :input_1 WHERE player_id = :player_check"
+            mydb.run_single_query(raw_query, params={'player_check': int(self.player_id), 'input_1': equipped_gear})
+        # Remove inlaid dragon gems
+        else:
+            for item_id in [x for x in self.player_equipped if x != 0]:
+                e_item = inventory.read_custom_item(item_id)
+                if selected_item.item_id == e_item.item_inlaid_gem_id:
+                    e_item.item_inlaid_gem_id = 0
+                    e_item.update_stored_item()
 
     def check_equipped(self, item):
         response = ""
         self.get_equipped()
+        if item.item_type in inventory.item_loc_dict and "D" not in item.item_type:
+            return f"Item {item.item_id} is not recognized."
         if item.item_id in self.player_equipped:
             return f"Item {item.item_id} is equipped."
-        elif item.item_type in inventory.item_loc_dict:
-            if "D" in item.item_type:
-                for x in self.player_equipped:
-                    if x != 0:
-                        e_item = inventory.read_custom_item(x)
-                        check = e_item.item_inlaid_gem_id
-                        if item.item_id == check:
-                            response = f"Dragon Heart Gem {item.item_id} is currently inlaid in item {e_item.item_id}."
-            return response
-        else:
-            return f"Item {item.item_id} is not recognized."
+        elif "D" in item.item_type:
+            for item_id in [x for x in self.player_equipped if x != 0]:
+                e_item = inventory.read_custom_item(item_id)
+                if item.item_id == e_item.item_inlaid_gem_id:
+                    response = f"Dragon Heart Gem {item.item_id} is currently inlaid in item {e_item.item_id}."
+        return response
+
 
     def create_stamina_embed(self):
         potion_msg = ""
@@ -644,7 +663,7 @@ def df_to_player(row):
     if isinstance(row, pd.Series):
         temp.player_id, temp.discord_id = int(row['player_id']), int(row['discord_id'])
         temp.player_username = str(row["player_username"])
-        temp.player_lvl, temp.player_exp = int(row['player_lvl']), int(row['player_exp'])
+        temp.player_level, temp.player_exp = int(row['player_level']), int(row['player_exp'])
         temp_string = str(row['quest_tokens'])
         temp.player_echelon, temp.player_quest = int(row['player_echelon']), int(row['player_quest'])
         temp.player_stamina, temp.player_coins = int(row['player_stamina']), int(row['player_coins'])
@@ -653,7 +672,7 @@ def df_to_player(row):
     else:
         temp.player_id, temp.discord_id = int(row['player_id'].values[0]), int(row['discord_id'].values[0])
         temp.player_username = str(row["player_username"].values[0])
-        temp.player_lvl, temp.player_exp = int(row['player_lvl'].values[0]), int(row['player_exp'].values[0])
+        temp.player_level, temp.player_exp = int(row['player_level'].values[0]), int(row['player_exp'].values[0])
         temp_string = str(row['quest_tokens'].values[0])
         temp.player_echelon, temp.player_quest = int(row['player_echelon'].values[0]), int(
             row['player_quest'].values[0])
@@ -694,10 +713,10 @@ def get_all_users():
     return user_list
 
 
-def get_max_exp(player_lvl):
-    exp_required = int(1000 * player_lvl)
-    if player_lvl >= 100:
-        exp_required = 100000 + (50000 * (player_lvl // 100))
+def get_max_exp(player_level):
+    exp_required = int(1000 * player_level)
+    if player_level >= 100:
+        exp_required = 100000 + (50000 * (player_level // 100))
     return exp_required
 
 
