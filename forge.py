@@ -21,7 +21,6 @@ import loot
 void_icon = "<a:evoid:1145520260573827134>"
 item_type_lotus_dict = {"W": "Lotus9", "A": "Lotus5", "V": "Lotus2",
                         "Y": "Lotus1", "G": "Lotus3", "C": "Lotus6"}
-max_enhancement = [20, 40, 60, 80, 100, 150, 200, 1000]
 
 
 class SelectView(discord.ui.View):
@@ -355,16 +354,18 @@ class UpgradeView(discord.ui.View):
 
 
 def run_button(player_obj, selected_item, material_id, method):
-    loot_item = inventory.BasicItem(material_id)
+    cost_item = inventory.BasicItem(material_id)
     reload_item = inventory.read_custom_item(selected_item.item_id)
-    result, cost = craft_item(player_obj, reload_item, loot_item, method)
+    result, cost = craft_item(player_obj, reload_item, cost_item, method)
     result_dict = {0: "Failed!", 1: "Success!", 2: "Cannot upgrade further.", 3: "Item not eligible",
                    4: "This element cannot be used",
                    5: f"Success! The item evolved to tier {reload_item.item_tier}!"}
-    item_stock = inventory.check_stock(player_obj, loot_item.item_id)
-    outcome = sharedmethods.get_stock_msg(loot_item, item_stock, cost)
     if result in result_dict:
         outcome = result_dict[result]
+    else:
+        no_stock_item = inventory.BasicItem(result)
+        item_stock = inventory.check_stock(player_obj, no_stock_item.item_id)
+        outcome = sharedmethods.get_stock_msg(no_stock_item, item_stock, cost)
     new_embed_msg = reload_item.create_citem_embed()
     new_embed_msg.add_field(name=outcome, value="", inline=False)
     return new_embed_msg, reload_item
@@ -376,7 +377,7 @@ def check_maxed(target_item, method, material_id, element):
     match method:
         case "Enhance":
             success_rate = max(5, (100 - (target_item.item_enhancement // 10) * 5))
-            if target_item.item_enhancement >= max_enhancement[(target_item.item_tier - 1)]:
+            if target_item.item_enhancement >= globalitems.max_enhancement[(target_item.item_tier - 1)]:
                 return True, 0
             return False, success_rate
         case "ReforgveA" | "ReforgeV":
@@ -468,7 +469,7 @@ def handle_craft_costs(player_obj, cost_list, cost_1=1, cost_2=1):
 def enhance_item(player_obj, selected_item, cost_list, success_check):
     success_rate = max(5, (100 - (selected_item.item_enhancement // 10) * 5))
     # Check if enhancement is already maxed.
-    if selected_item.item_enhancement >= max_enhancement[(selected_item.item_tier - 1)]:
+    if selected_item.item_enhancement >= globalitems.max_enhancement[(selected_item.item_tier - 1)]:
         return 4
     # Check if the material being used is eligible.
     element_location = 0
@@ -599,7 +600,7 @@ def purify_item(player_obj, selected_item, cost_list, success_rate, success_chec
     check_aug = itemrolls.check_augment(selected_item)
     if check_aug != selected_item.item_tier * 6:
         return 3
-    if selected_item.item_enhancement < max_enhancement[(selected_item.item_tier - 1)]:
+    if selected_item.item_enhancement < globalitems.max_enhancement[(selected_item.item_tier - 1)]:
         return 3
     if selected_item.item_num_sockets == 0:
         return 3
@@ -772,50 +773,49 @@ class MeldView(discord.ui.View):
     async def meld_gems(self, interaction: discord.Interaction, button: discord.Button):
         if interaction.user.id != self.player_obj.discord_id:
             return
-        if not self.embed:
-            # Reload the data.
-            self.player_obj = player.get_player_by_id(self.player_obj.player_id)
-            self.gem_1 = inventory.read_custom_item(self.gem_1.item_id)
-            self.gem_2 = inventory.read_custom_item(self.gem_2.item_id)
-            stock = inventory.check_stock(self.player_obj, "Token4")
-            self.embed = discord.Embed(colour=discord.Colour.blurple(),
-                                       title="Kazyth, Lifeblood of the True Laws", description="")
-            # Check the cost
-            if stock < self.cost:
-                self.embed.description = "Begone fool. Those without tokens have no right to stand before me."
-                await interaction.response.edit_message(embed=self.embed, view=self.new_view)
-                return
-            # Pay the cost
-            inventory.update_stock(self.player_obj, "Token4", (self.cost * -1))
-            # Process the meld attempt.
-            inventory.delete_item(self.player_obj, self.gem_2)
-            success_roll = random.randint(1, 100)
-            if success_roll > self.affinity:
-                self.embed.description = "The jewels were not compatible enough, the sacrificial heart died."
-                await interaction.response.edit_message(embed=self.embed, view=self.new_view)
-                return
-            error_msg, roll_change_list = meld_gems(self.gem_1, self.gem_2)
-            # Handle error.
-            if error_msg != "":
-                self.embed.description = "The jewels were not compatible enough, the sacrificial heart died."
-                await interaction.response.edit_message(embed=self.embed, view=self.new_view)
-                return
-            self.embed = self.gem_1.create_citem_embed(roll_change_list)
+        if self.embed is not None:
             await interaction.response.edit_message(embed=self.embed, view=self.new_view)
             return
+        # Reload the data.
+        self.player_obj.reload_player()
+        self.gem_1 = inventory.read_custom_item(self.gem_1.item_id)
+        self.gem_2 = inventory.read_custom_item(self.gem_2.item_id)
+        stock = inventory.check_stock(self.player_obj, "Token4")
+        self.embed = discord.Embed(colour=discord.Colour.blurple(),
+                                   title="Kazyth, Lifeblood of the True Laws", description="")
+        # Check the cost
+        if stock < self.cost:
+            self.embed.description = "Begone fool. Those without tokens have no right to stand before me."
+            await interaction.response.edit_message(embed=self.embed, view=self.new_view)
+            return
+        # Pay the cost
+        inventory.update_stock(self.player_obj, "Token4", (self.cost * -1))
+        # Process the meld attempt.
+        if random.randint(1, 100) > self.affinity:
+            inventory.delete_item(self.player_obj, self.gem_2)
+            self.embed.description = "The jewels were not compatible enough, the sacrificial heart died."
+            await interaction.response.edit_message(embed=self.embed, view=self.new_view)
+            return
+        error_msg, roll_change_list = meld_gems(self.player_obj, self.gem_1, self.gem_2)
+        # Handle error.
+        if error_msg != "":
+            self.embed.description = error_msg
+            await interaction.response.edit_message(embed=self.embed, view=self.new_view)
+            return
+        self.embed = self.gem_1.create_citem_embed(roll_change_list)
+        await interaction.response.edit_message(embed=self.embed, view=self.new_view)
+        return
 
 
-def meld_gems(gem_1, gem_2):
+def meld_gems(player_obj, gem_1, gem_2):
     if not inventory.if_custom_exists(gem_1.item_id) or not inventory.if_custom_exists(gem_2.item_id):
         return "Melding interrupted : Jewels no longer recognized before processing.", None
     if gem_1.item_tier >= 7:
         return "Melding interrupted : Jewel eligibility changed before processing.", None
-    tier_adjust = 0
+    inventory.delete_item(player_obj, gem_2)
     if gem_1.item_tier == gem_2.item_tier and gem_1.item_tier < 8 and gem_2.item_tier < 8:
-        tier_adjust = 1
-        gem_1.item_tier += tier_adjust
+        gem_1.item_tier += 1
         gem_1.base_damage_min, gem_1.base_damage_max = inventory.get_tier_damage(gem_1.item_tier, gem_1.item_type)
-        gem_1.item_bonus_stat = f"{gem_1.item_bonus_stat[0]};{inventory.gem_point_dict[gem_1.item_tier]}"
         gem_1.set_gem_name()
     roll_change_list = []
     for roll_index, secondary_roll in enumerate(gem_2.item_roll_values):

@@ -52,9 +52,9 @@ def get_thumbnail_by_class(class_name):
 def get_gear_thumbnail(item):
     tag_dict = {"A": "Armour", "V": "Vambraces", "Y": "Amulet", "G": "Wings", "C": "Crest"}
     item_tag = item.item_base_type
-    if item.item_type == "W" and item.item_tier <= 4:
+    if item.item_type == "W":
         item_tag = globalitems.gear_category_dict[item.item_base_type]
-    elif item.item_type != "W":
+    else:
         item_tag = "Jewel" if "D" in item.item_type else tag_dict[item.item_type]
     # Ensure image is currently available.
     if item_tag not in globalitems.availability_list:

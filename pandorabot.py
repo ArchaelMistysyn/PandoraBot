@@ -6,6 +6,7 @@ from discord.ui import Button, View
 from discord import app_commands
 import asyncio
 import pandas as pd
+import re
 import sys
 import random
 from datetime import datetime as dt, timedelta
@@ -104,7 +105,7 @@ def run_discord_bot():
             await self.get_destination().send(embed=embed)
 
     # Admin Commands
-    async def admin_verification(ctx_object, return_target=None, auth="GameAdmin"):
+    async def admin_verification(ctx_object, return_target: discord.User = None, auth="GameAdmin"):
         auth_dict = {"GameAdmin": globalitems.GM_id_dict.keys(), "Archael": globalitems.bot_admin_ids}
         if ctx_object.author.id not in auth_dict[auth]:
             await ctx.send("Only game admins can use this command.")
@@ -143,6 +144,22 @@ def run_discord_bot():
         await ctx.send('Pandora Bot commands synced!')
 
     @set_command_category('admin', 1)
+    @pandora_bot.hybrid_command(name='generategear', help="Admin gear item generation")
+    @app_commands.guilds(discord.Object(id=1011375205999968427))
+    async def GenerateGear(ctx, target_user: discord.User = None, tier=1, elements="0;0;0;0;0;0;0;0;0", item_type="W",
+                           base_type="", class_name="Knight", enhance=0, quality=1,
+                           base_stat=1.0, bonus_stat=None, base_dmg_min=0, base_dmg_max=0, num_sockets=0,
+                           roll1="", roll2="", roll3="", roll4="", roll5="", roll6=""):
+        trigger_return, player_obj, target_player = await admin_verification(ctx, return_target=target_user)
+        if trigger_return:
+            return
+        rolls, base_dmg = [roll1, roll2, roll3, roll4, roll5, roll6], [base_dmg_min, base_dmg_max]
+        new_item = await inventory.generate_item(ctx, target_player, tier, elements, item_type, base_type, class_name,
+                                                 enhance, quality, base_stat, bonus_stat, base_dmg, num_sockets, rolls)
+        if new_item is not None:
+            await ctx.send(f'Admin task completed. Created item id: {new_item.item_id}')
+
+    @set_command_category('admin', 2)
     @pandora_bot.hybrid_command(name='itemmanager', help="Admin item commands")
     @app_commands.guilds(discord.Object(id=1011375205999968427))
     async def ItemManager(ctx, method="", target_user: discord.User = None, item_id="", value="0"):
@@ -153,8 +170,8 @@ def run_discord_bot():
             target_item = inventory.BasicItem(item_id)
             if await validate_admin_inputs(target_item.item_id, value, id_check="nongear", value_check="numeric"):
                 return
-            stock = inventory.check_stock(target_player, target_item)
-            inventory.update_stock(target_player, target_item, (int(value) - stock))
+            stock = inventory.check_stock(target_player, target_item.item_id)
+            inventory.update_stock(target_player, target_item.item_id, (int(value) - stock))
         if method == "Delete":
             target_item = inventory.read_custom_item(item_id)
             if await validate_admin_inputs(target_item.item_id, None, id_check="gear"):
@@ -163,7 +180,7 @@ def run_discord_bot():
             inventory.delete_item(target_player, target_item)
         await ctx.send('Admin task completed.')
 
-    @set_command_category('admin', 2)
+    @set_command_category('admin', 3)
     @pandora_bot.hybrid_command(name='playermanager', help="Admin player commands")
     @app_commands.guilds(discord.Object(id=1011375205999968427))
     async def PlayerManager(ctx, method="", target_user: discord.User = None, value="0"):
@@ -180,7 +197,7 @@ def run_discord_bot():
             target_player.set_player_field(f"player_{method}", int(value))
         await ctx.send('Admin task completed.')
 
-    @set_command_category('admin', 3)
+    @set_command_category('admin', 4)
     @pandora_bot.hybrid_command(name='archcommand', help="Admin player commands")
     @app_commands.guilds(discord.Object(id=1011375205999968427))
     async def ArchCommand(ctx, keyword="", value="0"):
@@ -590,17 +607,17 @@ def run_discord_bot():
         is_eligible, gem_1, embed_message = can_meld(base_gem_id, player_obj)
         if not is_eligible:
             embed_msg.description = embed_message
-            await ctx.send(embed=embed_msg, view=new_view)
+            await ctx.send(embed=embed_msg)
             return
         is_eligible, gem_2, embed_message = can_meld(secondary_gem_id, player_obj)
         if not is_eligible:
             embed_msg.description = embed_message
-            await ctx.send(embed=embed_msg, view=new_view)
+            await ctx.send(embed=embed_msg)
             return
         # Build the meld details display.
-        embed_msg.description = ("The heart gem of great beings continues to beat long after extraction. This is the "
-                                 "real reason they exude great power. Refining living things is not a request to be "
-                                 "taken lightly. Will you bear the sins of such blasphemy?\n")
+        embed_msg.description = ("The jewelled heart of greater beings continues to beat long after extraction. "
+                                 "Refining living things is not a request to be taken lightly. "
+                                 "Will you bear the sins of such blasphemy?\n")
         path_location = int(gem_1.item_bonus_stat[0])
         target_tier = gem_1.item_tier if gem_1.item_tier != gem_2.item_tier else (gem_1.item_tier + 1)
         target_info = f"\nTarget Tier: {target_tier}\nTarget Path: {globalitems.path_names[path_location]}"

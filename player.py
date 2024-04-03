@@ -538,7 +538,7 @@ class PlayerProfile:
     def check_equipped(self, item):
         response = ""
         self.get_equipped()
-        if item.item_type in inventory.item_loc_dict and "D" not in item.item_type:
+        if item.item_type not in inventory.item_loc_dict and "D" not in item.item_type:
             return f"Item {item.item_id} is not recognized."
         if item.item_id in self.player_equipped:
             return f"Item {item.item_id} is equipped."
@@ -548,7 +548,6 @@ class PlayerProfile:
                 if item.item_id == e_item.item_inlaid_gem_id:
                     response = f"Dragon Heart Gem {item.item_id} is currently inlaid in item {e_item.item_id}."
         return response
-
 
     def create_stamina_embed(self):
         potion_msg = ""

@@ -154,6 +154,7 @@ class SelectRecipeView(discord.ui.View):
         super().__init__(timeout=None)
         self.player_obj = player_obj
         self.category = category
+        self.embed, self.new_view = None, None
 
         # Build the option menu dynamically based on the category's recipes.
         category_recipes = recipe_dict.get(self.category, {})
@@ -174,16 +175,17 @@ class SelectRecipeView(discord.ui.View):
         self.add_item(self.select_menu)
 
     async def recipe_callback(self, interaction: discord.Interaction):
-        try:
-            if interaction.user.id == self.player_obj.discord_id:
-                reload_player = player.get_player_by_id(self.player_obj.player_id)
-                selected_option = interaction.data['values'][0]
-                recipe_object = RecipeObject(self.category, selected_option)
-                embed_msg = recipe_object.create_cost_embed(reload_player)
-                new_view = CraftView(reload_player, recipe_object)
-                await interaction.response.edit_message(embed=embed_msg, view=new_view)
-        except Exception as e:
-            print(e)
+        if interaction.user.id != self.player_obj.discord_id:
+            return
+        if self.embed is not None:
+            await interaction.response.edit_message(embed=self.embed, view=self.new_view)
+            return
+        self.player_obj.reload_player()
+        selected_option = interaction.data['values'][0]
+        recipe_object = RecipeObject(self.category, selected_option)
+        self.embed = recipe_object.create_cost_embed(self.player_obj)
+        self.new_view = CraftView(self.player_obj, recipe_object)
+        await interaction.response.edit_message(embed=self.embed, view=self.new_view)
 
 
 class CraftView(discord.ui.View):

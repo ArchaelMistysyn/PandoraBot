@@ -180,9 +180,7 @@ class CustomItem:
                 self.assign_bonus_stat()
 
     def set_base_attack_speed(self):
-        speed_range_list = [(1.00, 1.10), (1.10, 1.20), (1.20, 1.30), (1.30, 1.50),
-                            (1.50, 2.00), (2.00, 2.50), (2.50, 3.00), (3.00, 4.00)]
-        selected_range = speed_range_list[(self.item_tier - 1)]
+        selected_range = globalitems.speed_range_list[(self.item_tier - 1)]
         self.item_base_stat = round(random.uniform(selected_range[0], selected_range[1]), 2)
 
     def set_base_damage_mitigation(self):
@@ -206,6 +204,12 @@ class CustomItem:
                 return
             return
         self.item_bonus_stat = random.choice(list(globalitems.rare_ability_dict.keys()))
+
+    def get_gem_stat_message(self):
+        points_value = gem_point_dict[self.item_tier]
+        path_name = globalitems.path_names[int(self.item_bonus_stat)]
+        stat_message = f"Path of {path_name} +{points_value}"
+        return stat_message
 
     def update_stored_item(self):
         item_elements = ""
@@ -255,9 +259,8 @@ class CustomItem:
     def generate_base(self):
         if "D" in self.item_type:
             itemrolls.add_roll(self, 6)
-            points_type = random.randint(0, 6)
-            points_value = gem_point_dict[self.item_tier]
-            self.item_bonus_stat = f"{points_type};{points_value}"
+            path = random.randint(0, 6)
+            self.item_bonus_stat = f"{path}"
             return
 
         # Add a roll and element to non-gem items.
@@ -324,8 +327,8 @@ class CustomItem:
         tier_specifier = {5: "Void", 6: "Wish", 7: "Abyss", 8: "Divine"}
         bonus_stat = self.item_bonus_stat
         if self.item_tier >= 5 and self.item_type != "W":
-            bonus_stat = self.item_bonus_stat.replace("X", tier_specifier[self.item_tier])
-        stat_msg += bonus_stat if "D" not in self.item_type else f"{get_gem_stat_message(bonus_stat)}"
+            bonus_stat = f"{tier_specifier[self.item_tier]} Application ({self.item_bonus_stat})"
+        stat_msg += bonus_stat if "D" not in self.item_type else f"{self.get_gem_stat_message()}"
         rolls_msg = itemrolls.display_rolls(self, roll_change_list)
         display_stars = sharedmethods.display_stars(self.item_tier)
         if "D" not in self.item_type:
@@ -452,9 +455,7 @@ def read_custom_item(item_id):
 
 
 def get_tier_damage(item_tier, item_type):
-    damage_tier_list = [[250, 500], [500, 2500], [2500, 5000], [5000, 10000],
-                        [10000, 25000], [25000, 50000], [50000, 100000], [100000, 200000]]
-    damage_values = damage_tier_list[item_tier - 1]
+    damage_values = globalitems.damage_tier_list[item_tier - 1]
     # Gem max tier exception.
     if "D" in item_type:
         if item_tier == 8:
@@ -570,13 +571,6 @@ def display_binventory(player_id, method):
     return player_inventory
 
 
-def get_gem_stat_message(gem_bonus_code):
-    bonus_stat_details = gem_bonus_code.split(";")
-    path_name = globalitems.path_names[int(bonus_stat_details[0])]
-    stat_message = f"Path of {path_name} +{bonus_stat_details[1]}"
-    return stat_message
-
-
 def generate_random_tier(min_tier=1, max_tier=4, luck_bonus=0):
     # Handle tier 1-4 rolls
     threshold_dict = {4: 10, 3: 110, 2: 510}
@@ -681,7 +675,7 @@ def delete_item(user_object, item):
         raw_query = "UPDATE CustomInventory SET item_inlaid_gem_id = 0 WHERE item_inlaid_gem_id = :item_check"
         pandora_db.run_query(raw_query, params={'item_check': item.item_id})
     else:
-        user_object.unequip_item(item.item_id)
+        user_object.unequip_item(item)
     raw_query = "DELETE FROM CustomInventory WHERE item_id = :item_check"
     pandora_db.run_query(raw_query, params={'item_check': item.item_id})
     pandora_db.close_engine()
@@ -722,3 +716,107 @@ def full_inventory_embed(lost_item, embed_colour):
     item_type = custom_item_dict[lost_item.item_type]
     return discord.Embed(colour=embed_colour, title="Inventory Full!",
                          description=f"Please make space in your {item_type} inventory.")
+
+
+async def generate_item(ctx, target_player, tier, elements, item_type, base_type, class_name, enhancement,
+                        quality, base_stat, bonus_stat, base_dmg, num_sockets, roll_list):
+    valid_damage_range = (globalitems.damage_tier_list[tier - 1][0], globalitems.damage_tier_list[tier - 1][1] + 1)
+    pattern = r"^\d(;[0-9]+){8}$"
+
+    # Create the new item.
+    if tier not in range(9):
+        await ctx.send('Tier input not valid.')
+        return None
+    if item_type not in inventory.custom_item_dict.keys() and item_type != "T":
+        await ctx.send('Item type input not valid.')
+        return None
+    new_item = inventory.CustomItem(target_player, item_type, tier)
+    new_item.player_owner = target_player.player_id
+
+    if "D" not in item_type:
+        # Handle non-gem inputs.
+        if not bool(re.match(pattern, elements)):
+            await ctx.send('Element input not valid.')
+            return None
+        if num_sockets not in range(2):
+            await ctx.send('Socket input not valid.')
+            return None
+        if enhancement not in range(1, globalitems.max_enhancement[tier - 1] + 1):
+            await ctx.send('Enhancement input not valid for given tier.')
+            return None
+        if quality not in range(1, 6):
+            await ctx.send('Quality input not valid.')
+            return None
+        if class_name not in globalitems.class_names:
+            await ctx.send('Class name input not valid.')
+            return None
+        if base_dmg[0] not in range(*valid_damage_range) or base_dmg[1] not in range(*valid_damage_range):
+            await ctx.send('Base damage input not valid.')
+            return
+        new_item.item_elements = list(map(int, elements.split(';')))
+        new_item.item_num_sockets, new_item.item_enhancement = num_sockets, enhancement
+        new_item.item_quality_tier, new_item.item_damage_type = quality, class_name
+        # Handle type specific inputs.
+        speed_range = globalitems.speed_range_list[tier - 1]
+        if ((item_type == "A" and base_stat not in range((1 + (tier - 1) * 5), tier * 5))
+                or (item_type == "W" and not (speed_range[0] <= base_stat <= speed_range[1]))):
+            await ctx.send('Base stat input not valid.')
+            return None
+        if item_type != "W":
+            words = bonus_stat.split()
+            if len(words) != 2:
+                await ctx.send('Bonus stat input not valid.')
+                return None
+            if tier >= 5 and bonus_stat not in globalitems.rare_ability_dict.keys():
+                await ctx.send('Bonus stat input not valid.')
+                return None
+            elif tier <= 4:
+                if ((words[1] == "Bane" and words[0] not in globalitems.boss_list and words[0] != "Human") or
+                        (words[0] not in globalitems.element_special_names and words[1] not in ["Feathers", "Authority"])):
+                    await ctx.send('Bonus stat input not valid.')
+                    return None
+        else:
+            # Set the item weapon item base.
+            class_checker = globalitems.class_names.index(new_item.item_damage_type)
+            if tier >= 5:
+                target_list = globalitems.weapon_list_high[class_checker]
+            else:
+                target_list = globalitems.weapon_list_low[class_checker][tier - 1]
+            new_item.item_base_type = random.choice(target_list)
+            if base_type != "" and base_type in target_list:
+                new_item.item_base_type = base_type
+        # Assign base/bonus stats.
+        new_item.item_bonus_stat = bonus_stat if item_type != "W" else ""
+        new_item.item_base_stat = base_stat if item_type in ["W", "A"] else new_item.item_base_stat
+    else:
+        # Handle gem/jewel specific inputs.
+        if bonus_stat not in globalitems.path_names:
+            await ctx.send('Bonus Stat input not valid for gem/jewel.')
+            return None
+        if tier == 8:
+            base_dmg = [150000, 150000]
+        elif base_dmg[0] not in range(*valid_damage_range) or base_dmg[1] not in range(*valid_damage_range):
+            await ctx.send('Base damage input not valid.')
+            return
+        new_item.item_bonus_stat = globalitems.path_names.index(bonus_stat)
+
+    # Apply the item rolls.
+    count, new_roll_values = 0, []
+    for roll in roll_list:
+        if roll is None:
+            break
+        if (not roll[0].isdigit() or int(roll[0]) not in range(1, tier + 1)
+                or roll[1] != "-" or roll[2:] not in itemrolls.valid_rolls):
+            await ctx.send(f'{roll} is not a roll valid input.')
+            return
+        new_roll_values.append(roll)
+        count += 1
+    new_item.item_roll_values = new_roll_values
+    if count != 6 and ("D" in item_type or tier >= 6):
+        await ctx.send(f'Please input 6 item rolls.')
+        return
+
+    new_item.base_damage_min, new_item.base_damage_max = min(base_dmg), max(base_dmg)
+    new_item.set_item_name()
+    new_item.item_id = add_custom_item(new_item)
+    return new_item

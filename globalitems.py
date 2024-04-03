@@ -70,15 +70,11 @@ boss_list = ["Fortress", "Dragon", "Demon", "Paragon", "Arbiter", "Incarnate"]
 
 # DATA STRUCTURES
 # Unique Ability Data
-rare_ability_dict = {"X Application (Overflow)": ["elemental_application", 2],
-                     "X Application (Mastery)": ["class_multiplier", 0.1],
-                     "X Application (Immortality)": ["immortal", True],
-                     "X Application (Omega)": ["critical_application", 1],
-                     "X Application (Combo)": ["combo_application", 1],
-                     "X Application (Reaper)": ["bleed_application", 1],
-                     "X Application (Overdrive)": ["ultimate_application", 1],
-                     "X Application (Unravel)": ["temporal_application", 1],
-                     "X Application (Vitality)": ["hp_multiplier", 5]}
+rare_ability_dict = {"Overflow": ["elemental_application", 2], "Mastery": ["class_multiplier", 0.1],
+                     "Immortality": ["immortal", True], "Omega": ["critical_application", 1],
+                     "Combo": ["combo_application", 1], "Reaper": ["bleed_application", 1],
+                     "Overdrive": ["ultimate_application", 1], "Unravel": ["temporal_application", 1],
+                     "Vitality": ["hp_multiplier", 5]}
 # Skill Names
 skill_names_dict = {
     "Knight": ["Destructive Cleave", "Merciless Blade", "Ruinous Slash", "Destiny Divider"],
@@ -160,6 +156,16 @@ quality_damage_map = {
     (8, 1): "Prelude", (8, 2): "Majestic", (8, 3): "Sanctified", (8, 4): "Radiant", (8, 5): "Transcendent",
 }
 
+# Max Enhancement by Tier
+max_enhancement = [20, 40, 60, 80, 100, 150, 200, 999]
+
+# Attack Speed Ranges by Tier
+speed_range_list = [(1.00, 1.10), (1.10, 1.20), (1.20, 1.30), (1.30, 1.50),
+                    (1.50, 2.00), (2.00, 2.50), (2.50, 3.00), (3.00, 4.00)]
+
+# Damage tier list
+damage_tier_list = [[250, 500], [500, 2500], [2500, 5000], [5000, 10000],
+                    [10000, 25000], [25000, 50000], [50000, 100000], [100000, 200000]]
 
 # HP Bars
 t5_hp_bar_empty = ["<:HP_Bar_Empty_03:1176059083204337744>", "<:HP_Bar_Empty_04:1176059084840124458>",

@@ -141,7 +141,7 @@ armour_unique_rolls = {
     "unique-1-a": ["Max HP reduced by X%. Gain 1% Final Damage per 100 HP lost.", 1, 5, [["unique_conversion", 1]]]
 }
 
-Amulet_unique_rolls = {
+accessory_unique_rolls = {
     "unique-0-y": ["Hyper Bleed Rate", 2, 15, [["specialty_rate", 1]]],
     "unique-1-y": ["Omega Critical Rate", 2, 15, [["specialty_rate", 2]]],
     "unique-2-y": ["Fractal Rate", 2, 15, [["specialty_rate", 3]]],
@@ -164,7 +164,7 @@ unique_rolls = {
     "s": [shared_unique_rolls, sum(weighting for _, _, weighting, _ in shared_unique_rolls.values())],
     "w": [weapon_unique_rolls, sum(weighting for _, _, weighting, _ in weapon_unique_rolls.values())],
     "a": [armour_unique_rolls, sum(weighting for _, _, weighting, _ in armour_unique_rolls.values())],
-    "y": [Amulet_unique_rolls, sum(weighting for _, _, weighting, _ in Amulet_unique_rolls.values())],
+    "y": [accessory_unique_rolls, sum(weighting for _, _, weighting, _ in accessory_unique_rolls.values())],
     "SKILL": [unique_skill_rolls, sum(weighting for _, _, weighting, _ in unique_skill_rolls.values())]
 }
 
@@ -175,6 +175,11 @@ item_roll_master_dict = {
     "defensive": [defensive_rolls, sum(weighting for _, _, weighting, _ in defensive_rolls.values())],
     "unique": unique_rolls
 }
+
+valid_rolls = [key for dict_obj in [damage_rolls, penetration_rolls, curse_rolls, defensive_rolls,
+                                    weapon_unique_rolls, armour_unique_rolls, accessory_unique_rolls,
+                                    shared_unique_rolls]
+               for key in dict_obj.keys()]
 
 cost_list = [2, 3, 6, 10, 15, 25]
 
@@ -527,9 +532,8 @@ def assign_gem_values(player_obj, e_item):
     if gem_id != 0:
         e_gem = inventory.read_custom_item(gem_id)
         player_obj.player_damage += (e_gem.item_damage_min + e_gem.item_damage_max) / 2
-        if e_gem.item_bonus_stat != "":
-            bonus_stat_details = e_gem.item_bonus_stat.split(";")
-            player_obj.gear_points[int(bonus_stat_details[0])] += int(bonus_stat_details[1])
+        points_value = int(inventory.gem_point_dict[e_gem.item_tier])
+        player_obj.gear_points[int(e_gem.item_bonus_stat)] += points_value
         assign_roll_values(player_obj, e_gem)
 
 

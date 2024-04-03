@@ -148,15 +148,13 @@ def generate_random_item(quantity=1):
     quantity_table = [1, 1, 1, 1, 1, 1, 2, 2, 2, 3]
     probability_rewards = [
         [10, None, "Lotus"], [1, "DarkStar", None], [1, "LightStar", None],
-        [100, None, "Essence"], [3, "Trove8", None], [100, None, "Origin"], [50, None, "Core"], [50, None, "Crystal"],
+        [100, None, "Essence"], [100, "Trove", None], [100, None, "Origin"], [50, None, "Core"], [50, None, "Crystal"],
         [100, None, "Token"], [100, None, "Jewel"], [50, None, "Heart"], [200, None, "Summon"], [50, "Compass", None],
-        [8, "Trove7", None],  [10, "Trove6", None],
-        [200, "Pearl", None], [200, "Hammer", None], [700, "Pearl", None], [700, "Hammer", None],
-        [50, "Trove5", None],  [70, "Trove4", None], [100, "Trove3", None],
-        [150, "Trove2", None], [250, "Trove1", None], [500, None, "Gem"], [150, "Ore5", None],
+        [200, "Pearl", None], [200, "Hammer", None], [1000, "Pearl", None], [1000, "Hammer", None],
+        [500, None, "Gem"], [500, "Ore5", None],
         [500, None, "Fragment"], [500, "Flame1", None], [1000, "Matrix1", None], [1000, None, "Potion"],
         [250, "Ore4", None], [250, "Ore3", None], [250, "Ore2", None], [250, "Ore1", None],
-        [2500, None, "Fae"]
+        [2138, None, "Fae"]
     ]
     max_reward = 10000  # sum(item[0] for item in probability_rewards)
     # Assign a reward id based on the probability, set id, or id prefix.
