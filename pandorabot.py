@@ -195,6 +195,13 @@ def run_discord_bot():
             if await validate_admin_inputs(None, value, value_check="alpha"):
                 return
             target_player.set_player_field(f"player_{method}", int(value))
+        elif method in ["cooldown"]:
+            if await validate_admin_inputs(None, value, value_check="alpha"):
+                return
+            if value not in ["manifest", "arena"]:
+                await ctx.send(f'Cooldown value "{value}" not recognized.')
+                return
+            target_player.clear_cooldown(value)
         await ctx.send('Admin task completed.')
 
     @set_command_category('admin', 4)

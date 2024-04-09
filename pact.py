@@ -64,7 +64,7 @@ def assign_pact_values(player_obj):
             player_obj.recovery *= 2
             player_obj.attack_speed = int(round(player_obj.attack_speed / 2))
         case "Greed":
-            player_obj.specialty_rate = [rate * 2 for rate in player_obj.specialty_rate]
+            player_obj.spec_rate = [rate * 2 for rate in player_obj.spec_rate]
             player_obj.charge_generation = int(round(player_obj.charge_generation / 2))
         case "Gluttony":
             player_obj.charge_generation *= 2

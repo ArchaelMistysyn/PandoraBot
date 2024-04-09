@@ -16,8 +16,7 @@ random_room_list = [
     ["greater_treasure", 999], ["jackpot_room", 999]
 ]
 
-adjuster_dict = {"basic_monster": 1, "elite_monster": 2, "legend_monster": 3,
-                 "penetralia_room": 1, "jackpot_room": 2}
+adjuster_dict = {"basic_monster": 1, "elite_monster": 2, "legend_monster": 3, "penetralia_room": 1, "jackpot_room": 2}
 
 shrine_dict = {1: ["Land", 3, "Sky", 4], 2: ["Fear", 6, "Suffering", 0],
                3: ["Illumination", 7, "Tranquility", 1], 4: ["Retribution", 2, "Imprisonment", 5]}

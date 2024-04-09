@@ -63,18 +63,18 @@ class PlayerProfile:
         # Initialize class specialization stats.
         self.unique_glyph_ability = [False, False, False, False, False, False, False]
         self.temporal_application = 0
-        self.elemental_capacity, self.elemental_application = 3, 0
+        self.elemental_capacity, self.elemental_app = 3, 0
         self.bleed_multiplier, self.bleed_penetration, self.bleed_application = 0.0, 0.0, 0
         self.combo_multiplier, self.combo_penetration, self.combo_application = 0.05, 0.0, 0
         self.ultimate_multiplier, self.ultimate_penetration, self.ultimate_application = 0.0, 0.0, 0
         self.critical_chance, self.critical_multiplier = 0.0, 1.0
-        self.critical_penetration, self.critical_application = 0.0, 0
+        self.critical_penetration, self.critical_app = 0.0, 0
 
         # Initialize misc stats.
         self.charge_generation = 1
         self.banes = [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
         self.skill_base_damage_bonus = [0, 0, 0, 0]
-        self.specialty_rate = [0.0, 0.0, 0.0, 0.0, 0.0]
+        self.spec_rate = [0.0, 0.0, 0.0, 0.0, 0.0]
         self.bloom_multiplier = 10.0
         self.unique_conversion = [0.0, 0.0, 0.0]
         self.attack_speed = 0.0
@@ -167,12 +167,12 @@ class PlayerProfile:
                 embed_msg.add_field(name=title_msg, value=stats, inline=False)
                 title_msg, stats = "Application Details", ""
                 stats += set_section("Elemental Details", ["Cap", "App", "FRC"],
-                                     [self.elemental_capacity, self.elemental_application,
-                                     (self.elemental_application * 5 + show_num(self.specialty_rate[3]))])
+                                     [self.elemental_capacity, self.elemental_app,
+                                     (self.elemental_app * 5 + show_num(self.spec_rate[3]))])
                 stats += set_section("Critical Details", ["CRT", "Dmg", "Pen", "App", "OMG"],
                                      [show_num(self.critical_chance, 1), show_num(self.critical_multiplier),
-                                     show_num(self.critical_penetration), show_num(self.critical_application),
-                                     (self.critical_application * 10 + show_num(self.specialty_rate[2]))])
+                                     show_num(self.critical_penetration), show_num(self.critical_app),
+                                     (self.critical_app * 10 + show_num(self.spec_rate[2]))])
                 stats += set_section("Combo Details", ["Dmg", "Pen", "App"],
                                      [show_num(self.combo_multiplier), show_num(self.combo_penetration),
                                      self.combo_application])
@@ -182,12 +182,12 @@ class PlayerProfile:
                 stats += set_section("Bleed Details", ["Dmg", "Pen", "App", "HPR"],
                                      [show_num(self.bleed_multiplier), show_num(self.bleed_penetration),
                                      self.bleed_application,
-                                     (self.bleed_application * 10 + show_num(self.specialty_rate[1]))])
+                                     (self.bleed_application * 10 + show_num(self.spec_rate[1]))])
                 stats += set_section("Time Details", ["Dmg", "App", "LCK"],
                                      [((self.temporal_application + 1) * 100), self.temporal_application,
-                                     (self.temporal_application * 5 + show_num(self.specialty_rate[4]))])
+                                     (self.temporal_application * 5 + show_num(self.spec_rate[4]))])
                 stats += set_section("Bloom Details", ["BLM", "Dmg"],
-                                     [show_num(self.specialty_rate[0]), show_num(self.bloom_multiplier)])
+                                     [show_num(self.spec_rate[0]), show_num(self.bloom_multiplier)])
                 embed_msg.add_field(name=title_msg, value=stats, inline=False)
                 return embed_msg
         if method == 3:
@@ -366,7 +366,7 @@ class PlayerProfile:
 
         # Class Multipliers
         class_multipliers = {
-            "Ranger": ["critical_application", 1], "Weaver": ["elemental_application", 2],
+            "Ranger": ["critical_app", 1], "Weaver": ["elemental_app", 2],
             "Assassin": ["bleed_application", 1], "Mage": ["temporal_application", 1],
             "Summoner": ["combo_application", 1], "Knight": ["ultimate_application", 1]
         }
@@ -405,15 +405,15 @@ class PlayerProfile:
         total_points = skillpaths.assign_path_multipliers(self)
 
         # Application Calculations
-        base_critical_chance += self.critical_application
-        self.critical_multiplier += self.critical_application
+        base_critical_chance += self.critical_app
+        self.critical_multiplier += self.critical_app
         self.skill_base_damage_bonus[3] += self.ultimate_application * 0.25
         self.charge_generation += self.ultimate_application
-        self.all_elemental_multiplier += self.elemental_application * 0.25
+        self.all_elemental_multiplier += self.elemental_app * 0.25
 
         # Elemental Capacity
-        if self.elemental_application > 0:
-            self.elemental_capacity += self.elemental_application
+        if self.elemental_app > 0:
+            self.elemental_capacity += self.elemental_app
 
         # Pact Bonus Multipliers
         pact.assign_pact_values(self)
@@ -488,15 +488,23 @@ class PlayerProfile:
         adjusted_damage *= defences_multiplier
         # Elemental Defences
         temp_element_list = combat.limit_elements(self, e_weapon)
+        highest = 0
         for idx, x in enumerate(temp_element_list):
             if x == 1:
                 self.elemental_damage[idx] = adjusted_damage * (1 + self.elemental_multiplier[idx])
                 resist_multi = combat.boss_defences("Element", self, boss_object, idx)
                 penetration_multi = 1 + self.elemental_penetration[idx]
                 self.elemental_damage[idx] *= resist_multi * penetration_multi * self.elemental_conversion[idx]
+                if self.elemental_damage[idx] > self.elemental_damage[highest]:
+                    highest = idx
         subtotal_damage = sum(self.elemental_damage) * (1 + boss_object.aura)
         subtotal_damage *= combat.boss_true_mitigation(boss_object.boss_level)
         adjusted_damage = int(subtotal_damage)
+        # Apply status
+        stun_status = globalitems.element_status_list[highest]
+        if stun_status is not None and random.randint(1, 100) <= 1:
+            boss_object.stun_status = stun_status
+            boss_object.stun_cycles += 1
         return adjusted_damage
 
     def get_bleed_damage(self, boss_object):
@@ -621,10 +629,8 @@ class PlayerProfile:
         return difference
 
     def clear_cooldown(self, command_name):
-        pandora_db = mydb.start_engine()
         raw_query = "DELETE FROM CommandCooldowns WHERE player_id = :player_check AND command_name = :cmd_check"
-        pandora_db.run_query(raw_query, params={'player_check': self.player_id, 'cmd_check': command_name})
-        pandora_db.close_engine()
+        mydb.run_single_query(raw_query, params={'player_check': self.player_id, 'cmd_check': command_name})
 
 
 def check_username(new_name: str):

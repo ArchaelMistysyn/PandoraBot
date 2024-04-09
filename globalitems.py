@@ -65,13 +65,15 @@ path_names = ["Storms", "Frostfire", "Horizon", "Eclipse", "Stars", "Confluence"
 # Element Names
 element_names = ["Fire", "Water", "Lightning", "Earth", "Wind", "Ice", "Shadow", "Light", "Celestial"]
 element_special_names = ["Volcanic", "Aquatic", "Voltaic", "Seismic", "Sonic", "Arctic", "Lunar", "Solar", "Cosmic"]
+element_status_list = [None, None, "paralyzed", "petrified", None, "frozen", None, "blinded", "disoriented"]
+
 # Boss Types
 boss_list = ["Fortress", "Dragon", "Demon", "Paragon", "Arbiter", "Incarnate"]
 
 # DATA STRUCTURES
 # Unique Ability Data
-rare_ability_dict = {"Overflow": ["elemental_application", 2], "Mastery": ["class_multiplier", 0.1],
-                     "Immortality": ["immortal", True], "Omega": ["critical_application", 1],
+rare_ability_dict = {"Overflow": ["elemental_app", 2], "Mastery": ["class_multiplier", 0.1],
+                     "Immortality": ["immortal", True], "Omega": ["critical_app", 1],
                      "Combo": ["combo_application", 1], "Reaper": ["bleed_application", 1],
                      "Overdrive": ["ultimate_application", 1], "Unravel": ["temporal_application", 1],
                      "Vitality": ["hp_multiplier", 5]}

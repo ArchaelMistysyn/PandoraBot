@@ -571,21 +571,23 @@ def display_binventory(player_id, method):
     return player_inventory
 
 
-def generate_random_tier(min_tier=1, max_tier=4, luck_bonus=0):
-    # Handle tier 1-4 rolls
-    threshold_dict = {4: 10, 3: 110, 2: 510}
-    if max_tier == 8:
-        threshold_dict = {8: 250}
-        if min_tier == 6:
-            threshold_dict = {8: 10, 7: 90}
-        if min_tier == 5:
-            threshold_dict = {8: 5, 7: 15, 6: 100}
-        if min_tier == 1:
-            threshold_dict = {8: 1, 7: 4, 6: 15, 5: 30, 4: 75, 3: 125, 2: 250}
-    for tier, threshold_breakpoint in threshold_dict.items():
-        if random.randint(1, 1000) - luck_bonus <= threshold_breakpoint:
+def generate_random_tier(min_tier=1, max_tier=8, luck_bonus=0):
+    # Determine probabilities based on tier range.
+    tier_range = max_tier - min_tier + 1
+    base_probabilities = [2 ** (tier_range - 1 - tier) for tier in range(tier_range)]
+    probabilities_actual = [prob / sum(base_probabilities) for prob in base_probabilities]
+    # Construct cumulative breakpoints
+    cumulative, cumulative_thresholds = 0, {}
+    for idx, tier in enumerate(range(min_tier, max_tier + 1)):
+        cumulative += probabilities_actual[idx]
+        cumulative_thresholds[tier] = cumulative
+    # Determine and return a tier.
+    adjusted_random = random.random() - (luck_bonus * 0.001)
+    for tier, threshold in cumulative_thresholds.items():
+        if adjusted_random <= threshold:
             return tier
     return min_tier
+
 
 
 def check_stock(player_obj, item_id):
@@ -628,23 +630,18 @@ def update_stock(player_obj, item_id, change, batch=None):
     pandora_db.close_engine()
 
 
-def try_refine(player_owner, item_type, selected_tier):
+def try_refine(player_owner, item_type, target_tier):
     # Handle flat-tier refinement (Tier 5+ non-gems)
-    if "D" not in item_type and selected_tier >= 5:
+    if "D" not in item_type and target_tier >= 5:
         is_success = False
         if item_type == "W" or random.randint(1, 100) <= 80:
             is_success = True
-        new_item = inventory.CustomItem(player_owner, item_type, selected_tier)
+        new_item = inventory.CustomItem(player_owner, item_type, target_tier)
         return new_item, is_success
-    # Refine max tier 4 item
-    if selected_tier == 4:
-        new_tier = generate_random_tier()
-        is_success = True if new_tier != 1 else False
-        new_item = inventory.CustomItem(player_owner, item_type, new_tier)
-        return new_item, is_success
-    # Refine max tier 8 item
-    new_tier = generate_random_tier(min_tier=selected_tier, max_tier=8)
     is_success = True if random.randint(1, 100) <= 75 else False
+    # All other refinement.
+    new_tier = generate_random_tier() if target_tier == 4 else generate_random_tier(min_tier=target_tier, max_tier=8)
+    new_tier = 2 if new_tier == 1 else new_tier
     new_item = inventory.CustomItem(player_owner, item_type, new_tier)
     return new_item, is_success
 

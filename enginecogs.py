@@ -10,6 +10,7 @@ import battleengine
 
 # Data Imports
 import globalitems
+import sharedmethods
 import leaderboards
 
 # Core imports
@@ -124,48 +125,42 @@ class PvPCog(commands.Cog):
             await self.run_pvp_cycle()
 
     async def run_pvp_cycle(self):
-        hit_list, is_alive_player1, is_alive_player2 = await self.calculate_cycle()
-        if self.combat_tracker1.player_cHP <= 0:
-            self.combat_tracker1.player_cHP = 0
-        if self.combat_tracker2.player_cHP <= 0:
-            self.combat_tracker2.player_cHP = 0
-        pvp_embed = await self.update_combat_embed(hit_list)
-        result_message = ""
-        exp_msg = ""
-        ended = False
-        quantity = 2
-        loot_item = inventory.BasicItem("i1r")
+        stun_list, hit_list, is_alive_player1, is_alive_player2 = await self.calculate_pvp_cycle()
+        pvp_embed = await self.update_combat_embed(stun_list, hit_list)
+        winner, quantity = None, 2
+        exp_amount = random.randint(self.player1.player_echelon * 100, self.player1.player_echelon * 500)
+        loot_item = inventory.BasicItem("Crate")
+        # Determine winners.
         if (not is_alive_player1 and not is_alive_player2) or self.combat_tracker1.total_cycles >= 50:
-            result_message = "It's a draw!"
-            exp_amount = random.randint(self.player1.player_echelon * 500, self.player1.player_echelon * 1000)
-            ended = True
-            quantity = 1
+            winner, result_message, quantity = "Draw", "It's a draw!", 1
+            exp_amount *= 5
             inventory.update_stock(self.player1, "Crate", quantity)
             inventory.update_stock(self.player2, "Crate", quantity)
             loot_msg = f"Both Players {loot_item.item_emoji} {quantity}x crate(s) acquired!"
         elif not is_alive_player1:
-            result_message = f"{self.player2.player_username} wins!"
-            exp_amount = random.randint(self.player1.player_echelon * 100, self.player1.player_echelon * 500)
-            ended = True
-            inventory.update_stock(self.player2, "Crate", quantity)
-            loot_msg = f"{self.player2.player_username} {loot_item.item_emoji} {quantity}x crates acquired!"
+            winner = self.player2
         elif not is_alive_player2:
-            exp_amount = random.randint(self.player1.player_echelon * 1000, self.player1.player_echelon * 5000)
-            result_message = f"{self.player1.player_username} wins!"
-            ended = True
-            inventory.update_stock(self.player1, "Crate", quantity)
-            loot_msg = f"{self.player1.player_username} {loot_item.item_emoji} {quantity}x crates acquired!"
-        if ended:
-            exp_msg = self.player1.adjust_exp(exp_amount)
-            exp_description = f"{globalitems.exp_icon} {exp_msg} EXP acquired!"
-            pvp_embed.add_field(name=result_message, value=exp_description, inline=False)
-            pvp_embed.add_field(name="", value=loot_msg, inline=False)
+            winner = self.player1
+            exp_amount *= 10
+        # Continue the combat.
+        if winner is None:
             await self.sent_message.edit(embed=pvp_embed)
-            self.cog_unload()
-        else:
-            await self.sent_message.edit(embed=pvp_embed)
+            return
+        # End the combat.
+        if not isinstance(winner, str):
+            result_message = f"{winner.player_username} wins!"
+            inventory.update_stock(winner, "Crate", quantity)
+            loot_msg = f"{winner.player_username} {loot_item.item_emoji} {quantity}x crates acquired!"
+        exp_msg, lvl_adjust = self.player1.adjust_exp(exp_amount)
+        exp_description = f"{exp_msg} EXP acquired!"
+        pvp_embed.add_field(name=result_message, value=f"{exp_description}\n{loot_msg}", inline=False)
+        await self.sent_message.edit(embed=pvp_embed)
+        if lvl_adjust == 0:
+            return
+        await sharedmethods.send_notification(ctx_object, player_obj, "Level", lvl_change)
+        self.cog_unload()
 
-    async def update_combat_embed(self, hit_list):
+    async def update_combat_embed(self, stun_list, hit_list):
         pvp_embed = discord.Embed(title="Arena PvP", description="", color=self.colour)
         # pvp_embed.set_thumbnail(url="")
         player_1_hp_msg = f"{sharedmethods.display_hp(self.combat_tracker1.player_cHP, self.player1.player_mHP)}"
@@ -174,117 +169,92 @@ class PvPCog(commands.Cog):
         pvp_embed.add_field(name=self.player2.player_username, value=player_2_hp_msg, inline=True)
         battle_msg = f"Cycle Count: {self.combat_tracker1.total_cycles}"
         pvp_embed.add_field(name="", value=battle_msg, inline=False)
-        hit_field = ""
+        hit_field, stun_field = "", ""
+        for stun_msg in stun_list:
+            stun_field += f"{stun_msg}\n"
         for hit in hit_list:
             hit_field += f"{hit[1]}\n"
+        if stun_field != "":
+            pvp_embed.add_field(name="Status", value=stun_field, inline=False)
         pvp_embed.add_field(name="Hits", value=hit_field, inline=False)
         return pvp_embed
 
-    async def calculate_cycle(self):
+    async def calculate_pvp_cycle(self):
         self.combat_tracker1.total_cycles += 1
-        hit_list = []
+        hit_list, stun_list = [], []
         combo_count = [0, 0]
         num_hits1, excess_hits1 = divmod(self.combat_tracker1.remaining_hits + self.player1.attack_speed, 1)
         num_hits2, excess_hits2 = divmod(self.combat_tracker2.remaining_hits + self.player2.attack_speed, 1)
-        self.combat_tracker1.remaining_hits = excess_hits1
-        self.combat_tracker2.remaining_hits = excess_hits2
-        player_interval = [60 / num_hits1,
-                           60 / num_hits2]
-        attack_counter = player_interval
-        while attack_counter[0] <= 60 or attack_counter[1] <= 60:
-            await self.handle_pvp_attack(combo_count, attack_counter, player_interval, hit_list)
-        combatants = [self.player1, self.player2]
-        trackers = [self.combat_tracker1, self.combat_tracker2]
-        if self.player1.bleed_application >= 1:
-            roles = [0, 1]
-            await self.handle_pvp_bleed(roles, combatants, trackers, hit_list, False)
-        if self.player1.bleed_application >= 1:
-            roles = [1, 0]
-            await self.handle_pvp_bleed(roles, combatants, trackers, hit_list, False)
-        is_alive_player1 = self.combat_tracker1.player_cHP > 0
-        is_alive_player2 = self.combat_tracker2.player_cHP > 0
-        return hit_list, is_alive_player1, is_alive_player2
+        self.combat_tracker1.remaining_hits, self.combat_tracker2.remaining_hits = excess_hits1, excess_hits2
+        # Apply status effects
+        stun_msg1 = combat.handle_status(self.combat_tracker1, self.player1)
+        stun_msg2 = combat.handle_status(self.combat_tracker2, self.player2)
+        if stun_msg1 is not None:
+            stun_list.append(stun_msg1)
+            num_hits1 = 0
+        if stun_msg2 is not None:
+            stun_list.append(stun_msg2)
+            num_hits2 = 0
 
-    async def handle_pvp_attack(self, combo_count, attack_counter, player_interval, hit_list):
-        combatant = [self.player1, self.player2]
-        tracker = [self.combat_tracker1, self.combat_tracker2]
-        attacker, defender = 1, 0
-        if attack_counter[0] <= attack_counter[1]:
-            attacker, defender = 0, 1
-        role = [attacker, defender]
-        hit_damage, critical_type = combat.pvp_attack(combatant[attacker], combatant[defender])
-        combo_count[attacker] += 1 + combatant[attacker].combo_application
-        hit_damage, skill_name = combat.skill_adjuster(combatant[attacker], tracker[attacker], hit_damage,
+        player_interval = [60 / num_hits1, 60 / num_hits2]
+        attack_counter = player_interval
+        combatants, trackers = [self.player1, self.player2], [self.combat_tracker1, self.combat_tracker2]
+        while attack_counter[0] <= 60 or attack_counter[1] <= 60:
+            await self.handle_pvp_attack(combatants, trackers, combo_count, attack_counter, player_interval, hit_list)
+        if self.player1.bleed_application >= 1:
+            await self.handle_pvp_bleed([0, 1], combatants, trackers, hit_list, False)
+        if self.player1.bleed_application >= 1:
+            await self.handle_pvp_bleed([1, 0], combatants, trackers, hit_list, False)
+        return stun_list, hit_list, self.combat_tracker1.player_cHP > 0, self.combat_tracker2.player_cHP > 0
+
+    async def handle_pvp_attack(self, combatants, trackers, combo_count, attack_counter, player_interval, hit_list):
+        attacker, defender = (0, 1) if attack_counter[0] <= attack_counter[1] else (1, 0)
+        role_order = [attacker, defender]
+        stun_status, hit_damage, critical_type = combat.pvp_attack(combatants[attacker], combatants[defender])
+        if stun_status is not None:
+            trackers[defender].stun_status = stun_status
+            trackers[defender].stun_cycles += 1
+        combo_count[attacker] += 1 + combatants[attacker].combo_application
+        hit_damage, skill_name = combat.skill_adjuster(combatants[attacker], trackers[attacker], hit_damage,
                                                        combo_count[attacker], False)
-        scaled_damage = self.scale_damage(role, combatant, hit_damage)
-        scaled_damage, status_msg = combat.check_lock(combatant[attacker], tracker[attacker], scaled_damage)
-        scaled_damage, second_msg = combat.check_bloom(combatant[attacker], scaled_damage)
-        hit_msg = f"{combatant[attacker].player_username} - {combo_count[attacker]}x Combo: {skill_name} {sharedmethods.number_conversion(scaled_damage)}"
-        if status_msg != "":
-            hit_msg += f" *{status_msg}*"
-        if second_msg != "":
-            hit_msg += f" *{second_msg}*"
-        if critical_type != "":
-            hit_msg += f" *{critical_type}*"
+        scaled_damage = combat.pvp_scale_damage(role_order, combatants, hit_damage)
+        scaled_damage, status_msg = combat.check_lock(combatants[attacker], trackers[attacker], scaled_damage)
+        scaled_damage, second_msg = combat.check_bloom(combatants[attacker], scaled_damage)
+        hit_msg = f"{combatants[attacker].player_username} - {combo_count[attacker]}x Combo: {skill_name} {sharedmethods.number_conversion(scaled_damage)}"
+        hit_msg += f"{status_msg}{second_msg}{critical_type}"
         hit_list.append([scaled_damage, hit_msg])
         attack_counter[attacker] += player_interval[attacker]
+        trackers[defender].player_cHP -= scaled_damage
+        combat.update_bleed(trackers[attacker], combatants[attacker])
+        await self.handle_pvp_ultimate(role_order, combatants, trackers, combo_count, hit_list)
+
+    async def handle_pvp_ultimate(self, role_order, combatant, tracker, combo_count, hit_list):
+        attacker, defender = role_order[0], role_order[1]
+        if tracker[attacker].charges < 20:
+            return
+        stun_status, hit_damage, critical_type = combat.pvp_attack(combatant[attacker], combatant[defender])
+        if stun_status is not None:
+            tracker[defender].stun_status = stun_status
+            tracker[defender].stun_cycles += 1
+        combo_count[attacker] += 1 + combatant[attacker].combo_application
+        hit_damage, skill_name = combat.skill_adjuster(combatant[attacker], tracker[attacker], hit_damage,
+                                                       combo_count[attacker], True)
+        scaled_damage = combat.pvp_scale_damage(role_order, combatant, hit_damage)
+        scaled_damage, status_msg = combat.check_lock(combatant[attacker], tracker[attacker], scaled_damage)
+        scaled_damage, second_msg = combat.check_bloom(combatant[attacker], scaled_damage)
+        hit_msg = f"{combatant[attacker].player_username} - Ultimate: {skill_name} {sharedmethods.number_conversion(scaled_damage)}"
+        hit_msg += f"{status_msg}{second_msg}{critical_type}"
+        hit_list.append([scaled_damage, hit_msg])
         tracker[defender].player_cHP -= scaled_damage
         if combatant[attacker].bleed_application >= 1:
-            tracker[attacker].bleed_tracker += 0.05 * combatant[attacker].bleed_application
-            if tracker[attacker].bleed_tracker >= 1:
-                tracker[attacker].bleed_tracker = 1
-        await self.handle_pvp_ultimate(role, combatant, tracker, combo_count, hit_list)
+            await self.handle_pvp_bleed(role_order, combatant, tracker, hit_list, True)
 
-    async def handle_pvp_ultimate(self, role, combatant, tracker, combo_count, hit_list):
-        attacker, defender = self.set_combat_roles(role)
-        if tracker[attacker].charges >= 20:
-            hit_damage, critical_type = combat.pvp_attack(combatant[attacker], combatant[defender])
-            combo_count[attacker] += 1 + combatant[attacker].combo_application
-            hit_damage, skill_name = combat.skill_adjuster(combatant[attacker], tracker[attacker], hit_damage,
-                                                           combo_count[attacker], True)
-            scaled_damage = self.scale_damage(role, combatant, hit_damage)
-            scaled_damage, status_msg = combat.check_lock(combatant[attacker], tracker[attacker], scaled_damage)
-            scaled_damage, second_msg = combat.check_bloom(combatant[attacker], scaled_damage)
-            hit_msg = f"{combatant[attacker].player_username} - Ultimate: {skill_name} {sharedmethods.number_conversion(scaled_damage)}"
-            if status_msg != "":
-                hit_msg += f" *{status_msg}*"
-            if second_msg != "":
-                hit_msg += f" *{second_msg}*"
-            if critical_type != "":
-                hit_msg += f" *{critical_type}*"
-            hit_list.append([scaled_damage, hit_msg])
-            tracker[defender].player_cHP -= scaled_damage
-            if combatant[attacker].bleed_application >= 1:
-                await self.handle_pvp_bleed(role, combatant, tracker, hit_list, True)
+    async def handle_pvp_bleed(self, role_order, combatant, tracker, hit_list, is_ultimate):
+        attacker, defender = role_order[0], role_order[1]
+        e_weapon = inventory.read_custom_item(combatant[attacker].player_equipped[0])
+        bleed_damage = combatant[attacker].get_player_initial_damage()
+        _, bleed_damage = combat.pvp_defences(combatant[attacker], combatant[defender], bleed_damage, e_weapon)
+        bleed_data = combat.trigger_bleed(tracker[attacker], combatant[attacker],
+                                          pvp_data=[role_order, combatant, bleed_damage])
+        hit_list.append([bleed_data[0], f"{combatant[attacker].player_username} - {bleed_data[1]}"])
 
-    async def handle_pvp_bleed(self, role, combatant, tracker, hit_list, is_ultimate):
-        attacker, defender = self.set_combat_roles(role)
-        bleed_damage, bleed_type = combat.pvp_bleed_damage(combatant[attacker], combatant[defender])
-        bleed_damage *= (tracker[attacker].bleed_tracker + 1)
-        if is_ultimate:
-            bleed_msg = "Sanguine Rupture"
-            bleed_damage *= 1.5
-        else:
-            bleed_msg = "Blood Rupture"
-            bleed_damage *= 0.75
-        scaled_damage = self.scale_damage(role, combatant, bleed_damage)
-        hit_msg = f"{combatant[attacker].player_username} - {bleed_msg}: {sharedmethods.number_conversion(scaled_damage)} *{bleed_type}*"
-        for x in range(combatant[attacker].bleed_application):
-            hit_list.append([scaled_damage, hit_msg])
-            tracker[defender].player_cHP -= scaled_damage
-
-    def set_combat_roles(self, role):
-        return role[0], role[1]
-
-    def scale_damage(self, role, combatants, hit_damage):
-        attacker, defender = self.set_combat_roles(role)
-        reduction = (combatants[defender].player_mHP // 100) * 0.002
-        damage = (len(str(hit_damage)) - 1) * 0.02
-        string_damage = str(hit_damage)
-        first_number = int(string_damage[0])
-        damage += first_number * 0.001
-        damage -= reduction
-        if damage <= 0:
-            damage = 0.01
-        scaled_damage = int(combatants[defender].player_mHP * damage)
-        return scaled_damage

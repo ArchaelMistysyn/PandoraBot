@@ -120,7 +120,7 @@ shared_unique_rolls = {
 }
 
 weapon_unique_rolls = {
-    "unique-0-w": ["X% Chance to trigger Bloom on hit", 5, 1, [["specialty_rate", 0]]],
+    "unique-0-w": ["X% Chance to trigger Bloom on hit", 5, 1, [["spec_rate", 0]]],
     "unique-1-w": ["X% Less Non-Fire Damage, X% More Fire Damage", 15, 10, [["elemental_conversion", 0]]],
     "unique-2-w": ["X% Less Non-Water Damage, X% More Water Damage", 15, 10, [["elemental_conversion", 1]]],
     "unique-3-w": ["X% Less Non-Lightning Damage, X% More Lightning Damage", 15, 10, [["elemental_conversion", 2]]],
@@ -142,10 +142,10 @@ armour_unique_rolls = {
 }
 
 accessory_unique_rolls = {
-    "unique-0-y": ["Hyper Bleed Rate", 2, 15, [["specialty_rate", 1]]],
-    "unique-1-y": ["Omega Critical Rate", 2, 15, [["specialty_rate", 2]]],
-    "unique-2-y": ["Fractal Rate", 2, 15, [["specialty_rate", 3]]],
-    "unique-3-y": ["Time Lock Rate", 2, 15, [["specialty_rate", 4]]],
+    "unique-0-y": ["Hyper Bleed Rate", 2, 15, [["spec_rate", 1]]],
+    "unique-1-y": ["Omega Critical Rate", 2, 15, [["spec_rate", 2]]],
+    "unique-2-y": ["Fractal Rate", 2, 15, [["spec_rate", 3]]],
+    "unique-3-y": ["Time Lock Rate", 2, 15, [["spec_rate", 4]]],
     "unique-4-y": ["Fortress Bane", 25, 10, [["banes", 0]]],
     "unique-5-y": ["Dragon Bane", 25, 10, [["banes", 1]]],
     "unique-6-y": ["Demon Bane", 25, 10, [["banes", 2]]],

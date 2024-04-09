@@ -142,11 +142,11 @@ def assign_path_multipliers(player_obj):
     player_obj.elemental_resistance[1] += 0.01 * storm_bonus
     player_obj.elemental_resistance[2] += 0.01 * storm_bonus
     player_obj.critical_multiplier += 0.03 * storm_bonus
-    player_obj.critical_application += storm_bonus // 20
+    player_obj.critical_app += storm_bonus // 20
     if storm_bonus >= 80:
-        player_obj.critical_application += 5
+        player_obj.critical_app += 5
     if storm_bonus >= 100:
-        player_obj.critical_application += 10
+        player_obj.critical_app += 10
 
     # Horizon Path
     horizon_bonus = total_points[2]
@@ -204,7 +204,7 @@ def assign_path_multipliers(player_obj):
     confluence_bonus = total_points[5]
     player_obj.aura += 0.01 * confluence_bonus
     player_obj.all_elemental_curse += 0.01 * confluence_bonus
-    player_obj.elemental_application += 2 * confluence_bonus // 20
+    player_obj.elemental_app += 2 * confluence_bonus // 20
     if confluence_bonus >= 80:
         player_obj.all_elemental_multiplier *= 2
     if confluence_bonus >= 100:
