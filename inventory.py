@@ -74,16 +74,16 @@ class BInventoryView(discord.ui.View):
             discord.SelectOption(
                 emoji="<a:eenergy:1145534127349706772>", label="Misc", description="Misc Items"),
             discord.SelectOption(
+                emoji="<a:eenergy:1145534127349706772>", label="Gemstones", description="Gemstone Items"),
+            discord.SelectOption(
                 emoji="<a:eenergy:1145534127349706772>", label="Ultra Rare", description="Unprocessed Items")
         ]
     )
     async def inventory_callback(self, interaction: discord.Interaction, inventory_select: discord.ui.Select):
         if interaction.user.id == self.user.discord_id:
             inventory_title = f'{self.user.player_username}\'s {inventory_select.values[0]} Inventory:\n'
-            player_inventory = display_binventory(self.user.player_id, inventory_select.values[0])
-
-            new_embed = discord.Embed(colour=discord.Colour.dark_orange(),
-                                      title=inventory_title, description=player_inventory)
+            inv = display_binventory(self.user.player_id, inventory_select.values[0])
+            new_embed = discord.Embed(colour=discord.Colour.dark_orange(), title=inventory_title, description=inv)
             await interaction.response.edit_message(embed=new_embed)
 
     @discord.ui.button(label="Gear", style=discord.ButtonStyle.blurple, emoji="✅")
@@ -547,6 +547,7 @@ def display_binventory(player_id, method):
         "Unprocessed": "^(Unrefined|Gem|Jewel|Void)",
         "Essences": "^(Essence)",
         "Summoning": "^(Compass|Summon)",
+        "Gemstones": "^(Gemstone)",
         "Misc": "^(Potion|Trove|Crate|Stone|Token)",
         "Ultra Rare": "^(Lotus|Star)"
     }

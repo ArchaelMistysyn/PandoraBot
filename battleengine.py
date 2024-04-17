@@ -544,12 +544,11 @@ def run_discord_bot():
         pvp_embed.add_field(name="Opponent", value=opponent_player.player_username, inline=True)
         # combat.run_initial_pvp_message(player_obj, opponent_player)
         await ctx.send(pvp_msg)
-        channel_object = ctx.channel
-        sent_message = await channel_object.send(embed=pvp_embed)
+        channel_obj = ctx.channel
+        message = await channel_obj.send(embed=pvp_embed)
 
         async def run_pvp_cog():
-            return enginecogs.PvPCog(engine_bot, player_obj, opponent_player, ctx.channel.id,
-                                     sent_message, channel_object)
+            return enginecogs.PvPCog(engine_bot, ctx, player_obj, opponent_player, ctx.channel.id, message, channel_obj)
 
         pvp_cog = await run_pvp_cog()
         task = asyncio.create_task(pvp_cog.run())

@@ -349,7 +349,8 @@ class GearView(discord.ui.View):
             insignia_item = self.target_user.insignia
             if insignia_item == "":
                 return no_item_msg
-            return insignia.display_insignia(self.target_user, insignia_item)
+            insignia_obj = insignia.Insignia(self.target_user, insignia_code=insignia_item)
+            return insignia_obj.insignia_output
         # Handle pact position.
         if self.current_position == 6:
             if self.target_user.pact == "":

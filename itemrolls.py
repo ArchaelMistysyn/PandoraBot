@@ -107,7 +107,9 @@ defensive_rolls = {
     "defensive-14": ["Hybrid Resistance (Frostfire)", 8, 3, [["elemental_resistance", 5], ["elemental_resistance", 0]]],
     "defensive-15": ["Hybrid Resistance (Storm)", 8, 3, [["elemental_resistance", 1], ["elemental_resistance", 2]]],
     "defensive-16": ["Omni Resistance", 5, 2, [["all_elemental_resistance", -1]]],
-    "defensive-17": ["Recovery", 1, 2, [["recovery", -1]]]
+    "defensive-17": ["Recovery", 1, 2, [["recovery", -1]]],
+    "defensive-18": ["Block Rate", 2, 3, [["block", -1]]],
+    "defensive-19": ["Dodge Rate", 1, 3, [["dodge", -1]]]
 }
 
 shared_unique_rolls = {

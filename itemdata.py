@@ -335,6 +335,40 @@ fragment_data = [
 ]
 itemdata_dict = build_item_dict(itemdata_dict, fragment_data, 1)
 
+# Gemstone Item Data
+gem_description = 'A precious stone used for ring crafting.'
+gemstone_data = [
+    "Gemstone",
+    [None, 'Bismuth Ore', 100, 5, '<a:elootitem:1144477550379274322>',
+     'A precious ore used for ring crafting.', 0, ""],
+    [None, 'Drowned Sapphire', 100, 6, '<a:elootitem:1144477550379274322>',
+     gem_description, 0, ""],
+    [None, 'Blazing Ruby', 100, 6, '<a:elootitem:1144477550379274322>',
+     gem_description, 0, ""],
+    [None, 'Silent Topaz', 100, 6, '<a:elootitem:1144477550379274322>',
+     gem_description, 0, ""],
+    [None, 'Ancient Agate', 100, 6, '<a:elootitem:1144477550379274322>',
+     gem_description, 0, ""],
+    [None, 'Whispering Emerald', 100, 6, '<a:elootitem:1144477550379274322>',
+     gem_description, 0, ""],
+    [None, 'Arctic Zircon', 100, 6, '<a:elootitem:1144477550379274322>',
+     gem_description, 0, ""],
+    [None, 'Haunted Obsidian', 100, 6, '<a:elootitem:1144477550379274322>',
+     gem_description, 0, ""],
+    [None, 'Prismatic Opal', 100, 6, '<a:elootitem:1144477550379274322>',
+     gem_description, 0, ""],
+    [None, 'Spatial Lapis', 100, 6, '<a:elootitem:1144477550379274322>',
+     gem_description, 0, ""],
+    [None, 'Soul Diamond', 100, 6, '<a:elootitem:1144477550379274322>',
+     gem_description, 0, ""],
+    [None, 'Aurora Tear', 100, 7, '<a:elootitem:1144477550379274322>',
+     gem_description, 0, ""],
+    [None, 'Stone of the True Void', 100, 8, '<a:elootitem:1144477550379274322>',
+     gem_description, 0, ""]
+
+]
+itemdata_dict = build_item_dict(itemdata_dict, gemstone_data, 0)
+
 # Heart Item Data
 heart_data = [
     "Heart",

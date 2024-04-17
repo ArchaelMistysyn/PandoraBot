@@ -15,50 +15,54 @@ import inventory
 import itemrolls
 import loot
 
-
 insignia_name_list = [None, "Monolith", "Dyadic", "Trinity", "Tetradic", "Pentagram",
                       None, None, None, "Refraction"]
 insignia_description_list = [None, "One element: ", "Two elements: ", "Three elements: ",
                              "Four elements: ", "Five elements: ", None, None, None, "All elements: "]
-insignia_multiplier_list = [[0, 0], [150, 25], [75, 25], [50, 25], [75, 10], [50, 10], [0, 0], [0, 0], [0, 0], [25, 10]]
+insignia_multipliers = [[0, 0], [150, 25], [75, 25], [50, 25], [75, 10], [50, 10], [0, 0], [0, 0], [0, 0], [25, 10]]
 insignia_hp_list = [0, 500, 1000, 1500, 2000, 2500, 5000, 10000, 20000]
 mutation_upgrade_data = {0: [5, 33], 1: [10, 11], 2: [50, 99]}
 insignia_prefix = ["Dormant", "Awakened", "Evolved", "Infused", "Symbiotic", "Resonating",
                    "Mutation: Void", "Mutation: Wish", "Mutation: Divine"]
 mutation_cost_list = ["OriginV", "OriginM", "Lotus7"]
+NPC_name = "Isolde, Soulweaver of the True Laws"
 
 
-def display_insignia(player_obj, insignia_code):
-    # Extract insignia data
-    temp_code = insignia_code.split(";")
-    temp_elements, mutation_tier = temp_code[:9], int(temp_code[-1])
-    insignia_stars = (player_obj.player_echelon + 1) // 2 + mutation_tier
-    mutation_adjust = max(1, mutation_tier)
-    element_list = list(map(int, temp_elements))
-    num_elements = element_list.count(1)
+class Insignia:
+    def __init__(self, player_obj, insignia_code=None):
+        # Initializations.
+        self.player_obj = player_obj
+        self.insignia_code = player_obj.insignia if insignia_code is None else insignia_code
+        temp_code = self.insignia_code.split(";")
+        temp_elements, self.mutation_tier = temp_code[:9], int(temp_code[-1])
+        mutation_adjust = max(1, self.mutation_tier)
+        self.element_list = list(map(int, temp_elements))
+        self.num_elements = self.element_list.count(1)
+        self.stars = (self.player_obj.player_echelon + 1) // 2 + self.mutation_tier
+        self.tier_colour, pearl = sharedmethods.get_gear_tier_colours(player_obj.player_echelon // 2)
 
-    # Build the stats message.
-    tier_colour, pearl = sharedmethods.get_gear_tier_colours(player_obj.player_echelon // 2)
-    hp_bonus = insignia_hp_list[insignia_stars]
-    item_rolls = f"{pearl} HP Bonus +{hp_bonus:,}"
-    item_rolls += f"\n{pearl} Luck +{insignia_stars}"
-    item_rolls += f"\n{pearl} Final Damage {player_obj.player_level * mutation_adjust:,}%"
-    item_rolls += f"\n{pearl} Attack Speed {insignia_stars * 10:,}%"
+        # Stats
+        hp_bonus, luck_bonus = insignia_hp_list[self.stars], self.stars
+        final_damage, attack_speed = self.player_obj.player_level * mutation_adjust, self.stars * 10
+        self.bonus_stats = {'hp_bonus': hp_bonus, 'luck_bonus': luck_bonus,
+                            'final_damage': final_damage * 0.01, 'attack_speed': attack_speed * 0.01}
 
-    # Build the embed message.
-    display_stars = sharedmethods.display_stars(insignia_stars)
-    insignia_name = f"{insignia_name_list[num_elements]} Insignia [{insignia_prefix[insignia_stars - 1]}]"
-    bonus = insignia_multiplier_list[num_elements][0] + insignia_multiplier_list[num_elements][1] * insignia_stars
-    if num_elements == 9:
-        icon_list = globalitems.omni_icon
-        item_rolls += f"\n{pearl} Omni Penetration {int(bonus) * mutation_adjust:,}%"
-    else:
-        selected_elements_list = [ind for ind, x in enumerate(element_list) if x == 1]
-        for y in selected_elements_list:
-            item_rolls += f"\n{pearl} {globalitems.element_names[y]} Penetration {int(bonus) * mutation_adjust:,}%"
-    insignia_output = discord.Embed(colour=tier_colour, title=insignia_name, description=display_stars)
-    insignia_output.add_field(name="", value=item_rolls, inline=False)
-    return insignia_output
+        # Build output.
+        item_rolls = f"{pearl} HP Bonus +{hp_bonus:,}\n{pearl} Luck +{luck_bonus}"
+        item_rolls += f"\n{pearl} Final Damage {final_damage:,}%\n{pearl} Attack Speed {attack_speed}%"
+        display_stars = sharedmethods.display_stars(self.stars)
+        self.name = f"{insignia_name_list[self.num_elements]} Insignia [{insignia_prefix[self.stars - 1]}]"
+        self.pen = insignia_multipliers[self.num_elements][0]
+        self.pen += insignia_multipliers[self.num_elements][1] * self.stars * mutation_adjust
+        if self.num_elements == 9:
+            icon_list = globalitems.omni_icon
+            item_rolls += f"\n{pearl} Omni Penetration {self.pen:,}%"
+        else:
+            selected_elements_list = [ind for ind, x in enumerate(self.element_list) if x == 1]
+            for y in selected_elements_list:
+                item_rolls += f"\n{pearl} {globalitems.element_names[y]} Penetration {self.pen:,}%"
+        self.insignia_output = discord.Embed(colour=self.tier_colour, title=self.name, description=display_stars)
+        self.insignia_output.add_field(name="", value=item_rolls, inline=False)
 
 
 class InsigniaView(discord.ui.View):
@@ -67,7 +71,7 @@ class InsigniaView(discord.ui.View):
         self.player_user = player_user
 
         insignia_options = [(index, name, description, values) for index, (name, description, values) in
-                            enumerate(zip(insignia_name_list, insignia_description_list, insignia_multiplier_list))
+                            enumerate(zip(insignia_name_list, insignia_description_list, insignia_multipliers))
                             if name is not None and values[0] != 0]
         options = [discord.SelectOption(
             emoji="<a:eenergy:1145534127349706772>", label=f"{name} Insignia", value=f"{index}",
@@ -87,20 +91,17 @@ class InsigniaView(discord.ui.View):
             if interaction.user.id == self.player_user.discord_id:
                 num_elements = int(interaction.data['values'][0])
                 token_item = inventory.BasicItem("Token2")
-                embed_msg = discord.Embed(colour=discord.Colour.dark_orange(),
-                                          title="Isolde, Soulweaver of the True Laws", description="")
+                embed_msg = discord.Embed(colour=discord.Colour.dark_orange(), title=NPC_name, description="")
                 # Proceed to element selection for regular options.
                 if num_elements < 9:
-                    current_selection = [0, 0, 0, 0, 0, 0, 0, 0, 0]
-                    num_selected = 0
+                    current_selection, num_selected = [0, 0, 0, 0, 0, 0, 0, 0, 0], 0
                     new_view = ElementSelectView(self.player_user, num_elements, num_selected, current_selection)
                     embed_msg.description = "What is the desired affinity?"
                     await interaction.response.edit_message(embed=embed_msg, view=new_view)
                     return
                 # Proceed directly to confirmation for omni option.
                 if num_elements == 9:
-                    current_selection = [1, 1, 1, 1, 1, 1, 1, 1, 1]
-                    num_selected = 9
+                    current_selection, num_selected = [1, 1, 1, 1, 1, 1, 1, 1, 1], 9
                     new_view = ConfirmSelectionView(self.player_user, num_selected, current_selection)
                     embed_msg.description = ("I applaud your greed. In addition to the payment I hope your "
                                              "sanity can afford the cost.")
@@ -115,7 +116,7 @@ class InsigniaView(discord.ui.View):
                     return
                 # Determine mutation cost and proceed to confirmation.
                 mutation_tier = int(self.player_user.insignia[-1])
-                embed_msg.description = "You would value the sanctity of your soul so little?"
+                embed_msg.description = "Do you not value the sanctity of your soul?"
                 if mutation_tier in mutation_upgrade_data:
                     token_cost = mutation_upgrade_data[mutation_tier][0]
                     cost_msg = payment_embed(self.player_user, token_cost, mutation_cost_list[mutation_tier])
@@ -130,52 +131,48 @@ class ElementSelectView(discord.ui.View):
     def __init__(self, player_user, num_elements, num_selected, current_selection):
         super().__init__(timeout=None)
         self.player_user = player_user
-        self.num_elements = num_elements
-        self.num_selected = num_selected
-        self.current_selection = current_selection
+        self.num_elements, self.num_selected, self.current_selection = num_elements, num_selected, current_selection
         self.embed = None
         available_options = [(index, (name, emoji)) for index, (name, emoji, selection) in
                              enumerate(zip(globalitems.element_names, globalitems.global_element_list,
                                            self.current_selection)) if selection != 1]
 
-        options = [discord.SelectOption(
-            emoji=emoji, label=option, value=str(i),
-            description=f"{option} affinity")
-            for (i, (option, emoji)) in available_options
-        ]
+        options = [discord.SelectOption(emoji=emoji, label=option, value=str(i), description=f"{option} affinity")
+                   for (i, (option, emoji)) in available_options]
         self.select_menu = discord.ui.Select(placeholder="Select the element add.",
                                              min_values=1, max_values=1, options=options)
         self.select_menu.callback = self.element_select_callback
         self.add_item(self.select_menu)
 
     async def element_select_callback(self, interaction: discord.Interaction):
-        title_msg = "Isolde, Soulweaver of the True Laws"
-        if interaction.user.id == self.player_user.discord_id:
-            selected_element = int(interaction.data['values'][0])
-            if not self.embed:
-                current_selection = self.current_selection
-                current_selection[selected_element] = 1
-                num_selected = self.num_selected + 1
-                if num_selected == self.num_elements:
-                    new_view = ConfirmSelectionView(self.player_user, num_selected, current_selection)
-                    self.embed = discord.Embed(colour=discord.Colour.dark_orange(), title=title_msg,
-                                               description="How entertaining. I am willing to engrave your soul, "
-                                                           "but my services are as expensive as they are painful.")
-                    cost_msg = payment_embed(self.player_user, self.num_elements, self.current_selection)
-                    self.embed.add_field(name="Cost:", value=cost_msg, inline=False)
-                else:
-                    new_view = ElementSelectView(self.player_user, self.num_elements, num_selected, current_selection)
-                    self.embed = discord.Embed(colour=discord.Colour.dark_orange(),
-                                               title=title_msg, description="What is the next desired affinity?")
+        base_embed = discord.Embed(colour=discord.Colour.dark_orange(), title=NPC_name, description="")
+        if interaction.user.id != self.player_user.discord_id:
+            return
+        selected_element = int(interaction.data['values'][0])
+        if self.embed is not None:
             await interaction.response.edit_message(embed=self.embed, view=new_view)
+            return
+        self.current_selection[selected_element] = 1
+        num_selected = self.num_selected + 1
+        self.embed = base_embed
+        if num_selected == self.num_elements:
+            new_view = ConfirmSelectionView(self.player_user, num_selected, self.current_selection)
+            self.embed.description = ("How entertaining. I am willing to engrave your soul, "
+                                      "but my services are as expensive as they are painful.")
+            cost_msg = payment_embed(self.player_user, self.num_elements, self.current_selection)
+            self.embed.add_field(name="Cost:", value=cost_msg, inline=False)
+            await interaction.response.edit_message(embed=self.embed, view=new_view)
+            return
+        new_view = ElementSelectView(self.player_user, self.num_elements, num_selected, self.current_selection)
+        self.embed.description = "What is the next desired affinity?"
+        await interaction.response.edit_message(embed=self.embed, view=new_view)
 
 
 class ConfirmSelectionView(discord.ui.View):
     def __init__(self, player_user, num_selected, current_selection):
         super().__init__(timeout=None)
         self.player_user = player_user
-        self.num_selected = num_selected
-        self.current_selection = current_selection
+        self.num_selected, self.current_selection = num_selected, current_selection
         mutation_tier = int(self.player_user.insignia[-1]) if self.player_user.insignia != "" else 0
         self.mutation_rate = mutation_upgrade_data[mutation_tier][1]
         if self.current_selection == "mutation":
@@ -191,15 +188,14 @@ class ConfirmSelectionView(discord.ui.View):
     async def engrave(self, interaction: discord.Interaction, button: discord.Button):
         if interaction.user.id != self.player_user.discord_id:
             return
-        if self.embed_msg:
+        if self.embed_msg is not None:
             await interaction.response.edit_message(embed=self.embed_msg, view=None)
             return
 
         # Initialize the data.
-        self.player_user = player.get_player_by_id(self.player_user.player_id)
+        self.player_user.reload_player()
         token_stock = inventory.check_stock(self.player_user, "Token2")
-        title_msg = "Isolde, Soulweaver of the True Laws"
-        self.embed_msg = discord.Embed(colour=discord.Colour.dark_orange(), title=title_msg, description="")
+        self.embed_msg = discord.Embed(colour=discord.Colour.dark_orange(), title=NPC_name, description="")
 
         # Handle regular engravings.
         if self.current_selection != "mutation":
@@ -228,7 +224,8 @@ class ConfirmSelectionView(discord.ui.View):
             delim = ";"
             insignia_code = reduce(lambda full, new: str(full) + delim + str(new), self.current_selection)
             insignia_code += ";0"
-            self.embed_msg = display_insignia(self.player_user, insignia_code)
+            insignia_obj = Insignia(self.player_user, insignia_code=insignia_code)
+            self.embed_msg = insignia_obj.insignia_output
             self.player_user.set_player_field("player_equip_insignia", insignia_code)
             await interaction.response.edit_message(embed=self.embed_msg, view=None)
             return
@@ -272,7 +269,8 @@ class ConfirmSelectionView(discord.ui.View):
         new_tier = int(self.player_user.insignia[-1]) + 1
         self.player_user.insignia = f"{self.player_user.insignia[:-1]}{new_tier}"
         self.player_user.set_player_field("player_equip_insignia", self.player_user.insignia)
-        self.embed_msg = display_insignia(self.player_user, self.player_user.insignia)
+        insignia_obj = Insignia(self.player_user)
+        self.embed_msg = insignia_obj.insignia_output
         reload_view = ConfirmSelectionView(self.player_user, 0, "mutation")
         await interaction.response.edit_message(embed=self.embed_msg, view=reload_view)
 
@@ -281,8 +279,7 @@ class ConfirmSelectionView(discord.ui.View):
         try:
             if interaction.user.id == self.player_user.discord_id:
                 engrave_msg = "My patience wears thin. Tell me, what kind of power do you seek?"
-                embed_msg = discord.Embed(colour=discord.Colour.dark_orange(),
-                                          title="Isolde, Soulweaver of the True Laws", description=engrave_msg)
+                embed_msg = discord.Embed(colour=discord.Colour.dark_orange(), title=NPC_name, description=engrave_msg)
                 new_view = InsigniaView(self.player_user)
                 await interaction.response.edit_message(embed=embed_msg, view=new_view)
         except Exception as e:
@@ -311,28 +308,17 @@ def payment_embed(player_obj, token_cost, current_selection):
 def assign_insignia_values(player_obj):
     if player_obj.insignia == "":
         return
-    # Data handling.
-    temp_code = player_obj.insignia.split(";")
-    temp_elements, mutation_tier = temp_code[:9], int(temp_code[-1])
-    insignia_stars = (player_obj.player_echelon + 1) // 2 + mutation_tier
-    mutation_adjust = max(1, mutation_tier)
-    element_list = list(map(int, temp_elements))
-    num_elements = element_list.count(1)
+    insignia_obj = Insignia(player_obj)
     # Apply bonus stats.
-    player_obj.final_damage += player_obj.player_level * 0.01 * mutation_adjust
-    player_obj.attack_speed += insignia_stars * 0.1
-    player_obj.luck_bonus += insignia_stars
-    player_obj.hp_bonus += insignia_hp_list[insignia_stars]
+    player_obj.final_damage += insignia_obj.bonus_stats["final_damage"]
+    player_obj.attack_speed += insignia_obj.bonus_stats["attack_speed"]
+    player_obj.luck_bonus += insignia_obj.bonus_stats["luck_bonus"]
+    player_obj.hp_bonus += insignia_obj.bonus_stats["hp_bonus"]
     # Apply Elemental Penetration
-    if num_elements != 9:
-        selected_elements_list = [ind for ind, x in enumerate(element_list) if x == 1]
-        for y in selected_elements_list:
-            player_obj.elemental_penetration[y] += insignia_multiplier_list[num_elements][0] * 0.01
-            player_obj.elemental_penetration[y] += (insignia_multiplier_list[num_elements][1]
-                                                    * insignia_stars * mutation_adjust * 0.01)
-    # Omni exception for faster runtime and separate stat assignment.
+    adjusted_penetration = insignia_obj.pen * 0.01
+    if insignia_obj.num_elements != 9:
+        for y, has_element in enumerate(insignia_obj.element_list):
+            if has_element:
+                player_obj.elemental_penetration[y] += adjusted_penetration
     else:
-        player_obj.all_elemental_penetration += insignia_multiplier_list[num_elements][0] * 0.01
-        player_obj.all_elemental_penetration += (insignia_multiplier_list[num_elements][1]
-                                                 * insignia_stars * mutation_adjust * 0.01)
-
+        player_obj.all_elemental_penetration += adjusted_penetration

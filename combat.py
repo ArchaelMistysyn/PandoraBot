@@ -77,13 +77,13 @@ def run_cycle(tracker_obj, boss_obj, player_obj, method):
     if status_effects_result is not None:
         return hit_list, status_effects_result, player_alive, boss_obj.calculate_hp(), total_damage
     # Step 2: Boss takes action
-    player_alive, boss_action_msg = handle_boss_actions(tracker_obj, boss_obj, player_obj)
+    player_alive, boss_action_msg = handle_boss_actions(boss_obj, tracker_obj, player_obj)
     if not player_alive:
         tracker_obj.hp_regen = 0
         battle_msg = f"{player_obj.player_username} has been felled!"
         return hit_list, battle_msg, player_alive, boss_alive, total_damage
     # Step 3: Player takes action
-    handle_player_actions(tracker_obj, boss_obj, player_obj)
+    hit_list = handle_player_actions(hit_list, tracker_obj, boss_obj, player_obj)
     # Step 4: Handle Cyclic DoT
     if player_obj.bleed_application > 0:
         hit_list.append(trigger_bleed(tracker_obj, player_obj, boss_obj=boss_obj))
@@ -104,7 +104,7 @@ def handle_status(tracker_obj, player_obj):
     battle_msg = f"{player_obj.player_username} is {tracker_obj.stun_status}! Duration: {tracker_obj.stun_cycles} cycles."
     if tracker_obj.stun_cycles == 0:
         battle_msg = f"{player_obj.player_username} has recovered from being {tracker_obj.stun_status}!"
-        tracker_obj.player_cHP = player_obj.player_mHP if tracker_obj.stun_status == "stunned" else target_obj.player_cHP
+        tracker_obj.player_cHP = player_obj.player_mHP if tracker_obj.stun_status == "stunned" else tracker_obj.player_cHP
         tracker_obj.stun_status = ""
     return battle_msg
 
@@ -130,13 +130,15 @@ def handle_boss_actions(boss_obj, tracker_obj, player_obj):
     if "[ELEMENT]" in skill:
         skill = skill.replace("[ELEMENT]", globalitems.element_special_names[boss_element])
     base_set = [100, 100] if "_" in skill else [25, 50]
-    bypass_immortal = True if "**" in skill else False
+    bypass1 = True if "_" in skill else False
+    bypass2 = True if "**" in skill else False
     skill_bonus = skill_multiplier_list[target_index]
     # Handle boss enrage.
     if boss_obj.boss_type_num >= 2 and boss_obj.boss_cHP <= int(boss_obj.boss_mHP / 2):
         base_set = [2 * value for value in base_set]
     damage_set = [base_set[0] * boss_obj.boss_level * skill_bonus, base_set[1] * boss_obj.boss_level * skill_bonus]
-    is_alive, damage = take_combat_damage(player_obj, tracker_obj, damage_set, boss_element, bypass_immortal)
+    damage_set, _ = handle_evasions(player_obj.block, player_obj.dodge, damage_set, bypass1=bypass1, bypass2=bypass2)
+    is_alive, damage = take_combat_damage(player_obj, tracker_obj, damage_set, boss_element, bypass2)
     boss_msg += f"{boss_obj.boss_name} uses {skill} dealing {sharedmethods.number_conversion(damage)} damage!\n"
     # Handle boss regen.
     if boss_obj.boss_type_num < 3:
@@ -147,7 +149,7 @@ def handle_boss_actions(boss_obj, tracker_obj, player_obj):
     return is_alive, boss_msg
 
 
-def handle_player_actions(tracker_obj, boss_obj, player_obj):
+def handle_player_actions(hit_list, tracker_obj, boss_obj, player_obj):
     tracker_obj.player_cHP = min(player_obj.player_mHP, tracker_obj.hp_regen + tracker_obj.player_cHP)
     combo_count, hits_per_cycle = 1 + player_obj.combo_application, int(player_obj.attack_speed)
     tracker_obj.remaining_hits += player_obj.attack_speed - hits_per_cycle
@@ -166,7 +168,8 @@ def handle_player_actions(tracker_obj, boss_obj, player_obj):
                 hit_list.append(trigger_bleed(tracker_obj, player_obj, hit_type="Ultimate", boss_obj=boss_obj))
         # Stop iterating if boss dies
         if not boss_obj.calculate_hp():
-            return
+            return hit_list
+    return hit_list
 
 
 def take_combat_damage(player_obj, tracker_obj, damage_set, dmg_element, bypass_immortal, no_trigger=False):
@@ -303,6 +306,17 @@ def check_lock(player_obj, combat_tracker, damage):
             return damage, " TIME SHATTER"
         damage, status_msg = 0, " LOCKED"
     return damage, status_msg
+
+
+def handle_evasions(block_rate, dodge_rate, damage, bypass1=False, bypass2=False):
+    damage_set = [damage, damage] if not isinstance(damage, list) else damage
+    if not bypass1 and not bypass2 and random.randint(1, 100) <= dodge_rate:
+        damage_set = [0, 0]
+        return (damage_set[0], " **DODGE**") if not isinstance(damage, list) else (damage_set, " **DODGE**")
+    elif not bypass2 and random.randint(1, 100) <= block_rate:
+        damage_set = [int(damage_set[0] / 2), int(damage_set[1] / 2)]
+        return (damage_set[0], " **BLOCK**") if not isinstance(damage, list) else (damage_set, " **BLOCK**")
+    return (damage_set[0], "") if not isinstance(damage, list) else (damage_set, "")
 
 
 def boss_defences(method, player_obj, boss_object, location):

@@ -997,10 +997,10 @@ monster_dict = {
 }
 gem_list = [("Rock", 1), ("Bronze Chunk", 500), ("Silver Chunk", 1000),
             ("Gold Ore", 5000), ("Platinum Ore", 10000), ("Bismuth Ore", 20000),
-            ("Silent Topaz", 30000), ("Mist Zircon", 40000), ("Prismatic Opal", 50000),
-            ("Whispering Emerald", 75000), ("Drowned Sapphire", 100000), ("Blood Amethyst", 150000),
-            ("Soul Diamond", 250000), ("Stygian Ruby", 500000), ("Aurora Tear", 1000000),
-            ("Spatial Prism", 2500000), ("Lotus of Abundance", 0), ("Stone of the True Void", 10000000)]
+            ("GEMSTONE", 30000), ("GEMSTONE", 40000), ("GEMSTONE", 50000),
+            ("GEMSTONE", 75000), ("GEMSTONE", 100000), ("GEMSTONE", 150000),
+            ("Aurora Tear", 250000), ("Aurora Tear", 500000), ("Aurora Tear", 1000000),
+            ("Aurora Tear", 2500000), ("Lotus of Abundance", 5000000), ("Stone of the True Void", 10000000)]
 
 
 async def build_manifest_return_embed(ctx_object, player_obj, method, colour):
@@ -1057,18 +1057,20 @@ async def handle_hunt(ctx_object, player_obj, success_rate):
 
 
 async def handle_mine(ctx_object, player_obj, success_rate):
+    item_obj = None
+    item_id_dict = {"GEMSTONE": f"Gemstone{random.randint(1, 10)}", "Bismuth Ore": "Gemstone0",
+                    "Lotus of Abundance": "Lotus5", "Aurora Tear": "Gemstone11", "Stone of the True Void": "Gemstone12"}
     outcome_index = sharedmethods.generate_ramping_reward(success_rate, 15, 18)
     outcome_index = max(outcome_index, player_obj.player_echelon)
     outcome_item, outcome_coins = gem_list[outcome_index][0], gem_list[outcome_index][1]
-    if outcome_coins != 0:
-        coin_msg = player_obj.adjust_coins(outcome_coins)
-        return f"You found a {outcome_item}!\nSold for {globalitems.coin_icon} {coin_msg} Lotus Coins!"
-    # Handle lotus item exception
-    inventory.update_stock(player_obj, "Lotus5", 1)
-    lotus_item = inventory.BasicItem("Lotus5")
-    output_msg = f"{lotus_item.item_emoji} 1x {lotus_item.item_name} found!"
-    await sharedmethods.send_notification(ctx_object, player_obj, "Item", lotus_item.item_id)
-    return output_msg
+    if outcome_item in item_id_dict.keys():
+        item_obj = inventory.BasicItem(item_id_dict[outcome_item])
+    if outcome_item == "Lotus of Abundance":
+        await sharedmethods.send_notification(ctx_object, player_obj, "Item", item_obj.item_id)
+    inventory.update_stock(player_obj, item_obj.item_id, 1)
+    coin_msg = player_obj.adjust_coins(outcome_coins)
+    item_name = item_obj.item_name if item_obj is not None else outcome_item
+    return f"You found a {item_name}!\nReceived {globalitems.coin_icon} {coin_msg} Lotus Coins!"
 
 
 async def handle_gather(ctx_object, player_obj, success_rate):

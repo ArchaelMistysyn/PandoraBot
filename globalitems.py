@@ -87,6 +87,11 @@ skill_names_dict = {
     "Rider": ["Valiant Charge", "Surge Dash", "Mounted Onslaught", "Chaos Rampage"],
     "Summoner": ["Savage Blows", "Moonlit Hunt", "Berserk Frenzy", "Synchronized Wrath"]
 }
+
+# ITEM LISTS
+crafting_gem = ["Drowned Sapphire", "Blazing Ruby", "Silent Topaz", "Ancient Agate", "Whispering Emerald",
+                "Arctic Zircon", "Haunted Obsidian", "Prismatic Opal", "Spatial Lapis", "Soul Diamond"]
+
 # Weapon lists
 availability_list = ["Sword", "Bow", "Threads", "Armour", "Wings", "Amulet"]  # Currently available icons
 weapon_list_low = [

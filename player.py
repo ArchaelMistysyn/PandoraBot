@@ -86,6 +86,7 @@ class PlayerProfile:
         # Initialize defensive stats.
         self.hp_bonus, self.hp_regen, self.hp_multiplier = 0.0, 0.0, 0.0
         self.recovery = 3
+        self.block, self.dodge = 0, 0
         self.damage_mitigation, self.mitigation_bonus = 0.0, 0.0
         self.elemental_resistance = [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
         self.all_elemental_resistance = 0.1
@@ -197,6 +198,8 @@ class PlayerProfile:
             for idy, y in enumerate(self.elemental_resistance):
                 stats += f"\n{globalitems.global_element_list[idy]} Resistance: {show_num(y)}%"
             stats += f"\nDamage Mitigation: {show_num(self.damage_mitigation, 1)}%"
+            stats += f"\nBlock Rate: {show_num(self.block, 1)}%"
+            stats += f"\nDodge Rate: {show_num(self.dodge, 1)}%"
             embed_msg.add_field(name=title_msg, value=stats, inline=False)
             return embed_msg
         if method == 4:

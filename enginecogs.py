@@ -98,17 +98,13 @@ class SoloCog(commands.Cog):
 
 
 class PvPCog(commands.Cog):
-    def __init__(self, bot, player1, player2, channel_id, sent_message, channel_object):
-        self.bot = bot
-        self.player1 = player1
-        self.player2 = player2
-        self.channel_id = channel_id
+    def __init__(self, bot, ctx_obj, player1, player2, channel_id, sent_message, channel_object):
+        self.bot, self.ctx_obj = bot, ctx_obj
+        self.channel_object, self.channel_id = channel_object, channel_id
+        self.player1, self.player2 = player1, player2
         self.sent_message = sent_message
-        self.channel_object = channel_object
-        self.combat_tracker1 = combat.CombatTracker(self.player1)
-        self.combat_tracker2 = combat.CombatTracker(self.player2)
-        self.combat_tracker1.player_cHP = self.player1.player_mHP
-        self.combat_tracker2.player_cHP = self.player2.player_mHP
+        self.combat_tracker1, self.combat_tracker2 = combat.CombatTracker(self.player1), combat.CombatTracker(self.player2)
+        self.combat_tracker1.player_cHP, self.combat_tracker2.player_cHP = self.player1.player_mHP, self.player2.player_mHP
         self.colour, _ = sharedmethods.get_gear_tier_colours(self.player1.player_echelon)
         self.hit_list = []
         self.lock = asyncio.Lock()
@@ -157,7 +153,7 @@ class PvPCog(commands.Cog):
         await self.sent_message.edit(embed=pvp_embed)
         if lvl_adjust == 0:
             return
-        await sharedmethods.send_notification(ctx_object, player_obj, "Level", lvl_change)
+        await sharedmethods.send_notification(self.ctx_obj, self.player1, "Level", lvl_adjust)
         self.cog_unload()
 
     async def update_combat_embed(self, stun_list, hit_list):
@@ -217,14 +213,15 @@ class PvPCog(commands.Cog):
         combo_count[attacker] += 1 + combatants[attacker].combo_application
         hit_damage, skill_name = combat.skill_adjuster(combatants[attacker], trackers[attacker], hit_damage,
                                                        combo_count[attacker], False)
-        scaled_damage = combat.pvp_scale_damage(role_order, combatants, hit_damage)
-        scaled_damage, status_msg = combat.check_lock(combatants[attacker], trackers[attacker], scaled_damage)
-        scaled_damage, second_msg = combat.check_bloom(combatants[attacker], scaled_damage)
-        hit_msg = f"{combatants[attacker].player_username} - {combo_count[attacker]}x Combo: {skill_name} {sharedmethods.number_conversion(scaled_damage)}"
-        hit_msg += f"{status_msg}{second_msg}{critical_type}"
-        hit_list.append([scaled_damage, hit_msg])
+        scaled_dmg = combat.pvp_scale_damage(role_order, combatants, hit_damage)
+        scaled_dmg, status_msg = combat.check_lock(combatants[attacker], trackers[attacker], scaled_dmg)
+        scaled_dmg, second_msg = combat.check_bloom(combatants[attacker], scaled_dmg)
+        scaled_dmg, evade = combat.handle_evasions(combatants[defender].block, combatants[defender].dodge, scaled_dmg)
+        hit_msg = f"{combatants[attacker].player_username} - {combo_count[attacker]}x Combo: {skill_name} {sharedmethods.number_conversion(scaled_dmg)}"
+        hit_msg += f"{status_msg}{second_msg}{critical_type}{evade}"
+        hit_list.append([scaled_dmg, hit_msg])
         attack_counter[attacker] += player_interval[attacker]
-        trackers[defender].player_cHP -= scaled_damage
+        trackers[defender].player_cHP -= scaled_dmg
         combat.update_bleed(trackers[attacker], combatants[attacker])
         await self.handle_pvp_ultimate(role_order, combatants, trackers, combo_count, hit_list)
 
@@ -239,13 +236,14 @@ class PvPCog(commands.Cog):
         combo_count[attacker] += 1 + combatant[attacker].combo_application
         hit_damage, skill_name = combat.skill_adjuster(combatant[attacker], tracker[attacker], hit_damage,
                                                        combo_count[attacker], True)
-        scaled_damage = combat.pvp_scale_damage(role_order, combatant, hit_damage)
-        scaled_damage, status_msg = combat.check_lock(combatant[attacker], tracker[attacker], scaled_damage)
-        scaled_damage, second_msg = combat.check_bloom(combatant[attacker], scaled_damage)
-        hit_msg = f"{combatant[attacker].player_username} - Ultimate: {skill_name} {sharedmethods.number_conversion(scaled_damage)}"
-        hit_msg += f"{status_msg}{second_msg}{critical_type}"
-        hit_list.append([scaled_damage, hit_msg])
-        tracker[defender].player_cHP -= scaled_damage
+        scaled_dmg = combat.pvp_scale_damage(role_order, combatant, hit_damage)
+        scaled_dmg, status_msg = combat.check_lock(combatant[attacker], tracker[attacker], scaled_dmg)
+        scaled_dmg, second_msg = combat.check_bloom(combatant[attacker], scaled_dmg)
+        scaled_dmg, evade = combat.handle_evasions(combatant[defender].block, combatant[defender].dodge, scaled_dmg)
+        hit_msg = f"{combatant[attacker].player_username} - Ultimate: {skill_name} {sharedmethods.number_conversion(scaled_dmg)}"
+        hit_msg += f"{status_msg}{second_msg}{critical_type}{evade}"
+        hit_list.append([scaled_dmg, hit_msg])
+        tracker[defender].player_cHP -= scaled_dmg
         if combatant[attacker].bleed_application >= 1:
             await self.handle_pvp_bleed(role_order, combatant, tracker, hit_list, True)
 

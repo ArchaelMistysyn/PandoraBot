@@ -26,8 +26,6 @@ async def check_registration(ctx):
 
 
 async def send_notification(ctx_object, player_obj, notification_type, value):
-    channels = ctx_object.guild.channels
-    channel_object = discord.utils.get(channels, id=globalitems.channel_list[0])
     item = None
     match notification_type:
         case "Level":
@@ -40,8 +38,9 @@ async def send_notification(ctx_object, player_obj, notification_type, value):
         case _:
             pass
     filepath = pilengine.build_notification(player_obj, message, notification_type, item=item)
-    file_object = discord.File(filepath)
-    await ctx_object.send(file=file_object)
+    channels = ctx_object.guild.channels
+    channel_object = discord.utils.get(channels, id=globalitems.channel_list[0])
+    await ctx_object.send(file=discord.File(filepath))
 
 
 def get_thumbnail_by_class(class_name):
