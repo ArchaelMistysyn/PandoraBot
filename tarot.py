@@ -311,7 +311,7 @@ class TarotView(discord.ui.View):
                 if active_card:
                     self.player_user = player.get_player_by_id(self.player_user.player_id)
                     self.player_user.equipped_tarot = f"{active_card.card_numeral}"
-                    self.player_user.set_player_field("player_equip_tarot", self.player_user.equipped_tarot)
+                    self.player_user.set_player_field("player_tarot", self.player_user.equipped_tarot)
                     embed_msg.add_field(name="Equipped!", value="", inline=False)
                 else:
                     embed_msg.add_field(name="Cannot Equip!", value="You do not own this card.", inline=False)

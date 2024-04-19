@@ -89,7 +89,7 @@ skill_names_dict = {
 }
 
 # ITEM LISTS
-crafting_gem = ["Drowned Sapphire", "Blazing Ruby", "Silent Topaz", "Ancient Agate", "Whispering Emerald",
+crafting_gem = ["Blazing Ruby", "Drowned Sapphire", "Silent Topaz", "Ancient Agate", "Whispering Emerald",
                 "Arctic Zircon", "Haunted Obsidian", "Prismatic Opal", "Spatial Lapis", "Soul Diamond"]
 
 # Weapon lists

@@ -283,6 +283,12 @@ def check_bloom(player_obj, input_damage):
     if random.randint(1, 100) <= int(round(player_obj.spec_rate[0] * 100)):
         damage = int(damage * player_obj.bloom_multiplier)
         status_msg = " *BLOOM*"
+        if random.randint(1, 100) <= int(round(player_obj.spec_conv[0] * 100)):
+            damage = int(damage * player_obj.bloom_multiplier)
+            status_msg = " *ABYSSAL BLOOM*"
+        elif random.randint(1, 100) <= int(round(player_obj.spec_conv[1] * 100)):
+            damage = int(damage * player_obj.spec_rate[0] * 100)
+            status_msg = " *SACRED BLOOM*"
     return damage, status_msg
 
 

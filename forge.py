@@ -19,23 +19,19 @@ import itemrolls
 import loot
 
 void_icon = "<a:evoid:1145520260573827134>"
-item_type_lotus_dict = {"W": "Lotus9", "A": "Lotus5", "V": "Lotus2",
-                        "Y": "Lotus1", "G": "Lotus3", "C": "Lotus6"}
+item_type_lotus_dict = {"W": "Lotus9", "A": "Lotus5", "V": "Lotus2", "Y": "Lotus1", "G": "Lotus3", "C": "Lotus6"}
 
 
 class SelectView(discord.ui.View):
     def __init__(self, player_obj, method):
         super().__init__(timeout=None)
-        self.selected_item = None
-        self.player_obj = player_obj
-        self.method = method
-        self.value = None
+        self.player_obj, self.selected_item = player_obj, None
+        self.method, self.value = method, None
+        exclusions = ['D', 'R']
         select_options = [
-            discord.SelectOption(
-                emoji="<a:eenergy:1145534127349706772>", label=inventory.custom_item_dict[key],
-                description=f"Equipped {inventory.custom_item_dict[key].lower()}"
-            ) for key, value in list(inventory.item_loc_dict.items())[:-1]
-        ]
+            discord.SelectOption(emoji="<a:eenergy:1145534127349706772>", label=inventory.custom_item_dict[key],
+                                 description=f"Equipped {inventory.custom_item_dict[key].lower()}")
+            for key, value in inventory.item_loc_dict.items() if key not in exclusions]
         self.select_menu = discord.ui.Select(
             placeholder="Select crafting base.", min_values=1, max_values=1, options=select_options)
         self.select_menu.callback = self.select_callback
@@ -87,8 +83,7 @@ class SelectView(discord.ui.View):
 class PurifyView(discord.ui.View):
     def __init__(self, player_obj, selected_item):
         super().__init__(timeout=None)
-        self.selected_item = selected_item
-        self.player_obj = player_obj
+        self.player_obj, self.selected_item = player_obj, selected_item
         self.materials = [None, None]
         self.embed, self.new_view = None, None
 
@@ -139,8 +134,7 @@ class PurifyView(discord.ui.View):
 class ForgeView(discord.ui.View):
     def __init__(self, player_obj, selected_item):
         super().__init__(timeout=None)
-        self.selected_item = selected_item
-        self.player_obj = player_obj
+        self.player_obj, self.selected_item = player_obj, selected_item
 
         # Build the option menu.
         options_dict = {
@@ -191,9 +185,7 @@ class ForgeView(discord.ui.View):
 class SubSelectView(discord.ui.View):
     def __init__(self, player_obj, selected_item, method):
         super().__init__(timeout=None)
-        self.selected_item = selected_item
-        self.player_obj = player_obj
-        self.method = method
+        self.player_obj, self.selected_item, self.method = player_obj, selected_item, method
 
         def build_select_option(i, option, craft_method, item_tier, cost_qty):
             if craft_method in ["Fae", "Origin"]:
@@ -251,13 +243,10 @@ class SubSelectView(discord.ui.View):
 class UpgradeView(discord.ui.View):
     def __init__(self, player_obj, selected_item, menu_type, hammer_type, element):
         super().__init__(timeout=None)
-        self.selected_item = selected_item
-        self.player_obj = player_obj
+        self.player_obj, self.selected_item = player_obj, selected_item
         self.menu_type = menu_type
-        self.hammer_type = hammer_type
-        self.element = element
-        self.change_method.emoji = "↩️"
-        self.change_base.emoji = "↩️"
+        self.hammer_type, self.element = hammer_type, element
+        self.change_method.emoji = self.change_base.emoji = "↩️"
 
         # Method: num_buttons, button_names, button_emojis, material_ids, crafting_method
         method_dict = {

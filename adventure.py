@@ -737,7 +737,7 @@ class AdventureRoomView(discord.ui.View):
             self.expedition.player_obj.player_cHP -= blood_cost
             temp_user = player.get_player_by_discord(self.expedition.player_obj.discord_id)
             temp_user.pact = active_room.variant
-            temp_user.set_player_field("player_equip_pact", temp_user.pact)
+            temp_user.set_player_field("player_pact", temp_user.pact)
             self.embed = pact.display_pact(temp_user)
             await interaction_obj.response.edit_message(embed=self.embed, view=self.new_view)
 

@@ -50,7 +50,7 @@ advanced_guide += "\n3. Use /abyss to upgrade gear items past tier 5. Req Quest:
 advanced_guide += "\n4. Use /scribe to attain perfect rolls on your items."
 advanced_guide += "\n5. Use /meld to combine and upgrade heart jewels to higher tiers. Req Quest: 42"
 advanced_guide += "\n6. Use /purge [itemtype] [Tier] to clear out useless low tier items."
-advanced_guide += "\n7. ???"
+advanced_guide += "\n7. Use /infuse to create ring gear items using rare materials."
 advanced_guide += "\n8. Use /sanctuary and search everywhere for the rare and elusive lotus items."
 advanced_guide += "\n9. Challenge /palace on higher difficulties to raise the level limit and reach alternate endings."
 advanced_guide += "\n10. Fight for the top stop on the /leaderboard for unique roles."
@@ -166,10 +166,10 @@ class InlaySelectView(discord.ui.View):
                 description="Inlay gem in your amulet", value="3"),
             discord.SelectOption(
                 emoji="<a:eenergy:1145534127349706772>", label="Wings",
-                description="Inlay gem in your wing", value="4"),
+                description="Inlay gem in your wing", value="5"),
             discord.SelectOption(
                 emoji="<a:eenergy:1145534127349706772>", label="Crest",
-                description="Inlay gem in your crest", value="5")
+                description="Inlay gem in your crest", value="6")
         ]
     )
     async def inlay_select_callback(self, interaction: discord.Interaction, inlay_select: discord.ui.Select):
@@ -286,7 +286,7 @@ class StaminaView(discord.ui.View):
         return embed_msg
 
 
-gear_button_list = ["Weapon", "Armour", "Vambraces", "Amulet", "Wing", "Crest", "Pact", "Insignia", "Tarot"]
+gear_button_list = ["Weapon", "Armour", "Vambraces", "Amulet",  "Ring", "Wing", "Crest", "Pact", "Insignia", "Tarot"]
 
 
 class GearView(discord.ui.View):
@@ -299,21 +299,21 @@ class GearView(discord.ui.View):
         self.previous_button.label = self.get_positional_label(-1)
         self.next_button.label = self.get_positional_label(1)
 
-        if self.current_position <= 5:
+        if self.current_position <= 6:
             toggle_type = "Gem" if self.view_type == "Gear" else "Gear"
             self.toggle_view_button.label = f"Toggle View ({toggle_type})"
         else:
             self.remove_item(self.children[1])
 
     def get_positional_label(self, direction):
-        max_position = 8 if self.view_type == "Gear" else 5
+        max_position = 9 if self.view_type == "Gear" else 6
         new_position = (self.current_position + direction) % (max_position + 1)
         button_label = gear_button_list[new_position]
         return f"{button_label} Gem" if self.view_type == "Gem" else button_label
 
     def cycle_gear(self, direction):
         self.target_user.reload_player()
-        max_position = 8 if self.view_type == "Gear" else 5
+        max_position = 9 if self.view_type == "Gear" else 6
         self.current_position = (self.current_position + direction) % (max_position + 1)
 
         # Build no item return message
@@ -323,7 +323,7 @@ class GearView(discord.ui.View):
         no_item_msg = discord.Embed(colour=discord.Colour.dark_gray(), title=f"Equipped {item_type}{gem_msg}",
                                     description=f"No {no_item}{gem_msg.lower()} is equipped")
         # Handle gear positions.
-        if self.current_position <= 5:
+        if self.current_position <= 6:
             item_type = inventory.item_type_dict[self.current_position]
             selected_item = self.target_user.player_equipped[self.current_position]
             if selected_item == 0:
@@ -338,21 +338,21 @@ class GearView(discord.ui.View):
             return equipped_item.create_citem_embed()
 
         # Handle tarot position.
-        elif self.current_position == 8:
+        elif self.current_position == 9:
             tarot_item = self.target_user.equipped_tarot
             if tarot_item == "":
                 return no_item_msg
             tarot_card = tarot.check_tarot(self.target_user.player_id, tarot.card_dict[self.target_user.equipped_tarot][0])
             return tarot_card.create_tarot_embed()
         # Handle insignia position.
-        if self.current_position == 7:
+        if self.current_position == 8:
             insignia_item = self.target_user.insignia
             if insignia_item == "":
                 return no_item_msg
             insignia_obj = insignia.Insignia(self.target_user, insignia_code=insignia_item)
             return insignia_obj.insignia_output
         # Handle pact position.
-        if self.current_position == 6:
+        if self.current_position == 7:
             if self.target_user.pact == "":
                 return no_item_msg
             return pact.display_pact(self.target_user)

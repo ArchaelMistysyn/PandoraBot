@@ -57,5 +57,9 @@ def start_engine():
 
 def run_single_query(raw_query, return_value=False, batch=False, params=None):
     pandora_db = start_engine()
+    if return_value:
+        df = pandora_db.run_query(raw_query, return_value=return_value, batch=batch, params=params)
+        pandora_db.close_engine()
+        return df
     pandora_db.run_query(raw_query, return_value=return_value, batch=batch, params=params)
     pandora_db.close_engine()

@@ -40,7 +40,7 @@ class PlayerProfile:
 
         # Initialize player gear/stats info.
         self.player_stats, self.gear_points = [0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0]
-        self.player_equipped = [0, 0, 0, 0, 0, 0]
+        self.player_equipped = [0, 0, 0, 0, 0, 0, 0]
         self.pact, self.insignia, self.equipped_tarot = "", "", ""
 
         # Initialize player health stats.
@@ -67,14 +67,14 @@ class PlayerProfile:
         self.bleed_multiplier, self.bleed_penetration, self.bleed_application = 0.0, 0.0, 0
         self.combo_multiplier, self.combo_penetration, self.combo_application = 0.05, 0.0, 0
         self.ultimate_multiplier, self.ultimate_penetration, self.ultimate_application = 0.0, 0.0, 0
-        self.critical_chance, self.critical_multiplier = 0.0, 1.0
+        self.perfect_crit, self.critical_chance, self.critical_multiplier = 0, 0.0, 1.0
         self.critical_penetration, self.critical_app = 0.0, 0
 
         # Initialize misc stats.
         self.charge_generation = 1
         self.banes = [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
         self.skill_base_damage_bonus = [0, 0, 0, 0]
-        self.spec_rate = [0.0, 0.0, 0.0, 0.0, 0.0]
+        self.spec_rate, self.spec_conv = [0.0, 0.0, 0.0, 0.0, 0.0], [0, 0]
         self.bloom_multiplier = 10.0
         self.unique_conversion = [0.0, 0.0, 0.0]
         self.attack_speed = 0.0
@@ -241,10 +241,9 @@ class PlayerProfile:
             elif pact_object.pact_variant == "Gluttony":
                 coin_change = int(round(coin_change / 2))
                 adjust_msg = " [Gluttony Penalty]"
-        change_message = f"{coin_change:,}x{adjust_msg}"
         self.player_coins += coin_change
         self.set_player_field("player_coins", self.player_coins)
-        return change_message
+        return f"{coin_change:,}x{adjust_msg}"
 
     def adjust_exp(self, exp_change, apply_pact=True):
         adjust_msg = ""
@@ -260,19 +259,15 @@ class PlayerProfile:
         # Handle Levels
         max_exp = get_max_exp(self.player_level)
         level_increase = 0
-        max_level = 100
-        if self.player_quest > 53:
-            max_level = 999
-        elif self.player_quest > 52:
-            max_level = 200
-        elif self.player_quest > 50:
-            max_level = 150
+        max_level = 999 if self.player_quest > 53 else 200 if self.player_quest > 52 else 150 if self.player_quest > 50 else 100
+
         while self.player_exp > max_exp and self.player_level < max_level:
             self.player_exp -= max_exp
             level_increase += 1
         self.player_level += level_increase
         change_message = "" if level_increase == 0 else f"(Level +{level_increase}) "
         change_message += f"{exp_change:,}x{adjust_msg}"
+        # This could be further improved to be one single adjustment.
         self.set_player_field("player_level", self.player_level)
         self.set_player_field("player_exp", self.player_exp)
         return change_message, level_increase
@@ -296,7 +291,7 @@ class PlayerProfile:
         self.player_class = selected_class
         self.player_quest, self.player_level = 1, 1
         self.player_stamina = 5000
-        player_stats, equipped_gear = "0;0;0;0;0;0;0", "0;0;0;0;0;0"
+        player_stats, equipped_gear = "0;0;0;0;0;0;0", "0;0;0;0;0;0;0"
         quest_tokens = ";".join(map(str, self.quest_tokens))
         pandora_db = mydb.start_engine()
         raw_query = "SELECT * FROM PlayerList WHERE discord_id = :id_check"
@@ -311,7 +306,7 @@ class PlayerProfile:
         raw_query = ("INSERT INTO PlayerList "
                      "(discord_id, player_username, player_level, player_exp, player_echelon, player_quest, "
                      "quest_tokens, player_stamina, player_class, player_coins, player_stats, player_equipped, "
-                     "player_equip_tarot, player_equip_insignia, player_equip_pact, vouch_points) "
+                     "player_tarot, player_insignia, player_pact, vouch_points) "
                      "VALUES (:input_1, :input_2, :input_3, :input_4, :input_5, :input_6,"
                      ":input_7, :input_8, :input_9, :input_10, :input_11, :input_12, :input_13, "
                      ":input_14, :input_15, :input_16)")
@@ -337,17 +332,15 @@ class PlayerProfile:
         return is_spent
 
     def get_equipped(self):
-        pandora_db = mydb.start_engine()
         raw_query = "SELECT * FROM PlayerList WHERE player_id = :player_check"
-        df = pandora_db.run_query(raw_query, return_value=True, params={'player_check': self.player_id})
-        pandora_db.close_engine()
+        df = mydb.run_single_query(raw_query, return_value=True, params={'player_check': self.player_id})
         temp_equipped = list(df['player_equipped'].values[0].split(';'))
         self.player_equipped = list(map(int, temp_equipped))
         temp_stats = list(df['player_stats'].values[0].split(';'))
         self.player_stats = list(map(int, temp_stats))
-        self.equipped_tarot = str(df['player_equip_tarot'].values[0])
-        self.insignia = str(df['player_equip_insignia'].values[0])
-        self.pact = str(df['player_equip_pact'].values[0])
+        self.equipped_tarot = str(df['player_tarot'].values[0])
+        self.insignia = str(df['player_insignia'].values[0])
+        self.pact = str(df['player_pact'].values[0])
 
     def reset_skill_points(self):
         self.player_stats = [0, 0, 0, 0, 0, 0, 0]
@@ -361,11 +354,8 @@ class PlayerProfile:
             setattr(self, attr_name, attr_value)
 
     def get_player_multipliers(self):
-        base_critical_chance = 10.0
-        base_attack_speed = 1.0
-        base_damage_mitigation = 0.0
-        base_player_hp = 1000
-        base_player_hp += 10 * self.player_level
+        base_critical_chance, base_attack_speed, base_mitigation = 10.0, 1.0, 0.0
+        base_player_hp = 1000 + 10 * self.player_level
 
         # Class Multipliers
         class_multipliers = {
@@ -393,7 +383,7 @@ class PlayerProfile:
             if self.player_class == "Rider":
                 base_attack_speed *= 1.25
         if e_item[1]:
-            base_damage_mitigation = e_item[1].item_base_stat
+            base_mitigation = e_item[1].item_base_stat
         for y in range(1, 5):
             if e_item[y]:
                 self.unique_ability_multipliers(e_item[y])
@@ -415,30 +405,22 @@ class PlayerProfile:
         self.all_elemental_multiplier += self.elemental_app * 0.25
 
         # Elemental Capacity
-        if self.elemental_app > 0:
-            self.elemental_capacity += self.elemental_app
+        self.elemental_capacity += max(0, self.elemental_app)
 
-        # Pact Bonus Multipliers
+        # Pact Bonus Multipliers (Occurs after stat adjustments, but before stat hard limits)
         pact.assign_pact_values(self)
 
         # Capacity Hard Limits
-        if self.elemental_capacity > 9:
-            self.elemental_capacity = 9
-        # Frostfire exception
-        if total_points[1] >= 80:
-            self.elemental_capacity = 3
-        # Solitude exception
-        if total_points[6] >= 100:
-            self.elemental_capacity = 1
+        self.elemental_capacity = min(self.elemental_capacity, 9)
+        # Solitude/Frostfire exception
+        self.elemental_capacity = 1 if total_points[6] >= 100 else 3 if total_points[1] >= 80 else self.elemental_capacity
 
         # General Calculations
         self.critical_chance = (1 + self.critical_chance) * base_critical_chance
+        self.critical_chance = 100.00 if self.perfect_crit > 0 else self.critical_chance
         self.attack_speed = (1 + self.attack_speed) * base_attack_speed
-        self.damage_mitigation = (1 + (self.mitigation_bonus + self.damage_mitigation)) * base_damage_mitigation
-        if self.damage_mitigation >= 90:
-            self.damage_mitigation = 90
-        self.player_mHP = int((base_player_hp + self.hp_bonus) * (1 + self.hp_multiplier))
-        self.player_cHP = self.player_mHP
+        self.damage_mitigation = min((1 + (self.mitigation_bonus + self.damage_mitigation)) * base_mitigation, 90)
+        self.player_cHP = self.player_mHP = int((base_player_hp + self.hp_bonus) * (1 + self.hp_multiplier))
 
         match_count = sum(1 for item in e_item if item is not None and item.item_damage_type == self.player_class)
         if self.unique_conversion[2] >= 1:
@@ -470,9 +452,7 @@ class PlayerProfile:
         self.final_damage += int(round(hp_reduction / 100))
 
     def get_player_initial_damage(self):
-        initial_damage = self.player_damage
-        initial_damage *= (1 + self.class_multiplier) * (1 + self.final_damage)
-        return initial_damage
+        return self.player_damage * (1 + self.class_multiplier) * (1 + self.final_damage)
 
     def get_player_boss_damage(self, boss_object):
         e_weapon = inventory.read_custom_item(self.player_equipped[0])
@@ -482,45 +462,39 @@ class PlayerProfile:
         self.player_total_damage = self.boss_adjustments(player_damage, boss_object, e_weapon)
         return self.player_total_damage, critical_type
 
-    def boss_adjustments(self, player_damage, boss_object, e_weapon):
+    def boss_adjustments(self, player_damage, boss_obj, e_weapon):
         # Boss type multipliers
-        boss_type = boss_object.boss_type_num - 1
-        adjusted_damage = player_damage * (1 + self.banes[boss_type])
+        damage = player_damage * (1 + self.banes[boss_obj.boss_type_num - 1])
         # Type Defences
-        defences_multiplier = (combat.boss_defences("", self, boss_object, -1) + self.defence_penetration)
-        adjusted_damage *= defences_multiplier
+        defences_multiplier = (combat.boss_defences("", self, boss_obj, -1) + self.defence_penetration)
+        damage *= defences_multiplier
         # Elemental Defences
-        temp_element_list = combat.limit_elements(self, e_weapon)
         highest = 0
-        for idx, x in enumerate(temp_element_list):
+        for idx, x in enumerate(combat.limit_elements(self, e_weapon)):
             if x == 1:
-                self.elemental_damage[idx] = adjusted_damage * (1 + self.elemental_multiplier[idx])
-                resist_multi = combat.boss_defences("Element", self, boss_object, idx)
+                self.elemental_damage[idx] = damage * (1 + self.elemental_multiplier[idx])
+                resist_multi = combat.boss_defences("Element", self, boss_obj, idx)
                 penetration_multi = 1 + self.elemental_penetration[idx]
                 self.elemental_damage[idx] *= resist_multi * penetration_multi * self.elemental_conversion[idx]
                 if self.elemental_damage[idx] > self.elemental_damage[highest]:
                     highest = idx
-        subtotal_damage = sum(self.elemental_damage) * (1 + boss_object.aura)
-        subtotal_damage *= combat.boss_true_mitigation(boss_object.boss_level)
-        adjusted_damage = int(subtotal_damage)
+        damage = sum(self.elemental_damage) * (1 + boss_obj.aura) * combat.boss_true_mitigation(boss_obj.boss_level)
         # Apply status
         stun_status = globalitems.element_status_list[highest]
         if stun_status is not None and random.randint(1, 100) <= 1:
-            boss_object.stun_status = stun_status
-            boss_object.stun_cycles += 1
-        return adjusted_damage
+            boss_obj.stun_status = stun_status
+            boss_obj.stun_cycles += 1
+        return int(damage)
 
-    def get_bleed_damage(self, boss_object):
-        e_weapon = inventory.read_custom_item(self.player_equipped[0])
+    def get_bleed_damage(self, boss_obj):
+        weapon = inventory.read_custom_item(self.player_equipped[0])
         player_damage = self.get_player_initial_damage()
-        self.player_total_damage = self.boss_adjustments(player_damage, boss_object, e_weapon)
-        self.player_total_damage *= (1 + self.bleed_multiplier)
+        self.player_total_damage = self.boss_adjustments(player_damage, boss_obj, weapon) * (1 + self.bleed_multiplier)
         return self.player_total_damage
 
     def equip(self, selected_item):
-        if selected_item.item_type not in ["W", "A", "V", "Y", "G", "C"]:
-            response = "Item is not equipable."
-            return response
+        if selected_item.item_type not in ["W", "A", "V", "Y", "R", "G", "C"]:
+            return "Item is not equipable."
         # Equip the item and update the database.
         location = inventory.item_loc_dict[selected_item.item_type]
         item_type = inventory.item_type_dict[location]
@@ -538,13 +512,13 @@ class PlayerProfile:
             equipped_gear = ";".join(map(str, self.player_equipped))
             raw_query = f"UPDATE PlayerList SET player_equipped = :input_1 WHERE player_id = :player_check"
             mydb.run_single_query(raw_query, params={'player_check': int(self.player_id), 'input_1': equipped_gear})
+            return
         # Remove inlaid dragon gems
-        else:
-            for item_id in [x for x in self.player_equipped if x != 0]:
-                e_item = inventory.read_custom_item(item_id)
-                if selected_item.item_id == e_item.item_inlaid_gem_id:
-                    e_item.item_inlaid_gem_id = 0
-                    e_item.update_stored_item()
+        for item_id in [x for x in self.player_equipped if x != 0]:
+            e_item = inventory.read_custom_item(item_id)
+            if selected_item.item_id == e_item.item_inlaid_gem_id:
+                e_item.item_inlaid_gem_id = 0
+                e_item.update_stored_item()
 
     def check_equipped(self, item):
         response = ""
@@ -637,33 +611,21 @@ class PlayerProfile:
 
 
 def check_username(new_name: str):
-    pandora_db = mydb.start_engine()
     raw_query = "SELECT * FROM PlayerList WHERE player_username = :player_check"
-    df = pandora_db.run_query(raw_query, return_value=True, params={'player_check': new_name})
-    pandora_db.close_engine()
-    if len(df) != 0:
-        return False
-    return True
+    df = mydb.run_single_query(raw_query, return_value=True, params={'player_check': new_name})
+    return False if len(df) != 0 else True
 
 
 def get_player_by_id(player_id):
-    pandora_db = mydb.start_engine()
     raw_query = "SELECT * FROM PlayerList WHERE player_id = :id_check"
-    df = pandora_db.run_query(raw_query, return_value=True, params={'id_check': player_id})
-    pandora_db.close_engine()
-    if len(df.index) == 0:
-        return None
-    return df_to_player(df)
+    df = mydb.run_single_query(raw_query, return_value=True, params={'id_check': player_id})
+    return None if len(df.index) == 0 else df_to_player(df)
 
 
 def get_player_by_discord(discord_id):
-    pandora_db = mydb.start_engine()
     raw_query = "SELECT * FROM PlayerList WHERE discord_id = :id_check"
-    df = pandora_db.run_query(raw_query, return_value=True, params={'id_check': discord_id})
-    pandora_db.close_engine()
-    if len(df.index) == 0:
-        return None
-    return df_to_player(df)
+    df = mydb.run_single_query(raw_query, return_value=True, params={'id_check': discord_id})
+    return None if len(df.index) == 0 else df_to_player(df)
 
 
 def df_to_player(row):
@@ -697,10 +659,8 @@ def df_to_player(row):
 
 def get_players_by_echelon(player_echelon):
     user_list = []
-    pandora_db = mydb.start_engine()
     raw_query = "SELECT * FROM PlayerList WHERE player_echelon = :echelon_check"
-    player_df = pandora_db.run_query(raw_query, return_value=True, params={'echelon_check': player_echelon})
-    pandora_db.close_engine()
+    player_df = mydb.run_single_query(raw_query, return_value=True, params={'echelon_check': player_echelon})
     if len(player_df.index) == 0:
         return None
     for index, row in player_df.iterrows():
@@ -710,10 +670,8 @@ def get_players_by_echelon(player_echelon):
 
 def get_all_users():
     user_list = []
-    pandora_db = mydb.start_engine()
     raw_query = "SELECT * FROM PlayerList"
-    df = pandora_db.run_query(raw_query, return_value=True)
-    pandora_db.close_engine()
+    df = mydb.run_single_query(raw_query, return_value=True)
     if len(df.index) == 0:
         return None
     for index, row in df.iterrows():
@@ -722,10 +680,7 @@ def get_all_users():
 
 
 def get_max_exp(player_level):
-    exp_required = int(1000 * player_level)
-    if player_level >= 100:
-        exp_required = 100000 + (50000 * (player_level // 100))
-    return exp_required
+    return int(1000 * player_level) if player_level < 100 else 100000 + (50000 * (player_level // 100))
 
 
 def show_num(input_number, adjust=100):

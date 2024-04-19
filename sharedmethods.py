@@ -1,7 +1,8 @@
-# General import
+# General imports
 import discord
 from discord.utils import get
 import pandas as pd
+import random
 
 # Data imports
 import globalitems
@@ -49,7 +50,7 @@ def get_thumbnail_by_class(class_name):
 
 
 def get_gear_thumbnail(item):
-    tag_dict = {"A": "Armour", "V": "Vambraces", "Y": "Amulet", "G": "Wings", "C": "Crest"}
+    tag_dict = {"A": "Armour", "V": "Vambraces", "Y": "Amulet", "R": "Ring", "G": "Wings", "C": "Crest"}
     item_tag = item.item_base_type
     if item.item_type == "W":
         item_tag = globalitems.gear_category_dict[item.item_base_type]

@@ -11,6 +11,9 @@ import player
 import inventory
 import combat
 
+# Item/crafting imports
+import ring
+
 roll_structure_dict = {"W": ["damage", "damage", "penetration", "penetration", "curse", "unique"],
                        "A": ["damage", "penetration", "curse", "defensive", "defensive", "unique"],
                        "V": ["damage", "penetration", "curse", "defensive", "defensive", "unique"],
@@ -134,13 +137,16 @@ weapon_unique_rolls = {
     "unique-9-w": ["X% Less Non-Celestial Damage, X% More Celestial Damage", 15, 10, [["elemental_conversion", 8]]],
     "unique-10-w": ["X% Less Non-Eclipse Damage, X% More Eclipse Damage", 10, 5, [["elemental_conversion", (6, 7)]]],
     "unique-11-w": ["X% Less Non-Horizon Damage, X% More Horizon Damage", 10, 5, [["elemental_conversion", (3, 4)]]],
-    "unique-12-w": ["X% Less Non-Frostfire Damage, X% More Frostfire Damage", 10, 5, [["elemental_conversion", (0, 5)]]],
+    "unique-12-w": ["X% Less Non-Frostfire Damage, X% More Frostfire Damage", 10, 5,
+                    [["elemental_conversion", (0, 5)]]],
     "unique-13-w": ["X% Less Non-Storm Damage, X% More Storm Damage", 10, 5, [["elemental_conversion", (1, 2)]]]
 }
 
 armour_unique_rolls = {
     "unique-0-a": ["Gain X% Elemental Damage per Matching Resistance", 2, 5, [["unique_conversion", 0]]],
-    "unique-1-a": ["Max HP reduced by X%. Gain 1% Final Damage per 100 HP lost.", 1, 5, [["unique_conversion", 1]]]
+    "unique-1-a": ["Max HP reduced by X%. Gain 1% Final Damage per 100 HP lost.", 1, 5, [["unique_conversion", 1]]],
+    "unique-2-a": ["Block Rate", 4, 10, [["block", -1]]],
+    "unique-3-a": ["Dodge Rate", 2, 10, [["dodge", -1]]]
 }
 
 accessory_unique_rolls = {
@@ -184,6 +190,7 @@ valid_rolls = [key for dict_obj in [damage_rolls, penetration_rolls, curse_rolls
                for key in dict_obj.keys()]
 
 cost_list = [2, 3, 6, 10, 15, 25]
+NPC_name = "Vexia, Scribe of the True Laws"
 
 
 class SelectRollsView(discord.ui.View):
@@ -198,9 +205,7 @@ class SelectRollsView(discord.ui.View):
             options=[
                 discord.SelectOption(label=f"{str(i)} Rolls",
                                      description=f"Token Cost: {cost_list[i - 1]:,}", value=str(i))
-                for i in range(1, 7)
-            ]
-        )
+                for i in range(1, 7)])
         self.count_view.callback = self.count_callback
         self.add_item(self.count_view)
 
@@ -209,11 +214,8 @@ class SelectRollsView(discord.ui.View):
             if interaction.user.id == self.player_obj.discord_id:
                 if not self.embed:
                     roll_count = int(interaction.data['values'][0])
-                    self.embed = discord.Embed(
-                        title="Vexia, Scribe of the True Laws",
-                        description="Select a damage skill. (1st Selection)",
-                        color=discord.Color.blue()
-                    )
+                    self.embed = discord.Embed(title=NPC_name, description="Select a damage skill. (1st Selection)",
+                                               color=discord.Color.blue())
                     self.new_view = SkillSelectView(self.player_obj, self.selected_item,
                                                     roll_count, 1, [])
                 await interaction.response.edit_message(embed=self.embed, view=self.new_view)
@@ -224,13 +226,10 @@ class SelectRollsView(discord.ui.View):
 class SkillSelectView(discord.ui.View):
     def __init__(self, player_obj, selected_item, total_rolls, roll_num, selected_skills):
         super().__init__()
-        self.player_obj = player_obj
-        self.selected_item = selected_item
-        self.total_rolls = total_rolls
-        self.roll_num = roll_num
+        self.player_obj, self.selected_item = player_obj, selected_item
+        self.total_rolls, self.roll_num = total_rolls, roll_num
         self.selected_skills = selected_skills
-        self.embed = None
-        self.new_view = None
+        self.embed, self.new_view = None, None
 
         roll_structure = roll_structure_dict[self.selected_item.item_type]
         roll_type = roll_structure[self.roll_num - 1]
@@ -238,12 +237,8 @@ class SkillSelectView(discord.ui.View):
         if roll_type == "unique":
             roll_list, _ = handle_unique(self.selected_item)
             roll_list = {code: value for code, value in roll_list.items() if code.endswith(player_obj.player_class)}
-        options = [
-            discord.SelectOption(
-                label=roll[1][0], description=f"Weighting: {roll[1][2]}", value=roll[0]
-            )
-            for roll in roll_list.items() if roll[0] not in self.selected_skills
-        ]
+        options = [discord.SelectOption(label=roll[1][0], description=f"Weighting: {roll[1][2]}", value=roll[0])
+                   for roll in roll_list.items() if roll[0] not in self.selected_skills]
 
         self.skill_view = discord.ui.Select(placeholder=f"Select Skill for Roll {self.roll_num}",
                                             min_values=1, max_values=1, options=options)
@@ -252,41 +247,38 @@ class SkillSelectView(discord.ui.View):
 
     async def skill_callback(self, interaction: discord.Interaction):
         try:
-            if interaction.user.id == self.player_obj.discord_id:
-                if not self.embed:
-                    selected_skill = str(interaction.data['values'][0])
-                    self.selected_skills.append(selected_skill)
-                    if (self.roll_num + 1) <= self.total_rolls:
-                        # Load the next view for the next roll
-                        npc_comment = f"I really haven't got all day you know. (Selection: {self.roll_num + 1})\n"
-                        for roll_id in self.selected_skills:
-                            temp_id = f"1-{roll_id}"
-                            current_roll = ItemRoll(temp_id)
-                            npc_comment += f"{current_roll.roll_name}\n"
-                        self.embed = discord.Embed(
-                            title="Vexia, Scribe of the True Laws", description=npc_comment, color=discord.Color.blue()
-                        )
-                        self.new_view = SkillSelectView(self.player_obj, self.selected_item,
-                                                        self.total_rolls, self.roll_num + 1, self.selected_skills)
-                    else:
-                        # This is the last roll, display the summary
-                        npc_comment = "Is this really all you wanted?\n"
-                        skill_display = ""
-                        for roll_id in self.selected_skills:
-                            temp_id = f"1-{roll_id}"
-                            current_roll = ItemRoll(temp_id)
-                            skill_display += f"{current_roll.roll_name}\n"
-                            if current_roll.roll_code == "unique-0-y":
-                                npc_comment = "Oooh, you have impeccable taste.\n"
-                        summary_msg = npc_comment + skill_display
-                        token_object = inventory.BasicItem("Token4")
-                        summary_msg += f"\n{token_object.item_emoji} {token_object.item_name} Offering: {cost_list[self.total_rolls - 1]:,}"
-                        self.embed = discord.Embed(
-                            title="Vexia, Scribe of the True Laws", description=summary_msg, color=discord.Color.green()
-                        )
-                        self.new_view = SkillPurchaseView(self.player_obj, self.selected_item,
-                                                          self.total_rolls, self.selected_skills)
-                await interaction.response.edit_message(embed=self.embed, view=self.new_view)
+            if interaction.user.id != self.player_obj.discord_id:
+                return
+            if not self.embed:
+                selected_skill = str(interaction.data['values'][0])
+                self.selected_skills.append(selected_skill)
+                if (self.roll_num + 1) <= self.total_rolls:
+                    # Load the next view for the next roll
+                    npc_comment = f"I really haven't got all day you know. (Selection: {self.roll_num + 1})\n"
+                    for roll_id in self.selected_skills:
+                        temp_id = f"1-{roll_id}"
+                        current_roll = ItemRoll(temp_id)
+                        npc_comment += f"{current_roll.roll_name}\n"
+                    self.embed = discord.Embed(title=NPC_name, description=npc_comment, color=discord.Color.blue())
+                    self.new_view = SkillSelectView(self.player_obj, self.selected_item,
+                                                    self.total_rolls, self.roll_num + 1, self.selected_skills)
+                else:
+                    # This is the last roll, display the summary
+                    npc_comment = "Is this really all you wanted?\n"
+                    skill_display = ""
+                    for roll_id in self.selected_skills:
+                        temp_id = f"1-{roll_id}"
+                        current_roll = ItemRoll(temp_id)
+                        skill_display += f"{current_roll.roll_name}\n"
+                        if current_roll.roll_code == "unique-0-y":
+                            npc_comment = "Oooh, you have impeccable taste.\n"
+                    summary_msg = npc_comment + skill_display
+                    token_object = inventory.BasicItem("Token4")
+                    summary_msg += f"\n{token_object.item_emoji} {token_object.item_name} Offering: {cost_list[self.total_rolls - 1]:,}"
+                    self.embed = discord.Embed(title=NPC_name, description=summary_msg, color=discord.Color.green())
+                    self.new_view = SkillPurchaseView(self.player_obj, self.selected_item,
+                                                      self.total_rolls, self.selected_skills)
+            await interaction.response.edit_message(embed=self.embed, view=self.new_view)
         except Exception as e:
             print(e)
 
@@ -344,8 +336,7 @@ class SkillPurchaseView(discord.ui.View):
                 else:
                     # Display the cost failed message. Reload the same view.
                     cost_msg = "If you really want me you'd better provide a sufficient offering."
-                    embed_msg = discord.Embed(colour=discord.Colour.dark_orange(),
-                                              title="Vexia, Scribe of the True Laws", description=cost_msg)
+                    embed_msg = discord.Embed(colour=discord.Colour.dark_orange(), title=NPC_name, description=cost_msg)
                     await interaction.response.edit_message(embed=embed_msg, view=self)
             else:
                 await interaction.response.edit_message(embed=self.embed, view=None)
@@ -353,10 +344,8 @@ class SkillPurchaseView(discord.ui.View):
     @discord.ui.button(label="Cancel", style=discord.ButtonStyle.red)
     async def cancel_callback(self, interaction: discord.Interaction, button: discord.ui.Button):
         if interaction.user.id == self.player_obj.discord_id:
-            cancellation_embed = discord.Embed(
-                title="Vexia, Scribe of the True Laws",
-                description="Come back when you've made up your mind.", color=discord.Color.red()
-            )
+            cancellation_embed = discord.Embed(title=NPC_name, description="Come back when you've made up your mind.",
+                                               color=discord.Color.red())
             await interaction.response.edit_message(embed=cancellation_embed, view=None)
 
 
@@ -369,8 +358,7 @@ class ItemRoll:
         self.roll_icon = f"{globalitems.augment_icons[self.roll_tier - 1]}"
         self.roll_category = roll_details[1]
         self.roll_code = f"{roll_details[1]}-{roll_details[2]}"
-        self.roll_value = 0
-        self.roll_msg = ""
+        self.roll_value, self.roll_msg = 0, ""
         # Adjust specific values
         roll_adjust = 0.01 * self.roll_tier
         if self.roll_category != "unique":
@@ -540,6 +528,9 @@ def assign_gem_values(player_obj, e_item):
 
 
 def assign_roll_values(player_obj, equipped_item):
+    if equipped_item.item_type == "R":
+        ring.assign_ring_values(player_obj, equipped_item)
+        return
     for roll_id in equipped_item.item_roll_values:
         current_roll = ItemRoll(roll_id)
         # Locate the roll information.
@@ -595,4 +586,3 @@ def assign_item_element_stats(player_obj, equipped_item):
         if z == 1:
             if equipped_item.item_type in associated_stats:
                 associated_stats[equipped_item.item_type][0][idz] += associated_stats[equipped_item.item_type][1]
-

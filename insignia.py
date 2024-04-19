@@ -226,7 +226,7 @@ class ConfirmSelectionView(discord.ui.View):
             insignia_code += ";0"
             insignia_obj = Insignia(self.player_user, insignia_code=insignia_code)
             self.embed_msg = insignia_obj.insignia_output
-            self.player_user.set_player_field("player_equip_insignia", insignia_code)
+            self.player_user.set_player_field("player_insignia", insignia_code)
             await interaction.response.edit_message(embed=self.embed_msg, view=None)
             return
 
@@ -268,7 +268,7 @@ class ConfirmSelectionView(discord.ui.View):
         inventory.update_stock(self.player_user, secondary_item.item_id, -1)
         new_tier = int(self.player_user.insignia[-1]) + 1
         self.player_user.insignia = f"{self.player_user.insignia[:-1]}{new_tier}"
-        self.player_user.set_player_field("player_equip_insignia", self.player_user.insignia)
+        self.player_user.set_player_field("player_insignia", self.player_user.insignia)
         insignia_obj = Insignia(self.player_user)
         self.embed_msg = insignia_obj.insignia_output
         reload_view = ConfirmSelectionView(self.player_user, 0, "mutation")

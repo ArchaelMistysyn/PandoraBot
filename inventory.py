@@ -19,16 +19,17 @@ import mydb
 # Item/crafting imports
 import loot
 import itemrolls
+import ring
 import tarot
 
 
 # Inventory Dictionaries.
-custom_item_dict = {"W": "Weapon", "A": "Armour", "V": "Vambraces",
-                    "Y": "Amulet", "G": "Wings", "C": "Crest", "D": "Gems",
+custom_item_dict = {"W": "Weapon", "A": "Armour", "V": "Vambraces", "Y": "Amulet",
+                    "R": "Ring", "G": "Wings", "C": "Crest", "D": "Gems",
                     "D1": "Dragon Heart Gem", "D2": "Demon Heart Gem", "D3": "Paragon Heart Gem",
                     "D4": "Arbiter Heart Gem", "D5": "Incarnate Heart Gem", "T": "Tarot Card"}
-item_loc_dict = {'W': 0, 'A': 1, 'V': 2, 'Y': 3, 'G': 4, 'C': 5, 'D': 6}
-item_type_dict = {0: "Weapon", 1: "Armour", 2: "Vambraces", 3: "Amulet", 4: "Wings", 5: "Crest", 6: "Gems"}
+item_loc_dict = {'W': 0, 'A': 1, 'V': 2, 'Y': 3, 'R': 4, 'G': 5, 'C': 6, 'D': 7}
+item_type_dict = {0: "Weapon", 1: "Armour", 2: "Vambraces", 3: "Amulet", 4: "Ring", 5: "Wings", 6: "Crest", 7: "Gems"}
 reverse_item_dict = {v: k for k, v in item_type_dict.items()}
 reverse_item_loc_dict = {v: k for k, v in item_loc_dict.items()}
 
@@ -74,7 +75,7 @@ class BInventoryView(discord.ui.View):
             discord.SelectOption(
                 emoji="<a:eenergy:1145534127349706772>", label="Misc", description="Misc Items"),
             discord.SelectOption(
-                emoji="<a:eenergy:1145534127349706772>", label="Gemstones", description="Gemstone Items"),
+                emoji="<a:eenergy:1145534127349706772>", label="Gemstone", description="Gemstone Items"),
             discord.SelectOption(
                 emoji="<a:eenergy:1145534127349706772>", label="Ultra Rare", description="Unprocessed Items")
         ]
@@ -194,7 +195,7 @@ class CustomItem:
                 return
             keyword = globalitems.element_special_names[random.randint(0, 8)]
             self.item_bonus_stat = f"{keyword} Authority"
-            if self.item_type == "Y":
+            if self.item_type == ["Y", "R"]:
                 bane_type = random.randint(0, 5)
                 keyword = "Human" if bane_type == 5 else globalitems.boss_list[bane_type]
                 self.item_bonus_stat = f"{keyword} Bane"
@@ -253,10 +254,16 @@ class CustomItem:
             target_list = summon_tier_keywords
         tier_keyword = target_list[self.item_tier]
         quality_name = globalitems.quality_damage_map[max(4, self.item_tier), self.item_quality_tier]
-        item_name = f"+{self.item_enhancement} {tier_keyword} {self.item_base_type} [{quality_name}]"
+        if "R" in self.item_type:
+            item_name = f"+{self.item_enhancement} {self.item_base_type} [{quality_name}]"
+        else:
+            item_name = f"+{self.item_enhancement} {tier_keyword} {self.item_base_type} [{quality_name}]"
         self.item_name = item_name
 
     def generate_base(self):
+        if "R" in self.item_type:
+            self.assign_bonus_stat()
+            return
         if "D" in self.item_type:
             itemrolls.add_roll(self, 6)
             path = random.randint(0, 6)
@@ -294,6 +301,8 @@ class CustomItem:
                 self.item_base_type = random.choice(crest_base_list)
                 if self.item_tier >= 5:
                     self.item_base_type = "Diadem"
+            case "R":
+                pass
             case _:
                 self.item_base_type = "base_type_error"
 
@@ -329,7 +338,10 @@ class CustomItem:
         if self.item_tier >= 5 and self.item_type != "W":
             bonus_stat = f"{tier_specifier[self.item_tier]} Application ({self.item_bonus_stat})"
         stat_msg += bonus_stat if "D" not in self.item_type else f"{self.get_gem_stat_message()}"
-        rolls_msg = itemrolls.display_rolls(self, roll_change_list)
+        if self.item_type != "R":
+            rolls_msg = itemrolls.display_rolls(self, roll_change_list)
+        else:
+            rolls_msg = ring.display_ring_values(self)
         display_stars = sharedmethods.display_stars(self.item_tier)
         if "D" not in self.item_type:
             elements = [globalitems.global_element_list[idz] for idz, z in enumerate(self.item_elements) if z == 1]
@@ -373,6 +385,7 @@ class CustomItem:
 
     def give_item(self, new_owner):
         self.player_owner = new_owner
+        self.item_inlaid_gem_id = 0
         self.update_stored_item()
 
 
@@ -547,7 +560,7 @@ def display_binventory(player_id, method):
         "Unprocessed": "^(Unrefined|Gem|Jewel|Void)",
         "Essences": "^(Essence)",
         "Summoning": "^(Compass|Summon)",
-        "Gemstones": "^(Gemstone)",
+        "Gemstone": "^(Gemstone)",
         "Misc": "^(Potion|Trove|Crate|Stone|Token)",
         "Ultra Rare": "^(Lotus|Star)"
     }

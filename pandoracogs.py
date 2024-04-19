@@ -5,6 +5,7 @@ from discord.ext import commands, tasks
 import asyncio
 
 # Core imports
+import mydb
 import player
 
 # Item/crafting imports
@@ -23,13 +24,14 @@ class StaminaCog(commands.Cog):
     @tasks.loop(seconds=600)
     async def stamina_manager(self):
         async with self.lock:
-            print("Stamina Assignment Triggered!")
             player_list = player.get_all_users()
             if player_list is not None:
+                update_params = []
                 for player_user in player_list:
                     pact_object = pact.Pact(player_user.pact)
                     max_stamina = 5000 if pact_object.pact_variant != "Sloth" else 2500
-                    new_stamina_value = player_user.player_stamina + 25
-                    if new_stamina_value > max_stamina:
-                        new_stamina_value = max_stamina
-                    player_user.set_player_field("player_stamina", new_stamina_value)
+                    new_stamina_value = min(player_user.player_stamina + 25, max_stamina)
+                    update_params.append({'player_check': player_user.player_id, 'input_1': new_stamina_value})
+                if update_params:
+                    raw_query = "UPDATE PlayerList SET player_stamina = :input_1 WHERE player_id = :player_check"
+                    mydb.run_single_query(raw_query, batch=True, params=update_params)
