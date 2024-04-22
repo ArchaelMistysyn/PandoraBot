@@ -318,7 +318,7 @@ class CustomItem:
         new_element = random.randint(0, 8) if add_element == 9 else add_element
         self.item_elements[new_element] = 1
 
-    def create_citem_embed(self, roll_change_list=None):
+    async def create_citem_embed(self, roll_change_list=None):
         tier_colour, _ = sharedmethods.get_gear_tier_colours(self.item_tier)
         gem_min, gem_max = 0, 0
         stat_msg, base_type, aux_suffix = "", "", ""
@@ -348,9 +348,9 @@ class CustomItem:
             item_types = f'{globalitems.class_icon_dict[self.item_damage_type]}' + ''.join(elements)
             # Handle socket and inlaid gem.
             gem_id = self.item_inlaid_gem_id if self.item_num_sockets == 1 else 0
-            e_gem = read_custom_item(gem_id)
+            e_gem = await read_custom_item(gem_id)
             if e_gem is not None:
-                e_gem = read_custom_item(gem_id)
+                e_gem = await read_custom_item(gem_id)
                 display_stars += f" Socket: {globalitems.augment_icons[e_gem.item_tier - 1]} ({gem_id})"
                 gem_min, gem_max = e_gem.item_damage_min, e_gem.item_damage_max
             elif self.item_num_sockets != 0:
@@ -445,11 +445,9 @@ def get_item_shop_list(item_tier):
     return item_list
 
 
-def read_custom_item(item_id):
-    pandora_db = mydb.start_engine()
+async def read_custom_item(item_id):
     raw_query = "SELECT * FROM CustomInventory WHERE item_id = :id_check"
-    df = pandora_db.run_query(raw_query, return_value=True, params={'id_check': item_id})
-    pandora_db.close_engine()
+    df = mydb.run_single_query(raw_query, return_value=True, params={'id_check': item_id})
     if len(df.index) == 0:
         return None
     item = CustomItem(int(df['player_id'].values[0]), str(df['item_type'].values[0]), 1)
@@ -562,7 +560,7 @@ def display_binventory(player_id, method):
         "Summoning": "^(Compass|Summon)",
         "Gemstone": "^(Gemstone)",
         "Misc": "^(Potion|Trove|Crate|Stone|Token)",
-        "Ultra Rare": "^(Lotus|Star)"
+        "Ultra Rare": "^(Lotus|LightStar|DarkStar)"
     }
     player_inventory = ""
     pandora_db = mydb.start_engine()
@@ -601,7 +599,6 @@ def generate_random_tier(min_tier=1, max_tier=8, luck_bonus=0):
         if adjusted_random <= threshold:
             return tier
     return min_tier
-
 
 
 def check_stock(player_obj, item_id):
@@ -660,10 +657,10 @@ def try_refine(player_owner, item_type, target_tier):
     return new_item, is_success
 
 
-def sell(user, item, embed_msg):
-    user.reload_player()
+async def sell(user, item, embed_msg):
+    await user.reload_player()
     response_embed = embed_msg
-    response = user.check_equipped(item)
+    response = await user.check_equipped(item)
     sell_value = inventory.sell_value_by_tier[item.item_tier]
     if response != "":
         response_embed.add_field(name="Item Not Sold!", value=response, inline=False)
@@ -692,27 +689,27 @@ def delete_item(user_object, item):
     pandora_db.close_engine()
 
 
-def purge(player_obj, item_type, tier):
+async def purge(player_obj, item_type, tier):
     pandora_db = mydb.start_engine()
     player_obj.get_equipped()
     exclusion_list = player_obj.player_equipped
     inlaid_gem_list = []
     for x in exclusion_list:
         if x != 0:
-            e_item = inventory.read_custom_item(x)
+            e_item = await inventory.read_custom_item(x)
             if e_item.item_inlaid_gem_id != 0:
                 inlaid_gem_list.append(e_item.item_inlaid_gem_id)
     exclusion_list += inlaid_gem_list
-    type_check = item_loc_dict[reverse_item_dict[item_type]]
-    params = {'id_check': player_obj.player_id, 'tier_check': tier, 'type_check': type_check}
+    params = {'id_check': player_obj.player_id, 'tier_check': tier}
     exclusion_ids = ', '.join([str(item_id) for item_id in exclusion_list])
+    type_checker = "" if item_type == "" else ' AND item_type = "{item_loc_dict[reverse_item_dict[item_type]]}"'
     raw_query = (f"SELECT item_tier FROM CustomInventory "
                  f"WHERE player_id = :id_check AND item_tier <= :tier_check "
-                 f"AND item_id NOT IN ({exclusion_ids}) AND item_type = :type_check")
+                 f"AND item_id NOT IN ({exclusion_ids}){type_checker}")
     df = pandora_db.run_query(raw_query, return_value=True, params=params)
     delete_query = (f"DELETE FROM CustomInventory "
                     f"WHERE player_id = :id_check AND item_tier <= :tier_check "
-                    f"AND item_id NOT IN ({exclusion_ids}) AND item_type = :type_check")
+                    f"AND item_id NOT IN ({exclusion_ids}){type_checker}")
     pandora_db.run_query(delete_query, params=params)
     pandora_db.close_engine()
     result = len(df)

@@ -294,52 +294,52 @@ class SkillPurchaseView(discord.ui.View):
 
     @discord.ui.button(label="Inscribe", style=discord.ButtonStyle.green)
     async def inscribe_callback(self, interaction: discord.Interaction, button: discord.ui.Button):
-        if interaction.user.id == self.player_obj.discord_id:
-            if not self.embed:
-                reload_player = player.get_player_by_id(self.player_obj.player_id)
-                custom_cost = cost_list[self.total_rolls - 1]
-                # Handle the cost and cost eligibility.
-                current_stock = inventory.check_stock(reload_player, "Token4")
-                if current_stock >= custom_cost:
-                    # Pay the cost. Reload the item data.
-                    inventory.update_stock(reload_player, "Token4", (custom_cost * -1))
-                    reload_item = inventory.read_custom_item(self.selected_item.item_id)
-                    new_roll_list = []
-                    roll_tier_list = []
-                    # Proxy the number of rolls. This is required.
-                    temp_num_rolls = reload_item.item_num_rolls
-                    for roll_index in range(max(temp_num_rolls, self.total_rolls)):
-                        # Log the tiers from the original rolls.
-                        if (roll_index + 1) > temp_num_rolls:
-                            temp_tier = 1
-                        else:
-                            current_roll = ItemRoll(reload_item.item_roll_values[roll_index])
-                            temp_tier = current_roll.roll_tier
-                        roll_tier_list.append(temp_tier)
-                        # Build a list of the new roll ids.
-                        if roll_index + 1 <= self.total_rolls:
-                            new_roll = f"1-{self.selected_skills[roll_index]}"
-                            new_roll_list.append(new_roll)
-                    # Add all the new selected and unselected rolls. Compare the Proxy after updating the value.
-                    reload_item.item_roll_values = new_roll_list
-                    reload_item.item_num_rolls = self.total_rolls
-                    if temp_num_rolls > self.total_rolls:
-                        add_roll(reload_item, (temp_num_rolls - self.total_rolls))
-                    # Set all the roll tiers
-                    for idx in range(reload_item.item_num_rolls):
-                        unassigned_roll = reload_item.item_roll_values[idx][1:]
-                        reload_item.item_roll_values[idx] = f"{roll_tier_list[idx]}{unassigned_roll}"
-                    # Save the item.
-                    reload_item.update_stored_item()
-                    self.embed = reload_item.create_citem_embed()
-                    await interaction.response.edit_message(embed=self.embed, view=None)
-                else:
-                    # Display the cost failed message. Reload the same view.
-                    cost_msg = "If you really want me you'd better provide a sufficient offering."
-                    embed_msg = discord.Embed(colour=discord.Colour.dark_orange(), title=NPC_name, description=cost_msg)
-                    await interaction.response.edit_message(embed=embed_msg, view=self)
+        if interaction.user.id != self.player_obj.discord_id:
+            return
+        if self.embed is not None:
+            await interaction.response.edit_message(embed=self.embed, view=None)
+            return
+        await self.player_obj.reload_player()
+        custom_cost = cost_list[self.total_rolls - 1]
+        current_stock = inventory.check_stock(self.player_obj, "Token4")
+        # Display the cost failed message. Reload the same view.
+        if current_stock < custom_cost:
+            cost_msg = "If you really want me you'd better provide a sufficient offering."
+            embed_msg = discord.Embed(colour=discord.Colour.dark_orange(), title=NPC_name, description=cost_msg)
+            await interaction.response.edit_message(embed=embed_msg, view=self)
+            return
+        # Pay the cost. Reload the item data.
+        inventory.update_stock(self.player_obj, "Token4", (custom_cost * -1))
+        reload_item = await inventory.read_custom_item(self.selected_item.item_id)
+        new_roll_list = []
+        roll_tier_list = []
+        # Proxy the number of rolls. This is required.
+        temp_num_rolls = reload_item.item_num_rolls
+        for roll_index in range(max(temp_num_rolls, self.total_rolls)):
+            # Log the tiers from the original rolls.
+            if (roll_index + 1) > temp_num_rolls:
+                temp_tier = 1
             else:
-                await interaction.response.edit_message(embed=self.embed, view=None)
+                current_roll = ItemRoll(reload_item.item_roll_values[roll_index])
+                temp_tier = current_roll.roll_tier
+            roll_tier_list.append(temp_tier)
+            # Build a list of the new roll ids.
+            if roll_index + 1 <= self.total_rolls:
+                new_roll = f"1-{self.selected_skills[roll_index]}"
+                new_roll_list.append(new_roll)
+        # Add all the new selected and unselected rolls. Compare the Proxy after updating the value.
+        reload_item.item_roll_values = new_roll_list
+        reload_item.item_num_rolls = self.total_rolls
+        if temp_num_rolls > self.total_rolls:
+            add_roll(reload_item, (temp_num_rolls - self.total_rolls))
+        # Set all the roll tiers
+        for idx in range(reload_item.item_num_rolls):
+            unassigned_roll = reload_item.item_roll_values[idx][1:]
+            reload_item.item_roll_values[idx] = f"{roll_tier_list[idx]}{unassigned_roll}"
+        # Save the item.
+        reload_item.update_stored_item()
+        self.embed = await reload_item.create_citem_embed()
+        await interaction.response.edit_message(embed=self.embed, view=None)
 
     @discord.ui.button(label="Cancel", style=discord.ButtonStyle.red)
     async def cancel_callback(self, interaction: discord.Interaction, button: discord.ui.Button):
@@ -517,10 +517,10 @@ def add_augment(selected_item):
         selected_item.item_roll_values[roll_location] = str(selected_tier + 1) + selected_id[1:]
 
 
-def assign_gem_values(player_obj, e_item):
+async def assign_gem_values(player_obj, e_item):
     gem_id = e_item.item_inlaid_gem_id
     if gem_id != 0:
-        e_gem = inventory.read_custom_item(gem_id)
+        e_gem = await inventory.read_custom_item(gem_id)
         player_obj.player_damage += (e_gem.item_damage_min + e_gem.item_damage_max) / 2
         points_value = int(inventory.gem_point_dict[e_gem.item_tier])
         player_obj.gear_points[int(e_gem.item_bonus_stat)] += points_value

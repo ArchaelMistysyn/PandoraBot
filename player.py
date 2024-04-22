@@ -1,8 +1,12 @@
+import cProfile
+import pstats
+
 # General imports
 import pandas as pd
 import discord
 import random
-from datetime import datetime as dt
+from datetime import datetime as dt, timedelta
+
 import math
 
 # Data imports
@@ -91,7 +95,7 @@ class PlayerProfile:
         self.elemental_resistance = [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
         self.all_elemental_resistance = 0.1
 
-    def get_player_stats(self, method):
+    async def get_player_stats(self, method):
         # Construct the base embed.
         echelon_colour, _ = sharedmethods.get_gear_tier_colours((self.player_echelon + 1) // 2)
         resources = f'<:estamina:1145534039684562994> {self.player_username}\'s stamina: {self.player_stamina:,}'
@@ -133,7 +137,7 @@ class PlayerProfile:
                 # Construct the damage spread field.
                 if self.player_equipped[0] != 0:
                     title_msg, stats = "Damage Spread", ""
-                    e_weapon = inventory.read_custom_item(self.player_equipped[0])
+                    e_weapon = await inventory.read_custom_item(self.player_equipped[0])
                     used_elements, used_multipliers = [], []
                     temp_element_list = combat.limit_elements(self, e_weapon)
                     # Build the list of used elements/multipliers.
@@ -286,7 +290,7 @@ class PlayerProfile:
         equipped_gear = ";".join(map(str, self.player_equipped))
         self.set_player_field("player_equipped", equipped_gear)
 
-    def add_new_player(self, selected_class, discord_id):
+    async def add_new_player(self, selected_class, discord_id):
         self.discord_id = discord_id
         self.player_class = selected_class
         self.player_quest, self.player_level = 1, 1
@@ -319,7 +323,7 @@ class PlayerProfile:
             'input_14': str(self.insignia), 'input_15': str(self.pact), 'input_16': int(self.vouch_points)
         }
         pandora_db.run_query(raw_query, params=params)
-        registered_player = get_player_by_discord(self.discord_id)
+        registered_player = await get_player_by_discord(self.discord_id)
         pandora_db.close_engine()
         return f"Welcome {self.player_username}!\nUse /quest to begin."
 
@@ -347,13 +351,15 @@ class PlayerProfile:
         reset_points = "0;0;0;0;0;0;0"
         self.set_player_field("player_stats", reset_points)
 
-    def reload_player(self):
-        reload_player = get_player_by_id(self.player_id)
-        for attr_name in vars(reload_player):
-            attr_value = getattr(reload_player, attr_name)
-            setattr(self, attr_name, attr_value)
+    async def reload_player(self):
+        profiler = cProfile.Profile()
+        profiler.enable()
+        _ = await get_player_by_id(self.player_id, reloading=self)
+        profiler.disable()
+        stats = pstats.Stats(profiler).sort_stats('cumtime')
+        stats.print_stats()
 
-    def get_player_multipliers(self):
+    async def get_player_multipliers(self):
         base_critical_chance, base_attack_speed, base_mitigation = 10.0, 1.0, 0.0
         base_player_hp = 1000 + 10 * self.player_level
 
@@ -370,12 +376,12 @@ class PlayerProfile:
         e_item = []
         for idx, x in enumerate(self.player_equipped):
             if x != 0:
-                e_item.append(inventory.read_custom_item(x))
+                e_item.append(await inventory.read_custom_item(x))
                 e_item[idx].update_damage()
                 self.player_damage += random.randint(e_item[idx].item_damage_min, e_item[idx].item_damage_max)
                 itemrolls.assign_roll_values(self, e_item[idx])
                 if e_item[idx].item_num_sockets == 1:
-                    itemrolls.assign_gem_values(self, e_item[idx])
+                    await itemrolls.assign_gem_values(self, e_item[idx])
             else:
                 e_item.append(None)
         if e_item[0]:
@@ -454,8 +460,8 @@ class PlayerProfile:
     def get_player_initial_damage(self):
         return self.player_damage * (1 + self.class_multiplier) * (1 + self.final_damage)
 
-    def get_player_boss_damage(self, boss_object):
-        e_weapon = inventory.read_custom_item(self.player_equipped[0])
+    async def get_player_boss_damage(self, boss_object):
+        e_weapon = await inventory.read_custom_item(self.player_equipped[0])
         num_elements = sum(e_weapon.item_elements)
         player_damage = self.get_player_initial_damage()
         player_damage, critical_type = combat.critical_check(self, player_damage, num_elements)
@@ -486,8 +492,8 @@ class PlayerProfile:
             boss_obj.stun_cycles += 1
         return int(damage)
 
-    def get_bleed_damage(self, boss_obj):
-        weapon = inventory.read_custom_item(self.player_equipped[0])
+    async def get_bleed_damage(self, boss_obj):
+        weapon = await inventory.read_custom_item(self.player_equipped[0])
         player_damage = self.get_player_initial_damage()
         self.player_total_damage = self.boss_adjustments(player_damage, boss_obj, weapon) * (1 + self.bleed_multiplier)
         return self.player_total_damage
@@ -504,7 +510,7 @@ class PlayerProfile:
         mydb.run_single_query(raw_query, params={'player_check': int(self.player_id), 'input_1': equipped_gear})
         return f"{item_type} {selected_item.item_id} is now equipped."
 
-    def unequip(self, selected_item):
+    async def unequip(self, selected_item):
         # Unequip non-gem gear items
         if "D" not in selected_item.item_type:
             location = inventory.item_loc_dict[selected_item.item_type]
@@ -515,12 +521,12 @@ class PlayerProfile:
             return
         # Remove inlaid dragon gems
         for item_id in [x for x in self.player_equipped if x != 0]:
-            e_item = inventory.read_custom_item(item_id)
+            e_item = await inventory.read_custom_item(item_id)
             if selected_item.item_id == e_item.item_inlaid_gem_id:
                 e_item.item_inlaid_gem_id = 0
                 e_item.update_stored_item()
 
-    def check_equipped(self, item):
+    async def check_equipped(self, item):
         response = ""
         self.get_equipped()
         if item.item_type not in inventory.item_loc_dict and "D" not in item.item_type:
@@ -529,7 +535,7 @@ class PlayerProfile:
             return f"Item {item.item_id} is equipped."
         elif "D" in item.item_type:
             for item_id in [x for x in self.player_equipped if x != 0]:
-                e_item = inventory.read_custom_item(item_id)
+                e_item = await inventory.read_custom_item(item_id)
                 if item.item_id == e_item.item_inlaid_gem_id:
                     response = f"Dragon Heart Gem {item.item_id} is currently inlaid in item {e_item.item_id}."
         return response
@@ -586,7 +592,7 @@ class PlayerProfile:
         pandora_db.close_engine()
         return difference, method
 
-    def set_cooldown(self, command_name, method):
+    def set_cooldown(self, command_name, method, rewind_days=0):
         difference = None
         pandora_db = mydb.start_engine()
         raw_query = "SELECT * FROM CommandCooldowns WHERE player_id = :player_check AND command_name = :cmd_check"
@@ -597,7 +603,7 @@ class PlayerProfile:
         if len(df) != 0:
             raw_query = ("UPDATE CommandCooldowns SET command_name = :cmd_check, time_used =:time_check "
                          "WHERE player_id = :player_check AND method = :method")
-        timestamp = dt.now()
+        timestamp = dt.now() - timedelta(days=rewind_days)
         current_time = timestamp.strftime(globalitems.date_formatting)
         params = {'player_check': self.player_id, 'cmd_check': command_name,
                   'method': method, 'time_check': current_time}
@@ -616,20 +622,20 @@ def check_username(new_name: str):
     return False if len(df) != 0 else True
 
 
-def get_player_by_id(player_id):
+async def get_player_by_id(player_id, reloading=None):
     raw_query = "SELECT * FROM PlayerList WHERE player_id = :id_check"
     df = mydb.run_single_query(raw_query, return_value=True, params={'id_check': player_id})
-    return None if len(df.index) == 0 else df_to_player(df)
+    return None if len(df.index) == 0 else await df_to_player(df, reloading=reloading)
 
 
-def get_player_by_discord(discord_id):
+async def get_player_by_discord(discord_id, reloading=None):
     raw_query = "SELECT * FROM PlayerList WHERE discord_id = :id_check"
     df = mydb.run_single_query(raw_query, return_value=True, params={'id_check': discord_id})
-    return None if len(df.index) == 0 else df_to_player(df)
+    return None if len(df.index) == 0 else await df_to_player(df, reloading=reloading)
 
 
-def df_to_player(row):
-    temp = PlayerProfile()
+async def df_to_player(row, reloading=None):
+    temp = PlayerProfile() if reloading is None else reloading
     if isinstance(row, pd.Series):
         temp.player_id, temp.discord_id = int(row['player_id']), int(row['discord_id'])
         temp.player_username = str(row["player_username"])
@@ -653,29 +659,29 @@ def df_to_player(row):
     string_list = temp_string.split(';')
     temp.quest_tokens = list(map(int, string_list))
     temp.get_equipped()
-    temp.get_player_multipliers()
+    await temp.get_player_multipliers()
     return temp
 
 
-def get_players_by_echelon(player_echelon):
+async def get_players_by_echelon(player_echelon):
     user_list = []
     raw_query = "SELECT * FROM PlayerList WHERE player_echelon = :echelon_check"
     player_df = mydb.run_single_query(raw_query, return_value=True, params={'echelon_check': player_echelon})
     if len(player_df.index) == 0:
         return None
     for index, row in player_df.iterrows():
-        user_list.append(df_to_player(row))
+        user_list.append(await df_to_player(row))
     return user_list
 
 
-def get_all_users():
+async def get_all_users():
     user_list = []
     raw_query = "SELECT * FROM PlayerList"
     df = mydb.run_single_query(raw_query, return_value=True)
     if len(df.index) == 0:
         return None
     for index, row in df.iterrows():
-        user_list.append(df_to_player(row))
+        user_list.append(await df_to_player(row))
     return user_list
 
 

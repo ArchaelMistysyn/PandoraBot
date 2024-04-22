@@ -273,7 +273,7 @@ essence_data = [
     ['EssenceXXVI', 'Essence of The Lifeblood', 10, 4, '<a:elootitem:1144477550379274322>', None, 0, ""],
     ['EssenceXXVII', 'Essence of The Scribe', 10, 5, '<a:elootitem:1144477550379274322>', None, 0, ""],
     ['EssenceXXVIII', 'Essence of The Oracle', 10, 6, '<a:elootitem:1144477550379274322>', None, 0, ""],
-    ['XXIX', 'Essence of The Adjudicator', 10, 7, '<a:elootitem:1144477550379274322>', None, 0, ""],
+    ['EssenceXXIX', 'Essence of The Adjudicator', 10, 7, '<a:elootitem:1144477550379274322>', None, 0, ""],
     ['EssenceXXX', 'Essence of The Lotus', 10, 8, '<a:elootitem:1144477550379274322>', None, 0, ""],
 
 ]
@@ -387,19 +387,19 @@ uncategorized_data = [
      'Augments an item roll. Increases the tier by 1.', 50000, ""],
     ['Crate', 'Crate', 100, 1, '<a:elootitem:1144477550379274322>',
      'Contains a random item.', 50000, ""],
-    ['Shard', "Shard of Pandora's Hammer", 100, 1, '<a:elootitem:1144477550379274322>',
+    ['Shard', "Shard of Pandora's Hammer", 100, 7, '<a:elootitem:1144477550379274322>',
      'Contains a random item.', 50000, ""],
     ['Scrap', 'Equipment Scrap', 100, 1, '<a:elootitem:1144477550379274322>',
      "One of many countless pieces of Pandora's Legendary Hammer.", 0, ""],
     ['Compass', 'Illusory Compass', 100, 6, '<a:elootitem:1144477550379274322>',
      'An enigmatic compass said to be capable of locating the Spire of Illusions.', 500000, ""],
-    ['DarkStar', 'Dark Star of Shattered Dreams', 100, 1, '<a:elootitem:1144477550379274322>',
+    ['DarkStar', 'Dark Star of Shattered Dreams', 100, 8, '<a:elootitem:1144477550379274322>',
      "Legend tells of a star engulfed in black flames that heralds great disasters. "
      "The old records describe visions of the dark star blocking out the sun leaving chaos in it's wake.", 0, ""],
-    ['LightStar', 'Glittering Star of Fractured Hearts', 100, 1, '<a:elootitem:1144477550379274322>',
+    ['LightStar', 'Glittering Star of Fractured Hearts', 100, 8, '<a:elootitem:1144477550379274322>',
      "Legend tells of a star often spotted by lovers as it dazzles and sparkles amidst the black night. "
      "The old records indicate that the star was so beautiful it would steal the hearts of those who saw it.", 0, ""],
-    ['TwinRings', 'Twin Rings of Divergent Stars', 100, 1, '<a:elootitem:1144477550379274322>',
+    ['TwinRings', 'Twin Rings of Divergent Stars', 100, 8, '<a:elootitem:1144477550379274322>',
      "A pair of rings with unique gemstones that twinkle like stars in the night sky and "
      "shine brightly like the brilliant sun.", 0, ""]
 ]

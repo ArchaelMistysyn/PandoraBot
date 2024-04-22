@@ -23,8 +23,8 @@ insignia_multipliers = [[0, 0], [150, 25], [75, 25], [50, 25], [75, 10], [50, 10
 insignia_hp_list = [0, 500, 1000, 1500, 2000, 2500, 5000, 10000, 20000]
 mutation_upgrade_data = {0: [5, 33], 1: [10, 11], 2: [50, 99]}
 insignia_prefix = ["Dormant", "Awakened", "Evolved", "Infused", "Symbiotic", "Resonating",
-                   "Mutation: Void", "Mutation: Wish", "Mutation: Divine"]
-mutation_cost_list = ["OriginV", "OriginM", "Lotus7"]
+                   "Mutation: Wish", "Mutation: Abyss", "Mutation: Divine"]
+mutation_cost_list = ["Crystal2", "Crystal3", "Lotus7"]
 NPC_name = "Isolde, Soulweaver of the True Laws"
 
 
@@ -193,7 +193,7 @@ class ConfirmSelectionView(discord.ui.View):
             return
 
         # Initialize the data.
-        self.player_user.reload_player()
+        await self.player_user.reload_player()
         token_stock = inventory.check_stock(self.player_user, "Token2")
         self.embed_msg = discord.Embed(colour=discord.Colour.dark_orange(), title=NPC_name, description="")
 

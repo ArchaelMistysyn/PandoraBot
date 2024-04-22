@@ -49,11 +49,11 @@ class SelectView(discord.ui.View):
             await interaction.response.edit_message(embed=embed_msg, view=None)
             return
 
-        self.selected_item = inventory.read_custom_item(selected_item)
+        self.selected_item = await inventory.read_custom_item(selected_item)
         # Handle the Forge view.
         if self.method == "celestial":
             # Display the View.
-            embed_msg = self.selected_item.create_citem_embed()
+            embed_msg = await self.selected_item.create_citem_embed()
             new_view = ForgeView(self.player_obj, self.selected_item)
             await interaction.response.edit_message(embed=embed_msg, view=new_view)
 
@@ -67,14 +67,14 @@ class SelectView(discord.ui.View):
                 await interaction.response.edit_message(embed=embed_msg, view=None)
                 return
             # Display the view.
-            embed_msg = self.selected_item.create_citem_embed()
+            embed_msg = await self.selected_item.create_citem_embed()
             new_view = PurifyView(self.player_obj, self.selected_item)
             await interaction.response.edit_message(embed=embed_msg, view=new_view)
             return
 
         # Display the Scribe view.
         if self.method == "custom":
-            embed_msg = self.selected_item.create_citem_embed()
+            embed_msg = await self.selected_item.create_citem_embed()
             new_view = itemrolls.SelectRollsView(self.player_obj, self.selected_item)
             await interaction.response.edit_message(embed=embed_msg, view=new_view)
             return
@@ -117,8 +117,8 @@ class PurifyView(discord.ui.View):
         if interaction.user.id != self.player_obj.discord_id:
             return
         if not self.embed:
-            self.embed, self.selected_item = run_button(self.player_obj, self.selected_item,
-                                                        self.material.item_id, "Purify")
+            self.embed, self.selected_item = await run_button(self.player_obj, self.selected_item,
+                                                              self.material.item_id, "Purify")
             self.new_view = PurifyView(self.player_obj, self.selected_item)
         await interaction.response.edit_message(embed=self.embed, view=self.new_view)
 
@@ -325,26 +325,26 @@ class UpgradeView(discord.ui.View):
             return
         button_id = int(button.custom_id)
         material_id = self.material_id[0] if self.menu_type == "Astral Augment" else self.material_id[button_id]
-        embed_msg, self.selected_item = run_button(self.player_obj, self.selected_item, material_id, self.method[button_id])
+        embed_msg, self.selected_item = await run_button(self.player_obj, self.selected_item, material_id, self.method[button_id])
         new_view = UpgradeView(self.player_obj, self.selected_item, self.menu_type, self.hammer_type, self.element)
         await button_interaction.response.edit_message(embed=embed_msg, view=new_view)
 
     async def reselect_callback(self, button_interaction: discord.Interaction, button: discord.Button, method):
         if button_interaction.user.id != self.player_obj.discord_id:
             return
-        reload_item = inventory.read_custom_item(self.selected_item.item_id)
+        reload_item = await inventory.read_custom_item(self.selected_item.item_id)
         if reload_item is not None:
             if method == "change_method":
                 new_view = ForgeView(self.player_obj, reload_item)
             else:
                 new_view = SelectView(self.player_obj, "celestial")
-            embed_msg = reload_item.create_citem_embed()
+            embed_msg = await reload_item.create_citem_embed()
             await button_interaction.response.edit_message(embed=embed_msg, view=new_view)
 
 
-def run_button(player_obj, selected_item, material_id, method):
+async def run_button(player_obj, selected_item, material_id, method):
     cost_item = inventory.BasicItem(material_id)
-    reload_item = inventory.read_custom_item(selected_item.item_id)
+    reload_item = await inventory.read_custom_item(selected_item.item_id)
     result, cost = craft_item(player_obj, reload_item, cost_item, method)
     result_dict = {0: "Failed!", 1: "Success!", 2: "Cannot upgrade further.", 3: "Item not eligible",
                    4: "This element cannot be used",
@@ -355,7 +355,7 @@ def run_button(player_obj, selected_item, material_id, method):
         no_stock_item = inventory.BasicItem(result)
         item_stock = inventory.check_stock(player_obj, no_stock_item.item_id)
         outcome = sharedmethods.get_stock_msg(no_stock_item, item_stock, cost)
-    new_embed_msg = reload_item.create_citem_embed()
+    new_embed_msg = await reload_item.create_citem_embed()
     new_embed_msg.add_field(name=outcome, value="", inline=False)
     return new_embed_msg, reload_item
 
@@ -461,9 +461,7 @@ def enhance_item(player_obj, selected_item, cost_list, success_check):
     if selected_item.item_enhancement >= globalitems.max_enhancement[(selected_item.item_tier - 1)]:
         return 4
     # Check if the material being used is eligible.
-    element_location = 0
-    if selected_item.item_tier < 6:
-        element_location = int(cost_list[0].item_id[3])
+    element_location = int(cost_list[0].item_id[3])
     if selected_item.item_elements[element_location] != 1:
         return 3
     # Material is consumed. Attempts to enhance the item.
@@ -706,7 +704,7 @@ class RefineItemView(discord.ui.View):
                 required_material = self.menu_details[4][button_id]
                 # Handle gem type exceptions.
                 item_type = f"D{button_id + 1}" if self.selected_type in ["Gem", "Jewel"] else self.selected_type
-                self.embed = refine_item(self.player_user, item_type, selected_tier, required_material)
+                self.embed = await refine_item(self.player_user, item_type, selected_tier, required_material)
             new_view = RefineItemView(self.player_user, self.selected_type)
             await interaction.response.edit_message(embed=self.embed, view=new_view)
 
@@ -720,7 +718,7 @@ class RefineItemView(discord.ui.View):
         await interaction.response.edit_message(embed=new_embed, view=new_view)
 
 
-def refine_item(player_user, selected_type, selected_tier, required_material, cost=1):
+async def refine_item(player_user, selected_type, selected_tier, required_material, cost=1):
     # Check if player has stock.
     loot_item = inventory.BasicItem(required_material)
     item_stock = inventory.check_stock(player_user, required_material)
@@ -738,7 +736,7 @@ def refine_item(player_user, selected_type, selected_tier, required_material, co
     # Check if inventory is full.
     if result_id == 0:
         return inventory.full_inventory_embed(new_item, discord.Colour.red())
-    return new_item.create_citem_embed()
+    return await new_item.create_citem_embed()
 
 
 class MeldView(discord.ui.View):
@@ -766,9 +764,9 @@ class MeldView(discord.ui.View):
             await interaction.response.edit_message(embed=self.embed, view=self.new_view)
             return
         # Reload the data.
-        self.player_obj.reload_player()
-        self.gem_1 = inventory.read_custom_item(self.gem_1.item_id)
-        self.gem_2 = inventory.read_custom_item(self.gem_2.item_id)
+        await self.player_obj.reload_player()
+        self.gem_1 = await inventory.read_custom_item(self.gem_1.item_id)
+        self.gem_2 = await inventory.read_custom_item(self.gem_2.item_id)
         stock = inventory.check_stock(self.player_obj, "Token4")
         self.embed = discord.Embed(colour=discord.Colour.blurple(),
                                    title="Kazyth, Lifeblood of the True Laws", description="")
@@ -791,7 +789,7 @@ class MeldView(discord.ui.View):
             self.embed.description = error_msg
             await interaction.response.edit_message(embed=self.embed, view=self.new_view)
             return
-        self.embed = self.gem_1.create_citem_embed(roll_change_list)
+        self.embed = await self.gem_1.create_citem_embed(roll_change_list)
         await interaction.response.edit_message(embed=self.embed, view=self.new_view)
         return
 

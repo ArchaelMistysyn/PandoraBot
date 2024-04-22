@@ -69,7 +69,7 @@ class CombatTracker:
         self.bleed_tracker = 0.0
 
 
-def run_cycle(tracker_obj, boss_obj, player_obj, method):
+async def run_cycle(tracker_obj, boss_obj, player_obj, method):
     hit_list, total_damage = [], 0
     player_alive, boss_alive = True, True
     # Step 1: Check and handle status effects
@@ -83,10 +83,10 @@ def run_cycle(tracker_obj, boss_obj, player_obj, method):
         battle_msg = f"{player_obj.player_username} has been felled!"
         return hit_list, battle_msg, player_alive, boss_alive, total_damage
     # Step 3: Player takes action
-    hit_list = handle_player_actions(hit_list, tracker_obj, boss_obj, player_obj)
+    hit_list = await handle_player_actions(hit_list, tracker_obj, boss_obj, player_obj)
     # Step 4: Handle Cyclic DoT
     if player_obj.bleed_application > 0:
-        hit_list.append(trigger_bleed(tracker_obj, player_obj, boss_obj=boss_obj))
+        hit_list.append(await trigger_bleed(tracker_obj, player_obj, boss_obj=boss_obj))
     # Step 5: Compile final battle message and return results
     total_damage = sum(hit[0] for hit in hit_list)
     tracker_obj.total_dps += total_damage
@@ -98,11 +98,11 @@ def run_cycle(tracker_obj, boss_obj, player_obj, method):
 
 
 def handle_status(tracker_obj, player_obj):
-    if tracker_obj.stun_cycles == 0:
+    if tracker_obj.stun_cycles <= 0:
         return None
     tracker_obj.stun_cycles -= 1
     battle_msg = f"{player_obj.player_username} is {tracker_obj.stun_status}! Duration: {tracker_obj.stun_cycles} cycles."
-    if tracker_obj.stun_cycles == 0:
+    if tracker_obj.stun_cycles == 0 and tracker_obj.stun_status != "":
         battle_msg = f"{player_obj.player_username} has recovered from being {tracker_obj.stun_status}!"
         tracker_obj.player_cHP = player_obj.player_mHP if tracker_obj.stun_status == "stunned" else tracker_obj.player_cHP
         tracker_obj.stun_status = ""
@@ -149,7 +149,7 @@ def handle_boss_actions(boss_obj, tracker_obj, player_obj):
     return is_alive, boss_msg
 
 
-def handle_player_actions(hit_list, tracker_obj, boss_obj, player_obj):
+async def handle_player_actions(hit_list, tracker_obj, boss_obj, player_obj):
     tracker_obj.player_cHP = min(player_obj.player_mHP, tracker_obj.hp_regen + tracker_obj.player_cHP)
     combo_count, hits_per_cycle = 1 + player_obj.combo_application, int(player_obj.attack_speed)
     tracker_obj.remaining_hits += player_obj.attack_speed - hits_per_cycle
@@ -158,14 +158,14 @@ def handle_player_actions(hit_list, tracker_obj, boss_obj, player_obj):
         tracker_obj.remaining_hits -= 1
     # Handle all hits
     for x in range(hits_per_cycle):
-        hit_list.append(hit_boss(tracker_obj, boss_obj, player_obj, combo_count))
+        hit_list.append(await hit_boss(tracker_obj, boss_obj, player_obj, combo_count))
         combo_count += 1
         tracker_obj.charges += player_obj.ultimate_application
         # Handle Ultimate
         if tracker_obj.charges >= 20:
-            hit_list.append(hit_boss(tracker_obj, boss_obj, player_obj, combo_count, hit_type="Ultimate"))
+            hit_list.append(await hit_boss(tracker_obj, boss_obj, player_obj, combo_count, hit_type="Ultimate"))
             if player_obj.bleed_application > 0:
-                hit_list.append(trigger_bleed(tracker_obj, player_obj, hit_type="Ultimate", boss_obj=boss_obj))
+                hit_list.append(await trigger_bleed(tracker_obj, player_obj, hit_type="Ultimate", boss_obj=boss_obj))
         # Stop iterating if boss dies
         if not boss_obj.calculate_hp():
             return hit_list
@@ -192,14 +192,14 @@ def take_combat_damage(player_obj, tracker_obj, damage_set, dmg_element, bypass_
     if tracker_obj.recovery > 0:
         tracker_obj.player_cHP = 0
         tracker_obj.recovery -= 1
-        tracker_obj.stun_cycles, tracker_obj.stun_status = max(1, 10 - player_obj.recovery), " stunned"
+        tracker_obj.stun_cycles, tracker_obj.stun_status = max(1, 10 - player_obj.recovery), "stunned"
         return True, damage
     return False, damage
 
 
-def hit_boss(tracker_obj, boss_obj, player_obj, combo_count, hit_type="Regular"):
+async def hit_boss(tracker_obj, boss_obj, player_obj, combo_count, hit_type="Regular"):
     update_bleed(tracker_obj, player_obj)
-    hit_damage, critical_type = player_obj.get_player_boss_damage(boss_obj)
+    hit_damage, critical_type = await player_obj.get_player_boss_damage(boss_obj)
     damage, skill_name = skill_adjuster(player_obj, tracker_obj, hit_damage, combo_count, (hit_type == "Ultimate"))
     damage, status_msg = check_lock(player_obj, tracker_obj, damage)
     damage, second_msg = check_bloom(player_obj, damage)
@@ -212,12 +212,12 @@ def hit_boss(tracker_obj, boss_obj, player_obj, combo_count, hit_type="Regular")
     return [damage, hit_msg]
 
 
-def trigger_bleed(tracker_obj, player_obj, hit_type="Normal", boss_obj=None, pvp_data=None):
+async def trigger_bleed(tracker_obj, player_obj, hit_type="Normal", boss_obj=None, pvp_data=None):
     bleed_dict = {1: "Single", 2: "Double", 3: "Triple", 4: "Quadra", 5: "Penta"}
     hit_multiplier, keyword = (1.5, "Sanguine") if hit_type == "Ultimate" else (0.75, "Blood")
     count = "Zenith" if player_obj.bleed_application > 5 else bleed_dict[player_obj.bleed_application]
     # Calculate damage
-    damage = pvp_data[2] if pvp_data is not None else int(hit_multiplier * player_obj.get_bleed_damage(boss_obj))
+    damage = pvp_data[2] if pvp_data is not None else int(hit_multiplier * await player_obj.get_bleed_damage(boss_obj))
     damage *= tracker_obj.bleed_tracker
     damage, bleed_type = check_hyper_bleed(player_obj, damage)
     damage = int(damage * (1 + player_obj.bleed_penetration))
@@ -250,8 +250,8 @@ def update_bleed(tracker_obj, player_obj):
     tracker_obj.bleed_tracker = min(1, tracker_obj.bleed_tracker)
 
 
-def run_solo_cycle(tracker_obj, boss_obj, player_obj):
-    hit_list, battle_msg, player_alive, boss_alive, total_damage = run_cycle(tracker_obj, boss_obj, player_obj, "Solo")
+async def run_solo_cycle(tracker_obj, boss_obj, player_obj):
+    hit_list, battle_msg, player_alive, boss_alive, total_damage = await run_cycle(tracker_obj, boss_obj, player_obj, "Solo")
     tracker_obj.total_cycles += 1
     total_dps = int(tracker_obj.total_dps / tracker_obj.total_cycles)
     embed_msg = boss_obj.create_boss_embed(total_dps)
@@ -267,8 +267,8 @@ def run_solo_cycle(tracker_obj, boss_obj, player_obj):
     return embed_msg, player_alive, boss_alive
 
 
-def run_raid_cycle(tracker_obj, boss_obj, player_obj):
-    hit_list, battle_msg, player_alive, boss_alive, total_damage = run_cycle(tracker_obj, boss_obj, player_obj, "Raid")
+async def run_raid_cycle(tracker_obj, boss_obj, player_obj):
+    hit_list, battle_msg, player_alive, boss_alive, total_damage = await run_cycle(tracker_obj, boss_obj, player_obj, "Raid")
     tracker_obj.total_cycles += 1
     if not boss_alive and boss_obj.boss_tier >= 4:
         quest.assign_unique_tokens(player_obj, boss_obj.boss_name)
@@ -392,8 +392,8 @@ def pvp_defences(attacker, defender, player_damage, e_weapon):
     return stun_status, int(sum(attacker.elemental_damage) * (1 + attacker.aura) * (1 + attacker.banes[5]))
 
 
-def pvp_attack(attacker, defender):
-    e_weapon = inventory.read_custom_item(attacker.player_equipped[0])
+async def pvp_attack(attacker, defender):
+    e_weapon = await inventory.read_custom_item(attacker.player_equipped[0])
     num_elements = sum(e_weapon.item_elements)
     player_damage = attacker.get_player_initial_damage()
     player_damage, critical_type = critical_check(attacker, player_damage, num_elements)
@@ -412,8 +412,8 @@ def pvp_scale_damage(role_order, combatants, hit_damage):
     return scaled_damage
 
 
-def get_random_opponent(player_echelon):
-    player_list = player.get_players_by_echelon(player_echelon)
+async def get_random_opponent(player_echelon):
+    player_list = await player.get_players_by_echelon(player_echelon)
     opponent_object = random.choice(player_list) if player_list else None
     return opponent_object
 

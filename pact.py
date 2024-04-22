@@ -17,7 +17,7 @@ pact_variants = {"Wrath": [["Attack Speed Bonus", "Elemental Capacity"], ["Mitig
                  "Greed": [["Specialty Rate Bonus", "Coin Acquisition"], ["Charge Generation", "EXP Acquisition"]],
                  "Gluttony": [["Charge Generation", "EXP Acquisition"], ["Elemental Capacity", "Coin Acquisition"]],
                  "Envy": [["Final Damage", "Base Luck"], ["Max HP", "Recovery"]],
-                 "Pride": [["Singularity Damage", "Human Bane"], ["", ""]],
+                 "Pride": [["Singularity Damage", "Human Bane"], ["Dodge Rate", "Block Rate"]],
                  "Lust": [["Class Mastery Bonus", "Bleed Damage"], ["Singularity Damage", ""]]}
 
 demon_variants = {1: "Lesser Incubus", 2: "Shadow Fiend", 3: "Cursed Defiler", 4: "Death Shade",
@@ -57,12 +57,12 @@ def assign_pact_values(player_obj):
         case "Wrath":
             player_obj.attack_speed *= 2
             player_obj.elemental_capacity *= 2
-            player_obj.luck_bonus = int(round(player_obj.luck_bonus / 2))
-            player_obj.mitigation_bonus = int(round(player_obj.mitigation_bonus / 2))
+            player_obj.luck_bonus = int(round(player_obj.luck_bonus / 2)) if player_obj.luck_bonus != 0 else 0
+            player_obj.mitigation_bonus = int(round(player_obj.mitigation_bonus / 2)) if player_obj.mitigation_bonus != 0 else 0
         case "Sloth":
             player_obj.player_mHP *= 2
             player_obj.recovery *= 2
-            player_obj.attack_speed = int(round(player_obj.attack_speed / 2))
+            player_obj.attack_speed = int(round(player_obj.attack_speed / 2)) if player_obj.attack_speed != 0 else 0
         case "Greed":
             player_obj.spec_rate = [rate * 2 for rate in player_obj.spec_rate]
             player_obj.charge_generation = int(round(player_obj.charge_generation / 2))
@@ -73,10 +73,12 @@ def assign_pact_values(player_obj):
             player_obj.final_damage *= 2
             player_obj.luck_bonus *= 2
             player_obj.player_mHP = int(round(player_obj.player_mHP / 2))
-            player_obj.recovery = int(round(player_obj.recovery / 2))
+            player_obj.recovery = int(round(player_obj.recovery / 2)) if player_obj.recovery != 0 else 0
         case "Pride":
             player_obj.singularity_damage *= 2
             player_obj.banes[5] *= 2
+            player_obj.dodge = int(round(player_obj.dodge / 2)) if player_obj.dodge != 0 else 0
+            player_obj.block = int(round(player_obj.block / 2)) if player_obj.block != 0 else 0
         case "Lust":
             player_obj.singularity_damage = int(round(player_obj.singularity_damage / 2))
             player_obj.bleed_multiplier *= 2

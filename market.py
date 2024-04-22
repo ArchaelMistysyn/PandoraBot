@@ -104,8 +104,8 @@ class PurchaseView(discord.ui.View):
         self.selected_item = selected_item
         self.is_paid = False
 
-    def handle_purchase(self, quantity):
-        self.player_obj.reload_player()
+    async def handle_purchase(self, quantity):
+        await self.player_obj.reload_player()
         total_cost = self.selected_item.item_cost * quantity
         if self.player_obj.player_coins < total_cost:
             embed_msg = discord.Embed(colour=discord.Colour.dark_orange(),
@@ -125,19 +125,19 @@ class PurchaseView(discord.ui.View):
     @discord.ui.button(label="Buy 1", style=discord.ButtonStyle.success, emoji="1️⃣")
     async def buy_one(self, interaction: discord.Interaction, button: discord.Button):
         if interaction.user.id == self.player_obj.discord_id:
-            embed_msg, new_view = self.handle_purchase(1)
+            embed_msg, new_view = await self.handle_purchase(1)
             await interaction.response.edit_message(embed=embed_msg, view=new_view)
 
     @discord.ui.button(label="Buy 10", style=discord.ButtonStyle.success, emoji="🔟")
     async def buy_ten(self, interaction: discord.Interaction, button: discord.Button):
         if interaction.user.id == self.player_obj.discord_id:
-            embed_msg, new_view = self.handle_purchase(10)
+            embed_msg, new_view = await self.handle_purchase(10)
             await interaction.response.edit_message(embed=embed_msg, view=new_view)
 
     @discord.ui.button(label="Buy 100", style=discord.ButtonStyle.success, emoji="💯")
     async def buy_hundred(self, interaction: discord.Interaction, button: discord.Button):
         if interaction.user.id == self.player_obj.discord_id:
-            embed_msg, new_view = self.handle_purchase(100)
+            embed_msg, new_view = await self.handle_purchase(100)
             await interaction.response.edit_message(embed=embed_msg, view=new_view)
 
     @discord.ui.button(label="Reselect", style=discord.ButtonStyle.blurple, emoji="↩️")

@@ -24,7 +24,7 @@ class StaminaCog(commands.Cog):
     @tasks.loop(seconds=600)
     async def stamina_manager(self):
         async with self.lock:
-            player_list = player.get_all_users()
+            player_list = await player.get_all_users()
             if player_list is not None:
                 update_params = []
                 for player_user in player_list:

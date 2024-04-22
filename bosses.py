@@ -42,8 +42,9 @@ class CurrentBoss:
         return self.boss_cHP > 0
 
     def create_boss_embed(self, dps=0, extension=""):
-        # img_link = self.boss_image
         img_link = "https://i.ibb.co/0ngNM7h/castle.png"
+        if "Demon" in self.boss_image or "Dragon" in self.boss_image:
+            img_link = self.boss_image
         tier_colour_dict = {
             1: [0x43B581, "💚"], 2: [0x3498DB, "💙"], 3: [0x9B59B6, "💜"], 4: [0xF1C40F, "💛"],
             5: [0xCC0000, "❤️"], 6: [0xE91E63, "🩷"],  7: [0xFFFFFF, "🖤"], 8: [0x000000, "🤍"]
@@ -85,6 +86,8 @@ class CurrentBoss:
         return embed_msg
 
     def generate_boss_name_image(self, boss_type, boss_tier):
+        url_base = "https://kyleportfolio.ca/botimages/bosses/"
+
         # Fortress names
         fortress_list_t1 = [("Ominous Keep", ""), ("Twisted Stronghold", "")]
         fortress_list_t2 = [("Malignant Fortress", ""), ("Malevolant Castle", "")]
@@ -93,17 +96,17 @@ class CurrentBoss:
         fortress_names = [fortress_list_t1, fortress_list_t2, fortress_list_t3, fortress_list_t4]
 
         # Dragon names
-        dragon_list_t1 = [("Zelphyros, Wind", ""), ("Sahjvadiir, Earth", ""), ("Cyries'vael, Ice", "")]
-        dragon_list_t2 = [("Arkadrya, Lightning", ""), ("Phyyratha, Fire", ""), ("Elyssrya, Water", "")]
-        dragon_list_t3 = [("Y'thana, Light", ""), ("Rahk'vath, Shadow", "")]
-        dragon_list_t4 = [("VII - Astratha, The Dimensional", "")]
+        dragon_list_t1 = ["Zelphyros, Wind", "Sahjvadiir, Earth", "Cyries'vael, Ice"]
+        dragon_list_t2 = ["Arkadrya, Lightning", "Phyyratha, Fire", "Elyssrya, Water"]
+        dragon_list_t3 = ["Y'thana, Light", "Rahk'vath, Shadow"]
+        dragon_list_t4 = ["VII - Astratha, The Dimensional"]
         dragon_names = [dragon_list_t1, dragon_list_t2, dragon_list_t3, dragon_list_t4]
 
         # Demon names
-        demon_list_t1 = [("Beelzebub", ""), ("Azazel", ""), ("Astaroth", ""), ("Belial", "")]
-        demon_list_t2 = [("Abbadon", ""), ("Asura", ""), ("Baphomet", ""), ("Charybdis", "")]
-        demon_list_t3 = [("Iblis", ""), ("Lilith", ""), ("Ifrit", ""), ("Scylla", "")]
-        demon_list_t4 = [("VIII - Tyra, The Behemoth", "")]
+        demon_list_t1 = ["Beelzebub", "Azazel", "Astaroth", "Belial"]
+        demon_list_t2 = ["Abbadon", "Asura", "Baphomet", "Charybdis"]
+        demon_list_t3 = ["Iblis", "Lilith", "Ifrit", "Scylla"]
+        demon_list_t4 = ["VIII - Tyra, The Behemoth"]
         demon_names = [demon_list_t1, demon_list_t2, demon_list_t3, demon_list_t4]
 
         # Paragon names
@@ -140,9 +143,11 @@ class CurrentBoss:
 
         # Assign a random boss default values.
         target_list = all_names_dict[boss_type][(boss_tier - 1)]
-        self.boss_name, self.boss_image = random.choice(target_list)
-        if self.boss_image == "":
-            self.boss_image = f'https://kyleportfolio.ca/botimages/bosses/{boss_type}{boss_tier}.png'
+        if boss_type not in ["Demon", "Dragon"]:
+            self.boss_name, self.boss_image = random.choice(target_list)
+            self.boss_image = f'{url_base}{boss_type}/{boss_tier}.png' if self.boss_image == "" else f'{url_base}{boss_type}/{self.boss_image}.png'
+        else:
+            self.boss_name = random.choice(target_list)
         self.boss_element = 9
 
         # Handle boss type exceptions.
@@ -158,11 +163,14 @@ class CurrentBoss:
                 if boss_tier != 4:
                     self.boss_element = globalitems.element_names.index(boss_element)
                     self.boss_name += " Dragon"
+                self.boss_image = f'{url_base}{boss_type}/{globalitems.element_names[self.boss_element]}_Dragon.png'
             case "Demon":
                 if boss_tier != 4:
                     boss_colour, self.boss_element = get_boss_descriptor(boss_type)
+                    if boss_colour not in ["Crimson", "Azure", "Jade"]:
+                        self.boss_image = ""
+                    self.boss_image = f'{url_base}Demon/{boss_colour}/{self.boss_name}_{boss_colour}.png'
                     self.boss_name = f'{boss_colour} {self.boss_name}'
-                    self.boss_image = f'https://kyleportfolio.ca/botimages/bosses/{boss_type}{boss_colour}{boss_tier}.png'
             case _:
                 pass
 
@@ -392,13 +400,13 @@ def get_raid_id(channel_id, player_id, return_multiple=False):
     return int(df_check['raid_id'].values[0])
 
 
-def create_dead_boss_embed(channel_id, active_boss, dps, extension=""):
+async def create_dead_boss_embed(channel_id, active_boss, dps, extension=""):
     active_boss.boss_cHP = 0
     dead_embed = active_boss.create_boss_embed(dps, extension=extension)
     player_list, damage_list = get_damage_list(channel_id)
     output_list = ""
     for idx, x in enumerate(player_list):
-        player_obj = player.get_player_by_id(x)
+        player_obj = await player.get_player_by_id(x)
         output_list += f'{str(player_obj.player_username)}: {sharedmethods.number_conversion(int(damage_list[idx]))}\n'
     dead_embed.add_field(name="SLAIN", value=output_list, inline=False)
     return dead_embed

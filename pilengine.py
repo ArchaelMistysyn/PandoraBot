@@ -179,22 +179,23 @@ def build_notification(player_obj, message, notification_type, item=None):
     # Initializations.
     width, height = 800, 200
     background_color = hex_to_rgba(globalitems.tier_colors[player_obj.player_echelon])
+    fill_colour = "Black" if player_obj.player_echelon < 8 else "White"
     result = Image.new('RGBA', (width, height), background_color + (255,))
     image_editable = ImageDraw.Draw(result)
 
     # Apply Title and Message Text.
     title = f"Congratulations {player_obj.player_username}!"
     title_font_object = ImageFont.truetype(level_font_file, 72)
-    font_object = ImageFont.truetype(name_font_file, 60)
-    image_editable.text((25, 25), title, fill="Black", font=title_font_object)
-    image_editable.text((200, height // 2 - 10), message, fill="Black", font=font_object)
+    font_object = ImageFont.truetype(name_font_file, 52)
+    image_editable.text((40, 25), title, fill=fill_colour, font=title_font_object)
+    image_editable.text((120, height // 2 + 10), message, fill=fill_colour, font=font_object)
 
     # Example Icon Loading.
-    icon_size = (124, 124)
+    icon_size = (62, 62)
     icon_url = sharedmethods.get_thumbnail_by_class(player_obj.player_class)
     class_icon = Image.open(requests.get(icon_url, stream=True).raw)
     class_icon = class_icon.resize(icon_size)
-    result.paste(class_icon, (50, 75), mask=class_icon)
+    result.paste(class_icon, (50, 90), mask=class_icon)
 
     # Save and return image.
     file_path = f'{image_path}notification\\Notification{player_obj.player_id}.png'

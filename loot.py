@@ -76,7 +76,7 @@ async def create_loot_embed(current_embed, active_boss, player_list, ctx=None, l
     # Build and return the loot output.
     loot_output = await award_loot(active_boss, player_list, exp_amount, coin_amount, loot_multiplier, gauntlet, ctx)
     for counter, loot_section in enumerate(loot_output):
-        temp_player = player.get_player_by_id(player_list[counter])
+        temp_player = await player.get_player_by_id(player_list[counter])
         loot_msg = f'{temp_player.player_username} received:'
         current_embed.add_field(name=loot_msg, value=loot_section, inline=False)
     return current_embed
@@ -89,7 +89,7 @@ async def award_loot(boss_object, player_list, exp_amount, coin_amount, loot_mul
     batch_df = pd.DataFrame(columns=labels)
     for counter, x in enumerate(player_list):
         # Handle coins and exp.
-        temp_player = player.get_player_by_id(x)
+        temp_player = await player.get_player_by_id(x)
         coin_msg = temp_player.adjust_coins(coin_amount)
         exp_msg, lvl_change = temp_player.adjust_exp(exp_amount)
         if lvl_change != 0 and boss_object.player_id != 0:
@@ -148,13 +148,11 @@ def generate_random_item(quantity=1):
     quantity_table = [1, 1, 1, 1, 1, 1, 2, 2, 2, 3]
     probability_rewards = [
         [10, None, "Lotus"], [1, "DarkStar", None], [1, "LightStar", None], [24, None, "Gemstone"],
-        [100, None, "Essence"], [100, "Trove", None], [100, None, "Origin"], [50, None, "Core"], [50, None, "Crystal"],
+        [100, None, "Essence"], [100, None, "Trove"], [100, None, "Origin"], [50, None, "Core"], [50, None, "Crystal"],
         [100, None, "Token"], [100, None, "Jewel"], [50, None, "Heart"], [200, None, "Summon"], [50, "Compass", None],
-        [200, "Pearl", None], [200, "Hammer", None], [1000, "Pearl", None], [1000, "Hammer", None],
-        [500, None, "Gem"], [500, "Ore5", None],
+        [1000, "Pearl", None], [1000, "Hammer", None], [500, None, "Gem"], [1500, None, "Ore"],
         [500, None, "Fragment"], [500, "Flame1", None], [1000, "Matrix1", None], [1000, None, "Potion"],
-        [250, "Ore4", None], [250, "Ore3", None], [250, "Ore2", None], [250, "Ore1", None],
-        [2113, None, "Fae"]
+        [2064, None, "Fae"]
     ]
     max_reward = 10000  # sum(item[0] for item in probability_rewards)
     # Assign a reward id based on the probability, set id, or id prefix.
@@ -173,6 +171,8 @@ def generate_random_item(quantity=1):
         item_qty = 1 if reward.item_tier >= 4 else random.choice(quantity_table)
         if "Fae" in reward_id:
             item_qty = random.randint(5, (50 * item_qty))
+        elif "Fragment" in reward_id:
+            item_qty = 5
         # Update quantity on duplicate entries
         if reward_id in rewards:
             rewards[reward_id] += item_qty

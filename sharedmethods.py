@@ -15,15 +15,24 @@ import pilengine
 
 async def check_registration(ctx):
     if not any(ctx.channel.id in sl for sl in globalitems.global_server_channels):
+        await ctx.send("This command may not be used in this channel.")
         return None
-    command_user = player.get_player_by_discord(ctx.author.id)
+    command_user = await player.get_player_by_discord(ctx.author.id)
     title, description = "Unregistered", "Please register using /register to play."
     register_embed = discord.Embed(colour=discord.Colour.dark_teal(), title=title, description=description)
     if command_user is None:
         await ctx.send(embed=register_embed)
         return None
-    await ctx.defer()
     return command_user
+
+
+async def check_click(interaction, player_obj, new_embed, new_view):
+    if interaction.user.id != player_obj.discord_id:
+        return True
+    if new_embed is not None:
+        await interaction.response.edit_message(embed=new_embed, view=new_view)
+        return True
+    return False
 
 
 async def send_notification(ctx_object, player_obj, notification_type, value):

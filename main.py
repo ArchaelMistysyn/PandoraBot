@@ -19,7 +19,7 @@ logger.setLevel(logging.WARNING)
 if __name__ == '__main__':
     processes = [multiprocessing.Process(target=pandorabot.run_discord_bot),
                  # multiprocessing.Process(target=eleuiabot.run_discord_bot),
-                 multiprocessing.Process(target=vouchbot.run_discord_bot),
+                 # multiprocessing.Process(target=vouchbot.run_discord_bot),
                  multiprocessing.Process(target=battleengine.run_discord_bot)]
 
     try:

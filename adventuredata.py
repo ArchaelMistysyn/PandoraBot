@@ -219,7 +219,7 @@ variant_details_dict = {
     'statue_room': ['Foreboding Statue', None],
     'basic_monster': ['Basic Monster Encounter', None],
     'elite_monster': ['Elite Monster Encounter', None],
-    'legendary_monster': ['Legendary Titan Encounter', None],
+    'legend_monster': ['Legendary Titan Encounter', None],
     'healing_room': ['Safe Zone', None],
     'treasure': ['Treasure Chamber', "The unopened chest calls to you."],
     'greater_treasure': ['Treasure Vault', "The irresistible allure of treasure entices you."],

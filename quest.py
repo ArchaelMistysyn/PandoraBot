@@ -154,7 +154,7 @@ class QuestView(discord.ui.View):
         if self.embed_msg is not None:
             await interaction.response.edit_message(embed=self.embed_msg, view=self.new_view)
             return
-        self.player_obj.reload_player()
+        await self.player_obj.reload_player()
         temp_embed, is_completed = await self.quest_object.hand_in(self.ctx_object, self.player_obj)
         if not is_completed:
             temp_embed.add_field(name="", value="Quest is not completed!", inline=False)

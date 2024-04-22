@@ -20,8 +20,7 @@ class LeaderbaordView(discord.ui.View):
     @discord.ui.button(label="DPS", style=discord.ButtonStyle.blurple)
     async def dps_leaderboard(self, interaction: discord.Interaction, button: discord.Button):
         try:
-            player_obj = player.get_player_by_id(self.player_user.player_id)
-            embed_msg = display_leaderboard("DPS", player_obj.player_id)
+            embed_msg = await display_leaderboard("DPS", self.player_user.player_id)
             await interaction.response.edit_message(embed=embed_msg)
         except Exception as e:
             print(e)
@@ -29,8 +28,7 @@ class LeaderbaordView(discord.ui.View):
     @discord.ui.button(label="Damage", style=discord.ButtonStyle.blurple)
     async def damage_leaderboard(self, interaction: discord.Interaction, button: discord.Button):
         try:
-            player_obj = player.get_player_by_id(self.player_user.player_id)
-            embed_msg = display_leaderboard("Damage", player_obj.player_id)
+            embed_msg = await display_leaderboard("Damage", self.player_user.player_id)
             await interaction.response.edit_message(embed=embed_msg)
         except Exception as e:
             print(e)
@@ -97,13 +95,13 @@ async def rerank_leaderboard(ctx_object):
         if original_id != new_id:
             role_object = discord.utils.get(ctx.guild.roles, name=role_name)
             # Assign the role to the new top ranker.
-            new_player_obj = player.get_player_by_id(new_id)
+            new_player_obj = await player.get_player_by_id(new_id)
             new_user = ctx.guild.get_member(new_player_obj.discord_id)
             await new_user.add_roles(role_object)
             await send_notification(ctx_object, new_player_obj, "Achievement", role_name)
             # If previous ranker exists remove their role.
             if original_id != -1:
-                original_player_obj = player.get_player_by_id(original_id)
+                original_player_obj = await player.get_player_by_id(original_id)
                 original_user = ctx.guild.get_member(original_player_obj.discord_id)
                 if original_user and new_user and role_object:
                     await original_user.remove_roles(role_object)
@@ -133,7 +131,7 @@ async def rerank_leaderboard(ctx_object):
     pandora_db.close_engine()
 
 
-def display_leaderboard(leaderboard_title, player_id):
+async def display_leaderboard(leaderboard_title, player_id):
     leaderboard_type = leaderboard_title.lower()
     pandora_db = mydb.start_engine()
     raw_query = (f"SELECT player_id, player_{leaderboard_type}_rank, player_{leaderboard_type} "
@@ -144,7 +142,7 @@ def display_leaderboard(leaderboard_title, player_id):
     embed = discord.Embed(color=discord.Color.blue(), title=f"{leaderboard_title} Leaderboard", description="")
     if len(rank_df) != 0:
         for index, row in rank_df.iterrows():
-            current_player = player.get_player_by_id(int(row['player_id']))
+            current_player = await player.get_player_by_id(int(row['player_id']))
             current_rank = row[f'player_{leaderboard_type}_rank']
             current_stat = sharedmethods.number_conversion(int(row[f'player_{leaderboard_type}']))
             class_icon = globalitems.class_icon_dict[current_player.player_class]

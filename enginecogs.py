@@ -206,7 +206,7 @@ class PvPCog(commands.Cog):
     async def handle_pvp_attack(self, combatants, trackers, combo_count, attack_counter, player_interval, hit_list):
         attacker, defender = (0, 1) if attack_counter[0] <= attack_counter[1] else (1, 0)
         role_order = [attacker, defender]
-        stun_status, hit_damage, critical_type = combat.pvp_attack(combatants[attacker], combatants[defender])
+        stun_status, hit_damage, critical_type = await combat.pvp_attack(combatants[attacker], combatants[defender])
         if stun_status is not None:
             trackers[defender].stun_status = stun_status
             trackers[defender].stun_cycles += 1
@@ -229,7 +229,7 @@ class PvPCog(commands.Cog):
         attacker, defender = role_order[0], role_order[1]
         if tracker[attacker].charges < 20:
             return
-        stun_status, hit_damage, critical_type = combat.pvp_attack(combatant[attacker], combatant[defender])
+        stun_status, hit_damage, critical_type = await combat.pvp_attack(combatant[attacker], combatant[defender])
         if stun_status is not None:
             tracker[defender].stun_status = stun_status
             tracker[defender].stun_cycles += 1
@@ -249,10 +249,10 @@ class PvPCog(commands.Cog):
 
     async def handle_pvp_bleed(self, role_order, combatant, tracker, hit_list, is_ultimate):
         attacker, defender = role_order[0], role_order[1]
-        e_weapon = inventory.read_custom_item(combatant[attacker].player_equipped[0])
+        e_weapon = await inventory.read_custom_item(combatant[attacker].player_equipped[0])
         bleed_damage = combatant[attacker].get_player_initial_damage()
         _, bleed_damage = combat.pvp_defences(combatant[attacker], combatant[defender], bleed_damage, e_weapon)
-        bleed_data = combat.trigger_bleed(tracker[attacker], combatant[attacker],
+        bleed_data = await combat.trigger_bleed(tracker[attacker], combatant[attacker],
                                           pvp_data=[role_order, combatant, bleed_damage])
         hit_list.append([bleed_data[0], f"{combatant[attacker].player_username} - {bleed_data[1]}"])
 

@@ -27,7 +27,6 @@ import enginecogs
 # Item/crafting imports
 import loot
 
-
 # Get Bot Token
 token_info = None
 with open("engine_bot_token.txt", 'r') as token_file:
@@ -44,7 +43,7 @@ class RaidView(discord.ui.View):
 
     @discord.ui.button(label="Join the raid!", style=discord.ButtonStyle.success, emoji="⚔️")
     async def raid_callback(self, interaction: discord.Interaction, raid_select: discord.ui.Select):
-        clicked_by = player.get_player_by_discord(interaction.user.id)
+        clicked_by = await player.get_player_by_discord(interaction.user.id)
         outcome = clicked_by.player_username
         echelon_req = [self.channel_num * 2 + 1, self.channel_num * 2 + 2]
         if clicked_by.player_echelon not in echelon_req:
@@ -140,7 +139,7 @@ def run_discord_bot():
                 asyncio.create_task(run_raid_task(raid_channel_id, x, raid_channel))
             restore_boss_list = bosses.restore_solo_bosses(command_channel_id)
             for idy, y in enumerate(restore_boss_list):
-                player_obj = player.get_player_by_id(y.player_id)
+                player_obj = await player.get_player_by_id(y.player_id)
                 asyncio.create_task(run_solo_boss_task(player_obj, y, command_channel_id, ctx))
         print("Initialized Bosses")
 
@@ -160,7 +159,7 @@ def run_discord_bot():
         temp_user = []
         dps = 0
         for idy, y in enumerate(player_list):
-            temp_user.append(player.get_player_by_id(int(y)))
+            temp_user.append(await player.get_player_by_id(int(y)))
             temp_user[idy].get_player_multipliers()
             active_boss.aura += temp_user[idy].aura
             curse_lists = [active_boss.curse_debuffs, temp_user[idy].elemental_curse]
@@ -169,7 +168,7 @@ def run_discord_bot():
                 combat_tracker_list.append(combat.CombatTracker(temp_user[idy]))
         player_msg_list = []
         for idx, x in enumerate(temp_user):
-            player_msg, player_damage = combat.run_raid_cycle(combat_tracker_list[idx], active_boss, x)
+            player_msg, player_damage = await combat.run_raid_cycle(combat_tracker_list[idx], active_boss, x)
             new_player_damage = int(damage_list[idx]) + player_damage
             dps += int(combat_tracker_list[idx].total_dps / combat_tracker_list[idx].total_cycles)
             bosses.update_player_damage(channel_id, x.player_id, new_player_damage)
@@ -182,7 +181,7 @@ def run_discord_bot():
             await sent_message.edit(embed=embed_msg)
             return True
         else:
-            embed_msg = bosses.create_dead_boss_embed(channel_id, active_boss, dps)
+            embed_msg = await bosses.create_dead_boss_embed(channel_id, active_boss, dps)
             for m in player_msg_list:
                 embed_msg.add_field(name="", value=m, inline=False)
             await sent_message.edit(embed=embed_msg)
@@ -202,7 +201,7 @@ def run_discord_bot():
         active_boss.reset_modifiers()
         active_boss.curse_debuffs = player_obj.elemental_curse
         active_boss.aura = player_obj.aura
-        embed, player_alive, boss_alive = combat.run_solo_cycle(combat_tracker, active_boss, player_obj)
+        embed, player_alive, boss_alive = await combat.run_solo_cycle(combat_tracker, active_boss, player_obj)
         bosses.update_boss_cHP(channel_id, active_boss.player_id, active_boss.boss_cHP)
         if not player_alive:
             await sent_message.edit(embed=embed)
@@ -244,6 +243,7 @@ def run_discord_bot():
     @engine_bot.hybrid_command(name='abandon', help="Abandon an active solo encounter.")
     @app_commands.guilds(discord.Object(id=1011375205999968427))
     async def abandon(ctx):
+        await ctx.defer()
         player_obj = await sharedmethods.check_registration(ctx)
         if player_obj is None:
             return
@@ -286,6 +286,7 @@ def run_discord_bot():
                                help="Options: [Random/Fortress/Dragon/Demon/Paragon/Arbiter]. Stamina Cost: 200")
     @app_commands.guilds(discord.Object(id=1011375205999968427))
     async def solo(ctx, boss_type="random"):
+        await ctx.defer()
         player_obj = await sharedmethods.check_registration(ctx)
         if player_obj is None:
             return
@@ -342,6 +343,7 @@ def run_discord_bot():
     @engine_bot.hybrid_command(name='palace', help="Enter the Divine Palace.")
     @app_commands.guilds(discord.Object(id=1011375205999968427))
     async def palace(ctx):
+        await ctx.defer()
         player_obj = await sharedmethods.check_registration(ctx)
         if player_obj is None:
             return
@@ -431,6 +433,7 @@ def run_discord_bot():
     @engine_bot.hybrid_command(name='gauntlet', help="Challenge the gauntlet in the Spire of Illusions.")
     @app_commands.guilds(discord.Object(id=1011375205999968427))
     async def run_gauntlet(ctx):
+        await ctx.defer()
         player_obj = await sharedmethods.check_registration(ctx)
         if player_obj is None:
             return
@@ -464,6 +467,7 @@ def run_discord_bot():
     @engine_bot.hybrid_command(name='summon', help="Challenge a paragon boss.")
     @app_commands.guilds(discord.Object(id=1011375205999968427))
     async def summon(ctx, token_version: int):
+        await ctx.defer()
         player_obj = await sharedmethods.check_registration(ctx)
         if player_obj is None:
             return
@@ -510,13 +514,14 @@ def run_discord_bot():
     @engine_bot.hybrid_command(name='arena', help="Enter pvp combat with another player.")
     @app_commands.guilds(discord.Object(id=1011375205999968427))
     async def arena(ctx):
+        await ctx.defer()
         player_obj = await sharedmethods.check_registration(ctx)
         if player_obj is None:
             return
         if player_obj.player_echelon < 1:
             await ctx.send("You must be Echelon 1 or higher to participate in the arena.")
             return
-        opponent_player = combat.get_random_opponent(player_obj.player_echelon)
+        opponent_player = await combat.get_random_opponent(player_obj.player_echelon)
         if opponent_player is None:
             await ctx.send("No available opponent found.")
             return

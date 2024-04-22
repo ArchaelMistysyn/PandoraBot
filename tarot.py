@@ -309,7 +309,7 @@ class TarotView(discord.ui.View):
                 embed_msg = tarot_menu_embed(self.player_user, self.selected_numeral)
                 active_card = check_tarot(self.player_user.player_id, card_dict[self.selected_numeral][0])
                 if active_card:
-                    self.player_user = player.get_player_by_id(self.player_user.player_id)
+                    await self.player_user.reload_player()
                     self.player_user.equipped_tarot = f"{active_card.card_numeral}"
                     self.player_user.set_player_field("player_tarot", self.player_user.equipped_tarot)
                     embed_msg.add_field(name="Equipped!", value="", inline=False)

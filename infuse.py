@@ -140,8 +140,9 @@ class RecipeObject:
         # Perform the infusion attempts
         for _ in range(num_crafts):
             if random.randint(1, 100) <= self.success_rate:
-                inventory.update_stock(player_obj, self.outcome_item.item_id, 1)
                 result += 1
+        if result > 0:
+            inventory.update_stock(player_obj, self.outcome_item.item_id, result)
         return result
 
 
@@ -210,7 +211,7 @@ class SelectRecipeView(discord.ui.View):
         if self.embed is not None:
             await interaction.response.edit_message(embed=self.embed, view=self.new_view)
             return
-        self.player_obj.reload_player()
+        await self.player_obj.reload_player()
         selected_option = interaction.data['values'][0]
         recipe_object = RecipeObject(self.category, selected_option)
         self.embed = recipe_object.create_cost_embed(self.player_obj)
@@ -232,7 +233,7 @@ class CraftView(discord.ui.View):
     async def run_button(self, interaction, selected_qty):
         if interaction.user.id != self.player_user.discord_id:
             return
-        self.player_user.reload_player()
+        await self.player_user.reload_player()
         if self.embed_msg is not None:
             await interaction.response.edit_message(embed=self.embed_msg, view=self.new_view)
             return
@@ -243,15 +244,16 @@ class CraftView(discord.ui.View):
             new_view = InfuseView(self.player_user)
             await interaction.response.edit_message(embed=embed_msg, view=new_view)
             return
-        result = self.recipe_object.perform_infusion(self.player_user, selected_qty, ring=True)
+        is_ring = "Ring" in self.recipe_object.category
+        result = self.recipe_object.perform_infusion(self.player_user, selected_qty, ring=is_ring)
         # Handle infusion
-        if "Ring" in self.recipe_object.category:
+        if is_ring:
             # Handle ring
             new_ring = inventory.CustomItem(self.player_user.player_id, "R", self.recipe_object.outcome_item)
             new_ring.item_base_type = self.recipe_object.recipe_name
             new_ring.set_item_name()
             inventory.add_custom_item(new_ring)
-            self.embed_msg = new_ring.create_citem_embed()
+            self.embed_msg = await new_ring.create_citem_embed()
             await interaction.response.edit_message(embed=self.embed_msg, view=self.new_view)
             return
         self.new_view = CraftView(self.player_user, self.recipe_object)

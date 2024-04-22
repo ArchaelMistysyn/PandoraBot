@@ -41,7 +41,7 @@ def retrieve_items(player_id):
     return len(item_ids) if item_ids else 0
 
 
-def show_bazaar_items(filtertype=None):
+async def show_bazaar_items(filtertype=None):
     raw_query = ("SELECT CustomBazaar.item_id, CustomBazaar.seller_id, CustomBazaar.cost, "
                  "CustomInventory.item_name, CustomInventory.item_type, "
                  "CustomInventory.item_damage_type, CustomInventory.item_elements, "
@@ -70,7 +70,7 @@ def show_bazaar_items(filtertype=None):
         item_main_info = f"{item_damage}"
         if item_bonus_stat:
             item_main_info = f"{item_main_info} -- Skill: {item_bonus_stat}"
-        seller = player.get_player_by_id(seller_id)
+        seller = await player.get_player_by_id(seller_id)
         display_stars = sharedmethods.display_stars(item_tier)
         item_type = f'{globalitems.class_icon_dict[item_damage_type]}'
         # elements = ''.join(globalitems.global_element_list[idz] for idz, z in enumerate(item_elements) if z == 1)
@@ -92,11 +92,11 @@ def get_item_cost(item_id):
     return int(df['cost'].values[0]) if len(df.index) != 0 else 0
 
 
-def buy_item(item_id):
+async def buy_item(item_id):
     raw_query = "DELETE FROM CustomBazaar WHERE item_id = :item_check"
     mydb.run_single_query(raw_query, params={'item_check': item_id})
     seller_id = get_seller_by_item(item_id)
-    seller_object = player.get_player_by_id(seller_id)
+    seller_object = await player.get_player_by_id(seller_id)
     if seller_object is not None:
         item_cost = get_item_cost(item_id)
         _ = seller_object.adjust_coins(item_cost)
