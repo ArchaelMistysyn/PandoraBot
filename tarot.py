@@ -12,7 +12,7 @@ import itemdata
 import player
 import inventory
 import pilengine
-import mydb
+from pandoradb import run_query as rq
 
 # Item/crafting imports
 import itemrolls
@@ -449,16 +449,16 @@ class TarotCard:
     def set_tarot_field(self, field_name, field_value):
         tarot_check = check_tarot(self.player_id, self.card_name)
         if tarot_check:
-            pandora_db = mydb.start_engine()
+            
             raw_query = (f"UPDATE TarotInventory SET {field_name} = :input_1 "
                          f"WHERE player_id = :player_check AND card_numeral = :numeral_check ")
             params = {'input_1': field_value, 'player_check': self.player_id, 'numeral_check': self.card_numeral}
-            pandora_db.run_query(raw_query, params=params)
-            pandora_db.close_engine()
+            rq(raw_query, params=params)
+            
 
     def add_tarot_card(self):
         tarot_check = check_tarot(self.player_id, self.card_name)
-        pandora_db = mydb.start_engine()
+        
         if tarot_check:
             return
         raw_query = ("INSERT INTO TarotInventory (player_id, card_numeral, "
@@ -466,16 +466,16 @@ class TarotCard:
                      "VALUES (:input_1, :input_2, :input_3, :input_4, :input_5, :input_6)")
         params = {'input_1': self.player_id, 'input_2': self.card_numeral, 'input_3': self.card_name,
                   'input_4': self.card_qty, 'input_5': self.num_stars, 'input_6': self.card_enhancement}
-        pandora_db.run_query(raw_query, params=params)
-        pandora_db.close_engine()
+        rq(raw_query, params=params)
+        
 
 
 def check_tarot(player_id, card_name):
     selected_tarot = None
-    pandora_db = mydb.start_engine()
+    
     raw_query = "SELECT * FROM TarotInventory WHERE player_id = :id_check AND card_name = :card_check"
-    df = pandora_db.run_query(raw_query, return_value=True, params={'id_check': player_id, 'card_check': card_name})
-    pandora_db.close_engine()
+    df = rq(raw_query, return_value=True, params={'id_check': player_id, 'card_check': card_name})
+    
     if len(df.index) != 0:
         player_id = int(df['player_id'].values[0])
         card_numeral, card_qty = str(df['card_numeral'].values[0]), int(df['card_qty'].values[0])
@@ -526,10 +526,10 @@ def get_resonance(card_num):
 
 def collection_check(player_obj):
     collection_count = 0
-    pandora_db = mydb.start_engine()
+    
     raw_query = "SELECT * FROM TarotInventory WHERE player_id = :id_check"
-    df = pandora_db.run_query(raw_query, return_value=True, params={'id_check': player_obj.player_id})
-    pandora_db.close_engine()
+    df = rq(raw_query, return_value=True, params={'id_check': player_obj.player_id})
+    
     if len(df.index) != 0:
         collection_count = df.shape[0]
     return collection_count

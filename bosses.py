@@ -8,7 +8,7 @@ import sharedmethods
 
 # Core imports
 import player
-import mydb
+from enginebotdb import run_query as rq
 
 fortress_variants = [['Devouring', 0], ['Vengeful', 0], ['Blighted', 1], ['Plagued', 1],
                      ['Writhing', 2], ['Agony', 2], ['Overgrown', 3], ['Man-Eating', 3],
@@ -191,13 +191,13 @@ def get_raid_boss_details(channel_num):
 def restore_solo_bosses(channel_id):
     raid_id_df = get_raid_id(channel_id, -1, return_multiple=True)
     restore_raid_list = []
-    pandora_db = mydb.start_engine()
+    
     if len(raid_id_df.index) == 0:
-        pandora_db.close_engine()
+        
         return restore_raid_list
     for index, row in raid_id_df.iterrows():
         raw_query = "SELECT * FROM BossList WHERE raid_id = :id_check"
-        df = pandora_db.run_query(raw_query, return_value=True, params={'id_check': int(row["raid_id"])})
+        df = rq(raw_query, return_value=True, params={'id_check': int(row["raid_id"])})
         boss_tier, boss_level = int(df["boss_tier"].values[0]), int(df["boss_level"].values[0])
         boss_type, boss_type_num = str(df["boss_type"].values[0]), int(df["boss_type_num"].values[0])
         boss_object = CurrentBoss(boss_type_num, boss_type, boss_tier, boss_level)
@@ -207,17 +207,17 @@ def restore_solo_bosses(channel_id):
         boss_object.boss_typeweak, boss_object.boss_eleweak = list(map(int, temp_t)), list(map(int, temp_e))
         boss_object.boss_image = str(df["boss_image"].values[0])
         restore_raid_list.append(boss_object)
-    pandora_db.close_engine()
+    
     return restore_raid_list
 
 
 def spawn_boss(channel_id, player_id, new_boss_tier, selected_boss_type, boss_level, channel_num, gauntlet=False):
     raid_id = get_raid_id(channel_id, player_id)
-    pandora_db = mydb.start_engine()
+    
     # Handle existing boss.
     if raid_id != 0:
         raw_query = "SELECT * FROM BossList WHERE raid_id = :id_check"
-        df = pandora_db.run_query(raw_query, return_value=True, params={'id_check': raid_id})
+        df = rq(raw_query, return_value=True, params={'id_check': raid_id})
         player_id = int(df["player_id"].values[0])
         boss_tier, boss_level = int(df["boss_tier"].values[0]), int(df["boss_level"].values[0])
         boss_type, boss_type_num = str(df["boss_type"].values[0]), int(df["boss_type_num"].values[0])
@@ -227,7 +227,7 @@ def spawn_boss(channel_id, player_id, new_boss_tier, selected_boss_type, boss_le
         temp_t, temp_e = list(df['boss_typeweak'].values[0].split(';')), list(df['boss_eleweak'].values[0].split(';'))
         boss_object.boss_typeweak, boss_object.boss_eleweak = list(map(int, temp_t)), list(map(int, temp_e))
         boss_object.boss_image = str(df["boss_image"].values[0])
-        pandora_db.close_engine()
+        
         # Set the damage cap.
         boss_object.damage_cap = -1
         if boss_object.boss_tier <= 4:
@@ -275,7 +275,7 @@ def spawn_boss(channel_id, player_id, new_boss_tier, selected_boss_type, boss_le
 
     # Apply the new boss to the database.
     raw_query = "INSERT INTO ActiveRaids (channel_id, player_id) VALUES (:input_1, :player_id)"
-    pandora_db.run_query(raw_query, params={'input_1': str(channel_id), 'player_id': player_id})
+    rq(raw_query, params={'input_1': str(channel_id), 'player_id': player_id})
     raid_id = get_raid_id(channel_id, player_id)
     raw_query = ("INSERT INTO BossList "
                  "(raid_id, player_id, boss_name, boss_tier, boss_level, boss_type_num, boss_type, "
@@ -286,8 +286,8 @@ def spawn_boss(channel_id, player_id, new_boss_tier, selected_boss_type, boss_le
               'input_3': boss_level, 'input_4': boss_type_num, 'input_5': selected_boss_type,
               'input_6': str(int(total_hp)), 'input_7': str(int(total_hp)), 'input_8': boss_typeweak,
               'input_9': boss_eleweak, 'input_10': boss_object.boss_image}
-    pandora_db.run_query(raw_query, params=params)
-    pandora_db.close_engine()
+    rq(raw_query, params=params)
+    
     return boss_object
 
 
@@ -329,42 +329,42 @@ def get_boss_descriptor(boss_type):
 
 def add_participating_player(channel_id, player_obj):
     raid_id = get_raid_id(channel_id, 0)
-    pandora_db = mydb.start_engine()
+    
     # Check if player is already part of the raid
     raw_query = "SELECT * FROM RaidPlayers WHERE raid_id = :id_check AND player_id = :player_check"
-    df_check = pandora_db.run_query(raw_query, True, params={'id_check': raid_id, 'player_check': player_obj.player_id})
+    df_check = rq(raw_query, True, params={'id_check': raid_id, 'player_check': player_obj.player_id})
     if len(df_check.index) != 0:
-        pandora_db.close_engine()
+        
         return " is already in the raid."
     # Add player to the raid
     raw_query = "INSERT INTO RaidPlayers (raid_id, player_id, player_dps) VALUES(:raid_id, :player_id, :player_dps)"
-    pandora_db.run_query(raw_query, params={'raid_id': raid_id, 'player_id': player_obj.player_id, 'player_dps': 0})
-    pandora_db.close_engine()
+    rq(raw_query, params={'raid_id': raid_id, 'player_id': player_obj.player_id, 'player_dps': 0})
+    
     return f"{player_obj.player_username} joined the raid"
 
 
 def update_player_damage(channel_id, player_id, player_damage):
     raid_id = get_raid_id(channel_id, 0)
-    pandora_db = mydb.start_engine()
+    
     raw_query = "UPDATE RaidPlayers SET player_dps = :new_dps WHERE raid_id = :id_check AND player_id = :player_check"
-    pandora_db.run_query(raw_query, params={'new_dps': player_damage, 'id_check': raid_id, 'player_check': player_id})
-    pandora_db.close_engine()
+    rq(raw_query, params={'new_dps': player_damage, 'id_check': raid_id, 'player_check': player_id})
+    
 
 
 def update_boss_cHP(channel_id, player_id, new_boss_cHP):
     raid_id = get_raid_id(channel_id, player_id)
-    pandora_db = mydb.start_engine()
+    
     raw_query = "UPDATE BossList SET boss_cHP = :new_cHP WHERE raid_id = :id_check"
-    pandora_db.run_query(raw_query, params={'new_cHP': str(int(new_boss_cHP)), 'id_check': raid_id})
-    pandora_db.close_engine()
+    rq(raw_query, params={'new_cHP': str(int(new_boss_cHP)), 'id_check': raid_id})
+    
 
 
 def get_damage_list(channel_id):
     raid_id = get_raid_id(channel_id, 0)
-    pandora_db = mydb.start_engine()
+    
     raw_query = "SELECT player_id, player_dps FROM RaidPlayers WHERE raid_id = :id_check"
-    df = pandora_db.run_query(raw_query, True, params={'id_check': raid_id})
-    pandora_db.close_engine()
+    df = rq(raw_query, True, params={'id_check': raid_id})
+    
     username = df["player_id"].values.tolist()
     damage = df["player_dps"].values.tolist()
     return username, damage
@@ -372,27 +372,27 @@ def get_damage_list(channel_id):
 
 def clear_boss_info(channel_id, player_id):
     raid_id = get_raid_id(channel_id, player_id)
-    pandora_db = mydb.start_engine()
+    
     raw_queries = [
         "DELETE FROM ActiveRaids WHERE raid_id = :id_check",
         "DELETE FROM BossList WHERE raid_id = :id_check",
         "DELETE FROM RaidPlayers WHERE raid_id = :id_check"
     ]
     for query in raw_queries:
-        pandora_db.run_query(query, params={'id_check': raid_id})
-    pandora_db.close_engine()
+        rq(query, params={'id_check': raid_id})
+    
 
 
 def get_raid_id(channel_id, player_id, return_multiple=False):
-    pandora_db = mydb.start_engine()
+    
     if player_id == -1:
         raw_query = "SELECT raid_id FROM ActiveRaids WHERE channel_id = :id_check"
         params = {'id_check': str(channel_id)}
     else:
         raw_query = "SELECT raid_id FROM ActiveRaids WHERE channel_id = :id_check AND player_id = :player_check"
         params = {'id_check': str(channel_id), 'player_check': player_id}
-    df_check = pandora_db.run_query(raw_query, return_value=True, params=params)
-    pandora_db.close_engine()
+    df_check = rq(raw_query, return_value=True, params=params)
+    
     if return_multiple:
         return df_check
     if len(df_check) == 0:

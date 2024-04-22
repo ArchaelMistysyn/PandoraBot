@@ -179,9 +179,7 @@ class InlaySelectView(discord.ui.View):
         # Set default embed.
         embed_msg = discord.Embed(colour=discord.Colour.dark_orange(),
                                   title="Inlay Failed.", description="No item equipped in this slot")
-        print("1")
         await self.player_user.reload_player()
-        print("2")
         # Confirm an item is equipped in the selected slot.
         if self.player_user.player_equipped[selected_type] == 0:
             await interaction.response.edit_message(embed=embed_msg)
@@ -272,10 +270,9 @@ class StaminaView(discord.ui.View):
     async def drink_potion(self, interaction, potion_version, potion_value):
         if interaction.user.id != self.player.discord_id:
             return
-        await interaction.response.defer()
         await self.player.reload_player()
         embed_msg = self.use_stamina_potion(f"Potion{potion_version}", potion_value)
-        await interaction.edit_original_response(embed=embed_msg, view=self)
+        await interaction.response.edit(embed=embed_msg, view=self)
 
     def use_stamina_potion(self, item_id, restore_amount):
         potion_stock = inventory.check_stock(self.player, item_id)

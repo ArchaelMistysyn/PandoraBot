@@ -1,6 +1,3 @@
-import cProfile
-import pstats
-
 # General imports
 import pandas as pd
 import discord
@@ -12,7 +9,7 @@ import math
 # Data imports
 import globalitems
 import sharedmethods
-import mydb
+from pandoradb import run_query as rq
 
 # Core imports
 import quest
@@ -278,10 +275,10 @@ class PlayerProfile:
 
     def set_player_field(self, field_name, field_value):
         try:
-            pandora_db = mydb.start_engine()
+            
             raw_query = f"UPDATE PlayerList SET {field_name} = :input_1 WHERE player_id = :player_check"
-            pandora_db.run_query(raw_query, params={'player_check': int(self.player_id), 'input_1': field_value})
-            pandora_db.close_engine()
+            rq(raw_query, params={'player_check': int(self.player_id), 'input_1': field_value})
+            
         except mysql.connector.Error as err:
             print("Database Error: {}".format(err))
 
@@ -297,14 +294,13 @@ class PlayerProfile:
         self.player_stamina = 5000
         player_stats, equipped_gear = "0;0;0;0;0;0;0", "0;0;0;0;0;0;0"
         quest_tokens = ";".join(map(str, self.quest_tokens))
-        pandora_db = mydb.start_engine()
         raw_query = "SELECT * FROM PlayerList WHERE discord_id = :id_check"
-        df = pandora_db.run_query(raw_query, return_value=True, params={'id_check': self.discord_id})
+        df = rq(raw_query, return_value=True, params={'id_check': self.discord_id})
 
         if len(df.index) != 0:
             return f"Player with discord ID: ({self.discord_id}) is already registered."
         raw_query = "SELECT * FROM PlayerList WHERE player_username = :username_check"
-        df = pandora_db.run_query(raw_query, return_value=True, params={'username_check': self.player_username})
+        df = rq(raw_query, return_value=True, params={'username_check': self.player_username})
         if len(df.index) != 0:
             return f"Username {self.player_username} is taken. Please pick a new username."
         raw_query = ("INSERT INTO PlayerList "
@@ -322,9 +318,8 @@ class PlayerProfile:
             'input_11': player_stats, 'input_12': equipped_gear, 'input_13': str(self.equipped_tarot),
             'input_14': str(self.insignia), 'input_15': str(self.pact), 'input_16': int(self.vouch_points)
         }
-        pandora_db.run_query(raw_query, params=params)
+        rq(raw_query, params=params)
         registered_player = await get_player_by_discord(self.discord_id)
-        pandora_db.close_engine()
         return f"Welcome {self.player_username}!\nUse /quest to begin."
 
     def spend_stamina(self, cost) -> bool:
@@ -337,7 +332,7 @@ class PlayerProfile:
 
     def get_equipped(self):
         raw_query = "SELECT * FROM PlayerList WHERE player_id = :player_check"
-        df = mydb.run_single_query(raw_query, return_value=True, params={'player_check': self.player_id})
+        df = rq(raw_query, return_value=True, params={'player_check': self.player_id})
         temp_equipped = list(df['player_equipped'].values[0].split(';'))
         self.player_equipped = list(map(int, temp_equipped))
         temp_stats = list(df['player_stats'].values[0].split(';'))
@@ -352,12 +347,7 @@ class PlayerProfile:
         self.set_player_field("player_stats", reset_points)
 
     async def reload_player(self):
-        profiler = cProfile.Profile()
-        profiler.enable()
         _ = await get_player_by_id(self.player_id, reloading=self)
-        profiler.disable()
-        stats = pstats.Stats(profiler).sort_stats('cumtime')
-        stats.print_stats()
 
     async def get_player_multipliers(self):
         base_critical_chance, base_attack_speed, base_mitigation = 10.0, 1.0, 0.0
@@ -507,7 +497,7 @@ class PlayerProfile:
         self.player_equipped[location] = selected_item.item_id
         equipped_gear = ";".join(map(str, self.player_equipped))
         raw_query = f"UPDATE PlayerList SET player_equipped = :input_1 WHERE player_id = :player_check"
-        mydb.run_single_query(raw_query, params={'player_check': int(self.player_id), 'input_1': equipped_gear})
+        rq(raw_query, params={'player_check': int(self.player_id), 'input_1': equipped_gear})
         return f"{item_type} {selected_item.item_id} is now equipped."
 
     async def unequip(self, selected_item):
@@ -517,7 +507,7 @@ class PlayerProfile:
             self.player_equipped[location] = 0
             equipped_gear = ";".join(map(str, self.player_equipped))
             raw_query = f"UPDATE PlayerList SET player_equipped = :input_1 WHERE player_id = :player_check"
-            mydb.run_single_query(raw_query, params={'player_check': int(self.player_id), 'input_1': equipped_gear})
+            rq(raw_query, params={'player_check': int(self.player_id), 'input_1': equipped_gear})
             return
         # Remove inlaid dragon gems
         for item_id in [x for x in self.player_equipped if x != 0]:
@@ -578,10 +568,10 @@ class PlayerProfile:
 
     def check_cooldown(self, command_name):
         difference = None
-        pandora_db = mydb.start_engine()
+        
         raw_query = "SELECT * FROM CommandCooldowns WHERE player_id = :player_check AND command_name = :cmd_check"
         params = {'player_check': self.player_id, 'cmd_check': command_name}
-        df = pandora_db.run_query(raw_query, return_value=True, params=params)
+        df = rq(raw_query, return_value=True, params=params)
         method = ""
         if len(df) != 0:
             date_string = str(df["time_used"].values[0])
@@ -589,15 +579,15 @@ class PlayerProfile:
             now = dt.now()
             difference = now - previous
             method = str(df["method"].values[0])
-        pandora_db.close_engine()
+        
         return difference, method
 
     def set_cooldown(self, command_name, method, rewind_days=0):
         difference = None
-        pandora_db = mydb.start_engine()
+        
         raw_query = "SELECT * FROM CommandCooldowns WHERE player_id = :player_check AND command_name = :cmd_check"
         params = {'player_check': self.player_id, 'cmd_check': command_name}
-        df = pandora_db.run_query(raw_query, return_value=True, params=params)
+        df = rq(raw_query, return_value=True, params=params)
         raw_query = ("INSERT INTO CommandCooldowns (player_id, command_name, method, time_used) "
                      "VALUES (:player_check, :cmd_check, :method, :time_check)")
         if len(df) != 0:
@@ -607,30 +597,30 @@ class PlayerProfile:
         current_time = timestamp.strftime(globalitems.date_formatting)
         params = {'player_check': self.player_id, 'cmd_check': command_name,
                   'method': method, 'time_check': current_time}
-        pandora_db.run_query(raw_query, params=params)
-        pandora_db.close_engine()
+        rq(raw_query, params=params)
+        
         return difference
 
     def clear_cooldown(self, command_name):
         raw_query = "DELETE FROM CommandCooldowns WHERE player_id = :player_check AND command_name = :cmd_check"
-        mydb.run_single_query(raw_query, params={'player_check': self.player_id, 'cmd_check': command_name})
+        rq(raw_query, params={'player_check': self.player_id, 'cmd_check': command_name})
 
 
 def check_username(new_name: str):
     raw_query = "SELECT * FROM PlayerList WHERE player_username = :player_check"
-    df = mydb.run_single_query(raw_query, return_value=True, params={'player_check': new_name})
+    df = rq(raw_query, return_value=True, params={'player_check': new_name})
     return False if len(df) != 0 else True
 
 
 async def get_player_by_id(player_id, reloading=None):
     raw_query = "SELECT * FROM PlayerList WHERE player_id = :id_check"
-    df = mydb.run_single_query(raw_query, return_value=True, params={'id_check': player_id})
+    df = rq(raw_query, return_value=True, params={'id_check': player_id})
     return None if len(df.index) == 0 else await df_to_player(df, reloading=reloading)
 
 
 async def get_player_by_discord(discord_id, reloading=None):
     raw_query = "SELECT * FROM PlayerList WHERE discord_id = :id_check"
-    df = mydb.run_single_query(raw_query, return_value=True, params={'id_check': discord_id})
+    df = rq(raw_query, return_value=True, params={'id_check': discord_id})
     return None if len(df.index) == 0 else await df_to_player(df, reloading=reloading)
 
 
@@ -666,7 +656,7 @@ async def df_to_player(row, reloading=None):
 async def get_players_by_echelon(player_echelon):
     user_list = []
     raw_query = "SELECT * FROM PlayerList WHERE player_echelon = :echelon_check"
-    player_df = mydb.run_single_query(raw_query, return_value=True, params={'echelon_check': player_echelon})
+    player_df = rq(raw_query, return_value=True, params={'echelon_check': player_echelon})
     if len(player_df.index) == 0:
         return None
     for index, row in player_df.iterrows():
@@ -677,7 +667,7 @@ async def get_players_by_echelon(player_echelon):
 async def get_all_users():
     user_list = []
     raw_query = "SELECT * FROM PlayerList"
-    df = mydb.run_single_query(raw_query, return_value=True)
+    df = rq(raw_query, return_value=True)
     if len(df.index) == 0:
         return None
     for index, row in df.iterrows():

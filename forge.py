@@ -7,7 +7,7 @@ import asyncio
 # Data imports
 import globalitems
 import sharedmethods
-import mydb
+from pandoradb import run_query as rq
 
 # Core imports
 import player

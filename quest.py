@@ -6,7 +6,7 @@ import discord
 import globalitems
 import sharedmethods
 import questdata
-import mydb
+from pandoradb import run_query as rq
 
 # Core imports
 import player

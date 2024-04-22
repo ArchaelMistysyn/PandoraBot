@@ -14,7 +14,7 @@ import itemdata
 # Core imports
 import player
 import inventory
-import mydb
+from pandoradb import run_query as rq
 
 # Item/crafting imports
 import loot
@@ -223,7 +223,7 @@ class CustomItem:
             item_roll_values += str(x) + ";"
         if item_roll_values != "":
             item_roll_values = item_roll_values[:-1]
-        pandora_db = mydb.start_engine()
+        
         raw_query = ("UPDATE CustomInventory SET player_id = :input_1, item_type = :input_2, item_name = :input_3, "
                      "item_damage_type = :input_4, item_elements = :input_5, item_enhancement = :input_6, "
                      "item_tier = :input_7, item_quality_tier = :input_8, item_base_type = :input_9, "
@@ -241,8 +241,8 @@ class CustomItem:
             'input_13': int(self.base_damage_min), 'input_14': int(self.base_damage_max),
             'input_15': int(self.item_num_sockets), 'input_16': int(self.item_inlaid_gem_id)
         }
-        pandora_db.run_query(raw_query, params=params)
-        pandora_db.close_engine()
+        rq(raw_query, params=params)
+        
 
     def set_item_name(self):
         # Handle naming exceptions.
@@ -447,7 +447,7 @@ def get_item_shop_list(item_tier):
 
 async def read_custom_item(item_id):
     raw_query = "SELECT * FROM CustomInventory WHERE item_id = :id_check"
-    df = mydb.run_single_query(raw_query, return_value=True, params={'id_check': item_id})
+    df = rq(raw_query, return_value=True, params={'id_check': item_id})
     if len(df.index) == 0:
         return None
     item = CustomItem(int(df['player_id'].values[0]), str(df['item_type'].values[0]), 1)
@@ -492,10 +492,10 @@ def add_custom_item(item):
     item_roll_values = item_roll_values[:-1]
 
     # Insert the item if applicable.
-    pandora_db = mydb.start_engine()
+    
     raw_query = "SELECT * FROM CustomInventory WHERE player_id = :player_check AND item_type = :item_check"
     params = {'player_check': item.player_owner, 'item_check': item.item_type}
-    check_df = pandora_db.run_query(raw_query, return_value=True, params=params)
+    check_df = rq(raw_query, return_value=True, params=params)
     if len(check_df) > 30:
         return 0
     insert_query = ("INSERT INTO CustomInventory "
@@ -512,12 +512,12 @@ def add_custom_item(item):
         'input_13': item.base_damage_min, 'input_14': item.base_damage_max,
         'input_15': item.item_num_sockets, 'input_16': item.item_inlaid_gem_id
     }
-    pandora_db.run_query(insert_query, params=params)
+    rq(insert_query, params=params)
     # Fetch the item id of the inserted item
     select_query = "SELECT item_id FROM CustomInventory WHERE player_id = :player_check AND item_name = :name_check"
-    df = pandora_db.run_query(select_query, return_value=True,
+    df = rq(select_query, return_value=True,
                               params={'player_check': item.player_owner, 'name_check': item.item_name})
-    pandora_db.close_engine()
+    
     if len(df) == 0:
         return 0
     id_list = list(df['item_id'])
@@ -528,23 +528,23 @@ def add_custom_item(item):
 
 # check if item already exists. Prevent duplication
 def if_custom_exists(item_id) -> bool:
-    pandora_db = mydb.start_engine()
+    
     raw_query = "SELECT * FROM CustomInventory WHERE item_id = :id_check"
-    df = pandora_db.run_query(raw_query, True, params={'id_check': item_id})
-    pandora_db.close_engine()
+    df = rq(raw_query, True, params={'id_check': item_id})
+    
     if len(df.index) == 0:
         return False
     return True
 
 
 def display_cinventory(player_id, item_type) -> str:
-    pandora_db = mydb.start_engine()
+    
     raw_query = ("SELECT item_id, item_name FROM CustomInventory "
                  "WHERE player_id = :player_id AND item_type LIKE :item_type "
                  "ORDER BY item_tier DESC")
     params = {'player_id': player_id, 'item_type': f'%{item_type}%'}
-    df = pandora_db.run_query(raw_query, True, params=params)
-    pandora_db.close_engine()
+    df = rq(raw_query, True, params=params)
+    
     temp = df.style.set_properties(**{'text-align': 'left'}).hide(axis='index').hide(axis='columns')
     player_inventory = temp.to_string()
     return player_inventory
@@ -563,10 +563,10 @@ def display_binventory(player_id, method):
         "Ultra Rare": "^(Lotus|LightStar|DarkStar)"
     }
     player_inventory = ""
-    pandora_db = mydb.start_engine()
+    
     raw_query = ("SELECT item_id, item_qty FROM BasicInventory "
                  "WHERE player_id = :id_check AND item_qty <> 0 ORDER BY item_id ASC")
-    df = pandora_db.run_query(raw_query, True, params={'id_check': player_id})
+    df = rq(raw_query, True, params={'id_check': player_id})
 
     # Filter the data, pull associated data by the id, and build the output string.
     inventory_list = []
@@ -579,7 +579,7 @@ def display_binventory(player_id, method):
             inventory_list.append([current_item, str(row['item_qty'])])
     for item, quantity in inventory_list:
         player_inventory += f"{item.item_emoji} {quantity}x {item.item_name}\n"
-    pandora_db.close_engine()
+    
     return player_inventory
 
 
@@ -603,31 +603,31 @@ def generate_random_tier(min_tier=1, max_tier=8, luck_bonus=0):
 
 def check_stock(player_obj, item_id):
     player_stock = 0
-    pandora_db = mydb.start_engine()
+    
     raw_query = ("SELECT item_qty FROM BasicInventory "
                  "WHERE player_id = :id_check AND item_id = :item_check")
-    df = pandora_db.run_query(raw_query, True, params={'id_check': player_obj.player_id, 'item_check': item_id})
-    pandora_db.close_engine()
+    df = rq(raw_query, True, params={'id_check': player_obj.player_id, 'item_check': item_id})
+    
     if len(df.index) != 0:
         player_stock = int(df['item_qty'].values[0])
     return player_stock
 
 
 def update_stock(player_obj, item_id, change, batch=None):
-    pandora_db = mydb.start_engine()
+    
     if batch is not None:
         raw_query = ("INSERT INTO BasicInventory (player_id, item_id, item_qty) "
                      "VALUES (:player_id, :item_id, :item_qty) "
                      "ON DUPLICATE KEY UPDATE item_qty = item_qty + VALUES(item_qty);")
         batch_params = batch.to_dict('records')
-        pandora_db.run_query(raw_query, batch=True, params=batch_params)
-        pandora_db.close_engine()
+        rq(raw_query, batch=True, params=batch_params)
+        
         return
     if player_obj is None or item_id is None or change is None:
         return
     raw_query = ("SELECT item_qty FROM BasicInventory "
                  "WHERE player_id = :id_check AND item_id = :item_check")
-    df = pandora_db.run_query(raw_query, True, params={'id_check': player_obj.player_id, 'item_check': item_id})
+    df = rq(raw_query, True, params={'id_check': player_obj.player_id, 'item_check': item_id})
     raw_query = ("INSERT INTO BasicInventory (player_id, item_id, item_qty) "
                  "VALUES(:player_check, :item_check, :new_qty)")
     player_stock = change
@@ -637,8 +637,8 @@ def update_stock(player_obj, item_id, change, batch=None):
                      "WHERE player_id = :player_check AND item_id = :item_check")
     player_stock = max(player_stock, 0)
     params = {'new_qty': player_stock, 'player_check': player_obj.player_id, 'item_check': item_id}
-    pandora_db.run_query(raw_query, params=params)
-    pandora_db.close_engine()
+    rq(raw_query, params=params)
+    
 
 
 def try_refine(player_owner, item_type, target_tier):
@@ -667,10 +667,10 @@ async def sell(user, item, embed_msg):
         return response_embed
     # Sell the item.
     sell_msg = user.adjust_coins(sell_value)
-    pandora_db = mydb.start_engine()
+    
     raw_query = "DELETE FROM CustomInventory WHERE item_id = :item_check"
-    pandora_db.run_query(raw_query, params={'item_check': item.item_id})
-    pandora_db.close_engine()
+    rq(raw_query, params={'item_check': item.item_id})
+    
     currency_msg = f'You now have {user.player_coins:,} lotus coins!'
     response_embed.add_field(name=f"Item Sold! {globalitems.coin_icon} {sell_msg} lotus coins acquired!",
                              value=currency_msg, inline=False)
@@ -678,19 +678,19 @@ async def sell(user, item, embed_msg):
 
 
 def delete_item(user_object, item):
-    pandora_db = mydb.start_engine()
+    
     if "D" in item.item_type:
         raw_query = "UPDATE CustomInventory SET item_inlaid_gem_id = 0 WHERE item_inlaid_gem_id = :item_check"
-        pandora_db.run_query(raw_query, params={'item_check': item.item_id})
+        rq(raw_query, params={'item_check': item.item_id})
     else:
         user_object.unequip_item(item)
     raw_query = "DELETE FROM CustomInventory WHERE item_id = :item_check"
-    pandora_db.run_query(raw_query, params={'item_check': item.item_id})
-    pandora_db.close_engine()
+    rq(raw_query, params={'item_check': item.item_id})
+    
 
 
 async def purge(player_obj, item_type, tier):
-    pandora_db = mydb.start_engine()
+    
     player_obj.get_equipped()
     exclusion_list = player_obj.player_equipped
     inlaid_gem_list = []
@@ -706,12 +706,12 @@ async def purge(player_obj, item_type, tier):
     raw_query = (f"SELECT item_tier FROM CustomInventory "
                  f"WHERE player_id = :id_check AND item_tier <= :tier_check "
                  f"AND item_id NOT IN ({exclusion_ids}){type_checker}")
-    df = pandora_db.run_query(raw_query, return_value=True, params=params)
+    df = rq(raw_query, return_value=True, params=params)
     delete_query = (f"DELETE FROM CustomInventory "
                     f"WHERE player_id = :id_check AND item_tier <= :tier_check "
                     f"AND item_id NOT IN ({exclusion_ids}){type_checker}")
-    pandora_db.run_query(delete_query, params=params)
-    pandora_db.close_engine()
+    rq(delete_query, params=params)
+    
     result = len(df)
     coin_total = 0
     for item_tier in df['item_tier']:

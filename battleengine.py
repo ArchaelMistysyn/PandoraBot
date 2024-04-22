@@ -27,6 +27,9 @@ import enginecogs
 # Item/crafting imports
 import loot
 
+# Database imports
+from enginebotdb import close_engine_database_session as ceds
+
 # Get Bot Token
 token_info = None
 with open("engine_bot_token.txt", 'r') as token_file:
@@ -74,8 +77,8 @@ def run_discord_bot():
     async def on_shutdown():
         print("Battle Engine Off")
         try:
+            await ceds()
             await engine_bot.close()
-            await engine_bot.session.close()
         except KeyboardInterrupt:
             sys.exit(0)
 
@@ -160,7 +163,7 @@ def run_discord_bot():
         dps = 0
         for idy, y in enumerate(player_list):
             temp_user.append(await player.get_player_by_id(int(y)))
-            temp_user[idy].get_player_multipliers()
+            await temp_user[idy].get_player_multipliers()
             active_boss.aura += temp_user[idy].aura
             curse_lists = [active_boss.curse_debuffs, temp_user[idy].elemental_curse]
             active_boss.curse_debuffs = [sum(z) for z in zip(*curse_lists)]

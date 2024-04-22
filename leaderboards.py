@@ -6,7 +6,7 @@ import pandas as pd
 
 # Data imports
 import globalitems
-import mydb
+from pandoradb import run_query as rq
 
 # Core imports
 import player
@@ -35,11 +35,11 @@ class LeaderbaordView(discord.ui.View):
 
 
 async def update_leaderboard(combat_tracker, player_obj, ctx_object):
-    pandora_db = mydb.start_engine()
+    
 
     # Pull the user data.
     raw_query = "SELECT * FROM Leaderboard WHERE player_id = :player_check"
-    df = pandora_db.run_query(query, return_value=True, params={'player_check': player_obj.player_id})
+    df = rq(query, return_value=True, params={'player_check': player_obj.player_id})
     true_dps = int(combat_tracker.total_dps / combat_tracker.total_cycles)
     high_dmg = combat_tracker.highest_damage
     now = dt.now()
@@ -49,13 +49,13 @@ async def update_leaderboard(combat_tracker, player_obj, ctx_object):
             raw_query = ("UPDATE Leaderboard SET player_dps = :new_dps, dps_record_time = :current_time "
                          "WHERE player_id = :player_check")
             params = {'new_dps': true_dps, 'current_time': now, 'player_check': player_obj.player_id}
-            pandora_db.run_query(raw_query, params=params)
+            rq(raw_query, params=params)
         # Update Damage ranking.
         if high_dmg > int(df['player_damage'].values[0]):
             raw_query = ("UPDATE Leaderboard SET player_damage = :new_dmg, damage_record_time = :current_time "
                          "WHERE player_id = :player_check")
             params = {'new_dmg': high_dmg, 'current_time': now, 'player_check': player_obj.player_id}
-            pandora_db.run_query(raw_query, params=params)
+            rq(raw_query, params=params)
     else:
         # Add the player to the leaderboard if new.
         raw_query = ("INSERT INTO Leaderboard (player_id, player_dps_rank, player_dps, dps_record_time, "
@@ -66,29 +66,29 @@ async def update_leaderboard(combat_tracker, player_obj, ctx_object):
             'player_id': player_obj.player_id, 'dps_record_time': now, 'damage_record_time': now,
             'player_dps_rank': 999999, 'player_dps': true_dps, 'player_damage_rank': 999999, 'player_damage': high_dmg
         }
-        pandora_db.run_query(raw_query, params=params)
-    pandora_db.close_engine()
+        rq(raw_query, params=params)
+    
     await rerank_leaderboard(ctx_object)
 
 
 async def rerank_leaderboard(ctx_object):
-    pandora_db = mydb.start_engine()
+    
 
     # Fetch the damage leaderboard, update the rankings.
     damage_query = "SELECT * FROM Leaderboard ORDER BY player_damage DESC, damage_record_time ASC"
-    damage_df = pandora_db.run_query(damage_query, return_value=True)
+    damage_df = rq(damage_query, return_value=True)
     damage_df['player_damage_rank'] = range(1, len(damage_df) + 1)
     damage_df = damage_df[['player_id', 'player_damage_rank']]
     # Fetch the dps leaderboard, update the rankings.
     dps_query = "SELECT * FROM Leaderboard ORDER BY player_dps DESC, dps_record_time ASC"
-    dps_df = pandora_db.run_query(dps_query, return_value=True)
+    dps_df = rq(dps_query, return_value=True)
     dps_df['player_dps_rank'] = range(1, len(dps_df) + 1)
     dps_df = dps_df[['player_id', 'player_dps_rank']]
 
     # Retrieve the current roles for rank 1 players
     raw_query = ("SELECT player_id, player_damage_rank, player_dps_rank "
                  "FROM Leaderboard WHERE player_damage_rank = 1 OR player_dps_rank = 1")
-    original_df = pandora_db.run_query(raw_query, return_value=True)
+    original_df = rq(raw_query, return_value=True)
 
     # Handle rank changes and role assignment.
     async def handle_rank_changes(ctx, original_id, new_id, role_name):
@@ -127,17 +127,17 @@ async def rerank_leaderboard(ctx_object):
         dps_rank = record['player_dps_rank']
         raw_query = ("UPDATE Leaderboard "
                      "SET player_damage_rank = :damage_rank, player_dps_rank = :dps_rank WHERE player_id = :id")
-        pandora_db.run_query(raw_query, params={'damage_rank': damage_rank, 'dps_rank': dps_rank, 'id': player_id})
-    pandora_db.close_engine()
+        rq(raw_query, params={'damage_rank': damage_rank, 'dps_rank': dps_rank, 'id': player_id})
+    
 
 
 async def display_leaderboard(leaderboard_title, player_id):
     leaderboard_type = leaderboard_title.lower()
-    pandora_db = mydb.start_engine()
+    
     raw_query = (f"SELECT player_id, player_{leaderboard_type}_rank, player_{leaderboard_type} "
                  f"FROM Leaderboard ORDER BY player_{leaderboard_type}_rank ASC, player_id DESC")
-    rank_df = pandora_db.run_query(raw_query, return_value=True)
-    pandora_db.close_engine()
+    rank_df = rq(raw_query, return_value=True)
+    
     # Build ranking embed.
     embed = discord.Embed(color=discord.Color.blue(), title=f"{leaderboard_title} Leaderboard", description="")
     if len(rank_df) != 0:

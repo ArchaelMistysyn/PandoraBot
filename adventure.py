@@ -111,7 +111,7 @@ class Room:
             case "epitaph_room":
                 return [min(90, 50 + luck), min(90, 75 + luck)]
             case "penetralia_room" | "jackpot_room":
-                return [min(90, (5 + (5 * scaling))), None]
+                return [min(90, (5 + (5 * scaling) + (5 * luck))), None]
             case "selection_room":
                 return [None, None, min(75, (luck * 5))]
             case "crystal_room":
@@ -164,7 +164,7 @@ class Room:
                 temp_player = await player.get_player_by_discord(expedition.player_obj.discord_id)
                 if self.variant == "Greed":
                     description += f"\nCurrent Coins: {globalitems.coin_icon} {temp_player.player_coins:,}x"
-                elif variant == "Soul":
+                elif self.variant == "Soul":
                     description += f"\nCurrent Stamina: {globalitems.stamina_icon} {temp_player.player_stamina:,}"
             case "boss_shrine":
                 self.variant = "Greater " if random_check <= (5 * expedition.luck) else ""
@@ -835,6 +835,7 @@ class AdventureRoomView(discord.ui.View):
             loot_msg = f"{reward.item_emoji} {qty}x {reward.item_name}"
             self.embed = discord.Embed(colour=self.expedition.colour, title="Fragments Acquired!", description=loot_msg)
             update_stock = inventory.update_stock(self.expedition.player_obj, reward.item_id, qty)
+            await interaction.response.edit_message(embed=self.embed, view=self.new_view)
             return
         # Handle gear item rewards.
         reward_tier = inventory.generate_random_tier(luck_bonus=(self.expedition.luck + bonus))

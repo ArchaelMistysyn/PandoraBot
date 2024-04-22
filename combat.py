@@ -9,7 +9,7 @@ import sharedmethods
 import player
 import quest
 import inventory
-import mydb
+from enginebotdb import run_query as rq
 
 
 combat_command_list = [("solo", "Challenge a solo boss. Stamina Cost: 200", 0),
@@ -420,27 +420,27 @@ async def get_random_opponent(player_echelon):
 
 def check_flag(player_obj):
     is_flagged = False
-    pandora_db = mydb.start_engine()
+    
     raw_query = "SELECT * FROM AbandonEncounter WHERE player_id = :player_check"
-    df = pandora_db.run_query(raw_query, True, params={'player_check': int(player_obj.player_id)})
+    df = rq(raw_query, True, params={'player_check': int(player_obj.player_id)})
     if len(df) != 0:
         is_flagged = True
-    pandora_db.close_engine()
+    
     return is_flagged
 
 
 def toggle_flag(player_obj):
     player_id = int(player_obj.player_id)
-    pandora_db = mydb.start_engine()
+    
     # Check if a flag exists
     check_query = "SELECT * FROM AbandonEncounter WHERE player_id = :player_check"
-    df = pandora_db.run_query(check_query, True, params={'player_check': player_id})
+    df = rq(check_query, True, params={'player_check': player_id})
     if len(df) != 0:
         toggle_query = "DELETE FROM AbandonEncounter WHERE player_id = :player_check"
     else:
         toggle_query = "INSERT INTO AbandonEncounter (player_id) VALUES (:player_check)"
-    pandora_db.run_query(toggle_query, params={'player_check': player_id})
-    pandora_db.close_engine()
+    rq(toggle_query, params={'player_check': player_id})
+    
 
 
 def limit_elements(player_obj, e_weapon):

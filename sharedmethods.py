@@ -76,10 +76,10 @@ def get_gear_tier_colours(base_tier):
 
 
 def reset_all_cooldowns():
-    pandora_db = mydb.start_engine()
+    
     raw_query = "DELETE FROM CommandCooldowns"
-    pandora_db.run_query(raw_query)
-    pandora_db.close_engine()
+    rq(raw_query)
+    
 
 
 def display_hp(current_hp, max_hp):

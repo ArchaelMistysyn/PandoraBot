@@ -7,7 +7,7 @@ import random
 import globalitems
 import itemdata
 import sharedmethods
-import mydb
+from pandoradb import run_query as rq
 
 # Core imports
 import player

@@ -7,7 +7,7 @@ import random
 import globalitems
 
 # Core imports
-import mydb
+from pandoradb import run_query as rq
 import player
 import inventory
 

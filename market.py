@@ -5,7 +5,7 @@ import player
 import globalitems
 import itemdata
 import pandas as pd
-import mydb
+from pandoradb import run_query as rq
 
 lotus_list = [itemdata.itemdata_dict[key] for key in itemdata.itemdata_dict.keys() if "Lotus" in key]
 
