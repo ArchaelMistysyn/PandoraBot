@@ -44,7 +44,7 @@ import infuse
 import pandoracogs
 
 # Database imports
-from pandoradb import close_pandora_database_session as cpds
+from pandoradb import close_database_session
 
 guild_id = 1011375205999968427
 
@@ -84,7 +84,7 @@ def run_discord_bot():
     async def on_shutdown():
         print("Pandora Bot Off")
         try:
-            await cpds()
+            await close_database_session()
             await pandora_bot.close()
         except KeyboardInterrupt:
             sys.exit(0)

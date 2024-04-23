@@ -164,7 +164,7 @@ quality_damage_map = {
 }
 
 # Max Enhancement by Tier
-max_enhancement = [20, 40, 60, 80, 100, 150, 200, 999]
+max_enhancement = [10, 20, 30, 40, 50, 100, 150, 200]
 
 # Attack Speed Ranges by Tier
 speed_range_list = [(1.00, 1.10), (1.10, 1.20), (1.20, 1.30), (1.30, 1.50),

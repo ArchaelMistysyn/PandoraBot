@@ -237,12 +237,14 @@ class CraftView(discord.ui.View):
         if self.embed_msg is not None:
             await interaction.response.edit_message(embed=self.embed_msg, view=self.new_view)
             return
+        self.new_view = CraftView(self.player_user, self.recipe_object)
+        self.embed_msg = self.recipe_object.create_cost_embed(self.player_user)
         # Handle cannot afford response
         if not self.recipe_object.can_afford(self.player_user, selected_qty):
-            embed_msg = discord.Embed(colour=discord.Colour.dark_orange(), title="Not Enough Materials!",
-                                      description="Please come back when you have more materials.")
+            self.embed_msg.add_field(name="Not Enough Materials!",
+                                     value="Please come back when you have more materials.", inline=False)
             new_view = InfuseView(self.player_user)
-            await interaction.response.edit_message(embed=embed_msg, view=new_view)
+            await interaction.response.edit_message(embed=self.embed_msg, view=new_view)
             return
         is_ring = "Ring" in self.recipe_object.category
         result = self.recipe_object.perform_infusion(self.player_user, selected_qty, ring=is_ring)
@@ -256,18 +258,18 @@ class CraftView(discord.ui.View):
             self.embed_msg = await new_ring.create_citem_embed()
             await interaction.response.edit_message(embed=self.embed_msg, view=self.new_view)
             return
-        self.new_view = CraftView(self.player_user, self.recipe_object)
         # Handle non-ring failure
         if result == 0:
-            description = "Infusion Failed! I guess it's just not your day today."
-            embed_msg = discord.Embed(colour=discord.Colour.dark_orange(), title=NPC_name, description=description)
-            new_view = CraftView(self.player_user, self.recipe_object)
+            header, description = "Infusion Failed!", "I guess it's just not your day today."
+            self.embed_msg = discord.Embed(colour=discord.Colour.dark_orange(), title=NPC_name, description=description)
+            self.embed_msg.add_field(name=header, value=description, inline=False)
+            self.new_view = CraftView(self.player_user, self.recipe_object)
             await interaction.response.edit_message(embed=self.embed_msg, view=self.new_view)
             return
         # Handle non-ring success
         outcome_item = self.recipe_object.outcome_item
-        description = f"Infusion Successful!\n{outcome_item.item_emoji} {result:,}x {outcome_item.item_name}"
-        self.embed_msg = discord.Embed(colour=discord.Colour.dark_orange(), title=NPC_name, description=description)
+        header, description = "Infusion Successful!", f"\n{outcome_item.item_emoji} {result:,}x {outcome_item.item_name}"
+        self.embed_msg.add_field(name=header, value=description, inline=False)
         await interaction.response.edit_message(embed=self.embed_msg, view=self.new_view)
         return
 

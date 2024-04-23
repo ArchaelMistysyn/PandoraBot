@@ -625,7 +625,7 @@ async def get_player_by_discord(discord_id, reloading=None):
 
 
 async def df_to_player(row, reloading=None):
-    temp = PlayerProfile() if reloading is None else reloading
+    temp = PlayerProfile()
     if isinstance(row, pd.Series):
         temp.player_id, temp.discord_id = int(row['player_id']), int(row['discord_id'])
         temp.player_username = str(row["player_username"])
@@ -650,6 +650,8 @@ async def df_to_player(row, reloading=None):
     temp.quest_tokens = list(map(int, string_list))
     temp.get_equipped()
     await temp.get_player_multipliers()
+    if reloading is not None:
+        reloading = temp
     return temp
 
 

@@ -8,7 +8,7 @@ import sharedmethods
 
 # Core imports
 import player
-from enginebotdb import run_query as rq
+from pandoradb import run_query as rq
 
 fortress_variants = [['Devouring', 0], ['Vengeful', 0], ['Blighted', 1], ['Plagued', 1],
                      ['Writhing', 2], ['Agony', 2], ['Overgrown', 3], ['Man-Eating', 3],
@@ -329,7 +329,6 @@ def get_boss_descriptor(boss_type):
 
 def add_participating_player(channel_id, player_obj):
     raid_id = get_raid_id(channel_id, 0)
-    
     # Check if player is already part of the raid
     raw_query = "SELECT * FROM RaidPlayers WHERE raid_id = :id_check AND player_id = :player_check"
     df_check = rq(raw_query, True, params={'id_check': raid_id, 'player_check': player_obj.player_id})
@@ -339,32 +338,27 @@ def add_participating_player(channel_id, player_obj):
     # Add player to the raid
     raw_query = "INSERT INTO RaidPlayers (raid_id, player_id, player_dps) VALUES(:raid_id, :player_id, :player_dps)"
     rq(raw_query, params={'raid_id': raid_id, 'player_id': player_obj.player_id, 'player_dps': 0})
-    
     return f"{player_obj.player_username} joined the raid"
 
 
 def update_player_damage(channel_id, player_id, player_damage):
     raid_id = get_raid_id(channel_id, 0)
-    
     raw_query = "UPDATE RaidPlayers SET player_dps = :new_dps WHERE raid_id = :id_check AND player_id = :player_check"
     rq(raw_query, params={'new_dps': player_damage, 'id_check': raid_id, 'player_check': player_id})
-    
 
 
 def update_boss_cHP(channel_id, player_id, new_boss_cHP):
     raid_id = get_raid_id(channel_id, player_id)
-    
     raw_query = "UPDATE BossList SET boss_cHP = :new_cHP WHERE raid_id = :id_check"
     rq(raw_query, params={'new_cHP': str(int(new_boss_cHP)), 'id_check': raid_id})
-    
 
 
 def get_damage_list(channel_id):
     raid_id = get_raid_id(channel_id, 0)
-    
     raw_query = "SELECT player_id, player_dps FROM RaidPlayers WHERE raid_id = :id_check"
     df = rq(raw_query, True, params={'id_check': raid_id})
-    
+    if df is None or len(df.index) == 0:
+        return [], []
     username = df["player_id"].values.tolist()
     damage = df["player_dps"].values.tolist()
     return username, damage
@@ -372,7 +366,6 @@ def get_damage_list(channel_id):
 
 def clear_boss_info(channel_id, player_id):
     raid_id = get_raid_id(channel_id, player_id)
-    
     raw_queries = [
         "DELETE FROM ActiveRaids WHERE raid_id = :id_check",
         "DELETE FROM BossList WHERE raid_id = :id_check",
@@ -380,11 +373,9 @@ def clear_boss_info(channel_id, player_id):
     ]
     for query in raw_queries:
         rq(query, params={'id_check': raid_id})
-    
 
 
 def get_raid_id(channel_id, player_id, return_multiple=False):
-    
     if player_id == -1:
         raw_query = "SELECT raid_id FROM ActiveRaids WHERE channel_id = :id_check"
         params = {'id_check': str(channel_id)}
@@ -392,11 +383,10 @@ def get_raid_id(channel_id, player_id, return_multiple=False):
         raw_query = "SELECT raid_id FROM ActiveRaids WHERE channel_id = :id_check AND player_id = :player_check"
         params = {'id_check': str(channel_id), 'player_check': player_id}
     df_check = rq(raw_query, return_value=True, params=params)
-    
+    if df_check is None or len(df_check) == 0:
+        return 0
     if return_multiple:
         return df_check
-    if len(df_check) == 0:
-        return 0
     return int(df_check['raid_id'].values[0])
 
 

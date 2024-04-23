@@ -448,7 +448,7 @@ def get_item_shop_list(item_tier):
 async def read_custom_item(item_id):
     raw_query = "SELECT * FROM CustomInventory WHERE item_id = :id_check"
     df = rq(raw_query, return_value=True, params={'id_check': item_id})
-    if len(df.index) == 0:
+    if df is None or len(df.index) == 0:
         return None
     item = CustomItem(int(df['player_id'].values[0]), str(df['item_type'].values[0]), 1)
     item.item_id, item.item_name = int(df['item_id'].values[0]), str(df['item_name'].values[0])

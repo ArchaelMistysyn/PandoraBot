@@ -27,9 +27,6 @@ import enginecogs
 # Item/crafting imports
 import loot
 
-# Database imports
-from enginebotdb import close_engine_database_session as ceds
-
 # Get Bot Token
 token_info = None
 with open("engine_bot_token.txt", 'r') as token_file:
@@ -77,7 +74,6 @@ def run_discord_bot():
     async def on_shutdown():
         print("Battle Engine Off")
         try:
-            await ceds()
             await engine_bot.close()
         except KeyboardInterrupt:
             sys.exit(0)

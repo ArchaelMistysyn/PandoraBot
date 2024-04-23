@@ -9,7 +9,7 @@ import sharedmethods
 import player
 import quest
 import inventory
-from enginebotdb import run_query as rq
+from pandoradb import run_query as rq
 
 
 combat_command_list = [("solo", "Challenge a solo boss. Stamina Cost: 200", 0),
@@ -419,14 +419,9 @@ async def get_random_opponent(player_echelon):
 
 
 def check_flag(player_obj):
-    is_flagged = False
-    
     raw_query = "SELECT * FROM AbandonEncounter WHERE player_id = :player_check"
-    df = rq(raw_query, True, params={'player_check': int(player_obj.player_id)})
-    if len(df) != 0:
-        is_flagged = True
-    
-    return is_flagged
+    df = rq(raw_query, return_value=True, params={'player_check': int(player_obj.player_id)})
+    return True if df is not None and len(df) != 0 else False
 
 
 def toggle_flag(player_obj):
@@ -434,7 +429,7 @@ def toggle_flag(player_obj):
     
     # Check if a flag exists
     check_query = "SELECT * FROM AbandonEncounter WHERE player_id = :player_check"
-    df = rq(check_query, True, params={'player_check': player_id})
+    df = rq(check_query, return_value=True, params={'player_check': player_id})
     if len(df) != 0:
         toggle_query = "DELETE FROM AbandonEncounter WHERE player_id = :player_check"
     else:
