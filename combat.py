@@ -150,7 +150,8 @@ def handle_boss_actions(boss_obj, tracker_obj, player_obj):
 
 
 async def handle_player_actions(hit_list, tracker_obj, boss_obj, player_obj):
-    tracker_obj.player_cHP = min(player_obj.player_mHP, tracker_obj.hp_regen + tracker_obj.player_cHP)
+    regen_value = tracker_obj.hp_regen if tracker_obj.player_cHP != 0 else 0
+    tracker_obj.player_cHP = min(player_obj.player_mHP, regen_value + tracker_obj.player_cHP)
     combo_count, hits_per_cycle = 1 + player_obj.combo_application, int(player_obj.attack_speed)
     tracker_obj.remaining_hits += player_obj.attack_speed - hits_per_cycle
     while tracker_obj.remaining_hits >= 1:
@@ -309,8 +310,8 @@ def check_lock(player_obj, combat_tracker, damage):
         if combat_tracker.time_lock == 0:
             damage = combat_tracker.time_damage * (player_obj.temporal_application + 1)
             combat_tracker.time_damage = 0
-            return damage, " TIME SHATTER"
-        damage, status_msg = 0, " LOCKED"
+            return damage, " *TIME SHATTER*"
+        damage, status_msg = 0, " *LOCKED*"
     return damage, status_msg
 
 

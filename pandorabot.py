@@ -86,8 +86,8 @@ def run_discord_bot():
         try:
             await close_database_session()
             await pandora_bot.close()
-        except KeyboardInterrupt:
-            sys.exit(0)
+        except Exception as e:
+            print(f"Shutdown Error: {e}")
 
     class CustomHelpCommand(commands.DefaultHelpCommand):
         def __init__(self):
@@ -104,7 +104,6 @@ def run_discord_bot():
             embed = discord.Embed(title=f"Help for (/{command.name}) Command")
             embed.add_field(name="Usage", value=f"```{self.get_command_signature(command)}```", inline=False)
             embed.add_field(name="Description", value=command.help, inline=False)
-
             await self.get_destination().send(embed=embed)
 
     # Admin Commands
@@ -233,6 +232,17 @@ def run_discord_bot():
             for gear_type in non_weapon_list:
                 count += pilengine.generate_and_combine_images(gear_type)
             await ctx.send(f"Admin item task completed. Task Count: {count}")
+
+    @set_command_category('admin', 5)
+    @pandora_bot.hybrid_command(name='shutdown', help="Admin shutdown command")
+    @app_commands.guilds(discord.Object(id=1011375205999968427))
+    async def shutdown(ctx):
+        await ctx.defer()
+        trigger_return, player_obj, _ = await admin_verification(ctx)
+        if trigger_return:
+            return
+        await ctx.send(f"Pandora Bot shutdown. Turned off by Admin: {player_obj.player_username}")
+        await on_shutdown()
 
     # Game Commands
     @set_command_category('game', 0)

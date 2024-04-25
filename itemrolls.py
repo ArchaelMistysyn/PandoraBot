@@ -93,7 +93,7 @@ curse_rolls = {
 }
 
 defensive_rolls = {
-    "defensive-0": ["Health Regen", 1, 3, [["hp_regen", -1]]],
+    "defensive-0": ["Health Regen", 0.5, 3, [["hp_regen", -1]]],
     "defensive-1": ["Health Multiplier", 15, 10, [["hp_multiplier", -1]]],
     "defensive-2": ["Mitigation Bonus", 15, 5, [["damage_mitigation", -1]]],
     "defensive-3": ["Fire Resistance", 10, 5, [["elemental_resistance", 0]]],
@@ -550,8 +550,6 @@ def assign_roll_values(player_obj, equipped_item):
                     target_list = getattr(player_obj, attribute_name)
                     target_list[attribute_position] += current_roll.roll_value
 
-    assign_item_element_stats(player_obj, equipped_item)
-
 
 def handle_roll_exceptions(player_obj, selected_roll, selected_data):
     if selected_roll.roll_id.endswith(player_obj.player_class):
@@ -583,6 +581,5 @@ def assign_item_element_stats(player_obj, equipped_item):
     }
     # Assign stats from elements on the item.
     for idz, z in enumerate(equipped_item.item_elements):
-        if z == 1:
-            if equipped_item.item_type in associated_stats:
-                associated_stats[equipped_item.item_type][0][idz] += associated_stats[equipped_item.item_type][1]
+        if z == 1 and equipped_item.item_type in associated_stats:
+            associated_stats[equipped_item.item_type][0][idz] += associated_stats[equipped_item.item_type][1]

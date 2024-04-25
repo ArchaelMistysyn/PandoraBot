@@ -272,7 +272,7 @@ class StaminaView(discord.ui.View):
             return
         await self.player.reload_player()
         embed_msg = self.use_stamina_potion(f"Potion{potion_version}", potion_value)
-        await interaction.response.edit(embed=embed_msg, view=self)
+        await interaction.response.edit_message(embed=embed_msg, view=self)
 
     def use_stamina_potion(self, item_id, restore_amount):
         potion_stock = inventory.check_stock(self.player, item_id)

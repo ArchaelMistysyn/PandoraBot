@@ -575,7 +575,10 @@ def display_binventory(player_id, method):
     for _, row in df.iterrows():
         temp_id = str(row['item_id'])
         if temp_id in itemdata.itemdata_dict:
+            # Gemstone exception
             current_item = BasicItem(temp_id)
+            if method == "Unprocessed" and "Gemstone" in temp_id:
+                continue
             inventory_list.append([current_item, str(row['item_qty'])])
     for item, quantity in inventory_list:
         player_inventory += f"{item.item_emoji} {quantity}x {item.item_name}\n"
@@ -686,11 +689,9 @@ def delete_item(user_object, item):
         user_object.unequip_item(item)
     raw_query = "DELETE FROM CustomInventory WHERE item_id = :item_check"
     rq(raw_query, params={'item_check': item.item_id})
-    
 
 
 async def purge(player_obj, item_type, tier):
-    
     player_obj.get_equipped()
     exclusion_list = player_obj.player_equipped
     inlaid_gem_list = []
@@ -717,7 +718,7 @@ async def purge(player_obj, item_type, tier):
     for item_tier in df['item_tier']:
         coin_total += inventory.sell_value_by_tier[int(item_tier)]
     coin_msg = player_obj.adjust_coins(coin_total)
-    return f"{player_obj.player_username} sold {result} items and received {coin_msg} lotus coins"
+    return f"{player_obj.player_username} sold {result} items and received {globalitems.coin_icon} {coin_msg} lotus coins"
 
 
 def full_inventory_embed(lost_item, embed_colour):

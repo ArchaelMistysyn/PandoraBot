@@ -370,6 +370,7 @@ class PlayerProfile:
                 e_item[idx].update_damage()
                 self.player_damage += random.randint(e_item[idx].item_damage_min, e_item[idx].item_damage_max)
                 itemrolls.assign_roll_values(self, e_item[idx])
+                itemrolls.assign_item_element_stats(self, e_item[idx])
                 if e_item[idx].item_num_sockets == 1:
                     await itemrolls.assign_gem_values(self, e_item[idx])
             else:
@@ -670,7 +671,7 @@ async def get_all_users():
     user_list = []
     raw_query = "SELECT * FROM PlayerList"
     df = rq(raw_query, return_value=True)
-    if len(df.index) == 0:
+    if df is None or len(df.index) == 0:
         return None
     for index, row in df.iterrows():
         user_list.append(await df_to_player(row))

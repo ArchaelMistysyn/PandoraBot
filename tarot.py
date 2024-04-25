@@ -121,13 +121,13 @@ card_stat_dict = {
                   "XXVI": [2, ["X% Chance to trigger Bloom on hit", 5, "spec_rate", 0],
                            ["Bleed Application", 1, "bleed_application", None]],
                   "XXVII": [0, ["X% Chance to trigger Bloom on hit", 5, "spec_rate", 0],
-                          ["Critical Application", 1, "critical_app", None]],
+                            ["Critical Application", 1, "critical_app", None]],
                   "XXVIII": [6, ["X% Chance to trigger Bloom on hit", 5, "spec_rate", 0],
-                            ["Temporal Application", 1, "temporal_application", None]],
+                             ["Temporal Application", 1, "temporal_application", None]],
                   "XXIX": ["All", ["X% Chance to trigger Bloom on hit", 5, "spec_rate", 0],
-                             ["Bloom Damage", 500, "bloom_multiplier", None]],
+                           ["Bloom Damage", 500, "bloom_multiplier", None]],
                   "XXX": ["All", ["X% Chance to trigger Bloom on hit", 5, "spec_rate", 0],
-                            ["Bloom Damage", 1000, "bloom_multiplier", None]],
+                          ["Bloom Damage", 1000, "bloom_multiplier", None]],
                   "XXV": ["All", ["Omni Aura", 25, "aura", None],
                           ["Omni Curse", 25, "all_elemental_curse", None]]
                   }
@@ -426,9 +426,10 @@ class TarotCard:
         player_obj.final_damage += self.fd * 0.01
         card_multiplier = self.num_stars * 0.01
         for bonus_roll in card_data[1:]:
-            attribute_name, attribute_position = bonus_roll[2], bonus_roll[3]
+            attribute_value, attribute_name, attribute_position = bonus_roll[1], bonus_roll[2], bonus_roll[3]
             if "application" not in attribute_name:
-                attribute_value = (bonus_roll[1] * card_multiplier)
+                attribute_value *= 0.01
+            attribute_value *= self.num_stars
             if attribute_position is None:
                 setattr(player_obj, attribute_name, getattr(player_obj, attribute_name) + attribute_value)
             else:

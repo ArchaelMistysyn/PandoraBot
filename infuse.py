@@ -11,82 +11,29 @@ from pandoradb import run_query as rq
 import player
 import inventory
 
+
 recipe_dict = {
-    "Heavenly Infusion": {
-        "Heavenly Ore (Crude)": [("Ore1", 50), ("Stone1", 10), 75, "Ore5"],
-        "Heavenly Ore (Cosmite)": [("Ore2", 20), ("Stone2", 10), 75, "Ore5"],
-        "Heavenly Ore (Celestite)": [("Ore3", 10), ("Stone3", 10), 75, "Ore5"],
-        "Heavenly Ore (Crystallite)": [("Ore4", 2), ("Stone4", 10), 75, "Ore5"]},
-    "Elemental Infusion": {
-        "Elemental Origin (Fire)": [("OriginZ", 1), ("Fae0", 500), 80, "Origin0"],
-        "Elemental Origin (Water)": [("OriginZ", 1), ("Fae1", 500), 80, "Origin1"],
-        "Elemental Origin (Lightning)": [("OriginZ", 1), ("Fae2", 500), 80, "Origin2"],
-        "Elemental Origin (Earth)": [("OriginZ", 1), ("Fae3", 500), 80, "Origin3"],
-        "Elemental Origin (Wind)": [("OriginZ", 1), ("Fae4", 500), 80, "Origin4"],
-        "Elemental Origin (Ice)": [("OriginZ", 1), ("Fae5", 500), 80, "Origin5"],
-        "Elemental Origin (Shadow)": [("OriginZ", 1), ("Fae6", 500), 80, "Origin6"],
-        "Elemental Origin (Light)": [("OriginZ", 1), ("Fae7", 500), 80, "Origin7"],
-        "Elemental Origin (Celestial)": [("OriginZ", 1), ("Fae8", 500), 80, "Origin8"]},
+    "Heavenly Infusion": {},
+    "Elemental Infusion": {},
     "Void Infusion": {
-        "Void Core": [("Fragment1", 10), ("Heart1", 1), 95, "Core1"],
-        "Fragmentized Void": [("Scrap", 5), ("Stone5", 1), 100, "Fragment1"],
-        "Unrefined Void Item (Weapon)": [("Crystal1", 1), ("Core1", 10), 99, "Void1"],
-        "Unrefined Void Item (Armour)": [("Scrap", 100), ("Core1", 5), 99, "Void2"],
-        "Unrefined Void Item (Vambraces)": [("Unrefined2", 10), ("Core1", 5), 99, "Void3"],
-        "Unrefined Void Item (Amulet)": [("Scrap", 100), ("Core1", 5), 99, "Void4"],
-        "Unrefined Void Item (Wing)": [("Unrefined1", 10), ("Core1", 5), 99, "Void5"],
-        "Unrefined Void Item (Crest)": [("Unrefined3", 10), ("Core1", 5), 99, "Void6"],
-        "Crystallized Void": [("Core1", 2), ("Fragment1", 25), 25, "Crystal1"]},
+        "Void Core": [("Fragment1", 10), 90, "Core1"],
+        "Crystallized Void": [("Core1", 5), 100, "Crystal1"]},
     "Wish Infusion": {
-        "Wish Core": [("Core1", 1), ("Fragment2", 10), 95, "Core2"],
-        "Fragmentized Wish": [("Scrap", 5), ("Fragment1", 5), 100, "Fragment2"],
-        "Radiant Heart": [("Stone5", 1), ("Fragment2", 1), 5, "Heart1"],
-        "Crystallized Wish": [("Core2", 2), ("Fragment2", 25), 25, "Crystal2"]},
+        "Wish Core": [("Crystal1", 1), ("Fragment2", 10), 90, "Core2"],
+        "Crystallized Wish": [("Core2", 5), 100, "Crystal2"]},
     "Abyss Infusion": {
-        "Abyss Core": [("Core2", 1), ("Fragment3", 20), 95, "Core4"],
-        "Fragmentized Abyss": [("Scrap", 5), ("Fragment2", 5), 100, "Fragment3"],
-        "Chaos Heart": [("Stone5", 1), ("Fragment3", 1), 5, "Heart2"],
-        "Abyss Flame": [("Flame1", 10), ("Heart2", 1), 10, "Flame2"],
-        "Crystallized Abyss": [("Core3", 2), ("Fragment3", 25), 25, "Crystal3"]},
+        "Abyss Core": [("Crystal2", 1), ("Fragment3", 10), 90, "Core3"],
+        "Crystallized Abyss": [("Core3", 5), 100, "Crystal3"],
+        "Abyss Flame": [("Core3", 1), ("Flame1", 10), 80, "Flame2"]},
     "Divine Infusion": {
-        "Divinity Core (Fragment)": [("Core3", 1), ("Fragment4", 20), 95, "Core4"],
-        "Divinity Core (Radiant)": [("OriginZ", 1), ("Heart1", 1), 1, "Core4"],
-        "Divinity Core (Chaos)": [("OriginZ", 1), ("Heart2", 1), 1, "Core4"],
-        "Fragmentized Divinity": [("Scrap", 5), ("Fragment3", 5), 100, "Fragment4"],
-        "Crystallized Divinity": [("Core4", 2), ("Fragment4", 25), 25, "Crystal4"],
+        "Divinity Core": [("Crystal3", 1), ("Fragment4", 10), 90, "Core4"],
+        "Crystallized Divinity": [("Core4", 5), 100, "Crystal4"],
         "Lotus of Serenity": [("Heart1", 99), ("Fragment2", 99), 99, "Lotus2"],
         "Twin Rings of Divergent Stars": [("DarkStar", 1), ("LightStar", 1), 100, "TwinRings"]},
-    "Elemental Ring Infusion": {
-        "Elemental Ring of Fire": [("Gemstone1", 1), ("Scrap", 100), 100, "4"],
-        "Elemental Ring of Water": [("Gemstone2", 1), ("Scrap", 100), 100, "4"],
-        "Elemental Ring of Lightning": [("Gemstone3", 1), ("Scrap", 100), 100, "4"],
-        "Elemental Ring of Earth": [("Gemstone4", 1), ("Scrap", 100), 100, "4"],
-        "Elemental Ring of Wind": [("Gemstone5", 1), ("Scrap", 100), 100, "4"],
-        "Elemental Ring of Ice": [("Gemstone6", 1), ("Scrap", 100), 100, "4"],
-        "Elemental Ring of Shadow": [("Gemstone7", 1), ("Scrap", 100), 100, "4"],
-        "Elemental Ring of Light": [("Gemstone8", 1), ("Scrap", 100), 100, "4"],
-        "Elemental Ring of Celestia": [("Gemstone9", 1), ("Scrap", 100), 100, "4"]},
-    "Primordial Ring Infusion": {
-        "Ruby Ring of Incineration": [("Gemstone1", 5), ("Gemstone11", 1), 100, "5"],
-        "Sapphire Ring of Atlantis": [("Gemstone2", 5), ("Gemstone11", 1), 100, "5"],
-        "Topaz Ring of Dancing Thunder": [("Gemstone3", 5), ("Gemstone11", 1), 100, "5"],
-        "Agate Ring of Seismic Tremors": [("Gemstone4", 5), ("Gemstone11", 1), 100, "5"],
-        "Emerald Ring of Wailing Winds": [("Gemstone5", 5), ("Gemstone11", 1), 100, "5"],
-        "Zircon Ring of the Frozen Castle": [("Gemstone6", 5), ("Gemstone11", 1), 100, "5"],
-        "Obsidian Ring of Tormented Souls": [("Gemstone7", 5), ("Gemstone11", 1), 100, "5"],
-        "Opal Ring of Scintillation": [("Gemstone8", 5), ("Gemstone11", 1), 100, "5"],
-        "Amethyst Ring of Shifting Stars": [("Gemstone9", 5), ("Gemstone11", 1), 100, "5"]},
-    "Path Ring Infusion": {
-        "Invoking Ring of Storms": [("Gemstone1", 5), ("Gemstone3", 5), ("Gemstone11", 2), 100, "6"],
-        "Primordial Ring of Frostfire": [("Gemstone2", 5), ("Gemstone6", 5), ("Gemstone11", 2), 100, "6"],
-        "Boundary Ring of Horizon": [("Gemstone4", 5), ("Gemstone5", 5), ("Gemstone11", 2), 100, "6"],
-        "Hidden Ring of Eclipse": [("Gemstone7", 5), ("Gemstone8", 5), ("Gemstone11", 2), 100, "6"],
-        "Cosmic Ring of Stars": [("Gemstone9", 10), ("Gemstone11", 2), 100, "6"],
-        "Rainbow Ring of Confluence": [("Gemstone1", 2), ("Gemstone2", 2), ("Gemstone3", 2),
-                                       ("Gemstone4", 2), ("Gemstone5", 2), ("Gemstone6", 2),
-                                       ("Gemstone7", 2), ("Gemstone8", 2), ("Gemstone9", 2),
-                                       ("Gemstone11", 2), 100, "6"],
-        "Lonely Ring of Solitude": [("Gemstone0", 20), ("Gemstone11", 1), 100, "6"]},
+    "Heart Infusion": {
+        "Radiant Heart": [("Stone5", 1), ("Fragment2", 1), 20, "Heart1"],
+        "Chaos Heart": [("Stone5", 1), ("Fragment3", 1), 20, "Heart2"]},
+    "Elemental Ring Infusion": {}, "Primordial Ring Infusion": {}, "Path Ring Infusion": {},
     "Legendary Ring Infusion": {
         "Dragon's Eye Diamond": [("Gemstone10", 10), ("Gemstone11", 3), 100, "7"],
         "Chromatic Tears": [("Gemstone11", 10), 100, "7"],
@@ -95,6 +42,50 @@ recipe_dict = {
         "Stygian Calamity": [("Gemstone12", 1), ("Gemstone11", 5), 100, "8"],
         "Sacred Ring of Divergent Stars": [("TwinRings", 1), ("Gemstone11", 5), 100, "8"]}
 }
+
+
+def add_recipe(category, name, components):
+    if category not in recipe_dict:
+        recipe_dict[category] = {}
+    recipe_dict[category][name] = components
+
+
+# Heavenly Infusion
+for ore, count in zip(['Crude', 'Cosmite', 'Celestite', 'Crystallite'], [50, 20, 10, 2]):
+    add_recipe("Heavenly Infusion", f"Heavenly Ore ({ore})",
+               [(f"Ore{ore[:2].upper()}{count//10}", count), ("Stone1", 5), 75, "Ore5"])
+
+primordial_rings = [("Ruby", "Incineration"), ("Sapphire", "Atlantis"), ("Topaz", "Dancing Thunder"),
+                    ("Agate", "Seismic Tremors"), ("Emerald", "Wailing Winds"), ("Zircon", "Frozen Castle"),
+                    ("Obsidian", "Tormented Souls"), ("Opal", "Scintillation"), ("Amethyst", "Shifting Stars")]
+# Elemental Infusions
+for idx, (element, (gemstone, ring_name)) in enumerate(zip(globalitems.element_names, primordial_rings)):
+    # Elemental Origins
+    add_recipe("Elemental Infusion", f"Elemental Origin ({element})",
+               [("OriginZ", 1), (f"Fae{idx}", 300), 80, f"Origin{idx}"])
+    # Elemental Rings
+    add_recipe("Elemental Ring Infusion", f"Elemental Ring of {element}",
+               [(f"Gemstone{idx + 1}", 1), ("Scrap", 100), 100, "4"])
+    # Primordial Rings
+    add_recipe("Primordial Ring Infusion", f"{gemstone} Ring of {ring_name}",
+               [(f"Gemstone{idx + 1}", 5), ("Gemstone11", 1), 100, "5"])
+void_cost = [('Weapon', ("Scrap", 200)), ('Armour', ("Scrap", 100)), ('Vambraces', ("Unrefined2", 10)),
+             ('Amulet', ("Scrap", 100)),  ('Wing', ("Unrefined1", 10)), ('Crest', ("Unrefined3", 10))]
+# Void Infusions
+for item_type, secondary_cost in zip(void_cost):
+    add_recipe("Void Infusion", f"Unrefined Void Item ({item_type})",
+               [("Crystal1", 1), secondary_cost, 99, f"Void{void_items.index(item_type) + 1}"])
+# Path Ring Infusions
+path_rings = [
+    ("Invoking Ring of Storms", [(1, 5), (3, 5), (11, 2)]),
+    ("Primordial Ring of Frostfire", [(2, 5), (6, 5), (11, 2)]),
+    ("Boundary Ring of Horizon", [(4, 5), (5, 5), (11, 2)]),
+    ("Hidden Ring of Eclipse", [(7, 5), (8, 5), (11, 2)]),
+    ("Cosmic Ring of Stars", [(9, 10), (11, 2)]),
+    ("Rainbow Ring of Confluence", [(1, 2), (2, 2), (3, 2), (4, 2), (5, 2), (6, 2), (7, 2), (8, 2), (9, 2), (11, 2)]),
+    ("Lonely Ring of Solitude", [(0, 20), (11, 1)])]
+for ring_name, gemstones in path_rings:
+    add_recipe("Path Ring Infusion", ring_name, [(f"Gemstone{idx}", qty) for idx, qty in gemstones] + [100, "6"])
 
 NPC_name = "Cloaked Alchemist, Sangam"
 
