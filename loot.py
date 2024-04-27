@@ -15,48 +15,32 @@ import inventory
 
 
 boss_loot_dict = {
-    "All": [
-        [0, "Crate", 10], [0, "Matrix1", 15],
-        [0, "Hammer", 20], [0, "Pearl", 10], [0, "Heart1", 2], [0, "Heart2", 1],
-        [1, "Ore1", 25], [2, "Ore2", 25], [3, "Ore3", 25], [4, "Ore4", 25],
-        [1, "Potion1", 5], [2, "Potion2", 5], [3, "Potion3", 5], [4, "Potion4", 5],
-        [5, "Potion4", 10], [6, "Potion4", 15], [7, "Potion4", 25],
-        [4, "OriginZ", 10], [5, "OriginZ", 10], [6, "OriginZ", 10], [7, "OriginZ", 25],
-        [5, "Core1", 25], [6, "Core2", 1], [7, "Core1", 50], [7, "Core2", 10], [7, "Core3", 5],
-        [5, "Fragment1", 75], [6, "Fragment2", 75], [7, "Fragment3", 99],
-        [6, "Crystal1", 2], [6, "Crystal2", 0.1],  [7, "Crystal1", 5], [7, "Crystal2", 0.2]
-    ],
-    "Fortress": [
-        [0, "Scrap", 100], [0, "Stone1", 60],
-        [0, "Trove1", 5], [0, "Trove2", 1], [0, "Trove3", 0.1], [0, "Trove4", 0.01]
-    ],
-    "Dragon": [
-        [0, "Unrefined1", 25], [0, "Stone2", 55],
-        [1, "Gem1", 10], [2, "Gem1", 20], [3, "Gem1", 30], [4, "Jewel1", 40]
-    ],
-    "Demon": [
-        [0, "Flame1", 10], [0, "Stone3", 50], [0, "Core1", 3],
-        [1, "Gem2", 10], [2, "Gem2", 20], [3, "Gem2", 30], [4, "Jewel2", 40]
-    ],
-    "Paragon": [
-        [0, "Summon1", 5], [0, "Summon2", 1], [0, "Unrefined3", 25], [0, "Stone4", 45], [0, "Core1", 5],
-        [1, "Gem3", 10], [2, "Gem3", 20], [3, "Gem3", 30],
-        [4, "Jewel3", 40], [5, "Jewel3", 50], [6, "Jewel3", 60]
-    ],
-    "Arbiter": [
-        [0, "Summon3", 5], [0, "Stone6", 40], [7, "Lotus4", 1],
-        [1, "Token1", 5], [2, "Token2", 5], [3, "Token3", 5], [4, "Token4", 5],
-        [5, "Token5", 5], [6, "Token6", 5], [7, "Token7", 5],
-        [1, "Jewel4", 10], [2, "Jewel4", 20], [3, "Jewel4", 30], [4, "Jewel4", 40],
-        [5, "Jewel4", 50], [6, "Jewel4", 60], [7, "Jewel4", 70]
-    ],
-    "Incarnate": [
-        [8, "Core3", 50], [8, "Core4", 25], [8, "Jewel5", 80],
-        [8, "Lotus1", 5], [8, "Lotus2", 5], [8, "Lotus3", 5], [8, "Lotus4", 5], [8, "Lotus5", 5],
-        [8, "Lotus6", 5], [8, "Lotus7", 5], [8, "Lotus8", 5], [8, "Lotus9", 5],
-        [8, "Lotus10", 1], [8, "DarkStar", 1], [8, "EssenceXXX", 99]
-    ]
-}
+    "All": [[0, "Crate", 25], [0, "Matrix1", 15], [0, "Core1", 1], [0, "OriginZ", 1],
+            [0, "Hammer", 25], [0, "Pearl", 15], [0, "Heart1", 2], [0, "Heart2", 1],
+            [1, "Ore1", 25], [2, "Ore2", 25], [3, "Ore3", 25], [4, "Ore4", 25],
+            [1, "Potion1", 5], [2, "Potion2", 5], [3, "Potion3", 5], [4, "Potion4", 5],
+            [5, "Potion4", 10], [6, "Potion4", 15], [7, "Potion4", 25], [8, "Potion4", 25],
+            [5, "Core1", 3], [6, "Core2", 3], [7, "Core3", 3], [8, "Core4", 3],
+            [5, "Crystal1", 1], [6, "Crystal2", 1], [7, "Crystal3", 1], [8, "Crystal4", 1],
+            [5, "Fragment1", 75], [6, "Fragment2", 75], [7, "Fragment3", 99], [8, "Fragment4", 99]],
+    "Fortress": [[0, "Scrap", 100], [0, "Stone1", 60],
+                 [1, "Trove1", 5], [2, "Trove2", 5], [3, "Trove3", 5], [4, "Trove4", 5], [0, "Ore5", 5]],
+    "Dragon": [[0, "Unrefined1", 25], [0, "Stone2", 55],
+               [1, "Gem1", 10], [2, "Gem1", 20], [3, "Gem1", 30], [4, "Jewel1", 40]],
+    "Demon": [[0, "Flame1", 10], [0, "Flame2", 1], [0, "Stone3", 50],
+              [1, "Gem2", 10], [2, "Gem2", 20], [3, "Gem2", 30], [4, "Jewel2", 40]],
+    "Paragon": [[0, "Summon1", 5], [0, "Summon2", 1], [0, "Unrefined3", 25], [0, "Stone4", 45],
+                [1, "Gem3", 10], [2, "Gem3", 20], [3, "Gem3", 30],
+                [4, "Jewel3", 40], [5, "Jewel3", 50], [6, "Jewel3", 60]],
+    "Arbiter": [[0, "Summon3", 5], [0, "Stone6", 40], [7, "Lotus4", 1],
+                [1, "Token1", 5], [2, "Token2", 5], [3, "Token3", 5], [4, "Token4", 5],
+                [5, "Token5", 5], [6, "Token6", 5], [7, "Token7", 5],
+                [1, "Jewel4", 10], [2, "Jewel4", 20], [3, "Jewel4", 30], [4, "Jewel4", 40],
+                [5, "Jewel4", 50], [6, "Jewel4", 60], [7, "Jewel4", 70]],
+    "Incarnate": [[8, "Core3", 50], [8, "Core4", 25], [8, "Jewel5", 80],
+                  [8, "Lotus1", 5], [8, "Lotus2", 5], [8, "Lotus3", 5], [8, "Lotus4", 5], [8, "Lotus5", 5],
+                  [8, "Lotus6", 5], [8, "Lotus7", 5], [8, "Lotus8", 5], [8, "Lotus9", 5],
+                  [8, "Lotus10", 1], [8, "DarkStar", 1], [8, "EssenceXXX", 99]]}
 incarnate_attempts_dict = {700: 1, 800: 2, 999: 5}
 
 
@@ -130,7 +114,7 @@ async def award_loot(boss_object, player_list, exp_amount, coin_amount, loot_mul
             qty = sum(is_dropped(drop_rate) for attempt in range(loot_multiplier))
             if qty > 0:
                 loot_msg, batch_df = update_loot_and_df(temp_player, drop_id, qty, loot_msg, counter, batch_df)
-                if "Lotus" in drop_id or drop_id in ["DarkStar", "LightStar"]:
+                if sharedmethods.check_rare_item(drop_id):
                     await sharedmethods.send_notification(ctx, temp_player, "Item", drop_id)
     # Update the database.
     inventory.update_stock(None, None, None, batch=batch_df)

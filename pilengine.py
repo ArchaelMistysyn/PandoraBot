@@ -2,6 +2,7 @@
 from PIL import Image, ImageFont, ImageDraw, ImageOps, ImageFilter
 import requests
 import os
+from ftplib import FTP
 
 # Data imports
 import globalitems
@@ -10,6 +11,7 @@ import sharedmethods
 # Core imports
 import player
 
+web_url = f"https://kyleportfolio.ca"
 image_path = 'C:\\Users\\GamerTech\\PycharmProjects\\PandoraBot\\'
 
 echelon_0 = "https://kyleportfolio.ca/botimages/roleicon/echelon1.png"
@@ -20,13 +22,13 @@ echelon_4 = "https://kyleportfolio.ca/botimages/roleicon/echelon4.png"
 echelon_5 = "https://kyleportfolio.ca/botimages/roleicon/echelon5noflare.png"
 echelon_5flare = "https://kyleportfolio.ca/botimages/roleicon/echelon5flare.png"
 special_icon = "https://kyleportfolio.ca/botimages/roleicon/exclusivenoflare.png"
-special_iconflare = "https://kyleportfolio.ca/botimages/roleicon/exclusiveflare.png"
+special_iconflare = f"{web_url}/botimages/roleicon/exclusiveflare.png"
 rank_url_list = [echelon_0, echelon_1, echelon_2, echelon_3, echelon_4, echelon_5, echelon_5flare,
                  special_icon, special_iconflare]
-generic_frame_url = "https://kyleportfolio.ca/botimages/iconframes/Iconframe.png"
+generic_frame_url = f"{web_url}/botimages/iconframes/Iconframe.png"
 
 rank_colour = ["Green", "Blue", "Purple", "Gold", "Red", "Magenta"]
-profile_url = "https://kyleportfolio.ca/botimages/profilecards/"
+profile_url = f"{web_url}/botimages/profilecards/"
 card_url = "cardBG/Rankcard_card_"
 exp_url = "expbar/Rankcard_Expbar_"
 wing_gem_url = "wing_gem/Rankcard_wing_"
@@ -51,12 +53,18 @@ url_dict = {'cardBG': rank_card_url_list, 'metal': metal_url_list, 'wing': wing_
             'exp_bar': exp_bar_url_list, 'role_icon': rank_url_list, 'frame_icon': globalitems.frame_icon_list}
 
 # Load Resources
-font_url = "https://kyleportfolio.ca//botimages/profilecards/fonts/"
+font_url = f"{web_url}/botimages/profilecards/fonts/"
 level_font_url = "aerolite/Aerolite.otf"
 name_font = "blackchancery/BLKCHCRY.TTF"
 # level_font_url = "oranienbaum/Oranienbaum.ttf"
 name_font_file = requests.get((font_url + name_font), stream=True).raw
 level_font_file = requests.get((font_url + level_font_url), stream=True).raw
+
+# Web Data for FTP Login
+web_data = None
+with open("web_data_login.txt", 'r') as data_file:
+    for line in data_file:
+        web_data = line.split(";")
 
 
 class RankCard:
@@ -158,11 +166,12 @@ def generate_and_combine_images(item_type, start_tier=1, end_tier=8, fetch_type=
     availability_list = ["Sword", "Bow", "Threads", "Armour", "Wings", "Amulet"]
     if item_type not in globalitems.availability_list:
         return 0
+    ftp = create_ftp_connection(web_data[0], web_data[1], web_data[2])
     for item_tier in range(start_tier, end_tier + 1):
         # Handle the urls and paths.
         frame_url = globalitems.frame_icon_list[item_tier - 1]
         frame_url = frame_url.replace("[EXT]", globalitems.frame_extension[0])
-        icon_url = f"https://kyleportfolio.ca/botimages/itemicons/{item_type}/{item_type}{item_tier}.png"
+        icon_url = f"{web_url}/botimages/itemicons/{item_type}/{item_type}{item_tier}.png"
         output_dir, file_name = f'{image_path}itemicons\\{item_type}\\', f"Framed_{item_type}_{item_tier}.png"
         file_path = f"{output_dir}{file_name}"
         frame = Image.open(requests.get(frame_url, stream=True).raw)
@@ -172,7 +181,29 @@ def generate_and_combine_images(item_type, start_tier=1, end_tier=8, fetch_type=
         result.paste(frame, (0, 0), frame)
         result.paste(icon, (17, 16), icon)
         result.save(file_path, format="PNG")
+        # Upload the file.
+        upload_file_to_ftp(ftp, file_path, f"/public_html/botimages/itemicons/{item_type}/", file_name)
+    ftp.quit()
     return end_tier + 1 - start_tier
+
+
+def create_ftp_connection(hostname, username, password):
+    try:
+        ftp = FTP(hostname)
+        ftp.login(user=username, passwd=password)
+        return ftp
+    except Exception as e:
+        print(f"Failed to connect to FTP: {e}")
+        return None
+
+
+def upload_file_to_ftp(ftp, local_path, remote_directory, remote_filename):
+    try:
+        ftp.cwd(remote_directory)
+        with open(local_path, 'rb') as file:
+            ftp.storbinary('STOR ' + remote_filename, file)
+    except Exception as e:
+        print(f"An error occurred while uploading {remote_filename}: {e}")
 
 
 def build_notification(player_obj, message, notification_type, item=None):

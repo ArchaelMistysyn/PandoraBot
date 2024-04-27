@@ -84,26 +84,21 @@ class PurifyView(discord.ui.View):
     def __init__(self, player_obj, selected_item):
         super().__init__(timeout=None)
         self.player_obj, self.selected_item = player_obj, selected_item
-        self.materials = [None, None]
+        self.material = None
         self.embed, self.new_view = None, None
 
-        purification_data = {5: ["Core2", "Crystal2", "Wish Purification", " [Miracle"],
-                             6: ["Core3", "Crystal3", "Abyss Purification", " [Stygian"],
-                             7: ["Core4", "Crystal4", "Divine Purification", " [Transcend"],
-                             8: [None, None, "Divine Purification", " [MAX]"]}
+        purification_data = {5: ["Crystal2", "Wish Purification", " [Miracle"],
+                             6: ["Crystal3", "Abyss Purification", " [Stygian"],
+                             7: ["Crystal4", "Divine Purification", " [Transcend"],
+                             8: [None, "Divine Purification", " [MAX]"]}
         selected_dataset = purification_data[self.selected_item.item_tier]
-        self.purify.label = selected_dataset[2] + selected_dataset[3]
-        self.material = inventory.BasicItem(selected_dataset[0])
-        if self.selected_item.item_type == "W":
-            self.material = inventory.BasicItem(selected_dataset[1])
-        # Disable if maxed.
-        if self.selected_item.item_tier == 8:
-            self.purify.disabled = True
-            self.purify.style = globalitems.button_colour_list[3]
-        self.purify_check = self.material.item_base_rate
-        if not self.purify.disabled:
+        self.purify.label = selected_dataset[1] + selected_dataset[2]
+        if self.selected_item.item_tier != 8:
+            self.material = inventory.BasicItem(selected_dataset[0])
+            self.purify.emoji, self.purify_check = self.material.item_emoji, self.material.item_base_rate
             self.purify.label += f": {self.purify_check}%]"
-        self.purify.emoji = self.material.item_emoji
+        else:
+            self.purify.disabled, self.purify.style = True, globalitems.button_colour_list[3]
 
     @discord.ui.button(style=discord.ButtonStyle.success)
     async def purify(self, interaction: discord.Interaction, button: discord.Button):

@@ -90,7 +90,7 @@ class Quest:
             inventory.update_stock(player_obj, self.award_item, self.award_qty)
             loot_item = inventory.BasicItem(self.award_item)
             rewards += f"{loot_item.item_emoji} {self.award_qty}x {loot_item.item_name}\n"
-        if "Lotus" in loot_item.item_id or loot_item.item_id in ["DarkStar", "LightStar"]:
+        if sharedmethods.check_rare_item(loot_item.item_id):
             await sharedmethods.send_notification(ctx_object, player_obj, "Item", loot_item.item_id)
         if self.award_role:
             rewards += f"New Role Achieved: {self.award_role}!"

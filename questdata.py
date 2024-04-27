@@ -176,7 +176,7 @@ quests_data = {
          "\nWhat could possibly go wrong?",
          1, 9, None,
          "Forge a pact at the demonic altar in /map",
-         'Core1', 2, None],
+         'Core1', 5, None],
 
     22: [0, "Arms of Steel",
          "The 'black flames' that shroud demons are actually comprised of metallic dust or shrapnel. "
@@ -239,7 +239,7 @@ quests_data = {
          "\nIf you pursue this path you must take great effort not to lose yourself in the process.",
          60, None, None,
          "Breakthrough to level 60",
-         'OriginZ', 1, None],
+         'Core2', 5, None],
 
     30: [2, "Messenger Of Celestia",
          "We must continue to seal as many of the True Paragons as we can. "
@@ -310,7 +310,7 @@ quests_data = {
          "\nPerhaps in those depths we may find the power we seek.",
          1, 18, None,
          "Visit the Gateway of the True Abyss using /abyss",
-         'Core3', 1, None],
+         'Core3', 5, None],
 
     39: [1, "Cultivate Divinity (Part 5)",
          "Oblivia is right. We're approaching the limits of what I can forge for you. "
@@ -330,8 +330,8 @@ quests_data = {
     41: [1, "The Endgame Beyond",
          "You are the harbinger of two miracles and have earned sovereignty over the stars."
          "\nEleuia won't ignore you as a threat any longer.",
-         90, None, None,
-         "Breakthrough to level 90",
+         85, None, None,
+         "Breakthrough to level 85",
          'Crate', 5, None],
 
     42: [0, "A Justified Blasphemy",
@@ -356,7 +356,7 @@ quests_data = {
          "\nMaybe one day I'll be able to reforge it.",
          90, None, None,
          "Breakthrough to level 90",
-         'Crate', 5, None],
+         'Crate', 10, None],
 
     45: [3, "Ending A Wish",
          "I feel the fading of reality. Eleuia wishes for finality, but you can rewrite this world. "
@@ -372,7 +372,7 @@ quests_data = {
          "\nThe arbiters won't overlook this, but this time, I know you'll be strong enough to face them.",
          95, None, None,
          "Breakthrough to level 95",
-         'Core2', 3, None],
+         'Core4', 2, None],
 
     47: [3, "A Flower Foregone",
          "This reality belongs to no one. We will usurp those who seek to control and manipulate it."
@@ -410,7 +410,7 @@ quests_data = {
          "\nAscend, and face the finale! (/palace)",
          1, 23, None,
          "Defeat XXX - Amaryllis, Incarnate of the Divine Lotus [Challenger]",
-         'Core3', 2, 'Echelon 10 (MAX)'],
+         'Core4', 2, 'Echelon 10 (MAX)'],
 
     51: [10, "Pandora's Box",
          "The one left standing ascends to take their place as the new high arbiter of the divine plane. "
@@ -418,7 +418,7 @@ quests_data = {
          "\nPerhaps in this little box, you can finally find peace.",
          31, 24, None,
          "Complete the Tarot Collection",
-         'Core4', 2, None],
+         'Crate', 10, None],
 
     52: [3, "Dance With Divinity",
          "Do you see now why the arbiters foresaw your failure and the futility of your actions? "
@@ -427,7 +427,7 @@ quests_data = {
          "\nAscend, and face the trial of the usurper!",
          1, 25, None,
          "Defeat XXX - Amaryllis, Incarnate of the Divine Lotus [Usurper]",
-         'Core4', 2, None],
+         'Crate', 20, None],
 
     53: [3, "A Heartfelt Wish",
          "I was wrong. I had resigned to my fate believing that gods could not be slain. "
@@ -436,7 +436,7 @@ quests_data = {
          "\nPlease, save us all.",
          1, 26, None,
          "Defeat XXX - Amaryllis, Incarnate of the Divine Lotus [Samsara]",
-         'Core4', 2, None],
+         'Crate', 30, None],
 
     54: [2, "A Moment Forever",
          "Just how far have you come just to see me again? Alas, you of all people should know I cannot stay. "
@@ -444,7 +444,7 @@ quests_data = {
          "But maybe, we can enjoy this moment a little longer.",
          1, None, 'Rings',
          "Give Pandora a special gift",
-         'Core4', 2, None],
+         'Crate', 50, None],
 
     55: [1, "Resurrection And Rebirth",
          "Rings faceted with gems forged from the twin mystical stars. "

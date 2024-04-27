@@ -588,7 +588,7 @@ class AdventureRoomView(discord.ui.View):
             title, description = "Item Selected!", f"{target_item.item_emoji} 1x {target_item.item_name} acquired!"
             self.embed = discord.Embed(colour=self.expedition.colour, title=title, description=description)
             await interaction_obj.response.edit_message(embed=self.embed, view=self.new_view)
-            if "Lotus" in target_item.item_id or target_item.item_id in ["DarkStar", "LightStar"]:
+            if sharedmethods.check_rare_item(target_item.item_id):
                 await sharedmethods.send_notification(self.expedition.ctx_object, self.expedition.player_obj,
                                                       "Item", target_item.item_id)
 
@@ -605,10 +605,10 @@ class AdventureRoomView(discord.ui.View):
             title = "Received Both Items!"
             self.embed = discord.Embed(colour=self.expedition.colour, title=title, description=output_msg)
             await interaction_obj.response.edit_message(embed=self.embed, view=self.new_view)
-            if "Lotus" in self.reward_items[0].item_id or self.reward_items[0].item_id in ["DarkStar", "LightStar"]:
+            if sharedmethods.check_rare_item(self.reward_items[0].item_id):
                 await sharedmethods.send_notification(self.expedition.ctx_object, self.expedition.player_obj,
                                                       "Item", self.reward_items[0].item_id)
-            if "Lotus" in choice_items[1].item_id or choice_items[1].item_id in ["DarkStar", "LightStar"]:
+            if sharedmethods.check_rare_item(self.reward_items[1].item_id):
                 await sharedmethods.send_notification(self.expedition.ctx_object, self.expedition.player_obj,
                                                       "Item", self.reward_items[1].item_id)
         callbacks = {0: option_callback, 1: option_callback, 2: speed_callback}
@@ -1078,7 +1078,7 @@ async def handle_gather(ctx_object, player_obj, success_rate):
     for (reward_id, item_qty) in reward_list:
         reward_object = inventory.BasicItem(reward_id)
         output_msg += f"{reward_object.item_emoji} {item_qty}x {reward_object.item_name} received!\n"
-        if "Lotus" in reward_object.item_id or reward_object.item_id in ["DarkStar", "LightStar"]:
+        if sharedmethods.check_rare_item(reward_object.item_id):
             await sharedmethods.send_notification(ctx_object, player_obj, "Item", reward_object.item_id)
     batch_df = sharedmethods.list_to_batch(player_obj, reward_list)
     inventory.update_stock(None, None, None, batch=batch_df)

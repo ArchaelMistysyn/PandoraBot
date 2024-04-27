@@ -386,7 +386,7 @@ def run_discord_bot():
             reward_object = inventory.BasicItem(reward_id)
             highest_tier = max(highest_tier, reward_object.item_tier)
             loot_description += f"{reward_object.item_emoji} {item_qty}x {reward_object.item_name}\n"
-            if "Lotus" in reward_object.item_id or reward_object.item_id in ["DarkStar", "LightStar"]:
+            if sharedmethods.check_rare_item(reward_object.item_id):
                 notifications.append((reward_object.item_id, player_obj))
         # Update the data and messages.
         batch_df = sharedmethods.list_to_batch(player_obj, reward_list)

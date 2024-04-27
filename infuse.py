@@ -15,24 +15,15 @@ import inventory
 recipe_dict = {
     "Heavenly Infusion": {},
     "Elemental Infusion": {},
-    "Void Infusion": {
-        "Void Core": [("Fragment1", 10), 90, "Core1"],
-        "Crystallized Void": [("Core1", 5), 100, "Crystal1"]},
-    "Wish Infusion": {
-        "Wish Core": [("Crystal1", 1), ("Fragment2", 10), 90, "Core2"],
-        "Crystallized Wish": [("Core2", 5), 100, "Crystal2"]},
-    "Abyss Infusion": {
-        "Abyss Core": [("Crystal2", 1), ("Fragment3", 10), 90, "Core3"],
-        "Crystallized Abyss": [("Core3", 5), 100, "Crystal3"],
-        "Abyss Flame": [("Core3", 1), ("Flame1", 10), 80, "Flame2"]},
-    "Divine Infusion": {
-        "Divinity Core": [("Crystal3", 1), ("Fragment4", 10), 90, "Core4"],
-        "Crystallized Divinity": [("Core4", 5), 100, "Crystal4"],
+    "Core Infusion": {},
+    "Void Infusion": {},
+    "Jewel Infusion": {},
+    "Special Infusion": {
+        "Radiant Heart": [("Stone5", 1), ("Fragment2", 1), 20, "Heart1"],
+        "Chaos Heart": [("Stone5", 1), ("Fragment3", 1), 20, "Heart2"],
+        "Abyss Flame": [("Core3", 1), ("Flame1", 10), 80, "Flame2"],
         "Lotus of Serenity": [("Heart1", 99), ("Fragment2", 99), 99, "Lotus2"],
         "Twin Rings of Divergent Stars": [("DarkStar", 1), ("LightStar", 1), 100, "TwinRings"]},
-    "Heart Infusion": {
-        "Radiant Heart": [("Stone5", 1), ("Fragment2", 1), 20, "Heart1"],
-        "Chaos Heart": [("Stone5", 1), ("Fragment3", 1), 20, "Heart2"]},
     "Elemental Ring Infusion": {}, "Primordial Ring Infusion": {}, "Path Ring Infusion": {},
     "Legendary Ring Infusion": {
         "Dragon's Eye Diamond": [("Gemstone10", 10), ("Gemstone11", 3), 100, "7"],
@@ -44,16 +35,16 @@ recipe_dict = {
 }
 
 
-def add_recipe(category, name, components):
+def add_recipe(category, name, data_list):
     if category not in recipe_dict:
         recipe_dict[category] = {}
-    recipe_dict[category][name] = components
+    recipe_dict[category][name] = data_list
 
 
 # Heavenly Infusion
-for ore, count in zip(['Crude', 'Cosmite', 'Celestite', 'Crystallite'], [50, 20, 10, 2]):
+for idx, (ore, count) in enumerate(zip(['Crude', 'Cosmite', 'Celestite', 'Crystallite'], [50, 20, 10, 2]), start=1):
     add_recipe("Heavenly Infusion", f"Heavenly Ore ({ore})",
-               [(f"Ore{ore[:2].upper()}{count//10}", count), ("Stone1", 5), 75, "Ore5"])
+               [(f"Ore{idx}", count), (f"Stone{idx}", 5), 75, "Ore5"])
 
 primordial_rings = [("Ruby", "Incineration"), ("Sapphire", "Atlantis"), ("Topaz", "Dancing Thunder"),
                     ("Agate", "Seismic Tremors"), ("Emerald", "Wailing Winds"), ("Zircon", "Frozen Castle"),
@@ -71,10 +62,22 @@ for idx, (element, (gemstone, ring_name)) in enumerate(zip(globalitems.element_n
                [(f"Gemstone{idx + 1}", 5), ("Gemstone11", 1), 100, "5"])
 void_cost = [('Weapon', ("Scrap", 200)), ('Armour', ("Scrap", 100)), ('Vambraces', ("Unrefined2", 10)),
              ('Amulet', ("Scrap", 100)),  ('Wing', ("Unrefined1", 10)), ('Crest', ("Unrefined3", 10))]
+# Core Infusions
+core_types = ["Void", "Wish", "Abyss", "Divinity"]
+for idx in range(1, len(core_types) + 1):
+    components = [(f"Crystal{idx - 1}", 1)] if idx != 1 else []
+    add_recipe("Core Infusion", f"{core_types[idx - 1]} Core",
+               components + [(f"Fragment{idx}", 10), 90, f"Core{idx}"])
+    add_recipe("Core Infusion", f"Crystallized {core_types[idx - 1]}",
+               [(f"Core{idx}", 3), 100, f"Crystal{idx}"])
 # Void Infusions
-for item_type, secondary_cost in zip(void_cost):
+for idx, (item_type, secondary_cost) in enumerate(void_cost):
     add_recipe("Void Infusion", f"Unrefined Void Item ({item_type})",
-               [("Crystal1", 1), secondary_cost, 99, f"Void{void_items.index(item_type) + 1}"])
+               [("Crystal1", 1), secondary_cost, 99, f"Void{idx + 1}"])
+# Jewel Infusion
+for idx, jewel_type in enumerate(['Dragon', 'Demon', 'Paragon'], start=1):
+    add_recipe("Jewel Infusion", f"Unrefined {jewel_type} Jewel",
+               [(f"Gem{idx}", 10), 75, f"Jewel{idx}"])
 # Path Ring Infusions
 path_rings = [
     ("Invoking Ring of Storms", [(1, 5), (3, 5), (11, 2)]),
@@ -229,9 +232,9 @@ class CraftView(discord.ui.View):
             await interaction.response.edit_message(embed=self.embed_msg, view=self.new_view)
             return
         self.new_view = CraftView(self.player_user, self.recipe_object)
-        self.embed_msg = self.recipe_object.create_cost_embed(self.player_user)
         # Handle cannot afford response
         if not self.recipe_object.can_afford(self.player_user, selected_qty):
+            self.embed_msg = self.recipe_object.create_cost_embed(self.player_user)
             self.embed_msg.add_field(name="Not Enough Materials!",
                                      value="Please come back when you have more materials.", inline=False)
             new_view = InfuseView(self.player_user)
@@ -239,6 +242,7 @@ class CraftView(discord.ui.View):
             return
         is_ring = "Ring" in self.recipe_object.category
         result = self.recipe_object.perform_infusion(self.player_user, selected_qty, ring=is_ring)
+        self.embed_msg = self.recipe_object.create_cost_embed(self.player_user)
         # Handle infusion
         if is_ring:
             # Handle ring
@@ -252,7 +256,6 @@ class CraftView(discord.ui.View):
         # Handle non-ring failure
         if result == 0:
             header, description = "Infusion Failed!", "I guess it's just not your day today."
-            self.embed_msg = discord.Embed(colour=discord.Colour.dark_orange(), title=NPC_name, description=description)
             self.embed_msg.add_field(name=header, value=description, inline=False)
             self.new_view = CraftView(self.player_user, self.recipe_object)
             await interaction.response.edit_message(embed=self.embed_msg, view=self.new_view)
