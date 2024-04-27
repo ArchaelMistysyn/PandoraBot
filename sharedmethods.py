@@ -36,7 +36,8 @@ async def check_click(interaction, player_obj, new_embed, new_view):
 
 
 def check_rare_item(item_id):
-    return True if "Lotus" in item_id or "True Void" in item_id or item_id in ["DarkStar", "LightStar"] else False
+    id_list = ["DarkStar", "LightStar", "Gemstone12"]
+    return True if "Lotus" in item_id or item_id in id_list else False
 
 
 async def send_notification(ctx_object, player_obj, notification_type, value):

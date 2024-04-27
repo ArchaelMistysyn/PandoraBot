@@ -117,14 +117,14 @@ def assign_unique_tokens(player_obj, token_string):
         "XVI - Aurora, The Fortress": 4, "VII - Astratha, The Dimensional": 6, "VIII - Tyra, The Behemoth": 11,
         "II - Pandora, The Celestial": 14, "III - Oblivia, The Void": 16, "IV - Akasha, The Infinite": 17,
         "XXV - Eleuia, The Wish": 19,
-        "XXVIII - Fleur, Oracle of the True Laws": 20, "XXIX - Yubelle, Adjudicator of the True Laws": 21,
-        "XXX - Amaryllis, Incarnate of the Divine Lotus [Challenger]": 22,
-        "XXX - Amaryllis, Incarnate of the Divine Lotus [Usurper]": 23,
-        "XXX - Amaryllis, Incarnate of the Divine Lotus [Samsara]": 24,
+        "XXVIII - Fleur, Oracle of the True Laws": 21, "XXIX - Yubelle, Adjudicator of the True Laws": 22,
+        "XXX - Amaryllis, Incarnate of the Divine Lotus [Challenger]": 23,
+        "XXX - Amaryllis, Incarnate of the Divine Lotus [Usurper]": 25,
+        "XXX - Amaryllis, Incarnate of the Divine Lotus [Samsara]": 26,
         # Feature Tokens
         "Register": 1, "Map": 2, "Town": 5, "Arbiter": 7, "Insignia": 8, "Contract": 9, "Vambraces": 10,
-        "Crest": 12, "Tarot": 13, "Gauntlet": 15, "Abyss": 18, "Meld": 19, "Tarot Completion": 24
-    }
+        "Crest": 12, "Tarot": 13, "Gauntlet": 15, "Abyss": 18, "Meld": 19, "Tarot Completion": 24}
+    token_string = token_string.replace(" [Gauntlet]", "")
     if token_string in token_quest_dict:
         player_obj.quest_tokens[token_quest_dict[token_string]] += 1
         quest_tokens = ";".join(map(str, player_obj.quest_tokens))

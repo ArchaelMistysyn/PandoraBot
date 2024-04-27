@@ -34,6 +34,7 @@ import itemrolls
 import tarot
 import insignia
 import forge
+import trading
 
 # Trade imports
 import market
@@ -725,7 +726,26 @@ def run_discord_bot():
         buy_view = menus.BuyView(player_obj, selected_item)
         await ctx.send(embed=embed_msg, view=buy_view)
 
-    @set_command_category('trade', 2)
+    @set_command_category('trade', 3)
+    @pandora_bot.hybrid_command(name='trade', help="Create a trade offer. [To trade with coins, leave the item blank]")
+    @app_commands.guilds(discord.Object(id=guild_id))
+    async def trade(ctx, receiving_player: discord.User, offer_item="", offer_qty=0, receive_item="", receive_qty=0):
+        await ctx.defer()
+        player_obj = await sharedmethods.check_registration(ctx)
+        if player_obj is None:
+            return
+        target = await player.get_player_by_discord(receiving_player.id)
+        if target is None:
+            await ctx.send(f"{receiving_player.display_name} is not registered.")
+            return
+        trade_obj, err_msg = await trading.create_trade(player_obj, target, offer_item, offer_qty, receive_item, receive_qty)
+        trade_view = trading.TradeView(trade_obj)
+        if err_msg != "":
+            await ctx.send(err_msg)
+            return
+        await ctx.send(embed=trade_obj.trade_msg, view=trade_view)
+
+    @set_command_category('trade', 3)
     @pandora_bot.hybrid_command(name='retrieve', help="Retrieve your items listed on the Bazaar.")
     @app_commands.guilds(discord.Object(id=guild_id))
     async def retrieve(ctx):
@@ -736,7 +756,7 @@ def run_discord_bot():
         num_items = bazaar.retrieve_items(player_obj.player_id)
         await ctx.send(f"{num_items} unsold items retrieved.")
 
-    @set_command_category('trade', 3)
+    @set_command_category('trade', 4)
     @pandora_bot.hybrid_command(name='bazaar', help="View the Bazaar.")
     @app_commands.guilds(discord.Object(id=guild_id))
     async def view_bazaar(ctx):
@@ -748,7 +768,7 @@ def run_discord_bot():
         bazaar_view = None  # Not yet implemented
         await ctx.send(embed=embed_msg, view=bazaar_view)
 
-    @set_command_category('trade', 4)
+    @set_command_category('trade', 5)
     @pandora_bot.hybrid_command(name='market', help="Visit the black market item shop.")
     @app_commands.guilds(discord.Object(id=guild_id))
     async def black_market(ctx):
@@ -764,7 +784,7 @@ def run_discord_bot():
         market_select_view = market.TierSelectView(player_obj)
         await ctx.send(embed=embed_msg, view=market_select_view)
 
-    @set_command_category('trade', 5)
+    @set_command_category('trade', 6)
     @pandora_bot.hybrid_command(name='give', help="Transfer ownership of a gear item.")
     @app_commands.guilds(discord.Object(id=guild_id))
     async def give(ctx, item_id: int, receiving_player: discord.User):
@@ -805,7 +825,7 @@ def run_discord_bot():
         embed_msg.add_field(name=header, value=message, inline=False)
         await ctx.send(embed=embed_msg)
 
-    @set_command_category('trade', 6)
+    @set_command_category('trade', 7)
     @pandora_bot.hybrid_command(name='purge', help="Sells all gear in or below a tier. "
                                 "Types: [Weapon, Armour, Vambraces, Amulet, Wings, Crest, Gems]")
     @app_commands.guilds(discord.Object(id=guild_id))

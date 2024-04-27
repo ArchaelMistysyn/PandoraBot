@@ -136,15 +136,14 @@ def generate_random_item(quantity=1):
         [100, None, "Token"], [100, None, "Jewel"], [50, None, "Heart"], [200, None, "Summon"], [50, "Compass", None],
         [1000, "Pearl", None], [1000, "Hammer", None], [500, None, "Gem"], [1500, None, "Ore"],
         [500, None, "Fragment"], [500, "Flame1", None], [1000, "Matrix1", None], [1000, None, "Potion"],
-        [2064, None, "Fae"]
-    ]
+        [2064, None, "Fae"]]
     max_reward = 10000  # sum(item[0] for item in probability_rewards)
     # Assign a reward id based on the probability, set id, or id prefix.
     for _ in range(quantity):
-        current_breakpoint = 0
+        current_breakpoint, random_item = 0, random.randint(1, max_reward)
         for item in probability_rewards:
             current_breakpoint += item[0]
-            if random.randint(1, max_reward) <= current_breakpoint:
+            if random_item <= current_breakpoint:
                 reward_id, prefix = item[1], item[2]
                 if prefix is not None:
                     reward_types = [key for key in itemdata.itemdata_dict.keys() if key is not None and prefix in key]
@@ -158,10 +157,7 @@ def generate_random_item(quantity=1):
         elif "Fragment" in reward_id:
             item_qty = 5
         # Update quantity on duplicate entries
-        if reward_id in rewards:
-            rewards[reward_id] += item_qty
-        else:
-            rewards[reward_id] = item_qty
+        rewards[reward_id] = (rewards[reward_id] + item_qty) if reward_id in rewards else item_qty
     return [(reward_id, qty) for reward_id, qty in rewards.items()]
 
 

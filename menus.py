@@ -41,7 +41,7 @@ intermediate_guide += "\n5. Use /stats to check your stats details and point gly
 intermediate_guide += "\n6. Use /engrave to engrave an insignia on your soul. Req Quest: 20"
 intermediate_guide += "\n7. Use /refinery to refine powerful unprocessed gear items."
 intermediate_guide += "\n8. Use /tarot [card number] to bind essence items to tarot cards."
-intermediate_guide += "\n9. Use /bazaar, /sell, /give, and /buy to trade items."
+intermediate_guide += "\n9. Use /bazaar, /sell, /give, /trade, and /buy to trade items."
 
 
 advanced_guide = "1. Use /summon and spend summoning items to fight powerful opponents above tier 5!"

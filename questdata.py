@@ -379,7 +379,7 @@ quests_data = {
          "They underestimated you and let your potential fully blossom. "
          "Even so we cannot challenge the rule of Divine Lotus while the Oracle still draws breath."
          "\nIf we're lucky she's already foreseen her demise.",
-         95, 21, None,
+         1, 21, None,
          "Defeat XXVIII - Fleur, Oracle of the True Laws",
          'Summon3', 5, None],
 

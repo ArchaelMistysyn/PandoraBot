@@ -5,6 +5,7 @@ import discord
 import re
 import string
 from discord.ui import Button, View
+import time
 
 # Data imports
 import globalitems
@@ -77,9 +78,7 @@ class BInventoryView(discord.ui.View):
             discord.SelectOption(
                 emoji="<a:eenergy:1145534127349706772>", label="Gemstone", description="Gemstone Items"),
             discord.SelectOption(
-                emoji="<a:eenergy:1145534127349706772>", label="Ultra Rare", description="Unprocessed Items")
-        ]
-    )
+                emoji="<a:eenergy:1145534127349706772>", label="Ultra Rare", description="Unprocessed Items")])
     async def inventory_callback(self, interaction: discord.Interaction, inventory_select: discord.ui.Select):
         if interaction.user.id == self.user.discord_id:
             inventory_title = f'{self.user.player_username}\'s {inventory_select.values[0]} Inventory:\n'
@@ -366,7 +365,8 @@ class CustomItem:
         embed_msg.add_field(name=item_info, value="", inline=False)
         thumbnail_url = sharedmethods.get_gear_thumbnail(self)
         if thumbnail_url is not None:
-            embed_msg.set_thumbnail(url=thumbnail_url)
+            timestamp = int(time.time())
+            embed_msg.set_thumbnail(url=f"{thumbnail_url}?ts={timestamp}")
         else:
             frame_url = globalitems.frame_icon_list[self.item_tier - 1]
             frame_url = frame_url.replace("[EXT]", globalitems.frame_extension[0])
@@ -496,7 +496,7 @@ def add_custom_item(item):
     raw_query = "SELECT * FROM CustomInventory WHERE player_id = :player_check AND item_type = :item_check"
     params = {'player_check': item.player_owner, 'item_check': item.item_type}
     check_df = rq(raw_query, return_value=True, params=params)
-    if len(check_df) > 30:
+    if len(check_df) > 40:
         return 0
     insert_query = ("INSERT INTO CustomInventory "
                     "(player_id, item_type, item_name, item_damage_type, item_elements, item_enhancement,"

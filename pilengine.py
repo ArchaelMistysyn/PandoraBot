@@ -53,7 +53,7 @@ url_dict = {'cardBG': rank_card_url_list, 'metal': metal_url_list, 'wing': wing_
             'exp_bar': exp_bar_url_list, 'role_icon': rank_url_list, 'frame_icon': globalitems.frame_icon_list}
 
 # Load Resources
-font_url = f"{web_url}/botimages/profilecards/fonts/"
+font_url = f"{web_url}//botimages/profilecards/fonts/"
 level_font_url = "aerolite/Aerolite.otf"
 name_font = "blackchancery/BLKCHCRY.TTF"
 # level_font_url = "oranienbaum/Oranienbaum.ttf"
@@ -209,8 +209,8 @@ def upload_file_to_ftp(ftp, local_path, remote_directory, remote_filename):
 def build_notification(player_obj, message, notification_type, item=None):
     # Initializations.
     width, height = 800, 200
-    background_color = hex_to_rgba(globalitems.tier_colors[player_obj.player_echelon])
-    fill_colour = "Black" if player_obj.player_echelon < 8 else "White"
+    # echelon_colour = hex_to_rgba(globalitems.tier_colors[player_obj.player_echelon])
+    background_color, fill_colour = hex_to_rgba(0x000000), "White"
     result = Image.new('RGBA', (width, height), background_color + (255,))
     image_editable = ImageDraw.Draw(result)
 

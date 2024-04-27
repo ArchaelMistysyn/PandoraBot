@@ -9,9 +9,9 @@ date_formatting = '%Y-%m-%d %H:%M:%S'
 # Discord Menu Button Colours
 button_colour_list = [discord.ButtonStyle.red, discord.ButtonStyle.green,
                       discord.ButtonStyle.blurple, discord.ButtonStyle.secondary]
-# Hex color codes for each tier: [Dark Gray, Green, Blue, Purple, Gold, Red, Pink, White, Black]
+# Hex color codes for each tier: [Dark Gray, Green, Blue, Purple, Gold, Red, Pink, Black, White]
 tier_colors = {0: 0x2C2F33, 1: 0x43B581, 2: 0x3498DB, 3: 0x9B59B6, 4: 0xF1C40F,
-               5: 0xCC0000, 6: 0xE91E63, 7: 0xFFFFFF, 8: 0x000000, 9: 0x000000}
+               5: 0xCC0000, 6: 0xE91E63, 7: 0x000000, 8: 0xFFFFFF, 9: 0xFFFFFF}
 
 # BOT DATA
 # Discord Lists
@@ -52,7 +52,7 @@ star_icon = ["<:SB:1201563579330076682>", "<:S1:1201563573202206910>", "<:S2:120
 # Augment Icons
 augment_icons = ["<:P1:1201567117414244372>", "<:P2:1201567119368798239>", "<:P3:1201567120669036554>",
                  "<:P4:1201567121411407944>", "<:P5:1201567122569048154>", "<:P6:1201567123999313930>",
-                 "<:P7:1201567125035286628>", "<:P8:1201567126088056862>", "<:P9:1201567463859556503>"]
+                 "<:P7:1201567125035286628>", "<:P8:1201567463859556503>", "<:PX:1201567126088056862>"]
 # Element Icons
 global_element_list = ["<:e1:1179726491311947829>", "<:e2:1179726472995405854>", "<:e3:1179726450056761364>",
                        "<:e4:1179726402296221787>", "<:e5:1179726383224733706>", "<:e6:1179726426509946900>",

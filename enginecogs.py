@@ -124,7 +124,7 @@ class PvPCog(commands.Cog):
         stun_list, hit_list, is_alive_player1, is_alive_player2 = await self.calculate_pvp_cycle()
         pvp_embed = await self.update_combat_embed(stun_list, hit_list)
         winner, quantity = None, 2
-        exp_amount = random.randint(self.player1.player_echelon * 100, self.player1.player_echelon * 500)
+        exp_amount = random.randint(self.player1.player_echelon * 100, self.player1.player_echelon * 200)
         loot_item = inventory.BasicItem("Crate")
         # Determine winners.
         if (not is_alive_player1 and not is_alive_player2) or self.combat_tracker1.total_cycles >= 50:
@@ -151,9 +151,8 @@ class PvPCog(commands.Cog):
         exp_description = f"{exp_msg} EXP acquired!"
         pvp_embed.add_field(name=result_message, value=f"{exp_description}\n{loot_msg}", inline=False)
         await self.sent_message.edit(embed=pvp_embed)
-        if lvl_adjust == 0:
-            return
-        await sharedmethods.send_notification(self.ctx_obj, self.player1, "Level", lvl_adjust)
+        if lvl_adjust != 0:
+            await sharedmethods.send_notification(self.ctx_obj, self.player1, "Level", lvl_adjust)
         self.cog_unload()
 
     async def update_combat_embed(self, stun_list, hit_list):
@@ -213,10 +212,10 @@ class PvPCog(commands.Cog):
         combo_count[attacker] += 1 + combatants[attacker].combo_application
         hit_damage, skill_name = combat.skill_adjuster(combatants[attacker], trackers[attacker], hit_damage,
                                                        combo_count[attacker], False)
+        hit_damage, status_msg = combat.check_lock(combatants[attacker], trackers[attacker], hit_damage)
+        hit_damage, second_msg = combat.check_bloom(combatants[attacker], hit_damage)
+        hit_damage, evade = combat.handle_evasions(combatants[defender].block, combatants[defender].dodge, hit_damage)
         scaled_dmg = combat.pvp_scale_damage(role_order, combatants, hit_damage)
-        scaled_dmg, status_msg = combat.check_lock(combatants[attacker], trackers[attacker], scaled_dmg)
-        scaled_dmg, second_msg = combat.check_bloom(combatants[attacker], scaled_dmg)
-        scaled_dmg, evade = combat.handle_evasions(combatants[defender].block, combatants[defender].dodge, scaled_dmg)
         hit_msg = f"{combatants[attacker].player_username} - {combo_count[attacker]}x Combo: {skill_name} {sharedmethods.number_conversion(scaled_dmg)}"
         hit_msg += f"{status_msg}{second_msg}{critical_type}{evade}"
         hit_list.append([scaled_dmg, hit_msg])

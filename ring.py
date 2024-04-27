@@ -44,8 +44,8 @@ ring_values_dict = {
     "Chromatic Tears": [[("Omni Curse X%", "all_elemental_curse", 500, None)], (0, None)],
     "Bleeding Hearts": [[("bleed_application +X", "bleed_application", 5, None)], (0, None)],
     # Mythic Rings
-    "Stygian Calamity": [[("spec_conv", 10, 0)], (0, None)],
-    "Sacred Ring of Divergent Stars": [[("spec_conv", 10, 1)], (0, None)]
+    "Stygian Calamity": [[("X% chance for Bloom to trigger Abyssal Bloom", "spec_conv", 10, 0)], (0, None)],
+    "Sacred Ring of Divergent Stars": [[("X% chance for Bloom to trigger Sacred Bloom", "spec_conv", 10, 1)], (0, None)]
 }
 
 
