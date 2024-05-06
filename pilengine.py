@@ -60,6 +60,17 @@ level_font_url = "aerolite/Aerolite.otf"
 name_font = "blackchancery/BLKCHCRY.TTF"
 # level_font_url = "oranienbaum/Oranienbaum.ttf"
 
+
+# COLOURS
+def hex_to_rgba(hex_value, alpha=255):
+    red = (hex_value >> 16) & 0xFF
+    green = (hex_value >> 8) & 0xFF
+    blue = hex_value & 0xFF
+    return red, green, blue
+
+
+GoldColour = hex_to_rgba(0xE5BF00)
+
 # Web Data for FTP Login
 web_data = None
 with open("web_data_login.txt", 'r') as data_file:
@@ -240,7 +251,6 @@ def build_notification(player_obj, message, notification_type, title_msg, item=N
     # Initializations.
     width, height = 800, 200
     cardBG = Image.open(requests.get(f"{web_url}/botimages/banners/achievement_banner.png", stream=True).raw)
-    # cardBG = Image.open(requests.get(f"{web_url}/botimages/banners/game_banner.png", stream=True).raw)
     result = Image.new("RGBA", (width, height))
     result.paste(cardBG, (0, 0), cardBG)
     name_font_file = requests.get((font_url + name_font), stream=True).raw
@@ -249,25 +259,55 @@ def build_notification(player_obj, message, notification_type, title_msg, item=N
     # Apply Title and Message Text.
     title_font_object = ImageFont.truetype(level_font_file, 52)
     font_object = ImageFont.truetype(name_font_file, 38)
-    title_colour, message_colour = "Gold", "White"
-    image_editable.text((185, 38), title_msg, fill=title_colour, font=title_font_object)
-    image_editable.text((185, 95), message, fill=message_colour, font=font_object)
-    # Example Icon Loading.
+    title_colour, message_colour = GoldColour, "White"
+    image_editable.text((195, 38), title_msg, fill=title_colour, font=title_font_object)
+    image_editable.text((195, 100), message, fill=message_colour, font=font_object)
+    # Achievement Icon Loading.
     if notification_type == "Achievement":
-        icon_size = (72, 72)
+        icon_size = (144, 144)
         icon_url = rank_url_list[player_obj.player_echelon // 2]
         role_icon = Image.open(requests.get(icon_url, stream=True).raw)
         role_icon = role_icon.resize(icon_size)
-        result.paste(role_icon, (700, 82), mask=role_icon)
+        result.paste(role_icon, (600, 25), mask=role_icon)
     # Save and return image.
     file_path = f'{image_path}notification\\Notification{player_obj.player_id}.png'
     result.save(file_path)
     return file_path
 
 
-def hex_to_rgba(hex_value, alpha=255):
-    red = (hex_value >> 16) & 0xFF
-    green = (hex_value >> 8) & 0xFF
-    blue = hex_value & 0xFF
-    return red, green, blue
+def build_message_box(player_obj, message, header=""):
+    width, height = 800, 200
+    cardBG = Image.open(requests.get(f"{web_url}/botimages/banners/game_banner.png", stream=True).raw)
+    result = Image.new("RGBA", (width, height))
+    result.paste(cardBG, (0, 0), cardBG)
+    image_editable = ImageDraw.Draw(result)
+    name_font_file = requests.get((font_url + name_font), stream=True).raw
+    font_object = ImageFont.truetype(name_font_file, 42)
+    text_x = image_editable.textlength(message, font=font_object)
+    image_editable.text(((width - text_x) / 2, 100), message, fill="White", font=font_object)
+    if header != "":
+        level_font_file = requests.get((font_url + level_font_url), stream=True).raw
+        title_font_object = ImageFont.truetype(level_font_file, 54)
+        text_x = image_editable.textlength(header, font=title_font_object)
+        image_editable.text(((width - text_x) / 2, 35), header, fill=GoldColour, font=title_font_object)
+    # Save and return image.
+    file_path = f'{image_path}notification\\Notification{player_obj.player_id}.png'
+    result.save(file_path)
+    return file_path
+
+
+def build_title_box(message):
+    width, height = 800, 200
+    cardBG = Image.open(requests.get(f"{web_url}/botimages/banners/game_banner.png", stream=True).raw)
+    result = Image.new("RGBA", (width, height))
+    result.paste(cardBG, (0, 0), cardBG)
+    image_editable = ImageDraw.Draw(result)
+    level_font_file = requests.get((font_url + level_font_url), stream=True).raw
+    title_font_object = ImageFont.truetype(level_font_file, 80)
+    text_x = image_editable.textlength(message, font=title_font_object)
+    image_editable.text(((width - text_x) / 2, 60), message, fill=GoldColour, font=title_font_object)
+    # Save and return image.
+    file_path = f'{image_path}notification\\Title_Notification.png'
+    result.save(file_path)
+    return file_path
 

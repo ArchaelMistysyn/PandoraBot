@@ -126,17 +126,10 @@ class HelpView(discord.ui.View):
 def build_help_embed(category_dict, category_name):
     display_category_name = category_name.capitalize()
     embed = discord.Embed(title=f"{display_category_name} Commands:", color=discord.Colour.dark_orange())
-    if category_name != "combat":
-        commands = category_dict[category_name]
-    else:
-        commands = combat.combat_command_list
+    commands = category_dict[category_name] if category_name != "combat" else combat.combat_command_list
     commands.sort(key=lambda x: x[2])
-    if category_name != 'admin':
-        command_prefix = '/'
-    else:
-        command_prefix = '!'
     for command_name, description, _ in commands:
-        embed.add_field(name=f"{command_prefix}{command_name}", value=f"{description}", inline=False)
+        embed.add_field(name=f"/{command_name}", value=f"{description}", inline=False)
     return embed
 
 
@@ -294,8 +287,8 @@ gear_button_list = ["Weapon", "Armour", "Greaves", "Amulet",  "Ring", "Wing", "C
 class GearView(discord.ui.View):
     def __init__(self, player_user, target_user, current_position, view_type):
         super().__init__(timeout=None)
-        self.player_user = player_user
-        self.target_user = target_user
+        self.player_user, self.target_user = player_user, target_user
+        self.new_embed, self.new_view = None, None
         self.view_type = view_type
         self.current_position = current_position
         self.previous_button.label = self.get_positional_label(-1)
@@ -363,26 +356,35 @@ class GearView(discord.ui.View):
     async def previous_button(self, interaction: discord.Interaction, button: discord.Button):
         if interaction.user.id != self.player_user.discord_id:
             return
-        new_msg = await self.cycle_gear(-1)
-        new_view = GearView(self.player_user, self.target_user, self.current_position, self.view_type)
-        await interaction.response.edit_message(embed=new_msg, view=new_view)
+        if self.new_embed is not None:
+            await interaction.response.edit_message(embed=self.new_embed, view=self.new_view)
+            return
+        self.new_embed = await self.cycle_gear(-1)
+        self.new_view = GearView(self.player_user, self.target_user, self.current_position, self.view_type)
+        await interaction.response.edit_message(embed=self.new_embed, view=self.new_view)
 
     @discord.ui.button(style=discord.ButtonStyle.success)
     async def toggle_view_button(self, interaction: discord.Interaction, button: discord.Button):
         if interaction.user.id != self.player_user.discord_id:
             return
+        if self.new_embed is not None:
+            await interaction.response.edit_message(embed=self.new_embed, view=self.new_view)
+            return
         self.view_type = "Gear" if self.view_type == "Gem" else "Gem"
-        new_msg = await self.cycle_gear(0)
-        new_view = GearView(self.target_user, self.target_user, self.current_position, self.view_type)
-        await interaction.response.edit_message(embed=new_msg, view=new_view)
+        self.new_embed = await self.cycle_gear(0)
+        self.new_view = GearView(self.target_user, self.target_user, self.current_position, self.view_type)
+        await interaction.response.edit_message(embed=self.new_embed, view=self.new_view)
 
     @discord.ui.button(style=discord.ButtonStyle.blurple, emoji="➡️")
     async def next_button(self, interaction: discord.Interaction, button: discord.Button):
         if interaction.user.id != self.player_user.discord_id:
             return
-        new_msg = await self.cycle_gear(1)
-        new_view = GearView(self.target_user, self.target_user, self.current_position, self.view_type)
-        await interaction.response.edit_message(embed=new_msg, view=new_view)
+        if self.new_embed is not None:
+            await interaction.response.edit_message(embed=self.new_embed, view=self.new_view)
+            return
+        self.new_embed = await self.cycle_gear(1)
+        self.new_view = GearView(self.target_user, self.target_user, self.current_position, self.view_type)
+        await interaction.response.edit_message(embed=self.new_embed, view=self.new_view)
 
 
 class ManageCustomItemView(discord.ui.View):

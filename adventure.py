@@ -1155,7 +1155,7 @@ class SkipView(discord.ui.View):
         colour, _ = sharedmethods.get_gear_tier_colours(self.player_user.player_echelon)
         self.new_embed = discord.Embed(colour=colour, title="", description="")
         cost_stock = inventory.check_stock(self.player_user, self.cost_item.item_id)
-        if cost_stock <= 5:
+        if cost_stock < 5:
             self.new_embed.title = "Manifest - Out of Stock"
             self.new_embed.description = sharedmethods.get_stock_msg(self.cost_item, cost_stock, cost=5)
             self.new_view = SkipView(self.ctx_obj, self.player_user, self.method_info)

@@ -24,6 +24,7 @@ web_url = "https://kyleportfolio.ca/botimages/"
 # IMAGE DATA
 forge_img, refinery_img = f"{web_url}scenes/Forge.png", f"{web_url}scenes/Refinery.png"
 abyss_img = f"{web_url}scenes/Abyss.png"
+archdragon_logo = f"{web_url}ArchDragon.png"
 
 # ICON DATA
 # General Icons

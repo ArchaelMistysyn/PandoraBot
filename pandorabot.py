@@ -134,7 +134,7 @@ def run_discord_bot():
         return False
 
     @set_command_category('admin', 0)
-    @pandora_bot.command(name='sync', help="Bot Admin Only!")
+    @pandora_bot.command(name='sync', help="Run with ! to sync. Archael Only.")
     async def sync(ctx, method="default"):
         await ctx.defer()
         trigger_return, _, _ = await admin_verification(ctx)
@@ -148,7 +148,7 @@ def run_discord_bot():
         await ctx.send('Pandora Bot commands synced!')
 
     @set_command_category('admin', 1)
-    @pandora_bot.hybrid_command(name='generategear', help="Admin gear item generation")
+    @pandora_bot.hybrid_command(name='generategear', help="Admin gear item generation.")
     @app_commands.guilds(discord.Object(id=1011375205999968427))
     async def GenerateGear(ctx, target_user: discord.User = None, tier=1, elements="0;0;0;0;0;0;0;0;0", item_type="W",
                            base_type="", class_name="Knight", enhance=0, quality=1,
@@ -165,7 +165,7 @@ def run_discord_bot():
             await ctx.send(f'Admin task completed. Created item id: {new_item.item_id}')
 
     @set_command_category('admin', 2)
-    @pandora_bot.hybrid_command(name='itemmanager', help="Admin item commands")
+    @pandora_bot.hybrid_command(name='itemmanager', help="Admin item commands [SetQTY, Delete]")
     @app_commands.guilds(discord.Object(id=1011375205999968427))
     async def ItemManager(ctx, method="", target_user: discord.User = None, item_id="", value="0"):
         await ctx.defer()
@@ -187,7 +187,7 @@ def run_discord_bot():
         await ctx.send('Admin task completed.')
 
     @set_command_category('admin', 3)
-    @pandora_bot.hybrid_command(name='playermanager', help="Admin player commands")
+    @pandora_bot.hybrid_command(name='playermanager', help="Admin player commands. [See admin wiki for options]")
     @app_commands.guilds(discord.Object(id=1011375205999968427))
     async def PlayerManager(ctx, method="", target_user: discord.User = None, value="0"):
         await ctx.defer()
@@ -212,7 +212,7 @@ def run_discord_bot():
         await ctx.send('Admin task completed.')
 
     @set_command_category('admin', 4)
-    @pandora_bot.hybrid_command(name='archcommand', help="Admin player commands")
+    @pandora_bot.hybrid_command(name='archcommand', help="Admin player commands. See admin wiki for options.")
     @app_commands.guilds(discord.Object(id=1011375205999968427))
     async def ArchCommand(ctx, keyword="", value="0"):
         await ctx.defer()
@@ -242,9 +242,13 @@ def run_discord_bot():
                 await ctx.send("Invalid notification type")
                 return
             await sharedmethods.send_notification(ctx, player_obj, value, test_dict[value])
+        elif keyword == "Sync":
+            synced = await pandora_bot.tree.sync(guild=discord.Object(id=guild_id))
+            print(f"Pandora Bot Synced! {len(synced)} command(s)")
+            await ctx.send('Pandora Bot commands synced!')
 
     @set_command_category('admin', 5)
-    @pandora_bot.hybrid_command(name='shutdown', help="Admin shutdown command")
+    @pandora_bot.hybrid_command(name='shutdown', help="Admin shutdown command. Admin Only.")
     @app_commands.guilds(discord.Object(id=1011375205999968427))
     async def shutdown(ctx):
         await ctx.defer()
@@ -819,20 +823,18 @@ def run_discord_bot():
             return
         # Check transfer eligibility (Item cannot be listed)
         if selected_item.player_owner == -1:
-            await ctx.send(f"Transfer Incomplete! Item ID: {item_id} is currently being listed.")
+            await ctx.send(f"Transfer Incomplete! Item ID: {item_id} is currently listed for sale.")
             return
         # Check transfer eligibility (Ownership)
-        owner_id = bazaar.get_seller_by_item(item_id)
-        owner_player = await player.get_player_by_id(owner_id)
-        if player_obj.player_id != owner_check:
+        if player_obj.player_id != selected_item.player_owner:
+            owner_player = await player.get_player_by_id(selected_item.player_owner)
             await ctx.send(f"Transfer Incomplete! Item ID: {item_id} owned by {owner_player.player_username}.")
             return
         # Transfer and display item.
         selected_item.give_item(target_player.player_id)
         header, message = "Transfer Complete!", f"{target_player.player_username} has received Item ID: {item_id}!"
-        embed_msg = await selected_item.create_citem_embed()
-        embed_msg.add_field(name=header, value=message, inline=False)
-        await ctx.send(embed=embed_msg)
+        file_path = pilengine.build_message_box(player_obj, message, header=header)
+        await ctx.send(file=discord.File(file_path))
 
     @set_command_category('trade', 7)
     @pandora_bot.hybrid_command(name='purge', help="Sells all gear in or below a tier. "
@@ -1102,26 +1104,43 @@ def run_discord_bot():
             await ctx.send(embed=embed_msg)
 
     @set_command_category('info', 8)
-    @pandora_bot.command(name='credits', help="Displays the game credits.")
+    @pandora_bot.hybrid_command(name='credits', help="Displays the game credits.")
     @app_commands.guilds(discord.Object(id=guild_id))
     async def credits_list(ctx):
         await ctx.defer()
-        credit_list = "Game created by: Kyle Mistysyn (Archael)"
-        # Artists
-        credit_list += "\nNong Dit @Nong Dit - Frame Artist (Fiverr)"
-        credit_list += "\nAztra.studio @Artherrera - Emoji/Icon Artist (Fiverr)"
-        credit_list += "\nLabs @labcornerr - Emoji/Icon Artist (Fiverr)"
-        credit_list += "\nVolff - Photoshop Assistance"
-        # Programming
-        credit_list += "\nBahamutt - Programming Assistance"
-        credit_list += "\nPota - Programming Assistance"
-        # Testers
-        credit_list += "\nZweii - Alpha Tester"
-        credit_list += "\nSoulViper - Alpha Tester"
-        credit_list += "\nKaelen - Alpha Tester"
-        credit_list += "\nVolff - Alpha Tester"
-        embed_msg = discord.Embed(colour=discord.Colour.light_gray(), title="Credits", description=credit_list)
-        embed_msg.set_image(url=globalitems.forge_img)
+        title = "Game created by: Kyle Mistysyn (Archael)"
+        artist_data = [
+            ("Nong Dit @Nong Dit", "Frame Artist (Fiverr)"),
+            ("Aztra.studio @Artherrera", "Emoji/Icon Artist (Fiverr)"),
+            ("Labs @labcornerr", "Emoji/Icon Artist (Fiverr)"),
+            ("Daimiuk @daimiuk", "Scene/Icon Artist (Fiverr)"),
+            ("Claudia", "Scene Artist (Volunteer)"),
+            ("Volff", "Photoshop Editing (Volunteer)")
+        ]
+        programming_data = [
+            ("Archael", "Programmer")
+        ]
+        tester_data = [
+            ("Zweii", "Alpha Tester"),
+            ("SoulViper", "Alpha Tester"),
+            ("Kaelen", "Alpha Tester"),
+            ("Volff", "Alpha Tester")
+        ]
+        misc_data = [
+            ("Bahamutt", "Programming Support"),
+            ("Pota", "Programming Support")]
+        artist_list = "\n".join(f"**{name}** - {role}" for name, role in artist_data)
+        programmer_list = "\n".join(f"**{name}** - {role}" for name, role in programming_data)
+        tester_list = "\n".join(f"**{name}** - {role}" for name, role in tester_data)
+        misc_list = "\n".join(f"**{name}** - {role}" for name, role in misc_data)
+        embed_msg = discord.Embed(colour=discord.Colour.light_gray(), title=title, description="")
+        embed_msg.add_field(name="__Artists__", value=artist_list.rstrip(), inline=False)
+        embed_msg.add_field(name="__Programmers__", value=programmer_list.rstrip(), inline=False)
+        embed_msg.add_field(name="__Testers__", value=tester_list.rstrip(), inline=False)
+        embed_msg.add_field(name="__Misc__", value=misc_list.rstrip(), inline=False)
+        embed_msg.set_thumbnail(url=globalitems.archdragon_logo)
+        file_path = pilengine.build_title_box("Pandora Bot Credits")
+        await ctx.send(file=discord.File(file_path))
         await ctx.send(embed=embed_msg)
 
     def build_category_dict():
