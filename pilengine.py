@@ -6,6 +6,8 @@ from ftplib import FTP
 
 # Data imports
 import globalitems
+import inventory
+import itemdata
 import sharedmethods
 
 # Core imports
@@ -42,8 +44,8 @@ exp_bar_url_list = [f"{profile_url}{exp_url}Teal.png", f"{profile_url}{exp_url}E
                     f"{profile_url}{exp_url}Azure.png", f"{profile_url}{exp_url}Rainbow.png",
                     f"{profile_url}{exp_url}Ruby.png", f"{profile_url}{exp_url}Pink.png"]
 wing_gem_url_list = [f"{profile_url}{wing_gem_url}Teal.png", f"{profile_url}{wing_gem_url}Emerald.png",
-                     f"{profile_url}{wing_gem_url}Azure.png", f"{profile_url}{wing_gem_url}Amethyst.png",
-                     f"{profile_url}{wing_gem_url}Cobalt.png", f"{profile_url}{wing_gem_url}Rainbow.png",
+                     f"{profile_url}{wing_gem_url}Cobalt.png", f"{profile_url}{wing_gem_url}Amethyst.png",
+                     f"{profile_url}{wing_gem_url}Azure.png", f"{profile_url}{wing_gem_url}Rainbow.png",
                      f"{profile_url}{wing_gem_url}Ruby.png", f"{profile_url}{wing_gem_url}Pink.png"]
 metal_url_list = [f"{profile_url}{metal_url}Bronze.png", f"{profile_url}{metal_url}Bronze.png",
                   f"{profile_url}{metal_url}Silver.png", f"{profile_url}{metal_url}SilverPlus.png",
@@ -51,14 +53,12 @@ metal_url_list = [f"{profile_url}{metal_url}Bronze.png", f"{profile_url}{metal_u
                   f"{profile_url}{metal_url}Stygian.png"]
 url_dict = {'cardBG': rank_card_url_list, 'metal': metal_url_list, 'wing': wing_gem_url_list,
             'exp_bar': exp_bar_url_list, 'role_icon': rank_url_list, 'frame_icon': globalitems.frame_icon_list}
-
+url_index_dict = {'cardBG': 0, 'metal': 1, 'wing': 2, 'exp_bar': 3, 'role_icon': 4, 'frame_icon': 5}
 # Load Resources
 font_url = f"{web_url}//botimages/profilecards/fonts/"
 level_font_url = "aerolite/Aerolite.otf"
 name_font = "blackchancery/BLKCHCRY.TTF"
 # level_font_url = "oranienbaum/Oranienbaum.ttf"
-name_font_file = requests.get((font_url + name_font), stream=True).raw
-level_font_file = requests.get((font_url + level_font_url), stream=True).raw
 
 # Web Data for FTP Login
 web_data = None
@@ -70,18 +70,19 @@ with open("web_data_login.txt", 'r') as data_file:
 class RankCard:
     def __init__(self, user, achievement_list):
         self.user, self.echelon = user, user.player_echelon
-        loc = [self.echelon for _ in range(6)]
+        self.cardBG, self.metal, self.wing, self.exp_bar, self.role_icon, self.frame_icon = "", "", "", "", "", ""
+        scaled_echelon = (self.echelon // 2)
+        loc = [scaled_echelon for _ in range(6)]
         self.fill_colour = "black"
         if "Exclusive Title Holder" in achievement_list:
             self.fill_colour = "white"
-            loc = [6, 6, 6, 6, 7, 7] if self.echelon != 5 else [5, 6, 5, 5, 7, 7]
-            loc[4] = 8 if "Herrscher - Subscriber" in achievement_list else loc[4]
+            loc = [6, 6, 6, 6, 7, 6] if scaled_echelon < 5 else [5, 6, 5, 5, 7, 6]
         elif "Herrscher - Subscriber" in achievement_list:
-            loc = [7, 7, 7, 7, 6, 5] if self.echelon < 5 else [5, 5, 5, 5, 6, 5]
+            loc = [7, loc[1], 7, 7, loc[4], 5] if scaled_echelon < 5 else [5, 5, 5, 5, loc[4], 5]
         for attr, url_list in url_dict.items():
             if attr != 'frame_icon':
-                index = loc[list(url_dict.keys()).index(attr)]
-            setattr(self, attr, url_list[index])
+                index = loc[url_index_dict[attr]]
+                setattr(self, attr, url_list[index])
         self.frame_icon = globalitems.frame_icon_list[loc[5]].replace("[EXT]", globalitems.frame_extension[1])
         self.class_icon = sharedmethods.get_thumbnail_by_class(self.user.player_class)
         self.fill_percent = round(self.user.player_exp / player.get_max_exp(self.user.player_level), 2)
@@ -98,6 +99,8 @@ def get_player_profile(player_obj, achievement_list):
     class_icon_frame = Image.open(requests.get(generic_frame_url, stream=True).raw)
     class_icon = Image.open(requests.get(rank_card.class_icon, stream=True).raw)
     exp_bar_image = Image.open(requests.get(rank_card.exp_bar, stream=True).raw)
+    name_font_file = requests.get((font_url + name_font), stream=True).raw
+    level_font_file = requests.get((font_url + level_font_url), stream=True).raw
     result = Image.new("RGBA", cardBG.size)
     result.paste(cardBG, (0, 0), cardBG)
     result.paste(metal, (0, 0), metal)
@@ -159,11 +162,10 @@ def generate_exp_bar(exp_bar_image, exp_bar_start, exp_bar_end, fill_percent):
     return exp_bar_result
 
 
-def generate_and_combine_images(item_type, start_tier=1, end_tier=8, fetch_type=False):
+def generate_and_combine_gear(item_type, start_tier=1, end_tier=8, fetch_type=False):
     if fetch_type:
         item_type = globalitems.gear_category_dict[item_type]
     # Ensure image is currently available.
-    availability_list = ["Sword", "Bow", "Threads", "Armour", "Wings", "Amulet"]
     if item_type not in globalitems.availability_list:
         return 0
     ftp = create_ftp_connection(web_data[0], web_data[1], web_data[2])
@@ -172,7 +174,7 @@ def generate_and_combine_images(item_type, start_tier=1, end_tier=8, fetch_type=
         frame_url = globalitems.frame_icon_list[item_tier - 1]
         frame_url = frame_url.replace("[EXT]", globalitems.frame_extension[0])
         icon_url = f"{web_url}/botimages/itemicons/{item_type}/{item_type}{item_tier}.png"
-        output_dir, file_name = f'{image_path}itemicons\\{item_type}\\', f"Framed_{item_type}_{item_tier}.png"
+        output_dir, file_name = f'{image_path}itemicons\\{item_type}\\', f"Frame_{item_type}_{item_tier}.png"
         file_path = f"{output_dir}{file_name}"
         frame = Image.open(requests.get(frame_url, stream=True).raw)
         icon = Image.open(requests.get(icon_url, stream=True).raw)
@@ -185,6 +187,34 @@ def generate_and_combine_images(item_type, start_tier=1, end_tier=8, fetch_type=
         upload_file_to_ftp(ftp, file_path, f"/public_html/botimages/itemicons/{item_type}/", file_name)
     ftp.quit()
     return end_tier + 1 - start_tier
+
+
+def generate_and_combine_images():
+    count = 0
+    ftp = create_ftp_connection(web_data[0], web_data[1], web_data[2])
+    for item_id in itemdata.itemdata_dict.keys():
+        # Ensure image is currently available.
+        if item_id not in globalitems.availability_list_nongear:
+            continue
+        count += 1
+        temp_item = inventory.BasicItem(item_id)
+        # Handle the urls and paths.
+        frame_url = globalitems.frame_icon_list[temp_item.item_tier - 1]
+        frame_url = frame_url.replace("[EXT]", globalitems.frame_extension[0])
+        icon_url = f"{web_url}/botimages/nongear/{temp_item.item_category}/{item_id}.png"
+        output_dir, file_name = f'{image_path}nongear\\{temp_item.item_category}\\', f"Frame_{item_id}.png"
+        file_path = f"{output_dir}{file_name}"
+        frame = Image.open(requests.get(frame_url, stream=True).raw)
+        icon = Image.open(requests.get(icon_url, stream=True).raw)
+        # Construct the new image
+        result = Image.new("RGBA", (106, 106))
+        result.paste(frame, (0, 0), frame)
+        result.paste(icon, (17, 16), icon)
+        result.save(file_path, format="PNG")
+        # Upload the file.
+        upload_file_to_ftp(ftp, file_path, f"/public_html/botimages/nongear/{temp_item.item_category}/", file_name)
+    ftp.quit()
+    return count
 
 
 def create_ftp_connection(hostname, username, password):
@@ -206,28 +236,29 @@ def upload_file_to_ftp(ftp, local_path, remote_directory, remote_filename):
         print(f"An error occurred while uploading {remote_filename}: {e}")
 
 
-def build_notification(player_obj, message, notification_type, item=None):
+def build_notification(player_obj, message, notification_type, title_msg, item=None):
     # Initializations.
     width, height = 800, 200
-    # echelon_colour = hex_to_rgba(globalitems.tier_colors[player_obj.player_echelon])
-    background_color, fill_colour = hex_to_rgba(0x000000), "White"
-    result = Image.new('RGBA', (width, height), background_color + (255,))
+    cardBG = Image.open(requests.get(f"{web_url}/botimages/banners/achievement_banner.png", stream=True).raw)
+    # cardBG = Image.open(requests.get(f"{web_url}/botimages/banners/game_banner.png", stream=True).raw)
+    result = Image.new("RGBA", (width, height))
+    result.paste(cardBG, (0, 0), cardBG)
+    name_font_file = requests.get((font_url + name_font), stream=True).raw
+    level_font_file = requests.get((font_url + level_font_url), stream=True).raw
     image_editable = ImageDraw.Draw(result)
-
     # Apply Title and Message Text.
-    title = f"Congratulations {player_obj.player_username}!"
-    title_font_object = ImageFont.truetype(level_font_file, 72)
-    font_object = ImageFont.truetype(name_font_file, 52)
-    image_editable.text((40, 25), title, fill=fill_colour, font=title_font_object)
-    image_editable.text((120, height // 2 + 10), message, fill=fill_colour, font=font_object)
-
+    title_font_object = ImageFont.truetype(level_font_file, 52)
+    font_object = ImageFont.truetype(name_font_file, 38)
+    title_colour, message_colour = "Gold", "White"
+    image_editable.text((185, 38), title_msg, fill=title_colour, font=title_font_object)
+    image_editable.text((185, 95), message, fill=message_colour, font=font_object)
     # Example Icon Loading.
-    icon_size = (62, 62)
-    icon_url = sharedmethods.get_thumbnail_by_class(player_obj.player_class)
-    class_icon = Image.open(requests.get(icon_url, stream=True).raw)
-    class_icon = class_icon.resize(icon_size)
-    result.paste(class_icon, (50, 90), mask=class_icon)
-
+    if notification_type == "Achievement":
+        icon_size = (72, 72)
+        icon_url = rank_url_list[player_obj.player_echelon // 2]
+        role_icon = Image.open(requests.get(icon_url, stream=True).raw)
+        role_icon = role_icon.resize(icon_size)
+        result.paste(role_icon, (700, 82), mask=role_icon)
     # Save and return image.
     file_path = f'{image_path}notification\\Notification{player_obj.player_id}.png'
     result.save(file_path)

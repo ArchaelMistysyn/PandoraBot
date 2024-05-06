@@ -167,28 +167,29 @@ class LotusSelectView(discord.ui.View):
         if interaction.user.id != self.player_obj.discord_id:
             return
         token_object = inventory.BasicItem("Token6")
+        token_stock = inventory.check_stock(self.player_obj, token_object.item_id)
         lotus_object = inventory.BasicItem(lotus_id)
         # Handle regular lotus.
         if lotus_id != "Lotus10":
             purchase_msg = (f"Are you absolutely certain this is the one you're looking for? It's not every day I let "
                             f"somebody lay their hands on my forbidden flowers."
                             f"\n{lotus_object.item_emoji} {lotus_object.item_name}")
-            cost_msg = f"{token_object.item_emoji} 50x {token_object.item_name}"
+            cost_msg = f"{token_stock} / 20 {token_object.item_emoji} {token_object.item_name}"
             embed_msg = discord.Embed(colour=discord.Colour.blurple(), title="Fleur, Oracle of the True Laws",
                                       description=purchase_msg)
             embed_msg.add_field(name="Offering", value=cost_msg, inline=False)
-            new_view = LotusPurchaseView(self.player_obj, lotus_object)
+            new_view = LotusPurchaseView(self.player_obj, token_object, lotus_object)
             await interaction.response.edit_message(embed=embed_msg, view=new_view)
             return
         # Handle divine lotus.
         purchase_msg = (f"You've evaded my foresight again. Truly remarkable. ... I suppose it could be done. "
                         f"\nSurely you understand that the cost equivalent to your request will be ... unfathomable."
                         f"\n{lotus_object.item_emoji} {lotus_object.item_name}")
-        cost_msg = f"{token_object.item_emoji} 100x {token_object.item_name}"
-        for item in lotus_list:
+        cost_msg = f"{token_stock} / 20 {token_object.item_name}"
+        for item in lotus_list[:-1]:
             temp_object = inventory.BasicItem(item['item_id'])
-            stock = inventory.check_stock(slef.player_obj, temp_object.item_id)
-            cost_msg += f"{temp_object.item_emoji} {temp_object.item_name} {stock} / 1"
+            stock = inventory.check_stock(self.player_obj, temp_object.item_id)
+            cost_msg += f"\n{temp_object.item_emoji} {temp_object.item_name} {stock} / 1"
         embed_msg = discord.Embed(colour=discord.Colour.blurple(), title="Fleur, Oracle of the True Laws",
                                   description=purchase_msg)
         embed_msg.add_field(name="Offering", value=cost_msg, inline=False)
@@ -202,12 +203,12 @@ class LotusPurchaseView(discord.ui.View):
         super().__init__(timeout=None)
         self.player_obj = player_obj
         self.token_object, self.lotus_object = token_object, lotus_object
-        self.embed_msg = False
-        self.token_cost = 50
+        self.embed_msg = None
+        self.token_cost = 20
         self.pluck.emoji = self.lotus_object.item_emoji
-        if self.lotus_object.item_id != "Lotus10":
+        if self.lotus_object.item_id == "Lotus10":
             self.pluck.label = "Divine Seed"
-            self.token_cost = 100
+            self.token_cost = 20
 
     @discord.ui.button(label="Pluck Lotus", style=discord.ButtonStyle.success)
     async def pluck(self, interaction: discord.Interaction, button: discord.Button):
@@ -218,10 +219,10 @@ class LotusPurchaseView(discord.ui.View):
                                    title="Fleur, Oracle of the True Laws", description="")
         new_view = LotusPurchaseView(self.player_obj, self.token_object, self.lotus_object)
         if self.embed_msg is not None:
-            await interaction.response.edit_message(embed=embed_msg, view=None)
+            await interaction.response.edit_message(embed=self.embed_msg, view=None)
             return
         # Handle regular lotus.
-        if lotus_object.item_id != "Lotus10":
+        if self.lotus_object.item_id != "Lotus10":
             if token_stock < self.token_cost:
                 temp_embed.description = "You'll have to come back with something a little more convincing."
                 await interaction.response.edit_message(embed=temp_embed, view=new_view)

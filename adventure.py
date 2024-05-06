@@ -104,7 +104,7 @@ class Room:
             case "trap_room":
                 return [min(100, int(10 + luck + (player_resist * 100))), None]
             case "statue_room":
-                return [min(90, 5 + luck), min(90, 50 + luck)]
+                return [min(90, 25 + luck), min(90, 50 + luck)]
             case "basic_monster" | "elite_monster" | "legend_monster":
                 scaling = adventuredata.adjuster_dict[self.room_type]
                 return [None, int(65 - (15 * scaling) + (luck / scaling))]
@@ -594,7 +594,7 @@ class AdventureRoomView(discord.ui.View):
 
         async def speed_callback():
             # Handle trap
-            if random.randint(1, 100) > self.speed_check:
+            if random.randint(1, 100) > self.success_rates[2]:
                 await self.trap_triggered(interaction_obj)
                 return
             # Award both items
@@ -838,7 +838,7 @@ class AdventureRoomView(discord.ui.View):
             await interaction.response.edit_message(embed=self.embed, view=self.new_view)
             return
         # Handle gear item rewards.
-        reward_tier = inventory.generate_random_tier(luck_bonus=(self.expedition.luck + bonus))
+        reward_tier = inventory.generate_random_tier(max_tier=4, luck_bonus=(self.expedition.luck + bonus))
         reward_item = inventory.CustomItem(self.expedition.player_obj.player_id, treasure_type, reward_tier)
         self.embed, self.new_view = await reward_item.create_citem_embed(), ItemView(self.expedition, reward_item)
         await interaction.response.edit_message(embed=self.embed, view=self.new_view)
@@ -1145,7 +1145,7 @@ class SkipView(discord.ui.View):
         self.ctx_obj, self.player_user = ctx_obj, player_user
         self.method_info = method_info
         self.new_embed, self.new_view = None, None
-        self.cost_item = inventory.BasicItem("Token7")
+        self.cost_item = inventory.BasicItem("RoyalCoin")
         self.skip_cooldown.emoji = self.cost_item.item_emoji
 
     @discord.ui.button(label="Advance Cooldown", style=discord.ButtonStyle.danger, emoji="⏩")
@@ -1155,9 +1155,9 @@ class SkipView(discord.ui.View):
         colour, _ = sharedmethods.get_gear_tier_colours(self.player_user.player_echelon)
         self.new_embed = discord.Embed(colour=colour, title="", description="")
         cost_stock = inventory.check_stock(self.player_user, self.cost_item.item_id)
-        if cost_stock <= 0:
+        if cost_stock <= 5:
             self.new_embed.title = "Manifest - Out of Stock"
-            self.new_embed.description = sharedmethods.get_stock_msg(self.cost_item, cost_stock)
+            self.new_embed.description = sharedmethods.get_stock_msg(self.cost_item, cost_stock, cost=5)
             self.new_view = SkipView(self.ctx_obj, self.player_user, self.method_info)
             await interaction.response.edit_message(embed=self.new_embed, view=self)
             return
@@ -1167,7 +1167,7 @@ class SkipView(discord.ui.View):
             return
         wait_time = timedelta(hours=(14 + self.player_user.player_echelon))
         if difference <= wait_time:
-            inventory.update_stock(self.player_user, self.cost_item.item_id, -1)
+            inventory.update_stock(self.player_user, self.cost_item.item_id, -5)
             self.player_user.set_cooldown("manifest", "", rewind_days=2)
         self.new_embed = await build_manifest_return_embed(self.ctx_obj, self.player_user, method_info, colour)
         self.new_view = RepeatView(self.ctx_obj, self.player_user, self.method_info)

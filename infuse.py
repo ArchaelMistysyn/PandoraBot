@@ -60,7 +60,7 @@ for idx, (element, (gemstone, ring_name)) in enumerate(zip(globalitems.element_n
     # Primordial Rings
     add_recipe("Primordial Ring Infusion", f"{gemstone} Ring of {ring_name}",
                [(f"Gemstone{idx + 1}", 5), ("Gemstone11", 1), 100, "5"])
-void_cost = [('Weapon', ("Scrap", 200)), ('Armour', ("Scrap", 100)), ('Vambraces', ("Unrefined2", 10)),
+void_cost = [('Weapon', ("Scrap", 200)), ('Armour', ("Scrap", 100)), ('Greaves', ("Unrefined2", 10)),
              ('Amulet', ("Scrap", 100)),  ('Wing', ("Unrefined1", 10)), ('Crest', ("Unrefined3", 10))]
 # Core Infusions
 core_types = ["Void", "Wish", "Abyss", "Divinity"]

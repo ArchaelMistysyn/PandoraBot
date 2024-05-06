@@ -126,20 +126,20 @@ shared_unique_rolls = {
 
 weapon_unique_rolls = {
     "unique-0-w": ["X% Chance to trigger Bloom on hit", 5, 1, [["spec_rate", 0]]],
-    "unique-1-w": ["X% Less Non-Fire Damage, X% More Fire Damage", 15, 10, [["elemental_conversion", 0]]],
-    "unique-2-w": ["X% Less Non-Water Damage, X% More Water Damage", 15, 10, [["elemental_conversion", 1]]],
-    "unique-3-w": ["X% Less Non-Lightning Damage, X% More Lightning Damage", 15, 10, [["elemental_conversion", 2]]],
-    "unique-4-w": ["X% Less Non-Earth Damage, X% More Earth Damage", 15, 10, [["elemental_conversion", 3]]],
-    "unique-5-w": ["X% Less Non-Wind Damage, X% More Wind Damage", 15, 10, [["elemental_conversion", 4]]],
-    "unique-6-w": ["X% Less Non-Ice Damage, X% More Ice Damage", 15, 10, [["elemental_conversion", 5]]],
-    "unique-7-w": ["X% Less Non-Shadow Damage, X% More Shadow Damage", 15, 10, [["elemental_conversion", 6]]],
-    "unique-8-w": ["X% Less Non-Light Damage, X% More Light Damage", 15, 10, [["elemental_conversion", 7]]],
-    "unique-9-w": ["X% Less Non-Celestial Damage, X% More Celestial Damage", 15, 10, [["elemental_conversion", 8]]],
-    "unique-10-w": ["X% Less Non-Eclipse Damage, X% More Eclipse Damage", 10, 5, [["elemental_conversion", (6, 7)]]],
-    "unique-11-w": ["X% Less Non-Horizon Damage, X% More Horizon Damage", 10, 5, [["elemental_conversion", (3, 4)]]],
-    "unique-12-w": ["X% Less Non-Frostfire Damage, X% More Frostfire Damage", 10, 5,
+    "unique-1-w": ["X% Less Non-Fire Damage,\nX%More Fire Damage", 12, 10, [["elemental_conversion", 0]]],
+    "unique-2-w": ["X% Less Non-Water Damage,\nX% More Water Damage", 12, 10, [["elemental_conversion", 1]]],
+    "unique-3-w": ["X% Less Non-Lightning Damage,\nX% More Lightning Damage", 12, 10, [["elemental_conversion", 2]]],
+    "unique-4-w": ["X% Less Non-Earth Damage,\nX% More Earth Damage", 12, 10, [["elemental_conversion", 3]]],
+    "unique-5-w": ["X% Less Non-Wind Damage,\nX% More Wind Damage", 12, 10, [["elemental_conversion", 4]]],
+    "unique-6-w": ["X% Less Non-Ice Damage,\nX% More Ice Damage", 12, 10, [["elemental_conversion", 5]]],
+    "unique-7-w": ["X% Less Non-Shadow Damage,\nX% More Shadow Damage", 12, 10, [["elemental_conversion", 6]]],
+    "unique-8-w": ["X% Less Non-Light Damage,\nX% More Light Damage", 12, 10, [["elemental_conversion", 7]]],
+    "unique-9-w": ["X% Less Non-Celestial Damage,\nX% More Celestial Damage", 12, 10, [["elemental_conversion", 8]]],
+    "unique-10-w": ["X% Less Non-Eclipse Damage,\nX% More Eclipse Damage", 10, 5, [["elemental_conversion", (6, 7)]]],
+    "unique-11-w": ["X% Less Non-Horizon Damage,\nX% More Horizon Damage", 10, 5, [["elemental_conversion", (3, 4)]]],
+    "unique-12-w": ["X% Less Non-Frostfire Damage,\nX% More Frostfire Damage", 10, 5,
                     [["elemental_conversion", (0, 5)]]],
-    "unique-13-w": ["X% Less Non-Storm Damage, X% More Storm Damage", 10, 5, [["elemental_conversion", (1, 2)]]]
+    "unique-13-w": ["X% Less Non-Storm Damage,\nX% More Storm Damage", 10, 5, [["elemental_conversion", (1, 2)]]]
 }
 
 armour_unique_rolls = {
@@ -563,7 +563,8 @@ def handle_roll_exceptions(player_obj, selected_roll, selected_data):
             for position in attribute_position:
                 target_list[position] += selected_roll.roll_value
         else:
-            target_list[position] += selected_roll.roll_value
+            other_positions = [i for i in range(len(target_list)) if i != attribute_position]
+            target_list[attribute_position] += selected_roll.roll_value
         # Apply less multipliers.
         for position in other_positions:
             other_positions = [i for i in range(len(target_list)) if i != attribute_position]

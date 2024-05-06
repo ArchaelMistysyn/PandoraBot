@@ -23,7 +23,7 @@ class TradeObject:
         if select_qty == 0:
             return
         if select_obj is None:
-            trade_details = f"{globalitems.coin_icon} {select_player.player_coins:,}x Lotus Coins"
+            trade_details = f"{globalitems.coin_icon} {select_qty:,}x Lotus Coins"
         else:
             trade_details = f"{select_obj.item_emoji} {select_obj.item_name} {select_qty:,}x"
         self.trade_msg.add_field(name=f"{select_player.player_username} Offers:", value=trade_details, inline=True)
@@ -68,8 +68,8 @@ async def create_trade(offer_player, target_player, offer_item, offer_qty, recei
         return None, ""
 
     # Validate the trade amounts.
-    if offer_qty < 0 or receive_qty < 0:
-        return None, "Trade amounts cannot be negative."
+    if offer_qty <= 0 or receive_qty <= 0:
+        return None, "Trade amounts cannot be negative or 0."
     # Validate the items and stock.
     offer_obj, err_msg = check_item_availability(offer_player, offer_item, offer_qty)
     if err_msg != "":

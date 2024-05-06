@@ -15,7 +15,7 @@ import inventory
 
 
 boss_loot_dict = {
-    "All": [[0, "Crate", 25], [0, "Matrix1", 15], [0, "Core1", 1], [0, "OriginZ", 1],
+    "All": [[0, "Crate", 25], [0, "Matrix", 15], [0, "Core1", 1], [0, "OriginZ", 1],
             [0, "Hammer", 25], [0, "Pearl", 15], [0, "Heart1", 2], [0, "Heart2", 1],
             [1, "Ore1", 25], [2, "Ore2", 25], [3, "Ore3", 25], [4, "Ore4", 25],
             [1, "Potion1", 5], [2, "Potion2", 5], [3, "Potion3", 5], [4, "Potion4", 5],
@@ -32,7 +32,7 @@ boss_loot_dict = {
     "Paragon": [[0, "Summon1", 5], [0, "Summon2", 1], [0, "Unrefined3", 25], [0, "Stone4", 45],
                 [1, "Gem3", 10], [2, "Gem3", 20], [3, "Gem3", 30],
                 [4, "Jewel3", 40], [5, "Jewel3", 50], [6, "Jewel3", 60]],
-    "Arbiter": [[0, "Summon3", 5], [0, "Stone6", 40], [7, "Lotus4", 1],
+    "Arbiter": [[0, "Summon3", 5], [0, "Stone6", 40], [7, "Lotus4", 5],
                 [1, "Token1", 5], [2, "Token2", 5], [3, "Token3", 5], [4, "Token4", 5],
                 [5, "Token5", 5], [6, "Token6", 5], [7, "Token7", 5],
                 [1, "Jewel4", 10], [2, "Jewel4", 20], [3, "Jewel4", 30], [4, "Jewel4", 40],
@@ -92,7 +92,7 @@ async def award_loot(boss_object, player_list, exp_amount, coin_amount, loot_mul
                                                     loot_msg, counter, batch_df)
         # Check essence drops.
         if ' - ' in boss_object.boss_name:
-            card_qty = sum(is_dropped(20) for attempt in range(loot_multiplier))
+            card_qty = sum(is_dropped(25) for attempt in range(loot_multiplier))
             if card_qty > 0:
                 numeral = boss_object.boss_name.split(" ", 1)
                 loot_msg, batch_df = update_loot_and_df(temp_player, f"Essence{numeral[0]}",
@@ -132,11 +132,11 @@ def generate_random_item(quantity=1):
     quantity_table = [1, 1, 1, 1, 1, 1, 2, 2, 2, 3]
     probability_rewards = [
         [10, None, "Lotus"], [1, "DarkStar", None], [1, "LightStar", None], [24, None, "Gemstone"],
-        [100, None, "Essence"], [100, None, "Trove"], [100, None, "Origin"], [50, None, "Core"], [50, None, "Crystal"],
-        [100, None, "Token"], [100, None, "Jewel"], [50, None, "Heart"], [200, None, "Summon"], [50, "Compass", None],
-        [1000, "Pearl", None], [1000, "Hammer", None], [500, None, "Gem"], [1500, None, "Ore"],
-        [500, None, "Fragment"], [500, "Flame1", None], [1000, "Matrix1", None], [1000, None, "Potion"],
-        [2064, None, "Fae"]]
+        [100, None, "Essence"], [200, None, "Trove"], [100, None, "Origin"], [100, None, "Core"], [50, None, "Crystal"],
+        [200, None, "Token"], [100, None, "Jewel"], [200, None, "Summon"], [50, "Compass", None],
+        [1000, "Pearl", None], [2000, "Hammer", None], [500, None, "Gem"], [1500, None, "Ore"],
+        [750, None, "Fragment"], [750, "Flame1", None], [750, "Matrix", None], [500, None, "Potion"],
+        [1114, None, "Fae"]]
     max_reward = 10000  # sum(item[0] for item in probability_rewards)
     # Assign a reward id based on the probability, set id, or id prefix.
     for _ in range(quantity):

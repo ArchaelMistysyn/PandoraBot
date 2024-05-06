@@ -83,7 +83,6 @@ class Quest:
         rewards = f"{globalitems.exp_icon} {exp_msg} EXP\n"
         rewards += f"{globalitems.coin_icon} {coin_msg} Lotus Coins\n"
         if lvl_change != 0:
-            print("IN!")
             await sharedmethods.send_notification(ctx_object, player_obj, "Level", lvl_change)
         # Handle Item/Role Awards.
         if self.award_item:
@@ -122,7 +121,7 @@ def assign_unique_tokens(player_obj, token_string):
         "XXX - Amaryllis, Incarnate of the Divine Lotus [Usurper]": 25,
         "XXX - Amaryllis, Incarnate of the Divine Lotus [Samsara]": 26,
         # Feature Tokens
-        "Register": 1, "Map": 2, "Town": 5, "Arbiter": 7, "Insignia": 8, "Contract": 9, "Vambraces": 10,
+        "Register": 1, "Map": 2, "Town": 5, "Arbiter": 7, "Insignia": 8, "Contract": 9, "Greaves": 10,
         "Crest": 12, "Tarot": 13, "Gauntlet": 15, "Abyss": 18, "Meld": 19, "Tarot Completion": 24}
     token_string = token_string.replace(" [Gauntlet]", "")
     if token_string in token_quest_dict:

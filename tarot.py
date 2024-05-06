@@ -131,7 +131,7 @@ card_stat_dict = {
                   "XXV": ["All", ["Omni Aura", 25, "aura", None],
                           ["Omni Curse", 25, "all_elemental_curse", None]]
                   }
-synthesis_success_rate = {0: 0, 1: 75, 2: 50, 3: 25, 4: 15, 5: 10, 6: 5, 7: 99, 8: 0}
+synthesis_success_rate = {0: 0, 1: 75, 2: 50, 3: 40, 4: 30, 5: 20, 6: 10, 7: 99, 8: 0}
 card_variant = ["Empty", "Prelude", "Chromatic", "Prismatic", "Resplendent", "Iridescent", "Divine", "Transcendent"]
 tarot_damage = [0, 5000, 25000, 50000, 100000, 250000, 500000, 1000000]
 tarot_hp = [0, 500, 1000, 1500, 2000, 2500, 5000, 10000, 20000]

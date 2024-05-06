@@ -19,6 +19,11 @@ bot_admin_ids = [185530717638230016]
 channel_list = [1157937444931514408, 1157934010090131458, 1157935203394785291, 1157935449462013972, 1157935876853211186]
 global_server_channels = [channel_list]
 GM_id_dict = {185530717638230016: "Archael", 141837266866667520: "Zweii", 353090154044325906: "Viper"}
+web_url = "https://kyleportfolio.ca/botimages/"
+
+# IMAGE DATA
+forge_img, refinery_img = f"{web_url}scenes/Forge.png", f"{web_url}scenes/Refinery.png"
+abyss_img = f"{web_url}scenes/Abyss.png"
 
 # ICON DATA
 # General Icons
@@ -35,14 +40,14 @@ class_icon_list = [class_icon_dict[class_name] for class_name in class_names]
 path_icon = ["<a:eenergy:1145534127349706772>", "<a:eenergy:1145534127349706772>", "<a:eenergy:1145534127349706772>",
              "<a:eenergy:1145534127349706772>", "<a:eenergy:1145534127349706772>", "<a:eenergy:1145534127349706772>"]
 # Icon Frames
-frame_icon_list = ["https://kyleportfolio.ca/botimages/iconframes/Icon_Border_[EXT]/Icon_border_Bronze_[EXT].png",
-                   "https://kyleportfolio.ca/botimages/iconframes/Icon_Border_[EXT]/Icon_border_Silver_[EXT].png",
-                   "https://kyleportfolio.ca/botimages/iconframes/Icon_Border_[EXT]/Icon_border_SilverPurple_[EXT].png",
-                   "https://kyleportfolio.ca/botimages/iconframes/Icon_Border_[EXT]/Icon_border_Goldblue_[EXT].png",
-                   "https://kyleportfolio.ca/botimages/iconframes/Icon_Border_[EXT]/Icon_border_Goldred_[EXT].png",
-                   "https://kyleportfolio.ca/botimages/iconframes/Icon_Border_[EXT]/Icon_border_Pink_[EXT].png",
-                   "https://kyleportfolio.ca/botimages/iconframes/Icon_Border_[EXT]/Icon_border_Black_[EXT].png",
-                   "https://kyleportfolio.ca/botimages/iconframes/Icon_Border_[EXT]/Icon_border_white_[EXT].png"]
+frame_icon_list = [f"{web_url}iconframes/Icon_Border_[EXT]/Icon_border_Bronze_[EXT].png",
+                   f"{web_url}iconframes/Icon_Border_[EXT]/Icon_border_Silver_[EXT].png",
+                   f"{web_url}iconframes/Icon_Border_[EXT]/Icon_border_SilverPurple_[EXT].png",
+                   f"{web_url}iconframes/Icon_Border_[EXT]/Icon_border_Goldblue_[EXT].png",
+                   f"{web_url}iconframes/Icon_Border_[EXT]/Icon_border_Goldred_[EXT].png",
+                   f"{web_url}iconframes/Icon_Border_[EXT]/Icon_border_Pink_[EXT].png",
+                   f"{web_url}iconframes/Icon_Border_[EXT]/Icon_border_Black_[EXT].png",
+                   f"{web_url}iconframes/Icon_Border_[EXT]/Icon_border_white_[EXT].png"]
 frame_extension = ["106px", "1484px"]
 # Star Icons
 star_icon = ["<:SB:1201563579330076682>", "<:S1:1201563573202206910>", "<:S2:1201563575433576488>",
@@ -91,6 +96,7 @@ skill_names_dict = {
 # ITEM LISTS
 crafting_gem = ["Blazing Ruby", "Drowned Sapphire", "Silent Topaz", "Ancient Agate", "Whispering Emerald",
                 "Arctic Zircon", "Haunted Obsidian", "Prismatic Opal", "Spatial Lapis", "Soul Diamond"]
+availability_list_nongear = ["RoyalCoin"]
 
 # Weapon lists
 availability_list = ["Sword", "Bow", "Threads", "Armour", "Wings", "Amulet"]  # Currently available icons

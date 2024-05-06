@@ -280,7 +280,7 @@ jackpot_levels = [
 
 selection_pools = [
     ["Hammer", "Pearl", "Ore1", "Trove1", "Potion1", "Scrap", "ESS"],
-    ["Hammer", "Pearl", "Ore2", "Token1", "Trove2", "Flame1", "Matrix1", "Trove2", "Summon1", "Potion2", "ESS"],
+    ["Hammer", "Pearl", "Ore2", "Token1", "Trove2", "Flame1", "Matrix", "Trove2", "Summon1", "Potion2", "ESS"],
     ["Hammer", "Pearl", "Ore3", "Token2", "Trove3", "Stone4", "Gem1", "Gem2", "Gem3", "Potion3", "ESS"],
     ["Hammer", "Pearl", "Ore4", "Token3", "Token4", "Trove4", "Summon1", "Core1", "Jewel1", "Jewel2", "Potion4", "ESS"],
     ["Hammer", "Pearl", "Ore5", "Token5", "Trove5", "Summon2", "Crystal2", "Core2", "Flame2", "Jewel3", "ESS"],

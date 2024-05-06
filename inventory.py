@@ -25,12 +25,12 @@ import tarot
 
 
 # Inventory Dictionaries.
-custom_item_dict = {"W": "Weapon", "A": "Armour", "V": "Vambraces", "Y": "Amulet",
+custom_item_dict = {"W": "Weapon", "A": "Armour", "V": "Greaves", "Y": "Amulet",
                     "R": "Ring", "G": "Wings", "C": "Crest", "D": "Gems",
                     "D1": "Dragon Heart Gem", "D2": "Demon Heart Gem", "D3": "Paragon Heart Gem",
                     "D4": "Arbiter Heart Gem", "D5": "Incarnate Heart Gem", "T": "Tarot Card"}
 item_loc_dict = {'W': 0, 'A': 1, 'V': 2, 'Y': 3, 'R': 4, 'G': 5, 'C': 6, 'D': 7}
-item_type_dict = {0: "Weapon", 1: "Armour", 2: "Vambraces", 3: "Amulet", 4: "Ring", 5: "Wings", 6: "Crest", 7: "Gems"}
+item_type_dict = {0: "Weapon", 1: "Armour", 2: "Greaves", 3: "Amulet", 4: "Ring", 5: "Wings", 6: "Crest", 7: "Gems"}
 reverse_item_dict = {v: k for k, v in item_type_dict.items()}
 reverse_item_loc_dict = {v: k for k, v in item_loc_dict.items()}
 
@@ -152,8 +152,7 @@ class CustomItem:
         self.item_num_sockets, self.item_inlaid_gem_id = 0, 0
 
         # Generate an item type and base.
-        self.item_damage_type = random.choice(list(globalitems.class_names))
-        self.item_base_type = ""
+        self.item_damage_type, self.item_base_type = random.choice(list(globalitems.class_names)), ""
         self.generate_base()
         # Generate base damage.
         self.base_damage_min, self.base_damage_max = get_tier_damage(self.item_tier, self.item_type)
@@ -184,7 +183,7 @@ class CustomItem:
         self.item_base_stat = round(random.uniform(selected_range[0], selected_range[1]), 2)
 
     def set_base_damage_mitigation(self):
-        self.item_base_stat = random.randint(1 + ((self.item_tier - 1) * 5), (self.item_tier * 5))
+        self.item_base_stat = round(random.uniform(1 + ((self.item_tier - 1) * 5), (self.item_tier * 5)), 2)
 
     def assign_bonus_stat(self):
         if self.item_type in "W" or "D" in self.item_type:
@@ -241,7 +240,6 @@ class CustomItem:
             'input_15': int(self.item_num_sockets), 'input_16': int(self.item_inlaid_gem_id)
         }
         rq(raw_query, params=params)
-        
 
     def set_item_name(self):
         # Handle naming exceptions.
@@ -291,17 +289,15 @@ class CustomItem:
                 self.set_base_damage_mitigation()
                 self.item_base_type = armour_base_dict[min(5, self.item_tier)]
             case "V":
-                self.item_base_type = "Vambraces"
+                self.item_base_type = "Greaves"
             case "Y":
                 self.item_base_type = "Amulet" if self.item_tier >= 5 else "Necklace"
             case "G":
                 self.item_base_type = wing_base_dict[self.item_tier]
             case "C":
-                self.item_base_type = random.choice(crest_base_list)
-                if self.item_tier >= 5:
-                    self.item_base_type = "Diadem"
+                self.item_base_type = "Diadem" if self.item_tier >= 5 else random.choice(crest_base_list)
             case "R":
-                pass
+                pass  # This is handled when the ring is crafted.
             case _:
                 self.item_base_type = "base_type_error"
 
@@ -329,8 +325,12 @@ class CustomItem:
             base_type, aux_suffix = "Base Attack Speed ", "/min"
         elif self.item_type == "A":
             base_type, aux_suffix = "Base Damage Mitigation ", "%"
-        if self.item_base_stat != 0:
-            stat_msg = f'{base_type}{self.item_base_stat}{aux_suffix}\n'
+        if self.item_base_stat != 0.0:
+            if isinstance(self.item_base_stat, int):
+                display_base_stat = f"{int(self.item_base_stat)}"
+            else:
+                display_base_stat = f"{self.item_base_stat:.2f}".rstrip('0').rstrip('.')
+            stat_msg = f'{base_type}{display_base_stat}{aux_suffix}\n'
         # Set the bonus stat text.
         tier_specifier = {5: "Void", 6: "Wish", 7: "Abyss", 8: "Divine"}
         bonus_stat = self.item_bonus_stat
@@ -365,8 +365,9 @@ class CustomItem:
         embed_msg.add_field(name=item_info, value="", inline=False)
         thumbnail_url = sharedmethods.get_gear_thumbnail(self)
         if thumbnail_url is not None:
-            timestamp = int(time.time())
-            embed_msg.set_thumbnail(url=f"{thumbnail_url}?ts={timestamp}")
+            # timestamp = int(time.time())
+            # embed_msg.set_thumbnail(url=f"{thumbnail_url}?ts={timestamp}")
+            embed_msg.set_thumbnail(url=thumbnail_url)
         else:
             frame_url = globalitems.frame_icon_list[self.item_tier - 1]
             frame_url = frame_url.replace("[EXT]", globalitems.frame_extension[0])
@@ -391,14 +392,10 @@ class CustomItem:
 
 class BasicItem:
     def __init__(self, item_id):
-        self.item_id = ""
-        self.item_name = ""
-        self.item_tier = ""
-        self.item_base_rate = 0
-        self.item_description = ""
-        self.item_emoji = ""
-        self.item_image = ""
-        self.item_cost = 0
+        self.item_id, self.item_name, self.item_tier = 1, "", ""
+        self.item_category, self.item_description,  = "", ""
+        self.item_emoji, self.item_image = "", ""
+        self.item_cost, self.item_base_rate = 0, 0
         self.get_bitem_by_id(item_id)
 
     def __str__(self):
@@ -407,25 +404,24 @@ class BasicItem:
     def get_bitem_by_id(self, item_id):
         if item_id in itemdata.itemdata_dict:
             item = itemdata.itemdata_dict[item_id]
-            self.item_id = item_id
-            self.item_name = item['name']
-            self.item_tier = item['tier']
-            self.item_base_rate = item['rate']
-            self.item_description = item['description']
+            self.item_id, self.item_name, self.item_tier = item_id, item['name'], item['tier']
+            self.item_category, self.item_description = item['category'], item['description']
+            self.item_base_rate, self.item_cost = item['rate'], item['cost']
             self.item_emoji = item['emoji']
-            self.item_cost = item['cost']
-            self.item_image = item['image']
+            self.item_image = ""
+            if self.item_id in globalitems.availability_list_nongear:
+                self.item_image = f"{globalitems.web_url}/nongear/{self.item_category}/Frame_{self.item_id}.png"
         else:
-            # Handle the case where the item_id is not found in the dictionary
             print(f"Item with ID '{item_id}' not found in itemdata_dict.")
 
     def create_bitem_embed(self, player_obj):
         item_qty = inventory.check_stock(player_obj, self.item_id)
         item_msg = f"{self.item_description}\n{player_obj.player_username}'s Stock: {item_qty}"
         colour, _ = inventory.sharedmethods.get_gear_tier_colours(self.item_tier)
-        embed_msg = discord.Embed(colour=colour, title=self.item_name, description=item_msg)
-        # loot_embed.set_thumbnail(url=self.item_image)
-        return embed_msg
+        loot_embed = discord.Embed(colour=colour, title=self.item_name, description=item_msg)
+        if self.item_image != "":
+            loot_embed.set_thumbnail(url=self.item_image)
+        return loot_embed
 
 
 def get_item_shop_list(item_tier):
@@ -468,9 +464,8 @@ async def read_custom_item(item_id):
 def get_tier_damage(item_tier, item_type):
     damage_values = globalitems.damage_tier_list[item_tier - 1]
     # Gem max tier exception.
-    if "D" in item_type:
-        if item_tier == 8:
-            damage_values = (150000, 150000)
+    if "D" in item_type and item_tier == 8:
+        damage_values = (150000, 150000)
     # Weapon has twice the value.
     damage_adjust = 2 if item_type == "W" else 1
     temp_damage = [random.randint(damage_values[0], damage_values[1]) * damage_adjust for _ in range(2)]
@@ -515,9 +510,7 @@ def add_custom_item(item):
     rq(insert_query, params=params)
     # Fetch the item id of the inserted item
     select_query = "SELECT item_id FROM CustomInventory WHERE player_id = :player_check AND item_name = :name_check"
-    df = rq(select_query, return_value=True,
-                              params={'player_check': item.player_owner, 'name_check': item.item_name})
-    
+    df = rq(select_query, return_value=True, params={'player_check': item.player_owner, 'name_check': item.item_name})
     if len(df) == 0:
         return 0
     id_list = list(df['item_id'])
@@ -528,13 +521,9 @@ def add_custom_item(item):
 
 # check if item already exists. Prevent duplication
 def if_custom_exists(item_id) -> bool:
-    
     raw_query = "SELECT * FROM CustomInventory WHERE item_id = :id_check"
     df = rq(raw_query, True, params={'id_check': item_id})
-    
-    if len(df.index) == 0:
-        return False
-    return True
+    return False if len(df.index) == 0 else True
 
 
 def display_cinventory(player_id, item_type) -> str:
@@ -553,17 +542,16 @@ def display_cinventory(player_id, item_type) -> str:
 def display_binventory(player_id, method):
     regex_dict = {
         "Crafting": "^(Matrix|Hammer|Pearl|Origin)",
-        "Cores": "^(Fae|Core)",
-        "Materials": "^(Scrap|Ore|Heart|Fragment|Crystal)",
+        "Cores": "^(Fae|Core|Crystal)",
+        "Materials": "^(Scrap|Ore|Heart|Fragment)",
         "Unprocessed": "^(Unrefined|Gem|Jewel|Void)",
         "Essences": "^(Essence)",
         "Summoning": "^(Compass|Summon)",
-        "Gemstone": "^(Gemstone)",
+        "Gemstone": "^(Gemstone([0-9]|1[01]))$",
         "Misc": "^(Potion|Trove|Crate|Stone|Token)",
-        "Ultra Rare": "^(Lotus|LightStar|DarkStar)"
+        "Ultra Rare": "^(Lotus|LightStar|DarkStar|Gemstone12|RoyalCoin)"
     }
     player_inventory = ""
-    
     raw_query = ("SELECT item_id, item_qty FROM BasicInventory "
                  "WHERE player_id = :id_check AND item_qty <> 0 ORDER BY item_id ASC")
     df = rq(raw_query, True, params={'id_check': player_id})
@@ -582,7 +570,6 @@ def display_binventory(player_id, method):
             inventory_list.append([current_item, str(row['item_qty'])])
     for item, quantity in inventory_list:
         player_inventory += f"{item.item_emoji} {quantity}x {item.item_name}\n"
-    
     return player_inventory
 
 
@@ -617,7 +604,6 @@ def check_stock(player_obj, item_id):
 
 
 def update_stock(player_obj, item_id, change, batch=None):
-    
     if batch is not None:
         raw_query = ("INSERT INTO BasicInventory (player_id, item_id, item_qty) "
                      "VALUES (:player_id, :item_id, :item_qty) "
@@ -641,7 +627,6 @@ def update_stock(player_obj, item_id, change, batch=None):
     player_stock = max(player_stock, 0)
     params = {'new_qty': player_stock, 'player_check': player_obj.player_id, 'item_check': item_id}
     rq(raw_query, params=params)
-    
 
 
 def try_refine(player_owner, item_type, target_tier):

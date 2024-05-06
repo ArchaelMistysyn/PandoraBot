@@ -216,23 +216,32 @@ def run_discord_bot():
     @app_commands.guilds(discord.Object(id=1011375205999968427))
     async def ArchCommand(ctx, keyword="", value="0"):
         await ctx.defer()
-        trigger_return, _, _ = await admin_verification(ctx, auth="Archael")
+        trigger_return, player_obj, _ = await admin_verification(ctx, auth="Archael")
         if trigger_return:
             return
         if keyword == "LBrerank":
             await leaderboards.rerank_leaderboard(ctx)
             await ctx.send(f"Admin leaderboard task completed.")
-        elif keyword == "MergeIcons":
+        elif keyword == "MergeGear":
             count = 0
             for (_, low_types), high_types in zip(globalitems.category_names.items(), globalitems.weapon_list_high):
                 for _, name in low_types.items():
-                    count += pilengine.generate_and_combine_images(name, end_tier=4)
+                    count += pilengine.generate_and_combine_gear(name, end_tier=4)
                 for name in high_types:
-                    count += pilengine.generate_and_combine_images(name, start_tier=5, fetch_type=True)
-            non_weapon_list = ["Armour", "Vambraces", "Amulet", "Wings", "Crest", "Jewel"]
+                    count += pilengine.generate_and_combine_gear(name, start_tier=5, fetch_type=True)
+            non_weapon_list = ["Armour", "Greaves", "Amulet", "Wings", "Crest", "Jewel"]
             for gear_type in non_weapon_list:
-                count += pilengine.generate_and_combine_images(gear_type)
+                count += pilengine.generate_and_combine_gear(gear_type)
             await ctx.send(f"Admin item task completed. Task Count: {count}")
+        elif keyword == "MergeNongear":
+            count = pilengine.generate_and_combine_images()
+            await ctx.send(f"Admin item task completed. Task Count: {count}")
+        elif keyword == "TestNotification":
+            test_dict = {"Level": 1, "Achievement": "Echelon 9", "Item": "LightStar"}
+            if value not in test_dict:
+                await ctx.send("Invalid notification type")
+                return
+            await sharedmethods.send_notification(ctx, player_obj, value, test_dict[value])
 
     @set_command_category('admin', 5)
     @pandora_bot.hybrid_command(name='shutdown', help="Admin shutdown command")
@@ -764,8 +773,8 @@ def run_discord_bot():
         player_obj = await sharedmethods.check_registration(ctx)
         if player_obj is None:
             return
-        embed_msg = await bazaar.show_bazaar_items()
-        bazaar_view = None  # Not yet implemented
+        embed_msg = await bazaar.show_bazaar_items(player_obj)
+        bazaar_view = bazaar.BazaarView(player_obj)
         await ctx.send(embed=embed_msg, view=bazaar_view)
 
     @set_command_category('trade', 5)
@@ -827,7 +836,7 @@ def run_discord_bot():
 
     @set_command_category('trade', 7)
     @pandora_bot.hybrid_command(name='purge', help="Sells all gear in or below a tier. "
-                                "Types: [Weapon, Armour, Vambraces, Amulet, Wings, Crest, Gems]")
+                                "Types: [Weapon, Armour, Greaves, Amulet, Wings, Crest, Gems]")
     @app_commands.guilds(discord.Object(id=guild_id))
     async def purge(ctx, tier: int, item_type=""):
         await ctx.defer()
@@ -837,8 +846,8 @@ def run_discord_bot():
         if tier not in range(1, 9):
             await ctx.send("The tier must be between 1 and 8.")
             return
-        if item_type not in ["Weapon", "Armour", "Vambraces", "Amulet", "Wings", "Crest", "Gems", ""]:
-            await ctx.send("Valid Types: [Weapon, Armour, Vambraces, Amulet, Wings, Crest, Gems]")
+        if item_type not in ["Weapon", "Armour", "Greaves", "Amulet", "Wings", "Crest", "Gems", ""]:
+            await ctx.send("Valid Types: [Weapon, Armour, Greaves, Amulet, Wings, Crest, Gems]")
             return
         result_msg = await inventory.purge(player_obj, item_type, tier)
         await ctx.send(result_msg)
@@ -854,7 +863,7 @@ def run_discord_bot():
             return
         embed_msg = discord.Embed(colour=discord.Colour.blurple(), title="Pandora's Celestial Forge",
                                   description="Let me know what you'd like me to upgrade today!")
-        embed_msg.set_image(url="https://i.ibb.co/QjWDYG3/forge.jpg")
+        embed_msg.set_image(url=globalitems.forge_img)
         if player_obj.player_quest == 11:
             quest.assign_unique_tokens(player_obj, "Town")
         forge_view = forge.SelectView(player_obj, "celestial")
@@ -870,7 +879,7 @@ def run_discord_bot():
             return
         embed_msg = discord.Embed(colour=discord.Colour.dark_orange(),
                                   title='Refinery', description="Please select the item to refine")
-        embed_msg.set_image(url="https://i.ibb.co/QjWDYG3/forge.jpg")
+        embed_msg.set_image(url=globalitems.refinery_img)
         if player_obj.player_quest == 11:
             quest.assign_unique_tokens(player_obj, "Town")
         ref_view = forge.RefSelectView(player_obj)
@@ -908,7 +917,7 @@ def run_discord_bot():
         if player_obj.player_quest == 38:
             quest.assign_unique_tokens(player_obj, "Abyss")
         embed_msg = discord.Embed(colour=discord.Colour.blurple(), title="Echo of Oblivia", description=globalitems.abyss_msg)
-        embed_msg.set_image(url="https://i.ibb.co/QjWDYG3/forge.jpg")
+        embed_msg.set_image(url=globalitems.abyss_img)
         new_view = forge.SelectView(player_obj, "purify")
         await ctx.send(embed=embed_msg, view=new_view)
 
@@ -932,7 +941,7 @@ def run_discord_bot():
                      "\nThe oracle has already foretold your failure. Now it need only be written into truth.")
         embed_msg = discord.Embed(colour=discord.Colour.blurple(), title="Vexia, Scribe of the True Laws",
                                   description=entry_msg)
-        embed_msg.set_image(url="https://i.ibb.co/QjWDYG3/forge.jpg")
+        embed_msg.set_image(url=globalitems.forge_img)
         new_view = forge.SelectView(player_obj, "custom")
         await ctx.send(embed=embed_msg, view=new_view)
 
@@ -1112,7 +1121,7 @@ def run_discord_bot():
         credit_list += "\nKaelen - Alpha Tester"
         credit_list += "\nVolff - Alpha Tester"
         embed_msg = discord.Embed(colour=discord.Colour.light_gray(), title="Credits", description=credit_list)
-        embed_msg.set_image(url="https://i.ibb.co/QjWDYG3/forge.jpg")
+        embed_msg.set_image(url=globalitems.forge_img)
         await ctx.send(embed=embed_msg)
 
     def build_category_dict():

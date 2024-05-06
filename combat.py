@@ -114,7 +114,7 @@ def handle_boss_actions(boss_obj, tracker_obj, player_obj):
     # Handle Boss Status
     if boss_obj.stun_cycles > 0:
         tracker_obj.stun_cycles -= 1
-        boss_msg = f"{boss_obj.boss_name} is {boss_obj.stun_status}! Duration: {boss_obj.stun_cycles} cycles."
+        boss_msg = f"{boss_obj.boss_name} is {boss_obj.stun_status}! Duration: {boss_obj.stun_cycles} cycles.\n"
         if boss_obj.stun_cycles == 0:
             boss_msg = f"{boss_obj.boss_name} has recovered from being {boss_obj.stun_status}!"
         return is_alive, boss_msg

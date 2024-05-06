@@ -41,18 +41,17 @@ def check_rare_item(item_id):
 
 
 async def send_notification(ctx_object, player_obj, notification_type, value):
-    item = None
-    match notification_type:
-        case "Level":
-            message = f"Level Up: {player_obj.player_level}"
-        case "Achievement":
-            message = f"Achievement Acquired: {value}"
-        case "Item":
-            item = inventory.BasicItem(value)
-            message = f"Ultra Rare Item Acquired: {item.item_name}"
-        case _:
-            pass
-    filepath = pilengine.build_notification(player_obj, message, notification_type, item=item)
+    item = inventory.BasicItem(value) if notification_type == "Item" and value is not None else None
+    notification_dict = {"Level": [(f"Congratulations {player_obj.player_username}",
+                                   f"Reached Level: {player_obj.player_level}"), 1],
+                         "Achievement": [(f"{player_obj.player_username} Unlocked", f"Achievement: {value}"), 10],
+                         "Item": [(f"{player_obj.player_username} Obtained Ultra Rare",
+                                  f"{item.item_name}" if item is not None else ""), 5]}
+    if notification_type not in notification_dict.keys():
+        return
+    inventory.update_stock(player_obj, "RoyalCoin", notification_dict[notification_type][1])
+    title, message = notification_dict[notification_type][0]
+    filepath = pilengine.build_notification(player_obj, message, notification_type, title, item=item)
     channels = ctx_object.guild.channels
     channel_object = discord.utils.get(channels, id=globalitems.channel_list[0])
     await ctx_object.send(file=discord.File(filepath))
@@ -64,7 +63,7 @@ def get_thumbnail_by_class(class_name):
 
 
 def get_gear_thumbnail(item):
-    tag_dict = {"A": "Armour", "V": "Vambraces", "Y": "Amulet", "R": "Ring", "G": "Wings", "C": "Crest"}
+    tag_dict = {"A": "Armour", "V": "Greaves", "Y": "Amulet", "R": "Ring", "G": "Wings", "C": "Crest"}
     item_tag = item.item_base_type
     if item.item_type == "W":
         item_tag = globalitems.gear_category_dict[item.item_base_type]
@@ -73,18 +72,17 @@ def get_gear_thumbnail(item):
     # Ensure image is currently available.
     if item_tag not in globalitems.availability_list:
         return None
-    return f"https://kyleportfolio.ca/botimages/itemicons/{item_tag}/Framed_{item_tag}_{item.item_tier}.png"
+    return f"https://kyleportfolio.ca/botimages/itemicons/{item_tag}/Frame_{item_tag}_{item.item_tier}.png"
 
 
 def get_gear_tier_colours(base_tier):
-    return globalitems.tier_colors[base_tier], globalitems.augment_icons[min(8, max(0, base_tier - 1))]
+    checked_tier = min(8, max(0, base_tier - 1))
+    return globalitems.tier_colors[checked_tier], globalitems.augment_icons[checked_tier]
 
 
 def reset_all_cooldowns():
-    
     raw_query = "DELETE FROM CommandCooldowns"
     rq(raw_query)
-    
 
 
 def display_hp(current_hp, max_hp):
@@ -134,15 +132,13 @@ def number_conversion(input_number):
     labels = ['', 'K', 'M', 'B', 'T', 'Q', 'Qt',
               'Z', 'Z+', 'Z++', 'Z+++', 'ZZ', 'ZZ+', 'ZZ++', 'ZZ+++',
               'ZZZ', 'ZZZ+', 'ZZZ++', 'ZZZ+++']
+    if input_number < 1000:
+        return f"{input_number}"
     num_digits = len(str(int(input_number)))
-    idx = max(0, (num_digits - 1) // 3)
-    input_str = str(input_number)
-    integer_digits = (num_digits - 1) % 3 + 1
-    integer_part = input_str[:integer_digits]
-    decimal_part = input_str[integer_digits:][:2]
-    if decimal_part == "00":
-        decimal_part = ""
-    number_msg = f"{integer_part}.{decimal_part}" if decimal_part else f"{integer_part}"
+    idx = (num_digits - 1) // 3
+    scaled_number = input_number / (10 ** (3 * idx))
+    truncated_scaled_number = int(scaled_number * 100) / 100.0
+    number_msg = f"{int(scaled_number)}" if scaled_number == int(scaled_number) else f"{truncated_scaled_number:.2f}"
     if idx != 0:
         number_msg = f"**{number_msg} {labels[idx]}**"
     return number_msg

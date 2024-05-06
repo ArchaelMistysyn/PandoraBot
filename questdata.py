@@ -183,7 +183,7 @@ quests_data = {
          "Once their heart gem is extracted the dust can be collected and used to make sturdy armour parts. "
          "\nBring some back with you and we'll try to get something nice refined for you.",
          1, 10, None,
-         "Equip a pair of Demon Vambraces",
+         "Equip a pair of Demon Greaves",
          'Crate', 5, None],
 
     23: [1, "Body and Mind",
@@ -399,7 +399,7 @@ quests_data = {
          "\nI will always..."
          "\nUnable to finish speaking, Pandora fades away."
          "\nShe's gone.",
-         5, None, None,
+         100, None, None,
          "Breakthrough to level 100",
          'Lotus10', 1, None],
 

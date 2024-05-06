@@ -248,7 +248,7 @@ class UpgradeView(discord.ui.View):
             "Enhance": [1, ["Enhance"], ["Enhance"], [f"Fae{self.element}"]],
             "Upgrade": [1, ["Reinforce"], ["Reinforce"], ["Ore5"]],
             "Reforge": [3, ["Create Socket", "Hellfire", "Abyssfire"], ["Open", "ReforgeA", "ReforgeV"],
-                        ["Matrix1", "Flame1", "Flame2"]],
+                        ["Matrix", "Flame1", "Flame2"]],
             "Cosmic Attunement": [1, ["Attune"], ["Attunement"], ["Pearl"]],
             "Astral Augment": [1, ["Star Fusion (Add/Reroll)", "Radiant Fusion (Defensive)", "Chaos Fusion (All)",
                                    "Void Fusion (Damage)", "Wish Fusion (Penetration)", "Abyss Fusion (Curse)",
@@ -602,7 +602,7 @@ class RefSelectView(discord.ui.View):
     def __init__(self, player_user):
         super().__init__(timeout=None)
         self.player_user = player_user
-        self.item_dict = {"Weapon": "W", "Armour": "A", "Vambraces": "V", "Amulet": "Y",
+        self.item_dict = {"Weapon": "W", "Armour": "A", "Greaves": "V", "Amulet": "Y",
                           "Dragon Wing": "G", "Paragon Crest": "C", "Gem": "Gem", "Jewel": "Jewel"}
 
     @discord.ui.select(
@@ -615,7 +615,7 @@ class RefSelectView(discord.ui.View):
             discord.SelectOption(
                 emoji="<a:eenergy:1145534127349706772>", label="Armour", description="Refine armours."),
             discord.SelectOption(
-                emoji="<a:eenergy:1145534127349706772>", label="Vambraces", description="Refine vambraces."),
+                emoji="<a:eenergy:1145534127349706772>", label="Greaves", description="Refine Greaves."),
             discord.SelectOption(
                 emoji="<a:eenergy:1145534127349706772>", label="Amulet", description="Refine amulets."),
             discord.SelectOption(
@@ -641,7 +641,7 @@ class RefineItemView(discord.ui.View):
         menu_dict = {
             "W": [1, ["Void (100%)"], ["✅"], [5], ["Void1"]],
             "A": [1, ["Void (80%)"], ["✅"], [5], ["Void2"]],
-            "V": [2, ["Vambraces (75%)", "Void (80%)"], ["✅", "✅"], [4, 5], ["Unrefined2", "Void3"]],
+            "V": [2, ["Greaves (75%)", "Void (80%)"], ["✅", "✅"], [4, 5], ["Unrefined2", "Void3"]],
             "Y": [1, ["Void (80%)"], ["✅"], [5], ["Void4"]],
             "G": [2, ["Wing (75%)", "Void (80%)"], ["✅", "✅"], [4, 5], ["Unrefined1", "Void5"]],
             "C": [2, ["Crest (75%)", "Void (80%)"], ["✅", "✅"], [4, 5], ["Unrefined3", "Void6"]],
@@ -709,7 +709,7 @@ class RefineItemView(discord.ui.View):
         new_view = RefSelectView(self.player_user)
         new_embed = discord.Embed(colour=discord.Colour.dark_orange(),
                                   title='Refinery', description="Please select the item to refine")
-        new_embed.set_image(url="https://i.ibb.co/QjWDYG3/forge.jpg")
+        new_embed.set_image(url=globalitems.forge_img)
         await interaction.response.edit_message(embed=new_embed, view=new_view)
 
 

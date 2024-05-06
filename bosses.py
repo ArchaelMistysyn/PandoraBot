@@ -167,7 +167,7 @@ class CurrentBoss:
             case "Demon":
                 if boss_tier != 4:
                     boss_colour, self.boss_element = get_boss_descriptor(boss_type)
-                    if boss_colour not in ["Crimson", "Azure", "Jade"]:
+                    if boss_colour not in ["Crimson", "Azure", "Jade", "Violet", "Gold"]:
                         self.boss_image = ""
                     self.boss_image = f'{url_base}Demon/{boss_colour}/{self.boss_name}_{boss_colour}.png'
                     self.boss_name = f'{boss_colour} {self.boss_name}'
@@ -235,7 +235,12 @@ def spawn_boss(channel_id, player_id, new_boss_tier, selected_boss_type, boss_le
         return boss_object
     # Create the boss object if it doesn't exist.
     boss_type_num = globalitems.boss_list.index(selected_boss_type)
-    boss_level += 10 if new_boss_tier == 6 or selected_boss_type == "Arbiter" else 20 if new_boss_tier == 7 else 0
+    if new_boss_tier == 7:
+        boss_level += 150
+    elif new_boss_tier == 6:
+        boss_level += 10
+    elif selected_boss_type == "Arbiter":
+        boss_level += 10
     boss_object = CurrentBoss(boss_type_num, selected_boss_type, new_boss_tier, boss_level)
 
     # Assign elemental weaknesses.
@@ -255,7 +260,7 @@ def spawn_boss(channel_id, player_id, new_boss_tier, selected_boss_type, boss_le
     boss_typeweak = boss_typeweak.rstrip(';')
 
     # Set boss hp and damage cap.
-    total_hp = int(10 ** (boss_object.boss_level // 10 + 5))
+    total_hp = int(10 ** (min(100, boss_object.boss_level) // 10 + 5))
     if boss_object.boss_level >= 100:
         multiplier_count = (boss_object.boss_level - 100) // 100 + 1
         total_hp *= (10 ** multiplier_count)

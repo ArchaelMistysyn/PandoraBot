@@ -159,8 +159,8 @@ class InlaySelectView(discord.ui.View):
                 emoji="<a:eenergy:1145534127349706772>", label="Armour",
                 description="Inlay gem in your armour", value="1"),
             discord.SelectOption(
-                emoji="<a:eenergy:1145534127349706772>", label="Vambraces",
-                description="Inlay gem in your vambraces", value="2"),
+                emoji="<a:eenergy:1145534127349706772>", label="Greaves",
+                description="Inlay gem in your Greaves", value="2"),
             discord.SelectOption(
                 emoji="<a:eenergy:1145534127349706772>", label="Amulet",
                 description="Inlay gem in your amulet", value="3"),
@@ -288,7 +288,7 @@ class StaminaView(discord.ui.View):
         return embed_msg
 
 
-gear_button_list = ["Weapon", "Armour", "Vambraces", "Amulet",  "Ring", "Wing", "Crest", "Pact", "Insignia", "Tarot"]
+gear_button_list = ["Weapon", "Armour", "Greaves", "Amulet",  "Ring", "Wing", "Crest", "Pact", "Insignia", "Tarot"]
 
 
 class GearView(discord.ui.View):
