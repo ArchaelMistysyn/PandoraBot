@@ -24,7 +24,7 @@ recipe_dict = {
         "Abyss Flame": [("Core3", 1), ("Flame1", 10), 80, "Flame2"],
         "Lotus of Serenity": [("Heart1", 99), ("Fragment2", 99), 99, "Lotus2"],
         "Twin Rings of Divergent Stars": [("DarkStar", 1), ("LightStar", 1), 100, "TwinRings"]},
-    "Elemental Ring Infusion": {}, "Primordial Ring Infusion": {}, "Path Ring Infusion": {},
+    "Elemental Ring Infusion": {}, "Primordial Signet Infusion": {}, "Path Ring Infusion": {},
     "Legendary Ring Infusion": {
         "Dragon's Eye Diamond": [("Gemstone10", 10), ("Gemstone11", 3), 100, "7"],
         "Chromatic Tears": [("Gemstone11", 10), 100, "7"],
@@ -58,7 +58,7 @@ for idx, (element, (gemstone, ring_name)) in enumerate(zip(globalitems.element_n
     add_recipe("Elemental Ring Infusion", f"Elemental Ring of {element}",
                [(f"Gemstone{idx + 1}", 1), ("Scrap", 100), 100, "4"])
     # Primordial Rings
-    add_recipe("Primordial Ring Infusion", f"{gemstone} Ring of {ring_name}",
+    add_recipe("Primordial Signet Infusion", f"{gemstone} Signet of {ring_name}",
                [(f"Gemstone{idx + 1}", 5), ("Gemstone11", 1), 100, "5"])
 void_cost = [('Weapon', ("Scrap", 200)), ('Armour', ("Scrap", 100)), ('Greaves', ("Unrefined2", 10)),
              ('Amulet', ("Scrap", 100)),  ('Wing', ("Unrefined1", 10)), ('Crest', ("Unrefined3", 10))]

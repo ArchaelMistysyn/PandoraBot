@@ -63,13 +63,8 @@ class Expedition:
 
     def take_damage(self, min_dmg, max_dmg, dmg_element, bypass_immortality=False):
         damage = random.randint(min_dmg, max_dmg) * self.tier
-        player_mitigation = self.player_obj.damage_mitigation
-        player_resist = 0
-        if dmg_element != -1:
-            player_resist = self.player_obj.elemental_resistance[dmg_element]
-        damage -= damage * player_resist
-        damage -= damage * player_mitigation * 0.01
-        damage = int(damage)
+        damage -= damage * (self.player_obj.elemental_resistance[dmg_element] if dmg_element != -1 else 0)
+        damage = int(damage - damage * self.player_obj.damage_mitigation * 0.01)
         self.player_obj.player_cHP -= damage
         if self.player_obj.player_cHP < 0:
             self.player_obj.player_cHP = 0
@@ -83,10 +78,8 @@ class Expedition:
         regen_bonus = self.player_obj.hp_regen
         if regen_bonus == 0:
             return ""
-        regen_amount = int(self.player_obj.player_cHP * regen_bonus)
-        self.player_obj.player_cHP += regen_amount
-        if self.player_obj.player_cHP > self.player_obj.player_mHP:
-            self.player_obj.player_cHP = self.player_obj.player_mHP
+        regen_amount = int(self.player_obj.player_mHP * regen_bonus)
+        self.player_obj.player_cHP = min(self.player_obj.player_cHP + regen_amount, self.player_obj.player_mHP)
         return f'Regen: +{regen_amount:,}'
 
 
@@ -407,7 +400,7 @@ class AdventureRoomView(discord.ui.View):
                 return
             # Handle excavation outcome
             reward_list = loot.generate_random_item()
-            reward_id, reward_qty = reward_list[0][0], reward_list[0][1]
+            reward_id, reward_qty = reward_list[0]
             loot_item = inventory.BasicItem(reward_id)
             embed_title = f"Excavated {loot_item.item_name}!"
             item_msg = f"{loot_item.item_emoji} {reward_qty} {loot_item.item_name} found in the rubble!"
@@ -551,7 +544,7 @@ class AdventureRoomView(discord.ui.View):
             # Build the embed.
             temp_player = await player.get_player_by_id(self.expedition.player_obj.player_id)
             reward_msg = temp_player.adjust_coins(reward_coins + bonus_coins)
-            title, description = "Treasures Obtained!", f"You acquired {globalitems.coin_icon} {reward_msg} lotus coins!"
+            title, description = "Treasures Obtained!", f"Acquired {globalitems.coin_icon} {reward_msg} lotus coins!"
             # Check for trove drops
             if random.randint(1, 100) <= trove_rate:
                 trove_tier = inventory.generate_random_tier(max_tier=8, luck_bonus=self.expedition.luck)

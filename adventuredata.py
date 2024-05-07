@@ -1,10 +1,18 @@
 # Data imports
 import globalitems
 
+# AUTOMAPPER DATA
+room_distribution = {'Combat': 3, 'Treasure': 2, 'Mining': 2, 'Storage': 1}
+weighted_rooms = []
+for room, weight in room_distribution.items():
+    weighted_rooms.extend([room] * weight)
+
+
 # Map data lists
 map_tier_dict = {"Ancient Ruins": 1, "Spatial Dungeon": 2, "Celestial Labyrinth": 3,
                  "Starlit Grotto": 4, "Void Temple": 5, "Citadel of Miracles": 6,
                  "Abyssal Sanctum": 7, "Divine Ziggurat": 8, "Cradle of Samsara": 9, "Rift of the Chaos God": 10}
+reverse_map_tier_dict = {v: k for k, v in map_tier_dict.items()}
 
 random_room_list = [
     ["trap_room", 0], ["healing_room", 0], ["treasure", 0], ["trial_room", 0], ["statue_room", 0],

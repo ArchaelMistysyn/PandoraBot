@@ -111,7 +111,7 @@ class TradeView(discord.ui.View):
         self.new_embed.add_field(name="Trade Completed", value="Items/Coins have been transferred.", inline=False)
         await interaction.response.edit_message(embed=self.new_embed, view=self.new_view)
 
-    @discord.ui.button(label="Cancel", style=discord.ButtonStyle.danger, emoji="❌")
+    @discord.ui.button(label="Cancel", style=discord.ButtonStyle.danger, emoji="✖️")
     async def cancel_trade(self, interaction: discord.Interaction, button: discord.Button):
         if interaction.user.id in [self.trade_obj.offer_player.discord_id, self.trade_obj.target_player.discord_id]:
             title, description = "Trade Cancelled", f"User {interaction.user.display_name} cancelled the trade."

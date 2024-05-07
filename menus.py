@@ -623,7 +623,7 @@ class PointsView(discord.ui.View):
                                  description="Mono Element and Time Specialist"),
             discord.SelectOption(emoji=globalitems.path_icon[5], label="Path of Confluence",
                                  description="Multi Elemental Specialist"),
-            discord.SelectOption(emoji="❌", label="Reset",
+            discord.SelectOption(emoji="✖️", label="Reset",
                                  description="Reset all skill points")
         ]
     )

@@ -13,6 +13,7 @@ from datetime import datetime as dt, timedelta
 # Data imports
 import globalitems
 import sharedmethods
+import adventuredata
 
 # Core imports
 import inventory
@@ -20,6 +21,7 @@ import player
 import quest
 import bosses
 import combat
+import encounters
 
 # Cog imports
 import enginecogs
@@ -50,7 +52,7 @@ class RaidView(discord.ui.View):
             outcome = f"{clicked_by.player_username} is not echelon {echelon_req} and cannot join this raid."
             await interaction.response.send_message(outcome)
             return
-        outcome = bosses.add_participating_player(interaction.channel.id, clicked_by)
+        outcome = await encounters.add_participating_player(interaction.channel.id, clicked_by)
         await interaction.response.send_message(outcome)
 
 
@@ -136,7 +138,7 @@ def run_discord_bot():
                 raid_channel_id = server[x]
                 raid_channel = engine_bot.get_channel(raid_channel_id)
                 asyncio.create_task(run_raid_task(raid_channel_id, x, raid_channel))
-            restore_boss_list = bosses.restore_solo_bosses(command_channel_id)
+            restore_boss_list = await bosses.restore_solo_bosses(command_channel_id)
             for idy, y in enumerate(restore_boss_list):
                 player_obj = await player.get_player_by_id(y.player_id)
                 asyncio.create_task(run_solo_boss_task(player_obj, y, command_channel_id, ctx))
@@ -144,8 +146,8 @@ def run_discord_bot():
 
     @engine_bot.event
     async def raid_task(channel_id, channel_num, channel_object):
-        level, boss_type, boss_tier = bosses.get_raid_boss_details(channel_num)
-        active_boss = bosses.spawn_boss(channel_id, 0, boss_tier, boss_type, level, channel_num)
+        level, boss_type, boss_tier = encounters.get_raid_boss_details(channel_num)
+        active_boss = await bosses.spawn_boss(channel_id, 0, boss_tier, boss_type, level, channel_num)
         embed_msg = active_boss.create_boss_embed()
         raid_button = RaidView(channel_num)
         sent_message = await channel_object.send(embed=embed_msg, view=raid_button)
@@ -153,7 +155,7 @@ def run_discord_bot():
 
     @engine_bot.event
     async def raid_boss(combat_tracker_list, active_boss, channel_id, channel_num, sent_message, channel_object):
-        player_list, damage_list = bosses.get_damage_list(channel_id)
+        player_list, damage_list = await bosses.get_damage_list(channel_id)
         active_boss.reset_modifiers()
         temp_user = []
         dps = 0
@@ -170,9 +172,9 @@ def run_discord_bot():
             player_msg, player_damage = await combat.run_raid_cycle(combat_tracker_list[idx], active_boss, x)
             new_player_damage = int(damage_list[idx]) + player_damage
             dps += int(combat_tracker_list[idx].total_dps / combat_tracker_list[idx].total_cycles)
-            bosses.update_player_damage(channel_id, x.player_id, new_player_damage)
+            await bosses.update_player_damage(channel_id, x.player_id, new_player_damage)
             player_msg_list.append(player_msg)
-        bosses.update_boss_cHP(channel_id, 0, active_boss.boss_cHP)
+        await bosses.update_boss_cHP(channel_id, 0, active_boss.boss_cHP)
         if active_boss.calculate_hp():
             embed_msg = active_boss.create_boss_embed(dps=dps)
             for m in player_msg_list:
@@ -201,10 +203,10 @@ def run_discord_bot():
         active_boss.curse_debuffs = player_obj.elemental_curse
         active_boss.aura = player_obj.aura
         embed, player_alive, boss_alive = await combat.run_solo_cycle(combat_tracker, active_boss, player_obj)
-        bosses.update_boss_cHP(channel_id, active_boss.player_id, active_boss.boss_cHP)
+        await bosses.update_boss_cHP(channel_id, active_boss.player_id, active_boss.boss_cHP)
         if not player_alive:
             await sent_message.edit(embed=embed)
-            bosses.clear_boss_info(channel_id, player_obj.player_id)
+            await bosses.clear_boss_info(channel_id, player_obj.player_id)
             return False, active_boss
         if boss_alive:
             await sent_message.edit(embed=embed)
@@ -213,11 +215,11 @@ def run_discord_bot():
             quest.assign_unique_tokens(player_obj, active_boss.boss_name)
         extension = " [Gauntlet]" if gauntlet else ""
         if gauntlet and active_boss.boss_tier != 6:
-            bosses.clear_boss_info(channel_id, player_obj.player_id)
+            await bosses.clear_boss_info(channel_id, player_obj.player_id)
             boss_type = random.choice(["Paragon", "Arbiter"])
             if active_boss.boss_tier < 4:
                 boss_type = random.choice(["Fortress", "Dragon", "Demon", "Paragon"])
-            active_boss = bosses.spawn_boss(channel_id, player_obj.player_id, active_boss.boss_tier + 1,
+            active_boss = await bosses.spawn_boss(channel_id, player_obj.player_id, active_boss.boss_tier + 1,
                                             boss_type, player_obj.player_level, 0, gauntlet=gauntlet)
             active_boss.player_id = player_obj.player_id
             current_dps = int(combat_tracker.total_dps / combat_tracker.total_cycles)
@@ -231,7 +233,7 @@ def run_discord_bot():
             loot_bonus = loot.incarnate_attempts_dict[active_boss.boss_level]
         loot_embed = await loot.create_loot_embed(embed, active_boss, player_list, ctx=ctx_object,
                                                   loot_multiplier=loot_bonus, gauntlet=gauntlet)
-        bosses.clear_boss_info(channel_id, player_obj.player_id)
+        await bosses.clear_boss_info(channel_id, player_obj.player_id)
         if combat_tracker.total_cycles <= 5:
             await sent_message.edit(embed=loot_embed)
             return False, active_boss
@@ -246,7 +248,7 @@ def run_discord_bot():
         player_obj = await sharedmethods.check_registration(ctx)
         if player_obj is None:
             return
-        existing_id = bosses.get_raid_id(ctx.channel.id, player_obj.player_id)
+        existing_id = await encounters.get_raid_id(ctx.channel.id, player_obj.player_id)
         if existing_id is None:
             await ctx.send("You are not in any solo encounter.")
             return
@@ -292,9 +294,9 @@ def run_discord_bot():
         if player_obj.player_equipped[0] == 0:
             await ctx.send("You must have a weapon equipped.")
             return
-        existing_id = bosses.get_raid_id(ctx.channel.id, player_obj.player_id)
+        existing_id = await encounters.get_raid_id(ctx.channel.id, player_obj.player_id)
         if existing_id != 0:
-            await ctx.send("You already have a solo boss encounter running.")
+            await ctx.send("You already have a solo boss or map encounter running.")
             return
         if not player_obj.spend_stamina(200):
             await ctx.send("Not enough stamina.")
@@ -328,7 +330,7 @@ def run_discord_bot():
 
         # Spawn the boss
         new_boss_tier, boss_type = bosses.get_random_bosstier(boss_type)
-        active_boss = bosses.spawn_boss(ctx.channel.id, player_obj.player_id, new_boss_tier,
+        active_boss = await bosses.spawn_boss(ctx.channel.id, player_obj.player_id, new_boss_tier,
                                         boss_type, player_obj.player_level, 0)
         active_boss.player_id = player_obj.player_id
         embed_msg = active_boss.create_boss_embed()
@@ -349,9 +351,9 @@ def run_discord_bot():
         if player_obj.player_equipped[0] == 0:
             await ctx.send("You must have a weapon equipped.")
             return
-        existing_id = bosses.get_raid_id(ctx.channel.id, player_obj.player_id)
+        existing_id = await encounters.get_raid_id(ctx.channel.id, player_obj.player_id)
         if existing_id != 0:
-            await ctx.send("You already have a solo boss encounter running.")
+            await ctx.send("You already have a solo boss or map encounter running.")
             return
         if not player_obj.player_quest < 50:
             await ctx.send("The divine palace is not a place mortals may tread.")
@@ -421,7 +423,7 @@ def run_discord_bot():
                 return
             boss_level = 300 if difficulty == 1 else 600 if difficulty == 2 else 999
             inventory.update_stock(self.player_obj, self.lotus_object.item_id, -1)
-            boss_obj = bosses.spawn_boss(self.ctx.channel.id, self.player_obj.player_id, 8, 5, boss_level, 0)
+            boss_obj = await bosses.spawn_boss(self.ctx.channel.id, self.player_obj.player_id, 8, 5, boss_level, 0)
             label_list = {0: " [Challenger]", 1: " [Usurper]", 2: " [Samsara]"}
             embed_msg = boss_obj.create_boss_embed(extension=label_list[difficulty])
             await interaction.response.edit_message(embed=embed_msg, view=None)
@@ -442,9 +444,9 @@ def run_discord_bot():
         if player_obj.player_quest < 36:
             await ctx.send("You must complete quest 36 to challenge the Spire of Illusions.")
             return
-        existing_id = bosses.get_raid_id(ctx.channel.id, player_obj.player_id)
+        existing_id = await encounters.get_raid_id(ctx.channel.id, player_obj.player_id)
         if existing_id != 0:
-            await ctx.send("You already have a solo boss encounter running.")
+            await ctx.send("You already have a solo boss or map encounter running.")
             return
         token_item = inventory.BasicItem("Compass")
         player_stock = inventory.check_stock(player_obj, "Compass")
@@ -453,8 +455,8 @@ def run_discord_bot():
             return
         inventory.update_stock(player_obj, "Compass", -1)
         quest.assign_unique_tokens(player_obj, "Gauntlet")
-        active_boss = bosses.spawn_boss(ctx.channel.id, player_obj.player_id, 1,
-                                        "Fortress", player_obj.player_level, 0, gauntlet=True)
+        active_boss = await bosses.spawn_boss(ctx.channel.id, player_obj.player_id, 1,
+                                              "Fortress", player_obj.player_level, 0, gauntlet=True)
         active_boss.player_id = player_obj.player_id
         await ctx.send(f"{player_obj.player_username} has entered the Spire of Illusions!")
         embed_msg = active_boss.create_boss_embed(extension=" [Gauntlet]")
@@ -485,9 +487,9 @@ def run_discord_bot():
         elif player_obj.player_echelon < 7 and token_version == 1:
             await ctx.send("You must be player echelon 7 to challenge a superior paragon.")
             return
-        existing_id = bosses.get_raid_id(ctx.channel.id, player_obj.player_id)
+        existing_id = await encounters.get_raid_id(ctx.channel.id, player_obj.player_id)
         if existing_id != 0:
-            await ctx.send("You already have a solo boss encounter running.")
+            await ctx.send("You already have a solo boss or map encounter running.")
             return
         token_id = f"Summon{token_version}"
         token_item = inventory.BasicItem(token_id)
@@ -499,8 +501,8 @@ def run_discord_bot():
         # Set the boss tier and type
         boss_type = "Paragon" if token_version < 3 else "Arbiter"
         new_boss_tier = 4 + token_version
-        active_boss = bosses.spawn_boss(ctx.channel.id, player_obj.player_id, new_boss_tier,
-                                        boss_type, player_obj.player_level, 0)
+        active_boss = await bosses.spawn_boss(ctx.channel.id, player_obj.player_id, new_boss_tier,
+                                              boss_type, player_obj.player_level, 0)
         active_boss.player_id = player_obj.player_id
         spawn_msg = f"{player_obj.player_username} has summoned a tier {active_boss.boss_tier} boss!"
         await ctx.send(spawn_msg)
@@ -552,10 +554,49 @@ def run_discord_bot():
         message = await channel_obj.send(embed=pvp_embed)
 
         async def run_pvp_cog():
-            return enginecogs.PvPCog(engine_bot, ctx, player_obj, opponent_player, ctx.channel.id, message, channel_obj)
+            return enginecogs.PvPCog(engine_bot, ctx, player_obj, opponent_player, message, channel_obj)
 
         pvp_cog = await run_pvp_cog()
         task = asyncio.create_task(pvp_cog.run())
+        await task
+
+    @engine_bot.hybrid_command(name='automapper', help="Run a map automatically. "
+                                                       "Default tier: Highest. Cost: 500 + (50 x Tier)")
+    @app_commands.guilds(discord.Object(id=1011375205999968427))
+    async def automapper(ctx, tier=0):
+        await ctx.defer()
+        player_obj = await sharedmethods.check_registration(ctx)
+        if player_obj is None:
+            return
+        if player_obj.player_echelon < 4:
+            await ctx.send("Player must be echelon 4 or higher.")
+            return
+        if player_obj.player_echelon + 1 < tier:
+            await ctx.send("Too Perilous! You are only qualified for expeditions one tier above your echelon.")
+            return
+        if tier not in range(0, 11):
+            await ctx.send("Tier must be between 1 and 10.")
+            return
+        tier = min(10, player_obj.player_echelon + 1) if tier == 0 else tier
+        existing_id = await encounters.get_raid_id(ctx.channel.id, player_obj.player_id)
+        if existing_id != 0:
+            await ctx.send("You already have a solo boss or map encounter running.")
+            return
+        if not player_obj.spend_stamina(500 + 50 * tier):
+            await ctx.send("Insufficient stamina to embark.")
+            return
+        await encounters.add_automapper(ctx.channel.id, player_obj.player_id)
+        colour, _ = sharedmethods.get_gear_tier_colours(tier)
+        title = f"{player_obj.player_username} - {adventuredata.reverse_map_tier_dict[tier]} [AUTO]"
+        map_embed = discord.Embed(colour=colour, title=title, description=""), colour
+        await ctx.send(f"{player_obj.player_username} embarks on a tier {tier} expedition.")
+        message = await ctx.channel.send(embed=map_embed)
+
+        async def run_map_cog():
+            return enginecogs.MapCog(engine_bot, ctx, player_obj, tier, message, colour)
+
+        map_cog = await run_map_cog()
+        task = asyncio.create_task(map_cog.run())
         await task
 
     engine_bot.run(TOKEN)

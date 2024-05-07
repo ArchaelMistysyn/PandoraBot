@@ -255,7 +255,9 @@ def run_discord_bot():
         trigger_return, player_obj, _ = await admin_verification(ctx)
         if trigger_return:
             return
-        await ctx.send(f"Pandora Bot shutdown. Turned off by Admin: {player_obj.player_username}")
+        message, header = f"Turned off by Admin: {player_obj.player_username}", "Pandora Bot Shutdown"
+        file_path = pilengine.build_message_box(player_obj, message, header=header)
+        await ctx.send(file=discord.File(file_path))
         await on_shutdown()
 
     # Game Commands
@@ -863,8 +865,8 @@ def run_discord_bot():
         player_obj = await sharedmethods.check_registration(ctx)
         if player_obj is None:
             return
-        embed_msg = discord.Embed(colour=discord.Colour.blurple(), title="Pandora's Celestial Forge",
-                                  description="Let me know what you'd like me to upgrade today!")
+        embed_msg = discord.Embed(colour=discord.Colour.blurple(), title="Pandora's Celestial Forge", description="")
+        embed_msg.add_field(name="Pandora, The Celestial", value="Let me know what you'd like me to upgrade today!", inline=False)
         embed_msg.set_image(url=globalitems.forge_img)
         if player_obj.player_quest == 11:
             quest.assign_unique_tokens(player_obj, "Town")

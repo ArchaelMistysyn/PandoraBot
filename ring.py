@@ -16,16 +16,16 @@ ring_values_dict = {
     "Elemental Ring of Shadow": [[("Shadow Curse X%", "elemental_curse", 100, 6)], (0, None)],
     "Elemental Ring of Light": [[("Light Curse X%", "elemental_curse", 100, 7)], (0, None)],
     "Elemental Ring of Celestial": [[("Celestial Curse X%", "elemental_curse", 100, 8)], (0, None)],
-    # Primordial Rings
-    "Ruby Ring of Incineration": [[("Fire Curse X%", "elemental_curse", 500, 0)], (0, None)],
-    "Sapphire Ring of Atlantis": [[("Water Curse X%", "elemental_curse", 500, 1)], (0, None)],
-    "Topaz Ring of Dancing Thunder": [[("Lightning Curse X%", "elemental_curse", 500, 2)], (0, None)],
-    "Agate Ring of Seismic Tremors": [[("Earth Curse X%", "elemental_curse", 500, 3)], (0, None)],
-    "Emerald Ring of Wailing Winds": [[("Wind Curse X%", "elemental_curse", 500, 4)], (0, None)],
-    "Zircon Ring of the Frozen Castle": [[("Ice Curse X%", "elemental_curse", 500, 5)], (0, None)],
-    "Obsidian Ring of Tormented Souls": [[("Shadow Curse X%", "elemental_curse", 500, 6)], (0, None)],
-    "Opal Ring of Scintillation": [[("Light Curse X%", "elemental_curse", 500, 7)], (0, None)],
-    "Amethyst Ring of Shifting Stars": [[("Celestial Curse X%", "elemental_curse", 500, 8)], (0, None)],
+    # Primordial Signet
+    "Ruby Signet of Incineration": [[("Fire Curse X%", "elemental_curse", 500, 0)], (0, None)],
+    "Sapphire Signet of Atlantis": [[("Water Curse X%", "elemental_curse", 500, 1)], (0, None)],
+    "Topaz Signet of Dancing Thunder": [[("Lightning Curse X%", "elemental_curse", 500, 2)], (0, None)],
+    "Agate Signet of Seismic Tremors": [[("Earth Curse X%", "elemental_curse", 500, 3)], (0, None)],
+    "Emerald Signet of Wailing Winds": [[("Wind Curse X%", "elemental_curse", 500, 4)], (0, None)],
+    "Zircon Signet of the Frozen Castle": [[("Ice Curse X%", "elemental_curse", 500, 5)], (0, None)],
+    "Obsidian Signet of Tormented Souls": [[("Shadow Curse X%", "elemental_curse", 500, 6)], (0, None)],
+    "Opal Signet of Scintillation": [[("Light Curse X%", "elemental_curse", 500, 7)], (0, None)],
+    "Amethyst Signet of Shifting Stars": [[("Celestial Curse X%", "elemental_curse", 500, 8)], (0, None)],
     # Path Rings
     "Invoking Ring of Storms": [[("Water Curse X%", "elemental_curse", 250, 1),
                                  ("Lightning Curse X%", "elemental_curse", 250, 2)], (10, 0)],
@@ -43,9 +43,11 @@ ring_values_dict = {
                               ("Critical Damage X%", "critical_multiplier", 100, None)], (100, None)],
     "Chromatic Tears": [[("Omni Curse X%", "all_elemental_curse", 500, None)], (0, None)],
     "Bleeding Hearts": [[("bleed_application +X", "bleed_application", 5, None)], (0, None)],
+    # "Gambler's Masterpiece": [[("Random Damage Bonus 1-100%", "rng_bonus", 100, None)], (0, None)],
     # Mythic Rings
     "Stygian Calamity": [[("X% chance for Bloom to trigger Abyssal Bloom", "spec_conv", 10, 0)], (0, None)],
     "Sacred Ring of Divergent Stars": [[("X% chance for Bloom to trigger Sacred Bloom", "spec_conv", 10, 1)], (0, None)]
+    # "Crown of Skulls": [[("Grants 5 flat damage per coin consumed", "flat_damage", dynamic, 0)], (0, None)]
 }
 
 

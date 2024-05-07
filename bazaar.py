@@ -59,7 +59,6 @@ def list_custom_item(item, cost):
 
 
 def retrieve_items(player_id):
-    
     raw_query = "SELECT item_id FROM CustomBazaar WHERE seller_id = :player_id"
     df = rq(raw_query, return_value=True, params={'player_id': player_id})
     item_ids = []
@@ -69,7 +68,6 @@ def retrieve_items(player_id):
         delete_query = "DELETE FROM CustomBazaar WHERE item_id IN :item_ids"
         rq(update_query, params={'player_id': player_id, 'item_ids': tuple(item_ids)})
         rq(delete_query, params={'item_ids': tuple(item_ids)})
-    
     return len(item_ids) if item_ids else 0
 
 

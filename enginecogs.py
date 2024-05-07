@@ -10,8 +10,10 @@ import battleengine
 
 # Data Imports
 import globalitems
+import pilengine
 import sharedmethods
 import leaderboards
+import adventuredata
 
 # Core imports
 import player
@@ -21,6 +23,7 @@ import menus
 # Combat imports
 import combat
 import bosses
+import encounters
 
 # Item/crafting imports
 import loot
@@ -49,9 +52,9 @@ class RaidCog(commands.Cog):
                                                 self.sent_message, self.channel_object)
             if is_alive:
                 return
-            bosses.clear_boss_info(self.channel_id, 0)
-            level, boss_type, boss_tier = bosses.get_raid_boss_details(self.channel_num)
-            active_boss = bosses.spawn_boss(self.channel_id, 0, boss_tier, boss_type, level, self.channel_num)
+            await bosses.clear_boss_info(self.channel_id, 0)
+            level, boss_type, boss_tier = encounters.get_raid_boss_details(self.channel_num)
+            active_boss = await bosses.spawn_boss(self.channel_id, 0, boss_tier, boss_type, level, self.channel_num)
             self.active_boss = active_boss
             self.combat_tracker_list = []
             embed_msg = active_boss.create_boss_embed()
@@ -82,7 +85,7 @@ class SoloCog(commands.Cog):
             # Handle abandon
             if combat.check_flag(self.player_obj):
                 combat.toggle_flag(self.player_obj)
-                bosses.clear_boss_info(self.channel_id, self.player_obj.player_id)
+                await bosses.clear_boss_info(self.channel_id, self.player_obj.player_id)
                 self.cog_unload()
                 return
             is_alive, self.active_boss = await self.bot.solo_boss(
@@ -98,9 +101,9 @@ class SoloCog(commands.Cog):
 
 
 class PvPCog(commands.Cog):
-    def __init__(self, bot, ctx_obj, player1, player2, channel_id, sent_message, channel_object):
+    def __init__(self, bot, ctx_obj, player1, player2, sent_message, channel_object):
         self.bot, self.ctx_obj = bot, ctx_obj
-        self.channel_object, self.channel_id = channel_object, channel_id
+        self.channel_object = channel_object
         self.player1, self.player2 = player1, player2
         self.sent_message = sent_message
         self.combat_tracker1, self.combat_tracker2 = combat.CombatTracker(self.player1), combat.CombatTracker(self.player2)
@@ -254,4 +257,146 @@ class PvPCog(commands.Cog):
         bleed_data = await combat.trigger_bleed(tracker[attacker], combatant[attacker],
                                           pvp_data=[role_order, combatant, bleed_damage])
         hit_list.append([bleed_data[0], f"{combatant[attacker].player_username} - {bleed_data[1]}"])
+
+
+class MapCog(commands.Cog):
+    def __init__(self, bot, ctx_obj, player_obj, map_tier, sent_message, colour):
+        self.bot, self.ctx_obj = bot, ctx_obj
+        self.player_obj, self.player_cHP, self.player_mHP = player_obj, player_obj.player_mHP, player_obj.player_mHP
+        self.player_regen = int(self.player_mHP * player_obj.hp_regen)
+        self.sent_message, self.colour = sent_message, colour
+        self.room_num, self.map_tier, self.map_title = 0, map_tier, adventuredata.reverse_map_tier_dict[map_tier]
+        self.colour, _ = sharedmethods.get_gear_tier_colours(self.player_obj.player_echelon)
+        self.hit_list = []
+        self.lock = asyncio.Lock()
+
+    async def run(self):
+        self.map_manager.start()
+
+    def cog_unload(self):
+        self.map_manager.cancel()
+
+    @tasks.loop(seconds=120)
+    async def map_manager(self):
+        async with self.lock:
+            status = await self.run_map_cycle()
+            if status != "Continue":
+                end_embed = self.build_base_embed()
+                end_embed.description = "Expedition Completed!"
+                await self.sent_message.edit(embed=end_embed)
+                await encounters.clear_automapper(self.player_obj.player_id)
+                self.cog_unload()
+            self.room_num += 1
+
+    async def run_map_cycle(self):
+        if self.room_num == self.map_tier * 2:
+            return "Clear"
+        # Trigger occurrence/deal damage to player
+        room_type = random.choice(adventuredata.weighted_rooms)
+        room_embed, status = await self.run_room(room_type)
+        await self.sent_message.edit(embed=room_embed)
+        return status
+
+    async def run_room(self, room_type):
+        room_handlers = {'Combat': self.handle_combat_room, 'Treasure': self.handle_treasure_room,
+                         'Mining': self.handle_mining_room, 'Storage': self.handle_storage_room}
+        self.player_cHP = min(self.player_cHP + self.player_regen, self.player_obj.player_mHP)
+        room_embed = await room_handlers[room_type]()
+        return room_embed, ("Dead" if self.player_cHP <= 0 else "Continue")
+
+    def build_base_embed(self):
+        title = f"{self.player_obj.player_username} - {adventuredata.reverse_map_tier_dict[self.map_tier]} [AUTO]"
+        return discord.Embed(colour=self.colour, title=title, description="")
+
+    async def handle_combat_room(self):
+        base_embed = self.build_base_embed()
+        threat, adjust = random.choices([('basic_monster', 1), ('elite_monster', 2), ('legendary_monster', 3)],
+                                        weights=[60, 30, 10], k=1)[0]
+        dmg_element = random.randint(0, 8)
+        element_descriptor = adventuredata.element_descriptor_list[dmg_element]
+        match threat:
+            case "basic_monster":
+                monster = random.choice(adventuredata.monster_dict[threat])
+                prefix = "An" if element_descriptor[0].lower() in adventuredata.vowel_list else "A"
+                base_embed.description = f"{prefix} {element_descriptor} {monster} blocks your path!"
+            case "elite_monster":
+                monster = adventuredata.monster_dict[threat][dmg_element]
+                base_embed.description = f"**{monster}** spotted!! It won't be long before it notices you."
+                dmg_element = -1
+            case "legendary_monster":
+                monster = adventuredata.monster_dict[threat][dmg_element]
+                base_embed.description = f"__**{monster}**__ the legendary titan comes into view!!! DANGER!!!"
+                dmg_element = -1
+            case _:
+                pass
+        await self.sent_message.edit(embed=base_embed)
+        await asyncio.sleep(60)
+        # Damage Handling
+        base_damage = random.randint(1000 * self.map_tier, 2000 * self.map_tier) * adjust
+        damage = base_damage - base_damage * (self.player_obj.elemental_resistance[dmg_element] if dmg_element != -1 else 0)
+        damage = int(damage - damage * self.player_obj.damage_mitigation * 0.01)
+        self.player_cHP -= damage
+        self.player_cHP = 1 if self.player_cHP <= 0 and adjust < 3 else max(0, self.player_cHP)
+        hp_msg = sharedmethods.display_hp(self.player_cHP, self.player_mHP)
+        if self.player_cHP <= 0:
+            base_embed.add_field(name="SLAIN", value=hp_msg, inline=False)
+            return base_embed
+        # EXP Handling
+        await self.player_obj.reload_player()
+        exp_awarded = int(base_damage / 10)
+        exp_msg, lvl_adjust = self.player_obj.adjust_exp(exp_awarded)
+        combined_msg = f"{globalitems.exp_icon} {exp_msg} Exp Acquired.\n{hp_msg}"
+        base_embed.add_field(name="Monster Defeated", value=combined_msg, inline=False)
+        if lvl_adjust != 0:
+            await sharedmethods.send_notification(self.ctx_obj, self.player_obj, "Level", lvl_adjust)
+        return base_embed
+
+    async def handle_treasure_room(self):
+        base_embed = self.build_base_embed()
+        outcome, bonus = random.choices([(1, 1), (2, 5), (3, 10)], weights=[60, 30, 10], k=1)[0]
+        hp_msg = sharedmethods.display_hp(self.player_cHP, self.player_mHP)
+        base_embed.description = "Found a treasure chamber!"
+        await self.sent_message.edit(embed=base_embed)
+        await asyncio.sleep(60)
+        if outcome == 3 and self.map_tier <= 2:
+            coin_msg = self.player_obj.adjust_coins(1000 * bonus)
+            field_value = f"Acquired {globalitems.coin_icon} {coin_msg} lotus coins!"
+        else:
+            reward_object = inventory.BasicItem(f"Trove{self.map_tier - 2}")
+            inventory.update_stock(self.player_obj, reward_object.item_id, 1)
+            field_value = f"{reward_object.item_emoji} 1x {reward_object.item_name}\n{hp_msg}"
+        base_embed.add_field(name="", value=field_value, inline=False)
+        return base_embed
+
+    async def handle_mining_room(self):
+        base_embed = self.build_base_embed()
+        hp_msg = sharedmethods.display_hp(self.player_cHP, self.player_mHP)
+        reward_list = loot.generate_random_item()
+        reward_id = f"Fragment{min(4, self.map_tier - 4)}" if self.map_tier >= 5 else "Scrap"
+        item_qty = self.map_tier if self.map_tier <= 4 else 1 if self.map_tier <= 8 else self.map_tier - 7
+        reward_object = inventory.BasicItem(reward_id)
+        base_embed.description = "Found a mining chamber!"
+        await self.sent_message.edit(embed=base_embed)
+        await asyncio.sleep(60)
+        inventory.update_stock(self.player_obj, reward_object.item_id, item_qty)
+        field_value = f"{reward_object.item_emoji} {item_qty}x {reward_object.item_name}\n{hp_msg}"
+        base_embed.add_field(name="", value=field_value, inline=False)
+        return base_embed
+
+    async def handle_storage_room(self):
+        base_embed = self.build_base_embed()
+        hp_msg = sharedmethods.display_hp(self.player_cHP, self.player_mHP)
+        reward_list = loot.generate_random_item()
+        reward_id, item_qty = reward_list[0]
+        reward_object = inventory.BasicItem(reward_id)
+        base_embed.description = "Found a storage chamber!"
+        await self.sent_message.edit(embed=base_embed)
+        await asyncio.sleep(60)
+        inventory.update_stock(self.player_obj, reward_object.item_id, item_qty)
+        field_value = f"{reward_object.item_emoji} {item_qty}x {reward_object.item_name}\n{hp_msg}"
+        base_embed.add_field(name="", value=field_value, inline=False)
+        if sharedmethods.check_rare_item(reward_object.item_id):
+            await sharedmethods.send_notification(ctx, player_obj, "Item", item_id)
+        return base_embed
+
 
