@@ -218,6 +218,8 @@ class PvPCog(commands.Cog):
         hit_damage, status_msg = combat.check_lock(combatants[attacker], trackers[attacker], hit_damage)
         hit_damage, second_msg = combat.check_bloom(combatants[attacker], hit_damage)
         hit_damage, evade = combat.handle_evasions(combatants[defender].block, combatants[defender].dodge, hit_damage)
+        if status_msg == " *TIME SHATTER*" or critical_type != "":
+            hit_damage *= random.randint(1, combatants[attacker].rng_bonus)
         scaled_dmg = combat.pvp_scale_damage(role_order, combatants, hit_damage)
         hit_msg = f"{combatants[attacker].player_username} - {combo_count[attacker]}x Combo: {skill_name} {sharedmethods.number_conversion(scaled_dmg)}"
         hit_msg += f"{status_msg}{second_msg}{critical_type}{evade}"
@@ -255,7 +257,7 @@ class PvPCog(commands.Cog):
         bleed_damage = combatant[attacker].get_player_initial_damage()
         _, bleed_damage = combat.pvp_defences(combatant[attacker], combatant[defender], bleed_damage, e_weapon)
         bleed_data = await combat.trigger_bleed(tracker[attacker], combatant[attacker],
-                                          pvp_data=[role_order, combatant, bleed_damage])
+                                                pvp_data=[role_order, combatant, bleed_damage])
         hit_list.append([bleed_data[0], f"{combatant[attacker].player_username} - {bleed_data[1]}"])
 
 
@@ -266,9 +268,10 @@ class MapCog(commands.Cog):
         self.player_regen = int(self.player_mHP * player_obj.hp_regen)
         self.sent_message, self.colour = sent_message, colour
         self.room_num, self.map_tier, self.map_title = 0, map_tier, adventuredata.reverse_map_tier_dict[map_tier]
-        self.colour, _ = sharedmethods.get_gear_tier_colours(self.player_obj.player_echelon)
+        self.colour, _ = sharedmethods.get_gear_tier_colours(map_tier)
         self.hit_list = []
         self.lock = asyncio.Lock()
+        self.exp_accumulated, self.coins_accumulated, self.items_accumulated = 0, 0, {}
 
     async def run(self):
         self.map_manager.start()
@@ -283,16 +286,31 @@ class MapCog(commands.Cog):
             if status != "Continue":
                 end_embed = self.build_base_embed()
                 end_embed.description = "Expedition Completed!"
+                end_embed = await self.accumulated_output(end_embed)
                 await self.sent_message.edit(embed=end_embed)
                 await encounters.clear_automapper(self.player_obj.player_id)
                 self.cog_unload()
             self.room_num += 1
 
+    async def accumulated_output(self, embed_obj):
+        accumulated_msg = ""
+        if self.coins_accumulated != 0:
+            accumulated_msg += f"{globalitems.coin_icon} {self.coins_accumulated:,}x Lotus Coins\n"
+        if self.exp_accumulated != 0:
+            accumulated_msg += f"{globalitems.exp_icon} {self.exp_accumulated:,}x EXP Acquired\n"
+        if self.items_accumulated:
+            for item_id, (item, qty) in self.items_accumulated.items():
+                accumulated_msg += f"{reward.item_emoji} {qty:,}x {reward.item_name}\n"
+        if accumulated_msg != "":
+            embed_obj.add_field(name="Total Accumulated Rewards", value=accumulated_msg, inline=False)
+        return embed_obj
+
     async def run_map_cycle(self):
         if self.room_num == self.map_tier * 2:
             return "Clear"
         # Trigger occurrence/deal damage to player
-        room_type = random.choice(adventuredata.weighted_rooms)
+        room_type = random.choices(['Combat', 'Treasure', 'Mining', 'Storage'],
+                                   weights=[5, 2, 2, 1], k=1)[0]
         room_embed, status = await self.run_room(room_type)
         await self.sent_message.edit(embed=room_embed)
         return status
@@ -310,7 +328,8 @@ class MapCog(commands.Cog):
 
     async def handle_combat_room(self):
         base_embed = self.build_base_embed()
-        threat, adjust = random.choices([('basic_monster', 1), ('elite_monster', 2), ('legendary_monster', 3)],
+        hp_msg = sharedmethods.display_hp(self.player_cHP, self.player_mHP)
+        threat, adjust = random.choices([('basic_monster', 1), ('elite_monster', 2), ('legend_monster', 3)],
                                         weights=[60, 30, 10], k=1)[0]
         dmg_element = random.randint(0, 8)
         element_descriptor = adventuredata.element_descriptor_list[dmg_element]
@@ -323,12 +342,14 @@ class MapCog(commands.Cog):
                 monster = adventuredata.monster_dict[threat][dmg_element]
                 base_embed.description = f"**{monster}** spotted!! It won't be long before it notices you."
                 dmg_element = -1
-            case "legendary_monster":
+            case "legend_monster":
                 monster = adventuredata.monster_dict[threat][dmg_element]
                 base_embed.description = f"__**{monster}**__ the legendary titan comes into view!!! DANGER!!!"
                 dmg_element = -1
             case _:
                 pass
+        new_embed = base_embed.copy()
+        base_embed.add_field(name="", value=hp_msg, inline=False)
         await self.sent_message.edit(embed=base_embed)
         await asyncio.sleep(60)
         # Damage Handling
@@ -338,35 +359,42 @@ class MapCog(commands.Cog):
         self.player_cHP -= damage
         self.player_cHP = 1 if self.player_cHP <= 0 and adjust < 3 else max(0, self.player_cHP)
         hp_msg = sharedmethods.display_hp(self.player_cHP, self.player_mHP)
+        dmg_msg = f"{self.player_obj.player_username} took {damage:,} damage!\n{hp_msg} HP"
         if self.player_cHP <= 0:
-            base_embed.add_field(name="SLAIN", value=hp_msg, inline=False)
-            return base_embed
+            new_embed.add_field(name="SLAIN", value=hp_msg, inline=False)
+            return new_embed
         # EXP Handling
         await self.player_obj.reload_player()
         exp_awarded = int(base_damage / 10)
+        self.exp_accumulated += exp_awarded
         exp_msg, lvl_adjust = self.player_obj.adjust_exp(exp_awarded)
-        combined_msg = f"{globalitems.exp_icon} {exp_msg} Exp Acquired.\n{hp_msg}"
-        base_embed.add_field(name="Monster Defeated", value=combined_msg, inline=False)
+        combined_msg = f"{dmg_msg}\n{globalitems.exp_icon} {exp_msg} Exp Acquired."
+        new_embed.add_field(name="Monster Defeated", value=combined_msg, inline=False)
         if lvl_adjust != 0:
             await sharedmethods.send_notification(self.ctx_obj, self.player_obj, "Level", lvl_adjust)
-        return base_embed
+        return new_embed
 
     async def handle_treasure_room(self):
         base_embed = self.build_base_embed()
         outcome, bonus = random.choices([(1, 1), (2, 5), (3, 10)], weights=[60, 30, 10], k=1)[0]
         hp_msg = sharedmethods.display_hp(self.player_cHP, self.player_mHP)
         base_embed.description = "Found a treasure chamber!"
+        new_embed = base_embed.copy()
+        base_embed.add_field(name="", value=hp_msg, inline=False)
         await self.sent_message.edit(embed=base_embed)
         await asyncio.sleep(60)
-        if outcome == 3 and self.map_tier <= 2:
+        if outcome == 3 and self.map_tier >= 3:
+            reward_object = inventory.BasicItem(f"Trove{self.map_tier - 2}")
+            current_qty = self.items_accumulated.get(reward_object.item_id, (reward_object, 0))[1]
+            self.items_accumulated[reward_object.item_id] = (reward_object, current_qty + 1)
+            inventory.update_stock(self.player_obj, reward_object.item_id, 1)
+            field_value = f"{hp_msg} HP\n{reward_object.item_emoji} 1x {reward_object.item_name}"
+        else:
+            self.coins_accumulated += 100 * bonus
             coin_msg = self.player_obj.adjust_coins(1000 * bonus)
             field_value = f"Acquired {globalitems.coin_icon} {coin_msg} lotus coins!"
-        else:
-            reward_object = inventory.BasicItem(f"Trove{self.map_tier - 2}")
-            inventory.update_stock(self.player_obj, reward_object.item_id, 1)
-            field_value = f"{reward_object.item_emoji} 1x {reward_object.item_name}\n{hp_msg}"
-        base_embed.add_field(name="", value=field_value, inline=False)
-        return base_embed
+        new_embed.add_field(name="", value=field_value, inline=False)
+        return new_embed
 
     async def handle_mining_room(self):
         base_embed = self.build_base_embed()
@@ -375,13 +403,17 @@ class MapCog(commands.Cog):
         reward_id = f"Fragment{min(4, self.map_tier - 4)}" if self.map_tier >= 5 else "Scrap"
         item_qty = self.map_tier if self.map_tier <= 4 else 1 if self.map_tier <= 8 else self.map_tier - 7
         reward_object = inventory.BasicItem(reward_id)
+        current_qty = self.items_accumulated.get(reward_object.item_id, (reward_object, 0))[1]
+        self.items_accumulated[reward_object.item_id] = (reward_object, current_qty + item_qty)
         base_embed.description = "Found a mining chamber!"
+        new_embed = base_embed.copy()
+        base_embed.add_field(name="", value=hp_msg, inline=False)
         await self.sent_message.edit(embed=base_embed)
         await asyncio.sleep(60)
         inventory.update_stock(self.player_obj, reward_object.item_id, item_qty)
-        field_value = f"{reward_object.item_emoji} {item_qty}x {reward_object.item_name}\n{hp_msg}"
-        base_embed.add_field(name="", value=field_value, inline=False)
-        return base_embed
+        field_value = f"{hp_msg} HP\n{reward_object.item_emoji} {item_qty}x {reward_object.item_name}"
+        new_embed.add_field(name="", value=field_value, inline=False)
+        return new_embed
 
     async def handle_storage_room(self):
         base_embed = self.build_base_embed()
@@ -389,14 +421,18 @@ class MapCog(commands.Cog):
         reward_list = loot.generate_random_item()
         reward_id, item_qty = reward_list[0]
         reward_object = inventory.BasicItem(reward_id)
+        current_qty = self.items_accumulated.get(reward_object.item_id, (reward_object, 0))[1]
+        self.items_accumulated[reward_object.item_id] = (reward_object, current_qty + item_qty)
         base_embed.description = "Found a storage chamber!"
+        new_embed = base_embed.copy()
+        base_embed.add_field(name="", value=hp_msg, inline=False)
         await self.sent_message.edit(embed=base_embed)
         await asyncio.sleep(60)
         inventory.update_stock(self.player_obj, reward_object.item_id, item_qty)
-        field_value = f"{reward_object.item_emoji} {item_qty}x {reward_object.item_name}\n{hp_msg}"
-        base_embed.add_field(name="", value=field_value, inline=False)
+        field_value = f"{hp_msg} HP\n{reward_object.item_emoji} {item_qty}x {reward_object.item_name}"
+        new_embed.add_field(name="", value=field_value, inline=False)
         if sharedmethods.check_rare_item(reward_object.item_id):
             await sharedmethods.send_notification(ctx, player_obj, "Item", item_id)
-        return base_embed
+        return new_embed
 
 

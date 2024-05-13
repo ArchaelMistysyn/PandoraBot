@@ -65,8 +65,12 @@ async def add_automapper(channel_id, player_id):
 
 
 async def clear_automapper(player_id):
-    raw_query = "DELETE FROM ActiveRaids WHERE player_id = :player_id AND encounter_type = :raid_type"
-    rq(raw_query, params={'player_id': player_id, 'raid_type': "automap"})
+    raw_query = "DELETE FROM ActiveRaids WHERE player_id = :player_id AND encounter_type = 'automap'"
+    rq(raw_query, params={'player_id': player_id})
+
+
+async def startup_clear_automaps():
+    rq("DELETE FROM ActiveRaids WHERE encounter_type = 'automap'")
 
 
 async def get_raid_id(channel_id, player_id, return_multiple=False):
@@ -74,8 +78,8 @@ async def get_raid_id(channel_id, player_id, return_multiple=False):
         raw_query = "SELECT raid_id FROM ActiveRaids WHERE channel_id = :id_check"
         params = {'id_check': str(channel_id)}
     else:
-        raw_query = "SELECT raid_id FROM ActiveRaids WHERE channel_id = :id_check AND player_id = :player_check"
-        params = {'id_check': str(channel_id), 'player_check': player_id}
+        raw_query = "SELECT raid_id FROM ActiveRaids WHERE player_id = :player_check"
+        params = {'player_check': player_id}
     df_check = rq(raw_query, return_value=True, params=params)
     if df_check is None or len(df_check) == 0:
         return 0

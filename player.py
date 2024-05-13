@@ -83,6 +83,7 @@ class PlayerProfile:
         self.defence_penetration = 0.0
         self.class_multiplier = 0.0
         self.final_damage = 0.0
+        self.rng_bonus = 0
 
         # Initialize defensive stats.
         self.hp_bonus, self.hp_regen, self.hp_multiplier = 0.0, 0.0, 0.0

@@ -13,11 +13,8 @@ import inventory
 
 
 recipe_dict = {
-    "Heavenly Infusion": {},
-    "Elemental Infusion": {},
-    "Core Infusion": {},
-    "Void Infusion": {},
-    "Jewel Infusion": {},
+    "Heavenly Infusion": {}, "Elemental Infusion": {}, "Core Infusion": {},
+    "Void Infusion": {}, "Jewel Infusion": {}, "Skull Infusion": {},
     "Special Infusion": {
         "Radiant Heart": [("Stone5", 1), ("Fragment2", 1), 20, "Heart1"],
         "Chaos Heart": [("Stone5", 1), ("Fragment3", 1), 20, "Heart2"],
@@ -28,10 +25,12 @@ recipe_dict = {
     "Legendary Ring Infusion": {
         "Dragon's Eye Diamond": [("Gemstone10", 10), ("Gemstone11", 3), 100, "7"],
         "Chromatic Tears": [("Gemstone11", 10), 100, "7"],
-        "Bleeding Hearts": [("Heart1", 99), ("Heart2", 99), ("Gemstone11", 3), 100, "7"]},
-    "Mythic Ring Infusion": {
+        "Bleeding Hearts": [("Heart1", 99), ("Heart2", 99), ("Gemstone11", 3), 100, "7"],
+        "Gambler's Masterpiece": [("Gemstone11", 1), 1, "7"]},
+    "Sovereign Ring Infusion": {
         "Stygian Calamity": [("Gemstone12", 1), ("Gemstone11", 5), 100, "8"],
-        "Sacred Ring of Divergent Stars": [("TwinRings", 1), ("Gemstone11", 5), 100, "8"]}
+        "Sacred Ring of Divergent Stars": [("TwinRings", 1), ("Gemstone11", 5), 100, "8"],
+        "Crown of Skulls": [("Skull4", 1), ("Lotus1", 1), ("Gemstone11", 5), 100, "8"]}
 }
 
 
@@ -62,6 +61,11 @@ for idx, (element, (gemstone, ring_name)) in enumerate(zip(globalitems.element_n
                [(f"Gemstone{idx + 1}", 5), ("Gemstone11", 1), 100, "5"])
 void_cost = [('Weapon', ("Scrap", 200)), ('Armour', ("Scrap", 100)), ('Greaves', ("Unrefined2", 10)),
              ('Amulet', ("Scrap", 100)),  ('Wing', ("Unrefined1", 10)), ('Crest', ("Unrefined3", 10))]
+# Skull Infusions
+skull_types = ["Cursed Golden Skull", "Haunted Golden Skull", "Radiant Golden Skull", "Prismatic Golden Skull"]
+for idx, skull_type in enumerate(skull_types[1:], start=1):
+    add_recipe("Skull Infusion", skull_type,
+               [(f"Skull{idx}", 1), 100, f"Skull{idx + 1}"])
 # Core Infusions
 core_types = ["Void", "Wish", "Abyss", "Divinity"]
 for idx in range(1, len(core_types) + 1):
@@ -240,7 +244,7 @@ class CraftView(discord.ui.View):
             new_view = InfuseView(self.player_user)
             await interaction.response.edit_message(embed=self.embed_msg, view=new_view)
             return
-        is_ring = "Ring" in self.recipe_object.category
+        is_ring = "Ring" in self.recipe_object.category or "Signet" in self.recipe_object.category
         result = self.recipe_object.perform_infusion(self.player_user, selected_qty, ring=is_ring)
         self.embed_msg = self.recipe_object.create_cost_embed(self.player_user)
         # Handle infusion
@@ -248,6 +252,8 @@ class CraftView(discord.ui.View):
             # Handle ring
             new_ring = inventory.CustomItem(self.player_user.player_id, "R", self.recipe_object.outcome_item)
             new_ring.item_base_type = self.recipe_object.recipe_name
+            if new_ring.item_base_type == "Crown of Skulls":
+                new_ring.item_roll_values[0] += 1000
             new_ring.set_item_name()
             inventory.add_custom_item(new_ring)
             self.embed_msg = await new_ring.create_citem_embed()

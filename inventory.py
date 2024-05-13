@@ -260,6 +260,8 @@ class CustomItem:
     def generate_base(self):
         if "R" in self.item_type:
             self.assign_bonus_stat()
+            # Default unique values for rings.
+            self.item_roll_values = [-1] * 6
             return
         if "D" in self.item_type:
             itemrolls.add_roll(self, 6)
@@ -375,14 +377,18 @@ class CustomItem:
         return embed_msg
 
     def update_damage(self):
+        flat_bonus, mult_bonus = 0, 1
         if "D" in self.item_type:
             self.item_damage_min, self.item_damage_max = self.base_damage_min, self.base_damage_max
             return
+        # Handle unique base damage exceptions
+        if self.item_base_type == "Crown of Skulls":
+            flat_bonus, mult_bonus = (self.item_roll_values[0] * 100000), (1 + (self.item_roll_values[1] * 0.1))
         # calculate item's damage per hit
         enh_multiplier = 1 + self.item_enhancement * (0.01 * self.item_tier)
         quality_damage = 1 + (self.item_quality_tier * 0.2)
-        self.item_damage_min = int(self.base_damage_min * quality_damage * enh_multiplier)
-        self.item_damage_max = int(self.base_damage_max * quality_damage * enh_multiplier)
+        self.item_damage_min = int((self.base_damage_min + flat_bonus) * quality_damage * enh_multiplier * mult_bonus)
+        self.item_damage_max = int((self.base_damage_max + flat_bonus) * quality_damage * enh_multiplier * mult_bonus)
 
     def give_item(self, new_owner):
         self.player_owner = new_owner
@@ -435,7 +441,7 @@ def get_item_shop_list(item_tier):
                 item_list.append(target_item)
         # Handle all other items.
         elif temp_tier == item_tier and item_data['cost'] != 0:
-            if 'Fae' not in item_id:
+            if 'Fae' not in item_id and 'Skull' not in item_id:
                 target_item = inventory.BasicItem(item_id)
                 item_list.append(target_item)
     return item_list
@@ -548,8 +554,8 @@ def display_binventory(player_id, method):
         "Essences": "^(Essence)",
         "Summoning": "^(Compass|Summon)",
         "Gemstone": "^(Gemstone([0-9]|1[01]))$",
-        "Misc": "^(Potion|Trove|Crate|Stone|Token)",
-        "Ultra Rare": "^(Lotus|LightStar|DarkStar|Gemstone12|RoyalCoin)"
+        "Misc": "^(Potion|Trove|Crate|Stone|Token|Skull[0-3])",
+        "Ultra Rare": "^(Lotus|LightStar|DarkStar|Gemstone12|Skull4|RoyalCoin)"
     }
     player_inventory = ""
     raw_query = ("SELECT item_id, item_qty FROM BasicInventory "

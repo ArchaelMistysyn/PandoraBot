@@ -160,6 +160,17 @@ crystallized_data = [
     [None, 'Crystallized Divinity', 100, 8, '<a:evoid:1145520260573827134>', 'Used to upgrade weapons to tier 8.', 0]]
 itemdata_dict = build_item_dict(itemdata_dict, crystallized_data, category="Crystal")
 
+# Skull List Data
+skull_data = [[None, 'Cursed Golden Skull', 50, 5, '💀',
+               'A skull of pure gold that whispers to you softly.', 100000],
+              [None, 'Haunted Golden Skull', 90, 6, '💀',
+               "A golden skull that exudes darkness. Placing it against your ear is clearly a bad idea.", 1000000],
+              [None, 'Radiant Golden Skull', 90, 7, '💀',
+               "A golden skull with a serene aura. Yet screaming can occasionally be heard from within.", 10000000],
+              [None, 'Prismatic Golden Skull', 90, 8, '💀',
+               "A golden skull that sparkles extraordinarily. Beware the lustful voices calling your name.", 100000000]]
+itemdata_dict = build_item_dict(itemdata_dict, skull_data, category="Skull")
+
 # Unrefined Void Items List Data
 unrefined_item_types = ['Weapon', 'Armour', 'Amulet', 'Wing', 'Crest', 'Gem']
 unrefined_void_data = [[None, "Unrefined Void Item (Weapon)", 100, 5, '<a:elootitem:1144477550379274322>', None, 0],

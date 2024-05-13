@@ -21,6 +21,7 @@ import player
 import quest
 import inventory
 import menus
+import encounters
 
 # Misc imports
 import leaderboards
@@ -246,6 +247,9 @@ def run_discord_bot():
             synced = await pandora_bot.tree.sync(guild=discord.Object(id=guild_id))
             print(f"Pandora Bot Synced! {len(synced)} command(s)")
             await ctx.send('Pandora Bot commands synced!')
+        elif keyword == "Startup":
+            await encounters.startup_clear_automaps()
+            await ctx.send('Pandora Bot startup tasks completed!')
 
     @set_command_category('admin', 5)
     @pandora_bot.hybrid_command(name='shutdown', help="Admin shutdown command. Admin Only.")

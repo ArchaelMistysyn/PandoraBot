@@ -588,7 +588,7 @@ def run_discord_bot():
         await encounters.add_automapper(ctx.channel.id, player_obj.player_id)
         colour, _ = sharedmethods.get_gear_tier_colours(tier)
         title = f"{player_obj.player_username} - {adventuredata.reverse_map_tier_dict[tier]} [AUTO]"
-        map_embed = discord.Embed(colour=colour, title=title, description=""), colour
+        map_embed = discord.Embed(colour=colour, title=title, description="")
         await ctx.send(f"{player_obj.player_username} embarks on a tier {tier} expedition.")
         message = await ctx.channel.send(embed=map_embed)
 

@@ -205,6 +205,8 @@ async def hit_boss(tracker_obj, boss_obj, player_obj, combo_count, hit_type="Reg
     damage, status_msg = check_lock(player_obj, tracker_obj, damage)
     damage, second_msg = check_bloom(player_obj, damage)
     damage, extension = (boss_obj.damage_cap, " *LIMIT*") if damage >= boss_obj.damage_cap != -1 else (damage, "")
+    if status_msg == " *TIME SHATTER*" or critical_type != "":
+        damage *= random.randint(1, player_obj.rng_bonus)
     hit_msg = f"{combo_count}x Combo: {skill_name} {sharedmethods.number_conversion(damage)}{extension}"
     if hit_type == "Ultimate":
         hit_msg = f"Ultimate: {skill_name} {sharedmethods.number_conversion(damage)}{extension}"
@@ -282,14 +284,11 @@ async def run_raid_cycle(tracker_obj, boss_obj, player_obj):
 def check_bloom(player_obj, input_damage):
     damage, status_msg = input_damage, ""
     if random.randint(1, 100) <= int(round(player_obj.spec_rate[0] * 100)):
-        damage = int(damage * player_obj.bloom_multiplier)
-        status_msg = " *BLOOM*"
+        damage, status_msg = int(damage * player_obj.bloom_multiplier), " *BLOOM*"
         if random.randint(1, 100) <= int(round(player_obj.spec_conv[0] * 10)):
-            damage = int(damage * player_obj.bloom_multiplier)
-            status_msg = " *ABYSSAL BLOOM*"
-        elif random.randint(1, 100) <= int(round(player_obj.spec_conv[1] * 100)):
-            damage = int(damage * player_obj.spec_rate[0] * 100)
-            status_msg = " *SACRED BLOOM*"
+            damage, status_msg = damage * 10, " *SACRED BLOOM*"
+    elif random.randint(1, 100) <= int(round(player_obj.spec_conv[1] * 100)):
+        damage, status_msg = int(damage * player_obj.bloom_multiplier * 3), " *ABYSSAL BLOOM*"
     return damage, status_msg
 
 
@@ -436,7 +435,6 @@ def toggle_flag(player_obj):
     else:
         toggle_query = "INSERT INTO AbandonEncounter (player_id) VALUES (:player_check)"
     rq(toggle_query, params={'player_check': player_id})
-    
 
 
 def limit_elements(player_obj, e_weapon):

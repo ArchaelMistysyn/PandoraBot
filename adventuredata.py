@@ -1,13 +1,6 @@
 # Data imports
 import globalitems
 
-# AUTOMAPPER DATA
-room_distribution = {'Combat': 3, 'Treasure': 2, 'Mining': 2, 'Storage': 1}
-weighted_rooms = []
-for room, weight in room_distribution.items():
-    weighted_rooms.extend([room] * weight)
-
-
 # Map data lists
 map_tier_dict = {"Ancient Ruins": 1, "Spatial Dungeon": 2, "Celestial Labyrinth": 3,
                  "Starlit Grotto": 4, "Void Temple": 5, "Citadel of Miracles": 6,

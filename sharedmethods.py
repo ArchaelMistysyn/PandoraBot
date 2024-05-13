@@ -36,7 +36,7 @@ async def check_click(interaction, player_obj, new_embed, new_view):
 
 
 def check_rare_item(item_id):
-    id_list = ["DarkStar", "LightStar", "Gemstone12"]
+    id_list = ["DarkStar", "LightStar", "Gemstone12", "Skull4"]
     return True if "Lotus" in item_id or item_id in id_list else False
 
 
@@ -76,8 +76,8 @@ def get_gear_thumbnail(item):
 
 
 def get_gear_tier_colours(base_tier):
-    checked_tier = min(8, max(0, base_tier - 1))
-    return globalitems.tier_colors[checked_tier], globalitems.augment_icons[checked_tier]
+    checked_tier = min(9, max(0, base_tier))
+    return globalitems.tier_colors[checked_tier], globalitems.augment_icons[checked_tier - 1]
 
 
 def reset_all_cooldowns():
