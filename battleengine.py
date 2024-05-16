@@ -322,11 +322,11 @@ def run_discord_bot():
                 return
             stone_id = f"Stone{spawned_boss + 1}" if spawned_boss <= 3 else "Stone6"
             stone_obj = inventory.BasicItem(stone_id)
-            stone_stock = inventory.check_stock(player_obj, stone_obj.item_id)
+            stone_stock = await inventory.check_stock(player_obj, stone_obj.item_id)
             if stone_stock < 1:
                 await ctx.send(sharedmethods.get_stock_msg(stone_obj, stone_stock))
                 return
-            inventory.update_stock(player_obj, stone_obj.item_id, -1)
+            await inventory.update_stock(player_obj, stone_obj.item_id, -1)
 
         # Spawn the boss
         new_boss_tier, boss_type = bosses.get_random_bosstier(boss_type)
@@ -361,7 +361,7 @@ def run_discord_bot():
         spawn_msg = f"{player_obj.player_username} has spawned a tier {active_boss.boss_tier} boss!"
         await ctx.send(spawn_msg)
         lotus_object = inventory.BasicItem("Lotus10")
-        lotus_stock = inventory.check_stock(player_obj, lotus_object.item_id)
+        lotus_stock = await inventory.check_stock(player_obj, lotus_object.item_id)
         embed_msg = discord.Embed(colour=discord.Colour.gold(), title="Divine Palace of God", description="")
         embed_msg.description = ("The inside of the palace is still, the torches unlit as if it hasn't been used"
                                  "in thousands of years.")
@@ -415,14 +415,14 @@ def run_discord_bot():
             await self.begin_encounter(3)
 
         async def begin_encounter(self, difficulty):
-            lotus_stock = inventory.check_stock(self.player_obj, self.lotus_object.item_id)
+            lotus_stock = await inventory.check_stock(self.player_obj, self.lotus_object.item_id)
             embed_msg = discord.Embed(colour=discord.Colour.dark_orange(), title="Divine Palace of God", description="")
             if lotus_stock < 1:
                 embed_msg.description = "The echo falls silent and fades away alongside the light of the torches."
                 await interaction.response.edit_message(embed=embed_msg, view=None)
                 return
             boss_level = 300 if difficulty == 1 else 600 if difficulty == 2 else 999
-            inventory.update_stock(self.player_obj, self.lotus_object.item_id, -1)
+            await inventory.update_stock(self.player_obj, self.lotus_object.item_id, -1)
             boss_obj = await bosses.spawn_boss(self.ctx.channel.id, self.player_obj.player_id, 8, 5, boss_level, 0)
             label_list = {0: " [Challenger]", 1: " [Usurper]", 2: " [Samsara]"}
             embed_msg = boss_obj.create_boss_embed(extension=label_list[difficulty])
@@ -449,11 +449,11 @@ def run_discord_bot():
             await ctx.send("You already have a solo boss or map encounter running.")
             return
         token_item = inventory.BasicItem("Compass")
-        player_stock = inventory.check_stock(player_obj, "Compass")
+        player_stock = await inventory.check_stock(player_obj, "Compass")
         if player_stock <= 0:
             await ctx.send(f"Out of Stock: {token_item.item_emoji} {token_item.item_name}.")
             return
-        inventory.update_stock(player_obj, "Compass", -1)
+        await inventory.update_stock(player_obj, "Compass", -1)
         quest.assign_unique_tokens(player_obj, "Gauntlet")
         active_boss = await bosses.spawn_boss(ctx.channel.id, player_obj.player_id, 1,
                                               "Fortress", player_obj.player_level, 0, gauntlet=True)
@@ -493,11 +493,11 @@ def run_discord_bot():
             return
         token_id = f"Summon{token_version}"
         token_item = inventory.BasicItem(token_id)
-        player_stock = inventory.check_stock(player_obj, token_id)
+        player_stock = await inventory.check_stock(player_obj, token_id)
         if player_stock <= 0:
             await ctx.send(sharedmethods.get_stock_msg(token_item, player_stock))
             return
-        inventory.update_stock(player_obj, token_id, -1)
+        await inventory.update_stock(player_obj, token_id, -1)
         # Set the boss tier and type
         boss_type = "Paragon" if token_version < 3 else "Arbiter"
         new_boss_tier = 4 + token_version

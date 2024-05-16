@@ -188,7 +188,7 @@ class SearchCardView(discord.ui.View):
             if interaction.user.id == self.player_user.discord_id:
                 selected_numeral = interaction.data['values'][0]
                 selected_card = get_index_by_key(selected_numeral)
-                new_embed = tarot_menu_embed(self.player_user, selected_numeral)
+                new_embed = await tarot_menu_embed(self.player_user, selected_numeral)
                 new_view = TarotView(self.player_user, selected_card)
                 await interaction.response.edit_message(embed=new_embed, view=new_view)
         except Exception as e:
@@ -206,7 +206,7 @@ class CollectionView(discord.ui.View):
         try:
             if interaction.user.id == self.player_user.discord_id:
                 selected_numeral = get_key_by_index(self.current_position)
-                new_msg = tarot_menu_embed(self.player_user, selected_numeral)
+                new_msg = await tarot_menu_embed(self.player_user, selected_numeral)
                 new_view = TarotView(self.player_user, self.current_position)
                 await interaction.response.edit_message(embed=new_msg, view=new_view)
         except Exception as e:
@@ -259,20 +259,20 @@ class TarotView(discord.ui.View):
         self.previous_card.label = f"Prev: {previous_numeral}"
         self.next_card.label = f"Next: {next_numeral}"
 
-    def cycle_tarot(self, direction):
+    async def cycle_tarot(self, direction):
         max_position = 30
         self.current_position = (self.current_position + direction) % (max_position + 1)
         self.selected_numeral = get_key_by_index(self.current_position)
         tarot = check_tarot(self.player_user, self.selected_numeral)
         # Display the tarot card.
-        embed_msg = tarot_menu_embed(self.player_user, self.selected_numeral)
+        embed_msg = await tarot_menu_embed(self.player_user, self.selected_numeral)
         return embed_msg
 
     @discord.ui.button(label="Previous", style=discord.ButtonStyle.blurple, row=1)
     async def previous_card(self, interaction: discord.Interaction, button: discord.Button):
         try:
             if interaction.user.id == self.player_user.discord_id:
-                new_msg = self.cycle_tarot(-1)
+                new_msg = await self.cycle_tarot(-1)
                 reload_view = TarotView(self.player_user, self.current_position)
                 await interaction.response.edit_message(embed=new_msg, view=reload_view)
         except Exception as e:
@@ -286,7 +286,7 @@ class TarotView(discord.ui.View):
                 embed_msg = discord.Embed(colour=discord.Colour.magenta(),
                                           title=f"{self.player_user.player_username}'s Tarot Collection",
                                           description=f"Completion Total: {completion_count} / 31")
-                embed_msg.set_image(url="")
+                embed_msg.set_image(url=globalitems.planetarium_img)
                 new_view = SearchTierView(self.player_user)
                 await interaction.response.edit_message(embed=embed_msg, view=new_view)
         except Exception as e:
@@ -296,7 +296,7 @@ class TarotView(discord.ui.View):
     async def next_card(self, interaction: discord.Interaction, button: discord.Button):
         try:
             if interaction.user.id == self.player_user.discord_id:
-                new_msg = self.cycle_tarot(1)
+                new_msg = await self.cycle_tarot(1)
                 reload_view = TarotView(self.player_user, self.current_position)
                 await interaction.response.edit_message(embed=new_msg, view=reload_view)
         except Exception as e:
@@ -306,7 +306,7 @@ class TarotView(discord.ui.View):
     async def equip(self, interaction: discord.Interaction, button: discord.Button):
         try:
             if interaction.user.id == self.player_user.discord_id:
-                embed_msg = tarot_menu_embed(self.player_user, self.selected_numeral)
+                embed_msg = await tarot_menu_embed(self.player_user, self.selected_numeral)
                 active_card = check_tarot(self.player_user.player_id, card_dict[self.selected_numeral][0])
                 if active_card:
                     await self.player_user.reload_player()
@@ -325,7 +325,7 @@ class TarotView(discord.ui.View):
         try:
             if interaction.user.id == self.player_user.discord_id:
                 if not self.embed:
-                    self.embed = binding_ritual(self.player_user, self.selected_numeral, self.bind_success_rate)
+                    self.embed = await binding_ritual(self.player_user, self.selected_numeral, self.bind_success_rate)
                 reload_view = TarotView(self.player_user, self.current_position)
                 await interaction.response.edit_message(embed=self.embed, view=reload_view)
         except Exception as e:
@@ -339,7 +339,7 @@ class TarotView(discord.ui.View):
         reload_view = TarotView(self.player_user, self.current_position)
         title = "Cannot Synthesize!"
         if not self.embed:
-            self.embed = tarot_menu_embed(self.player_user, self.selected_numeral)
+            self.embed = await tarot_menu_embed(self.player_user, self.selected_numeral)
             if not active_card:
                 self.embed.title, self.embed.description = title, "You do not own this card."
                 await interaction.response.edit_message(embed=self.embed, view=reload_view)
@@ -355,16 +355,16 @@ class TarotView(discord.ui.View):
             # Handle tier 7 exception.
             if active_card.num_stars == 7:
                 lotus_item = inventory.BasicItem("Lotus8")
-                player_stock = inventory.check_stock(player_obj, lotus_item.item_id)
+                player_stock = await inventory.check_stock(player_obj, lotus_item.item_id)
                 if player_stock < 1:
                     description = f"Divine Synthesis requires: {lotus_item.item_emoji} 1x {lotus_item.item_name}"
                     self.embed.title, self.embed.description = title, description
                     await interaction.response.edit_message(embed=self.embed, view=reload_view)
                     return
-                inventory.update_stock(player_obj, lotus_item.item_id, -1)
+                await inventory.update_stock(player_obj, lotus_item.item_id, -1)
             # Attempt Synthesis
             title, description = active_card.synthesize_tarot()
-            self.embed = self.cycle_tarot(0)
+            self.embed = await self.cycle_tarot(0)
             self.embed.add_field(name=title, value=description, inline=False)
             reload_view = TarotView(self.player_user, self.current_position)
         await interaction.response.edit_message(embed=self.embed, view=reload_view)
@@ -485,7 +485,7 @@ def check_tarot(player_id, card_name):
     return selected_tarot
 
 
-def tarot_menu_embed(player_obj, card_numeral):
+async def tarot_menu_embed(player_obj, card_numeral):
     # Pull the card information
     tarot_card = check_tarot(player_obj.player_id, card_dict[card_numeral][0])
     if tarot_card is None:
@@ -493,7 +493,7 @@ def tarot_menu_embed(player_obj, card_numeral):
     # Build the card embed message.
     embed_msg = tarot_card.create_tarot_embed()
     loot_item = inventory.BasicItem(f"Essence{card_numeral}")
-    essence_stock = inventory.check_stock(player_obj, loot_item.item_id)
+    essence_stock = await inventory.check_stock(player_obj, loot_item.item_id)
     description = f"Card Quantity: {tarot_card.card_qty}\nEssence Quantity: {essence_stock}"
     embed_msg.add_field(name=f"", value=description, inline=False)
     embed_msg.set_image(url=tarot_card.card_image_link)
@@ -536,21 +536,21 @@ def collection_check(player_obj):
     return collection_count
 
 
-def binding_ritual(player_obj, essence_type, success_rate):
+async def binding_ritual(player_obj, essence_type, success_rate):
     essence_id = f'Essence{essence_type}'
-    essence_stock = inventory.check_stock(player_obj, essence_id)
+    essence_stock = await inventory.check_stock(player_obj, essence_id)
     loot_item = inventory.BasicItem(essence_id)
     # Confirm stock is available
     if essence_stock == 0:
-        embed_msg = tarot_menu_embed(player_obj, essence_type)
+        embed_msg = await tarot_menu_embed(player_obj, essence_type)
         stock_msg = sharedmethods.get_stock_msg(loot_item, essence_stock)
         embed_msg.add_field(name="Ritual Failed!", value=stock_msg)
         return embed_msg
     # Pay the cost and attempt the binding.
-    inventory.update_stock(player_obj, essence_id, -1)
+    await inventory.update_stock(player_obj, essence_id, -1)
     random_roll = random.randint(1, 100)
     if random_roll > success_rate:
-        embed_msg = tarot_menu_embed(player_obj, essence_type)
+        embed_msg = await tarot_menu_embed(player_obj, essence_type)
         description_msg = "The essence dissipates."
         embed_msg.add_field(name="Ritual Failed!", value=description_msg)
         return embed_msg
@@ -563,7 +563,7 @@ def binding_ritual(player_obj, essence_type, success_rate):
     else:
         new_tarot = TarotCard(player_obj.player_id, essence_type, 1, 1, 0)
         new_tarot.add_tarot_card()
-    embed_msg = tarot_menu_embed(player_obj, essence_type)
+    embed_msg = await tarot_menu_embed(player_obj, essence_type)
     description_msg = "The sealed tarot card has been added to your collection."
     embed_msg.add_field(name="Ritual Successful!", value=description_msg)
     return embed_msg

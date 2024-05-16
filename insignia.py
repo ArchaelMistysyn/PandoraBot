@@ -105,7 +105,7 @@ class InsigniaView(discord.ui.View):
                     new_view = ConfirmSelectionView(self.player_user, num_selected, current_selection)
                     embed_msg.description = ("I applaud your greed. In addition to the payment I hope your "
                                              "sanity can afford the cost.")
-                    cost_msg = payment_embed(self.player_user, num_elements, current_selection)
+                    cost_msg = await payment_embed(self.player_user, num_elements, current_selection)
                     embed_msg.add_field(name="Cost:", value=cost_msg, inline=False)
                     await interaction.response.edit_message(embed=embed_msg, view=new_view)
                     return
@@ -119,7 +119,7 @@ class InsigniaView(discord.ui.View):
                 embed_msg.description = "Do you not value the sanctity of your soul?"
                 if mutation_tier in mutation_upgrade_data:
                     token_cost = mutation_upgrade_data[mutation_tier][0]
-                    cost_msg = payment_embed(self.player_user, token_cost, mutation_cost_list[mutation_tier])
+                    cost_msg = await payment_embed(self.player_user, token_cost, mutation_cost_list[mutation_tier])
                     embed_msg.add_field(name="Cost:", value=cost_msg, inline=False)
                 new_view = ConfirmSelectionView(self.player_user, 0, "mutation")
                 await interaction.response.edit_message(embed=embed_msg, view=new_view)
@@ -159,7 +159,7 @@ class ElementSelectView(discord.ui.View):
             new_view = ConfirmSelectionView(self.player_user, num_selected, self.current_selection)
             self.embed.description = ("How entertaining. I am willing to engrave your soul, "
                                       "but my services are as expensive as they are painful.")
-            cost_msg = payment_embed(self.player_user, self.num_elements, self.current_selection)
+            cost_msg = await payment_embed(self.player_user, self.num_elements, self.current_selection)
             self.embed.add_field(name="Cost:", value=cost_msg, inline=False)
             await interaction.response.edit_message(embed=self.embed, view=new_view)
             return
@@ -194,7 +194,7 @@ class ConfirmSelectionView(discord.ui.View):
 
         # Initialize the data.
         await self.player_user.reload_player()
-        token_stock = inventory.check_stock(self.player_user, "Token2")
+        token_stock = await inventory.check_stock(self.player_user, "Token2")
         self.embed_msg = discord.Embed(colour=discord.Colour.dark_orange(), title=NPC_name, description="")
 
         # Handle regular engravings.
@@ -210,7 +210,7 @@ class ConfirmSelectionView(discord.ui.View):
             # Confirm the material core cost can be paid.
             selected_elements_list = [ind for ind, y in enumerate(self.current_selection) if y == 1]
             for x in selected_elements_list:
-                fae_check = inventory.check_stock(self.player_user, f"Fae{x}")
+                fae_check = await inventory.check_stock(self.player_user, f"Fae{x}")
                 if fae_check < 100:
                     self.embed_msg.description = ("Weaving requires a lot of fae energy. "
                                                   "I'll need you to bring me more cores.")
@@ -218,9 +218,9 @@ class ConfirmSelectionView(discord.ui.View):
                     return
 
             # Pay the costs and engrave the insignia.
-            inventory.update_stock(self.player_user, "Token2", (token_cost * -1))
+            await inventory.update_stock(self.player_user, "Token2", (token_cost * -1))
             for z in selected_elements_list:
-                inventory.update_stock(self.player_user, f"Fae{z}", -100)
+                await inventory.update_stock(self.player_user, f"Fae{z}", -100)
             delim = ";"
             insignia_code = reduce(lambda full, new: str(full) + delim + str(new), self.current_selection)
             insignia_code += ";0"
@@ -247,7 +247,7 @@ class ConfirmSelectionView(discord.ui.View):
 
         # Confirm the secondary cost can be paid.
         secondary_item = inventory.BasicItem(mutation_cost_list[mutation_tier])
-        secondary_stock = inventory.check_stock(self.player_user, secondary_item.item_id)
+        secondary_stock = await inventory.check_stock(self.player_user, secondary_item.item_id)
         if secondary_stock < 1:
             self.embed_msg.description = ("Such gall to request my services without a sufficient offering. "
                                           "Bring me tokens or don't come back.")
@@ -257,15 +257,15 @@ class ConfirmSelectionView(discord.ui.View):
         # Handle unsuccessful mutation.
         if random.randint(1, 100) > self.mutation_rate:
             self.embed_msg.description = "The mutation failed, but I managed to keep your soul intact."
-            cost_msg = payment_embed(self.player_user, token_cost, mutation_cost_list[mutation_tier])
+            cost_msg = await payment_embed(self.player_user, token_cost, mutation_cost_list[mutation_tier])
             self.embed_msg.add_field(name="Cost:", value=cost_msg, inline=False)
             reload_view = ConfirmSelectionView(self.player_user, 0, "mutation")
             await interaction.response.edit_message(embed=self.embed_msg, view=reload_view)
             return
 
         # Pay the costs and handle the successful mutation.
-        inventory.update_stock(self.player_user, "Token2", (token_cost * -1))
-        inventory.update_stock(self.player_user, secondary_item.item_id, -1)
+        await inventory.update_stock(self.player_user, "Token2", (token_cost * -1))
+        await inventory.update_stock(self.player_user, secondary_item.item_id, -1)
         new_tier = int(self.player_user.insignia[-1]) + 1
         self.player_user.insignia = f"{self.player_user.insignia[:-1]}{new_tier}"
         self.player_user.set_player_field("player_insignia", self.player_user.insignia)
@@ -286,21 +286,21 @@ class ConfirmSelectionView(discord.ui.View):
             print(e)
 
 
-def payment_embed(player_obj, token_cost, current_selection):
+async def payment_embed(player_obj, token_cost, current_selection):
     token_item = inventory.BasicItem("Token2")
-    token_stock = inventory.check_stock(player_obj, token_item.item_id)
+    token_stock = await inventory.check_stock(player_obj, token_item.item_id)
     cost_msg = f"{token_item.item_emoji} {token_item.item_name}: {token_stock} / {token_cost}\n"
     # Create non mutation cost message.
     if type(current_selection) is list:
         for idx, x in enumerate(current_selection):
             if x != 0:
                 loot_item = inventory.BasicItem(f"Fae{idx}")
-                stock = inventory.check_stock(player_obj, loot_item.item_id)
+                stock = await inventory.check_stock(player_obj, loot_item.item_id)
                 cost_msg += f"{loot_item.item_emoji} {loot_item.item_name}: {stock} / 100\n"
         return cost_msg
     # Create mutation cost message.
     secondary_item = inventory.BasicItem(current_selection)
-    secondary_stock = inventory.check_stock(player_obj, secondary_item.item_id)
+    secondary_stock = await inventory.check_stock(player_obj, secondary_item.item_id)
     cost_msg += f"{secondary_item.item_emoji} {secondary_item.item_name}: {secondary_stock} / 1"
     return cost_msg
 

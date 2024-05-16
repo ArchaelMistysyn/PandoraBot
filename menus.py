@@ -12,15 +12,18 @@ import player
 import inventory
 import quest
 import combat
+import sharedmethods
 import skillpaths
 import bazaar
+import market
+import infuse
 
 # Item/crafting imports
 import loot
+import forge
 import insignia
 import pact
 import tarot
-
 
 starter_guide = "1. Use /quest to progress through the quest."
 starter_guide += "\n2. Use /map to farm for tier 1-4 Weapons, Armour, Amulets, and EXP."
@@ -58,6 +61,7 @@ guide_dict = {0: ["Beginner Guide", starter_guide],
               1: ["Intermediate Guide", intermediate_guide],
               2: ["Advanced Guide", advanced_guide]}
 
+thana_title = "XIII - Thana, The Death"
 
 class GuideMenu(discord.ui.View):
     def __init__(self):
@@ -112,7 +116,12 @@ class HelpView(discord.ui.View):
         embed_msg = build_help_embed(self.category_dict,'trade')
         await interaction.response.edit_message(embed=embed_msg)
 
-    @discord.ui.button(label="Info", style=discord.ButtonStyle.blurple, row=1, emoji="ℹ️")
+    @discord.ui.button(label="Areas", style=discord.ButtonStyle.blurple, row=1, emoji="ℹ️")
+    async def location_help_callback(self, interaction: discord.Interaction, button: discord.Button):
+        embed_msg = build_help_embed(self.category_dict, 'location')
+        await interaction.response.edit_message(embed=embed_msg)
+
+    @discord.ui.button(label="Info", style=discord.ButtonStyle.blurple, row=2, emoji="ℹ️")
     async def account_help_callback(self, interaction: discord.Interaction, button: discord.Button):
         embed_msg = build_help_embed(self.category_dict, 'info')
         await interaction.response.edit_message(embed=embed_msg)
@@ -131,6 +140,350 @@ def build_help_embed(category_dict, category_name):
     for command_name, description, _ in commands:
         embed.add_field(name=f"/{command_name}", value=f"{description}", inline=False)
     return embed
+
+
+class TownView(discord.ui.View):
+    def __init__(self, player_obj):
+        super().__init__(timeout=None)
+        self.player_obj = player_obj
+
+    @discord.ui.button(label="Refinery", style=discord.ButtonStyle.blurple, row=0)
+    async def refinery_callback(self, interaction: discord.Interaction, button: discord.Button):
+        if interaction.user.id != self.player_obj.discord_id:
+            return
+        title, description = "Refinery", "Please select the item to refine"
+        embed_msg = discord.Embed(colour=discord.Colour.dark_orange(), title=title, description=description)
+        embed_msg.set_image(url=globalitems.refinery_img)
+        await interaction.response.edit_message(embed=embed_msg, view=forge.RefSelectView(self.player_obj))
+
+    @discord.ui.button(label="Alchemist", style=discord.ButtonStyle.blurple, row=0)
+    async def alchemist_callback(self, interaction: discord.Interaction, button: discord.Button):
+        if interaction.user.id != self.player_obj.discord_id:
+            return
+        title, description = "Cloaked Alchemist, Sangam", "I can make anything, if you bring the right stuff."
+        embed_msg = discord.Embed(colour=discord.Colour.magenta(), title=title, description=description)
+        embed_msg.set_image(url=globalitems.infuse_img)
+        await interaction.response.edit_message(embed=embed_msg, view=infuse.InfuseView(self.player_obj))
+
+    @discord.ui.button(label="Market", style=discord.ButtonStyle.blurple, row=0)
+    async def market_callback(self, interaction: discord.Interaction, button: discord.Button):
+        if interaction.user.id != self.player_obj.discord_id:
+            return
+        title, description = "Black Market", "Everything has a price."
+        embed_msg = discord.Embed(colour=discord.Colour.dark_orange(), title=title, description=description)
+        embed_msg.set_image(url=globalitems.market_img)
+        await interaction.response.edit_message(embed=embed_msg, view=market.TierSelectView(self.player_obj))
+
+    @discord.ui.button(label="Bazaar", style=discord.ButtonStyle.blurple, row=0)
+    async def bazaar_callback(self, interaction: discord.Interaction, button: discord.Button):
+        if interaction.user.id != self.player_obj.discord_id:
+            return
+        embed_msg = await bazaar.show_bazaar_items(self.player_obj)
+        embed_msg.set_image(url=globalitems.bazaar_img)
+        await interaction.response.edit_message(embed=embed_msg, view=bazaar.BazaarView(self.player_obj))
+
+
+class CelestialView(discord.ui.View):
+    def __init__(self, player_obj):
+        super().__init__(timeout=None)
+        self.player_obj = player_obj
+        self.num_visits = int(self.player_obj.check_misc_data("thana_visits"))
+        if self.num_visits > 0:
+            self.summon_callback.label = "Call Thana"
+
+    @discord.ui.button(label="Forge", style=discord.ButtonStyle.blurple, row=0)
+    async def forge_callback(self, interaction: discord.Interaction, button: discord.Button):
+        if interaction.user.id != self.player_obj.discord_id:
+            return
+        embed_msg = discord.Embed(colour=discord.Colour.blurple(), title="Pandora's Celestial Forge", description="")
+        name, value = "Pandora, The Celestial", "Let me know what you'd like me to upgrade!"
+        embed_msg.add_field(name=name, value=value, inline=False)
+        embed_msg.set_image(url=globalitems.forge_img)
+        await interaction.response.edit_message(embed=embed_msg, view=forge.SelectView(self.player_obj, "celestial"))
+
+    @discord.ui.button(label="Tarot", style=discord.ButtonStyle.blurple, row=0)
+    async def planetarium_callback(self, interaction: discord.Interaction, button: discord.Button):
+        if interaction.user.id != self.player_obj.discord_id:
+            return
+        completion_count = tarot.collection_check(self.player_obj)
+        title, description = "Pandora, The Celestial", "Welcome to the planetarium. Sealed tarots are stored here."
+        embed_msg = discord.Embed(colour=discord.Colour.magenta(), title=title, description=description)
+        name, value = f"{self.player_obj.player_username}'s Tarot Collection", f"Completion Total: {completion_count} / 31"
+        embed_msg.add_field(name=name, value=value, inline=False)
+        embed_msg.set_image(url=globalitems.planetarium_img)
+        await interaction.response.edit_message(embed=embed_msg, view=tarot.CollectionView(self.player_obj, 0))
+
+    @discord.ui.button(label="?????", style=discord.ButtonStyle.blurple, row=0)
+    async def summon_callback(self, interaction: discord.Interaction, button: discord.Button):
+        if interaction.user.id != self.player_obj.discord_id:
+            return
+        item_obj = inventory.BasicItem("Skull2")
+        if self.num_visits == 0:
+            description = (f"Ah so you're Pandora's new pet. One ought to be more cautious when speaking my name. "
+                           f"You never know when death is waiting just around the corner. "
+                           f"Or were you perhaps dissatisfied with awaiting your scheduled departure? "
+                           f"I jest. Unlike the others, I alone will support you {self.player_obj.player_username}. "
+                           f"In exchange for your kind invitation to my little sister's abode I offer you a gift.\n"
+                           f"Thana hands you a valuable item: {item_obj.item_emoji} 1x {item_obj.item_name}\n"
+                           f"This skull belonged to a general of my fallen undead legion during the last paragon war. "
+                           f"Their remains have been stolen and scattered. Return them to me and I shall reward you.\n")
+            await inventory.update_stock(self.player_obj, item_obj.item_id, 1)
+            self.player_obj.update_misc_data("thana_visits", 1)
+            name = f"Heed my words human. I will not tolerate disobedience."
+            value = (f"If you overestimate yourself and try to seal me, I will *KILL* you.\n"
+                     f"If tell anyone I was here, I will *KILL* you.\n"
+                     f"If you hurt my little sister, I will *KILL* you.\n")
+        else:
+            player_deaths = int(self.player_obj.check_misc_data('deaths'))
+            description = (f"I will continue to revive your mortal body so long as you continue to aid me. "
+                           f"Though, should you ever want to remain dead you are more than welcome to stay by my side. "
+                           f"You've died {player_deaths} times you know. It'd save me quite the hassle. "
+                           f"I must confess, the mere thought of my sister's jealousy, every time you call my name "
+                           f"fills me with immeasurable pleasure.\n")
+            name, value = "", "Out with it now, what can the embodiment of death do for you today?"
+        embed_msg = discord.Embed(colour=discord.Colour.dark_purple(), title=thana_title, description=description)
+        embed_msg.add_field(name=name, value=value, inline=False)
+        embed_msg.set_image(url="")
+        skull_ring = False
+        if self.player_obj.player_equipped[4] != 0:
+            e_ring = await inventory.read_custom_item(self.player_obj.player_equipped[4])
+            if e_ring.item_name == "Crown of Skulls":
+                skull_ring = True
+        await interaction.response.edit_message(embed=embed_msg, view=SkullSelectView(self.player_obj, skull_ring))
+
+
+class DivineView(discord.ui.View):
+    def __init__(self, player_obj):
+        super().__init__(timeout=None)
+        self.player_obj = player_obj
+
+    @discord.ui.button(label="Avalon", style=discord.ButtonStyle.blurple, row=0)
+    async def points_callback(self, interaction: discord.Interaction, button: discord.Button):
+        if interaction.user.id != self.player_obj.discord_id:
+            return
+        embed_msg = skillpaths.create_path_embed(self.player_obj)
+        if self.player_obj.player_quest == 17:
+            quest.assign_unique_tokens(self.player_obj, "Arbiter")
+        await interaction.response.edit_message(embed=embed_msg, view=PointsView(self.player_obj))
+
+    @discord.ui.button(label="Isolde", style=discord.ButtonStyle.blurple, row=0)
+    async def engrave_callback(self, interaction: discord.Interaction, button: discord.Button):
+        if interaction.user.id != self.player_obj.discord_id:
+            return
+        if self.player_obj.player_quest == 17:
+            quest.assign_unique_tokens(self.player_obj, "Arbiter")
+        title = "Isolde, Soulweaver of the True Laws"
+        if self.player_obj.player_quest < 20:
+            description = "You can't yet handle my threads. This is no place for the weak."
+            embed_msg = discord.Embed(colour=discord.Colour.dark_orange(), title=title, description=description)
+            await interaction.response.edit_message(embed=embed_msg)
+            return
+        description = "You've come a long way from home child. Tell me, what kind of power do you seek?"
+        embed_msg = discord.Embed(colour=discord.Colour.dark_orange(), title=title, description=description)
+        await interaction.response.edit_message(embed=embed_msg, view=insignia.InsigniaView(self.player_obj))
+
+    @discord.ui.button(label="Vexia", style=discord.ButtonStyle.blurple, row=0)
+    async def scribe_callback(self, interaction: discord.Interaction, button: discord.Button):
+        if interaction.user.id != self.player_obj.discord_id:
+            return
+        e_weapon = await inventory.read_custom_item(self.player_obj.player_equipped[0])
+        title = "Vexia, Scribe of the True Laws"
+        if self.player_obj.player_quest < 46:
+            denial_msg = "I have permitted your passage, but you are not yet qualified to speak with me. Begone."
+            embed_msg = discord.Embed(colour=discord.Colour.blurple(), title=title, description=denial_msg)
+            await interaction.response.edit_message(embed=embed_msg)
+            return
+        entry_msg = ("You are the only recorded mortal to have entered the divine plane. "
+                     "We are not your allies, but we will not treat you unfairly."
+                     "\nThe oracle has already foretold your failure. Now it need only be written into truth.")
+        embed_msg = discord.Embed(colour=discord.Colour.blurple(), title=title, description=entry_msg)
+        embed_msg.set_image(url=globalitems.forge_img)
+        await interaction.response.edit_message(embed=embed_msg, view=forge.SelectView(self.player_obj, "custom"))
+
+    @discord.ui.button(label="Fleur", style=discord.ButtonStyle.blurple, row=0)
+    async def sanctuary_callback(self, interaction: discord.Interaction, button: discord.Button):
+        if interaction.user.id != self.player_obj.discord_id:
+            return
+        title = "Fleur, Oracle of the True Laws"
+        if self.player_obj.player_quest < 48:
+            denial_msg = "The sanctuary radiates with divinity. Entry is impossible."
+            embed_msg = discord.Embed(colour=discord.Colour.blurple(), title="???", description=denial_msg)
+            await interaction.response.edit_message(embed=embed_msg)
+            return
+        entry_msg = ("Have you come to desecrate my holy gardens once more? Well, I suppose it no longer matters, "
+                     "I know you will inevitably find what you desire even without my guidance. "
+                     "If you intend to sever the divine lotus, then I suppose the rest are nothing but pretty flowers.")
+        embed_msg = discord.Embed(colour=discord.Colour.blurple(), title=title, description=entry_msg)
+        embed_msg.set_image(url=globalitems.sanctuary_img)
+        await interaction.response.edit_message(embed=embed_msg, view=market.LotusSelectView(self.player_obj))
+
+
+async def add_skull_fields(player_obj, embed_msg, method="Return"):
+    await player_obj.reload_player()
+    skull_items = [inventory.BasicItem(f"Skull{i}") for i in range(1, 5)]
+    field_value = ""
+    if method != "Sacrifice":
+        coin_msg = f"{globalitems.coin_icon} {player_obj.player_coins:,}x Lotus Coins"
+        embed_msg.add_field(name=f"Current Coins", value=coin_msg, inline=False)
+    for item in skull_items:
+        price = item.item_cost // 2 if method == "Return" else item.item_cost
+        skull_stock = await inventory.check_stock(player_obj, item.item_id)
+        coin_msg = f"{globalitems.coin_icon} {price:,}x Lotus Coins\n"
+        if method == "Return":
+            field_value += f"{item.item_emoji} {skull_stock}x __**{item.item_name}**__: {coin_msg}"
+        elif method == "Purchase":
+            field_value += f"{item.item_emoji} __**{item.item_name}**__: {coin_msg}"
+        else:
+            field_value += f"{item.item_emoji} {skull_stock}x __**{item.item_name}**__"
+    embed_msg.add_field(name=f"{method} Value", value=field_value, inline=False)
+    return embed_msg
+
+
+class SkullSelectView(discord.ui.View):
+    def __init__(self, player_obj, skull_ring):
+        super().__init__(timeout=None)
+        self.player_obj = player_obj
+        self.skull_ring = skull_ring
+        if skull_ring:
+            self.feed_ring_callback.disabled = False
+            self.feed_ring_callback.style = globalitems.button_colour_list[2]
+
+    @discord.ui.button(label="Return Skulls", style=discord.ButtonStyle.blurple, row=0)
+    async def return_skulls_callback(self, interaction: discord.Interaction, button: discord.Button):
+        if interaction.user.id != self.player_obj.discord_id:
+            return
+        description = f"Did you bring skulls for me {self.player_obj.player_username}? I shall reward you."
+        embed_msg = discord.Embed(colour=discord.Colour.dark_purple(), title=thana_title, description=description)
+        embed_msg = await add_skull_fields(self.player_obj, embed_msg, method="Return")
+        await interaction.response.edit_message(embed=embed_msg, view=SkullsView(self.player_obj, method="Return"))
+
+    @discord.ui.button(label="Buy Skulls", style=discord.ButtonStyle.blurple, row=0)
+    async def buy_skulls_callback(self, interaction: discord.Interaction, button: discord.Button):
+        if interaction.user.id != self.player_obj.discord_id:
+            return
+        description = ("I'm not really sure...\nOh fine, I suppose you were the one who returned them after all. "
+                       "If you're willing to compensate me appropriately, I suppose I can let you have some.")
+        embed_msg = discord.Embed(colour=discord.Colour.dark_purple(), title=thana_title, description=description)
+        embed_msg = await add_skull_fields(self.player_obj, embed_msg, method="Purchase")
+        await interaction.response.edit_message(embed=embed_msg, view=SkullsView(self.player_obj, method="Purchase"))
+
+    @discord.ui.button(label="Upgrade Ring", style=discord.ButtonStyle.secondary, row=0, disabled=True)
+    async def feed_ring_callback(self, interaction: discord.Interaction, button: discord.Button):
+        if interaction.user.id != self.player_obj.discord_id:
+            return
+        description = ("Did you bring me more skulls so that I can imbue your ring with more of my love? "
+                       "Take off your clothes and lie down for me. I'll be with you in a moment once I'm ready."
+                       "Place the hand with the ring against my chest.\n"
+                       "Now close your eyes, I'll begin the ritual...")
+        embed_msg = discord.Embed(colour=discord.Colour.dark_purple(), title=thana_title, description=description)
+        embed_msg = await add_skull_fields(self.player_obj, embed_msg, method="Sacrifice")
+        await interaction.response.edit_message(embed=embed_msg, view=SkullsView(self.player_obj, method="Sacrifice"))
+
+
+class SkullsView(discord.ui.View):
+    def __init__(self, player_obj, method="Return"):
+        super().__init__(timeout=None)
+        self.player_obj = player_obj
+        self.method = method
+        self.new_embed, self.new_view = None, None
+        self.skull_items = [inventory.BasicItem(f"Skull{i}") for i in range(1, 5)]
+        for index, button in enumerate(self.children[:-1]):
+            button.label = self.skull_items[index].item_name
+
+    async def handle_skull_interaction(self, interaction_obj, item):
+        if interaction_obj.user.id != self.player_obj.discord_id:
+            return
+        if self.new_embed is not None:
+            await interaction_obj.response.edit_message(embed=self.new_embed, view=self.new_view)
+        await self.player_obj.reload_player()
+        self.new_embed = discord.Embed(colour=discord.Colour.dark_purple(), title=thana_title, description="")
+        self.new_view = SkullsView(self.player_obj, method=self.method)
+        skull_stock = await inventory.check_stock(self.player_obj, item.item_id)
+        # Ring upgrading
+        if self.method == "Sacrifice":
+            ring_id = self.player_obj.player_equipped[4]
+            e_ring = await inventory.read_custom_item(ring_id) if ring_id != 0 else None
+            if e_ring is None or e_ring.item_name != "Crown of Skulls":
+                self.new_embed.description = "Put the ring back on or I will *END* you. Okay darling?"
+                await interaction_obj.response.edit_message(embed=self.new_embed, view=self.new_view)
+                return
+            if skull_stock <= 0:
+                self.new_embed = await e_ring.create_citem_embed()
+                self.new_embed = await add_skull_fields(self.player_obj, self.new_embed, self.method)
+                stock_msg = sharedmethods.get_stock_msg(item, skull_stock)
+                self.new_embed.add_field(name="", value=stock_msg, inline=False)
+                await interaction_obj.response.edit_message(embed=self.new_embed, view=self.new_view)
+                return
+            await inventory.update_stock(self.player_obj, item.item_id, -1)
+            e_ring.item_roll_values[1] += item.success_rate
+            await e_ring.update_stored_item()
+            self.new_embed = await e_ring.create_citem_embed()
+            self.new_embed = await add_skull_fields(self.player_obj, self.new_embed, self.method)
+            await interaction_obj.response.edit_message(embed=self.new_embed, view=self.new_view)
+        # Buy skulls
+        elif self.method == "Purchase":
+            if self.player_obj.player_coins <= item.item_cost:
+                self.new_embed.description = "You'll need more coins than that to convince me to part with these."
+                await interaction_obj.response.edit_message(embed=self.new_embed, view=self.new_view)
+                return
+            _ = self.player_obj.adjust_coins(item.item_cost, reduction=True)
+            self.new_embed.description = (f"Alright, please take good care of it. Each one is precious to me.\n"
+                                          f"Thana hands you a valuable item: {item.item_emoji} 1x {item.item_name}")
+            self.new_embed = await add_skull_fields(self.player_obj, self.new_embed, method=self.method)
+            await inventory.update_stock(self.player_obj, item.item_id, 1)
+            await interaction_obj.response.edit_message(embed=self.new_embed, view=self.new_view)
+        # Sell skulls
+        elif self.method == "Return":
+            if skull_stock <= 0:
+                self.new_embed.description = ("Stop messing around, you might give me the wrong idea. "
+                                              "Or is there actually another reason you called for me?\n")
+                self.new_embed.description += sharedmethods.get_stock_msg(item, skull_stock)
+                self.new_embed = await add_skull_fields(self.player_obj, self.new_embed, method=self.method)
+                await interaction_obj.response.edit_message(embed=self.new_embed, view=self.new_view)
+                return
+            await inventory.update_stock(self.player_obj, item.item_id, -1)
+            coin_msg = self.player_obj.adjust_coins(item.item_cost // 2, apply_pact=False)
+            self.new_embed.description = (f"Thank you for bringing him home. As promised here's your reward.\n"
+                                          f"Thana hands you {globalitems.coin_icon} {coin_msg} Lotus Coins")
+            self.new_embed = await add_skull_fields(self.player_obj, self.new_embed, method=self.method)
+            await interaction_obj.response.edit_message(embed=self.new_embed, view=self.new_view)
+
+    @discord.ui.button(label="Skull1", style=discord.ButtonStyle.blurple, row=0)
+    async def skull1_callback(self, interaction: discord.Interaction, button: discord.Button):
+        await self.handle_skull_interaction(interaction, self.skull_items[0])
+
+    @discord.ui.button(label="Skull2", style=discord.ButtonStyle.blurple, row=0)
+    async def skull2_callback(self, interaction: discord.Interaction, button: discord.Button):
+        await self.handle_skull_interaction(interaction, self.skull_items[1])
+
+    @discord.ui.button(label="Skull3", style=discord.ButtonStyle.blurple, row=0)
+    async def skull3_callback(self, interaction: discord.Interaction, button: discord.Button):
+        await self.handle_skull_interaction(interaction, self.skull_items[2])
+
+    @discord.ui.button(label="Skull4", style=discord.ButtonStyle.blurple, row=0)
+    async def skull4_callback(self, interaction: discord.Interaction, button: discord.Button):
+        await self.handle_skull_interaction(interaction, self.skull_items[3])
+
+    @discord.ui.button(label="Return", style=discord.ButtonStyle.blurple, row=0)
+    async def return_callback(self, interaction: discord.Interaction, button: discord.Button):
+        if interaction.user.id != self.player_obj.discord_id:
+            return
+        player_deaths = int(self.player_obj.check_misc_data('deaths'))
+        description = (f"I will continue to revive your mortal body so long as you continue to aid me. "
+                       f"Though, should you ever want to remain dead you are more than welcome to stay by my side. "
+                       f"You've died {player_deaths} times you know. It'd save me quite the hassle. "
+                       f"I must confess, the mere thought of my sister's jealousy, every time you call my name "
+                       f"fills me with immeasurable pleasure.\n")
+        name, value = "", "Out with it now, what can the embodiment of death do for you today?"
+        embed_msg = discord.Embed(colour=discord.Colour.dark_purple(), title=thana_title, description=description)
+        embed_msg.add_field(name=name, value=value, inline=False)
+        embed_msg.set_image(url="")
+        skull_ring = False
+        if self.player_obj.player_equipped[4] != 0:
+            e_ring = await inventory.read_custom_item(self.player_obj.player_equipped[4])
+            if e_ring.item_name == "Crown of Skulls":
+                skull_ring = True
+        await interaction.response.edit_message(embed=embed_msg, view=SkullSelectView(self.player_obj, skull_ring))
 
 
 # Gem inlay menus
@@ -224,7 +577,7 @@ class ConfirmInlayView(discord.ui.View):
                     return
                 # Update the inlaid gem and re-display the item.
                 self.e_item.item_inlaid_gem_id = self.gem_id
-                self.e_item.update_stored_item()
+                await self.e_item.update_stored_item()
                 embed_msg = await self.e_item.create_citem_embed()
                 await interaction.response.edit_message(embed=embed_msg, view=None)
         except Exception as e:
@@ -264,20 +617,20 @@ class StaminaView(discord.ui.View):
         if interaction.user.id != self.player.discord_id:
             return
         await self.player.reload_player()
-        embed_msg = self.use_stamina_potion(f"Potion{potion_version}", potion_value)
+        embed_msg = await self.use_stamina_potion(f"Potion{potion_version}", potion_value)
         await interaction.response.edit_message(embed=embed_msg, view=self)
 
-    def use_stamina_potion(self, item_id, restore_amount):
-        potion_stock = inventory.check_stock(self.player, item_id)
+    async def use_stamina_potion(self, item_id, restore_amount):
+        potion_stock = await inventory.check_stock(self.player, item_id)
         if potion_stock > 0:
             pact_object = pact.Pact(self.player.pact)
             max_stamina = 5000 if pact_object.pact_variant != "Sloth" else 2500
-            inventory.update_stock(self.player, item_id, -1)
+            await inventory.update_stock(self.player, item_id, -1)
             self.player.player_stamina += restore_amount
             if self.player.player_stamina > max_stamina:
                 self.player.player_stamina = max_stamina
             self.player.set_player_field("player_stamina", self.player.player_stamina)
-        embed_msg = self.player.create_stamina_embed()
+        embed_msg = await self.player.create_stamina_embed()
         return embed_msg
 
 
@@ -442,9 +795,7 @@ class ClassSelect(discord.ui.View):
         self.discord_id = discord_id
 
     @discord.ui.select(
-        placeholder="Select a class!",
-        min_values=1,
-        max_values=1,
+        placeholder="Select a class!", min_values=1, max_values=1,
         options=[
             discord.SelectOption(
                 emoji=globalitems.class_icon_list[0], label="Knight", description="The Valiant Knight"),
@@ -486,8 +837,7 @@ class ClassChangeView(discord.ui.View):
         self.embed = False
 
     @discord.ui.select(
-        placeholder="Select a new class!",
-        min_values=1, max_values=1,
+        placeholder="Select a new class!", min_values=1, max_values=1,
         options=[
             discord.SelectOption(
                 emoji=globalitems.class_icon_list[0], label="Knight", description="The Valiant Knight"),
@@ -514,9 +864,9 @@ class ClassChangeView(discord.ui.View):
         await self.player_obj.reload_player()
         current_class = self.player_obj.player_class
         chosen_class = class_select.values[0]
-        token_stock = inventory.check_stock(self.player_obj, "Token1")
+        token_stock = await inventory.check_stock(self.player_obj, "Token1")
         if token_stock >= 50:
-            token_stock = inventory.update_stock(self.player_obj, "Token1", -50)
+            token_stock = await inventory.update_stock(self.player_obj, "Token1", -50)
             self.player_obj.set_player_field("player_class", chosen_class)
             add_role = discord.utils.get(interaction.guild.roles, name=f"Class Role - {chosen_class}")
             remove_role = discord.utils.get(interaction.guild.roles, name=f"Class Role - {current_class}")
@@ -529,7 +879,6 @@ class ClassChangeView(discord.ui.View):
         self.embed = discord.Embed(colour=discord.Colour.dark_teal(),
                                    title="Mysmir, The Changer", description=response)
         await interaction.response.edit_message(embed=self.embed, view=None)
-
 
 
 class StatView(discord.ui.View):
@@ -582,7 +931,7 @@ class BuyView(discord.ui.View):
                 if self.selected_item.player_owner == -1:
                     await bazaar.buy_item(self.selected_item.item_id)
                     self.selected_item.player_owner = self.player_user.player_id
-                    self.selected_item.update_stored_item()
+                    await self.selected_item.update_stored_item()
                     embed_msg = await self.selected_item.create_citem_embed()
                 embed_msg.add_field(name="PURCHASE COMPLETED!", value="", inline=False)
                 await interaction.response.edit_message(embed=embed_msg, view=None)
@@ -605,9 +954,7 @@ class PointsView(discord.ui.View):
         self.player_obj = player_obj
 
     @discord.ui.select(
-        placeholder="Select a Path",
-        min_values=1,
-        max_values=1,
+        placeholder="Select a Path", min_values=1, max_values=1,
         options=[
             discord.SelectOption(emoji=globalitems.path_icon[0], label="Path of Storms",
                                  description="Water, Lightning, and Critical Specialist"),
@@ -634,7 +981,7 @@ class PointsView(discord.ui.View):
             if selected_path == "Reset":
                 token_object = inventory.BasicItem("Token3")
                 token_cost = sum(self.player_obj.player_stats) // 10
-                token_stock = inventory.check_stock(self.player_obj, "Token3")
+                token_stock = await inventory.check_stock(self.player_obj, "Token3")
                 response = (f"The farther you are, the harder it is to go back to the start.\nReset Cost:\n "
                             f"{token_object.item_emoji} {token_object.item_name}: {token_stock} / {token_cost}")
                 embed_msg = discord.Embed(colour=discord.Colour.dark_orange(),
@@ -702,9 +1049,9 @@ class ResetView(discord.ui.View):
             if not self.embed_msg:
                 await self.player_obj.reload_player()
                 token_cost = sum(self.player_obj.player_stats) // 10
-                token_stock = inventory.check_stock(self.player_obj, "Token3")
+                token_stock = await inventory.check_stock(self.player_obj, "Token3")
                 if token_stock >= token_cost:
-                    inventory.update_stock(self.player_obj, "Token3", -1)
+                    await inventory.update_stock(self.player_obj, "Token3", -1)
                     self.player_obj.reset_skill_points()
                     result_msg = "ALL SKILL POINTS RESET!"
                 else:

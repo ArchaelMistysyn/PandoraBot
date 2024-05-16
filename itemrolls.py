@@ -320,7 +320,7 @@ class SkillPurchaseView(discord.ui.View):
             return
         await self.player_obj.reload_player()
         custom_cost = cost_list[self.total_rolls - 1]
-        current_stock = inventory.check_stock(self.player_obj, "Token4")
+        current_stock = await inventory.check_stock(self.player_obj, "Token4")
         # Display the cost failed message. Reload the same view.
         if current_stock < custom_cost:
             cost_msg = "If you really want me you'd better provide a sufficient offering."
@@ -328,7 +328,7 @@ class SkillPurchaseView(discord.ui.View):
             await interaction.response.edit_message(embed=embed_msg, view=self)
             return
         # Pay the cost. Reload the item data.
-        inventory.update_stock(self.player_obj, "Token4", (custom_cost * -1))
+        await inventory.update_stock(self.player_obj, "Token4", (custom_cost * -1))
         reload_item = await inventory.read_custom_item(self.selected_item.item_id)
         new_roll_list = []
         roll_tier_list = []
@@ -356,7 +356,7 @@ class SkillPurchaseView(discord.ui.View):
             unassigned_roll = reload_item.item_roll_values[idx][1:]
             reload_item.item_roll_values[idx] = f"{roll_tier_list[idx]}{unassigned_roll}"
         # Save the item.
-        reload_item.update_stored_item()
+        await reload_item.update_stored_item()
         self.embed = await reload_item.create_citem_embed()
         await interaction.response.edit_message(embed=self.embed, view=None)
 

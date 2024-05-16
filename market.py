@@ -84,13 +84,13 @@ class ShopView(discord.ui.View):
     async def shop_callback(self, interaction: discord.Interaction):
         if interaction.user.id != self.player_obj.discord_id:
             return
-        embed_msg, purchase_view = show_item(self.player_obj, interaction.data['values'][0])
+        embed_msg, purchase_view = await show_item(self.player_obj, interaction.data['values'][0])
         await interaction.response.edit_message(embed=embed_msg, view=purchase_view)
 
 
-def show_item(player_user, selected_info):
+async def show_item(player_user, selected_info):
     selected_item = inventory.BasicItem(selected_info)
-    embed_msg = selected_item.create_bitem_embed(player_user)
+    embed_msg = await selected_item.create_bitem_embed(player_user)
     cost = selected_item.item_cost
     embed_msg.add_field(name="Cost", value=f"{cost:,}", inline=False)
     purchase_view = PurchaseView(player_user, selected_item)
@@ -113,7 +113,7 @@ class PurchaseView(discord.ui.View):
             return embed_msg, self
         if not self.is_paid:
             _ = self.player_obj.adjust_coins(total_cost, True)
-            inventory.update_stock(self.player_obj, self.selected_item.item_id, quantity)
+            await inventory.update_stock(self.player_obj, self.selected_item.item_id, quantity)
             self.is_paid = True
         embed_title = "Purchase Successful!"
         embed_description = (f"Purchased {self.selected_item.item_emoji} {quantity:,}x {self.selected_item.item_name}"
@@ -167,7 +167,7 @@ class LotusSelectView(discord.ui.View):
         if interaction.user.id != self.player_obj.discord_id:
             return
         token_object = inventory.BasicItem("Token6")
-        token_stock = inventory.check_stock(self.player_obj, token_object.item_id)
+        token_stock = await inventory.check_stock(self.player_obj, token_object.item_id)
         lotus_object = inventory.BasicItem(lotus_id)
         # Handle regular lotus.
         if lotus_id != "Lotus10":
@@ -188,7 +188,7 @@ class LotusSelectView(discord.ui.View):
         cost_msg = f"{token_stock} / 20 {token_object.item_name}"
         for item in lotus_list[:-1]:
             temp_object = inventory.BasicItem(item['item_id'])
-            stock = inventory.check_stock(self.player_obj, temp_object.item_id)
+            stock = await inventory.check_stock(self.player_obj, temp_object.item_id)
             cost_msg += f"\n{temp_object.item_emoji} {temp_object.item_name} {stock} / 1"
         embed_msg = discord.Embed(colour=discord.Colour.blurple(), title="Fleur, Oracle of the True Laws",
                                   description=purchase_msg)
@@ -214,7 +214,7 @@ class LotusPurchaseView(discord.ui.View):
     async def pluck(self, interaction: discord.Interaction, button: discord.Button):
         if interaction.user.id != self.player_obj.discord_id:
             return
-        token_stock = inventory.check_stock(self.player_obj, "Token6")
+        token_stock = await inventory.check_stock(self.player_obj, "Token6")
         temp_embed = discord.Embed(colour=discord.Colour.dark_orange(),
                                    title="Fleur, Oracle of the True Laws", description="")
         new_view = LotusPurchaseView(self.player_obj, self.token_object, self.lotus_object)
@@ -227,21 +227,21 @@ class LotusPurchaseView(discord.ui.View):
                 temp_embed.description = "You'll have to come back with something a little more convincing."
                 await interaction.response.edit_message(embed=temp_embed, view=new_view)
                 return
-            inventory.update_stock(self.player_obj, "Token6", (self.token_cost * -1))
-            inventory.update_stock(self.player_obj, self.lotus_object.item_id, 1)
+            await inventory.update_stock(self.player_obj, "Token6", (self.token_cost * -1))
+            await inventory.update_stock(self.player_obj, self.lotus_object.item_id, 1)
             temp_embed.description = f"{self.lotus_object.item_emoji} 1x {self.lotus_object.item_name} acquired"
             self.embed_msg = temp_embed
             await interaction.response.edit_message(embed=self.embed_msg, view=new_view)
             return
         # Handle divine lotus.
-        lotus_stock = [inventory.check_stock(self.player_obj, lotus_item.item_id) for lotus_item in lotus_list[:-1]]
+        lotus_stock = [await inventory.check_stock(self.player_obj, lotus_item.item_id) for lotus_item in lotus_list[:-1]]
         if token_stock < self.token_cost or any(stock == 0 for stock in lotus_stock):
             temp_embed.description = "I'm offended you had the gall to ask without sufficient preparations."
             await interaction.response.edit_message(embed=temp_embed, view=new_view)
             return
-        inventory.update_stock(self.player_obj, "Token6", (self.token_cost * -1))
-        _ = [inventory.update_stock(self.player_obj, self.lotus_object, -1) for lotus_item in lotus_list[:-1]]
-        inventory.update_stock(self.player_obj, self.lotus_object.item_id, 1)
+        await inventory.update_stock(self.player_obj, "Token6", (self.token_cost * -1))
+        _ = [await inventory.update_stock(self.player_obj, self.lotus_object, -1) for lotus_item in lotus_list[:-1]]
+        await inventory.update_stock(self.player_obj, self.lotus_object.item_id, 1)
         temp_embed.description = f"{self.lotus_object.item_emoji} 1x {self.lotus_object.item_name} acquired"
         self.embed_msg = temp_embed
         await interaction.response.edit_message(embed=self.embed_msg, view=new_view)

@@ -340,7 +340,7 @@ class UpgradeView(discord.ui.View):
 async def run_button(player_obj, selected_item, material_id, method):
     cost_item = inventory.BasicItem(material_id)
     reload_item = await inventory.read_custom_item(selected_item.item_id)
-    result, cost = craft_item(player_obj, reload_item, cost_item, method)
+    result, cost = await craft_item(player_obj, reload_item, cost_item, method)
     result_dict = {0: "Failed!", 1: "Success!", 2: "Cannot upgrade further.", 3: "Item not eligible",
                    4: "This element cannot be used",
                    5: f"Success! The item evolved to tier {reload_item.item_tier}!"}
@@ -348,7 +348,7 @@ async def run_button(player_obj, selected_item, material_id, method):
         outcome = result_dict[result]
     else:
         no_stock_item = inventory.BasicItem(result)
-        item_stock = inventory.check_stock(player_obj, no_stock_item.item_id)
+        item_stock = await inventory.check_stock(player_obj, no_stock_item.item_id)
         outcome = sharedmethods.get_stock_msg(no_stock_item, item_stock, cost)
     new_embed_msg = await reload_item.create_citem_embed()
     new_embed_msg.add_field(name=outcome, value="", inline=False)
@@ -380,13 +380,13 @@ def check_maxed(target_item, method, material_id, element):
             return False, success_rate
 
 
-def craft_item(player_obj, selected_item, material_item, method):
+async def craft_item(player_obj, selected_item, material_item, method):
     success_rate = material_item.item_base_rate
     success_check = random.randint(1, 100)
 
     # Handle the first cost.
     cost_list = []
-    player_stock = inventory.check_stock(player_obj, material_item.item_id)
+    player_stock = await inventory.check_stock(player_obj, material_item.item_id)
     cost_1 = 1 if method != "Enhance" else 10
     if player_stock < cost_1:
         return material_item.item_id, cost_1
@@ -408,7 +408,7 @@ def craft_item(player_obj, selected_item, material_item, method):
             secondary_item = inventory.BasicItem(cost_dict[method_type[0]])
 
     if secondary_item is not None:
-        secondary_stock = inventory.check_stock(player_obj, secondary_item.item_id)
+        secondary_stock = await inventory.check_stock(player_obj, secondary_item.item_id)
         if secondary_stock < 1:
             return secondary_item.item_id, 1
         cost_list.append(secondary_item)
@@ -416,21 +416,21 @@ def craft_item(player_obj, selected_item, material_item, method):
     # Attempt the craft.
     match method:
         case "Enhance":
-            outcome = enhance_item(player_obj, selected_item, cost_list, success_check)
+            outcome = await enhance_item(player_obj, selected_item, cost_list, success_check)
         case "Reinforce":
-            outcome = reinforce_item(player_obj, selected_item, cost_list, success_check)
+            outcome = await reinforce_item(player_obj, selected_item, cost_list, success_check)
         case "ReforgeA":
-            outcome = reforge_item(player_obj, selected_item, cost_list, success_rate, success_check, "Hell")
+            outcome = await reforge_item(player_obj, selected_item, cost_list, success_rate, success_check, "Hell")
         case "ReforgeV":
-            outcome = reforge_item(player_obj, selected_item, cost_list, success_rate, success_check, "Abyss")
+            outcome = await reforge_item(player_obj, selected_item, cost_list, success_rate, success_check, "Abyss")
         case "Open":
-            outcome = open_item(player_obj, selected_item, cost_list, success_rate, success_check)
+            outcome = await open_item(player_obj, selected_item, cost_list, success_rate, success_check)
         case "Attunement":
-            outcome = attune_item(player_obj, selected_item, cost_list, success_rate, success_check)
+            outcome = await attune_item(player_obj, selected_item, cost_list, success_rate, success_check)
         case "Implant":
-            outcome = implant_item(player_obj, selected_item, cost_list, success_rate, success_check)
+            outcome = await implant_item(player_obj, selected_item, cost_list, success_rate, success_check)
         case "Purify":
-            outcome = purify_item(player_obj, selected_item, cost_list, success_rate, success_check)
+            outcome = await purify_item(player_obj, selected_item, cost_list, success_rate, success_check)
         case _:
             if "fusion" in method:
                 outcome = modify_item_rolls(player_obj, selected_item, cost_list,
@@ -438,19 +438,19 @@ def craft_item(player_obj, selected_item, material_item, method):
     return outcome, 0
 
 
-def update_crafted_item(selected_item):
+async def update_crafted_item(selected_item):
     selected_item.set_item_name()
     selected_item.update_damage()
-    selected_item.update_stored_item()
+    await selected_item.update_stored_item()
 
 
-def handle_craft_costs(player_obj, cost_list, cost_1=1, cost_2=1):
-    inventory.update_stock(player_obj, cost_list[0].item_id, -1 * cost_1)
+async def handle_craft_costs(player_obj, cost_list, cost_1=1, cost_2=1):
+    await inventory.update_stock(player_obj, cost_list[0].item_id, -1 * cost_1)
     if len(cost_list) > 1:
-        inventory.update_stock(player_obj, cost_list[1].item_id, -1 * cost_2)
+        await inventory.update_stock(player_obj, cost_list[1].item_id, -1 * cost_2)
 
 
-def enhance_item(player_obj, selected_item, cost_list, success_check):
+async def enhance_item(player_obj, selected_item, cost_list, success_check):
     success_rate = max(5, (100 - (selected_item.item_enhancement // 10) * 5))
     # Check if enhancement is already maxed.
     if selected_item.item_enhancement >= globalitems.max_enhancement[(selected_item.item_tier - 1)]:
@@ -460,66 +460,66 @@ def enhance_item(player_obj, selected_item, cost_list, success_check):
     if selected_item.item_elements[element_location] != 1:
         return 3
     # Material is consumed. Attempts to enhance the item.
-    handle_craft_costs(player_obj, cost_list, cost_1=10)
+    await handle_craft_costs(player_obj, cost_list, cost_1=10)
     if success_check <= success_rate:
         selected_item.item_enhancement += 1
-        update_crafted_item(selected_item)
+        await update_crafted_item(selected_item)
         return 1
     return 0
 
 
-def reinforce_item(player_obj, selected_item, cost_list, success_check):
+async def reinforce_item(player_obj, selected_item, cost_list, success_check):
     success_rate = 100 - selected_item.item_quality_tier * 10
     # Check if item is eligible.
     if selected_item.item_quality_tier >= 5:
         return 2
     # Material is consumed. Attempts to upgrade the item (Reinforcement).
-    handle_craft_costs(player_obj, cost_list)
+    await handle_craft_costs(player_obj, cost_list)
     if success_check <= success_rate:
         selected_item.item_quality_tier += 1
-        update_crafted_item(selected_item)
+        await update_crafted_item(selected_item)
         return 1
     return 0
 
 
-def open_item(player_obj, selected_item, cost_list, success_rate, success_check):
+async def open_item(player_obj, selected_item, cost_list, success_rate, success_check):
     # Check the item is eligible.
     if selected_item.item_num_sockets == 1:
         return 2
     # Material is consumed. Attempts to add a socket and update the item.
-    handle_craft_costs(player_obj, cost_list)
+    await handle_craft_costs(player_obj, cost_list)
     if success_check <= success_rate:
         selected_item.item_num_sockets += 1
-        update_crafted_item(selected_item)
+        await update_crafted_item(selected_item)
         return 1
     return 0
 
 
-def reforge_item(player_obj, selected_item, cost_list, success_rate, success_check, method):
+async def reforge_item(player_obj, selected_item, cost_list, success_rate, success_check, method):
     outcome = 0
     # Material is consumed. Attempts to re-roll and update the item.
-    handle_craft_costs(player_obj, cost_list)
+    await handle_craft_costs(player_obj, cost_list)
     if success_check <= success_rate:
         selected_item.reforge_stats(unlock=(method == "Abyss"))
-        update_crafted_item(selected_item)
+        await update_crafted_item(selected_item)
         return 1
     return 0
 
 
-def modify_item_rolls(player_obj, selected_item, cost_list, success_rate, success_check, method):
+async def modify_item_rolls(player_obj, selected_item, cost_list, success_rate, success_check, method):
     outcome = 0
     if selected_item.item_num_rolls < 6:
         # Check eligibility for which methods can add a roll.
         if method != "any":
             return 3
         # Material is consumed. Attempts to add a roll to the item.
-        handle_craft_costs(player_obj, cost_list)
+        await handle_craft_costs(player_obj, cost_list)
         if success_check <= success_rate:
             itemrolls.add_roll(selected_item, 1)
             outcome = 1
     elif method == "any":
         # Material is consumed. Attempts to re-roll the item.
-        handle_craft_costs(player_obj, cost_list)
+        await handle_craft_costs(player_obj, cost_list)
         if success_check <= success_rate:
             itemrolls.reroll_roll(selected_item, method)
             outcome = 1
@@ -528,17 +528,17 @@ def modify_item_rolls(player_obj, selected_item, cost_list, success_rate, succes
         if method not in itemrolls.roll_structure_dict[selected_item.item_type] and method != "all":
             return 3
         # Material is consumed. Attempts to re-roll the item.
-        handle_craft_costs(player_obj, cost_list)
+        await handle_craft_costs(player_obj, cost_list)
         if success_check <= success_rate:
             itemrolls.reroll_roll(selected_item, method)
             outcome = 1
     # Update the item if applicable.
     if outcome == 1:
-        update_crafted_item(selected_item)
+        await update_crafted_item(selected_item)
     return outcome
 
 
-def attune_item(player_obj, selected_item, cost_list, success_rate, success_check):
+async def attune_item(player_obj, selected_item, cost_list, success_rate, success_check):
     check_aug = itemrolls.check_augment(selected_item)
     outcome = 0
     # Confirm if the item has rolls.
@@ -548,15 +548,15 @@ def attune_item(player_obj, selected_item, cost_list, success_rate, success_chec
     if check_aug == selected_item.item_tier * 6:
         return 2
     # Material is consumed. Attempts to add an augment.
-    handle_craft_costs(player_obj, cost_list)
+    await handle_craft_costs(player_obj, cost_list)
     if success_check <= success_rate:
         itemrolls.add_augment(selected_item)
-        update_crafted_item(selected_item)
+        await update_crafted_item(selected_item)
         return 1
     return 0
 
 
-def implant_item(player_obj, selected_item, cost_list, success_rate, success_check):
+async def implant_item(player_obj, selected_item, cost_list, success_rate, success_check):
     outcome = 0
     # Confirm the item does not already have every element.
     if sum(selected_item.item_elements) == 9:
@@ -568,15 +568,15 @@ def implant_item(player_obj, selected_item, cost_list, success_rate, success_che
     if selected_item.item_elements[selected_element] == 1:
         return 4
     # Material is consumed. Attempts to add an element and update the item.
-    handle_craft_costs(player_obj, cost_list)
+    await handle_craft_costs(player_obj, cost_list)
     if success_check <= success_rate:
         selected_item.add_item_element(selected_element)
-        update_crafted_item(selected_item)
+        await update_crafted_item(selected_item)
         return 1
     return 0
 
 
-def purify_item(player_obj, selected_item, cost_list, success_rate, success_check):
+async def purify_item(player_obj, selected_item, cost_list, success_rate, success_check):
     # Check if item is eligible
     outcome = 0
     check_aug = itemrolls.check_augment(selected_item)
@@ -587,12 +587,12 @@ def purify_item(player_obj, selected_item, cost_list, success_rate, success_chec
     if selected_item.item_num_sockets == 0:
         return 3
     # Material is consumed. Attempts to enhance the item.
-    handle_craft_costs(player_obj, cost_list)
+    await handle_craft_costs(player_obj, cost_list)
     if success_check <= success_rate:
         selected_item.item_quality_tier = 1
         selected_item.item_tier += 1
         selected_item.reforge_stats()
-        update_crafted_item(selected_item)
+        await update_crafted_item(selected_item)
         return 5
     return 0
 
@@ -716,12 +716,12 @@ class RefineItemView(discord.ui.View):
 async def refine_item(player_user, selected_type, selected_tier, required_material, cost=1):
     # Check if player has stock.
     loot_item = inventory.BasicItem(required_material)
-    item_stock = inventory.check_stock(player_user, required_material)
+    item_stock = await inventory.check_stock(player_user, required_material)
     if item_stock == 0:
         stock_message = sharedmethods.get_stock_msg(loot_item, item_stock)
         return discord.Embed(colour=discord.Colour.red(), title="Cannot Refine!", description=stock_message)
     # Pay the cost and attempt to refine.
-    inventory.update_stock(player_user, required_material, (cost * -1))
+    await inventory.update_stock(player_user, required_material, (cost * -1))
     new_item, is_success = inventory.try_refine(player_user.player_id, selected_type, selected_tier)
     if not is_success:
         stock_message = sharedmethods.get_stock_msg(loot_item, (item_stock - cost))
@@ -762,7 +762,7 @@ class MeldView(discord.ui.View):
         await self.player_obj.reload_player()
         self.gem_1 = await inventory.read_custom_item(self.gem_1.item_id)
         self.gem_2 = await inventory.read_custom_item(self.gem_2.item_id)
-        stock = inventory.check_stock(self.player_obj, "Token4")
+        stock = await inventory.check_stock(self.player_obj, "Token4")
         self.embed = discord.Embed(colour=discord.Colour.blurple(),
                                    title="Kazyth, Lifeblood of the True Laws", description="")
         # Check the cost
@@ -771,14 +771,14 @@ class MeldView(discord.ui.View):
             await interaction.response.edit_message(embed=self.embed, view=self.new_view)
             return
         # Pay the cost
-        inventory.update_stock(self.player_obj, "Token4", (self.cost * -1))
+        await inventory.update_stock(self.player_obj, "Token4", (self.cost * -1))
         # Process the meld attempt.
         if random.randint(1, 100) > self.affinity:
             inventory.delete_item(self.player_obj, self.gem_2)
             self.embed.description = "The jewels were not compatible enough, the sacrificial heart died."
             await interaction.response.edit_message(embed=self.embed, view=self.new_view)
             return
-        error_msg, roll_change_list = meld_gems(self.player_obj, self.gem_1, self.gem_2)
+        error_msg, roll_change_list = await meld_gems(self.player_obj, self.gem_1, self.gem_2)
         # Handle error.
         if error_msg != "":
             self.embed.description = error_msg
@@ -789,7 +789,7 @@ class MeldView(discord.ui.View):
         return
 
 
-def meld_gems(player_obj, gem_1, gem_2):
+async def meld_gems(player_obj, gem_1, gem_2):
     if not inventory.if_custom_exists(gem_1.item_id) or not inventory.if_custom_exists(gem_2.item_id):
         return "Melding interrupted : Jewels no longer recognized before processing.", None
     if gem_1.item_tier >= 7:
@@ -809,7 +809,7 @@ def meld_gems(player_obj, gem_1, gem_2):
             new_roll_value = gem_1.item_roll_values[roll_index][1:]
             roll_change_list.append(False)
         gem_1.item_roll_values[roll_index] = f"{gem_1.item_tier}{new_roll_value}"
-    gem_1.update_stored_item()
+    await gem_1.update_stored_item()
     return "", roll_change_list
 
 

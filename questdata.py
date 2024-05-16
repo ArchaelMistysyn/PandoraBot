@@ -93,7 +93,7 @@ quests_data = {
          "Why don't you let me take a look at your gear or we can stock up in on resources in town. "
          "\nNobody around here will refuse to help you now.",
          1, 5, None,
-         "Use any of the /forge, /refinery, or /market commands",
+         "Use the /town command",
          'Crate', 5, None],
 
     12: [2, "Clear The Skies",

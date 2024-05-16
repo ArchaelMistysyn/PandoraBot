@@ -49,7 +49,7 @@ async def send_notification(ctx_object, player_obj, notification_type, value):
                                   f"{item.item_name}" if item is not None else ""), 5]}
     if notification_type not in notification_dict.keys():
         return
-    inventory.update_stock(player_obj, "RoyalCoin", notification_dict[notification_type][1])
+    await inventory.update_stock(player_obj, "RoyalCoin", notification_dict[notification_type][1])
     title, message = notification_dict[notification_type][0]
     filepath = pilengine.build_notification(player_obj, message, notification_type, title, item=item)
     channels = ctx_object.guild.channels

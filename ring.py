@@ -45,11 +45,11 @@ ring_values_dict = {
     "Bleeding Hearts": [[("bleed_application +X", "bleed_application", 5, None)], (0, None)],
     "Gambler's Masterpiece": [[("All-In!", "rng_bonus", 777, None)], (0, None)],
     # Sovereign Rings
-    "Stygian Calamity": [[("X% chance for Bloom to trigger Abyssal Bloom", "spec_conv", 10, 0)], (0, None)],
+    "Stygian Calamity": [[("X% chance for Non-Bloom hits to trigger Calamity", "spec_conv", 99, 2)],
+                         [("X% Hybrid Curse (Chaos)", "elemental_curse", 999, (0, 2, 3, 6))], (0, None)],
     "Sacred Ring of Divergent Stars": [[("X% chance for Bloom hits to trigger Sacred Bloom", "spec_conv", 50, 0)],
                                        [("X% chance for Non-Bloom hits to trigger Abyssal Bloom", "spec_conv", 50, 1)],
-                                       [("Omni Curse X%", "all_elemental_curse", 300, None)],
-                                       (0, None)],
+                                       [("Omni Curse X%", "all_elemental_curse", 300, None)], (0, None)],
     "Crown of Skulls": [["Avaricious Ruin", "Banquet of Bones"], (0, None)]
 }
 

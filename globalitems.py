@@ -24,6 +24,10 @@ web_url = "https://kyleportfolio.ca/botimages/"
 # IMAGE DATA
 forge_img, refinery_img = f"{web_url}scenes/Forge.png", f"{web_url}scenes/Refinery.png"
 abyss_img = f"{web_url}scenes/Abyss.png"
+planetarium_img = ""
+market_img, bazaar_img = "", ""
+infuse_img = ""
+sanctuary_img = ""
 archdragon_logo = f"{web_url}ArchDragon.png"
 
 # ICON DATA
@@ -203,6 +207,7 @@ hp_bar_dict = {1: [t5_hp_bar_full, t5_hp_bar_empty], 2: [t5_hp_bar_full, t5_hp_b
                5: [t5_hp_bar_full, t5_hp_bar_empty], 6: [t5_hp_bar_full, t5_hp_bar_empty],
                7: [t5_hp_bar_full, t5_hp_bar_empty]}
 
-# Messages
+# MESSAGES
 abyss_msg = ("Within this cavern resides the true abyss. The taint of the void can only be purified "
              "through a more powerful darkness. Take great caution, there is nothing which can save you down there.")
+

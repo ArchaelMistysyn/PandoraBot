@@ -15,6 +15,7 @@ from datetime import datetime as dt, timedelta
 import globalitems
 import sharedmethods
 import itemdata
+from pandoradb import run_query as rq
 
 # Core imports
 import player
@@ -177,8 +178,8 @@ def run_discord_bot():
             target_item = inventory.BasicItem(item_id)
             if await validate_admin_inputs(ctx, target_item.item_id, value, id_check="nongear", value_check="numeric"):
                 return
-            stock = inventory.check_stock(target_player, target_item.item_id)
-            inventory.update_stock(target_player, target_item.item_id, (int(value) - stock))
+            stock = await inventory.check_stock(target_player, target_item.item_id)
+            await inventory.update_stock(target_player, target_item.item_id, (int(value) - stock))
         if method == "Delete":
             target_item = await inventory.read_custom_item(item_id)
             if await validate_admin_inputs(ctx, target_item.item_id, None, id_check="gear"):
@@ -290,7 +291,7 @@ def run_discord_bot():
         current_quest = player_obj.player_quest
         if current_quest <= 55:
             quest_object = quest.quest_list[player_obj.player_quest]
-            quest_message = quest_object.get_quest_embed(player_obj)
+            quest_message = await quest_object.get_quest_embed(player_obj)
             quest_view = quest.QuestView(ctx, player_obj, quest_object)
             await ctx.send(embed=quest_message, view=quest_view)
             return
@@ -305,7 +306,7 @@ def run_discord_bot():
         player_obj = await sharedmethods.check_registration(ctx)
         if player_obj is None:
             return
-        embed_msg = player_obj.create_stamina_embed()
+        embed_msg = await player_obj.create_stamina_embed()
         stamina_view = menus.StaminaView(player_obj)
         await ctx.send(embed=embed_msg, view=stamina_view)
 
@@ -381,7 +382,7 @@ def run_discord_bot():
             return
         crate_id = "Crate"
         loot_item = inventory.BasicItem(crate_id)
-        crate_stock = inventory.check_stock(player_obj, crate_id)
+        crate_stock = await inventory.check_stock(player_obj, crate_id)
         if not quantity.isnumeric():
             if quantity != "all":
                 await ctx.send("Enter a valid number or 'all' in the quantity field.")
@@ -396,7 +397,7 @@ def run_discord_bot():
             stock_msg = sharedmethods.get_stock_msg(loot_item, crate_stock, quantity)
             await ctx.send(stock_msg)
             return
-        inventory.update_stock(player_obj, crate_id, (-1 * quantity))
+        await inventory.update_stock(player_obj, crate_id, (-1 * quantity))
         extension = f"Crate{'s' if quantity > 1 else ''}"
         title_msg = f"{player_obj.player_username}: Opening {quantity} {extension}!"
         embed_msg = discord.Embed(colour=discord.Colour.dark_teal(), title=title_msg, description="Feeling lucky?")
@@ -410,7 +411,7 @@ def run_discord_bot():
                 notifications.append((reward_object.item_id, player_obj))
         # Update the data and messages.
         batch_df = sharedmethods.list_to_batch(player_obj, reward_list)
-        inventory.update_stock(None, None, None, batch=batch_df)
+        await inventory.update_stock(None, None, None, batch=batch_df)
 
         async def open_lootbox(ctx_object, embed, item_tier):
             sent_msg = await ctx_object.send(embed=embed_msg)
@@ -445,7 +446,7 @@ def run_discord_bot():
         # Get the trove data.
         for trove_tier in range(8):
             trove_id = f"Trove{trove_tier + 1}"
-            stock_count = inventory.check_stock(player_obj, trove_id)
+            stock_count = await inventory.check_stock(player_obj, trove_id)
             total_stock += stock_count
             trove_details.append((trove_id, (-1 * stock_count)))
         # Check that there are troves before consuming the trove items.
@@ -453,7 +454,7 @@ def run_discord_bot():
             await ctx.send(f"No troves in inventory.")
             return
         trove_df = sharedmethods.list_to_batch(player_obj, trove_details)
-        inventory.update_stock(None, None, None, batch=trove_df)
+        await inventory.update_stock(None, None, None, batch=trove_df)
         # Build the message.
         extension = f"Trove{'s' if total_stock > 1 else ''}"
         title_msg = f"{player_obj.player_username}: Opening {total_stock:,} {extension}!"
@@ -488,19 +489,63 @@ def run_discord_bot():
         player_obj = await sharedmethods.check_registration(ctx)
         if player_obj is None:
             return
+        title = "Fleur, Oracle of the True Laws"
         if player_obj.player_quest < 48:
             denial_msg = "The sanctuary radiates with divinity. Entry is impossible."
             embed_msg = discord.Embed(colour=discord.Colour.blurple(), title="???", description=denial_msg)
             await ctx.send(embed=embed_msg)
             return
         entry_msg = ("Have you come to desecrate my holy gardens once more? Well, I suppose it no longer matters, "
-                     "I know you will find what you desire even without my guidance. "
-                     "If you sever the divine lotus, then I suppose the rest are nothing but pretty flowers.")
-        embed_msg = discord.Embed(colour=discord.Colour.blurple(), title="Fleur, Oracle of the True Laws",
-                                  description=entry_msg)
+                     "I know you will inevitably find what you desire even without my guidance. "
+                     "If you intend to sever the divine lotus, then I suppose the rest are nothing but pretty flowers.")
+        embed_msg = discord.Embed(colour=discord.Colour.blurple(), title=title, description=entry_msg)
+        embed_msg.set_image(url=globalitems.sanctuary_img)
+        await ctx.send(embed=embed_msg, view=market.LotusSelectView(player_obj))
+
+    # Location Commands
+    @set_command_category('location', 0)
+    @pandora_bot.hybrid_command(name='town', help="Go into town [Refinery, Alchemist, Market, Bazaar]")
+    @app_commands.guilds(discord.Object(id=guild_id))
+    async def enter_town(ctx):
+        await ctx.defer()
+        player_obj = await sharedmethods.check_registration(ctx)
+        if player_obj is None:
+            return
+        if player_obj.player_quest == 11:
+            quest.assign_unique_tokens(player_obj, "Town")
+        location_view = menus.TownView(player_obj)
+        title, description = "Nearby Town", "A bustling town thriving with opportunity."
+        embed_msg = discord.Embed(colour=discord.Colour.dark_orange(), title=title, description=description)
         embed_msg.set_image(url="")
-        new_view = market.LotusSelectView(player_obj)
-        await ctx.send(embed=embed_msg, view=new_view)
+        await ctx.send(embed=embed_msg, view=location_view)
+
+    @set_command_category('location', 1)
+    @pandora_bot.hybrid_command(name='celestial', help="Enter Pandora's Celestial Realm [Forge, Planetarium]")
+    @app_commands.guilds(discord.Object(id=guild_id))
+    async def enter_celestial(ctx):
+        await ctx.defer()
+        player_obj = await sharedmethods.check_registration(ctx)
+        if player_obj is None:
+            return
+        location_view = menus.CelestialView(player_obj)
+        title, description = "Celestial Realm", "Pandora's domain and home to her celestial forge."
+        embed_msg = discord.Embed(colour=discord.Colour.dark_purple(), title=title, description=description)
+        embed_msg.set_image(url="")
+        await ctx.send(embed=embed_msg, view=location_view)
+
+    @set_command_category('location', 2)
+    @pandora_bot.hybrid_command(name='divine', help="Cross into the Divine Plane [Arbiters, Sanctuary]")
+    @app_commands.guilds(discord.Object(id=guild_id))
+    async def enter_divine(ctx):
+        await ctx.defer()
+        player_obj = await sharedmethods.check_registration(ctx)
+        if player_obj is None:
+            return
+        location_view = menus.DivineView(player_obj)
+        title, description = "Divine Plane", "You are permitted to visit the higher plane by the grace of the arbiters."
+        embed_msg = discord.Embed(colour=discord.Colour.gold(), title=title, description=description)
+        embed_msg.set_image(url="")
+        await ctx.send(embed=embed_msg, view=location_view)
 
     # Gear commands
     @set_command_category('gear', 0)
@@ -580,7 +625,7 @@ def run_discord_bot():
                 await ctx.send(embed=embed_msg)
                 return
             selected_item = inventory.BasicItem(item_id)
-            embed_msg = selected_item.create_bitem_embed(player_obj)
+            embed_msg = await selected_item.create_bitem_embed(player_obj)
             # item_view = menus.ManageBasicItem(player_obj, selected_item)
             await ctx.send(embed=embed_msg)
             return
@@ -597,10 +642,11 @@ def run_discord_bot():
             await ctx.send("Please enter a valid start location from 0-30 or leave the start location blank.")
             return
         completion_count = tarot.collection_check(player_obj)
-        embed_msg = discord.Embed(colour=discord.Colour.magenta(),
-                                  title=f"{player_obj.player_username}'s Tarot Collection",
-                                  description=f"Completion Total: {completion_count} / 31")
-        embed_msg.set_image(url="")
+        title, description = "Pandora, The Celestial", "Welcome to the planetarium. Sealed tarots are stored here."
+        embed_msg = discord.Embed(colour=discord.Colour.magenta(), title=title, description=description)
+        name, value = f"{player_obj.player_username}'s Tarot Collection", f"Completion Total: {completion_count} / 31"
+        embed_msg.add_field(name=name, value=value, inline=False)
+        embed_msg.set_image(url=globalitems.planetarium_img)
         tarot_view = tarot.CollectionView(player_obj, start_location)
         await ctx.send(embed=embed_msg, view=tarot_view)
 
@@ -615,14 +661,13 @@ def run_discord_bot():
         if player_obj.player_quest == 17:
             quest.assign_unique_tokens(player_obj, "Arbiter")
         if player_obj.player_quest < 20:
-            engrave_msg = "I'm pretty sure you can't handle my threads. This is no place for the weak."
-            embed_msg = discord.Embed(colour=discord.Colour.dark_orange(),
-                                      title="Isolde, Soulweaver of the True Laws", description=engrave_msg)
+            title = "Isolde, Soulweaver of the True Laws"
+            description = "You can't yet handle my threads. This is no place for the weak."
+            embed_msg = discord.Embed(colour=discord.Colour.dark_orange(), title=title, description=description)
             await ctx.send(embed=embed_msg)
             return
-        engrave_msg = "You've come a long way from home child. Tell me, what kind of power do you seek?"
-        embed_msg = discord.Embed(colour=discord.Colour.dark_orange(),
-                                  title="Isolde, Soulweaver of the True Laws", description=engrave_msg)
+        description = "You've come a long way from home child. Tell me, what kind of power do you seek?"
+        embed_msg = discord.Embed(colour=discord.Colour.dark_orange(), title=title, description=description)
         insignia_view = insignia.InsigniaView(player_obj)
         await ctx.send(embed=embed_msg, view=insignia_view)
 
@@ -691,7 +736,7 @@ def run_discord_bot():
         secondary_gem_info = itemrolls.display_rolls(gem_2)
         embed_msg.add_field(name=f"Secondary Jewel - ID: {secondary_gem_id}", value=secondary_gem_info, inline=False)
         # Build the cost display.
-        stock, token_object = inventory.check_stock(player_obj, "Token4"), inventory.BasicItem("Token4")
+        stock, token_object = await inventory.check_stock(player_obj, "Token4"), inventory.BasicItem("Token4")
         cost = gem_1.item_tier + gem_2.item_tier - 8
         cost_msg = f"{token_object.item_emoji} {token_object.item_name}: {stock}/{cost}"
         embed_msg.add_field(name="Token Cost", value=cost_msg, inline=False)
@@ -723,7 +768,7 @@ def run_discord_bot():
         if response != "":
             await ctx.send(response)
             return
-        bazaar.list_custom_item(selected_item, cost)
+        await bazaar.list_custom_item(selected_item, cost)
         await ctx.send(f"Item {item_id} has been listed for {cost} lotus coins.")
 
     @set_command_category('trade', 1)
@@ -772,7 +817,7 @@ def run_discord_bot():
         player_obj = await sharedmethods.check_registration(ctx)
         if player_obj is None:
             return
-        num_items = bazaar.retrieve_items(player_obj.player_id)
+        num_items = await bazaar.retrieve_items(player_obj.player_id)
         await ctx.send(f"{num_items} unsold items retrieved.")
 
     @set_command_category('trade', 4)
@@ -784,8 +829,8 @@ def run_discord_bot():
         if player_obj is None:
             return
         embed_msg = await bazaar.show_bazaar_items(player_obj)
-        bazaar_view = bazaar.BazaarView(player_obj)
-        await ctx.send(embed=embed_msg, view=bazaar_view)
+        embed_msg.set_image(url=globalitems.bazaar_img)
+        await ctx.send(embed=embed_msg, view=bazaar.BazaarView(player_obj))
 
     @set_command_category('trade', 5)
     @pandora_bot.hybrid_command(name='market', help="Visit the black market item shop.")
@@ -795,13 +840,10 @@ def run_discord_bot():
         player_obj = await sharedmethods.check_registration(ctx)
         if player_obj is None:
             return
-        if player_obj.player_quest == 11:
-            quest.assign_unique_tokens(player_obj, "Town")
-        embed_msg = discord.Embed(colour=discord.Colour.dark_orange(),
-                                  title="Black Market", description="Everything has a price.")
-        embed_msg.set_image(url="")
-        market_select_view = market.TierSelectView(player_obj)
-        await ctx.send(embed=embed_msg, view=market_select_view)
+        title, description = "Black Market", "Everything has a price."
+        embed_msg = discord.Embed(colour=discord.Colour.dark_orange(), title=title, description=description)
+        embed_msg.set_image(url=globalitems.market_img)
+        await ctx.send(embed=embed_msg, view=market.TierSelectView(player_obj))
 
     @set_command_category('trade', 6)
     @pandora_bot.hybrid_command(name='give', help="Transfer ownership of a gear item.")
@@ -837,7 +879,7 @@ def run_discord_bot():
             await ctx.send(f"Transfer Incomplete! Item ID: {item_id} owned by {owner_player.player_username}.")
             return
         # Transfer and display item.
-        selected_item.give_item(target_player.player_id)
+        await selected_item.give_item(target_player.player_id)
         header, message = "Transfer Complete!", f"{target_player.player_username} has received Item ID: {item_id}!"
         file_path = pilengine.build_message_box(player_obj, message, header=header)
         await ctx.send(file=discord.File(file_path))
@@ -870,12 +912,10 @@ def run_discord_bot():
         if player_obj is None:
             return
         embed_msg = discord.Embed(colour=discord.Colour.blurple(), title="Pandora's Celestial Forge", description="")
-        embed_msg.add_field(name="Pandora, The Celestial", value="Let me know what you'd like me to upgrade today!", inline=False)
+        name, value = "Pandora, The Celestial", "Let me know what you'd like me to upgrade!"
+        embed_msg.add_field(name=name, value=value, inline=False)
         embed_msg.set_image(url=globalitems.forge_img)
-        if player_obj.player_quest == 11:
-            quest.assign_unique_tokens(player_obj, "Town")
-        forge_view = forge.SelectView(player_obj, "celestial")
-        await ctx.send(embed=embed_msg, view=forge_view)
+        await ctx.send(embed=embed_msg, view=forge.SelectView(player_obj, "celestial"))
 
     @set_command_category('craft', 1)
     @pandora_bot.hybrid_command(name='refinery', help="Go to the refinery.")
@@ -885,13 +925,10 @@ def run_discord_bot():
         player_obj = await sharedmethods.check_registration(ctx)
         if player_obj is None:
             return
-        embed_msg = discord.Embed(colour=discord.Colour.dark_orange(),
-                                  title='Refinery', description="Please select the item to refine")
+        title, description = "Refinery", "Please select the item to refine"
+        embed_msg = discord.Embed(colour=discord.Colour.dark_orange(), title=title, description=description)
         embed_msg.set_image(url=globalitems.refinery_img)
-        if player_obj.player_quest == 11:
-            quest.assign_unique_tokens(player_obj, "Town")
-        ref_view = forge.RefSelectView(player_obj)
-        await ctx.send(embed=embed_msg, view=ref_view)
+        await ctx.send(embed=embed_msg, view=forge.RefSelectView(player_obj))
 
     @set_command_category('craft', 2)
     @pandora_bot.hybrid_command(name='infuse', help="Infuse items using alchemy.")
@@ -901,9 +938,9 @@ def run_discord_bot():
         player_obj = await sharedmethods.check_registration(ctx)
         if player_obj is None:
             return
-        embed_msg = discord.Embed(colour=discord.Colour.magenta(), title="Cloaked Alchemist, Sangam",
-                                  description="I can make anything, if you bring the right stuff.")
-        embed_msg.set_image(url="")
+        title, description = "Cloaked Alchemist, Sangam", "I can make anything, if you bring the right stuff."
+        embed_msg = discord.Embed(colour=discord.Colour.magenta(), title=title, description=description)
+        embed_msg.set_image(url=globalitems.infuse_img)
         infuse_view = infuse.InfuseView(player_obj)
         await ctx.send(embed=embed_msg, view=infuse_view)
 
@@ -930,7 +967,7 @@ def run_discord_bot():
         await ctx.send(embed=embed_msg, view=new_view)
 
     @set_command_category('craft', 4)
-    @pandora_bot.hybrid_command(name='scribe', help="Speak with ??? in the divine plane.")
+    @pandora_bot.hybrid_command(name='scribe', help="Speak with Vexia in the divine plane.")
     @app_commands.guilds(discord.Object(id=guild_id))
     async def scribe(ctx):
         await ctx.defer()
@@ -938,20 +975,18 @@ def run_discord_bot():
         if player_obj is None:
             return
         e_weapon = await inventory.read_custom_item(player_obj.player_equipped[0])
+        title = "Vexia, Scribe of the True Laws"
         if player_obj.player_quest < 46:
-            denial_msg = "Without the grace of the arbiters your entry is denied."
-            embed_msg = discord.Embed(colour=discord.Colour.blurple(), title="???", description=denial_msg)
+            denial_msg = "I have permitted your passage, but you are not yet qualified to speak with me. Begone."
+            embed_msg = discord.Embed(colour=discord.Colour.blurple(), title=title, description=denial_msg)
             await ctx.send(embed=embed_msg)
             return
-        entry_msg = ("You are the first recorded mortal to enter the divine plane. "
-                     "I will grant you passage because of the futility of your actions. "
-                     "I will record your attempts and perhaps even assist you. "
+        entry_msg = ("You are the only recorded mortal to have entered the divine plane. "
+                     "We are not your allies, but we will not treat you unfairly."
                      "\nThe oracle has already foretold your failure. Now it need only be written into truth.")
-        embed_msg = discord.Embed(colour=discord.Colour.blurple(), title="Vexia, Scribe of the True Laws",
-                                  description=entry_msg)
+        embed_msg = discord.Embed(colour=discord.Colour.blurple(), title=title, description=entry_msg)
         embed_msg.set_image(url=globalitems.forge_img)
-        new_view = forge.SelectView(player_obj, "custom")
-        await ctx.send(embed=embed_msg, view=new_view)
+        await ctx.send(embed=embed_msg, view=forge.SelectView(player_obj, "custom"))
 
     # Info commands
     @set_command_category('info', 0)
@@ -1068,7 +1103,7 @@ def run_discord_bot():
         player_obj = await sharedmethods.check_registration(ctx)
         if player_obj is None:
             return
-        stock = inventory.check_stock(player_obj, "Token1")
+        stock = await inventory.check_stock(player_obj, "Token1")
         description = f"Bring me enough tokens and even you can be rewritten.\n{stock} / 50"
         embed_msg = discord.Embed(colour=discord.Colour.dark_orange(),
                                   title="Mysmir, Changeling of the True Laws", description=description)
@@ -1097,13 +1132,13 @@ def run_discord_bot():
             embed_msg.description = "This name is too long. I refuse."
             await ctx.send(embed=embed_msg)
             return
-        token_stock = inventory.check_stock(player_obj, "Token1")
+        token_stock = await inventory.check_stock(player_obj, "Token1")
         if token_stock < 50:
             embed_msg.description = f"I will only help those with sufficient tokens. I refuse.\n{token_stock} / 50"
             await ctx.send(embed=embed_msg)
             return
         else:
-            inventory.update_stock(player_obj, "Token1", -50)
+            await inventory.update_stock(player_obj, "Token1", -50)
             player_obj.player_username = new_username
             player_obj.set_player_field("player_username", new_username)
             embed_msg.description = f'{player_obj.player_username} you say? Fine, I accept.'
@@ -1148,6 +1183,86 @@ def run_discord_bot():
         file_path = pilengine.build_title_box("Pandora Bot Credits")
         await ctx.send(file=discord.File(file_path))
         await ctx.send(embed=embed_msg)
+
+    @set_command_category('misc', 0)
+    @pandora_bot.hybrid_command(name='savequote', help="Add a quote to the quote database")
+    @app_commands.guilds(discord.Object(id=guild_id))
+    async def add_quote(ctx: commands.Context, message_id: str = None):
+        await ctx.defer()
+        if message_id:
+            if not message_id.isnumeric():
+                await ctx.send("Message ID must be numeric")
+                return
+            try:
+                message = await ctx.channel.fetch_message(message_id)
+            except discord.NotFound:
+                await ctx.send("Message not found.")
+                return
+        elif ctx.message.reference:
+            message = await ctx.channel.fetch_message(ctx.message.reference.message_id)
+        else:
+            await ctx.send("You need to reply to a message (! only) or provide a message ID to add a quote.")
+            return
+
+        def insert_quote(quote_id, user_discord_id, user_quote, quote_date):
+            raw_query = ("INSERT INTO UserQuotes (message_id, user_discord_id, user_quote, quote_date) "
+                         "VALUES (:message_id, :discord_id, :quote, :date) "
+                         "ON DUPLICATE KEY UPDATE user_discord_id=VALUES(user_discord_id), "
+                         "user_quote=VALUES(user_quote), quote_date=VALUES(quote_date)")
+            rq(raw_query, params={'message_id': quote_id, 'discord_id': user_discord_id,
+                                  'quote': user_quote, 'date': quote_date})
+
+        insert_quote(message.id, message.author.id, message.content, message.created_at.strftime('%Y-%m-%d'))
+        await ctx.send(f"Quote successfully added.")
+
+    @set_command_category('misc', 1)
+    @pandora_bot.hybrid_command(name='deletequote', help="Remove a quote by message id.")
+    @app_commands.guilds(discord.Object(id=guild_id))
+    async def delete_quote(ctx: commands.Context, message_id: str):
+        await ctx.defer()
+        if ctx.author.id not in globalitems.GM_id_dict.keys():
+            await ctx.send("Only game admins can execute this command.")
+            return
+        if not message_id.isnumeric():
+            await ctx.send("Message ID must be numeric")
+            return
+        raw_query = "DELETE FROM UserQuotes WHERE message_id = :message_id"
+        rq(raw_query, params={'message_id': message_id})
+        await ctx.send(f"Quote {message_id} successfully removed.")
+
+    @set_command_category('misc', 2)
+    @pandora_bot.hybrid_command(name='quote', help="Send a random quote. Specific user or quote can be selected.")
+    @app_commands.guilds(discord.Object(id=guild_id))
+    async def post_quote(ctx: commands.Context, target_user: discord.User = None, message_id: str = None):
+        await ctx.defer()
+        if message_id is not None:
+            if not message_id.isnumeric():
+                await ctx.send("Message ID must be numeric")
+                return
+            raw_query = "SELECT * FROM UserQuotes WHERE message_id = :message_id"
+            quote_df = rq(raw_query, params={'message_id': message_id}, return_value=True)
+        elif target_user is not None:
+            raw_query = "SELECT * FROM UserQuotes WHERE user_discord_id = :discord_id"
+            quote_df = rq(raw_query, params={'discord_id': target_user.id}, return_value=True)
+        else:
+            raw_query = "SELECT * FROM UserQuotes"
+            quote_df = rq(raw_query, return_value=True)
+        if quote_df.empty:
+            await ctx.send("No quotes available with these inputs.")
+            return
+        quote_list = quote_df.to_dict(orient='records')
+        selected_quote = random.choice(quote_list)
+        user_discord_id = selected_quote['user_discord_id']
+        user_quote, message_id = selected_quote['user_quote'], selected_quote['message_id']
+        quote_date = selected_quote['quote_date']
+        user = await pandora_bot.fetch_user(user_discord_id)
+        if not user:
+            await ctx.send("User not found in the server.")
+            return
+        quote_embed = discord.Embed(title=user.display_name, description=user_quote, color=discord.Color.blue())
+        quote_embed.add_field(name="", value=f"Quoted from {quote_date} [ID: {message_id}]", inline=True)
+        quote_embed.set_thumbnail(url=user.avatar)
+        await ctx.send(embed=quote_embed)
 
     def build_category_dict():
         temp_dict = {}

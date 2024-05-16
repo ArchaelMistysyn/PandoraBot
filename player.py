@@ -275,13 +275,8 @@ class PlayerProfile:
         return change_message, level_increase
 
     def set_player_field(self, field_name, field_value):
-        try:
-            
-            raw_query = f"UPDATE PlayerList SET {field_name} = :input_1 WHERE player_id = :player_check"
-            rq(raw_query, params={'player_check': int(self.player_id), 'input_1': field_value})
-            
-        except mysql.connector.Error as err:
-            print("Database Error: {}".format(err))
+        raw_query = f"UPDATE PlayerList SET {field_name} = :input_1 WHERE player_id = :player_check"
+        rq(raw_query, params={'player_check': int(self.player_id), 'input_1': field_value})
 
     def unequip_item(self, item):
         self.player_equipped = [0 if element == item.item_id else element for element in self.player_equipped]
@@ -321,7 +316,23 @@ class PlayerProfile:
         }
         rq(raw_query, params=params)
         registered_player = await get_player_by_discord(self.discord_id)
+        raw_query = "INSERT INTO MiscPlayerData (player_id, thana_visits, deaths) VALUES (:input_1, :input_2, :input_3)"
+        params = {"input_1": registered_player.player_id, "input_2": 0, "input_3": 0}
+        rq(raw_query, params=params)
         return f"Welcome {self.player_username}!\nUse /quest to begin."
+
+    def update_misc_data(self, field_name, change, overwrite_value=False):
+        raw_query = f"UPDATE MiscPlayerData SET {field_name} = {field_name} + :new_value WHERE player_id = :player_check"
+        if overwrite_value:
+            raw_query = f"UPDATE MiscPlayerData SET {field_name} = :new_value WHERE player_id = :player_check"
+        params = {"new_value": change, "player_check": self.player_id}
+        rq(raw_query, params=params)
+
+    def check_misc_data(self, field_name):
+        raw_query = f"SELECT {field_name} FROM MiscPlayerData WHERE player_id = :player_check"
+        params = {"player_check": self.player_id}
+        result_df = rq(raw_query, params=params, return_value=True)
+        return result_df[field_name].values[0]
 
     def spend_stamina(self, cost) -> bool:
         is_spent = False
@@ -516,7 +527,7 @@ class PlayerProfile:
             e_item = await inventory.read_custom_item(item_id)
             if selected_item.item_id == e_item.item_inlaid_gem_id:
                 e_item.item_inlaid_gem_id = 0
-                e_item.update_stored_item()
+                await e_item.update_stored_item()
 
     async def check_equipped(self, item):
         response = ""
@@ -532,11 +543,11 @@ class PlayerProfile:
                     response = f"Dragon Heart Gem {item.item_id} is currently inlaid in item {e_item.item_id}."
         return response
 
-    def create_stamina_embed(self):
+    async def create_stamina_embed(self):
         potion_msg = ""
         for x in range(1, 5):
             loot_item = inventory.BasicItem(f"Potion{x}")
-            potion_stock = inventory.check_stock(self, loot_item.item_id)
+            potion_stock = await inventory.check_stock(self, loot_item.item_id)
             potion_msg += f"\n{loot_item.item_emoji} {potion_stock}x {loot_item.item_name}"
         pact_object = pact.Pact(self.pact)
         max_stamina = 5000 if pact_object.pact_variant != "Sloth" else 2500

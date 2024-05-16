@@ -32,11 +32,11 @@ class Quest:
         self.quest_title = f"#{self.quest_num}: {quest_title}"
 
     async def hand_in(self, ctx_object, player_obj):
-        is_completed, progress_count = self.calculate_progress(player_obj)
+        is_completed, progress_count = await self.calculate_progress(player_obj)
         if is_completed:
             # Pay cost if required
             if self.quest_type == 2:
-                inventory.update_stock(player_obj, self.item_handin, self.cost)
+                await inventory.update_stock(player_obj, self.item_handin, self.cost)
             embed_msg = await self.handle_completion(ctx_object, player_obj, progress_count)
             return embed_msg, is_completed
         # Handle incomplete quest hand-in.
@@ -45,7 +45,7 @@ class Quest:
         embed_msg.add_field(name="Quest Incomplete", value=progress_msg, inline=False)
         return embed_msg, is_completed
 
-    def calculate_progress(self, player_obj):
+    async def calculate_progress(self, player_obj):
         # Handle Specific Quest Exceptions
         if player_obj.player_quest == 20:
             return (False, 0) if player_obj.insignia == "" else (True, 1)
@@ -71,7 +71,7 @@ class Quest:
             return (True, current_level) if current_level >= self.cost else (False, current_level)
         # Hand-In Quests.
         if self.quest_type == 2:
-            progress_count = inventory.check_stock(player_obj, self.item_handin)
+            progress_count = await inventory.check_stock(player_obj, self.item_handin)
             return (progress_count >= self.cost), progress_count
 
     async def handle_completion(self, ctx_object, player_obj, progress_count):
@@ -86,7 +86,7 @@ class Quest:
             await sharedmethods.send_notification(ctx_object, player_obj, "Level", lvl_change)
         # Handle Item/Role Awards.
         if self.award_item:
-            inventory.update_stock(player_obj, self.award_item, self.award_qty)
+            await inventory.update_stock(player_obj, self.award_item, self.award_qty)
             loot_item = inventory.BasicItem(self.award_item)
             rewards += f"{loot_item.item_emoji} {self.award_qty}x {loot_item.item_name}\n"
         if sharedmethods.check_rare_item(loot_item.item_id):
@@ -98,12 +98,12 @@ class Quest:
             await sharedmethods.send_notification(ctx_object, player_obj, "Achievement", self.award_role)
         return discord.Embed(colour=self.colour, title="QUEST COMPLETED!", description=rewards)
 
-    def get_quest_embed(self, player_obj):
-        is_completed, progress_count = self.calculate_progress(player_obj)
+    async def get_quest_embed(self, player_obj):
+        is_completed, progress_count = await self.calculate_progress(player_obj)
         quest_details = f"{self.quest_message}: {progress_count} / {self.cost}"
         quest_embed = discord.Embed(colour=self.colour, title=self.quest_title, description="")
         quest_giver = "Pandora, The Celestial"
-        if player_obj.player_quest in range(49, 54):
+        if player_obj.player_quest in range(50, 54):
             quest_giver = "Echo of __Eleuia, The Wish__"
         quest_embed.add_field(name=quest_giver, value=self.story_message, inline=False)
         quest_embed.add_field(name=f"Quest Details", value=quest_details, inline=False)
@@ -189,7 +189,7 @@ class RewardView(discord.ui.View):
             return
         current_quest = self.player_obj.player_quest
         quest_object = quest_list[self.player_obj.player_quest]
-        embed_msg = quest_object.get_quest_embed(self.player_obj)
+        embed_msg = await quest_object.get_quest_embed(self.player_obj)
         quest_view = QuestView(self.ctx_object, self.player_obj, quest_object)
         await interaction.response.edit_message(embed=embed_msg, view=quest_view)
 

@@ -133,8 +133,8 @@ class PvPCog(commands.Cog):
         if (not is_alive_player1 and not is_alive_player2) or self.combat_tracker1.total_cycles >= 50:
             winner, result_message, quantity = "Draw", "It's a draw!", 1
             exp_amount *= 5
-            inventory.update_stock(self.player1, "Crate", quantity)
-            inventory.update_stock(self.player2, "Crate", quantity)
+            await inventory.update_stock(self.player1, "Crate", quantity)
+            await inventory.update_stock(self.player2, "Crate", quantity)
             loot_msg = f"Both Players {loot_item.item_emoji} {quantity}x crate(s) acquired!"
         elif not is_alive_player1:
             winner = self.player2
@@ -148,7 +148,7 @@ class PvPCog(commands.Cog):
         # End the combat.
         if not isinstance(winner, str):
             result_message = f"{winner.player_username} wins!"
-            inventory.update_stock(winner, "Crate", quantity)
+            await inventory.update_stock(winner, "Crate", quantity)
             loot_msg = f"{winner.player_username} {loot_item.item_emoji} {quantity}x crates acquired!"
         exp_msg, lvl_adjust = self.player1.adjust_exp(exp_amount)
         exp_description = f"{exp_msg} EXP acquired!"
@@ -300,7 +300,7 @@ class MapCog(commands.Cog):
             accumulated_msg += f"{globalitems.exp_icon} {self.exp_accumulated:,}x EXP Acquired\n"
         if self.items_accumulated:
             for item_id, (item, qty) in self.items_accumulated.items():
-                accumulated_msg += f"{reward.item_emoji} {qty:,}x {reward.item_name}\n"
+                accumulated_msg += f"{item.item_emoji} {qty:,}x {item.item_name}\n"
         if accumulated_msg != "":
             embed_obj.add_field(name="Total Accumulated Rewards", value=accumulated_msg, inline=False)
         return embed_obj
@@ -310,7 +310,7 @@ class MapCog(commands.Cog):
             return "Clear"
         # Trigger occurrence/deal damage to player
         room_type = random.choices(['Combat', 'Treasure', 'Mining', 'Storage'],
-                                   weights=[5, 2, 2, 1], k=1)[0]
+                                   weights=[5, 4, 4, 3], k=1)[0]
         room_embed, status = await self.run_room(room_type)
         await self.sent_message.edit(embed=room_embed)
         return status
@@ -387,7 +387,7 @@ class MapCog(commands.Cog):
             reward_object = inventory.BasicItem(f"Trove{self.map_tier - 2}")
             current_qty = self.items_accumulated.get(reward_object.item_id, (reward_object, 0))[1]
             self.items_accumulated[reward_object.item_id] = (reward_object, current_qty + 1)
-            inventory.update_stock(self.player_obj, reward_object.item_id, 1)
+            await inventory.update_stock(self.player_obj, reward_object.item_id, 1)
             field_value = f"{hp_msg} HP\n{reward_object.item_emoji} 1x {reward_object.item_name}"
         else:
             self.coins_accumulated += 100 * bonus
@@ -410,7 +410,7 @@ class MapCog(commands.Cog):
         base_embed.add_field(name="", value=hp_msg, inline=False)
         await self.sent_message.edit(embed=base_embed)
         await asyncio.sleep(60)
-        inventory.update_stock(self.player_obj, reward_object.item_id, item_qty)
+        await inventory.update_stock(self.player_obj, reward_object.item_id, item_qty)
         field_value = f"{hp_msg} HP\n{reward_object.item_emoji} {item_qty}x {reward_object.item_name}"
         new_embed.add_field(name="", value=field_value, inline=False)
         return new_embed
@@ -428,7 +428,7 @@ class MapCog(commands.Cog):
         base_embed.add_field(name="", value=hp_msg, inline=False)
         await self.sent_message.edit(embed=base_embed)
         await asyncio.sleep(60)
-        inventory.update_stock(self.player_obj, reward_object.item_id, item_qty)
+        await inventory.update_stock(self.player_obj, reward_object.item_id, item_qty)
         field_value = f"{hp_msg} HP\n{reward_object.item_emoji} {item_qty}x {reward_object.item_name}"
         new_embed.add_field(name="", value=field_value, inline=False)
         if sharedmethods.check_rare_item(reward_object.item_id):

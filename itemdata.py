@@ -161,13 +161,13 @@ crystallized_data = [
 itemdata_dict = build_item_dict(itemdata_dict, crystallized_data, category="Crystal")
 
 # Skull List Data
-skull_data = [[None, 'Cursed Golden Skull', 50, 5, '💀',
+skull_data = [[None, 'Cursed Golden Skull', 1, 4, '💀',
                'A skull of pure gold that whispers to you softly.', 100000],
-              [None, 'Haunted Golden Skull', 90, 6, '💀',
+              [None, 'Haunted Golden Skull', 10, 5, '💀',
                "A golden skull that exudes darkness. Placing it against your ear is clearly a bad idea.", 1000000],
-              [None, 'Radiant Golden Skull', 90, 7, '💀',
+              [None, 'Radiant Golden Skull', 100, 7, '💀',
                "A golden skull with a serene aura. Yet screaming can occasionally be heard from within.", 10000000],
-              [None, 'Prismatic Golden Skull', 90, 8, '💀',
+              [None, 'Prismatic Golden Skull', 1000, 8, '💀',
                "A golden skull that sparkles extraordinarily. Beware the lustful voices calling your name.", 100000000]]
 itemdata_dict = build_item_dict(itemdata_dict, skull_data, category="Skull")
 

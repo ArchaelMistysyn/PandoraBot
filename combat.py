@@ -81,6 +81,7 @@ async def run_cycle(tracker_obj, boss_obj, player_obj, method):
     if not player_alive:
         tracker_obj.hp_regen = 0
         battle_msg = f"{player_obj.player_username} has been felled!"
+        player_obj.update_misc_data("deaths", 1)
         return hit_list, battle_msg, player_alive, boss_alive, total_damage
     # Step 3: Player takes action
     hit_list = await handle_player_actions(hit_list, tracker_obj, boss_obj, player_obj)
@@ -289,6 +290,8 @@ def check_bloom(player_obj, input_damage):
             damage, status_msg = damage * 10, " *SACRED BLOOM*"
     elif random.randint(1, 100) <= int(round(player_obj.spec_conv[1] * 100)):
         damage, status_msg = int(damage * player_obj.bloom_multiplier * 3), " *ABYSSAL BLOOM*"
+    elif random.randint(1, 100) <= int(round(player_obj.spec_conv[2] * 100)):
+        damage, status_msg = int(damage * 9.99), " *CALAMITY*"
     return damage, status_msg
 
 

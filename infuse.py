@@ -110,37 +110,38 @@ class RecipeObject:
             item_id, qty = item_info
             self.cost_items.append((inventory.BasicItem(item_id), qty))
 
-    def create_cost_embed(self, player_obj):
+    async def create_cost_embed(self, player_obj):
         cost_title = f"{self.recipe_name} Infusion Cost"
         cost_info = ""
         for (item, qty) in self.cost_items:
-            stock = inventory.check_stock(player_obj, item.item_id)
+            stock = await inventory.check_stock(player_obj, item.item_id)
             cost_info += f"{item.item_emoji} {item.item_name}: {stock} / {qty}\n"
         cost_info += f"Success Rate: {self.success_rate}%"
         cost_embed = discord.Embed(colour=discord.Colour.dark_orange(), title=cost_title, description=cost_info)
         return cost_embed
 
-    def can_afford(self, player_obj, num_crafts):
+    async def can_afford(self, player_obj, num_crafts):
         for (item, qty) in self.cost_items:
-            stock = inventory.check_stock(player_obj, item.item_id)
+            stock = await inventory.check_stock(player_obj, item.item_id)
             if stock < num_crafts * qty:
                 return False
         return True
 
-    def perform_infusion(self, player_obj, num_crafts, ring=False):
+    async def perform_infusion(self, player_obj, num_crafts, ring=False):
         result = 0
         # Deduct the cost for each item
         for (item, qty) in self.cost_items:
             total_cost = 0 - (num_crafts * qty)
-            inventory.update_stock(player_obj, item.item_id, total_cost)  # This needs to update all at once instead.
+            await inventory.update_stock(player_obj, item.item_id, total_cost)  # This needs to update all at once instead.
         if ring:
-            return 1
+            outcome = random.randint(1, 100)
+            return 1 if ("Gambler's Masterpiece" not in self.recipe_name or outcome == 1) else 0
         # Perform the infusion attempts
         for _ in range(num_crafts):
             if random.randint(1, 100) <= self.success_rate:
                 result += 1
         if result > 0:
-            inventory.update_stock(player_obj, self.outcome_item.item_id, result)
+            await inventory.update_stock(player_obj, self.outcome_item.item_id, result)
         return result
 
 
@@ -212,7 +213,7 @@ class SelectRecipeView(discord.ui.View):
         await self.player_obj.reload_player()
         selected_option = interaction.data['values'][0]
         recipe_object = RecipeObject(self.category, selected_option)
-        self.embed = recipe_object.create_cost_embed(self.player_obj)
+        self.embed = await recipe_object.create_cost_embed(self.player_obj)
         self.new_view = CraftView(self.player_obj, recipe_object)
         await interaction.response.edit_message(embed=self.embed, view=self.new_view)
 
@@ -224,6 +225,8 @@ class CraftView(discord.ui.View):
         self.embed_msg, self.new_view = None, None
         if "Ring" in self.recipe_object.category:
             self.infuse_1.label = "Infuse Ring"
+            if "Gambler's Masterpiece" in self.recipe_object.recipe_name:
+                self.infuse_1.label += f" (1%)"
             self.infuse_1.emoji = "💍"
             self.remove_item(self.children[2])
             self.remove_item(self.children[1])
@@ -237,18 +240,18 @@ class CraftView(discord.ui.View):
             return
         self.new_view = CraftView(self.player_user, self.recipe_object)
         # Handle cannot afford response
-        if not self.recipe_object.can_afford(self.player_user, selected_qty):
-            self.embed_msg = self.recipe_object.create_cost_embed(self.player_user)
+        if not await self.recipe_object.can_afford(self.player_user, selected_qty):
+            self.embed_msg = await self.recipe_object.create_cost_embed(self.player_user)
             self.embed_msg.add_field(name="Not Enough Materials!",
                                      value="Please come back when you have more materials.", inline=False)
             new_view = InfuseView(self.player_user)
             await interaction.response.edit_message(embed=self.embed_msg, view=new_view)
             return
         is_ring = "Ring" in self.recipe_object.category or "Signet" in self.recipe_object.category
-        result = self.recipe_object.perform_infusion(self.player_user, selected_qty, ring=is_ring)
-        self.embed_msg = self.recipe_object.create_cost_embed(self.player_user)
+        result = await self.recipe_object.perform_infusion(self.player_user, selected_qty, ring=is_ring)
+        self.embed_msg = await self.recipe_object.create_cost_embed(self.player_user)
         # Handle infusion
-        if is_ring:
+        if is_ring and result == 1:
             # Handle ring
             new_ring = inventory.CustomItem(self.player_user.player_id, "R", self.recipe_object.outcome_item)
             new_ring.item_base_type = self.recipe_object.recipe_name
@@ -261,7 +264,7 @@ class CraftView(discord.ui.View):
             return
         # Handle non-ring failure
         if result == 0:
-            header, description = "Infusion Failed!", "I guess it's just not your day today."
+            header, description = "Infusion Failed!", "I guess it's just not your day today. How about another try?"
             self.embed_msg.add_field(name=header, value=description, inline=False)
             self.new_view = CraftView(self.player_user, self.recipe_object)
             await interaction.response.edit_message(embed=self.embed_msg, view=self.new_view)

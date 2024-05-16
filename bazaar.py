@@ -50,15 +50,15 @@ def check_num_listings(player_obj):
     return len(df)
 
 
-def list_custom_item(item, cost):
+async def list_custom_item(item, cost):
     raw_query = "INSERT INTO CustomBazaar (item_id, seller_id, cost) VALUES (:item_id, :seller_id, :cost)"
     params = {'item_id': item.item_id, 'seller_id': item.player_owner, 'cost': cost}
     rq(raw_query, params=params)
     item.item_inlaid_gem_id, item.player_owner = 0, -1
-    item.update_stored_item()
+    await item.update_stored_item()
 
 
-def retrieve_items(player_id):
+async def retrieve_items(player_id):
     raw_query = "SELECT item_id FROM CustomBazaar WHERE seller_id = :player_id"
     df = rq(raw_query, return_value=True, params={'player_id': player_id})
     item_ids = []

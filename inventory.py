@@ -210,7 +210,7 @@ class CustomItem:
         stat_message = f"Path of {path_name} +{points_value}"
         return stat_message
 
-    def update_stored_item(self):
+    async def update_stored_item(self):
         item_elements = ""
         for x in self.item_elements:
             item_elements += str(x) + ";"
@@ -390,10 +390,10 @@ class CustomItem:
         self.item_damage_min = int((self.base_damage_min + flat_bonus) * quality_damage * enh_multiplier * mult_bonus)
         self.item_damage_max = int((self.base_damage_max + flat_bonus) * quality_damage * enh_multiplier * mult_bonus)
 
-    def give_item(self, new_owner):
+    async def give_item(self, new_owner):
         self.player_owner = new_owner
         self.item_inlaid_gem_id = 0
-        self.update_stored_item()
+        await self.update_stored_item()
 
 
 class BasicItem:
@@ -420,8 +420,8 @@ class BasicItem:
         else:
             print(f"Item with ID '{item_id}' not found in itemdata_dict.")
 
-    def create_bitem_embed(self, player_obj):
-        item_qty = inventory.check_stock(player_obj, self.item_id)
+    async def create_bitem_embed(self, player_obj):
+        item_qty = await inventory.check_stock(player_obj, self.item_id)
         item_msg = f"{self.item_description}\n{player_obj.player_username}'s Stock: {item_qty}"
         colour, _ = inventory.sharedmethods.get_gear_tier_colours(self.item_tier)
         loot_embed = discord.Embed(colour=colour, title=self.item_name, description=item_msg)
@@ -597,26 +597,23 @@ def generate_random_tier(min_tier=1, max_tier=8, luck_bonus=0):
     return min_tier
 
 
-def check_stock(player_obj, item_id):
+async def check_stock(player_obj, item_id):
     player_stock = 0
-    
     raw_query = ("SELECT item_qty FROM BasicInventory "
                  "WHERE player_id = :id_check AND item_id = :item_check")
     df = rq(raw_query, True, params={'id_check': player_obj.player_id, 'item_check': item_id})
-    
     if len(df.index) != 0:
         player_stock = int(df['item_qty'].values[0])
     return player_stock
 
 
-def update_stock(player_obj, item_id, change, batch=None):
+async def update_stock(player_obj, item_id, change, batch=None):
     if batch is not None:
         raw_query = ("INSERT INTO BasicInventory (player_id, item_id, item_qty) "
                      "VALUES (:player_id, :item_id, :item_qty) "
                      "ON DUPLICATE KEY UPDATE item_qty = item_qty + VALUES(item_qty);")
         batch_params = batch.to_dict('records')
         rq(raw_query, batch=True, params=batch_params)
-        
         return
     if player_obj is None or item_id is None or change is None:
         return

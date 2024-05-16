@@ -28,40 +28,40 @@ class TradeObject:
             trade_details = f"{select_obj.item_emoji} {select_obj.item_name} {select_qty:,}x"
         self.trade_msg.add_field(name=f"{select_player.player_username} Offers:", value=trade_details, inline=True)
 
-    def perform_trade(self):
+    async def perform_trade(self):
         # Validate coins/stock
         if ((self.offer_obj is None and self.target_player.player_coins < self.receive_qty) or
                 (self.target_player.player_coins < self.receive_qty)):
             return "Insufficient coins to complete the trade."
         if self.offer_obj is not None:
-            offer_stock = inventory.check_stock(self.offer_player, self.offer_obj.item_id)
+            offer_stock = await inventory.check_stock(self.offer_player, self.offer_obj.item_id)
             if offer_stock < self.offer_qty:
                 return "Insufficient items to complete the trade."
         if self.receive_obj is not None:
-            receive_stock = inventory.check_stock(self.target_player, self.receive_obj.item_id)
+            receive_stock = await inventory.check_stock(self.target_player, self.receive_obj.item_id)
             if receive_stock < self.receive_qty:
                 return "Insufficient items to complete the trade."
         # Execute trade and transfer all item/coins.
         if self.offer_obj:
-            inventory.update_stock(self.offer_player, self.offer_obj.item_id, (self.offer_qty * -1))
-            inventory.update_stock(self.target_player, self.offer_obj.item_id, self.offer_qty)
+            await inventory.update_stock(self.offer_player, self.offer_obj.item_id, (self.offer_qty * -1))
+            await inventory.update_stock(self.target_player, self.offer_obj.item_id, self.offer_qty)
         else:
             _ = self.offer_player.adjust_coins(self.offer_qty, reduction=True)
-            _ = self.target_player.adjust_coins(self.offer_qty)
+            _ = self.target_player.adjust_coins(self.offer_qty, apply_pact=False)
         if self.receive_obj:
-            inventory.update_stock(self.target_player, self.receive_obj.item_id, (self.receive_qty * -1))
-            inventory.update_stock(self.offer_player, self.receive_obj.item_id, self.receive_qty)
+            await inventory.update_stock(self.target_player, self.receive_obj.item_id, (self.receive_qty * -1))
+            await inventory.update_stock(self.offer_player, self.receive_obj.item_id, self.receive_qty)
         else:
             _ = self.target_player.adjust_coins(self.receive_qty, reduction=True)
-            _ = self.offer_player.adjust_coins(self.receive_qty)
+            _ = self.offer_player.adjust_coins(self.receive_qty, apply_pact=False)
         return ""
 
 
 async def create_trade(offer_player, target_player, offer_item, offer_qty, receive_item, receive_qty):
-    def check_item_availability(select_player, select_item, select_qty):
+    async def check_item_availability(select_player, select_item, select_qty):
         if select_item != "" and select_item in itemdata.itemdata_dict.keys():
             select_obj = inventory.BasicItem(select_item)
-            select_stock = inventory.check_stock(select_player, select_item)
+            select_stock = await inventory.check_stock(select_player, select_item)
             if select_stock < select_qty:
                 return None, f"{select_player.player_username} only has {select_item.item_emoji} {select_obj.item_name} {select_stock:,}x"
             return select_obj, ""
@@ -71,10 +71,10 @@ async def create_trade(offer_player, target_player, offer_item, offer_qty, recei
     if offer_qty <= 0 or receive_qty <= 0:
         return None, "Trade amounts cannot be negative or 0."
     # Validate the items and stock.
-    offer_obj, err_msg = check_item_availability(offer_player, offer_item, offer_qty)
+    offer_obj, err_msg = await check_item_availability(offer_player, offer_item, offer_qty)
     if err_msg != "":
         return None, err_msg
-    receive_obj, err_msg = check_item_availability(target_player, receive_item, receive_qty)
+    receive_obj, err_msg = await check_item_availability(target_player, receive_item, receive_qty)
     if err_msg != "":
         return None, err_msg
     # Validate coin amounts.
@@ -102,7 +102,7 @@ class TradeView(discord.ui.View):
             await interaction.response.edit_message(embed=self.new_embed, view=self.new_view)
             return
         self.new_embed = self.trade_obj.trade_msg
-        fail_msg = self.trade_obj.perform_trade()
+        fail_msg = await self.trade_obj.perform_trade()
         if fail_msg != "":
             self.new_embed.add_field(name="Trade Failed", value=fail_msg, inline=False)
             self.new_view = TradeView(self.trade_obj)

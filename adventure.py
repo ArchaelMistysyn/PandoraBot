@@ -351,7 +351,7 @@ class AdventureRoomView(discord.ui.View):
                 if matching_rewards[0] in ["PARAGON", "ARBITER"]:
                     blessing_msg = blessing_msg.replace(matching_rewards[0], f"{tarot.card_dict[deity][0]}'s")
                 item_msg = f"{reward_item.item_emoji} 1x {reward_item.item_name} received!"
-                inventory.update_stock(self.expedition.player_obj, reward_item.item_id, 1)
+                await inventory.update_stock(self.expedition.player_obj, reward_item.item_id, 1)
                 self.expedition.luck += matching_rewards[2]
                 self.embed.add_field(name=blessing_msg, value=item_msg, inline=False)
                 await interaction_obj.response.edit_message(embed=self.embed, view=self.new_view)
@@ -375,6 +375,7 @@ class AdventureRoomView(discord.ui.View):
                     self.new_view = None
                     await interaction_obj.response.edit_message(embed=self.embed, view=self.new_view)
                     self.embed.add_field(name=f"{embed_title} - Run Ended", value=wrath_msg, inline=False)
+                    self.expedition.player_obj.update_misc_data("deaths", 1)
                     return
                 # Handle Regular/Teleport
                 elif outcome in [0, 2]:
@@ -404,7 +405,7 @@ class AdventureRoomView(discord.ui.View):
             loot_item = inventory.BasicItem(reward_id)
             embed_title = f"Excavated {loot_item.item_name}!"
             item_msg = f"{loot_item.item_emoji} {reward_qty} {loot_item.item_name} found in the rubble!"
-            inventory.update_stock(self.expedition.player_obj, reward_id, reward_qty)
+            await inventory.update_stock(self.expedition.player_obj, reward_id, reward_qty)
             self.embed.add_field(name=embed_title, value=item_msg, inline=False)
             await interaction_obj.response.edit_message(embed=self.embed, view=self.new_view)
 
@@ -549,7 +550,7 @@ class AdventureRoomView(discord.ui.View):
             if random.randint(1, 100) <= trove_rate:
                 trove_tier = inventory.generate_random_tier(max_tier=8, luck_bonus=self.expedition.luck)
                 trove_item = inventory.BasicItem(f"Trove{trove_tier}")
-                inventory.update_stock(self.player_obj, trove_item.item_id, 1)
+                await inventory.update_stock(self.player_obj, trove_item.item_id, 1)
                 description += f"\n{sharedmethods.reward_message(trove_item)} acquired!"
             self.embed = discord.Embed(colour=self.expedition.colour, title=title, description=description)
             # Add jackpot message.
@@ -566,7 +567,7 @@ class AdventureRoomView(discord.ui.View):
         luck_value = -1
         title, description = "Magical Overload!", f"The creature's heart was destroyed.\nLuck {luck_value}"
         if random.randint(1, 100) <= self.success_rates[variant]:
-            inventory.update_stock(self.expedition.player_obj, target_item.item_id, 1)
+            await inventory.update_stock(self.expedition.player_obj, target_item.item_id, 1)
             luck_value = 1
             title = "Heart Preserved!"
             description = f"{sharedmethods.reward_message(target_item)} acquired!\n Luck +{luck_value}"
@@ -577,7 +578,7 @@ class AdventureRoomView(discord.ui.View):
     async def selection_callback(self, interaction_obj, variant, active_room):
         async def option_callback():
             target_item = self.reward_items[variant]
-            inventory.update_stock(self.expedition.player_obj, target_item.item_id, 1)
+            await inventory.update_stock(self.expedition.player_obj, target_item.item_id, 1)
             title, description = "Item Selected!", f"{target_item.item_emoji} 1x {target_item.item_name} acquired!"
             self.embed = discord.Embed(colour=self.expedition.colour, title=title, description=description)
             await interaction_obj.response.edit_message(embed=self.embed, view=self.new_view)
@@ -591,8 +592,8 @@ class AdventureRoomView(discord.ui.View):
                 await self.trap_triggered(interaction_obj)
                 return
             # Award both items
-            inventory.update_stock(self.expedition.player_obj, self.reward_items[0].item_id, 1)
-            inventory.update_stock(self.expedition.player_obj, self.reward_items[1].item_id, 1)
+            await inventory.update_stock(self.expedition.player_obj, self.reward_items[0].item_id, 1)
+            await inventory.update_stock(self.expedition.player_obj, self.reward_items[1].item_id, 1)
             output_msg = f"{self.reward_items[0].item_emoji} 1x {self.reward_items[0].item_name} acquired!\n"
             output_msg += f"{self.reward_items[1].item_emoji} 1x {self.reward_items[1].item_name} acquired!"
             title = "Received Both Items!"
@@ -615,7 +616,7 @@ class AdventureRoomView(discord.ui.View):
             if self.reward_items[variant] is not None:
                 item_id = self.reward_items[variant].item_id
                 quantity = get_random_quantity(luck=self.expedition.luck, is_lucky=(adjuster == 2))
-                inventory.update_stock(self.expedition.player_obj, item_id, quantity)
+                await inventory.update_stock(self.expedition.player_obj, item_id, quantity)
                 self.embed.description = (f"{self.reward_items[variant].item_emoji} {quantity}x "
                                           f"{self.reward_items[variant].item_name}")
                 await interaction_obj.response.edit_message(embed=self.embed, view=self.new_view)
@@ -694,7 +695,7 @@ class AdventureRoomView(discord.ui.View):
             return
         # Handle success
         title, output_msg = "Found Materials!", f"{reward.item_emoji} {item_qty}x {reward.item_name}\n**Luck +1**"
-        inventory.update_stock(self.expedition.player_obj, reward.item_id, item_qty)
+        await inventory.update_stock(self.expedition.player_obj, reward.item_id, item_qty)
         self.expedition.luck += luck_qty
         self.embed = discord.Embed(colour=self.expedition.colour, title=title, description=output_msg)
         await interaction_obj.response.edit_message(embed=self.embed, view=self.new_view)
@@ -702,7 +703,7 @@ class AdventureRoomView(discord.ui.View):
     async def sanctuary_callback(self, interaction_obj, variant, active_room):
         item_type = "Origin" if "Origin" in self.reward_items[variant].item_id else "Cores"
         qty = 1 if item_type == "Origin" else random.randint((1 + self.expedition.luck), (10 + self.expedition.luck))
-        inventory.update_stock(self.expedition.player_obj, self.reward_items[variant].item_id, qty)
+        await inventory.update_stock(self.expedition.player_obj, self.reward_items[variant].item_id, qty)
         title = f"{item_type} Collected!"
         output_msg = f"{self.reward_items[variant].item_emoji} {qty}x {self.reward_items[variant].item_name}"
         self.embed = discord.Embed(colour=self.expedition.colour, title=title, description=output_msg)
@@ -758,6 +759,7 @@ class AdventureRoomView(discord.ui.View):
         if active_room.room_type != "treasure":
             trap_msg = "You have fallen for the ultimate elder mimic's clever ruse!"
             self.embed.add_field(name="Eaten - Run Ended", value=trap_msg, inline=False)
+            self.expedition.player_obj.update_misc_data("deaths", 1)
             self.expedition.player_obj.player_cHP = 0
             if await self.check_death(interaction_obj):
                 return
@@ -812,6 +814,7 @@ class AdventureRoomView(discord.ui.View):
             title_msg = "Slain"
         if self.expedition.player_obj.player_cHP > 0:
             return False
+        self.expedition.player_obj.update_misc_data("deaths", 1)
         death_header, death_msg = "__Thana, The Death__", random.choice(adventuredata.death_msg_list)
         self.embed = discord.Embed(colour=self.expedition.colour, title=title_msg, description=result_msg)
         self.embed.add_field(name=death_header, value=death_msg, inline=False)
@@ -827,7 +830,7 @@ class AdventureRoomView(discord.ui.View):
             reward = inventory.BasicItem(f"Fragment{min((self.expedition.tier - 4), 4)}")
             loot_msg = f"{reward.item_emoji} {qty}x {reward.item_name}"
             self.embed = discord.Embed(colour=self.expedition.colour, title="Fragments Acquired!", description=loot_msg)
-            update_stock = inventory.update_stock(self.expedition.player_obj, reward.item_id, qty)
+            update_stock = await inventory.update_stock(self.expedition.player_obj, reward.item_id, qty)
             await interaction.response.edit_message(embed=self.embed, view=self.new_view)
             return
         # Handle gear item rewards.
@@ -961,7 +964,7 @@ class ItemView(discord.ui.View):
             return
         self.new_view = TransitionView(self.expedition)
         scrap_item = inventory.BasicItem("Scrap")
-        inventory.update_stock(self.expedition.player_obj, scrap_item.item_id, self.item.item_tier)
+        await inventory.update_stock(self.expedition.player_obj, scrap_item.item_id, self.item.item_tier)
         title, description = "Item Scrapped!", f"{scrap_item.item_emoji} {self.item.item_tier}x {scrap_item.item_name}"
         self.embed = discord.Embed(colour=self.expedition.colour, title=title, description=description)
         await interaction.response.edit_message(embed=self.embed, view=self.new_view)
@@ -1056,7 +1059,7 @@ async def handle_mine(ctx_object, player_obj, success_rate):
         item_icon = f" {item_obj.item_emoji}"
     if outcome_item == "Lotus of Abundance":
         await sharedmethods.send_notification(ctx_object, player_obj, "Item", item_obj.item_id)
-    inventory.update_stock(player_obj, item_obj.item_id, 1)
+    await inventory.update_stock(player_obj, item_obj.item_id, 1)
     coin_msg = player_obj.adjust_coins(outcome_coins)
     item_name = item_obj.item_name if item_obj is not None else outcome_item
     return f"You found{item_icon} 1x {item_name}!\nReceived {globalitems.coin_icon} {coin_msg} Lotus Coins!"
@@ -1074,7 +1077,7 @@ async def handle_gather(ctx_object, player_obj, success_rate):
         if sharedmethods.check_rare_item(reward_object.item_id):
             await sharedmethods.send_notification(ctx_object, player_obj, "Item", reward_object.item_id)
     batch_df = sharedmethods.list_to_batch(player_obj, reward_list)
-    inventory.update_stock(None, None, None, batch=batch_df)
+    await inventory.update_stock(None, None, None, batch=batch_df)
     return output_msg
 
 
@@ -1147,7 +1150,7 @@ class SkipView(discord.ui.View):
             return
         colour, _ = sharedmethods.get_gear_tier_colours(self.player_user.player_echelon)
         self.new_embed = discord.Embed(colour=colour, title="", description="")
-        cost_stock = inventory.check_stock(self.player_user, self.cost_item.item_id)
+        cost_stock = await inventory.check_stock(self.player_user, self.cost_item.item_id)
         if cost_stock < 5:
             self.new_embed.title = "Manifest - Out of Stock"
             self.new_embed.description = sharedmethods.get_stock_msg(self.cost_item, cost_stock, cost=5)
@@ -1160,7 +1163,7 @@ class SkipView(discord.ui.View):
             return
         wait_time = timedelta(hours=(14 + self.player_user.player_echelon))
         if difference <= wait_time:
-            inventory.update_stock(self.player_user, self.cost_item.item_id, -5)
+            await inventory.update_stock(self.player_user, self.cost_item.item_id, -5)
             self.player_user.set_cooldown("manifest", "", rewind_days=2)
         self.new_embed = await build_manifest_return_embed(self.ctx_obj, self.player_user, method_info, colour)
         self.new_view = RepeatView(self.ctx_obj, self.player_user, self.method_info)
