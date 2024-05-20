@@ -189,6 +189,20 @@ def generate_and_combine_gear(item_type, start_tier=1, end_tier=8, fetch_type=Fa
         file_path = f"{output_dir}{file_name}"
         frame = Image.open(requests.get(frame_url, stream=True).raw)
         icon = Image.open(requests.get(icon_url, stream=True).raw)
+        # Handle Pact Variants
+        if item_type == "Pact":
+            for variant in ["Wrath", "Sloth", "Greed", "Envy", "Pride", "Lust", "Gluttony"]:
+                variant_url = f"{web_url}/botimages/itemicons/Pact_Variants/{variant}.png"
+                variant_img = Image.open(requests.get(variant_url, stream=True).raw)
+                output_dir = f'{image_path}itemicons\\{item_type}\\'
+                file_name = f"Frame_{item_type}_{item_tier}_{variant}.png"
+                remote_dir = f"/public_html/botimages/itemicons/{item_type}/"
+                result = Image.new("RGBA", (106, 106))
+                result.paste(frame, (0, 0), frame)
+                result.paste(icon, (17, 16), icon)
+                result.paste(variant_img, (17, 16), variant_img)
+                result.save(file_path, format="PNG")
+                upload_file_to_ftp(ftp, file_path, remote_dir, file_name)
         # Construct the new image
         result = Image.new("RGBA", (106, 106))
         result.paste(frame, (0, 0), frame)

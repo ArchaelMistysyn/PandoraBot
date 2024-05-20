@@ -284,8 +284,8 @@ selection_pools = [
     ["Hammer", "Pearl", "Ore2", "Token1", "Trove2", "Flame1", "Matrix", "Trove2", "Summon1", "Potion2", "ESS"],
     ["Hammer", "Pearl", "Ore3", "Token2", "Trove3", "Stone4", "Gem1", "Gem2", "Gem3", "Potion3", "ESS"],
     ["Hammer", "Pearl", "Ore4", "Token3", "Token4", "Trove4", "Summon1", "Core1", "Jewel1", "Jewel2", "Potion4", "ESS"],
-    ["Hammer", "Pearl", "Ore5", "Token5", "Trove5", "Summon2", "Crystal2", "Core2", "Flame2", "Jewel3", "ESS"],
-    ["Hammer", "Pearl", "Ore5", "Token7", "Token6", "Trove7", "Trove6", "Summon3", "Crystal3",
+    ["Skull1", "Hammer", "Pearl", "Ore5", "Token5", "Trove5", "Summon2", "Crystal2", "Core2", "Flame2", "Jewel3", "ESS"],
+    ["Skull2", "Hammer", "Pearl", "Ore5", "Token7", "Token6", "Trove7", "Trove6", "Summon3", "Crystal3",
      "Core3", "Jewel4", "Compass", "ESS"],
-    ["Lotus1", "Lotus2", "Lotus3", "Lotus4", "Lotus5", "Lotus6", "Lotus7", "Lotus8", "Lotus9",
+    ["Skull3", "Lotus1", "Lotus2", "Lotus3", "Lotus4", "Lotus5", "Lotus6", "Lotus7", "Lotus8", "Lotus9",
      "Lotus10", "DarkStar", "LightStar", "Core4", "Trove8", "Crystal4", "Jewel5", "ESS"]]

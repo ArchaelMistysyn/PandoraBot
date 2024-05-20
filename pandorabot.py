@@ -231,7 +231,7 @@ def run_discord_bot():
                     count += pilengine.generate_and_combine_gear(name, end_tier=4)
                 for name in high_types:
                     count += pilengine.generate_and_combine_gear(name, start_tier=5, fetch_type=True)
-            non_weapon_list = ["Armour", "Greaves", "Amulet", "Wings", "Crest", "Jewel"]
+            non_weapon_list = ["Armour", "Greaves", "Amulet", "Wings", "Crest", "Gem", "Pact"]
             for gear_type in non_weapon_list:
                 count += pilengine.generate_and_combine_gear(gear_type)
             await ctx.send(f"Admin item task completed. Task Count: {count}")
@@ -1263,6 +1263,40 @@ def run_discord_bot():
         quote_embed.add_field(name="", value=f"Quoted from {quote_date} [ID: {message_id}]", inline=True)
         quote_embed.set_thumbnail(url=user.avatar)
         await ctx.send(embed=quote_embed)
+
+    @set_command_category('misc', 3)
+    @pandora_bot.hybrid_command(name='listquotes', help="List all quotes from a selected user.")
+    @app_commands.guilds(discord.Object(id=guild_id))
+    async def list_quotes(ctx: commands.Context, target_user: discord.User):
+        await ctx.defer()
+        raw_query = "SELECT * FROM UserQuotes WHERE user_discord_id = :discord_id"
+        quote_df = rq(raw_query, params={'discord_id': target_user.id}, return_value=True)
+        if quote_df.empty:
+            await ctx.send("No quotes available for this user.")
+            return
+        quote_list = quote_df.to_dict(orient='records')
+        random_quote = random.choice(quote_list)
+        user_discord_id = random_quote['user_discord_id']
+        user = await pandora_bot.fetch_user(user_discord_id)
+        if not user:
+            await ctx.send("User not found in the server.")
+            return
+        max_fields_per_embed = 25
+        embed_list = []
+        total_quotes = len(quote_list)
+
+        for i in range(0, total_quotes, max_fields_per_embed):
+            chunk = quote_list[i:i + max_fields_per_embed]
+            title, description = user.display_name, f"Quotes {i + 1}-{i + len(chunk)} of {total_quotes}"
+            quote_embed = discord.Embed(title=title, description=description, color=discord.Color.blue())
+            for selected_quote in chunk:
+                user_quote, message_id = selected_quote['user_quote'], selected_quote['message_id']
+                quote_date = selected_quote['quote_date']
+                quote_embed.add_field(name=f"Date: {quote_date} [ID: {message_id}]", value=user_quote, inline=False)
+            quote_embed.set_thumbnail(url=user.avatar.url if user.avatar else discord.Embed.Empty)
+            embed_list.append(quote_embed)
+        for embed in embed_list:
+            await ctx.send(embed=embed)
 
     def build_category_dict():
         temp_dict = {}

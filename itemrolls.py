@@ -162,10 +162,11 @@ weapon_unique_rolls = {
 }
 
 armour_unique_rolls = {
-    "unique-0-a": ["Gain X% Elemental Damage per Matching Resistance", 2, 5, [["unique_conversion", 0]]],
-    "unique-1-a": ["Max HP reduced by X%. Gain 1% Final Damage per 100 HP lost.", 1, 5, [["unique_conversion", 1]]],
+    "unique-0-a": ["Gain X% Elemental Damage per Matching Resistance", 1, 5, [["unique_conversion", 0]]],
+    "unique-1-a": ["Max HP reduced by X%. Gain 1% Final Damage per 100 HP lost", 1, 5, [["unique_conversion", 1]]],
     "unique-2-a": ["Block Rate", 4, 10, [["block", -1]]],
-    "unique-3-a": ["Dodge Rate", 2, 10, [["dodge", -1]]]
+    "unique-3-a": ["Dodge Rate", 2, 10, [["dodge", -1]]],
+    "unique-4-a": ["Gain X% Final Damage per 1% damage mitigation", 1, 5, [["unique_conversion", 3]]]
 }
 
 accessory_unique_rolls = {

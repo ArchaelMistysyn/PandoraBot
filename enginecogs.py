@@ -286,6 +286,13 @@ class MapCog(commands.Cog):
             if status != "Continue":
                 end_embed = self.build_base_embed()
                 end_embed.description = "Expedition Completed!"
+                if random.randint(1, 2000) <= self.map_tier:
+                    reward_object = inventory.BasicItem("Lotus7")
+                    current_qty = self.items_accumulated.get(reward_object.item_id, (reward_object, 0))[1]
+                    self.items_accumulated[reward_object.item_id] = (reward_object, current_qty + 1)
+                    await inventory.update_stock(self.player_obj, reward_object.item_id, 1)
+                    if sharedmethods.check_rare_item(reward_object.item_id):
+                        await sharedmethods.send_notification(self.ctx_obj, self.player_obj, "Item", reward_object.item_id)
                 end_embed = await self.accumulated_output(end_embed)
                 await self.sent_message.edit(embed=end_embed)
                 await encounters.clear_automapper(self.player_obj.player_id)
@@ -309,8 +316,7 @@ class MapCog(commands.Cog):
         if self.room_num == self.map_tier * 2:
             return "Clear"
         # Trigger occurrence/deal damage to player
-        room_type = random.choices(['Combat', 'Treasure', 'Mining', 'Storage'],
-                                   weights=[5, 4, 4, 3], k=1)[0]
+        room_type = random.choices(['Combat', 'Treasure', 'Mining', 'Storage'], weights=[5, 4, 4, 3], k=1)[0]
         room_embed, status = await self.run_room(room_type)
         await self.sent_message.edit(embed=room_embed)
         return status
@@ -329,8 +335,8 @@ class MapCog(commands.Cog):
     async def handle_combat_room(self):
         base_embed = self.build_base_embed()
         hp_msg = sharedmethods.display_hp(self.player_cHP, self.player_mHP)
-        threat, adjust = random.choices([('basic_monster', 1), ('elite_monster', 2), ('legend_monster', 3)],
-                                        weights=[60, 30, 10], k=1)[0]
+        monster_data = [('basic_monster', 1), ('elite_monster', 2), ('legend_monster', 3)]
+        threat, adjust = random.choices(monster_data, weights=[60, 30, 10], k=1)[0]
         dmg_element = random.randint(0, 8)
         element_descriptor = adventuredata.element_descriptor_list[dmg_element]
         match threat:
@@ -363,8 +369,17 @@ class MapCog(commands.Cog):
         if self.player_cHP <= 0:
             new_embed.add_field(name="SLAIN", value=hp_msg, inline=False)
             return new_embed
-        # EXP Handling
+
         await self.player_obj.reload_player()
+
+        # Handle ring souls
+        if self.player_obj.player_equipped[4] != 0:
+            e_ring = await inventory.read_custom_item(self.player_obj.player_equipped[4])
+            if e_ring.item_base_type == "Crown of Skulls":
+                e_ring.item_roll_values[1] += adjust
+                await e_ring.update_stored_item()
+
+        # EXP Handling
         exp_awarded = int(base_damage / 10)
         self.exp_accumulated += exp_awarded
         exp_msg, lvl_adjust = self.player_obj.adjust_exp(exp_awarded)
@@ -390,7 +405,7 @@ class MapCog(commands.Cog):
             await inventory.update_stock(self.player_obj, reward_object.item_id, 1)
             field_value = f"{hp_msg} HP\n{reward_object.item_emoji} 1x {reward_object.item_name}"
         else:
-            self.coins_accumulated += 100 * bonus
+            self.coins_accumulated += 1000 * bonus
             coin_msg = self.player_obj.adjust_coins(1000 * bonus)
             field_value = f"Acquired {globalitems.coin_icon} {coin_msg} lotus coins!"
         new_embed.add_field(name="", value=field_value, inline=False)
@@ -432,7 +447,7 @@ class MapCog(commands.Cog):
         field_value = f"{hp_msg} HP\n{reward_object.item_emoji} {item_qty}x {reward_object.item_name}"
         new_embed.add_field(name="", value=field_value, inline=False)
         if sharedmethods.check_rare_item(reward_object.item_id):
-            await sharedmethods.send_notification(ctx, player_obj, "Item", item_id)
+            await sharedmethods.send_notification(self.ctx_obj, self.player_obj, "Item", reward_object.item_id)
         return new_embed
 
 

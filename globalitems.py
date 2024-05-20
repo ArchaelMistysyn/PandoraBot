@@ -102,9 +102,9 @@ skill_names_dict = {
 crafting_gem = ["Blazing Ruby", "Drowned Sapphire", "Silent Topaz", "Ancient Agate", "Whispering Emerald",
                 "Arctic Zircon", "Haunted Obsidian", "Prismatic Opal", "Spatial Lapis", "Soul Diamond"]
 availability_list_nongear = ["RoyalCoin"]
+availability_list = ["Sword", "Bow", "Threads", "Armour", "Wings", "Amulet", "Crest", "Greaves", "Gem", "Pact"]
 
 # Weapon lists
-availability_list = ["Sword", "Bow", "Threads", "Armour", "Wings", "Amulet"]  # Currently available icons
 weapon_list_low = [
     [["Shortsword", "Javelin"],
      ["Sword", "Spear"],

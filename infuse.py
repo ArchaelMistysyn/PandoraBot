@@ -129,10 +129,13 @@ class RecipeObject:
 
     async def perform_infusion(self, player_obj, num_crafts, ring=False):
         result = 0
+        labels = ['player_id', 'item_id', 'item_qty']
+        batch_df = pd.DataFrame(columns=labels)
         # Deduct the cost for each item
         for (item, qty) in self.cost_items:
             total_cost = 0 - (num_crafts * qty)
-            await inventory.update_stock(player_obj, item.item_id, total_cost)  # This needs to update all at once instead.
+            batch_df.loc[len(batch_df)] = [player_obj.player_id, item.item_id, total_cost]
+        await inventory.update_stock(None, None, None, batch=batch_df)
         if ring:
             outcome = random.randint(1, 100)
             return 1 if ("Gambler's Masterpiece" not in self.recipe_name or outcome == 1) else 0

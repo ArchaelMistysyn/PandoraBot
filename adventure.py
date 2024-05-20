@@ -149,6 +149,7 @@ class Room:
                 demon_type, pact_type = pact.demon_variants[demon_tier], random.choice(list(pact.pact_variants.keys()))
                 self.variant = f"{demon_tier};{pact_type}"
                 title = f"{title} [{pact_type}]"
+                pact_url = f"Frame_Pact_{demon_tier}_{pact_type}.png"
             case "trial_room":
                 self.variant = random.choice(list(adventuredata.trial_variants_dict.keys()))
                 trial_type = adventuredata.trial_variants_dict[self.variant]
@@ -167,6 +168,8 @@ class Room:
             case _:
                 pass
         self.embed = discord.Embed(colour=expedition.colour, title=title, description=description)
+        if self.room_type == "pact_room":
+            self.embed.set_thumbnail(url=pact_url)
 
     def check_trap(self, luck_value):
         trap_rates = {"trap_room": 100, "treasure": max(0, (25 - luck_value)),
@@ -465,6 +468,11 @@ class AdventureRoomView(discord.ui.View):
             exp_msg, lvl_change = temp_user.adjust_exp(exp_reward)
             self.embed.add_field(name="Monster Defeated!", value=msg, inline=False)
             self.embed.add_field(name="", value=f"{hp_msg}\n{globalitems.exp_icon} {exp_msg} Exp Acquired.", inline=False)
+            if self.expedition.player_obj.player_equipped[4] != 0:
+                e_ring = await inventory.read_custom_item(self.expedition.player_obj.player_equipped[4])
+                if e_ring.item_base_type == "Crown of Skulls":
+                    e_ring.item_roll_values[1] += adjuster
+                    await e_ring.update_stored_item()
             await interaction_obj.response.edit_message(embed=self.embed, view=self.new_view)
             if lvl_change != 0:
                 await sharedmethods.send_notification(self.expedition.ctx_object, temp_user, "Level", lvl_change)
@@ -859,6 +867,7 @@ class AdventureRoomView(discord.ui.View):
         item_location = random.sample(range(0, (len(selected_pool) - 1)), 2)
         selected_set = [selected_pool[item_location[0]], selected_pool[item_location[1]]]
         selected_set = check_essence(selected_set, reward_tier)
+        selected_set[0] = "Skull4" if random.randint(1, 20000) <= 1 else selected_set[0]
         self.reward_items = [inventory.BasicItem(selected_set[0]), inventory.BasicItem(selected_set[1])]
         self.option1.label = f"{self.reward_items[0].item_name}"
         self.option1.emoji = self.reward_items[0].item_emoji

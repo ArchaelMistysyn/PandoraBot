@@ -16,6 +16,7 @@ import inventory
 
 boss_loot_dict = {
     "All": [[0, "Crate", 25], [0, "Matrix", 15], [0, "Core1", 1], [0, "OriginZ", 1],
+            [0, "Skull4", 0.005], [0, "Skull3", 0.05], [0, "Skull2", 0.5], [0, "Skull1", 5],
             [0, "Hammer", 25], [0, "Pearl", 15], [0, "Heart1", 2], [0, "Heart2", 1],
             [1, "Ore1", 25], [2, "Ore2", 25], [3, "Ore3", 25], [4, "Ore4", 25],
             [1, "Potion1", 5], [2, "Potion2", 5], [3, "Potion3", 5], [4, "Potion4", 5],
@@ -82,6 +83,13 @@ async def award_loot(boss_object, player_list, exp_amount, coin_amount, loot_mul
         base_reward_msg += f"{globalitems.coin_icon} {coin_msg} lotus coins\n"
         loot_msg.append(base_reward_msg)
 
+        # Handle ring souls
+        if temp_player.player_equipped[4] != 0:
+            e_ring = await inventory.read_custom_item(temp_player.player_equipped[4])
+            if e_ring.item_base_type == "Crown of Skulls":
+                e_ring.item_roll_values[1] += 1
+                await e_ring.update_stored_item()
+
         # Check unscaled drops.
         core_element = boss_object.boss_element if boss_object.boss_element != 9 else random.randint(0, 8)
         fae_id, fae_qty = f"Fae{core_element}", random.randint(5, max(5, min(100, boss_object.boss_level)))
@@ -117,13 +125,12 @@ async def award_loot(boss_object, player_list, exp_amount, coin_amount, loot_mul
                 if sharedmethods.check_rare_item(drop_id):
                     await sharedmethods.send_notification(ctx, temp_player, "Item", drop_id)
     # Update the database.
-    inventory.update_stock(None, None, None, batch=batch_df)
+    await inventory.update_stock(None, None, None, batch=batch_df)
     return loot_msg
 
 
 def is_dropped(drop_rate):
-    random_num = random.randint(1, 10000)
-    return True if random_num <= int(round((drop_rate * 100))) else False
+    return True if random.randint(1, 100000) <= int(round((drop_rate * 1000))) else False
 
 
 def generate_random_item(quantity=1):
@@ -131,11 +138,12 @@ def generate_random_item(quantity=1):
     rewards = {}
     quantity_table = [1, 1, 1, 1, 1, 1, 2, 2, 2, 3]
     probability_rewards = [
-        [10, None, "Lotus"], [1, "DarkStar", None], [1, "LightStar", None], [24, None, "Gemstone"],
-        [100, None, "Essence"], [200, None, "Trove"], [100, None, "Origin"], [100, None, "Core"], [50, None, "Crystal"],
+        [10, None, "Lotus"], [1, "DarkStar", None], [1, "LightStar", None], [1, None, "Skull"], [24, None, "Gemstone"],
+        [99, None, "Essence"], [200, None, "Trove"], [100, None, "Origin"], [100, None, "Core"], [50, None, "Crystal"],
+        [5, None, "Skull3"], [30, None, "Skull2"], [65, None, "Skull1"],
         [200, None, "Token"], [100, None, "Jewel"], [200, None, "Summon"], [50, "Compass", None],
         [1000, "Pearl", None], [2000, "Hammer", None], [500, None, "Gem"], [1500, None, "Ore"],
-        [750, None, "Fragment"], [750, "Flame1", None], [750, "Matrix", None], [500, None, "Potion"],
+        [750, None, "Fragment"], [750, "Flame1", None], [750, "Matrix", None], [400, None, "Potion"],
         [1114, None, "Fae"]]
     max_reward = 10000  # sum(item[0] for item in probability_rewards)
     # Assign a reward id based on the probability, set id, or id prefix.

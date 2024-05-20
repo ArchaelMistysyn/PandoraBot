@@ -77,7 +77,7 @@ class PlayerProfile:
         self.skill_base_damage_bonus = [0, 0, 0, 0]
         self.spec_rate, self.spec_conv = [0.0, 0.0, 0.0, 0.0, 0.0], [0, 0]
         self.bloom_multiplier = 10.0
-        self.unique_conversion = [0.0, 0.0, 0.0]
+        self.unique_conversion = [0.0, 0.0, 0.0, 0.0]
         self.attack_speed = 0.0
         self.bonus_hits = 0.0
         self.defence_penetration = 0.0
@@ -452,13 +452,14 @@ class PlayerProfile:
             if self.elemental_resistance[x] >= 0.9:
                 self.elemental_resistance[x] = 0.9
             # Apply unique resistance conversion.
-            self.elemental_multiplier[x] += self.elemental_resistance[x] * int(round(self.unique_conversion[0] * 100))
+            self.elemental_multiplier[x] += self.elemental_resistance[x] * self.unique_conversion[0]
         for y in range(6):
             self.banes[y] += self.banes[6]
         # Calculate unique conversions
         hp_reduction = self.player_mHP * self.unique_conversion[1]
         self.player_mHP = int(self.player_mHP - hp_reduction)
         self.final_damage += int(round(hp_reduction / 100))
+        self.final_damage += self.unique_conversion[3]
 
     def get_player_initial_damage(self):
         return self.player_damage * (1 + self.class_multiplier) * (1 + self.final_damage)
