@@ -63,18 +63,18 @@ class PlayerProfile:
 
         # Initialize class specialization stats.
         self.unique_glyph_ability = [False, False, False, False, False, False, False]
-        self.temporal_application = 0
+        self.temporal_app = 0
         self.elemental_capacity, self.elemental_app = 3, 0
-        self.bleed_multiplier, self.bleed_penetration, self.bleed_application = 0.0, 0.0, 0
-        self.combo_multiplier, self.combo_penetration, self.combo_application = 0.05, 0.0, 0
-        self.ultimate_multiplier, self.ultimate_penetration, self.ultimate_application = 0.0, 0.0, 0
+        self.bleed_mult, self.bleed_penetration, self.bleed_app = 0.0, 0.0, 0
+        self.combo_mult, self.combo_penetration, self.combo_application = 0.05, 0.0, 0
+        self.ultimate_mult, self.ultimate_penetration, self.ultimate_app = 0.0, 0.0, 0
         self.perfect_crit, self.critical_chance, self.critical_multiplier = 0, 0.0, 1.0
         self.critical_penetration, self.critical_app = 0.0, 0
 
         # Initialize misc stats.
         self.charge_generation = 1
         self.banes = [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
-        self.skill_base_damage_bonus = [0, 0, 0, 0]
+        self.skill_damage_bonus = [0, 0, 0, 0]
         self.spec_rate, self.spec_conv = [0.0, 0.0, 0.0, 0.0, 0.0], [0, 0, 0, 0]
         self.bloom_multiplier = 10.0
         self.unique_conversion = [0.0, 0.0, 0.0, 0.0]
@@ -84,6 +84,7 @@ class PlayerProfile:
         self.class_multiplier = 0.0
         self.final_damage = 0.0
         self.rng_bonus = 0
+        self.aqua_mode, self.aqua_points, self.aqua_app = 0, 0, 0
 
         # Initialize defensive stats.
         self.hp_bonus, self.hp_regen, self.hp_multiplier = 0.0, 0.0, 0.0
@@ -178,18 +179,18 @@ class PlayerProfile:
                                      show_num(self.critical_penetration), show_num(self.critical_app),
                                      (self.critical_app * 10 + show_num(self.spec_rate[2]))])
                 stats += set_section("Combo Details", ["Dmg", "Pen", "App"],
-                                     [show_num(self.combo_multiplier), show_num(self.combo_penetration),
+                                     [show_num(self.combo_mult), show_num(self.combo_penetration),
                                      self.combo_application])
                 stats += set_section("Ultimate Details", ["Dmg", "Pen", "App"],
-                                     [show_num(self.ultimate_multiplier), show_num(self.ultimate_penetration),
-                                     self.ultimate_application])
+                                     [show_num(self.ultimate_mult), show_num(self.ultimate_penetration),
+                                     self.ultimate_app])
                 stats += set_section("Bleed Details", ["Dmg", "Pen", "App", "HPR"],
-                                     [show_num(self.bleed_multiplier), show_num(self.bleed_penetration),
-                                     self.bleed_application,
-                                     (self.bleed_application * 10 + show_num(self.spec_rate[1]))])
+                                     [show_num(self.bleed_mult), show_num(self.bleed_penetration),
+                                     self.bleed_app,
+                                     (self.bleed_app * 10 + show_num(self.spec_rate[1]))])
                 stats += set_section("Time Details", ["Dmg", "App", "LCK"],
-                                     [((self.temporal_application + 1) * 100), self.temporal_application,
-                                     (self.temporal_application * 5 + show_num(self.spec_rate[4]))])
+                                     [((self.temporal_app + 1) * 100), self.temporal_app,
+                                     (self.temporal_app * 5 + show_num(self.spec_rate[4]))])
                 stats += set_section("Bloom Details", ["BLM", "Dmg"],
                                      [show_num(self.spec_rate[0]), show_num(self.bloom_multiplier)])
                 embed_msg.add_field(name=title_msg, value=stats, inline=False)
@@ -218,7 +219,7 @@ class PlayerProfile:
             return embed_msg
         if method == 5:
             # Points Display.
-            temp_embed = skillpaths.create_path_embed(self)
+            temp_embed = await skillpaths.create_path_embed(self)
             if temp_embed is not None:
                 for field in temp_embed.fields[:-1]:
                     embed_msg.add_field(name=field.name, value=field.value, inline=field.inline)
@@ -227,10 +228,13 @@ class PlayerProfile:
         if method == 6:
             # Glyph Display.
             embed_msg.add_field(name=f"{self.player_username}'s Glyphs (Above tier 1)", value="", inline=False)
+            if self.aqua_mode != 0:
+                embed_msg = await skillpaths.display_glyph("Waterfalls", self.aqua_points, embed_msg)
+                return embed_msg
             for path_index, path_type in enumerate(globalitems.path_names):
                 total_points = self.player_stats[path_index] + self.gear_points[path_index]
                 if total_points >= 20:
-                    embed_msg = skillpaths.display_glyph(path_type, total_points, embed_msg)
+                    embed_msg = await skillpaths.display_glyph(path_type, total_points, embed_msg)
             return embed_msg
 
     def adjust_coins(self, coin_change, reduction=False, apply_pact=True):
@@ -369,8 +373,8 @@ class PlayerProfile:
         # Class Multipliers
         class_multipliers = {
             "Ranger": ["critical_app", 1], "Weaver": ["elemental_app", 2],
-            "Assassin": ["bleed_application", 1], "Mage": ["temporal_application", 1],
-            "Summoner": ["combo_application", 1], "Knight": ["ultimate_application", 1]
+            "Assassin": ["bleed_app", 1], "Mage": ["temporal_app", 1],
+            "Summoner": ["combo_application", 1], "Knight": ["ultimate_app", 1]
         }
         if self.player_class in class_multipliers:
             setattr(self, class_multipliers[self.player_class][0], class_multipliers[self.player_class][1])
@@ -410,8 +414,8 @@ class PlayerProfile:
         # Application Calculations
         base_critical_chance += self.critical_app
         self.critical_multiplier += self.critical_app
-        self.skill_base_damage_bonus[3] += self.ultimate_application * 0.25
-        self.charge_generation += self.ultimate_application
+        self.skill_damage_bonus[3] += self.ultimate_app * 0.25
+        self.charge_generation += self.ultimate_app
         self.all_elemental_multiplier += self.elemental_app * 0.25
 
         # Elemental Capacity
@@ -422,12 +426,12 @@ class PlayerProfile:
 
         # Capacity Hard Limits
         self.elemental_capacity = min(self.elemental_capacity, 9)
-        # Solitude/Frostfire exception
-        self.elemental_capacity = 1 if total_points[6] >= 100 else 3 if total_points[1] >= 80 else self.elemental_capacity
+        # Solitude/Frostfire and Aqua exceptions
+        self.elemental_capacity = 1 if total_points[6] >= 100 or self.aqua_mode != 0 else 3 if total_points[1] >= 80 else self.elemental_capacity
 
         # General Calculations
         self.critical_chance = (1 + self.critical_chance) * base_critical_chance
-        self.critical_chance = 100.00 if self.perfect_crit > 0 else self.critical_chance
+        self.critical_chance = 100.00 if self.perfect_crit > 0 or self.aqua_points >= 80 else self.critical_chance
         self.attack_speed = (1 + self.attack_speed) * base_attack_speed
         self.damage_mitigation = min((1 + (self.mitigation_bonus + self.damage_mitigation)) * base_mitigation, 90)
         self.player_cHP = self.player_mHP = int((base_player_hp + self.hp_bonus) * (1 + self.hp_multiplier))
@@ -461,6 +465,8 @@ class PlayerProfile:
         self.player_mHP = int(self.player_mHP - hp_reduction)
         self.final_damage += int(round(hp_reduction / 100)) / 100
         self.final_damage += self.unique_conversion[3]
+        if self.aqua_mode != 0 and self.equipped_tarot != "" and e_tarot.card_numeral == "XIV":
+            self.critical_multiplier += self.elemental_multiplier[1]
 
     def get_player_initial_damage(self):
         return self.player_damage * (1 + self.class_multiplier) * (1 + self.final_damage)
@@ -500,7 +506,7 @@ class PlayerProfile:
     async def get_bleed_damage(self, boss_obj):
         weapon = await inventory.read_custom_item(self.player_equipped[0])
         player_damage = self.get_player_initial_damage()
-        self.player_total_damage = self.boss_adjustments(player_damage, boss_obj, weapon) * (1 + self.bleed_multiplier)
+        self.player_total_damage = self.boss_adjustments(player_damage, boss_obj, weapon) * (1 + self.bleed_mult)
         return self.player_total_damage
 
     def equip(self, selected_item):

@@ -42,11 +42,15 @@ ring_values_dict = {
     "Dragon's Eye Diamond": [[("Critical Rate is always X%", "perfect_crit", 100, None),
                               ("Critical Damage X%", "critical_multiplier", 500, None)], (100, None)],
     "Chromatic Tears": [[("Omni Curse X%", "all_elemental_curse", 500, None)], (0, None)],
-    "Bleeding Hearts": [[("bleed_application +X", "bleed_application", 5, None)], (0, None)],
+    "Bleeding Hearts": [[("bleed_app +X", "bleed_app", 5, None)], (0, None)],
     "Gambler's Masterpiece": [[("All-In!", "rng_bonus", 777, None)], (0, None)],
     # Sovereign Rings
     "Stygian Calamity": [[("X% chance for Non-Bloom hits to trigger Calamity", "spec_conv", 99, 2)],
                          [("X% Hybrid Curse (Chaos)", "elemental_curse", 999, (0, 2, 3, 6))], (0, None)],
+    "Heavenly Calamity": [[("X% chance for Non-Bloom hits to trigger Calamity", "spec_conv", 99, 2)],
+                          [("X% Hybrid Curse (Holy)", "elemental_curse", 999, (1, 4, 5, 7))], (0, None)],
+    "Hadal's Raindrop": [[("Aqua Cascade", "aqua_mode", 100, None)], [("Aqua Conversion", None, 0, None)],
+                         [("Aqua Resonance", None, 0, None)], (0, None)],
     "Sacred Ring of Divergent Stars": [[("X% chance for Bloom hits to trigger Sacred Bloom", "spec_conv", 50, 0)],
                                        [("X% chance for Non-Bloom hits to trigger Abyssal Bloom", "spec_conv", 50, 1)],
                                        [("Omni Curse X%", "all_elemental_curse", 300, None)], (0, None)],
@@ -66,6 +70,8 @@ def assign_ring_values(player_obj, ring_equipment):
         return
     # Handle everything else
     for (attr_name, attr, value, index) in bonuses:
+        if attr is None:
+            continue
         percent_adjust = 0.01 if "Application" not in attr_name and "All-In" not in attr_name else 1
         if index is None:
             setattr(player_obj, attr, getattr(player_obj, attr, 0) + value * percent_adjust)

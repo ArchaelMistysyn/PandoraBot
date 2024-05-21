@@ -41,9 +41,9 @@ damage_rolls = {
     "damage-11": ["Hybrid Damage (Frostfire)", 20, 8, [["elemental_multiplier", 5], ["elemental_multiplier", 0]]],
     "damage-12": ["Hybrid Damage (Storm)", 20, 8, [["elemental_multiplier", 1], ["elemental_multiplier", 2]]],
     "damage-13": ["Omni Damage", 15, 5, [["all_elemental_multiplier", -1]]],
-    "damage-14": ["Ultimate Damage", 25, 5, [["ultimate_multiplier", -1]]],
-    "damage-15": ["Bleed Damage", 25, 5, [["bleed_multiplier", -1]]],
-    "damage-16": ["Combo Damage", 10, 5, [["combo_multiplier", -1]]],
+    "damage-14": ["Ultimate Damage", 25, 5, [["ultimate_mult", -1]]],
+    "damage-15": ["Bleed Damage", 25, 5, [["bleed_mult", -1]]],
+    "damage-16": ["Combo Damage", 10, 5, [["combo_mult", -1]]],
     "damage-17": ["Hybrid Damage (Chaos)", 18, 5, [["elemental_multiplier", 0], ["elemental_multiplier", 2],
                                                    ["elemental_multiplier", 3], ["elemental_multiplier", 6]]],
     "damage-18": ["Hybrid Damage (Holy)", 18, 5, [["elemental_multiplier", 1], ["elemental_multiplier", 4],
@@ -179,7 +179,7 @@ unique_skill_rolls = {}
 for roll_num, (class_name, skills) in enumerate(globalitems.skill_names_dict.items()):
     for index, skill_name in enumerate(skills):
         key = f"unique-{roll_num}-{class_name}"
-        unique_skill_rolls[key] = [f"{skill_name} Damage", 10, 1, [["skill_base_damage_bonus", index]]]
+        unique_skill_rolls[key] = [f"{skill_name} Damage", 10, 1, [["skill_damage_bonus", index]]]
 
 unique_rolls = {
     "s": [shared_unique_rolls, sum(weighting for _, _, weighting, _ in shared_unique_rolls.values())],

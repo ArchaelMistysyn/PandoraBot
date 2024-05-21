@@ -291,6 +291,27 @@ gemstone_data = [
     [None, 'Stone of the True Void', 100, 8, '<a:elootitem:1144477550379274322>', gem_description, 0]]
 itemdata_dict = build_item_dict(itemdata_dict, gemstone_data, starting_index=0, category="Gemstone")
 
+# Fish Item Data
+fish_list = [("Sawshark [Pristiophoridae]", 1), ("Slippery Dick [Halichoeres bivittatus]", 1),
+             ("Scorpionfish [Scorpaenidae]", 1), ("Clownfish [Amphiprioninae]", 1),
+             ("Hammerhead Shark [Sphyrnidae]", 2), ("Old Wife [Enoplosus armatus]", 2),
+             ("Glass Catfish [Kryptopterus vitreolus]", 2), ("Jellyfish [Scyphozoa]", 2),
+             ("Nurse Shark [Ginglymostoma cirratum]", 3), ("Wahoo [Acanthocybium solandri]", 3),
+             ("Frogfish [Antennariidae]", 3), ("Butterflyfish [Chaetodontidae]", 3),
+             ("Cookiecutter Shark [Isistius brasiliensis]", 4), ("Four-Eyed Fish [Anableps anableps]", 4),
+             ("Coffinfish [Chaunax endeavouri]", 4), ("BoxFish [Ostraciidae]", 4),
+             ("Goblin Shark [Mitsukurina owstoni]", 5), ("Obese Dragonfish [Opostomias micripnus]", 5),
+             ("Anglerfish [Lophiiformes]", 5), ("Swordfish [Xiphias gladius]", 5),
+             ("Zebra Shark [Stegostoma fasciatum]", 6), ("Blue Bastard [Plectorhinchus caeruleonothus]", 6),
+             ("Sunfish [Mola mola]", 6), ("Angelfish [Pomacanthidae]", 6),
+             ("Whale Shark [Rhincodon typus]", 7), ("Whitemargin Stargazer [Uranoscopus sulphureus]", 7),
+             ("Viperfish [Chauliodus sloani]", 7), ("Spookfish [Opisthoproctidae]", 7)]
+fish_description = 'Amazing! What a cute fish. So adorable!'
+fish_data = []
+for (fish_name, fish_tier) in fish_list:
+    fish_data.append([None, fish_name, 100, fish_tier, '<a:elootitem:1144477550379274322>', fish_description, 0])
+itemdata_dict = build_item_dict(itemdata_dict, fish_data, starting_index=1, category="Fish")
+
 # Heart Item Data
 heart_data = [[None, 'Radiant Heart', 100, 6, '<a:elootitem:1144477550379274322>', 'Used for various infusions.', 0],
               [None, 'Chaos Heart', 100, 7, '<a:elootitem:1144477550379274322>', 'Used for various infusions.', 0]]
@@ -305,7 +326,7 @@ uncategorized_data = [
      'Augments an item roll. Increases the tier by 1.', 50000],
     ["Matrix", 'Socket Matrix', 5, 3, '<a:elootitem:1144477550379274322>',
      '5% Chance to add a socket to a gear item.', 5000],
-    ['Crate', 'Crate', 100, 1, '<a:elootitem:1144477550379274322>', 'Contains a random item.', 50000],
+    ['Chest', 'Chest', 100, 1, '<a:elootitem:1144477550379274322>', 'Contains a random item.', 50000],
     ['Shard', "Shard of Pandora's Hammer", 100, 7, '<a:elootitem:1144477550379274322>',
      'Contains a random item.', 50000],
     ['Scrap', 'Equipment Scrap', 100, 1, '<a:elootitem:1144477550379274322>',
@@ -321,6 +342,9 @@ uncategorized_data = [
     ['TwinRings', 'Twin Rings of Divergent Stars', 100, 8, '<a:elootitem:1144477550379274322>',
      "A pair of rings with unique gemstones that twinkle like stars in the night sky and "
      "shine brightly like the brilliant sun.", 0],
+    ['Nadir', 'Phantasm of Nadir', 100, 8, '<a:elootitem:1144477550379274322>',
+     "Amidst the vastest oceans, this tiny fish is exceedingly elusive. They dwell in the deepest trenches. "
+     "Their pitch-black scales conceal precious and unique gems that grow inside their small bodies. ", 0],
     ['RoyalCoin', 'Royal Lotus Coin', 100, 8, '<:Royal_Lotus_Coin:1236080235313893417>',
      "A sacred coin blessed by gods. It is said to be indestructible.", 0]]
 itemdata_dict = build_item_dict(itemdata_dict, uncategorized_data, unique_index=True)

@@ -15,7 +15,7 @@ import inventory
 
 
 boss_loot_dict = {
-    "All": [[0, "Crate", 25], [0, "Matrix", 15], [0, "Core1", 1], [0, "OriginZ", 1],
+    "All": [[0, "Chest", 25], [0, "Matrix", 15], [0, "Core1", 1], [0, "OriginZ", 1],
             [0, "Skull4", 0.005], [0, "Skull3", 0.05], [0, "Skull2", 0.5], [0, "Skull1", 5],
             [0, "Hammer", 25], [0, "Pearl", 15], [0, "Heart1", 2], [0, "Heart2", 1],
             [1, "Ore1", 25], [2, "Ore2", 25], [3, "Ore3", 25], [4, "Ore4", 25],
@@ -144,9 +144,9 @@ def generate_random_item(quantity=1):
         [99, None, "Essence"], [200, None, "Trove"], [100, None, "Origin"], [100, None, "Core"], [50, None, "Crystal"],
         [5, None, "Skull3"], [30, None, "Skull2"], [65, None, "Skull1"],
         [200, None, "Token"], [100, None, "Jewel"], [200, None, "Summon"], [50, "Compass", None],
-        [1000, "Pearl", None], [2000, "Hammer", None], [500, None, "Gem"], [1500, None, "Ore"],
-        [750, None, "Fragment"], [750, "Flame1", None], [750, "Matrix", None], [400, None, "Potion"],
-        [1114, None, "Fae"]]
+        [1000, "Pearl", None], [2000, "Hammer", None], [250, None, "Gem"], [2500, None, "Ore"],
+        [750, None, "Fragment"], [500, "Flame1", None], [500, "Matrix", None], [400, None, "Potion"],
+        [864, None, "Fae"]]
     max_reward = 10000  # sum(item[0] for item in probability_rewards)
     # Assign a reward id based on the probability, set id, or id prefix.
     for _ in range(quantity):

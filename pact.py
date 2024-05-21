@@ -81,7 +81,7 @@ def assign_pact_values(player_obj):
             player_obj.block = int(round(player_obj.block / 2)) if player_obj.block != 0 else 0
         case "Lust":
             player_obj.singularity_damage = int(round(player_obj.singularity_damage / 2))
-            player_obj.bleed_multiplier *= 2
+            player_obj.bleed_mult *= 2
         case _:
             pass
 

@@ -261,7 +261,7 @@ class DivineView(discord.ui.View):
     async def points_callback(self, interaction: discord.Interaction, button: discord.Button):
         if interaction.user.id != self.player_obj.discord_id:
             return
-        embed_msg = skillpaths.create_path_embed(self.player_obj)
+        embed_msg = await skillpaths.create_path_embed(self.player_obj)
         if self.player_obj.player_quest == 17:
             quest.assign_unique_tokens(self.player_obj, "Arbiter")
         await interaction.response.edit_message(embed=embed_msg, view=PointsView(self.player_obj))
@@ -310,7 +310,7 @@ class DivineView(discord.ui.View):
             embed_msg = discord.Embed(colour=discord.Colour.blurple(), title="???", description=denial_msg)
             await interaction.response.edit_message(embed=embed_msg)
             return
-        entry_msg = ("Have you come to desecrate my holy gardens once more? Well, I suppose it no longer matters, "
+        entry_msg = ("Have you come to deseChest my holy gardens once more? Well, I suppose it no longer matters, "
                      "I know you will inevitably find what you desire even without my guidance. "
                      "If you intend to sever the divine lotus, then I suppose the rest are nothing but pretty flowers.")
         embed_msg = discord.Embed(colour=discord.Colour.blurple(), title=title, description=entry_msg)
@@ -989,7 +989,7 @@ class PointsView(discord.ui.View):
                                           description=response)
                 new_view = ResetView(self.player_obj)
             else:
-                embed_msg = skillpaths.build_points_embed(self.player_obj, selected_path)
+                embed_msg = await skillpaths.build_points_embed(self.player_obj, selected_path)
                 new_view = PointsMenu(self.player_obj, selected_path)
             await interaction.response.edit_message(embed=embed_msg, view=new_view)
 
@@ -1023,8 +1023,8 @@ class PointsMenu(discord.ui.View):
     async def allocate_callback(self, num_points):
         if not self.embed_msg:
             await self.player_obj.reload_player()
-            response = skillpaths.allocate_points(self.player_obj, self.selected_path, num_points)
-            self.embed_msg = skillpaths.build_points_embed(self.player_obj, self.selected_path)
+            response = await skillpaths.allocate_points(self.player_obj, self.selected_path, num_points)
+            self.embed_msg = await skillpaths.build_points_embed(self.player_obj, self.selected_path)
             self.embed_msg.add_field(name="", value=response, inline=False)
             self.view = PointsMenu(self.player_obj, self.selected_path)
 
@@ -1032,7 +1032,7 @@ class PointsMenu(discord.ui.View):
     async def reselect_path_button(self, interaction: discord.Interaction, button: discord.ui.Button):
         if interaction.user.id == self.player_obj.discord_id:
             await self.player_obj.reload_player()
-            embed_msg = skillpaths.create_path_embed(self.player_obj)
+            embed_msg = await skillpaths.create_path_embed(self.player_obj)
             points_view = PointsView(self.player_obj)
             await interaction.response.edit_message(embed=embed_msg, view=points_view)
 
@@ -1057,7 +1057,7 @@ class ResetView(discord.ui.View):
                 else:
                     result_msg = "Come back when you have a token."
                 await self.player_obj.reload_player()
-                self.embed_msg = skillpaths.create_path_embed(self.player_obj)
+                self.embed_msg = await skillpaths.create_path_embed(self.player_obj)
                 self.embed_msg.add_field(name=result_msg, value="", inline=False)
             points_view = PointsView(self.player_obj)
             await interaction.response.edit_message(embed=self.embed_msg, view=points_view)
@@ -1066,7 +1066,7 @@ class ResetView(discord.ui.View):
     async def reselect_path_button(self, interaction: discord.Interaction, button: discord.ui.Button):
         if interaction.user.id == self.player_obj.discord_id:
             await self.player_obj.reload_player()
-            embed_msg = skillpaths.create_path_embed(self.player_obj)
+            embed_msg = await skillpaths.create_path_embed(self.player_obj)
             points_view = PointsView(self.player_obj)
             if self.embed_msg:
                 embed_msg.add_field(name="ALL SKILL POINTS RESET!", value="", inline=False)

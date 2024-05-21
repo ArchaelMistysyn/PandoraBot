@@ -63,8 +63,8 @@ card_type_dict = {
 # Key: [path, [description1, value1, reference1, location1], [description2, value2, reference2, location2]]
 card_stat_dict = {
                   # Application Cards
-                  "X": [6, ["Temporal Application", 1, "temporal_application", None],
-                        ["Ultimate Application", 1, "ultimate_application", None]],
+                  "X": [6, ["Temporal Application", 1, "temporal_app", None],
+                        ["Ultimate Application", 1, "ultimate_app", None]],
                   "III": [4, ["Critical Application", 1, "critical_app", None],
                           ["Critical Application", 1, "critical_app", None]],
                   "IV": [0, ["Critical Application", 1, "critical_app", None],
@@ -87,7 +87,7 @@ card_stat_dict = {
                         ["Light Penetration", 20, "elemental_penetration", 7]],
                   "II": [4, ["Celestial Penetration", 20, "elemental_penetration", 8],
                          ["Celestial Curse", 15, "elemental_curse", 8]],
-                  "XXI": [6, ["Temporal Application", 1, "temporal_application", None],
+                  "XXI": [6, ["Temporal Application", 1, "temporal_app", None],
                           ["Elemental Overflow", 1, "elemental_app", None]],
                   # Bane Cards
                   "XVI": [2, ["Fortress Bane", 25, "banes", 0],
@@ -115,15 +115,15 @@ card_stat_dict = {
                   "XXII": [1, ["X% Chance to trigger Bloom on hit", 5, "spec_rate", 0],
                            ["Arbiter Bane", 25, "banes", 4]],
                   "XXIII": [3, ["X% Chance to trigger Bloom on hit", 5, "spec_rate", 0],
-                            ["Ultimate Application", 1, "ultimate_application", None]],
+                            ["Ultimate Application", 1, "ultimate_app", None]],
                   "XXIV": [5, ["X% Chance to trigger Bloom on hit", 5, "spec_rate", 0],
                            ["Elemental Overflow", 1, "elemental_app", None]],
                   "XXVI": [2, ["X% Chance to trigger Bloom on hit", 5, "spec_rate", 0],
-                           ["Bleed Application", 1, "bleed_application", None]],
+                           ["Bleed Application", 1, "bleed_app", None]],
                   "XXVII": [0, ["X% Chance to trigger Bloom on hit", 5, "spec_rate", 0],
                             ["Critical Application", 1, "critical_app", None]],
                   "XXVIII": [6, ["X% Chance to trigger Bloom on hit", 5, "spec_rate", 0],
-                             ["Temporal Application", 1, "temporal_application", None]],
+                             ["Temporal Application", 1, "temporal_app", None]],
                   "XXIX": ["All", ["X% Chance to trigger Bloom on hit", 5, "spec_rate", 0],
                            ["Bloom Damage", 500, "bloom_multiplier", None]],
                   "XXX": ["All", ["X% Chance to trigger Bloom on hit", 5, "spec_rate", 0],

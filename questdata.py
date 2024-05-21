@@ -28,7 +28,7 @@ quests_data = {
         "That will do nicely to prove both your loyalty and ability.",
         1, None, 'Stone1',
         "Retrieve a Fortress Stone using /solo",
-        'Crate', 5, None],
+        'Chest', 5, None],
 
     4: [1, "Initiate the Ascent",
         "I'm impressed with your findings. This stone contains remnants of my celestial energy. "
@@ -37,7 +37,7 @@ quests_data = {
         "\n What are you waiting for let's go!",
         5, None, None,
         "Breakthrough to level 5",
-        'Crate', 5, None],
+        'Chest', 5, None],
 
     5: [1, "Pursuit Of Power",
         "You're not anywhere near strong enough yet. I can help you improve your equipment, "
@@ -45,7 +45,7 @@ quests_data = {
         "\nNote: You can use /manifest to help you hunt monsters.",
         10, None, None,
         "Breakthrough to level 10",
-        'Crate', 10, 'Echelon 1'],
+        'Chest', 10, 'Echelon 1'],
 
     6: [2, "Out Of Reach",
         "Glad to see you can hold your own in combat, but can you also battle through the skies? "
@@ -53,7 +53,7 @@ quests_data = {
         "You'll need to acquire a pair of wings if you intend to contend.",
         1, None, 'Stone2',
         "Retrieve a Dragon Stone",
-        'Crate', 5, None],
+        'Chest', 5, None],
 
     7: [2, "Crush The Castles",
         "It would seem these stones all harbor a fraction of my power. "
@@ -62,7 +62,7 @@ quests_data = {
         "\nThis should assist me in regaining my power.",
         5, None, 'Stone1',
         "Retrieve 5 Fortress Stones using /solo",
-        'Crate', 5, None],
+        'Chest', 5, None],
 
     8: [1, "Unveiling Hidden Potential",
         "You've hardly scratched the surface of your true potential. "
@@ -70,7 +70,7 @@ quests_data = {
         "\nDo you think you can do that for me?",
         15, None, None,
         "Breakthrough to level 15",
-        'Crate', 5, None],
+        'Chest', 5, None],
 
     9: [1, "A Way Forward",
         "A False Paragon will be here soon, but you're still not ready. "
@@ -78,7 +78,7 @@ quests_data = {
         "\nAurora doesn't yet have the power to become a True Paragon. We can still stop him.",
         20, None, None,
         "Breakthrough to level 20",
-        'Crate', 5, None],
+        'Chest', 5, None],
 
     10: [3, "A False Deity",
          "Aurora is nearby and commands a mobile fortress that poses a dire threat to this world. "
@@ -86,7 +86,7 @@ quests_data = {
          "\nQuickly! He is almost here!",
          1, 4, None,
          "Defeat the Fortress Paragon",
-         'Crate', 10, 'Echelon 2'],
+         'Chest', 10, 'Echelon 2'],
 
     11: [0, "On Borrowed Wings",
          "The threat from Aurora has been quelled thanks to your efforts. "
@@ -94,7 +94,7 @@ quests_data = {
          "\nNobody around here will refuse to help you now.",
          1, 5, None,
          "Use the /town command",
-         'Crate', 5, None],
+         'Chest', 5, None],
 
     12: [2, "Clear The Skies",
          "Hopefully, you've refined some wings. "
@@ -102,7 +102,7 @@ quests_data = {
          "\nLet's act swiftly!",
          5, None, 'Stone2',
          "Retrieve 5 Dragon Stones",
-         'Crate', 5, None],
+         'Chest', 5, None],
 
     13: [1, "Prepare For War",
          "I sense Astratha is nearby. "
@@ -111,7 +111,7 @@ quests_data = {
          "\nBegin preparations and bring every weapon you've got. ",
          25, None, None,
          "Breakthrough to level 25",
-         'Crate', 5, None],
+         'Chest', 5, None],
 
     14: [3, "Fearless Before Fire",
          "The dragons are an elemental blight invading from the outer dimensions. "
@@ -119,7 +119,7 @@ quests_data = {
          "\nWe will make our stand here. \nThey do not feel. \nShow them no mercy.",
          1, 6, None,
          "Defeat the Dragon Paragon",
-         'Crate', 5, None],
+         'Chest', 5, None],
 
     15: [1, "Into The Depths",
          "The mortal plane is safe for now, thanks to you. "
@@ -137,7 +137,7 @@ quests_data = {
          "\nUse the gear I have enchanted for you and purge these horrors.",
          5, None, 'Stone3',
          "Retrieve 5 Demon Stones",
-         'Crate', 5, None],
+         'Chest', 5, None],
 
     17: [0, "An Arbiter's Assistance",
          "If you are to stand a chance, you will need to find new sources of strength. "
@@ -146,7 +146,7 @@ quests_data = {
          "\nAs long as we bring them a sufficient offering they will surely help us.",
          1, 7, None,
          "Talk to an Arbiter using the /engrave or /points command",
-         'Crate', 5, None],
+         'Chest', 5, None],
 
     18: [1, "Carve The Soul",
          "That damned Isolde just wants to watch you suffer as she tears into your soul. "
@@ -154,7 +154,7 @@ quests_data = {
          "\nTrain your fortitude to prove to her that you are worthy of this power.",
          35, None, None,
          "Breakthrough to level 35",
-         'Crate', 5, None],
+         'Chest', 5, None],
 
     19: [1, "Iron Resolve",
          "Steel yourself for this will be an excruciatingly painful process. "
@@ -162,7 +162,7 @@ quests_data = {
          "\nBut you'll do it for me, won't you?",
          40, None, None,
          "Breakthrough to level 40",
-         'Crate', 5, None],
+         'Chest', 5, None],
 
     20: [0, "Price Of Power",
          "I know you can do it! Show her your resolve!",
@@ -184,7 +184,7 @@ quests_data = {
          "\nBring some back with you and we'll try to get something nice refined for you.",
          1, 10, None,
          "Equip a pair of Demon Greaves",
-         'Crate', 5, None],
+         'Chest', 5, None],
 
     23: [1, "Body and Mind",
          "You've become very strong very quickly. "
@@ -192,7 +192,7 @@ quests_data = {
          "\nWe'll continue your training at dawn.",
          45, None, None,
          "Breakthrough to level 45",
-         'Crate', 5, None],
+         'Chest', 5, None],
 
     24: [1, "The Journey Continues",
          "No need to rush. We've got lots of time to prepare before the other paragons can cross into this world."
@@ -200,7 +200,7 @@ quests_data = {
          "\nThere is no such thing as an easy challenge.",
          50, None, None,
          "Breakthrough to level 50",
-         'Crate', 5, None],
+         'Chest', 5, None],
 
     25: [3, "The First Monster",
          "I'm sorry… I've miscalculated. I did not think Tyra would be able to manifest in this plane. "
@@ -215,7 +215,7 @@ quests_data = {
          "\nWe've come this far. You will go with me won't you?",
          55, None, None,
          "Breakthrough to level 55",
-         'Crate', 5, None],
+         'Chest', 5, None],
 
     27: [2, "Encounter On Arrival",
          "To my knowledge, no human has ventured into the celestial plane before. "
@@ -223,14 +223,14 @@ quests_data = {
          "\nThey are aware of our presence, prepare to engage the enemy.",
          1, None, 'Stone4',
          "Retrieve a Paragon Stone",
-         'Crate', 5, None],
+         'Chest', 5, None],
 
     28: [5, "Harness Paragon Essence",
          "This is the power of a True Paragon. Claim it as your own and ascend to new heights. "
          "\nWe can use their power against them and fight on equal footing.",
          1, 12, None,
          "Equip a Paragon Crest",
-         'Crate', 5, None],
+         'Chest', 5, None],
 
     29: [1, "Cultivate Divinity (Part 1)",
          "By taking in this power you have now become a deity yourself. "
@@ -247,7 +247,7 @@ quests_data = {
          "\nRemember they are not like you. The paragons have never been human.",
          5, None, 'Stone4',
          "Retrieve 5 Paragon Stones",
-         'Crate', 5, 'Echelon 6'],
+         'Chest', 5, 'Echelon 6'],
 
     31: [2, "The Echoes Within",
          "It's impossible to truly kill a deity. That's why we gather and seal their essence. "
@@ -264,7 +264,7 @@ quests_data = {
          "\nThis power is a double edged sword if used incorrectly.",
          65, None, None,
          "Breakthrough to level 65",
-         'Crate', 5, None],
+         'Chest', 5, None],
 
     33: [2, "Shatter The Cycle",
          "It is not an exaggeration to say that any one of the High Three can bring an end to all things. "
@@ -272,7 +272,7 @@ quests_data = {
          "\nI relish the thought, but them working together is just as impossible.",
          10, None, 'Stone4',
          "Retrieve 10 Paragon Stones",
-         'Crate', 5, None],
+         'Chest', 5, None],
 
     34: [1, "Cultivate Divinity (Part 3)",
          "Something's not right. Stay here, gather yourself. "
@@ -280,7 +280,7 @@ quests_data = {
          "\nI promise.",
          70, None, None,
          "Breakthrough to level 70",
-         'Crate', 5, None],
+         'Chest', 5, None],
 
     35: [3, "Free From Possession",
          "Oblivia has seized my mind. I can't stop them. You can't stop them. All is lost."
@@ -294,7 +294,7 @@ quests_data = {
          "\nThank you. For saving me.",
          75, None, None,
          "Breakthrough to level 75",
-         'Crate', 5, None],
+         'Chest', 5, None],
 
     37: [3, "Charge Into Terminus",
          "The void is an annihilator of all. "
@@ -318,7 +318,7 @@ quests_data = {
          "\nI'll do my best to keep you safe from the pull of the abyss whilst you temper your gear.",
          80, None, None,
          "Breakthrough to level 80",
-         'Crate', 5, None],
+         'Chest', 5, None],
 
     40: [3, "Challenge The Omniscia",
          "Akasha has come. To overcome destruction is a miracle. Now you must claim authority over creation."
@@ -332,7 +332,7 @@ quests_data = {
          "\nEleuia won't ignore you as a threat any longer.",
          85, None, None,
          "Breakthrough to level 85",
-         'Crate', 5, None],
+         'Chest', 5, None],
 
     42: [0, "A Justified Blasphemy",
          "We should probably try visiting some of the other arbiters. "
@@ -340,7 +340,7 @@ quests_data = {
          "\nLet's go pay Kazyth a visit.",
          1, 19, None,
          "Use /meld to have the affinity of two jewels appraised",
-         'Crate', 5, None],
+         'Chest', 5, None],
 
     43: [0, "Spire of Illusions",
          "To overcome Eleuia's boundless power and overwhelming advantage we will go to the Spire of Illusions. "
@@ -356,7 +356,7 @@ quests_data = {
          "\nMaybe one day I'll be able to reforge it.",
          90, None, None,
          "Breakthrough to level 90",
-         'Crate', 10, None],
+         'Chest', 10, None],
 
     45: [3, "Ending A Wish",
          "I feel the fading of reality. Eleuia wishes for finality, but you can rewrite this world. "
@@ -418,7 +418,7 @@ quests_data = {
          "\nPerhaps in this little box, you can finally find peace.",
          31, 24, None,
          "Complete the Tarot Collection",
-         'Crate', 10, None],
+         'Chest', 10, None],
 
     52: [3, "Dance With Divinity",
          "Do you see now why the arbiters foresaw your failure and the futility of your actions? "
@@ -427,7 +427,7 @@ quests_data = {
          "\nAscend, and face the trial of the usurper!",
          1, 25, None,
          "Defeat XXX - Amaryllis, Incarnate of the Divine Lotus [Usurper]",
-         'Crate', 20, None],
+         'Chest', 20, None],
 
     53: [3, "A Heartfelt Wish",
          "I was wrong. I had resigned to my fate believing that gods could not be slain. "
@@ -436,7 +436,7 @@ quests_data = {
          "\nPlease, save us all.",
          1, 26, None,
          "Defeat XXX - Amaryllis, Incarnate of the Divine Lotus [Samsara]",
-         'Crate', 30, None],
+         'Chest', 30, None],
 
     54: [2, "A Moment Forever",
          "Just how far have you come just to see me again? Alas, you of all people should know I cannot stay. "
@@ -444,7 +444,7 @@ quests_data = {
          "But maybe, we can enjoy this moment a little longer.",
          1, None, 'Rings',
          "Give Pandora a special gift",
-         'Crate', 50, None],
+         'Chest', 50, None],
 
     55: [1, "Resurrection And Rebirth",
          "Rings faceted with gems forged from the twin mystical stars. "

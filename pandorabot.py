@@ -322,7 +322,7 @@ def run_discord_bot():
         player_obj = await sharedmethods.check_registration(ctx)
         if player_obj is None:
             return
-        embed_msg = skillpaths.create_path_embed(player_obj)
+        embed_msg = await skillpaths.create_path_embed(player_obj)
         if player_obj.player_quest == 17:
             quest.assign_unique_tokens(player_obj, "Arbiter")
         points_view = menus.PointsView(player_obj)
@@ -377,32 +377,32 @@ def run_discord_bot():
         await ctx.send(embed=embed_msg, view=new_view)
 
     @set_command_category('game', 5)
-    @pandora_bot.hybrid_command(name='crate', help="Open crates.")
+    @pandora_bot.hybrid_command(name='Chest', help="Open Chests.")
     @app_commands.guilds(discord.Object(id=guild_id))
-    async def crate(ctx, quantity="1"):
+    async def Chest(ctx, quantity="1"):
         await ctx.defer()
         player_obj = await sharedmethods.check_registration(ctx)
         if player_obj is None:
             return
-        crate_id = "Crate"
-        loot_item = inventory.BasicItem(crate_id)
-        crate_stock = await inventory.check_stock(player_obj, crate_id)
+        Chest_id = "Chest"
+        loot_item = inventory.BasicItem(Chest_id)
+        Chest_stock = await inventory.check_stock(player_obj, Chest_id)
         if not quantity.isnumeric():
             if quantity != "all":
                 await ctx.send("Enter a valid number or 'all' in the quantity field.")
                 return
-            quantity = min(50, crate_stock)
+            quantity = min(50, Chest_stock)
         else:
             quantity = int(quantity)
         if quantity <= 0:
             await ctx.send(sharedmethods.get_stock_msg(loot_item, 0))
             return
-        if crate_stock < quantity:
-            stock_msg = sharedmethods.get_stock_msg(loot_item, crate_stock, quantity)
+        if Chest_stock < quantity:
+            stock_msg = sharedmethods.get_stock_msg(loot_item, Chest_stock, quantity)
             await ctx.send(stock_msg)
             return
-        await inventory.update_stock(player_obj, crate_id, (-1 * quantity))
-        extension = f"Crate{'s' if quantity > 1 else ''}"
+        await inventory.update_stock(player_obj, Chest_id, (-1 * quantity))
+        extension = f"Chest{'s' if quantity > 1 else ''}"
         title_msg = f"{player_obj.player_username}: Opening {quantity} {extension}!"
         embed_msg = discord.Embed(colour=discord.Colour.dark_teal(), title=title_msg, description="Feeling lucky?")
         reward_list = loot.generate_random_item(quantity=quantity)
@@ -499,7 +499,7 @@ def run_discord_bot():
             embed_msg = discord.Embed(colour=discord.Colour.blurple(), title="???", description=denial_msg)
             await ctx.send(embed=embed_msg)
             return
-        entry_msg = ("Have you come to desecrate my holy gardens once more? Well, I suppose it no longer matters, "
+        entry_msg = ("Have you come to deseChest my holy gardens once more? Well, I suppose it no longer matters, "
                      "I know you will inevitably find what you desire even without my guidance. "
                      "If you intend to sever the divine lotus, then I suppose the rest are nothing but pretty flowers.")
         embed_msg = discord.Embed(colour=discord.Colour.blurple(), title=title, description=entry_msg)

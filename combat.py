@@ -86,7 +86,7 @@ async def run_cycle(tracker_obj, boss_obj, player_obj, method):
     # Step 3: Player takes action
     hit_list = await handle_player_actions(hit_list, tracker_obj, boss_obj, player_obj)
     # Step 4: Handle Cyclic DoT
-    if player_obj.bleed_application > 0:
+    if player_obj.bleed_app > 0:
         hit_list.append(await trigger_bleed(tracker_obj, player_obj, boss_obj=boss_obj))
     # Step 5: Compile final battle message and return results
     total_damage = sum(hit[0] for hit in hit_list)
@@ -162,11 +162,11 @@ async def handle_player_actions(hit_list, tracker_obj, boss_obj, player_obj):
     for x in range(hits_per_cycle):
         hit_list.append(await hit_boss(tracker_obj, boss_obj, player_obj, combo_count))
         combo_count += 1
-        tracker_obj.charges += player_obj.ultimate_application
+        tracker_obj.charges += player_obj.ultimate_app
         # Handle Ultimate
         if tracker_obj.charges >= 20:
             hit_list.append(await hit_boss(tracker_obj, boss_obj, player_obj, combo_count, hit_type="Ultimate"))
-            if player_obj.bleed_application > 0:
+            if player_obj.bleed_app > 0:
                 hit_list.append(await trigger_bleed(tracker_obj, player_obj, hit_type="Ultimate", boss_obj=boss_obj))
         # Stop iterating if boss dies
         if not boss_obj.calculate_hp():
@@ -219,14 +219,14 @@ async def hit_boss(tracker_obj, boss_obj, player_obj, combo_count, hit_type="Reg
 async def trigger_bleed(tracker_obj, player_obj, hit_type="Normal", boss_obj=None, pvp_data=None):
     bleed_dict = {1: "Single", 2: "Double", 3: "Triple", 4: "Quadra", 5: "Penta"}
     hit_multiplier, keyword = (1.5, "Sanguine") if hit_type == "Ultimate" else (0.75, "Blood")
-    count = "Zenith" if player_obj.bleed_application > 5 else bleed_dict[player_obj.bleed_application]
+    count = "Zenith" if player_obj.bleed_app > 5 else bleed_dict[player_obj.bleed_app]
     # Calculate damage
     damage = pvp_data[2] if pvp_data is not None else int(hit_multiplier * await player_obj.get_bleed_damage(boss_obj))
     damage *= tracker_obj.bleed_tracker
     damage, bleed_type = check_hyper_bleed(player_obj, damage)
     damage = int(damage * (1 + player_obj.bleed_penetration))
     # Handle application scaling
-    for b in range(player_obj.bleed_application):
+    for b in range(player_obj.bleed_app):
         damage += damage
     # Determine boss or pvp specific damage adjustments.
     if boss_obj is not None:
@@ -239,18 +239,18 @@ async def trigger_bleed(tracker_obj, player_obj, hit_type="Normal", boss_obj=Non
 
 
 def check_hyper_bleed(player_obj, bleed_damage):
-    hyper_bleed_rate = player_obj.bleed_application * 5 + int(round(player_obj.spec_rate[1] * 100))
+    hyper_bleed_rate = player_obj.bleed_app * 5 + int(round(player_obj.spec_rate[1] * 100))
     bleed_type = "BLEED"
     if random.randint(1, 100) <= hyper_bleed_rate:
         bleed_type = "HYPERBLEED"
-        bleed_damage *= (1 + player_obj.bleed_multiplier)
+        bleed_damage *= (1 + player_obj.bleed_mult)
     return int(bleed_damage), bleed_type
 
 
 def update_bleed(tracker_obj, player_obj):
-    if player_obj.bleed_application <= 0:
+    if player_obj.bleed_app <= 0:
         return
-    tracker_obj.bleed_tracker += 0.05 * player_obj.bleed_application
+    tracker_obj.bleed_tracker += 0.05 * player_obj.bleed_app
     tracker_obj.bleed_tracker = min(1, tracker_obj.bleed_tracker)
 
 
@@ -299,10 +299,10 @@ def check_lock(player_obj, combat_tracker, damage):
     status_msg = ""
     # Create a new time lock.
     if combat_tracker.time_lock == 0:
-        lock_rate = 5 * player_obj.temporal_application + int(round(player_obj.spec_rate[4] * 100))
+        lock_rate = 5 * player_obj.temporal_app + int(round(player_obj.spec_rate[4] * 100))
         if random.randint(1, 100) > lock_rate:
             return damage, status_msg
-        combat_tracker.time_lock = player_obj.temporal_application + 1
+        combat_tracker.time_lock = player_obj.temporal_app + 1
         status_msg = " *TIME LOCK*"
     # Handle existing time lock.
     elif combat_tracker.time_lock > 0:
@@ -310,7 +310,7 @@ def check_lock(player_obj, combat_tracker, damage):
         combat_tracker.time_damage += damage
         # Trigger time shatter.
         if combat_tracker.time_lock == 0:
-            damage = combat_tracker.time_damage * (player_obj.temporal_application + 1)
+            damage = combat_tracker.time_damage * (player_obj.temporal_app + 1)
             combat_tracker.time_damage = 0
             return damage, " *TIME SHATTER*"
         damage, status_msg = 0, " *LOCKED*"
@@ -360,20 +360,24 @@ def critical_check(player_obj, player_damage, num_elements):
 
 
 def skill_adjuster(player_obj, combat_tracker, hit_damage, combo_count, is_ultimate):
-    mult_dict = {0: 0.5, 1: 0.75, 2: 1}
-    combo_multiplier = (1 + (player_obj.combo_multiplier * combo_count)) * (1 + player_obj.combo_penetration)
-    ultimate_multiplier = (1 + player_obj.ultimate_multiplier) * (1 + player_obj.ultimate_penetration)
+    mult_dict = {0: 0.5, 1: 0.75, 2: 1, 3: 2}
+    combo_mult = (1 + (player_obj.combo_mult * combo_count)) * (1 + player_obj.combo_penetration)
+    ultimate_mult = (1 + player_obj.ultimate_mult) * (1 + player_obj.ultimate_penetration)
+    skill_list = globalitems.skill_names_dict[player_obj.player_class]
+    if player_obj.aqua_points >= 100:
+        skill_list = ["Sea of Subjugation", "Ocean of Oppression", "Deluge of Domination", "Tides of Annihilation"]
+        mult_dict = {0: 1, 1: 1.5, 2: 2, 3: 5}
     if is_ultimate:
         combat_tracker.charges -= 20
-        damage = int(hit_damage * combo_multiplier * ultimate_multiplier * (2 + player_obj.skill_base_damage_bonus[3]))
-        return damage, globalitems.skill_names_dict[player_obj.player_class][3]
+        damage = int(hit_damage * combo_mult * ultimate_mult * (mult_dict[3] + player_obj.skill_damage_bonus[3]))
+        return damage, skill_list[3]
     # Handle non-ultimates.
     index = 0 if combo_count < 3 else 1 if combo_count < 5 else 2
-    damage = int(hit_damage * combo_multiplier * (mult_dict[index] + player_obj.skill_base_damage_bonus[index]))
+    damage = int(hit_damage * combo_mult * (mult_dict[index] + player_obj.skill_damage_bonus[index]))
     if player_obj.unique_glyph_ability[3]:
-        damage = int(hit_damage * ultimate_multiplier)
+        damage = int(hit_damage * ultimate_mult)
     combat_tracker.charges += 1 + player_obj.charge_generation
-    return damage, globalitems.skill_names_dict[player_obj.player_class][index]
+    return damage, skill_list[index]
 
 
 def pvp_defences(attacker, defender, player_damage, e_weapon):

@@ -29,7 +29,9 @@ recipe_dict = {
         "Bleeding Hearts": [("Heart1", 99), ("Heart2", 99), ("Gemstone11", 3), 100, "7"],
         "Gambler's Masterpiece": [("Gemstone11", 1), 1, "7"]},
     "Sovereign Ring Infusion": {
-        "Stygian Calamity": [("Gemstone12", 1), ("Gemstone11", 5), 100, "8"],
+        "Stygian Calamity": [("Gemstone12", 1), ("Crystal3", 10), ("Gemstone11", 5), 100, "8"],
+        "Heavenly Calamity": [("Gemstone12", 1), ("Ore5", 10), ("Gemstone11", 5), 100, "8"],
+        "Hadal's Raindrop": [("Nadir", 1), ("EssenceXIV", 10), ("Gemstone11", 5), 100, "8"],
         "Sacred Ring of Divergent Stars": [("TwinRings", 1), ("Gemstone11", 5), 100, "8"],
         "Crown of Skulls": [("Skull4", 1), ("Lotus1", 1), ("Gemstone11", 5), 100, "8"]}
 }

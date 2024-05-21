@@ -124,14 +124,14 @@ class PvPCog(commands.Cog):
         pvp_embed = await self.update_combat_embed(stun_list, hit_list)
         winner, quantity = None, 2
         exp_amount = random.randint(self.player1.player_echelon * 100, self.player1.player_echelon * 200)
-        loot_item = inventory.BasicItem("Crate")
+        loot_item = inventory.BasicItem("Chest")
         # Determine winners.
         if (not is_alive_player1 and not is_alive_player2) or self.combat_tracker1.total_cycles >= 50:
             winner, result_message, quantity = "Draw", "It's a draw!", 1
             exp_amount *= 5
-            await inventory.update_stock(self.player1, "Crate", quantity)
-            await inventory.update_stock(self.player2, "Crate", quantity)
-            loot_msg = f"Both Players {loot_item.item_emoji} {quantity}x crate(s) acquired!"
+            await inventory.update_stock(self.player1, "Chest", quantity)
+            await inventory.update_stock(self.player2, "Chest", quantity)
+            loot_msg = f"Both Players {loot_item.item_emoji} {quantity}x Chest(s) acquired!"
         elif not is_alive_player1:
             winner = self.player2
         elif not is_alive_player2:
@@ -144,8 +144,8 @@ class PvPCog(commands.Cog):
         # End the combat.
         if not isinstance(winner, str):
             result_message = f"{winner.player_username} wins!"
-            await inventory.update_stock(winner, "Crate", quantity)
-            loot_msg = f"{winner.player_username} {loot_item.item_emoji} {quantity}x crates acquired!"
+            await inventory.update_stock(winner, "Chest", quantity)
+            loot_msg = f"{winner.player_username} {loot_item.item_emoji} {quantity}x Chests acquired!"
         exp_msg, lvl_adjust = self.player1.adjust_exp(exp_amount)
         exp_description = f"{exp_msg} EXP acquired!"
         pvp_embed.add_field(name=result_message, value=f"{exp_description}\n{loot_msg}", inline=False)
@@ -195,9 +195,9 @@ class PvPCog(commands.Cog):
         combatants, trackers = [self.player1, self.player2], [self.combat_tracker1, self.combat_tracker2]
         while attack_counter[0] <= 60 or attack_counter[1] <= 60:
             await self.handle_pvp_attack(combatants, trackers, combo_count, attack_counter, player_interval, hit_list)
-        if self.player1.bleed_application >= 1:
+        if self.player1.bleed_app >= 1:
             await self.handle_pvp_bleed([0, 1], combatants, trackers, hit_list, False)
-        if self.player1.bleed_application >= 1:
+        if self.player1.bleed_app >= 1:
             await self.handle_pvp_bleed([1, 0], combatants, trackers, hit_list, False)
         return stun_list, hit_list, self.combat_tracker1.player_cHP > 0, self.combat_tracker2.player_cHP > 0
 
@@ -244,7 +244,7 @@ class PvPCog(commands.Cog):
         hit_msg += f"{status_msg}{second_msg}{critical_type}{evade}"
         hit_list.append([scaled_dmg, hit_msg])
         tracker[defender].player_cHP -= scaled_dmg
-        if combatant[attacker].bleed_application >= 1:
+        if combatant[attacker].bleed_app >= 1:
             await self.handle_pvp_bleed(role_order, combatant, tracker, hit_list, True)
 
     async def handle_pvp_bleed(self, role_order, combatant, tracker, hit_list, is_ultimate):

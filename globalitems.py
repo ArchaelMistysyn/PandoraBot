@@ -84,8 +84,8 @@ boss_list = ["Fortress", "Dragon", "Demon", "Paragon", "Arbiter", "Incarnate"]
 # Unique Ability Data
 rare_ability_dict = {"Overflow": ["elemental_app", 2], "Mastery": ["class_multiplier", 0.1],
                      "Immortality": ["immortal", True], "Omega": ["critical_app", 1],
-                     "Combo": ["combo_application", 1], "Reaper": ["bleed_application", 1],
-                     "Overdrive": ["ultimate_application", 1], "Unravel": ["temporal_application", 1],
+                     "Combo": ["combo_application", 1], "Reaper": ["bleed_app", 1],
+                     "Overdrive": ["ultimate_app", 1], "Unravel": ["temporal_app", 1],
                      "Vitality": ["hp_multiplier", 5]}
 # Skill Names
 skill_names_dict = {

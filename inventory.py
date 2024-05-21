@@ -554,8 +554,9 @@ def display_binventory(player_id, method):
         "Essences": "^(Essence)",
         "Summoning": "^(Compass|Summon)",
         "Gemstone": "^(Gemstone([0-9]|1[01]))$",
-        "Misc": "^(Potion|Trove|Crate|Stone|Token|Skull[0-3])",
-        "Ultra Rare": "^(Lotus|LightStar|DarkStar|Gemstone12|Skull4|RoyalCoin)"
+        "Fish": "^(Fish)",
+        "Misc": "^(Potion|Trove|Chest|Stone|Token|Skull[0-3])",
+        "Ultra Rare": "^(Lotus|LightStar|DarkStar|Gemstone12|Skull4|Nadir|RoyalCoin)"
     }
     player_inventory = ""
     raw_query = ("SELECT item_id, item_qty FROM BasicInventory "

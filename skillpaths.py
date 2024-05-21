@@ -33,7 +33,11 @@ glyph_data = {
             "Solitude": [["Temporal Application +X", 1],
                          ["Unity", None, 20], ["Harmony", None, 40], ["Synergy", None, 60],
                          ["Fast Forward", "Time Shatter is applied immediately.", 80],
-                         ["Equilibrium", "Elemental Capacity becomes 1. Singularity multipliers are doubled", 100]]
+                         ["Equilibrium", "Elemental Capacity becomes 1. Singularity multipliers are doubled", 100]],
+            "Waterfalls": [["Aqua Application +X", 1],
+                           ["Waterfalls", None, 20], ["Waterfalls", None, 40], ["Waterfalls", None, 60],
+                           ["Waterfalls", "Critical Rate Becomes 100%", 80],
+                           ["Waterfalls", "Attack Skills are Changed", 100]]
             }
 path_perks = {
     "Storms": [["Water Damage X%", 5], ["Lightning Damage X%", 5],
@@ -47,11 +51,12 @@ path_perks = {
                 ["Dark Resistance X%", 1], ["Light Resistance X%", 1], ["Ultimate Damage X%", 10]],
     "Stars": [["Celestial Damage X%", 7], ["Celestial Resistance X%", 1], ["Combo Damage X%", 3]],
     "Solitude": [["Singularity Damage X%", 10], ["Singularity Penetration X%", 5], ["Singularity Curse X%", 1]],
-    "Confluence": [["Omni Aura X%", 1], ["Omni Curse X%", 1]]
+    "Confluence": [["Omni Aura X%", 1], ["Omni Curse X%", 1]],
+    "Waterfalls": [["Water Damage X%", 25], ["Water Resistance X%", 1]]
 }
 
 
-def display_glyph(path_type, total_points, embed_msg):
+async def display_glyph(path_type, total_points, embed_msg):
     current_data = glyph_data[path_type]
     path_bonuses = path_perks[path_type]
     if total_points != 0:
@@ -73,7 +78,7 @@ def display_glyph(path_type, total_points, embed_msg):
     return embed_msg
 
 
-def allocate_points(player_obj, selected_path, num_change):
+async def allocate_points(player_obj, selected_path, num_change):
     path_type = selected_path.split(" ")[-1]
     path_location = globalitems.path_names.index(path_type)
     spent_points = sum(player_obj.player_stats)
@@ -86,7 +91,7 @@ def allocate_points(player_obj, selected_path, num_change):
     return "Skill point has been allocated!"
 
 
-def create_path_embed(player_obj):
+async def create_path_embed(player_obj):
     colour, _ = sharedmethods.get_gear_tier_colours((player_obj.player_echelon + 1) // 2)
     points_msg = "Your shiny toys are useless if you don't know how to use them."
     embed = discord.Embed(color=colour, title="Avalon, Pathwalker of the True Laws", description=points_msg)
@@ -95,6 +100,8 @@ def create_path_embed(player_obj):
         value_msg = f"Points: {points}"
         if gear_points > 0:
             value_msg += f" (+{gear_points})"
+        if player_obj.aqua_mode != 0:
+            path_label = f"Waterfalls [{path_label}]"
         embed.add_field(name=f"Path of {path_label}", value=value_msg, inline=True)
     spent_points = sum(player_obj.player_stats)
     remaining_points = player_obj.player_level - spent_points
@@ -102,17 +109,19 @@ def create_path_embed(player_obj):
     return embed
 
 
-def build_points_embed(player_obj, selected_path):
+async def build_points_embed(player_obj, selected_path, water_converted=False):
     colour, _ = sharedmethods.get_gear_tier_colours((player_obj.player_echelon + 1) // 2)
     embed = discord.Embed(color=colour, title=f"{selected_path}", description="Stats per point:\n")
-
-    path_type = selected_path.split(" ")[-1]
+    path_type = selected_path.split(" ")[-1] if not water_converted else "Waterfalls"
     for modifier in path_perks[path_type]:
         embed.description += f'{modifier[0].replace("X", str(modifier[1]))}\n'
 
     # Calculate the points.
-    points_field = player_obj.player_stats[globalitems.path_names.index(path_type)]
-    gear_points = player_obj.gear_points[globalitems.path_names.index(path_type)]
+    if not water_converted:
+        points_field = player_obj.player_stats[globalitems.path_names.index(path_type)]
+        gear_points = player_obj.gear_points[globalitems.path_names.index(path_type)]
+    else:
+        points_field = player_obj.aqua_points
     points_msg = f"{player_obj.player_username}'s {selected_path} points: {points_field}"
     total_points = points_field + gear_points
     if gear_points > 0:
@@ -120,7 +129,7 @@ def build_points_embed(player_obj, selected_path):
     embed.add_field(name="", value=points_msg, inline=False)
 
     # Build the embed.
-    embed = display_glyph(path_type, total_points, embed)
+    embed = await display_glyph(path_type, total_points, embed)
     spent_points = sum(player_obj.player_stats)
     remaining_points = player_obj.player_level - spent_points
     embed.add_field(name="", value=f"Remaining Points: {remaining_points}", inline=False)
@@ -130,6 +139,22 @@ def build_points_embed(player_obj, selected_path):
 def assign_path_multipliers(player_obj):
     # Path Multipliers
     total_points = [x + y for x, y in zip(player_obj.player_stats, player_obj.gear_points)]
+
+    # Aqua Path exception
+    if player_obj.aqua_mode != 0:
+        player_obj.aqua_points = sum(total_points)
+        total_points = [0] * len(total_points)
+        player_obj.critical_multiplier += 0.03 * storm_bonus
+        player_obj.aqua_app += player_obj.aqua_mode // 20
+        player_obj.aqua_app += player_obj.critical_app + player_obj.bleed_app + player_obj.elemental_app
+        player_obj.aqua_app += player_obj.temporal_app + player_obj.ultimate_app
+        player_obj.critical_app = player_obj.bleed_app = player_obj.elemental_app = 0
+        player_obj.temporal_app = player_obj.ultimate_app = 0
+        player_obj.elemental_resistance[1] += 0.01 * player_obj.aqua_points
+        player_obj.elemental_multiplier[1] += 0.25 * player_obj.aqua_points
+        player_obj.elemental_multiplier[1] += 100 * player_obj.aqua_app
+        return total_points
+
     unique_breakpoints = [80, 80, 80, 80, 100, 80, 100]
     for glyph, (points, unique_breakpoint) in enumerate(zip(total_points, unique_breakpoints)):
         if points >= unique_breakpoint:
@@ -154,10 +179,10 @@ def assign_path_multipliers(player_obj):
     player_obj.elemental_multiplier[4] += 0.05 * horizon_bonus
     player_obj.elemental_resistance[3] += 0.01 * horizon_bonus
     player_obj.elemental_resistance[4] += 0.01 * horizon_bonus
-    player_obj.bleed_multiplier += 0.1 * horizon_bonus
-    player_obj.bleed_application += horizon_bonus // 20
+    player_obj.bleed_mult += 0.1 * horizon_bonus
+    player_obj.bleed_app += horizon_bonus // 20
     if storm_bonus >= 80:
-        player_obj.bleed_multiplier *= 2
+        player_obj.bleed_mult *= 2
     if storm_bonus >= 100:
         player_obj.bleed_penetration *= 2
 
@@ -195,10 +220,10 @@ def assign_path_multipliers(player_obj):
     player_obj.elemental_multiplier[7] += 0.05 * eclipse_bonus
     player_obj.elemental_resistance[6] += 0.01 * eclipse_bonus
     player_obj.elemental_resistance[7] += 0.01 * eclipse_bonus
-    player_obj.ultimate_multiplier += 0.1 * eclipse_bonus
-    player_obj.ultimate_application += eclipse_bonus // 20
+    player_obj.ultimate_mult += 0.1 * eclipse_bonus
+    player_obj.ultimate_app += eclipse_bonus // 20
     if eclipse_bonus >= 100:
-        player_obj.skill_base_damage_bonus[3] += 3
+        player_obj.skill_damage_bonus[3] += 3
 
     # Confluence Path
     confluence_bonus = total_points[5]
@@ -215,20 +240,20 @@ def assign_path_multipliers(player_obj):
     star_bonus = total_points[4]
     player_obj.elemental_multiplier[8] += 0.07 * star_bonus
     player_obj.elemental_resistance[8] += 0.01 * star_bonus
-    player_obj.combo_multiplier += 0.03 * star_bonus
+    player_obj.combo_mult += 0.03 * star_bonus
     star_skill_bonus = 0.25 * star_bonus // 20
-    player_obj.skill_base_damage_bonus[0] += star_skill_bonus
+    player_obj.skill_damage_bonus[0] += star_skill_bonus
     if star_bonus >= 80:
-        player_obj.skill_base_damage_bonus[1] += star_skill_bonus
+        player_obj.skill_damage_bonus[1] += star_skill_bonus
     if star_bonus >= 100:
-        player_obj.skill_base_damage_bonus[2] += star_skill_bonus
+        player_obj.skill_damage_bonus[2] += star_skill_bonus
 
     # Solitude Path
     solitude_bonus = total_points[6] * 2 if total_points[6] >= 100 else total_points[6]
     player_obj.singularity_damage += (0.10 * solitude_bonus)
     player_obj.singularity_penetration += (0.05 * solitude_bonus)
     player_obj.singularity_curse += (0.01 * solitude_bonus)
-    player_obj.temporal_application += solitude_bonus // 20
+    player_obj.temporal_app += solitude_bonus // 20
 
     return total_points
         
