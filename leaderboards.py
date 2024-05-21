@@ -6,6 +6,7 @@ import pandas as pd
 
 # Data imports
 import globalitems
+import sharedmethods
 from pandoradb import run_query as rq
 
 # Core imports
@@ -35,15 +36,13 @@ class LeaderbaordView(discord.ui.View):
 
 
 async def update_leaderboard(combat_tracker, player_obj, ctx_object):
-    
-
     # Pull the user data.
     raw_query = "SELECT * FROM Leaderboard WHERE player_id = :player_check"
-    df = rq(query, return_value=True, params={'player_check': player_obj.player_id})
+    df = rq(raw_query, return_value=True, params={'player_check': player_obj.player_id})
     true_dps = int(combat_tracker.total_dps / combat_tracker.total_cycles)
     high_dmg = combat_tracker.highest_damage
     now = dt.now()
-    if len(df) != 0:
+    if not df.empty:
         # Update DPS ranking.
         if true_dps > int(df['player_dps'].values[0]):
             raw_query = ("UPDATE Leaderboard SET player_dps = :new_dps, dps_record_time = :current_time "
@@ -61,19 +60,16 @@ async def update_leaderboard(combat_tracker, player_obj, ctx_object):
         raw_query = ("INSERT INTO Leaderboard (player_id, player_dps_rank, player_dps, dps_record_time, "
                      "player_damage_rank, player_damage, damage_record_time) "
                      "VALUES (:player_id, :player_dps_rank, :player_dps, :dps_record_time, "
-                     ":player_damage_rank, :player_damage, :damage_record_time")
+                     ":player_damage_rank, :player_damage, :damage_record_time)")
         params = {
             'player_id': player_obj.player_id, 'dps_record_time': now, 'damage_record_time': now,
             'player_dps_rank': 999999, 'player_dps': true_dps, 'player_damage_rank': 999999, 'player_damage': high_dmg
         }
         rq(raw_query, params=params)
-    
     await rerank_leaderboard(ctx_object)
 
 
 async def rerank_leaderboard(ctx_object):
-    
-
     # Fetch the damage leaderboard, update the rankings.
     damage_query = "SELECT * FROM Leaderboard ORDER BY player_damage DESC, damage_record_time ASC"
     damage_df = rq(damage_query, return_value=True)
@@ -98,7 +94,7 @@ async def rerank_leaderboard(ctx_object):
             new_player_obj = await player.get_player_by_id(new_id)
             new_user = ctx.guild.get_member(new_player_obj.discord_id)
             await new_user.add_roles(role_object)
-            await send_notification(ctx_object, new_player_obj, "Achievement", role_name)
+            await sharedmethods.send_notification(ctx_object, new_player_obj, "Achievement", role_name)
             # If previous ranker exists remove their role.
             if original_id != -1:
                 original_player_obj = await player.get_player_by_id(original_id)
@@ -133,7 +129,6 @@ async def rerank_leaderboard(ctx_object):
 
 async def display_leaderboard(leaderboard_title, player_id):
     leaderboard_type = leaderboard_title.lower()
-    
     raw_query = (f"SELECT player_id, player_{leaderboard_type}_rank, player_{leaderboard_type} "
                  f"FROM Leaderboard ORDER BY player_{leaderboard_type}_rank ASC, player_id DESC")
     rank_df = rq(raw_query, return_value=True)

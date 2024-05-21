@@ -433,8 +433,8 @@ async def craft_item(player_obj, selected_item, material_item, method):
             outcome = await purify_item(player_obj, selected_item, cost_list, success_rate, success_check)
         case _:
             if "fusion" in method:
-                outcome = modify_item_rolls(player_obj, selected_item, cost_list,
-                                            success_rate, success_check, method_type[0])
+                outcome = await modify_item_rolls(player_obj, selected_item, cost_list,
+                                                  success_rate, success_check, method_type[0])
     return outcome, 0
 
 

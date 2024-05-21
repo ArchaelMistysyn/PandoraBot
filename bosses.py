@@ -47,8 +47,10 @@ class CurrentBoss:
         if "Demon" in self.boss_image or "Dragon" in self.boss_image:
             img_link = self.boss_image
         tier_colour_dict = {
-            1: [0x43B581, "💚"], 2: [0x3498DB, "💙"], 3: [0x9B59B6, "💜"], 4: [0xF1C40F, "💛"],
-            5: [0xCC0000, "❤️"], 6: [0xE91E63, "🩷"],  7: [0xFFFFFF, "🖤"], 8: [0x000000, "🤍"]
+            1: [0x43B581, "<:Gem1:1242206599481659442>"], 2: [0x3498DB, "<:Gem2:1242206600555532421>"],
+            3: [0x9B59B6, "<:Gem3:1242206601385873498>"], 4: [0xF1C40F, "<:Gem4:1242206602405347459>"],
+            5: [0xCC0000, "<:Gem5:1242206603441078363>"], 6: [0xE91E63, "<:Gem6:1242206603953049721>"],
+            7: [0xFFFFFF, "<:Gem7:1242206605211205662>"], 8: [0x000000, "<:Gem8:1242206660513108029>"]
         }
         tier_info = tier_colour_dict[self.boss_tier]
         tier_colour = tier_info[0]
@@ -60,7 +62,7 @@ class CurrentBoss:
         # Set boss hp
         if not self.calculate_hp():
             self.boss_cHP = 0
-        hp_bar_icons = globalitems.hp_bar_dict[self.boss_tier]
+        hp_bar_icons = globalitems.hp_bar_dict[min(7, self.boss_tier)]  # Adjust if needed for t8
         boss_hp = f'{life_emoji} ({sharedmethods.display_hp(int(self.boss_cHP), int(self.boss_mHP))})'
         bar_length = 0
         if int(self.boss_cHP) >= 1:
@@ -136,14 +138,14 @@ class CurrentBoss:
                          arbiter_list_t6, arbiter_list_t7]
 
         # Incarnate names
-        incarnate_names = [[("XXX - Amaryllis, Incarnate of the Divine Lotus", "")]]
+        incarnate_names = [("XXX - Amaryllis, Incarnate of the Divine Lotus", "")]
 
         # All names
         all_names_dict = {"Fortress": fortress_names, "Dragon": dragon_names, "Demon": demon_names,
                           "Paragon": paragon_names, "Arbiter": arbiter_names, "Incarnate": incarnate_names}
 
         # Assign a random boss default values.
-        target_list = all_names_dict[boss_type][(boss_tier - 1)]
+        target_list = all_names_dict[boss_type][(boss_tier - 1)] if boss_tier < 8 else incarnate_names
         if boss_type not in ["Demon", "Dragon"]:
             self.boss_name, self.boss_image = random.choice(target_list)
             self.boss_image = f'{url_base}{boss_type}/{boss_tier}.png' if self.boss_image == "" else f'{url_base}{boss_type}/{self.boss_image}.png'
@@ -314,12 +316,18 @@ async def get_damage_list(channel_id):
 
 
 async def clear_boss_info(channel_id, player_id):
-    raid_id = await encounters.get_raid_id(channel_id, player_id)
-    raw_queries = ["DELETE FROM ActiveRaids WHERE raid_id = :id_check",
-                   "DELETE FROM BossList WHERE raid_id = :id_check",
-                   "DELETE FROM RaidPlayers WHERE raid_id = :id_check"]
+    if player_id == "All":
+        raw_queries = ["DELETE FROM ActiveRaids WHERE encounter_type = 'solo' or encounter_type = 'gauntlet'",
+                       "DELETE FROM BossList WHERE player_id <> 0"]
+        params = None
+    else:
+        raid_id = await encounters.get_raid_id(channel_id, player_id)
+        raw_queries = ["DELETE FROM ActiveRaids WHERE raid_id = :id_check",
+                       "DELETE FROM BossList WHERE raid_id = :id_check",
+                       "DELETE FROM RaidPlayers WHERE raid_id = :id_check"]
+        params = {'id_check': raid_id}
     for query in raw_queries:
-        rq(query, params={'id_check': raid_id})
+        rq(query, params=params)
 
 
 async def create_dead_boss_embed(channel_id, active_boss, dps, extension=""):

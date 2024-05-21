@@ -110,24 +110,25 @@ class Quest:
         return quest_embed
 
 
-def assign_unique_tokens(player_obj, token_string):
+def assign_unique_tokens(player_obj, token_string, mode=0):
     token_quest_dict = {
         # Boss Tokens
         "XVI - Aurora, The Fortress": 4, "VII - Astratha, The Dimensional": 6, "VIII - Tyra, The Behemoth": 11,
         "II - Pandora, The Celestial": 14, "III - Oblivia, The Void": 16, "IV - Akasha, The Infinite": 17,
         "XXV - Eleuia, The Wish": 19,
         "XXVIII - Fleur, Oracle of the True Laws": 21, "XXIX - Yubelle, Adjudicator of the True Laws": 22,
-        "XXX - Amaryllis, Incarnate of the Divine Lotus [Challenger]": 23,
-        "XXX - Amaryllis, Incarnate of the Divine Lotus [Usurper]": 25,
-        "XXX - Amaryllis, Incarnate of the Divine Lotus [Samsara]": 26,
+        1: 23, 2: 25, 3: 26,
         # Feature Tokens
         "Register": 1, "Map": 2, "Town": 5, "Arbiter": 7, "Insignia": 8, "Contract": 9, "Greaves": 10,
         "Crest": 12, "Tarot": 13, "Gauntlet": 15, "Abyss": 18, "Meld": 19, "Tarot Completion": 24}
     token_string = token_string.replace(" [Gauntlet]", "")
-    if token_string in token_quest_dict:
-        player_obj.quest_tokens[token_quest_dict[token_string]] += 1
-        quest_tokens = ";".join(map(str, player_obj.quest_tokens))
-        player_obj.set_player_field("quest_tokens", quest_tokens)
+    if mode != 0:
+        location = token_quest_dict[mode]
+    elif token_string in token_quest_dict:
+        location = token_quest_dict[token_string]
+    player_obj.quest_tokens[location] += 1
+    quest_tokens = ";".join(map(str, player_obj.quest_tokens))
+    player_obj.set_player_field("quest_tokens", quest_tokens)
 
 
 def initialize_quest_list():
@@ -163,6 +164,7 @@ class QuestView(discord.ui.View):
         # Handle completed quest.
         self.embed_msg = temp_embed
         self.new_view = RewardView(self.ctx_object, self.player_obj)
+        await interaction.response.edit_message(embed=self.embed_msg, view=self.new_view)
         if self.quest_object.award_role is not None:
             add_role = discord.utils.get(interaction.guild.roles, name=self.quest_object.award_role)
             await interaction.user.add_roles(add_role)
@@ -170,7 +172,6 @@ class QuestView(discord.ui.View):
                 previous_rolename = f"Echelon {self.player_obj.player_echelon - 1}"
                 remove_role = discord.utils.get(interaction.guild.roles, name=previous_rolename)
                 await interaction.user.remove_roles(remove_role)
-        await interaction.response.edit_message(embed=self.embed_msg, view=self.new_view)
 
 
 class RewardView(discord.ui.View):

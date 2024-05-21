@@ -22,7 +22,10 @@ import player
 import quest
 import inventory
 import menus
+
+# Combat imports
 import encounters
+import bosses
 
 # Misc imports
 import leaderboards
@@ -250,6 +253,7 @@ def run_discord_bot():
             await ctx.send('Pandora Bot commands synced!')
         elif keyword == "Startup":
             await encounters.startup_clear_automaps()
+            await bosses.clear_boss_info(ctx.channel.id, "All")
             await ctx.send('Pandora Bot startup tasks completed!')
 
     @set_command_category('admin', 5)
@@ -660,8 +664,8 @@ def run_discord_bot():
             return
         if player_obj.player_quest == 17:
             quest.assign_unique_tokens(player_obj, "Arbiter")
+        title = "Isolde, Soulweaver of the True Laws"
         if player_obj.player_quest < 20:
-            title = "Isolde, Soulweaver of the True Laws"
             description = "You can't yet handle my threads. This is no place for the weak."
             embed_msg = discord.Embed(colour=discord.Colour.dark_orange(), title=title, description=description)
             await ctx.send(embed=embed_msg)

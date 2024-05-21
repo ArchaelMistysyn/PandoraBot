@@ -36,22 +36,18 @@ damage_rolls = {
     "damage-6": ["Shadow Damage", 25, 10, [["elemental_multiplier", 6]]],
     "damage-7": ["Light Damage", 25, 10, [["elemental_multiplier", 7]]],
     "damage-8": ["Celestial Damage", 25, 10, [["elemental_multiplier", 8]]],
-    "damage-9": ["Hybrid Damage (Eclipse)", 20, 8, [["elemental_multiplier", 7],
-                                                    ["elemental_multiplier", 6]]],
-    "damage-10": ["Hybrid Damage (Horizon)", 20, 8, [["elemental_multiplier", 4],
-                                                     ["elemental_multiplier", 3]]],
-    "damage-11": ["Hybrid Damage (Frostfire)", 20, 8, [["elemental_multiplier", 5],
-                                                       ["elemental_multiplier", 0]]],
-    "damage-12": ["Hybrid Damage (Storm)", 20, 8, [["elemental_multiplier", 1],
-                                                   ["elemental_multiplier", 2]]],
+    "damage-9": ["Hybrid Damage (Eclipse)", 20, 8, [["elemental_multiplier", 7], ["elemental_multiplier", 6]]],
+    "damage-10": ["Hybrid Damage (Horizon)", 20, 8, [["elemental_multiplier", 4], ["elemental_multiplier", 3]]],
+    "damage-11": ["Hybrid Damage (Frostfire)", 20, 8, [["elemental_multiplier", 5], ["elemental_multiplier", 0]]],
+    "damage-12": ["Hybrid Damage (Storm)", 20, 8, [["elemental_multiplier", 1], ["elemental_multiplier", 2]]],
     "damage-13": ["Omni Damage", 15, 5, [["all_elemental_multiplier", -1]]],
     "damage-14": ["Ultimate Damage", 25, 5, [["ultimate_multiplier", -1]]],
     "damage-15": ["Bleed Damage", 25, 5, [["bleed_multiplier", -1]]],
     "damage-16": ["Combo Damage", 10, 5, [["combo_multiplier", -1]]],
     "damage-17": ["Hybrid Damage (Chaos)", 18, 5, [["elemental_multiplier", 0], ["elemental_multiplier", 2],
-                                                  ["elemental_multiplier", 3], ["elemental_multiplier", 6]]],
+                                                   ["elemental_multiplier", 3], ["elemental_multiplier", 6]]],
     "damage-18": ["Hybrid Damage (Holy)", 18, 5, [["elemental_multiplier", 1], ["elemental_multiplier", 4],
-                                                 ["elemental_multiplier", 5], ["elemental_multiplier", 7]]]
+                                                  ["elemental_multiplier", 5], ["elemental_multiplier", 7]]]
 }
 
 penetration_rolls = {
@@ -64,22 +60,17 @@ penetration_rolls = {
     "penetration-6": ["Shadow Penetration", 15, 10, [["elemental_penetration", 6]]],
     "penetration-7": ["Light Penetration", 15, 10, [["elemental_penetration", 7]]],
     "penetration-8": ["Celestial Penetration", 15, 10, [["elemental_penetration", 8]]],
-    "penetration-9": ["Hybrid Penetration (Eclipse)", 10, 8, [["elemental_penetration", 7],
-                                                              ["elemental_penetration", 6]]],
-    "penetration-10": ["Hybrid Penetration (Horizon)", 10, 8, [["elemental_penetration", 4],
-                                                               ["elemental_penetration", 3]]],
-    "penetration-11": ["Hybrid Penetration (Frostfire)", 10, 8, [["elemental_penetration", 5],
-                                                                 ["elemental_penetration", 0]]],
-    "penetration-12": ["Hybrid Penetration (Storm)", 10, 8, [["elemental_penetration", 1],
-                                                             ["elemental_penetration", 2]]],
+    "penetration-9": ["Hybrid Penetration (Eclipse)", 10, 8, [["elemental_penetration", 7], ["elemental_penetration", 6]]],
+    "penetration-10": ["Hybrid Penetration (Horizon)", 10, 8, [["elemental_penetration", 4], ["elemental_penetration", 3]]],
+    "penetration-11": ["Hybrid Penetration (Frostfire)", 10, 8, [["elemental_penetration", 5], ["elemental_penetration", 0]]],
+    "penetration-12": ["Hybrid Penetration (Storm)", 10, 8, [["elemental_penetration", 1], ["elemental_penetration", 2]]],
     "penetration-13": ["Omni Penetration", 8, 5, [["all_elemental_penetration", -1]]],
     "penetration-14": ["Critical Penetration", 25, 5, [["critical_penetration", -1]]],
     "penetration-15": ["Bleed Penetration", 25, 5, [["bleed_penetration", -1]]],
     "penetration-16": ["Combo Penetration", 20, 5, [["combo_penetration", -1]]],
     "penetration-17": ["Ultimate Penetration", 20, 5, [["ultimate_penetration", -1]]],
     "penetration-18": ["Hybrid Penetration (Chaos)", 9, 8, [["elemental_penetration", 0], ["elemental_penetration", 2],
-                                                            ["elemental_penetration", 3],
-                                                            ["elemental_penetration", 6]]],
+                                                            ["elemental_penetration", 3], ["elemental_penetration", 6]]],
     "penetration-19": ["Hybrid Penetration (Holy)", 9, 8, [["elemental_penetration", 1], ["elemental_penetration", 4],
                                                            ["elemental_penetration", 5], ["elemental_penetration", 7]]]
 }
@@ -143,27 +134,26 @@ shared_unique_rolls = {
 
 weapon_unique_rolls = {
     "unique-0-w": ["X% Chance to trigger Bloom on hit", 5, 1, [["spec_rate", 0]]],
-    "unique-1-w": ["X% Less Non-Fire Damage,\nX%More Fire Damage", 12, 10, [["elemental_conversion", 0]]],
-    "unique-2-w": ["X% Less Non-Water Damage,\nX% More Water Damage", 12, 10, [["elemental_conversion", 1]]],
-    "unique-3-w": ["X% Less Non-Lightning Damage,\nX% More Lightning Damage", 12, 10, [["elemental_conversion", 2]]],
-    "unique-4-w": ["X% Less Non-Earth Damage,\nX% More Earth Damage", 12, 10, [["elemental_conversion", 3]]],
-    "unique-5-w": ["X% Less Non-Wind Damage,\nX% More Wind Damage", 12, 10, [["elemental_conversion", 4]]],
-    "unique-6-w": ["X% Less Non-Ice Damage,\nX% More Ice Damage", 12, 10, [["elemental_conversion", 5]]],
-    "unique-7-w": ["X% Less Non-Shadow Damage,\nX% More Shadow Damage", 12, 10, [["elemental_conversion", 6]]],
-    "unique-8-w": ["X% Less Non-Light Damage,\nX% More Light Damage", 12, 10, [["elemental_conversion", 7]]],
-    "unique-9-w": ["X% Less Non-Celestial Damage,\nX% More Celestial Damage", 12, 10, [["elemental_conversion", 8]]],
-    "unique-10-w": ["X% Less Non-Eclipse Damage,\nX% More Eclipse Damage", 10, 5, [["elemental_conversion", (6, 7)]]],
-    "unique-11-w": ["X% Less Non-Horizon Damage,\nX% More Horizon Damage", 10, 5, [["elemental_conversion", (3, 4)]]],
-    "unique-12-w": ["X% Less Non-Frostfire Damage,\nX% More Frostfire Damage", 10, 5,
-                    [["elemental_conversion", (0, 5)]]],
-    "unique-13-w": ["X% Less Non-Storm Damage,\nX% More Storm Damage", 10, 5, [["elemental_conversion", (1, 2)]]],
-    "unique-14-w": ["X% Less Non-Chaos Damage,\nX% More Chaos Damage", 8, 5, [["elemental_conversion", (0, 2, 3, 6)]]],
-    "unique-15-w": ["X% Less Non-Holy Damage,\nX% More Holy Damage", 8, 5, [["elemental_conversion", (1, 4, 5, 7)]]]
+    "unique-1-w": ["X% Less Non-Fire, X% More Fire Damage", 12, 10, [["elemental_conversion", 0]]],
+    "unique-2-w": ["X% Less Non-Water, X% More Water Damage", 12, 10, [["elemental_conversion", 1]]],
+    "unique-3-w": ["X% Less Non-Lightning, X% More Lightning Damage", 12, 10, [["elemental_conversion", 2]]],
+    "unique-4-w": ["X% Less Non-Earth, X% More Earth Damage", 12, 10, [["elemental_conversion", 3]]],
+    "unique-5-w": ["X% Less Non-Wind, X% More Wind Damage", 12, 10, [["elemental_conversion", 4]]],
+    "unique-6-w": ["X% Less Non-Ice, X% More Ice Damage", 12, 10, [["elemental_conversion", 5]]],
+    "unique-7-w": ["X% Less Non-Shadow, X% More Shadow Damage", 12, 10, [["elemental_conversion", 6]]],
+    "unique-8-w": ["X% Less Non-Light, X% More Light Damage", 12, 10, [["elemental_conversion", 7]]],
+    "unique-9-w": ["X% Less Non-Celestial, X% More Celestial Damage", 12, 10, [["elemental_conversion", 8]]],
+    "unique-10-w": ["X% Less Non-Eclipse, X% More Eclipse Damage", 10, 5, [["elemental_conversion", (6, 7)]]],
+    "unique-11-w": ["X% Less Non-Horizon, X% More Horizon Damage", 10, 5, [["elemental_conversion", (3, 4)]]],
+    "unique-12-w": ["X% Less Non-Frostfire, X% More Frostfire Damage", 10, 5, [["elemental_conversion", (0, 5)]]],
+    "unique-13-w": ["X% Less Non-Storm, X% More Storm Damage", 10, 5, [["elemental_conversion", (1, 2)]]],
+    "unique-14-w": ["X% Less Non-Chaos, X% More Chaos Damage", 8, 5, [["elemental_conversion", (0, 2, 3, 6)]]],
+    "unique-15-w": ["X% Less Non-Holy, X% More Holy Damage", 8, 5, [["elemental_conversion", (1, 4, 5, 7)]]]
 }
 
 armour_unique_rolls = {
     "unique-0-a": ["Gain X% Elemental Damage per Matching Resistance", 1, 5, [["unique_conversion", 0]]],
-    "unique-1-a": ["Max HP reduced by X%. Gain 1% Final Damage per 100 HP lost", 1, 5, [["unique_conversion", 1]]],
+    "unique-1-a": ["Convert X% Max HP to 1% Final Damage per 100 HP", 1, 5, [["unique_conversion", 1]]],
     "unique-2-a": ["Block Rate", 4, 10, [["block", -1]]],
     "unique-3-a": ["Dodge Rate", 2, 10, [["dodge", -1]]],
     "unique-4-a": ["Gain X% Final Damage per 1% damage mitigation", 1, 5, [["unique_conversion", 3]]]
@@ -179,7 +169,10 @@ accessory_unique_rolls = {
     "unique-6-y": ["Demon Bane", 25, 10, [["banes", 2]]],
     "unique-7-y": ["Paragon Bane", 25, 10, [["banes", 3]]],
     "unique-8-y": ["Arbiter Bane", 25, 10, [["banes", 4]]],
-    "unique-9-y": ["Class Mastery Bonus X%. Class Mastery is inverted.", 5, 5, [["unique_conversion", 2]]]
+    "unique-9-y": ["Class Mastery Bonus X%. Class Mastery is inverted", 5, 5, [["unique_conversion", 2]]],
+    "unique-10-y": ["X% Singularity Damage, Penetration, and Curse", 5, 5, [["singularity_damage", -1],
+                                                                            ["singularity_penetration", -1],
+                                                                            ["singularity_curse", -1]]]
 }
 
 unique_skill_rolls = {}

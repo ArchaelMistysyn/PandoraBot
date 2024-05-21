@@ -299,7 +299,7 @@ itemdata_dict = build_item_dict(itemdata_dict, heart_data, category="Heart")
 # Uncategorized Item Data
 uncategorized_data = [
     ['OriginZ', 'Origin Catalyst', 100, 5, '<a:eorigin:1145520263954440313>', 'Used for elemental infusion.', 500000],
-    ["Hammer", 'Astral Hammer', 60, 2, '<:ehammer:1145520259248427069>',
+    ["Hammer", 'Astral Hammer', 80, 2, '<:ehammer:1145520259248427069>',
      'Used to reroll specific item rolls. Works on tier 4 and lower gear items.', 50000],
     ["Pearl", 'Stellar Pearl', 75, 4, '<:eprl:1148390531345432647>',
      'Augments an item roll. Increases the tier by 1.', 50000],

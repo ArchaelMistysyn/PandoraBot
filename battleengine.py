@@ -14,6 +14,7 @@ from datetime import datetime as dt, timedelta
 import globalitems
 import sharedmethods
 import adventuredata
+import leaderboards
 
 # Core imports
 import inventory
@@ -80,8 +81,9 @@ def run_discord_bot():
         except KeyboardInterrupt:
             sys.exit(0)
 
-    async def run_solo_cog(player_obj, active_boss, channel_id, sent_message, ctx, gauntlet=False):
-        return enginecogs.SoloCog(engine_bot, player_obj, active_boss, channel_id, sent_message, ctx, gauntlet=gauntlet)
+    async def run_solo_cog(player_obj, active_boss, channel_id, sent_message, ctx, gauntlet=False, mode=-1):
+        return enginecogs.SoloCog(engine_bot, player_obj, active_boss, channel_id, sent_message, ctx,
+                                  gauntlet=gauntlet, mode=mode)
 
     # Admin Commands
     @engine_bot.command(name='sync', help="Archael Only")
@@ -138,10 +140,6 @@ def run_discord_bot():
                 raid_channel_id = server[x]
                 raid_channel = engine_bot.get_channel(raid_channel_id)
                 asyncio.create_task(run_raid_task(raid_channel_id, x, raid_channel))
-            restore_boss_list = await bosses.restore_solo_bosses(command_channel_id)
-            for idy, y in enumerate(restore_boss_list):
-                player_obj = await player.get_player_by_id(y.player_id)
-                asyncio.create_task(run_solo_boss_task(player_obj, y, command_channel_id, ctx))
         print("Initialized Bosses")
 
     @engine_bot.event
@@ -198,7 +196,8 @@ def run_discord_bot():
         await solo_cog.run()
 
     @engine_bot.event
-    async def solo_boss(combat_tracker, player_obj, active_boss, channel_id, sent_message, ctx_object, gauntlet=False):
+    async def solo_boss(combat_tracker, player_obj, active_boss, channel_id, sent_message, ctx_object,
+                        gauntlet=False, mode=-1):
         active_boss.reset_modifiers()
         active_boss.curse_debuffs = player_obj.elemental_curse
         active_boss.aura = player_obj.aura
@@ -212,7 +211,7 @@ def run_discord_bot():
             await sent_message.edit(embed=embed)
             return True, active_boss
         if active_boss.boss_tier >= 4:
-            quest.assign_unique_tokens(player_obj, active_boss.boss_name)
+            quest.assign_unique_tokens(player_obj, active_boss.boss_name, mode=mode)
         extension = " [Gauntlet]" if gauntlet else ""
         if gauntlet and active_boss.boss_tier != 6:
             await bosses.clear_boss_info(channel_id, player_obj.player_id)
@@ -220,7 +219,7 @@ def run_discord_bot():
             if active_boss.boss_tier < 4:
                 boss_type = random.choice(["Fortress", "Dragon", "Demon", "Paragon"])
             active_boss = await bosses.spawn_boss(channel_id, player_obj.player_id, active_boss.boss_tier + 1,
-                                            boss_type, player_obj.player_level, 0, gauntlet=gauntlet)
+                                                  boss_type, player_obj.player_level, 0, gauntlet=gauntlet)
             active_boss.player_id = player_obj.player_id
             current_dps = int(combat_tracker.total_dps / combat_tracker.total_cycles)
             embed = active_boss.create_boss_embed(dps=current_dps, extension=extension)
@@ -231,6 +230,7 @@ def run_discord_bot():
         loot_bonus = 5 if gauntlet else 1
         if "XXX" in active_boss.boss_name:
             loot_bonus = loot.incarnate_attempts_dict[active_boss.boss_level]
+            await leaderboards.update_leaderboard(combat_tracker, player_obj, ctx_object)
         loot_embed = await loot.create_loot_embed(embed, active_boss, player_list, ctx=ctx_object,
                                                   loot_multiplier=loot_bonus, gauntlet=gauntlet)
         await bosses.clear_boss_info(channel_id, player_obj.player_id)
@@ -355,23 +355,21 @@ def run_discord_bot():
         if existing_id != 0:
             await ctx.send("You already have a solo boss or map encounter running.")
             return
-        if not player_obj.player_quest < 50:
+        if player_obj.player_quest < 50:
             await ctx.send("The divine palace is not a place mortals may tread.")
             return
-        spawn_msg = f"{player_obj.player_username} has spawned a tier {active_boss.boss_tier} boss!"
-        await ctx.send(spawn_msg)
+        await ctx.send(f"{player_obj.player_username} enters the divine palace.")
         lotus_object = inventory.BasicItem("Lotus10")
         lotus_stock = await inventory.check_stock(player_obj, lotus_object.item_id)
         embed_msg = discord.Embed(colour=discord.Colour.gold(), title="Divine Palace of God", description="")
-        embed_msg.description = ("The inside of the palace is still, the torches unlit as if it hasn't been used"
-                                 "in thousands of years.")
+        embed_msg.description = "The palace interior remains still, the torches unlit and the halls silent."
         if lotus_stock >= 1:
-            embed_msg.description = ("As you set foot in the palace, the rows of torches lining the ivory halls "
-                                     "shine, alight with divine fire. As you approach the throne of god "
-                                     "you see Yubelle's echo appears before you. She draws the Divine Lotus "
-                                     "inside herself manifesting into a new physical form. "
-                                     "She challenges you to decide your fate in combat before the eyes of god."
-                                     "\n**FINAL WARNING: a Divine Lotus will be consumed if you start the encounter.**")
+            embed_msg.description = (f"As you set foot in the palace rows of torches lining the ivory halls "
+                                     f"ignite with divine fire. Approaching the throne of god "
+                                     f"Yubelle's echo manifests by drawing on the energy of the Divine Lotus. "
+                                     f"Shifting into a new being, 'it' challenges you before the eyes of god."
+                                     f"\n**EXTREME DIFFICUILTY WARNING: {lotus_object.item_emoji} 1x Divine Lotus "
+                                     f"will be consumed.**")
         sent_message = await ctx.channel.send(embed=embed_msg)
         palace_view = PalaceView(player_obj, lotus_object, lotus_stock, sent_message, ctx)
         sent_message = await sent_message.edit(embed=embed_msg, view=palace_view)
@@ -384,37 +382,34 @@ def run_discord_bot():
             self.ctx, self.sent_message = ctx, sent_message
             self.embed_msg = False
             self.lotus_stock = lotus_stock
-            if self.lotus_stock < 0:
-                self.children.disabled = True
-                self.children.style = globalitems.button_colour_list[3]
+            if self.lotus_stock <= 0:
+                for button in self.children:
+                    button.disabled, button.style = True, globalitems.button_colour_list[3]
             elif self.player_obj.player_quest == 50:
-                self.usurper_difficulty.disabled = True
-                self.samsara_difficulty.disabled = True
-                self.usurper_difficulty.style = globalitems.button_colour_list[3]
-                self.samsara_difficulty.style = globalitems.button_colour_list[3]
-            elif self.player_obj.ascendency == "Demi-God":
-                self.samsara_difficulty.disabled = True
-                self.samsara_difficulty.style = globalitems.button_colour_list[3]
+                self.usurper.disabled, self.usurper.style = True, globalitems.button_colour_list[3]
+                self.samsara.disabled, self.samsara.style = True, globalitems.button_colour_list[3]
+            elif self.player_obj.player_level < 200:
+                self.samsara.disabled, self.samsara.style = True, globalitems.button_colour_list[3]
 
         @discord.ui.button(label="Challenger", style=discord.ButtonStyle.blurple)
-        async def challenger_difficulty(self, interaction: discord.Interaction, button: discord.Button):
+        async def challenger(self, interaction: discord.Interaction, button: discord.Button):
             if interaction.user.id != self.player_obj.discord_id:
                 return
-            await self.begin_encounter(1)
+            await self.begin_encounter(interaction, 1)
 
         @discord.ui.button(label="Usurper", style=discord.ButtonStyle.blurple)
-        async def usurper_difficulty(self, interaction: discord.Interaction, button: discord.Button):
+        async def usurper(self, interaction: discord.Interaction, button: discord.Button):
             if interaction.user.id != self.player_obj.discord_id:
                 return
-            await self.begin_encounter(2)
+            await self.begin_encounter(interaction, 2)
 
         @discord.ui.button(label="Samsara", style=discord.ButtonStyle.blurple)
-        async def samsara_difficulty(self, interaction: discord.Interaction, button: discord.Button):
+        async def samsara(self, interaction: discord.Interaction, button: discord.Button):
             if interaction.user.id != self.player_obj.discord_id:
                 return
-            await self.begin_encounter(3)
+            await self.begin_encounter(interaction, 3)
 
-        async def begin_encounter(self, difficulty):
+        async def begin_encounter(self, interaction_obj, difficulty):
             lotus_stock = await inventory.check_stock(self.player_obj, self.lotus_object.item_id)
             embed_msg = discord.Embed(colour=discord.Colour.dark_orange(), title="Divine Palace of God", description="")
             if lotus_stock < 1:
@@ -423,11 +418,13 @@ def run_discord_bot():
                 return
             boss_level = 300 if difficulty == 1 else 600 if difficulty == 2 else 999
             await inventory.update_stock(self.player_obj, self.lotus_object.item_id, -1)
-            boss_obj = await bosses.spawn_boss(self.ctx.channel.id, self.player_obj.player_id, 8, 5, boss_level, 0)
+            boss_obj = await bosses.spawn_boss(self.ctx.channel.id, self.player_obj.player_id, 8,
+                                               "Incarnate", boss_level, 0)
             label_list = {0: " [Challenger]", 1: " [Usurper]", 2: " [Samsara]"}
             embed_msg = boss_obj.create_boss_embed(extension=label_list[difficulty])
-            await interaction.response.edit_message(embed=embed_msg, view=None)
-            solo_cog = await run_solo_cog(self.player_obj, boss_obj, self.ctx.channel.id, self.sent_message, self.ctx)
+            await interaction_obj.response.edit_message(embed=embed_msg, view=None)
+            solo_cog = await run_solo_cog(self.player_obj, boss_obj, self.ctx.channel.id, self.sent_message, self.ctx,
+                                          mode=difficulty)
             task = asyncio.create_task(solo_cog.run())
             await task
 

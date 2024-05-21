@@ -75,7 +75,7 @@ class PlayerProfile:
         self.charge_generation = 1
         self.banes = [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
         self.skill_base_damage_bonus = [0, 0, 0, 0]
-        self.spec_rate, self.spec_conv = [0.0, 0.0, 0.0, 0.0, 0.0], [0, 0]
+        self.spec_rate, self.spec_conv = [0.0, 0.0, 0.0, 0.0, 0.0], [0, 0, 0, 0]
         self.bloom_multiplier = 10.0
         self.unique_conversion = [0.0, 0.0, 0.0, 0.0]
         self.attack_speed = 0.0
@@ -94,6 +94,7 @@ class PlayerProfile:
         self.all_elemental_resistance = 0.1
 
     async def get_player_stats(self, method):
+        await self.reload_player()
         # Construct the base embed.
         echelon_colour, _ = sharedmethods.get_gear_tier_colours((self.player_echelon + 1) // 2)
         resources = f'<:estamina:1145534039684562994> {self.player_username}\'s stamina: {self.player_stamina:,}'
@@ -458,7 +459,7 @@ class PlayerProfile:
         # Calculate unique conversions
         hp_reduction = self.player_mHP * self.unique_conversion[1]
         self.player_mHP = int(self.player_mHP - hp_reduction)
-        self.final_damage += int(round(hp_reduction / 100))
+        self.final_damage += int(round(hp_reduction / 100)) / 100
         self.final_damage += self.unique_conversion[3]
 
     def get_player_initial_damage(self):
@@ -654,10 +655,8 @@ async def df_to_player(row, reloading=None):
         temp.player_username = str(row["player_username"].values[0])
         temp.player_level, temp.player_exp = int(row['player_level'].values[0]), int(row['player_exp'].values[0])
         temp_string = str(row['quest_tokens'].values[0])
-        temp.player_echelon, temp.player_quest = int(row['player_echelon'].values[0]), int(
-            row['player_quest'].values[0])
-        temp.player_stamina, temp.player_coins = int(row['player_stamina'].values[0]), int(
-            row['player_coins'].values[0])
+        temp.player_echelon, temp.player_quest = int(row['player_echelon'].values[0]), int(row['player_quest'].values[0])
+        temp.player_stamina, temp.player_coins = int(row['player_stamina'].values[0]), int(row['player_coins'].values[0])
         temp.player_class = str(row['player_class'].values[0])
         temp.vouch_points = int(row['vouch_points'].values[0])
     string_list = temp_string.split(';')
@@ -665,7 +664,7 @@ async def df_to_player(row, reloading=None):
     temp.get_equipped()
     await temp.get_player_multipliers()
     if reloading is not None:
-        reloading = temp
+        reloading.__dict__.update(temp.__dict__)
     return temp
 
 

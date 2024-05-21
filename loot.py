@@ -42,7 +42,7 @@ boss_loot_dict = {
                   [8, "Lotus1", 5], [8, "Lotus2", 5], [8, "Lotus3", 5], [8, "Lotus4", 5], [8, "Lotus5", 5],
                   [8, "Lotus6", 5], [8, "Lotus7", 5], [8, "Lotus8", 5], [8, "Lotus9", 5],
                   [8, "Lotus10", 1], [8, "DarkStar", 1], [8, "EssenceXXX", 99]]}
-incarnate_attempts_dict = {700: 1, 800: 2, 999: 5}
+incarnate_attempts_dict = {300: 1, 600: 2, 999: 5}
 
 
 def update_loot_and_df(player_obj, item_id, quantity, loot_msg, counter, batch_df):
@@ -76,6 +76,8 @@ async def award_loot(boss_object, player_list, exp_amount, coin_amount, loot_mul
         # Handle coins and exp.
         temp_player = await player.get_player_by_id(x)
         coin_msg = temp_player.adjust_coins(coin_amount)
+        exp_amount = 200000 if 'XXX' in boss_object.boss_name else exp_amount
+
         exp_msg, lvl_change = temp_player.adjust_exp(exp_amount)
         if lvl_change != 0 and boss_object.player_id != 0:
             await sharedmethods.send_notification(ctx, temp_player, "Level", lvl_change)

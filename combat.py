@@ -207,7 +207,7 @@ async def hit_boss(tracker_obj, boss_obj, player_obj, combo_count, hit_type="Reg
     damage, second_msg = check_bloom(player_obj, damage)
     damage, extension = (boss_obj.damage_cap, " *LIMIT*") if damage >= boss_obj.damage_cap != -1 else (damage, "")
     if status_msg == " *TIME SHATTER*" or critical_type != "":
-        damage *= random.randint(1, player_obj.rng_bonus)
+        damage *= random.randint(1, max(1, player_obj.rng_bonus))
     hit_msg = f"{combo_count}x Combo: {skill_name} {sharedmethods.number_conversion(damage)}{extension}"
     if hit_type == "Ultimate":
         hit_msg = f"Ultimate: {skill_name} {sharedmethods.number_conversion(damage)}{extension}"
@@ -429,7 +429,6 @@ def check_flag(player_obj):
 
 def toggle_flag(player_obj):
     player_id = int(player_obj.player_id)
-    
     # Check if a flag exists
     check_query = "SELECT * FROM AbandonEncounter WHERE player_id = :player_check"
     df = rq(check_query, return_value=True, params={'player_check': player_id})

@@ -12,7 +12,6 @@ import battleengine
 import globalitems
 import pilengine
 import sharedmethods
-import leaderboards
 import adventuredata
 
 # Core imports
@@ -27,6 +26,7 @@ import encounters
 
 # Item/crafting imports
 import loot
+import tarot
 
 
 class RaidCog(commands.Cog):
@@ -64,13 +64,13 @@ class RaidCog(commands.Cog):
 
 
 class SoloCog(commands.Cog):
-    def __init__(self, bot, player_obj, active_boss, channel_id, sent_message, ctx_object, gauntlet=False):
+    def __init__(self, bot, player_obj, active_boss, channel_id, sent_message, ctx_object, gauntlet=False, mode=-1):
         self.bot = bot
         self.player_obj, self.active_boss = player_obj, active_boss
         self.channel_id, self.sent_message = channel_id, sent_message
         self.ctx_object, self.channel_object = ctx_object, ctx_object.channel
         self.combat_tracker = combat.CombatTracker(player_obj)
-        self.gauntlet = gauntlet
+        self.gauntlet, self.mode = gauntlet, mode
         self.lock = asyncio.Lock()
 
     async def run(self):
@@ -90,13 +90,9 @@ class SoloCog(commands.Cog):
                 return
             is_alive, self.active_boss = await self.bot.solo_boss(
                 self.combat_tracker, self.player_obj, self.active_boss,
-                self.channel_id, self.sent_message, self.channel_object,
-                gauntlet=self.gauntlet
-            )
+                self.channel_id, self.sent_message, self.channel_object, gauntlet=self.gauntlet, mode=self.mode)
             if is_alive:
                 return
-            if "XXX" in self.active_boss.boss_name:
-                await leaderboards.update_leaderboard(self.combat_tracker, self.player_obj, self.ctx_object)
             self.cog_unload()
 
 
@@ -313,17 +309,19 @@ class MapCog(commands.Cog):
         return embed_obj
 
     async def run_map_cycle(self):
-        if self.room_num == self.map_tier * 2:
+        if self.room_num == max(8, self.map_tier * 2):
             return "Clear"
         # Trigger occurrence/deal damage to player
-        room_type = random.choices(['Combat', 'Treasure', 'Mining', 'Storage'], weights=[5, 4, 4, 3], k=1)[0]
+        room_type = random.choices(['Combat', 'Treasure', 'Mining', 'Storage', 'Fountain'],
+                                   weights=[5, 4, 4, 3, 2], k=1)[0]
         room_embed, status = await self.run_room(room_type)
         await self.sent_message.edit(embed=room_embed)
         return status
 
     async def run_room(self, room_type):
         room_handlers = {'Combat': self.handle_combat_room, 'Treasure': self.handle_treasure_room,
-                         'Mining': self.handle_mining_room, 'Storage': self.handle_storage_room}
+                         'Mining': self.handle_mining_room, 'Storage': self.handle_storage_room,
+                         'Fountain': self.handle_token_room}
         self.player_cHP = min(self.player_cHP + self.player_regen, self.player_obj.player_mHP)
         room_embed = await room_handlers[room_type]()
         return room_embed, ("Dead" if self.player_cHP <= 0 else "Continue")
@@ -393,7 +391,7 @@ class MapCog(commands.Cog):
         base_embed = self.build_base_embed()
         outcome, bonus = random.choices([(1, 1), (2, 5), (3, 10)], weights=[60, 30, 10], k=1)[0]
         hp_msg = sharedmethods.display_hp(self.player_cHP, self.player_mHP)
-        base_embed.description = "Found a treasure chamber!"
+        base_embed.description = "Uncovered a treasure chamber!"
         new_embed = base_embed.copy()
         base_embed.add_field(name="", value=hp_msg, inline=False)
         await self.sent_message.edit(embed=base_embed)
@@ -420,7 +418,7 @@ class MapCog(commands.Cog):
         reward_object = inventory.BasicItem(reward_id)
         current_qty = self.items_accumulated.get(reward_object.item_id, (reward_object, 0))[1]
         self.items_accumulated[reward_object.item_id] = (reward_object, current_qty + item_qty)
-        base_embed.description = "Found a mining chamber!"
+        base_embed.description = "Discovered a mining chamber!"
         new_embed = base_embed.copy()
         base_embed.add_field(name="", value=hp_msg, inline=False)
         await self.sent_message.edit(embed=base_embed)
@@ -450,4 +448,26 @@ class MapCog(commands.Cog):
             await sharedmethods.send_notification(self.ctx_obj, self.player_obj, "Item", reward_object.item_id)
         return new_embed
 
-
+    async def handle_token_room(self):
+        base_embed = self.build_base_embed()
+        hp_msg = sharedmethods.display_hp(self.player_cHP, self.player_mHP)
+        base_embed.description = "Entered a Spiritual Chamber!"
+        new_embed = base_embed.copy()
+        base_embed.add_field(name="", value=hp_msg, inline=False)
+        await self.sent_message.edit(embed=base_embed)
+        await asyncio.sleep(60)
+        card_dict_copy = tarot.card_dict.copy()
+        card_dict_copy.pop("XXX")
+        essence_weight_data = [(f"Essence{id_key}", 8 - tier)
+                               for id_key, (name, tier) in card_dict_copy.items() if tier <= self.map_tier]
+        token_weight_data = [(f"Token{tier}", 8 - tier) for tier in range(1, 8) if tier <= self.map_tier]
+        selected_data = token_weight_data if random.randint(1, 100) <= 75 else essence_weight_data
+        weighted_list = [item for item, weight in selected_data for _ in range(weight)]
+        new_embed.description = "The spiritual energy gathers and condenses into a new form."
+        reward_object = inventory.BasicItem(random.choice(weighted_list))
+        current_qty = self.items_accumulated.get(reward_object.item_id, (reward_object, 0))[1]
+        self.items_accumulated[reward_object.item_id] = (reward_object, current_qty + 1)
+        await inventory.update_stock(self.player_obj, reward_object.item_id, 1)
+        field_value = f"{hp_msg} HP\n{reward_object.item_emoji} 1x {reward_object.item_name}"
+        new_embed.add_field(name="", value=field_value, inline=False)
+        return new_embed

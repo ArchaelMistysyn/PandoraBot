@@ -21,7 +21,7 @@ insignia_description_list = [None, "One element: ", "Two elements: ", "Three ele
                              "Four elements: ", "Five elements: ", None, None, None, "All elements: "]
 insignia_multipliers = [[0, 0], [150, 25], [75, 25], [50, 25], [75, 10], [50, 10], [0, 0], [0, 0], [0, 0], [25, 10]]
 insignia_hp_list = [0, 500, 1000, 1500, 2000, 2500, 5000, 10000, 20000]
-mutation_upgrade_data = {0: [5, 33], 1: [10, 11], 2: [50, 99]}
+mutation_upgrade_data = {0: [5, 50], 1: [10, 25], 2: [20, 99]}
 insignia_prefix = ["Dormant", "Awakened", "Evolved", "Infused", "Symbiotic", "Resonating",
                    "Mutation: Wish", "Mutation: Abyss", "Mutation: Divine"]
 mutation_cost_list = ["Crystal2", "Crystal3", "Lotus7"]
@@ -39,7 +39,7 @@ class Insignia:
         self.element_list = list(map(int, temp_elements))
         self.num_elements = self.element_list.count(1)
         self.stars = (self.player_obj.player_echelon + 1) // 2 + self.mutation_tier
-        self.tier_colour, pearl = sharedmethods.get_gear_tier_colours(player_obj.player_echelon // 2)
+        self.tier_colour, pearl = sharedmethods.get_gear_tier_colours(player_obj.player_echelon // 2 + self.mutation_tier)
 
         # Stats
         hp_bonus, luck_bonus = insignia_hp_list[self.stars], self.stars
@@ -254,36 +254,39 @@ class ConfirmSelectionView(discord.ui.View):
             await interaction.response.edit_message(embed=self.embed_msg, view=None)
             return
 
+        # Pay the costs
+        await inventory.update_stock(self.player_user, "Token2", (token_cost * -1))
+        await inventory.update_stock(self.player_user, secondary_item.item_id, -1)
+
         # Handle unsuccessful mutation.
         if random.randint(1, 100) > self.mutation_rate:
             self.embed_msg.description = "The mutation failed, but I managed to keep your soul intact."
-            cost_msg = await payment_embed(self.player_user, token_cost, mutation_cost_list[mutation_tier])
+            cost_msg = await payment_embed(self.player_user, token_cost, mutation_cost_list[mutation_tier + 1])
             self.embed_msg.add_field(name="Cost:", value=cost_msg, inline=False)
             reload_view = ConfirmSelectionView(self.player_user, 0, "mutation")
             await interaction.response.edit_message(embed=self.embed_msg, view=reload_view)
             return
 
-        # Pay the costs and handle the successful mutation.
-        await inventory.update_stock(self.player_user, "Token2", (token_cost * -1))
-        await inventory.update_stock(self.player_user, secondary_item.item_id, -1)
+        # Handle the successful mutation.
         new_tier = int(self.player_user.insignia[-1]) + 1
         self.player_user.insignia = f"{self.player_user.insignia[:-1]}{new_tier}"
         self.player_user.set_player_field("player_insignia", self.player_user.insignia)
         insignia_obj = Insignia(self.player_user)
         self.embed_msg = insignia_obj.insignia_output
+        self.embed_msg.add_field(name=NPC_name, value="Mutation Successful!", inline=False)
+        if mutation_tier != 3:
+            cost_msg = await payment_embed(self.player_user, token_cost, mutation_cost_list[mutation_tier + 1])
+            self.embed_msg.add_field(name="Cost:", value=cost_msg, inline=False)
         reload_view = ConfirmSelectionView(self.player_user, 0, "mutation")
         await interaction.response.edit_message(embed=self.embed_msg, view=reload_view)
 
     @discord.ui.button(label="Reselect", style=discord.ButtonStyle.blurple, emoji="↩️")
     async def reselect_callback(self, interaction: discord.Interaction, button: discord.Button):
-        try:
-            if interaction.user.id == self.player_user.discord_id:
-                engrave_msg = "My patience wears thin. Tell me, what kind of power do you seek?"
-                embed_msg = discord.Embed(colour=discord.Colour.dark_orange(), title=NPC_name, description=engrave_msg)
-                new_view = InsigniaView(self.player_user)
-                await interaction.response.edit_message(embed=embed_msg, view=new_view)
-        except Exception as e:
-            print(e)
+        if interaction.user.id == self.player_user.discord_id:
+            engrave_msg = "My patience wears thin. Tell me, what kind of power do you seek?"
+            embed_msg = discord.Embed(colour=discord.Colour.dark_orange(), title=NPC_name, description=engrave_msg)
+            new_view = InsigniaView(self.player_user)
+            await interaction.response.edit_message(embed=embed_msg, view=new_view)
 
 
 async def payment_embed(player_obj, token_cost, current_selection):
