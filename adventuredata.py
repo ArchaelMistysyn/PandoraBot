@@ -1,5 +1,5 @@
 # Data imports
-import globalitems
+import globalitems as gli
 
 # Map data lists
 map_tier_dict = {"Ancient Ruins": 1, "Spatial Dungeon": 2, "Celestial Labyrinth": 3,
@@ -27,92 +27,92 @@ room_data_dict = {
     "trap_room":
         [2, ["Salvage", "Bypass"],
          [None, "↩️"],
-         [globalitems.button_colour_list[1], globalitems.button_colour_list[2]],
+         [gli.button_colour_list[1], gli.button_colour_list[2]],
          "trap_callback"],
     "statue_room":
         [2, ["Pray", "Destroy"],
          [None, None],
-         [globalitems.button_colour_list[1], globalitems.button_colour_list[0]],
+         [gli.button_colour_list[1], gli.button_colour_list[0]],
          "statue_callback"],
     "healing_room":
         [2, ["Short Rest", "Long Rest"],
          [None, None],
-         [globalitems.button_colour_list[1], globalitems.button_colour_list[2]],
+         [gli.button_colour_list[1], gli.button_colour_list[2]],
          "rest_callback"],
     "basic_monster":
         [2, ["Fight", "Stealth"],
          ["⚔️", "↩️"],
-         [globalitems.button_colour_list[0], globalitems.button_colour_list[2]],
+         [gli.button_colour_list[0], gli.button_colour_list[2]],
          "basic_monster_callback"],
     "elite_monster":
         [2, ["Fight", "Stealth"],
          ["⚔️", "↩️"],
-         [globalitems.button_colour_list[0], globalitems.button_colour_list[2]],
+         [gli.button_colour_list[0], gli.button_colour_list[2]],
          "elite_monster_callback"],
     "legend_monster":
         [2, ["Fight", "Stealth"],
          ["⚔️", "↩️"],
-         [globalitems.button_colour_list[0], globalitems.button_colour_list[2]],
+         [gli.button_colour_list[0], gli.button_colour_list[2]],
          "legend_monster_callback"],
     "epitaph_room":
         [2, ["Search", "Decipher"],
          [None, "🧩"],
-         [globalitems.button_colour_list[2], globalitems.button_colour_list[2]],
+         [gli.button_colour_list[2], gli.button_colour_list[2]],
          "epitaph_callback"],
     "treasure":
         [2, ["Open Chest", "Bypass"],
          [None, None],
-         [globalitems.button_colour_list[1], globalitems.button_colour_list[2]],
+         [gli.button_colour_list[1], gli.button_colour_list[2]],
          "treasure_callback"],
     "greater_treasure":
         [2, ["Open Chest", "Bypass"],
          [None, None],
-         [globalitems.button_colour_list[1], globalitems.button_colour_list[2]],
+         [gli.button_colour_list[1], gli.button_colour_list[2]],
          "treasure_callback"],
     "penetralia_room":
         [2, ["Search", "Collect"],
          ["📿", "💲"],
-         [globalitems.button_colour_list[1], globalitems.button_colour_list[2]],
+         [gli.button_colour_list[1], gli.button_colour_list[2]],
          "penetralia_callback"],
     "jackpot_room":
         [2, ["Search", "Collect"],
          ["📿", "💲"],
-         [globalitems.button_colour_list[1], globalitems.button_colour_list[2]],
+         [gli.button_colour_list[1], gli.button_colour_list[2]],
          "penetralia_callback"],
     "selection_room":
         [3, ["Option1", "Option2", "Both"],
          [None, None, None],
-         [globalitems.button_colour_list[2], globalitems.button_colour_list[2], globalitems.button_colour_list[0]],
+         [gli.button_colour_list[2], gli.button_colour_list[2], gli.button_colour_list[0]],
          "selection_callback"],
     "boss_shrine":
         [3, ["Option1", "Option2", "Option3"],
          [None, None, None],
-         [globalitems.button_colour_list[2], globalitems.button_colour_list[2], globalitems.button_colour_list[0]],
+         [gli.button_colour_list[2], gli.button_colour_list[2], gli.button_colour_list[0]],
          "shrine_callback"],
     "trial_room":
         [3, ["Option1", "Option2", "Option3"],
          [None, None, None],
-         [globalitems.button_colour_list[2], globalitems.button_colour_list[2], globalitems.button_colour_list[0]],
+         [gli.button_colour_list[2], gli.button_colour_list[2], gli.button_colour_list[0]],
          "trial_callback"],
     "crystal_room":
         [2, ["Resonate", "Search"],
          ["🌟", "🔍"],
-         [globalitems.button_colour_list[2], globalitems.button_colour_list[2]],
+         [gli.button_colour_list[2], gli.button_colour_list[2]],
          "crystal_callback"],
     "sanctuary_room":
         [3, ["Option1", "Option2", "Option3"],
          [None, None, None],
-         [globalitems.button_colour_list[2], globalitems.button_colour_list[2], globalitems.button_colour_list[2]],
+         [gli.button_colour_list[2], gli.button_colour_list[2], gli.button_colour_list[2]],
          "sanctuary_callback"],
     "pact_room":
         [2, ["Refuse Pact", "Forge Pact"],
          [None, None],
-         [globalitems.button_colour_list[0], globalitems.button_colour_list[1]],
+         [gli.button_colour_list[0], gli.button_colour_list[1]],
          "pact_callback"],
     "heart_room":
         [2, ["Purify", "Taint"],
          [None, None],
-         [globalitems.button_colour_list[1], globalitems.button_colour_list[0]],
+         [gli.button_colour_list[1], gli.button_colour_list[0]],
          "heart_callback"]
 }
 

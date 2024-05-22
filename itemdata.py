@@ -1,4 +1,4 @@
-import globalitems
+import globalitems as gli
 
 itemdata_dict = {}
 
@@ -25,7 +25,7 @@ fae_celestial = "<:e9:1179726302480183396>"
 fae_emoji_list = [fae_fire, fae_water, fae_lightning, fae_earth, fae_wind, fae_ice, fae_dark, fae_light, fae_celestial]
 fae_data = [[None, f'Fae Core ({element})', 100, 1, emoji,
              f'The core harvested from a {element.lower()} fae spirit. Brimming with elemental energies.', 500]
-            for i, element, emoji in zip(range(9), globalitems.element_names, fae_emoji_list)]
+            for i, element, emoji in zip(range(9), gli.element_names, fae_emoji_list)]
 itemdata_dict = build_item_dict(itemdata_dict, fae_data, starting_index=0, category="Fae")
 
 # Elemental Origin Data List
@@ -43,7 +43,7 @@ origin_emoji_list = [fire_origin_emoji, water_origin_emoji, lightning_origin_emo
                      shadow_origin_emoji, light_origin_emoji, celestial_origin_emoji]
 origin_data = [[None, f'Elemental Origin ({element})', 90, 6, emoji,
                 f'90% chance to add the {element.lower()} element to a gear item.', 0]
-               for element, emoji in zip(globalitems.element_names, origin_emoji_list)]
+               for element, emoji in zip(gli.element_names, origin_emoji_list)]
 itemdata_dict = build_item_dict(itemdata_dict, origin_data, starting_index=0, category="Origin")
 
 # Token List Data
@@ -193,24 +193,24 @@ unrefined_misc_data = [[None, 'Unrefined Dragon Wings', 75, 4, '<a:elootitem:114
 itemdata_dict = build_item_dict(itemdata_dict, unrefined_misc_data, category="Unrefined")
 
 # Unrefined Gems List Data
-unrefined_gem_data = [[None, 'Unrefined Dragon Gem', 75, 3, '<a:elootitem:1144477550379274322>',
+unrefined_gem_data = [[None, 'Unrefined Dragon Gem', 75, 2, '<:Gem2:1242206600555532421>',
                        'Refine for 75% chance to receive tier 2-4 dragon gem.', 0],
-                      [None, 'Unrefined Demon Gem', 75, 4, '<a:elootitem:1144477550379274322>',
+                      [None, 'Unrefined Demon Gem', 75, 3, '<:Gem3:1242206601385873498>',
                        'Refine for 75% chance to receive a tier 2-4 demon gem.', 0],
-                      [None, 'Unrefined Paragon Gem', 75, 5, '<a:elootitem:1144477550379274322>',
+                      [None, 'Unrefined Paragon Gem', 75, 4, '<:Gem4:1242206602405347459>',
                        'Refine for 75% chance to receive a tier 2-4 paragon gem.', 0]]
 itemdata_dict = build_item_dict(itemdata_dict, unrefined_gem_data, category="Gem")
 
 # Unrefined Jewel List Data
-unrefined_jewel_data = [[None, 'Unrefined Dragon Jewel', 75, 5, '<a:elootitem:1144477550379274322>',
+unrefined_jewel_data = [[None, 'Unrefined Dragon Jewel', 75, 5, '<:Gem5:1242206603441078363>',
                          'Refine for 50% chance to receive tier 5-8 dragon jewel.', 0],
-                        [None, 'Unrefined Demon Jewel', 75, 5, '<a:elootitem:1144477550379274322>',
+                        [None, 'Unrefined Demon Jewel', 75, 5, '<:Gem5:1242206603441078363>',
                          'Refine for 50% chance to receive a tier 5-8 demon jewel.', 0],
-                        [None, 'Unrefined Paragon Jewel', 75, 6, '<a:elootitem:1144477550379274322>',
+                        [None, 'Unrefined Paragon Jewel', 75, 5, '<:Gem5:1242206603441078363>',
                          'Refine for 50% chance to receive a tier 5-8 paragon jewel.', 0],
-                        [None, 'Unrefined Arbiter Jewel', 75, 7, '<a:elootitem:1144477550379274322>',
+                        [None, 'Unrefined Arbiter Jewel', 75, 7, '<:Gem7:1242206605211205662>',
                          'Refine for 50% chance to receive a tier 6-8 arbiter jewel.', 0],
-                        [None, 'Unrefined Incarnate Jewel', 75, 8, '<a:elootitem:1144477550379274322>',
+                        [None, 'Unrefined Incarnate Jewel', 75, 8, '<:Gem8:1242206660513108029>',
                          'Refine for 50% chance to receive a tier 7-8 incarnate jewel.', 0]]
 itemdata_dict = build_item_dict(itemdata_dict, unrefined_jewel_data, category="Jewel")
 
@@ -251,23 +251,23 @@ for index, row in enumerate(essence_data):
 itemdata_dict = build_item_dict(itemdata_dict, essence_data, category="Essence", unique_index=True)
 
 # Lotus List Data
-lotus_data = [[None, 'Lotus of Prosperity', 100, 7, '<a:eorigin:1145520263954440313>',
+lotus_data = [[None, 'Lotus of Prosperity', 100, 8, '<a:eorigin:1145520263954440313>',
                'Used for Divine Purification (Amulet). Increases the tier to 8. ', 9999999],
-              [None, 'Lotus of Serenity', 100, 7, '<a:eorigin:1145520263954440313>',
+              [None, 'Lotus of Serenity', 100, 8, '<a:eorigin:1145520263954440313>',
                'Used for Divine Purification (Greaves).  Increases the tier to 8.', 0],
-              [None, 'Lotus of Freedom', 100, 7, '<a:eorigin:1145520263954440313>',
+              [None, 'Lotus of Freedom', 100, 8, '<a:eorigin:1145520263954440313>',
                'Used for Divine Purification (Wings). Increases the tier to 8. ', 0],
-              [None, 'Lotus of Eternity', 100, 7, '<a:eorigin:1145520263954440313>',
+              [None, 'Lotus of Eternity', 100, 8, '<a:eorigin:1145520263954440313>',
                'Used for Divine Melding (Jewels). Increases the tier to 8.', 0],
-              [None, 'Lotus of Abundance', 100, 7, '<a:eorigin:1145520263954440313>',
+              [None, 'Lotus of Abundance', 100, 8, '<a:eorigin:1145520263954440313>',
                'Used for Divine Purification (Armour). Increases the tier to 8.', 0],
-              [None, 'Lotus of Domincation', 100, 7, '<a:eorigin:1145520263954440313>',
+              [None, 'Lotus of Domincation', 100, 8, '<a:eorigin:1145520263954440313>',
                'Used for Divine Purification (Crest).  Increases the tier to 8.', 0],
-              [None, 'Lotus of Divergence', 100, 7, '<a:eorigin:1145520263954440313>',
+              [None, 'Lotus of Divergence', 100, 8, '<a:eorigin:1145520263954440313>',
                'Used for Divine Mutation (Insignia).  Increases the tier to 8.', 0],
-              [None, 'Lotus of Revelations', 100, 7, '<a:eorigin:1145520263954440313>',
+              [None, 'Lotus of Revelations', 100, 8, '<a:eorigin:1145520263954440313>',
                'Used for Divine Synthesis (Tarot).  Increases the tier to 8.', 0],
-              [None, 'Lotus of Nightmares', 100, 7, '<a:eorigin:1145520263954440313>',
+              [None, 'Lotus of Nightmares', 100, 8, '<a:eorigin:1145520263954440313>',
                'Used for Divine Synthesis (Weapon).  Increases the tier to 8.', 0],
               [None, 'Divine Lotus', 100, 8, '<a:eorigin:1145520263954440313>',
                '???', 0, ""]]
@@ -292,24 +292,24 @@ gemstone_data = [
 itemdata_dict = build_item_dict(itemdata_dict, gemstone_data, starting_index=0, category="Gemstone")
 
 # Fish Item Data
-fish_list = [("Sawshark [Pristiophoridae]", 1), ("Slippery Dick [Halichoeres bivittatus]", 1),
-             ("Scorpionfish [Scorpaenidae]", 1), ("Clownfish [Amphiprioninae]", 1),
-             ("Hammerhead Shark [Sphyrnidae]", 2), ("Old Wife [Enoplosus armatus]", 2),
-             ("Glass Catfish [Kryptopterus vitreolus]", 2), ("Jellyfish [Scyphozoa]", 2),
-             ("Nurse Shark [Ginglymostoma cirratum]", 3), ("Wahoo [Acanthocybium solandri]", 3),
-             ("Frogfish [Antennariidae]", 3), ("Butterflyfish [Chaetodontidae]", 3),
-             ("Cookiecutter Shark [Isistius brasiliensis]", 4), ("Four-Eyed Fish [Anableps anableps]", 4),
-             ("Coffinfish [Chaunax endeavouri]", 4), ("BoxFish [Ostraciidae]", 4),
-             ("Goblin Shark [Mitsukurina owstoni]", 5), ("Obese Dragonfish [Opostomias micripnus]", 5),
-             ("Anglerfish [Lophiiformes]", 5), ("Swordfish [Xiphias gladius]", 5),
-             ("Zebra Shark [Stegostoma fasciatum]", 6), ("Blue Bastard [Plectorhinchus caeruleonothus]", 6),
-             ("Sunfish [Mola mola]", 6), ("Angelfish [Pomacanthidae]", 6),
-             ("Whale Shark [Rhincodon typus]", 7), ("Whitemargin Stargazer [Uranoscopus sulphureus]", 7),
-             ("Viperfish [Chauliodus sloani]", 7), ("Spookfish [Opisthoproctidae]", 7)]
+fish_list = [("**Sawshark** [Pristiophoridae]", 1), ("**Slippery Dick** [Halichoeres bivittatus]", 1),
+             ("**Scorpionfish** [Scorpaenidae]", 1), ("**Clownfish** [Amphiprioninae]", 1),
+             ("**Hammerhead Shark** [Sphyrnidae]", 2), ("**Old Wife** [Enoplosus armatus]", 2),
+             ("**Glass Catfish** [Kryptopterus vitreolus]", 2), ("**Jellyfish** [Scyphozoa]", 2),
+             ("**Nurse Shark** [Ginglymostoma cirratum]", 3), ("**Wahoo** [Acanthocybium solandri]", 3),
+             ("**Frogfish** [Antennariidae]", 3), ("**Butterflyfish** [Chaetodontidae]", 3),
+             ("**Cookiecutter Shark** [Isistius brasiliensis]", 4), ("**Four-Eyed Fish** [Anableps anableps]", 4),
+             ("**Coffinfish** [Chaunax endeavouri]", 4), ("**BoxFish** [Ostraciidae]", 4),
+             ("**Goblin Shark** [Mitsukurina owstoni]", 5), ("**Obese Dragonfish** [Opostomias micripnus]", 5),
+             ("**Anglerfish** [Lophiiformes]", 5), ("**Swordfish** [Xiphias gladius]", 5),
+             ("**Zebra Shark** [Stegostoma fasciatum]", 6), ("**Blue Bastard** [Plectorhinchus caeruleonothus]", 6),
+             ("**Sunfish** [Mola mola]", 6), ("**Angelfish** [Pomacanthidae]", 6),
+             ("**Whale Shark** [Rhincodon typus]", 7), ("**Whitemargin Stargazer** [Uranoscopus sulphureus]", 7),
+             ("**Viperfish** [Chauliodus sloani]", 7), ("**Spookfish** [Opisthoproctidae]", 7)]
 fish_description = 'Amazing! What a cute fish. So adorable!'
 fish_data = []
 for (fish_name, fish_tier) in fish_list:
-    fish_data.append([None, fish_name, 100, fish_tier, '<a:elootitem:1144477550379274322>', fish_description, 0])
+    fish_data.append([None, fish_name, 100, fish_tier, "🐟", fish_description, 0])
 itemdata_dict = build_item_dict(itemdata_dict, fish_data, starting_index=1, category="Fish")
 
 # Heart Item Data

@@ -1,5 +1,5 @@
 # Data imports
-import sharedmethods
+import sharedmethods as sm
 
 # Core imports
 import player
@@ -83,9 +83,9 @@ def assign_ring_values(player_obj, ring_equipment):
 def display_ring_values(ring_equipment):
     output = ""
     bonuses, (points, path_index) = ring_values_dict[ring_equipment.item_base_type]
-    _, augment = sharedmethods.get_gear_tier_colours(ring_equipment.item_tier)
+    _, augment = sm.get_gear_tier_colours(ring_equipment.item_tier)
     if points > 0:
-        output += f"Path of {globalitems.path_names[path_index]} +{points}\n"
+        output += f"Path of {gli.path_names[path_index]} +{points}\n"
     output += f"{augment} HP Bonus +{ring_equipment.item_tier * 500:,}\n"
     output += f"{augment} Final Damage {ring_equipment.item_tier * 10:,}%\n"
     output += f"{augment} Attack Speed {ring_equipment.item_tier * 5:,}%\n"

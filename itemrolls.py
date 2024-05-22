@@ -4,7 +4,7 @@ from discord.ui import Button, View
 import random
 
 # Data imports
-import globalitems
+import globalitems as gli
 
 # Core imports
 import player
@@ -176,7 +176,7 @@ accessory_unique_rolls = {
 }
 
 unique_skill_rolls = {}
-for roll_num, (class_name, skills) in enumerate(globalitems.skill_names_dict.items()):
+for roll_num, (class_name, skills) in enumerate(gli.skill_names_dict.items()):
     for index, skill_name in enumerate(skills):
         key = f"unique-{roll_num}-{class_name}"
         unique_skill_rolls[key] = [f"{skill_name} Damage", 10, 1, [["skill_damage_bonus", index]]]
@@ -368,7 +368,7 @@ class ItemRoll:
         self.roll_id = roll_id
         roll_details = roll_id.split("-")
         self.roll_tier = int(roll_details[0])
-        self.roll_icon = f"{globalitems.augment_icons[self.roll_tier - 1]}"
+        self.roll_icon = f"{gli.augment_icons[self.roll_tier - 1]}"
         self.roll_category = roll_details[1]
         self.roll_code = f"{roll_details[1]}-{roll_details[2]}"
         self.roll_value, self.roll_msg = 0, ""
@@ -384,7 +384,7 @@ class ItemRoll:
             return
         # Handle unique roll
         self.roll_code += f"-{roll_details[3]}"
-        current = unique_skill_rolls if roll_details[3] in globalitems.class_names else unique_rolls[roll_details[3]][0]
+        current = unique_skill_rolls if roll_details[3] in gli.class_names else unique_rolls[roll_details[3]][0]
         current_roll = current[self.roll_code]
         self.roll_value = current_roll[1] * roll_adjust
         temp_msg = f"{current_roll[0]}"

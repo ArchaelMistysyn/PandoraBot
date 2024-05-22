@@ -4,8 +4,8 @@ import random
 import pandas as pd
 
 # Data imports
-import globalitems
-import sharedmethods
+import globalitems as gli
+import sharedmethods as sm
 import itemdata
 
 # Core imports
@@ -286,7 +286,7 @@ class TarotView(discord.ui.View):
                 embed_msg = discord.Embed(colour=discord.Colour.magenta(),
                                           title=f"{self.player_user.player_username}'s Tarot Collection",
                                           description=f"Completion Total: {completion_count} / 31")
-                embed_msg.set_image(url=globalitems.planetarium_img)
+                embed_msg.set_image(url=gli.planetarium_img)
                 new_view = SearchTierView(self.player_user)
                 await interaction.response.edit_message(embed=embed_msg, view=new_view)
         except Exception as e:
@@ -385,8 +385,8 @@ class TarotCard:
             self.card_image_link = f"https://kyleportfolio.ca/botimages/tarot/{self.card_numeral}.png"
 
     def create_tarot_embed(self):
-        gear_colour, _ = sharedmethods.get_gear_tier_colours(self.num_stars)
-        display_stars = sharedmethods.display_stars(self.num_stars)
+        gear_colour, _ = sm.get_gear_tier_colours(self.num_stars)
+        display_stars = sm.display_stars(self.num_stars)
         card_title = f"{self.card_numeral} - {self.card_name}"
         card_title += f" [{card_variant[self.num_stars]}]"
         tarot_embed = discord.Embed(colour=gear_colour, title=card_title, description=display_stars)
@@ -397,8 +397,8 @@ class TarotCard:
 
     def display_tarot_stats(self):
         card_data = card_stat_dict[self.card_numeral]
-        pearl = globalitems.augment_icons[self.num_stars - 1]
-        path_string = f"Path of {globalitems.path_names[card_data[0]]}" if card_data[0] != "All" else "All Paths"
+        pearl = gli.augment_icons[self.num_stars - 1]
+        path_string = f"Path of {gli.path_names[card_data[0]]}" if card_data[0] != "All" else "All Paths"
         stat_string = f"{path_string} +{path_point_values[self.num_stars]}\n"
         stat_string += (f"{pearl} Base Damage {self.damage:,} - {self.damage:,}\n"
                         f"{pearl} HP Bonus +{self.hp:,}\n"
@@ -543,7 +543,7 @@ async def binding_ritual(player_obj, essence_type, success_rate):
     # Confirm stock is available
     if essence_stock == 0:
         embed_msg = await tarot_menu_embed(player_obj, essence_type)
-        stock_msg = sharedmethods.get_stock_msg(loot_item, essence_stock)
+        stock_msg = sm.get_stock_msg(loot_item, essence_stock)
         embed_msg.add_field(name="Ritual Failed!", value=stock_msg)
         return embed_msg
     # Pay the cost and attempt the binding.

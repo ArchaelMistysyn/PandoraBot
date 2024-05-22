@@ -5,14 +5,14 @@ import asyncio
 import random
 
 # Data imports
-import globalitems
+import globalitems as gli
 
 # Core imports
 import player
 import inventory
 import quest
 import combat
-import sharedmethods
+import sharedmethods as sm
 import skillpaths
 import bazaar
 import market
@@ -153,7 +153,7 @@ class TownView(discord.ui.View):
             return
         title, description = "Refinery", "Please select the item to refine"
         embed_msg = discord.Embed(colour=discord.Colour.dark_orange(), title=title, description=description)
-        embed_msg.set_image(url=globalitems.refinery_img)
+        embed_msg.set_image(url=gli.refinery_img)
         await interaction.response.edit_message(embed=embed_msg, view=forge.RefSelectView(self.player_obj))
 
     @discord.ui.button(label="Alchemist", style=discord.ButtonStyle.blurple, row=0)
@@ -162,7 +162,7 @@ class TownView(discord.ui.View):
             return
         title, description = "Cloaked Alchemist, Sangam", "I can make anything, if you bring the right stuff."
         embed_msg = discord.Embed(colour=discord.Colour.magenta(), title=title, description=description)
-        embed_msg.set_image(url=globalitems.infuse_img)
+        embed_msg.set_image(url=gli.infuse_img)
         await interaction.response.edit_message(embed=embed_msg, view=infuse.InfuseView(self.player_obj))
 
     @discord.ui.button(label="Market", style=discord.ButtonStyle.blurple, row=0)
@@ -171,7 +171,7 @@ class TownView(discord.ui.View):
             return
         title, description = "Black Market", "Everything has a price."
         embed_msg = discord.Embed(colour=discord.Colour.dark_orange(), title=title, description=description)
-        embed_msg.set_image(url=globalitems.market_img)
+        embed_msg.set_image(url=gli.market_img)
         await interaction.response.edit_message(embed=embed_msg, view=market.TierSelectView(self.player_obj))
 
     @discord.ui.button(label="Bazaar", style=discord.ButtonStyle.blurple, row=0)
@@ -179,7 +179,7 @@ class TownView(discord.ui.View):
         if interaction.user.id != self.player_obj.discord_id:
             return
         embed_msg = await bazaar.show_bazaar_items(self.player_obj)
-        embed_msg.set_image(url=globalitems.bazaar_img)
+        embed_msg.set_image(url=gli.bazaar_img)
         await interaction.response.edit_message(embed=embed_msg, view=bazaar.BazaarView(self.player_obj))
 
 
@@ -198,7 +198,7 @@ class CelestialView(discord.ui.View):
         embed_msg = discord.Embed(colour=discord.Colour.blurple(), title="Pandora's Celestial Forge", description="")
         name, value = "Pandora, The Celestial", "Let me know what you'd like me to upgrade!"
         embed_msg.add_field(name=name, value=value, inline=False)
-        embed_msg.set_image(url=globalitems.forge_img)
+        embed_msg.set_image(url=gli.forge_img)
         await interaction.response.edit_message(embed=embed_msg, view=forge.SelectView(self.player_obj, "celestial"))
 
     @discord.ui.button(label="Tarot", style=discord.ButtonStyle.blurple, row=0)
@@ -210,7 +210,7 @@ class CelestialView(discord.ui.View):
         embed_msg = discord.Embed(colour=discord.Colour.magenta(), title=title, description=description)
         name, value = f"{self.player_obj.player_username}'s Tarot Collection", f"Completion Total: {completion_count} / 31"
         embed_msg.add_field(name=name, value=value, inline=False)
-        embed_msg.set_image(url=globalitems.planetarium_img)
+        embed_msg.set_image(url=gli.planetarium_img)
         await interaction.response.edit_message(embed=embed_msg, view=tarot.CollectionView(self.player_obj, 0))
 
     @discord.ui.button(label="?????", style=discord.ButtonStyle.blurple, row=0)
@@ -297,7 +297,7 @@ class DivineView(discord.ui.View):
                      "We are not your allies, but we will not treat you unfairly."
                      "\nThe oracle has already foretold your failure. Now it need only be written into truth.")
         embed_msg = discord.Embed(colour=discord.Colour.blurple(), title=title, description=entry_msg)
-        embed_msg.set_image(url=globalitems.forge_img)
+        embed_msg.set_image(url=gli.forge_img)
         await interaction.response.edit_message(embed=embed_msg, view=forge.SelectView(self.player_obj, "custom"))
 
     @discord.ui.button(label="Fleur", style=discord.ButtonStyle.blurple, row=0)
@@ -314,7 +314,7 @@ class DivineView(discord.ui.View):
                      "I know you will inevitably find what you desire even without my guidance. "
                      "If you intend to sever the divine lotus, then I suppose the rest are nothing but pretty flowers.")
         embed_msg = discord.Embed(colour=discord.Colour.blurple(), title=title, description=entry_msg)
-        embed_msg.set_image(url=globalitems.sanctuary_img)
+        embed_msg.set_image(url=gli.sanctuary_img)
         await interaction.response.edit_message(embed=embed_msg, view=market.LotusSelectView(self.player_obj))
 
 
@@ -323,12 +323,12 @@ async def add_skull_fields(player_obj, embed_msg, method="Return"):
     skull_items = [inventory.BasicItem(f"Skull{i}") for i in range(1, 5)]
     field_value = ""
     if method != "Sacrifice":
-        coin_msg = f"{globalitems.coin_icon} {player_obj.player_coins:,}x Lotus Coins"
+        coin_msg = f"{gli.coin_icon} {player_obj.player_coins:,}x Lotus Coins"
         embed_msg.add_field(name=f"Current Coins", value=coin_msg, inline=False)
     for item in skull_items:
         price = item.item_cost // 2 if method == "Return" else item.item_cost
         skull_stock = await inventory.check_stock(player_obj, item.item_id)
-        coin_msg = f"{globalitems.coin_icon} {price:,}x Lotus Coins\n"
+        coin_msg = f"{gli.coin_icon} {price:,}x Lotus Coins\n"
         if method == "Return":
             field_value += f"{item.item_emoji} {skull_stock}x __**{item.item_name}**__: {coin_msg}"
         elif method == "Purchase":
@@ -346,7 +346,7 @@ class SkullSelectView(discord.ui.View):
         self.skull_ring = skull_ring
         if skull_ring:
             self.feed_ring_callback.disabled = False
-            self.feed_ring_callback.style = globalitems.button_colour_list[2]
+            self.feed_ring_callback.style = gli.button_colour_list[2]
 
     @discord.ui.button(label="Return Skulls", style=discord.ButtonStyle.blurple, row=0)
     async def return_skulls_callback(self, interaction: discord.Interaction, button: discord.Button):
@@ -410,7 +410,7 @@ class SkullsView(discord.ui.View):
             if skull_stock <= 0:
                 self.new_embed = await e_ring.create_citem_embed()
                 self.new_embed = await add_skull_fields(self.player_obj, self.new_embed, self.method)
-                stock_msg = sharedmethods.get_stock_msg(item, skull_stock)
+                stock_msg = sm.get_stock_msg(item, skull_stock)
                 self.new_embed.add_field(name="", value=stock_msg, inline=False)
                 await interaction_obj.response.edit_message(embed=self.new_embed, view=self.new_view)
                 return
@@ -437,14 +437,14 @@ class SkullsView(discord.ui.View):
             if skull_stock <= 0:
                 self.new_embed.description = ("Stop messing around, you might give me the wrong idea. "
                                               "Or is there actually another reason you called for me?\n")
-                self.new_embed.description += sharedmethods.get_stock_msg(item, skull_stock)
+                self.new_embed.description += sm.get_stock_msg(item, skull_stock)
                 self.new_embed = await add_skull_fields(self.player_obj, self.new_embed, method=self.method)
                 await interaction_obj.response.edit_message(embed=self.new_embed, view=self.new_view)
                 return
             await inventory.update_stock(self.player_obj, item.item_id, -1)
             coin_msg = self.player_obj.adjust_coins(item.item_cost // 2, apply_pact=False)
             self.new_embed.description = (f"Thank you for bringing him home. As promised here's your reward.\n"
-                                          f"Thana hands you {globalitems.coin_icon} {coin_msg} Lotus Coins")
+                                          f"Thana hands you {gli.coin_icon} {coin_msg} Lotus Coins")
             self.new_embed = await add_skull_fields(self.player_obj, self.new_embed, method=self.method)
             await interaction_obj.response.edit_message(embed=self.new_embed, view=self.new_view)
 
@@ -597,19 +597,19 @@ class StaminaView(discord.ui.View):
         super().__init__(timeout=None)
         self.player = player_user
 
-    @discord.ui.button(label="Lesser Potion", style=discord.ButtonStyle.success, emoji=globalitems.stamina_icon)
+    @discord.ui.button(label="Lesser Potion", style=discord.ButtonStyle.success, emoji=gli.stamina_icon)
     async def t1_stamina_callback(self, interaction: discord.Interaction, button: discord.Button):
         await self.drink_potion(interaction, 1, 500)
 
-    @discord.ui.button(label="Stamina Potion", style=discord.ButtonStyle.success, emoji=globalitems.stamina_icon)
+    @discord.ui.button(label="Stamina Potion", style=discord.ButtonStyle.success, emoji=gli.stamina_icon)
     async def t2_stamina_callback(self, interaction: discord.Interaction, button: discord.Button):
         await self.drink_potion(interaction, 2, 1000)
 
-    @discord.ui.button(label="Greater Potion", style=discord.ButtonStyle.success, emoji=globalitems.stamina_icon)
+    @discord.ui.button(label="Greater Potion", style=discord.ButtonStyle.success, emoji=gli.stamina_icon)
     async def t3_stamina_callback(self, interaction: discord.Interaction, button: discord.Button):
         await self.drink_potion(interaction, 3, 2500)
 
-    @discord.ui.button(label="Ultimate Potion", style=discord.ButtonStyle.success, emoji=globalitems.stamina_icon)
+    @discord.ui.button(label="Ultimate Potion", style=discord.ButtonStyle.success, emoji=gli.stamina_icon)
     async def t4_stamina_callback(self, interaction: discord.Interaction, button: discord.Button):
         await self.drink_potion(interaction, 4, 5000)
 
@@ -798,19 +798,19 @@ class ClassSelect(discord.ui.View):
         placeholder="Select a class!", min_values=1, max_values=1,
         options=[
             discord.SelectOption(
-                emoji=globalitems.class_icon_list[0], label="Knight", description="The Valiant Knight"),
+                emoji=gli.class_icon_list[0], label="Knight", description="The Valiant Knight"),
             discord.SelectOption(
-                emoji=globalitems.class_icon_list[1], label="Ranger", description="The Precise Ranger"),
+                emoji=gli.class_icon_list[1], label="Ranger", description="The Precise Ranger"),
             discord.SelectOption(
-                emoji=globalitems.class_icon_list[2], label="Mage", description="The Arcane Mage"),
+                emoji=gli.class_icon_list[2], label="Mage", description="The Arcane Mage"),
             discord.SelectOption(
-                emoji=globalitems.class_icon_list[3], label="Assassin", description="The Stealthy Assassin"),
+                emoji=gli.class_icon_list[3], label="Assassin", description="The Stealthy Assassin"),
             discord.SelectOption(
-                emoji=globalitems.class_icon_list[4], label="Weaver", description="The Mysterious Weaver"),
+                emoji=gli.class_icon_list[4], label="Weaver", description="The Mysterious Weaver"),
             discord.SelectOption(
-                emoji=globalitems.class_icon_list[5], label="Rider", description="The Mounted Rider"),
+                emoji=gli.class_icon_list[5], label="Rider", description="The Mounted Rider"),
             discord.SelectOption(
-                emoji=globalitems.class_icon_list[6], label="Summoner", description="The Trusted Summoner")
+                emoji=gli.class_icon_list[6], label="Summoner", description="The Trusted Summoner")
         ]
     )
     async def class_callback(self, interaction: discord.Interaction, class_select: discord.ui.Select):
@@ -840,19 +840,19 @@ class ClassChangeView(discord.ui.View):
         placeholder="Select a new class!", min_values=1, max_values=1,
         options=[
             discord.SelectOption(
-                emoji=globalitems.class_icon_list[0], label="Knight", description="The Valiant Knight"),
+                emoji=gli.class_icon_list[0], label="Knight", description="The Valiant Knight"),
             discord.SelectOption(
-                emoji=globalitems.class_icon_list[1], label="Ranger", description="The Precise Ranger"),
+                emoji=gli.class_icon_list[1], label="Ranger", description="The Precise Ranger"),
             discord.SelectOption(
-                emoji=globalitems.class_icon_list[2], label="Mage", description="The Arcane Mage"),
+                emoji=gli.class_icon_list[2], label="Mage", description="The Arcane Mage"),
             discord.SelectOption(
-                emoji=globalitems.class_icon_list[3], label="Assassin", description="The Stealthy Assassin"),
+                emoji=gli.class_icon_list[3], label="Assassin", description="The Stealthy Assassin"),
             discord.SelectOption(
-                emoji=globalitems.class_icon_list[4], label="Weaver", description="The Mysterious Weaver"),
+                emoji=gli.class_icon_list[4], label="Weaver", description="The Mysterious Weaver"),
             discord.SelectOption(
-                emoji=globalitems.class_icon_list[5], label="Rider", description="The Mounted Rider"),
+                emoji=gli.class_icon_list[5], label="Rider", description="The Mounted Rider"),
             discord.SelectOption(
-                emoji=globalitems.class_icon_list[6], label="Summoner", description="The Trusted Summoner")
+                emoji=gli.class_icon_list[6], label="Summoner", description="The Trusted Summoner")
         ]
     )
     async def change_callback(self, interaction: discord.Interaction, class_select: discord.ui.Select):
@@ -950,25 +950,25 @@ class BuyView(discord.ui.View):
 class PointsView(discord.ui.View):
     def __init__(self, player_obj):
         super().__init__()
-        self.path_names = globalitems.path_names
+        self.path_names = gli.path_names
         self.player_obj = player_obj
 
     @discord.ui.select(
         placeholder="Select a Path", min_values=1, max_values=1,
         options=[
-            discord.SelectOption(emoji=globalitems.path_icon[0], label="Path of Storms",
+            discord.SelectOption(emoji=gli.path_icon[0], label="Path of Storms",
                                  description="Water, Lightning, and Critical Specialist"),
-            discord.SelectOption(emoji=globalitems.path_icon[1], label="Path of Frostfire",
+            discord.SelectOption(emoji=gli.path_icon[1], label="Path of Frostfire",
                                  description="Ice, Fire, and Class Specialist"),
-            discord.SelectOption(emoji=globalitems.path_icon[2], label="Path of Horizon",
+            discord.SelectOption(emoji=gli.path_icon[2], label="Path of Horizon",
                                  description="Earth, Wind, and Bleed Specialist"),
-            discord.SelectOption(emoji=globalitems.path_icon[3], label="Path of Eclipse",
+            discord.SelectOption(emoji=gli.path_icon[3], label="Path of Eclipse",
                                  description="Dark, Light, and Ultimate Specialist"),
-            discord.SelectOption(emoji=globalitems.path_icon[4], label="Path of Stars",
+            discord.SelectOption(emoji=gli.path_icon[4], label="Path of Stars",
                                  description="Celestial and Combo Specialist"),
-            discord.SelectOption(emoji=globalitems.path_icon[5], label="Path of Solitude",
+            discord.SelectOption(emoji=gli.path_icon[5], label="Path of Solitude",
                                  description="Mono Element and Time Specialist"),
-            discord.SelectOption(emoji=globalitems.path_icon[5], label="Path of Confluence",
+            discord.SelectOption(emoji=gli.path_icon[5], label="Path of Confluence",
                                  description="Multi Elemental Specialist"),
             discord.SelectOption(emoji="✖️", label="Reset",
                                  description="Reset all skill points")

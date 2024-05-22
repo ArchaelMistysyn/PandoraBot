@@ -7,8 +7,8 @@ from datetime import datetime as dt, timedelta
 import math
 
 # Data imports
-import globalitems
-import sharedmethods
+import globalitems as gli
+import sharedmethods as sm
 from pandoradb import run_query as rq
 
 # Core imports
@@ -97,14 +97,14 @@ class PlayerProfile:
     async def get_player_stats(self, method):
         await self.reload_player()
         # Construct the base embed.
-        echelon_colour, _ = sharedmethods.get_gear_tier_colours((self.player_echelon + 1) // 2)
+        echelon_colour, _ = sm.get_gear_tier_colours((self.player_echelon + 1) // 2)
         resources = f'<:estamina:1145534039684562994> {self.player_username}\'s stamina: {self.player_stamina:,}'
-        resources += f'\n{globalitems.coin_icon} Lotus Coins: {self.player_coins:,}'
+        resources += f'\n{gli.coin_icon} Lotus Coins: {self.player_coins:,}'
         exp = f'Level: {self.player_level} Exp: ({self.player_exp:,} / {get_max_exp(self.player_level):,})'
-        id_msg = f'User ID: {self.player_id}\nClass: {globalitems.class_icon_dict[self.player_class]}'
+        id_msg = f'User ID: {self.player_id}\nClass: {gli.class_icon_dict[self.player_class]}'
         embed_msg = discord.Embed(colour=echelon_colour, title=self.player_username, description=id_msg)
         embed_msg.add_field(name=exp, value=resources, inline=False)
-        embed_msg.set_thumbnail(url=f"{sharedmethods.get_thumbnail_by_class(self.player_class)}")
+        embed_msg.set_thumbnail(url=f"{sm.get_thumbnail_by_class(self.player_class)}")
 
         # Initialize the values.
         title_msg, stats = "", ""
@@ -124,7 +124,7 @@ class PlayerProfile:
                 element_breakdown.append((x, total_multi * 100))
             sorted_element_breakdown = sorted(element_breakdown, key=lambda v: v[1], reverse=True)
             for z, total_multi in sorted_element_breakdown:
-                temp_icon = globalitems.global_element_list[z]
+                temp_icon = gli.global_element_list[z]
                 temp_dmg_str = f"(Dmg: {int(round(self.elemental_multiplier[z] * 100)):,}%)"
                 temp_pen_str = f"(Pen: {int(round(self.elemental_penetration[z] * 100)):,}%)"
                 temp_curse_str = f"(Curse: {int(round(self.elemental_curse[z] * 100)):,}%)"
@@ -143,7 +143,7 @@ class PlayerProfile:
                     # Build the list of used elements/multipliers.
                     for i, is_used in enumerate(temp_element_list):
                         if is_used:
-                            used_elements.append(globalitems.global_element_list[i])
+                            used_elements.append(gli.global_element_list[i])
                             used_multipliers.append(element_breakdown[i][1] / 100)
                     used_elements, used_multipliers = zip(*sorted(zip(used_elements, used_multipliers),
                                                                   key=lambda e: e[1], reverse=True))
@@ -200,7 +200,7 @@ class PlayerProfile:
             title_msg = "Defensive Stats"
             stats = f"Player HP: {self.player_mHP:,}\nRecovery: {self.recovery}"
             for idy, y in enumerate(self.elemental_resistance):
-                stats += f"\n{globalitems.global_element_list[idy]} Resistance: {show_num(y)}%"
+                stats += f"\n{gli.global_element_list[idy]} Resistance: {show_num(y)}%"
             stats += f"\nDamage Mitigation: {show_num(self.damage_mitigation, 1)}%"
             stats += f"\nBlock Rate: {show_num(self.block, 1)}%"
             stats += f"\nDodge Rate: {show_num(self.dodge, 1)}%"
@@ -210,7 +210,7 @@ class PlayerProfile:
             # Multiplier Display.
             title_msg = "Multipliers"
             for idh, h in enumerate(self.banes):
-                stats += f"\n{globalitems.boss_list[idh]} Bane: {show_num(h)}%" if idh < 5 else f"\nHuman Bane: {show_num(h)}%"
+                stats += f"\n{gli.boss_list[idh]} Bane: {show_num(h)}%" if idh < 5 else f"\nHuman Bane: {show_num(h)}%"
             stats += f"\nClass Mastery: {show_num(self.class_multiplier)}%"
             stats += f"\nFinal Damage: {show_num(self.final_damage)}%"
             stats += f"\nDefence Penetration: {show_num(self.defence_penetration)}%"
@@ -231,7 +231,7 @@ class PlayerProfile:
             if self.aqua_mode != 0:
                 embed_msg = await skillpaths.display_glyph("Waterfalls", self.aqua_points, embed_msg)
                 return embed_msg
-            for path_index, path_type in enumerate(globalitems.path_names):
+            for path_index, path_type in enumerate(gli.path_names):
                 total_points = self.player_stats[path_index] + self.gear_points[path_index]
                 if total_points >= 20:
                     embed_msg = await skillpaths.display_glyph(path_type, total_points, embed_msg)
@@ -497,7 +497,7 @@ class PlayerProfile:
                     highest = idx
         damage = sum(self.elemental_damage) * (1 + boss_obj.aura) * combat.boss_true_mitigation(boss_obj.boss_level)
         # Apply status
-        stun_status = globalitems.element_status_list[highest]
+        stun_status = gli.element_status_list[highest]
         if stun_status is not None and random.randint(1, 100) <= 1:
             boss_obj.stun_status = stun_status
             boss_obj.stun_cycles += 1
@@ -568,18 +568,18 @@ class PlayerProfile:
         if item.item_bonus_stat == "":
             return
         if item.item_tier >= 5:
-            current_ability = globalitems.rare_ability_dict[item.item_bonus_stat]
+            current_ability = gli.rare_ability_dict[item.item_bonus_stat]
             self.final_damage += 0.25 * (item.item_tier - 4)
             setattr(self, current_ability[0], current_ability[1])
         else:
             keywords = item.item_bonus_stat.split()
             if item.item_type == "Y":
-                if keywords[0] in globalitems.boss_list:
-                    self.banes[globalitems.boss_list.index(keywords[0])] += 0.5
+                if keywords[0] in gli.boss_list:
+                    self.banes[gli.boss_list.index(keywords[0])] += 0.5
                 elif keywords[0] == "Human":
                     self.banes[5] += 0.5
                 return
-            element_position = globalitems.element_special_names.index(keywords[0])
+            element_position = gli.element_special_names.index(keywords[0])
             if item.item_type == "G":
                 self.elemental_multiplier[element_position] += 0.25
                 return
@@ -589,23 +589,20 @@ class PlayerProfile:
 
     def check_cooldown(self, command_name):
         difference = None
-        
         raw_query = "SELECT * FROM CommandCooldowns WHERE player_id = :player_check AND command_name = :cmd_check"
         params = {'player_check': self.player_id, 'cmd_check': command_name}
         df = rq(raw_query, return_value=True, params=params)
         method = ""
         if len(df) != 0:
             date_string = str(df["time_used"].values[0])
-            previous = dt.strptime(date_string, globalitems.date_formatting)
+            previous = dt.strptime(date_string, gli.date_formatting)
             now = dt.now()
             difference = now - previous
             method = str(df["method"].values[0])
-        
         return difference, method
 
     def set_cooldown(self, command_name, method, rewind_days=0):
         difference = None
-        
         raw_query = "SELECT * FROM CommandCooldowns WHERE player_id = :player_check AND command_name = :cmd_check"
         params = {'player_check': self.player_id, 'cmd_check': command_name}
         df = rq(raw_query, return_value=True, params=params)
@@ -615,11 +612,10 @@ class PlayerProfile:
             raw_query = ("UPDATE CommandCooldowns SET command_name = :cmd_check, time_used =:time_check "
                          "WHERE player_id = :player_check AND method = :method")
         timestamp = dt.now() - timedelta(days=rewind_days)
-        current_time = timestamp.strftime(globalitems.date_formatting)
+        current_time = timestamp.strftime(gli.date_formatting)
         params = {'player_check': self.player_id, 'cmd_check': command_name,
                   'method': method, 'time_check': current_time}
         rq(raw_query, params=params)
-        
         return difference
 
     def clear_cooldown(self, command_name):

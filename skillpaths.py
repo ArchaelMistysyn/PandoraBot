@@ -2,8 +2,8 @@
 import discord
 
 # Data imports
-import globalitems
-import sharedmethods
+import globalitems as gli
+import sharedmethods as sm
 
 glyph_data = {
             "Storms": [["Critical Application +X", 1],
@@ -63,7 +63,9 @@ async def display_glyph(path_type, total_points, embed_msg):
         bonus = current_data[0][1] * (total_points // 20)
         glyph_name = f"Glyph of {path_type}"
         # Build the description.
-        description = sharedmethods.display_stars(total_points // 20)
+        num_stars = min(8, total_points // 20)
+        blue_stars = f"{gli.star_icon[2] * num_stars}{gli.star_icon[0] * max(0, (8 - num_stars))}"
+        description = sm.display_stars(num_stars) if path_type != "Waterfalls" else blue_stars
         for modifier in path_bonuses:
             total_value = modifier[1] * total_points
             modified_string = modifier[0].replace("X", str(total_value))
@@ -80,7 +82,7 @@ async def display_glyph(path_type, total_points, embed_msg):
 
 async def allocate_points(player_obj, selected_path, num_change):
     path_type = selected_path.split(" ")[-1]
-    path_location = globalitems.path_names.index(path_type)
+    path_location = gli.path_names.index(path_type)
     spent_points = sum(player_obj.player_stats)
     available_points = player_obj.player_level - spent_points
     if available_points < num_change:
@@ -92,11 +94,11 @@ async def allocate_points(player_obj, selected_path, num_change):
 
 
 async def create_path_embed(player_obj):
-    colour, _ = sharedmethods.get_gear_tier_colours((player_obj.player_echelon + 1) // 2)
+    colour, _ = sm.get_gear_tier_colours((player_obj.player_echelon + 1) // 2)
     points_msg = "Your shiny toys are useless if you don't know how to use them."
     embed = discord.Embed(color=colour, title="Avalon, Pathwalker of the True Laws", description=points_msg)
     embed.add_field(name=f"{player_obj.player_username}'s Skill Points", value="", inline=False)
-    for path_label, points, gear_points in zip(globalitems.path_names, player_obj.player_stats, player_obj.gear_points):
+    for path_label, points, gear_points in zip(gli.path_names, player_obj.player_stats, player_obj.gear_points):
         value_msg = f"Points: {points}"
         if gear_points > 0:
             value_msg += f" (+{gear_points})"
@@ -110,7 +112,7 @@ async def create_path_embed(player_obj):
 
 
 async def build_points_embed(player_obj, selected_path, water_converted=False):
-    colour, _ = sharedmethods.get_gear_tier_colours((player_obj.player_echelon + 1) // 2)
+    colour, _ = sm.get_gear_tier_colours((player_obj.player_echelon + 1) // 2)
     embed = discord.Embed(color=colour, title=f"{selected_path}", description="Stats per point:\n")
     path_type = selected_path.split(" ")[-1] if not water_converted else "Waterfalls"
     for modifier in path_perks[path_type]:
@@ -118,8 +120,8 @@ async def build_points_embed(player_obj, selected_path, water_converted=False):
 
     # Calculate the points.
     if not water_converted:
-        points_field = player_obj.player_stats[globalitems.path_names.index(path_type)]
-        gear_points = player_obj.gear_points[globalitems.path_names.index(path_type)]
+        points_field = player_obj.player_stats[gli.path_names.index(path_type)]
+        gear_points = player_obj.gear_points[gli.path_names.index(path_type)]
     else:
         points_field = player_obj.aqua_points
     points_msg = f"{player_obj.player_username}'s {selected_path} points: {points_field}"

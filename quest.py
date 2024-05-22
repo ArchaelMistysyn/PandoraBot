@@ -3,8 +3,8 @@ import pandas as pd
 import discord
 
 # Data imports
-import globalitems
-import sharedmethods
+import globalitems as gli
+import sharedmethods as sm
 import questdata
 from pandoradb import run_query as rq
 
@@ -22,7 +22,7 @@ class Quest:
                  cost, token_num, item_handin, quest_message,
                  award_item, award_qty, award_role):
         self.quest_num, self.quest_type = quest_num, quest_type
-        self.colour = globalitems.tier_colors[(min(8, quest_num // 5))]
+        self.colour = gli.tier_colors[(min(8, quest_num // 5))]
         self.story_message = story_message
         self.cost, self.token_num, self.item_handin = cost, token_num, item_handin
         self.quest_message = quest_message
@@ -80,22 +80,22 @@ class Quest:
         player_obj.set_player_field("player_quest", player_obj.player_quest)
         exp_msg, lvl_change = player_obj.adjust_exp(self.award_exp)
         coin_msg = player_obj.adjust_coins(self.award_coins)
-        rewards = f"{globalitems.exp_icon} {exp_msg} EXP\n"
-        rewards += f"{globalitems.coin_icon} {coin_msg} Lotus Coins\n"
+        rewards = f"{gli.exp_icon} {exp_msg} EXP\n"
+        rewards += f"{gli.coin_icon} {coin_msg} Lotus Coins\n"
         if lvl_change != 0:
-            await sharedmethods.send_notification(ctx_object, player_obj, "Level", lvl_change)
+            await sm.send_notification(ctx_object, player_obj, "Level", lvl_change)
         # Handle Item/Role Awards.
         if self.award_item:
             await inventory.update_stock(player_obj, self.award_item, self.award_qty)
             loot_item = inventory.BasicItem(self.award_item)
             rewards += f"{loot_item.item_emoji} {self.award_qty}x {loot_item.item_name}\n"
-        if sharedmethods.check_rare_item(loot_item.item_id):
-            await sharedmethods.send_notification(ctx_object, player_obj, "Item", loot_item.item_id)
+        if sm.check_rare_item(loot_item.item_id):
+            await sm.send_notification(ctx_object, player_obj, "Item", loot_item.item_id)
         if self.award_role:
             rewards += f"New Role Achieved: {self.award_role}!"
             player_obj.player_echelon += 1
             player_obj.set_player_field("player_echelon", player_obj.player_echelon)
-            await sharedmethods.send_notification(ctx_object, player_obj, "Achievement", self.award_role)
+            await sm.send_notification(ctx_object, player_obj, "Achievement", self.award_role)
         return discord.Embed(colour=self.colour, title="QUEST COMPLETED!", description=rewards)
 
     async def get_quest_embed(self, player_obj):

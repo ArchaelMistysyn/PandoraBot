@@ -2,8 +2,8 @@
 import random
 
 # Data imports
-import globalitems
-import sharedmethods
+import globalitems as gli
+import sharedmethods as sm
 
 # Core imports
 import player
@@ -91,7 +91,7 @@ async def run_cycle(tracker_obj, boss_obj, player_obj, method):
     # Step 5: Compile final battle message and return results
     total_damage = sum(hit[0] for hit in hit_list)
     tracker_obj.total_dps += total_damage
-    battle_msg = f"{player_obj.player_username} - [HP: {sharedmethods.display_hp(tracker_obj.player_cHP, player_obj.player_mHP)}]"
+    battle_msg = f"{player_obj.player_username} - [HP: {sm.display_hp(tracker_obj.player_cHP, player_obj.player_mHP)}]"
     battle_msg += f" - [Recovery: {tracker_obj.recovery}]"
     battle_msg = f"{boss_action_msg}{battle_msg}" if method == "Solo" else battle_msg
     # Check again if boss is dead.
@@ -129,7 +129,7 @@ def handle_boss_actions(boss_obj, tracker_obj, player_obj):
     target_index = random.randint(0, len(skill_list) - 1)
     skill = skill_list[target_index]
     if "[ELEMENT]" in skill:
-        skill = skill.replace("[ELEMENT]", globalitems.element_special_names[boss_element])
+        skill = skill.replace("[ELEMENT]", gli.element_special_names[boss_element])
     base_set = [100, 100] if "_" in skill else [25, 50]
     bypass1 = True if "_" in skill else False
     bypass2 = True if "**" in skill else False
@@ -140,7 +140,7 @@ def handle_boss_actions(boss_obj, tracker_obj, player_obj):
     damage_set = [base_set[0] * boss_obj.boss_level * skill_bonus, base_set[1] * boss_obj.boss_level * skill_bonus]
     damage_set, _ = handle_evasions(player_obj.block, player_obj.dodge, damage_set, bypass1=bypass1, bypass2=bypass2)
     is_alive, damage = take_combat_damage(player_obj, tracker_obj, damage_set, boss_element, bypass2)
-    boss_msg += f"{boss_obj.boss_name} uses {skill} dealing {sharedmethods.number_conversion(damage)} damage!\n"
+    boss_msg += f"{boss_obj.boss_name} uses {skill} dealing {sm.number_conversion(damage)} damage!\n"
     # Handle boss regen.
     if boss_obj.boss_type_num < 3:
         return is_alive, boss_msg
@@ -180,8 +180,8 @@ def take_combat_damage(player_obj, tracker_obj, damage_set, dmg_element, bypass_
     if dmg_element != -1:
         player_resist = player_obj.elemental_resistance[dmg_element]
         if (tracker_obj.stun_status != "stunned" and random.randint(1, 100) <= 1 and
-                globalitems.element_status_list[dmg_element] is not None):
-            tracker_obj.stun_status = globalitems.element_status_list[dmg_element]
+                gli.element_status_list[dmg_element] is not None):
+            tracker_obj.stun_status = gli.element_status_list[dmg_element]
             tracker_obj.stun_cycles += 1
     damage -= damage * player_resist
     damage = int(damage - (damage * player_obj.damage_mitigation * 0.01))
@@ -208,9 +208,9 @@ async def hit_boss(tracker_obj, boss_obj, player_obj, combo_count, hit_type="Reg
     damage, extension = (boss_obj.damage_cap, " *LIMIT*") if damage >= boss_obj.damage_cap != -1 else (damage, "")
     if status_msg == " *TIME SHATTER*" or critical_type != "":
         damage *= random.randint(1, max(1, player_obj.rng_bonus))
-    hit_msg = f"{combo_count}x Combo: {skill_name} {sharedmethods.number_conversion(damage)}{extension}"
+    hit_msg = f"{combo_count}x Combo: {skill_name} {sm.number_conversion(damage)}{extension}"
     if hit_type == "Ultimate":
-        hit_msg = f"Ultimate: {skill_name} {sharedmethods.number_conversion(damage)}{extension}"
+        hit_msg = f"Ultimate: {skill_name} {sm.number_conversion(damage)}{extension}"
     hit_msg += f"{status_msg}{second_msg}{critical_type}"
     boss_obj.boss_cHP -= damage
     return [damage, hit_msg]
@@ -234,7 +234,7 @@ async def trigger_bleed(tracker_obj, player_obj, hit_type="Normal", boss_obj=Non
         boss_obj.boss_cHP -= damage
     else:
         damage, extension = pvp_scale_damage(*pvp_data), ""
-    bleed_msg = f"{keyword} Rupture [{count}]: {sharedmethods.number_conversion(damage)}{extension} *{bleed_type}*"
+    bleed_msg = f"{keyword} Rupture [{count}]: {sm.number_conversion(damage)}{extension} *{bleed_type}*"
     return [damage, bleed_msg]
 
 
@@ -278,7 +278,7 @@ async def run_raid_cycle(tracker_obj, boss_obj, player_obj):
         quest.assign_unique_tokens(player_obj, boss_obj.boss_name)
     player_msg = battle_msg
     if total_damage != 0 and player_alive:
-        player_msg = f"{battle_msg} - dealt {sharedmethods.number_conversion(total_damage)} damage!"
+        player_msg = f"{battle_msg} - dealt {sm.number_conversion(total_damage)} damage!"
     return player_msg, total_damage
 
 
@@ -333,7 +333,7 @@ def boss_defences(method, player_obj, boss_object, location):
     if method == "Element":
         return 1 + boss_object.curse_debuffs[location] if boss_object.boss_eleweak[location] == 1 else mult
     else:
-        return 1 if boss_object.boss_typeweak[globalitems.class_names.index(player_obj.player_class)] == 1 else mult
+        return 1 if boss_object.boss_typeweak[gli.class_names.index(player_obj.player_class)] == 1 else mult
 
 
 def boss_true_mitigation(boss_level):
@@ -363,7 +363,7 @@ def skill_adjuster(player_obj, combat_tracker, hit_damage, combo_count, is_ultim
     mult_dict = {0: 0.5, 1: 0.75, 2: 1, 3: 2}
     combo_mult = (1 + (player_obj.combo_mult * combo_count)) * (1 + player_obj.combo_penetration)
     ultimate_mult = (1 + player_obj.ultimate_mult) * (1 + player_obj.ultimate_penetration)
-    skill_list = globalitems.skill_names_dict[player_obj.player_class]
+    skill_list = gli.skill_names_dict[player_obj.player_class]
     if player_obj.aqua_points >= 100:
         skill_list = ["Sea of Subjugation", "Ocean of Oppression", "Deluge of Domination", "Tides of Annihilation"]
         mult_dict = {0: 1, 1: 1.5, 2: 2, 3: 5}
@@ -394,7 +394,7 @@ def pvp_defences(attacker, defender, player_damage, e_weapon):
             attacker.elemental_damage[idx] *= resist_multi * penetration_multi * attacker.elemental_conversion[idx]
             if attacker.elemental_damage[idx] > attacker.elemental_damage[highest]:
                 highest = idx
-    stun_status = globalitems.element_status_list[highest]
+    stun_status = gli.element_status_list[highest]
     stun_status = stun_status if (stun_status is not None and random.randint(1, 100) <= 1) else None
     return stun_status, int(sum(attacker.elemental_damage) * (1 + attacker.aura) * (1 + attacker.banes[5]))
 

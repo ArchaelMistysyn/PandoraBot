@@ -4,8 +4,8 @@ import random
 from functools import reduce
 
 # Data imports
-import globalitems
-import sharedmethods
+import globalitems as gli
+import sharedmethods as sm
 
 # Core imports
 import player
@@ -39,7 +39,7 @@ class Insignia:
         self.element_list = list(map(int, temp_elements))
         self.num_elements = self.element_list.count(1)
         self.stars = (self.player_obj.player_echelon + 1) // 2 + self.mutation_tier
-        self.tier_colour, pearl = sharedmethods.get_gear_tier_colours(player_obj.player_echelon // 2 + self.mutation_tier)
+        self.tier_colour, pearl = sm.get_gear_tier_colours(player_obj.player_echelon // 2 + self.mutation_tier)
 
         # Stats
         hp_bonus, luck_bonus = insignia_hp_list[self.stars], self.stars
@@ -50,17 +50,17 @@ class Insignia:
         # Build output.
         item_rolls = f"{pearl} HP Bonus +{hp_bonus:,}\n{pearl} Luck +{luck_bonus}"
         item_rolls += f"\n{pearl} Final Damage {final_damage:,}%\n{pearl} Attack Speed {attack_speed}%"
-        display_stars = sharedmethods.display_stars(self.stars)
+        display_stars = sm.display_stars(self.stars)
         self.name = f"{insignia_name_list[self.num_elements]} Insignia [{insignia_prefix[self.stars - 1]}]"
         self.pen = insignia_multipliers[self.num_elements][0]
         self.pen += insignia_multipliers[self.num_elements][1] * self.stars * mutation_adjust
         if self.num_elements == 9:
-            icon_list = globalitems.omni_icon
+            icon_list = gli.omni_icon
             item_rolls += f"\n{pearl} Omni Penetration {self.pen:,}%"
         else:
             selected_elements_list = [ind for ind, x in enumerate(self.element_list) if x == 1]
             for y in selected_elements_list:
-                item_rolls += f"\n{pearl} {globalitems.element_names[y]} Penetration {self.pen:,}%"
+                item_rolls += f"\n{pearl} {gli.element_names[y]} Penetration {self.pen:,}%"
         self.insignia_output = discord.Embed(colour=self.tier_colour, title=self.name, description=display_stars)
         self.insignia_output.add_field(name="", value=item_rolls, inline=False)
 
@@ -134,7 +134,7 @@ class ElementSelectView(discord.ui.View):
         self.num_elements, self.num_selected, self.current_selection = num_elements, num_selected, current_selection
         self.embed = None
         available_options = [(index, (name, emoji)) for index, (name, emoji, selection) in
-                             enumerate(zip(globalitems.element_names, globalitems.global_element_list,
+                             enumerate(zip(gli.element_names, gli.global_element_list,
                                            self.current_selection)) if selection != 1]
 
         options = [discord.SelectOption(emoji=emoji, label=option, value=str(i), description=f"{option} affinity")

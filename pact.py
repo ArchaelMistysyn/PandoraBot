@@ -2,8 +2,8 @@
 import discord
 
 # Data imports
-import globalitems
-import sharedmethods
+import globalitems as gli
+import sharedmethods as sm
 
 # Core imports
 import inventory
@@ -46,7 +46,7 @@ class Pact:
         self.roll_1 = itemrolls.ItemRoll(f"{self.pact_tier}-damage-13")
         self.roll_2 = itemrolls.ItemRoll(f"{self.pact_tier}-unique-4-s")
         self.pact_bonuses += f"{self.roll_1.roll_msg}\n{self.roll_2.roll_msg}"
-        self.pact_colour, self.pact_augment_icon = sharedmethods.get_gear_tier_colours(self.pact_tier)
+        self.pact_colour, self.pact_augment_icon = sm.get_gear_tier_colours(self.pact_tier)
 
 
 def assign_pact_values(player_obj):
@@ -88,10 +88,10 @@ def assign_pact_values(player_obj):
 
 def display_pact(player_obj):
     pact_object = Pact(player_obj.pact)
-    pact_stars = sharedmethods.display_stars(pact_object.pact_tier)
+    pact_stars = sm.display_stars(pact_object.pact_tier)
     pact_embed = discord.Embed(colour=pact_object.pact_colour, title=pact_object.pact_name, description=pact_stars)
     pact_embed.add_field(name="Pact Bonuses", value=pact_object.pact_bonuses, inline=False)
     file_name = f"Frame_Pact_{pact_object.pact_tier}_{pact_object.pact_variant}.png"
-    pact_embed.set_thumbnail(url=f"{globalitems.web_url}itemicons/Pact/{file_name}")
+    pact_embed.set_thumbnail(url=f"{gli.web_url}itemicons/Pact/{file_name}")
     return pact_embed
 

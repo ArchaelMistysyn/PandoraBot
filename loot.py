@@ -4,9 +4,9 @@ import pandas as pd
 import random
 
 # Data imports
-import globalitems
+import globalitems as gli
 import itemdata
-import sharedmethods
+import sharedmethods as sm
 from pandoradb import run_query as rq
 
 # Core imports
@@ -80,9 +80,9 @@ async def award_loot(boss_object, player_list, exp_amount, coin_amount, loot_mul
 
         exp_msg, lvl_change = temp_player.adjust_exp(exp_amount)
         if lvl_change != 0 and boss_object.player_id != 0:
-            await sharedmethods.send_notification(ctx, temp_player, "Level", lvl_change)
-        base_reward_msg = f"{globalitems.exp_icon} {exp_msg} EXP\n"
-        base_reward_msg += f"{globalitems.coin_icon} {coin_msg} lotus coins\n"
+            await sm.send_notification(ctx, temp_player, "Level", lvl_change)
+        base_reward_msg = f"{gli.exp_icon} {exp_msg} EXP\n"
+        base_reward_msg += f"{gli.coin_icon} {coin_msg} lotus coins\n"
         loot_msg.append(base_reward_msg)
 
         # Handle ring souls
@@ -112,10 +112,10 @@ async def award_loot(boss_object, player_list, exp_amount, coin_amount, loot_mul
             loot_msg, batch_df = update_loot_and_df(temp_player, f"Shard", 1, loot_msg, counter, batch_df)
             if "XXVIII" in boss_object.boss_name and is_dropped(5):
                 loot_msg, batch_df = update_loot_and_df(temp_player, f"Lotus9", 1, loot_msg, counter, batch_df)
-                await sharedmethods.send_notification(ctx, temp_player, "Item", "Lotus9")
+                await sm.send_notification(ctx, temp_player, "Item", "Lotus9")
             elif "XXV" in boss_object.boss_name and is_dropped(5):
                 loot_msg, batch_df = update_loot_and_df(temp_player, f"Lotus8", 1, loot_msg, counter, batch_df)
-                await sharedmethods.send_notification(ctx, temp_player, "Item", "Lotus8")
+                await sm.send_notification(ctx, temp_player, "Item", "Lotus8")
 
         # Handle boss drops.
         possible_loot = boss_loot_dict[boss_object.boss_type] + boss_loot_dict['All']
@@ -124,8 +124,8 @@ async def award_loot(boss_object, player_list, exp_amount, coin_amount, loot_mul
             qty = sum(is_dropped(drop_rate) for attempt in range(loot_multiplier))
             if qty > 0:
                 loot_msg, batch_df = update_loot_and_df(temp_player, drop_id, qty, loot_msg, counter, batch_df)
-                if sharedmethods.check_rare_item(drop_id):
-                    await sharedmethods.send_notification(ctx, temp_player, "Item", drop_id)
+                if sm.check_rare_item(drop_id):
+                    await sm.send_notification(ctx, temp_player, "Item", drop_id)
     # Update the database.
     await inventory.update_stock(None, None, None, batch=batch_df)
     return loot_msg

@@ -5,7 +5,7 @@ from discord.ui import Button, View
 import random
 
 # Data imports
-import globalitems
+import globalitems as gli
 
 # Core imports
 from pandoradb import run_query as rq
@@ -52,7 +52,7 @@ primordial_rings = [("Ruby", "Incineration"), ("Sapphire", "Atlantis"), ("Topaz"
                     ("Agate", "Seismic Tremors"), ("Emerald", "Wailing Winds"), ("Zircon", "Frozen Castle"),
                     ("Obsidian", "Tormented Souls"), ("Opal", "Scintillation"), ("Amethyst", "Shifting Stars")]
 # Elemental Infusions
-for idx, (element, (gemstone, ring_name)) in enumerate(zip(globalitems.element_names, primordial_rings)):
+for idx, (element, (gemstone, ring_name)) in enumerate(zip(gli.element_names, primordial_rings)):
     # Elemental Origins
     add_recipe("Elemental Infusion", f"Elemental Origin ({element})",
                [("OriginZ", 1), (f"Fae{idx}", 300), 80, f"Origin{idx}"])

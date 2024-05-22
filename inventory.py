@@ -8,8 +8,8 @@ from discord.ui import Button, View
 import time
 
 # Data imports
-import globalitems
-import sharedmethods
+import globalitems as gli
+import sharedmethods as sm
 import itemdata
 
 # Core imports
@@ -76,7 +76,9 @@ class BInventoryView(discord.ui.View):
             discord.SelectOption(
                 emoji="<a:eenergy:1145534127349706772>", label="Misc", description="Misc Items"),
             discord.SelectOption(
-                emoji="<a:eenergy:1145534127349706772>", label="Gemstone", description="Gemstone Items"),
+                emoji="<:Gem1:1242206599481659442>", label="Gemstone", description="Gemstone Items"),
+            discord.SelectOption(
+                emoji="🐟", label="Fish", description="Fish Items"),
             discord.SelectOption(
                 emoji="<a:eenergy:1145534127349706772>", label="Ultra Rare", description="Unprocessed Items")])
     async def inventory_callback(self, interaction: discord.Interaction, inventory_select: discord.ui.Select):
@@ -152,7 +154,7 @@ class CustomItem:
         self.item_num_sockets, self.item_inlaid_gem_id = 0, 0
 
         # Generate an item type and base.
-        self.item_damage_type, self.item_base_type = random.choice(list(globalitems.class_names)), ""
+        self.item_damage_type, self.item_base_type = random.choice(list(gli.class_names)), ""
         self.generate_base()
         # Generate base damage.
         self.base_damage_min, self.base_damage_max = get_tier_damage(self.item_tier, self.item_type)
@@ -170,7 +172,7 @@ class CustomItem:
         if self.item_type == "A":
             self.set_base_damage_mitigation()
         if self.item_tier >= 5 and unlock:
-            available = [key for key in globalitems.rare_ability_dict.keys() if key != self.item_bonus_stat]
+            available = [key for key in gli.rare_ability_dict.keys() if key != self.item_bonus_stat]
             self.item_bonus_stat = random.choice(available)
             return
         if self.item_tier < 5:
@@ -179,7 +181,7 @@ class CustomItem:
                 self.assign_bonus_stat()
 
     def set_base_attack_speed(self):
-        selected_range = globalitems.speed_range_list[(self.item_tier - 1)]
+        selected_range = gli.speed_range_list[(self.item_tier - 1)]
         self.item_base_stat = round(random.uniform(selected_range[0], selected_range[1]), 2)
 
     def set_base_damage_mitigation(self):
@@ -191,22 +193,22 @@ class CustomItem:
         if self.item_tier < 5:
             if self.item_type in ["A", "V"]:
                 return
-            keyword = globalitems.element_special_names[random.randint(0, 8)]
+            keyword = gli.element_special_names[random.randint(0, 8)]
             self.item_bonus_stat = f"{keyword} Authority"
             if self.item_type == ["Y", "R"]:
                 bane_type = random.randint(0, 5)
-                keyword = "Human" if bane_type == 5 else globalitems.boss_list[bane_type]
+                keyword = "Human" if bane_type == 5 else gli.boss_list[bane_type]
                 self.item_bonus_stat = f"{keyword} Bane"
                 return
             if self.item_type == "G":
                 self.item_bonus_stat = f"{keyword} Feathers"
                 return
             return
-        self.item_bonus_stat = random.choice(list(globalitems.rare_ability_dict.keys()))
+        self.item_bonus_stat = random.choice(list(gli.rare_ability_dict.keys()))
 
     def get_gem_stat_message(self):
         points_value = gem_point_dict[self.item_tier]
-        path_name = globalitems.path_names[int(self.item_bonus_stat)]
+        path_name = gli.path_names[int(self.item_bonus_stat)]
         stat_message = f"Path of {path_name} +{points_value}"
         return stat_message
 
@@ -250,7 +252,7 @@ class CustomItem:
         if (self.item_damage_type == "Summoner" or self.item_damage_type == "Rider") and self.item_type == "W":
             target_list = summon_tier_keywords
         tier_keyword = target_list[self.item_tier]
-        quality_name = globalitems.quality_damage_map[max(4, self.item_tier), self.item_quality_tier]
+        quality_name = gli.quality_damage_map[max(4, self.item_tier), self.item_quality_tier]
         if "R" in self.item_type:
             item_name = f"+{self.item_enhancement} {self.item_base_type} [{quality_name}]"
         else:
@@ -276,11 +278,11 @@ class CustomItem:
         # Handle weapon items.
         if self.item_type == "W":
             self.set_base_attack_speed()
-            class_checker = globalitems.class_names.index(self.item_damage_type)
+            class_checker = gli.class_names.index(self.item_damage_type)
             if self.item_tier >= 5:
-                target_list = globalitems.weapon_list_high[class_checker]
+                target_list = gli.weapon_list_high[class_checker]
             else:
-                target_list = globalitems.weapon_list_low[class_checker][self.item_tier - 1]
+                target_list = gli.weapon_list_low[class_checker][self.item_tier - 1]
             self.item_base_type = random.choice(target_list)
             return
 
@@ -309,14 +311,14 @@ class CustomItem:
         tier_keyword = tier_keywords[self.item_tier]
         type_keyword = gem_tier_keywords[self.item_tier]
         item_type = "Gem" if self.item_tier <= 4 else "Jewel"
-        self.item_name = f"{tier_keyword} {globalitems.boss_list[int(self.item_type[1])]} Heart {item_type} [{type_keyword}]"
+        self.item_name = f"{tier_keyword} {gli.boss_list[int(self.item_type[1])]} Heart {item_type} [{type_keyword}]"
 
     def add_item_element(self, add_element):
         new_element = random.randint(0, 8) if add_element == 9 else add_element
         self.item_elements[new_element] = 1
 
     async def create_citem_embed(self, roll_change_list=None):
-        tier_colour, _ = sharedmethods.get_gear_tier_colours(self.item_tier)
+        tier_colour, _ = sm.get_gear_tier_colours(self.item_tier)
         gem_min, gem_max = 0, 0
         stat_msg, base_type, aux_suffix = "", "", ""
         item_types = ""
@@ -343,16 +345,16 @@ class CustomItem:
             rolls_msg = itemrolls.display_rolls(self, roll_change_list)
         else:
             rolls_msg = ring.display_ring_values(self)
-        display_stars = sharedmethods.display_stars(self.item_tier)
+        display_stars = sm.display_stars(self.item_tier)
         if "D" not in self.item_type:
-            elements = [globalitems.global_element_list[idz] for idz, z in enumerate(self.item_elements) if z == 1]
-            item_types = f'{globalitems.class_icon_dict[self.item_damage_type]}' + ''.join(elements)
+            elements = [gli.global_element_list[idz] for idz, z in enumerate(self.item_elements) if z == 1]
+            item_types = f'{gli.class_icon_dict[self.item_damage_type]}' + ''.join(elements)
             # Handle socket and inlaid gem.
             gem_id = self.item_inlaid_gem_id if self.item_num_sockets == 1 else 0
             e_gem = await read_custom_item(gem_id)
             if e_gem is not None:
                 e_gem = await read_custom_item(gem_id)
-                display_stars += f" Socket: {globalitems.augment_icons[e_gem.item_tier - 1]} ({gem_id})"
+                display_stars += f" Socket: {gli.augment_icons[e_gem.item_tier - 1]} ({gem_id})"
                 gem_min, gem_max = e_gem.item_damage_min, e_gem.item_damage_max
             elif self.item_num_sockets != 0:
                 display_stars += " Socket: <:esocket:1148387477615300740>"
@@ -365,14 +367,14 @@ class CustomItem:
             embed_msg.add_field(name="", value=rolls_msg, inline=False)
         item_info = f'Item ID: {self.item_id}'
         embed_msg.add_field(name=item_info, value="", inline=False)
-        thumbnail_url = sharedmethods.get_gear_thumbnail(self)
+        thumbnail_url = sm.get_gear_thumbnail(self)
         if thumbnail_url is not None:
             # timestamp = int(time.time())
             # embed_msg.set_thumbnail(url=f"{thumbnail_url}?ts={timestamp}")
             embed_msg.set_thumbnail(url=thumbnail_url)
         else:
-            frame_url = globalitems.frame_icon_list[self.item_tier - 1]
-            frame_url = frame_url.replace("[EXT]", globalitems.frame_extension[0])
+            frame_url = gli.frame_icon_list[self.item_tier - 1]
+            frame_url = frame_url.replace("[EXT]", gli.frame_extension[0])
             embed_msg.set_thumbnail(url=frame_url)
         return embed_msg
 
@@ -415,15 +417,17 @@ class BasicItem:
             self.item_base_rate, self.item_cost = item['rate'], item['cost']
             self.item_emoji = item['emoji']
             self.item_image = ""
-            if self.item_id in globalitems.availability_list_nongear:
-                self.item_image = f"{globalitems.web_url}/nongear/{self.item_category}/Frame_{self.item_id}.png"
+            if self.item_id in gli.availability_list_nongear:
+                self.item_image = f"{gli.web_url}/nongear/{self.item_category}/Frame_{self.item_id}.png"
+            # if "Fish" in self.item_id:
+                # self.item_image = ""
         else:
             print(f"Item with ID '{item_id}' not found in itemdata_dict.")
 
     async def create_bitem_embed(self, player_obj):
         item_qty = await inventory.check_stock(player_obj, self.item_id)
         item_msg = f"{self.item_description}\n{player_obj.player_username}'s Stock: {item_qty}"
-        colour, _ = inventory.sharedmethods.get_gear_tier_colours(self.item_tier)
+        colour, _ = inventory.sm.get_gear_tier_colours(self.item_tier)
         loot_embed = discord.Embed(colour=colour, title=self.item_name, description=item_msg)
         if self.item_image != "":
             loot_embed.set_thumbnail(url=self.item_image)
@@ -468,7 +472,7 @@ async def read_custom_item(item_id):
 
 
 def get_tier_damage(item_tier, item_type):
-    damage_values = globalitems.damage_tier_list[item_tier - 1]
+    damage_values = gli.damage_tier_list[item_tier - 1]
     # Gem max tier exception.
     if "D" in item_type and item_tier == 8:
         damage_values = (150000, 150000)
@@ -664,7 +668,7 @@ async def sell(user, item, embed_msg):
     rq(raw_query, params={'item_check': item.item_id})
     
     currency_msg = f'You now have {user.player_coins:,} lotus coins!'
-    response_embed.add_field(name=f"Item Sold! {globalitems.coin_icon} {sell_msg} lotus coins acquired!",
+    response_embed.add_field(name=f"Item Sold! {gli.coin_icon} {sell_msg} lotus coins acquired!",
                              value=currency_msg, inline=False)
     return response_embed
 
@@ -707,7 +711,7 @@ async def purge(player_obj, item_type, tier):
     for item_tier in df['item_tier']:
         coin_total += inventory.sell_value_by_tier[int(item_tier)]
     coin_msg = player_obj.adjust_coins(coin_total)
-    return f"{player_obj.player_username} sold {result} items and received {globalitems.coin_icon} {coin_msg} lotus coins"
+    return f"{player_obj.player_username} sold {result} items and received {gli.coin_icon} {coin_msg} lotus coins"
 
 
 def full_inventory_embed(lost_item, embed_colour):
@@ -718,7 +722,7 @@ def full_inventory_embed(lost_item, embed_colour):
 
 async def generate_item(ctx, target_player, tier, elements, item_type, base_type, class_name, enhancement,
                         quality, base_stat, bonus_stat, base_dmg, num_sockets, roll_list):
-    valid_damage_range = (globalitems.damage_tier_list[tier - 1][0], globalitems.damage_tier_list[tier - 1][1] + 1)
+    valid_damage_range = (gli.damage_tier_list[tier - 1][0], gli.damage_tier_list[tier - 1][1] + 1)
     pattern = r"^\d(;[0-9]+){8}$"
 
     # Create the new item.
@@ -739,13 +743,13 @@ async def generate_item(ctx, target_player, tier, elements, item_type, base_type
         if num_sockets not in range(2):
             await ctx.send('Socket input not valid.')
             return None
-        if enhancement not in range(1, globalitems.max_enhancement[tier - 1] + 1):
+        if enhancement not in range(1, gli.max_enhancement[tier - 1] + 1):
             await ctx.send('Enhancement input not valid for given tier.')
             return None
         if quality not in range(1, 6):
             await ctx.send('Quality input not valid.')
             return None
-        if class_name not in globalitems.class_names:
+        if class_name not in gli.class_names:
             await ctx.send('Class name input not valid.')
             return None
         if base_dmg[0] not in range(*valid_damage_range) or base_dmg[1] not in range(*valid_damage_range):
@@ -755,7 +759,7 @@ async def generate_item(ctx, target_player, tier, elements, item_type, base_type
         new_item.item_num_sockets, new_item.item_enhancement = num_sockets, enhancement
         new_item.item_quality_tier, new_item.item_damage_type = quality, class_name
         # Handle type specific inputs.
-        speed_range = globalitems.speed_range_list[tier - 1]
+        speed_range = gli.speed_range_list[tier - 1]
         if ((item_type == "A" and base_stat not in range((1 + (tier - 1) * 5), tier * 5))
                 or (item_type == "W" and not (speed_range[0] <= base_stat <= speed_range[1]))):
             await ctx.send('Base stat input not valid.')
@@ -765,21 +769,21 @@ async def generate_item(ctx, target_player, tier, elements, item_type, base_type
             if len(words) != 2:
                 await ctx.send('Bonus stat input not valid.')
                 return None
-            if tier >= 5 and bonus_stat not in globalitems.rare_ability_dict.keys():
+            if tier >= 5 and bonus_stat not in gli.rare_ability_dict.keys():
                 await ctx.send('Bonus stat input not valid.')
                 return None
             elif tier <= 4:
-                if ((words[1] == "Bane" and words[0] not in globalitems.boss_list and words[0] != "Human") or
-                        (words[0] not in globalitems.element_special_names and words[1] not in ["Feathers", "Authority"])):
+                if ((words[1] == "Bane" and words[0] not in gli.boss_list and words[0] != "Human") or
+                        (words[0] not in gli.element_special_names and words[1] not in ["Feathers", "Authority"])):
                     await ctx.send('Bonus stat input not valid.')
                     return None
         else:
             # Set the item weapon item base.
-            class_checker = globalitems.class_names.index(new_item.item_damage_type)
+            class_checker = gli.class_names.index(new_item.item_damage_type)
             if tier >= 5:
-                target_list = globalitems.weapon_list_high[class_checker]
+                target_list = gli.weapon_list_high[class_checker]
             else:
-                target_list = globalitems.weapon_list_low[class_checker][tier - 1]
+                target_list = gli.weapon_list_low[class_checker][tier - 1]
             new_item.item_base_type = random.choice(target_list)
             if base_type != "" and base_type in target_list:
                 new_item.item_base_type = base_type
@@ -788,7 +792,7 @@ async def generate_item(ctx, target_player, tier, elements, item_type, base_type
         new_item.item_base_stat = base_stat if item_type in ["W", "A"] else new_item.item_base_stat
     else:
         # Handle gem/jewel specific inputs.
-        if bonus_stat not in globalitems.path_names:
+        if bonus_stat not in gli.path_names:
             await ctx.send('Bonus Stat input not valid for gem/jewel.')
             return None
         if tier == 8:
@@ -796,7 +800,7 @@ async def generate_item(ctx, target_player, tier, elements, item_type, base_type
         elif base_dmg[0] not in range(*valid_damage_range) or base_dmg[1] not in range(*valid_damage_range):
             await ctx.send('Base damage input not valid.')
             return
-        new_item.item_bonus_stat = globalitems.path_names.index(bonus_stat)
+        new_item.item_bonus_stat = gli.path_names.index(bonus_stat)
 
     # Apply the item rolls.
     count, new_roll_values = 0, []

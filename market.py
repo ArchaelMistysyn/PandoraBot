@@ -1,8 +1,8 @@
-import sharedmethods
+import sharedmethods as sm
 import discord
 import inventory
 import player
-import globalitems
+import globalitems as gli
 import itemdata
 import pandas as pd
 from pandoradb import run_query as rq
@@ -60,7 +60,7 @@ class TierSelectView(discord.ui.View):
             return
         selected_tier = int(selected_type[5])
         shop_msg = f"Black Market - Tier {selected_tier} items."
-        tier_colour, _ = sharedmethods.get_gear_tier_colours(selected_tier)
+        tier_colour, _ = sm.get_gear_tier_colours(selected_tier)
         await self.display_shop(interaction, selected_tier, tier_colour, shop_msg)
 
 
@@ -117,7 +117,7 @@ class PurchaseView(discord.ui.View):
             self.is_paid = True
         embed_title = "Purchase Successful!"
         embed_description = (f"Purchased {self.selected_item.item_emoji} {quantity:,}x {self.selected_item.item_name}"
-                             f"\nRemaining: {globalitems.coin_icon} {self.player_obj.player_coins:,}x lotus coins")
+                             f"\nRemaining: {gli.coin_icon} {self.player_obj.player_coins:,}x lotus coins")
         embed_msg = discord.Embed(colour=discord.Colour.dark_orange(), title=embed_title, description=embed_description)
         new_view = PurchaseView(self.player_obj, self.selected_item)
         return embed_msg, new_view

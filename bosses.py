@@ -3,8 +3,8 @@ import discord
 import random
 
 # Data imports
-import globalitems
-import sharedmethods
+import globalitems as gli
+import sharedmethods as sm
 
 # Core imports
 import player
@@ -56,14 +56,14 @@ class CurrentBoss:
         tier_colour = tier_info[0]
         life_emoji = tier_info[1]
         # Set boss details
-        dps_msg = f"{sharedmethods.number_conversion(dps)} / min"
+        dps_msg = f"{sm.number_conversion(dps)} / min"
         boss_title = f'{self.boss_name}{extension}'
         boss_field = f'Tier {self.boss_tier} {self.boss_type} - Level {self.boss_level}'
         # Set boss hp
         if not self.calculate_hp():
             self.boss_cHP = 0
-        hp_bar_icons = globalitems.hp_bar_dict[min(7, self.boss_tier)]  # Adjust if needed for t8
-        boss_hp = f'{life_emoji} ({sharedmethods.display_hp(int(self.boss_cHP), int(self.boss_mHP))})'
+        hp_bar_icons = gli.hp_bar_dict[min(7, self.boss_tier)]  # Adjust if needed for t8
+        boss_hp = f'{life_emoji} ({sm.display_hp(int(self.boss_cHP), int(self.boss_mHP))})'
         bar_length = 0
         if int(self.boss_cHP) >= 1:
             bar_percentage = (int(self.boss_cHP) / int(self.boss_mHP)) * 100
@@ -77,10 +77,10 @@ class CurrentBoss:
         boss_weakness = f'Weakness: '
         for idx, x in enumerate(self.boss_typeweak):
             if x == 1:
-                boss_weakness += globalitems.class_icon_list[idx]
+                boss_weakness += gli.class_icon_list[idx]
         for idy, y in enumerate(self.boss_eleweak):
             if y == 1:
-                boss_weakness += globalitems.global_element_list[idy]
+                boss_weakness += gli.global_element_list[idy]
         embed_msg = discord.Embed(colour=tier_colour, title=boss_title, description="")
         embed_msg.set_image(url=img_link)
         embed_msg.add_field(name=boss_field, value=boss_hp, inline=False)
@@ -165,9 +165,9 @@ class CurrentBoss:
                 boss_element = temp_name_split[1]
                 self.boss_element = 8
                 if boss_tier != 4:
-                    self.boss_element = globalitems.element_names.index(boss_element)
+                    self.boss_element = gli.element_names.index(boss_element)
                     self.boss_name += " Dragon"
-                self.boss_image = f'{url_base}{boss_type}/{globalitems.element_names[self.boss_element]}_Dragon.png'
+                self.boss_image = f'{url_base}{boss_type}/{gli.element_names[self.boss_element]}_Dragon.png'
             case "Demon":
                 if boss_tier != 4:
                     self.boss_element = random.randint(0, 8)
@@ -204,7 +204,7 @@ async def spawn_boss(channel_id, player_id, new_boss_tier, selected_boss_type, b
         return boss_object
     # Create the boss object if it doesn't exist.
     raid_type = "solo"
-    boss_type_num = globalitems.boss_list.index(selected_boss_type)
+    boss_type_num = gli.boss_list.index(selected_boss_type)
     if new_boss_tier == 7:
         boss_level += 150
     elif new_boss_tier == 6:
@@ -281,14 +281,14 @@ def get_random_bosstier(boss_type):
     # Handle non-paragon exceptions for pseudo-paragon type bosses.
     if boss_tier == 4 and boss_type == "Paragon":
         paragon_exceptions = [0, 1, 2, 3, 3]
-        boss_type = globalitems.boss_list[random.choice(paragon_exceptions)]
+        boss_type = gli.boss_list[random.choice(paragon_exceptions)]
     return boss_tier, boss_type
 
 
 # generate ele weakness
 def get_element(chosen_weakness):
     random_number = chosen_weakness if chosen_weakness == 0 else random.randint(0, 8)
-    element_temp = globalitems.global_element_list[random_number]
+    element_temp = gli.global_element_list[random_number]
     return element_temp
 
 
@@ -337,6 +337,6 @@ async def create_dead_boss_embed(channel_id, active_boss, dps, extension=""):
     output_list = ""
     for idx, x in enumerate(player_list):
         player_obj = await player.get_player_by_id(x)
-        output_list += f'{str(player_obj.player_username)}: {sharedmethods.number_conversion(int(damage_list[idx]))}\n'
+        output_list += f'{str(player_obj.player_username)}: {sm.number_conversion(int(damage_list[idx]))}\n'
     dead_embed.add_field(name="SLAIN", value=output_list, inline=False)
     return dead_embed

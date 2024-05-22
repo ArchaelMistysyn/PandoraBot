@@ -11,8 +11,8 @@ import random
 from datetime import datetime as dt, timedelta
 
 # Data imports
-import globalitems
-import sharedmethods
+import globalitems as gli
+import sharedmethods as sm
 import adventuredata
 import leaderboards
 
@@ -115,7 +115,7 @@ def run_discord_bot():
     @engine_bot.command(name='resetCD', help="Archael Only")
     async def resetCD(ctx):
         if ctx.message.author.id == 185530717638230016:
-            sharedmethods.reset_all_cooldowns()
+            sm.reset_all_cooldowns()
             await ctx.send("All player cooldowns have been reset.")
         else:
             await ctx.send('You must be the owner to use this command!')
@@ -133,7 +133,7 @@ def run_discord_bot():
         async def run_solo_boss_task(pass_player_obj, pass_y, pass_command_channel_id, ctx_object):
             await solo_boss_task(pass_player_obj, pass_y, pass_command_channel_id, ctx_object)
 
-        for server in globalitems.global_server_channels:
+        for server in gli.global_server_channels:
             command_channel_id = server[0]
             cmd_channel = engine_bot.get_channel(command_channel_id)
             for x in range(1, 5):
@@ -245,7 +245,7 @@ def run_discord_bot():
     @app_commands.guilds(discord.Object(id=1011375205999968427))
     async def abandon(ctx):
         await ctx.defer()
-        player_obj = await sharedmethods.check_registration(ctx)
+        player_obj = await sm.check_registration(ctx)
         if player_obj is None:
             return
         existing_id = await encounters.get_raid_id(ctx.channel.id, player_obj.player_id)
@@ -288,7 +288,7 @@ def run_discord_bot():
     @app_commands.guilds(discord.Object(id=1011375205999968427))
     async def solo(ctx, boss_type="random"):
         await ctx.defer()
-        player_obj = await sharedmethods.check_registration(ctx)
+        player_obj = await sm.check_registration(ctx)
         if player_obj is None:
             return
         if player_obj.player_equipped[0] == 0:
@@ -311,12 +311,12 @@ def run_discord_bot():
         boss_type = boss_type.capitalize()
         if boss_type == "Random":
             spawned_boss = random.randint(0, max_spawn)
-            boss_type = globalitems.boss_list[spawned_boss]
+            boss_type = gli.boss_list[spawned_boss]
         else:
-            if boss_type not in globalitems.boss_list:
+            if boss_type not in gli.boss_list:
                 await ctx.send("Boss type not recognized. Please select [Random/Fortress/Dragon/Demon/Paragon/Arbiter].")
                 return
-            spawned_boss = globalitems.boss_list.index(boss_type)
+            spawned_boss = gli.boss_list.index(boss_type)
             if spawned_boss > max_spawn:
                 await ctx.send("Your echelon is not high enough to challenge this boss type.")
                 return
@@ -324,7 +324,7 @@ def run_discord_bot():
             stone_obj = inventory.BasicItem(stone_id)
             stone_stock = await inventory.check_stock(player_obj, stone_obj.item_id)
             if stone_stock < 1:
-                await ctx.send(sharedmethods.get_stock_msg(stone_obj, stone_stock))
+                await ctx.send(sm.get_stock_msg(stone_obj, stone_stock))
                 return
             await inventory.update_stock(player_obj, stone_obj.item_id, -1)
 
@@ -345,7 +345,7 @@ def run_discord_bot():
     @app_commands.guilds(discord.Object(id=1011375205999968427))
     async def palace(ctx):
         await ctx.defer()
-        player_obj = await sharedmethods.check_registration(ctx)
+        player_obj = await sm.check_registration(ctx)
         if player_obj is None:
             return
         if player_obj.player_equipped[0] == 0:
@@ -384,12 +384,12 @@ def run_discord_bot():
             self.lotus_stock = lotus_stock
             if self.lotus_stock <= 0:
                 for button in self.children:
-                    button.disabled, button.style = True, globalitems.button_colour_list[3]
+                    button.disabled, button.style = True, gli.button_colour_list[3]
             elif self.player_obj.player_quest == 50:
-                self.usurper.disabled, self.usurper.style = True, globalitems.button_colour_list[3]
-                self.samsara.disabled, self.samsara.style = True, globalitems.button_colour_list[3]
+                self.usurper.disabled, self.usurper.style = True, gli.button_colour_list[3]
+                self.samsara.disabled, self.samsara.style = True, gli.button_colour_list[3]
             elif self.player_obj.player_level < 200:
-                self.samsara.disabled, self.samsara.style = True, globalitems.button_colour_list[3]
+                self.samsara.disabled, self.samsara.style = True, gli.button_colour_list[3]
 
         @discord.ui.button(label="Challenger", style=discord.ButtonStyle.blurple)
         async def challenger(self, interaction: discord.Interaction, button: discord.Button):
@@ -432,7 +432,7 @@ def run_discord_bot():
     @app_commands.guilds(discord.Object(id=1011375205999968427))
     async def run_gauntlet(ctx):
         await ctx.defer()
-        player_obj = await sharedmethods.check_registration(ctx)
+        player_obj = await sm.check_registration(ctx)
         if player_obj is None:
             return
         if player_obj.player_equipped[0] == 0:
@@ -466,7 +466,7 @@ def run_discord_bot():
     @app_commands.guilds(discord.Object(id=1011375205999968427))
     async def summon(ctx, token_version: int):
         await ctx.defer()
-        player_obj = await sharedmethods.check_registration(ctx)
+        player_obj = await sm.check_registration(ctx)
         if player_obj is None:
             return
         if token_version not in range(1, 4):
@@ -492,7 +492,7 @@ def run_discord_bot():
         token_item = inventory.BasicItem(token_id)
         player_stock = await inventory.check_stock(player_obj, token_id)
         if player_stock <= 0:
-            await ctx.send(sharedmethods.get_stock_msg(token_item, player_stock))
+            await ctx.send(sm.get_stock_msg(token_item, player_stock))
             return
         await inventory.update_stock(player_obj, token_id, -1)
         # Set the boss tier and type
@@ -513,7 +513,7 @@ def run_discord_bot():
     @app_commands.guilds(discord.Object(id=1011375205999968427))
     async def arena(ctx):
         await ctx.defer()
-        player_obj = await sharedmethods.check_registration(ctx)
+        player_obj = await sm.check_registration(ctx)
         if player_obj is None:
             return
         if player_obj.player_echelon < 1:
@@ -523,7 +523,7 @@ def run_discord_bot():
         if opponent_player is None:
             await ctx.send("No available opponent found.")
             return
-        echelon_colour, _ = sharedmethods.get_gear_tier_colours(player_obj.player_echelon)
+        echelon_colour, _ = sm.get_gear_tier_colours(player_obj.player_echelon)
         if opponent_player.player_equipped[0] == 0:
             await ctx.send("No available opponent found.")
             return
@@ -562,7 +562,7 @@ def run_discord_bot():
     @app_commands.guilds(discord.Object(id=1011375205999968427))
     async def automapper(ctx, tier=0):
         await ctx.defer()
-        player_obj = await sharedmethods.check_registration(ctx)
+        player_obj = await sm.check_registration(ctx)
         if player_obj is None:
             return
         if player_obj.player_echelon < 4:
@@ -583,7 +583,7 @@ def run_discord_bot():
             await ctx.send("Insufficient stamina to embark.")
             return
         await encounters.add_automapper(ctx.channel.id, player_obj.player_id)
-        colour, _ = sharedmethods.get_gear_tier_colours(tier)
+        colour, _ = sm.get_gear_tier_colours(tier)
         title = f"{player_obj.player_username} - {adventuredata.reverse_map_tier_dict[tier]} [AUTO]"
         map_embed = discord.Embed(colour=colour, title=title, description="")
         await ctx.send(f"{player_obj.player_username} embarks on a tier {tier} expedition.")

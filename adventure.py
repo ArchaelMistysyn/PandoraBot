@@ -6,8 +6,8 @@ import numpy
 from datetime import datetime as dt, timedelta
 
 # Data imports
-import globalitems
-import sharedmethods
+import globalitems as gli
+import sharedmethods as sm
 import adventuredata
 
 # Core imports
@@ -25,7 +25,7 @@ class Expedition:
     def __init__(self, ctx_object, player_obj, tier):
         self.ctx_object = ctx_object
         self.tier = tier
-        self.colour, _ = sharedmethods.get_gear_tier_colours(self.tier)
+        self.colour, _ = sm.get_gear_tier_colours(self.tier)
         self.player_obj, self.luck = player_obj, player_obj.luck_bonus + 1
         self.length, self.room_num = 9 + tier, 0
         self.room, self.room_view = None, None
@@ -51,7 +51,7 @@ class Expedition:
         self.room = Room(new_room_type, self.tier)
         await self.room.display_room_embed(self)
         self.room_view = AdventureRoomView(ctx_object, player_obj, self)
-        status_msg = sharedmethods.display_hp(self.player_obj.player_cHP, self.player_obj.player_mHP)
+        status_msg = sm.display_hp(self.player_obj.player_cHP, self.player_obj.player_mHP)
         status_msg += f"\nLuck: {self.luck}"
         if player_obj.hp_regen > 0:
             status_msg = f"{self.handle_regen()}\n{status_msg}"
@@ -157,12 +157,12 @@ class Room:
                 description = f"{trial_type[0]}\n{', '.join(trial_type[1])}"
                 temp_player = await player.get_player_by_discord(expedition.player_obj.discord_id)
                 if self.variant == "Greed":
-                    description += f"\nCurrent Coins: {globalitems.coin_icon} {temp_player.player_coins:,}x"
+                    description += f"\nCurrent Coins: {gli.coin_icon} {temp_player.player_coins:,}x"
                 elif self.variant == "Soul":
-                    description += f"\nCurrent Stamina: {globalitems.stamina_icon} {temp_player.player_stamina:,}"
+                    description += f"\nCurrent Stamina: {gli.stamina_icon} {temp_player.player_stamina:,}"
             case "boss_shrine":
                 self.variant = "Greater " if random_check <= (5 * expedition.luck) else ""
-                target_list = globalitems.boss_list[1:-2] if self.variant == "" else globalitems.boss_list[1:-1]
+                target_list = gli.boss_list[1:-2] if self.variant == "" else gli.boss_list[1:-1]
                 self.room_deity = random.choice(target_list)
                 title = f"{self.variant}{element_descriptor} {self.room_deity} Shrine"
             case _:
@@ -362,7 +362,7 @@ class AdventureRoomView(discord.ui.View):
             # Handle heal occurrence
             heal_total = int(self.expedition.player_obj.player_mHP * (random.randint(self.expedition.tier, 10) * 0.01))
             self.expedition.player_obj.player_cHP += heal_total
-            hp_msg = sharedmethods.display_hp(self.expedition.player_obj.player_cHP,
+            hp_msg = sm.display_hp(self.expedition.player_obj.player_cHP,
                                               self.expedition.player_obj.player_mHP)
             self.embed.add_field(name="Health Restored", value=hp_msg, inline=False)
             await interaction_obj.response.edit_message(embed=self.embed, view=self.new_view)
@@ -389,7 +389,7 @@ class AdventureRoomView(discord.ui.View):
                     return
                 # Handle Damage
                 await self.expedition.take_damage(outcome, outcome, -1, True)
-                hp_msg = sharedmethods.display_hp(self.player_obj.player_cHP, self.player_obj.player_mHP)
+                hp_msg = sm.display_hp(self.player_obj.player_cHP, self.player_obj.player_mHP)
                 wrath_msg += f"\nYou took {outcome:,} damage!\n{hp_msg}"
                 if await self.check_death(interaction_obj, result_msg=wrath_msg, title_msg=embed_title):
                     return
@@ -425,7 +425,7 @@ class AdventureRoomView(discord.ui.View):
         if active_room.check_trap(self.expedition.luck):
             if variant == 1:
                 damage = self.expedition.take_damage(heal_total, heal_total, active_room.room_element)
-                hp = sharedmethods.display_hp(self.expedition.player_obj.player_cHP, self.expedition.player_obj.player_mHP)
+                hp = sm.display_hp(self.expedition.player_obj.player_cHP, self.expedition.player_obj.player_mHP)
                 title, description = "Ambushed!", f"You were attacked while resting! You took {damage:,} damage."
                 if await self.check_death(interaction_obj, result_msg=description):
                     return
@@ -440,7 +440,7 @@ class AdventureRoomView(discord.ui.View):
         title, description = "Recovery Successful!", f"You restore **{heal_total:,}** HP."
         self.embed = discord.Embed(colour=self.expedition.colour, title=title, description=description)
         self.expedition.player_obj.player_cHP += heal_total
-        hp = sharedmethods.display_hp(self.expedition.player_obj.player_cHP, self.expedition.player_obj.player_mHP)
+        hp = sm.display_hp(self.expedition.player_obj.player_cHP, self.expedition.player_obj.player_mHP)
         self.embed.add_field(name="", value=hp, inline=False)
         await interaction_obj.response.edit_message(embed=self.embed, view=self.new_view)
 
@@ -464,10 +464,10 @@ class AdventureRoomView(discord.ui.View):
             trigger, msg = await self.handle_combat(interaction_obj, min_dmg, max_dmg, int(self.expedition.luck * 2 / adjuster))
             if trigger:
                 return
-            hp_msg = sharedmethods.display_hp(self.expedition.player_obj.player_cHP, self.expedition.player_obj.player_mHP)
+            hp_msg = sm.display_hp(self.expedition.player_obj.player_cHP, self.expedition.player_obj.player_mHP)
             exp_msg, lvl_change = temp_user.adjust_exp(exp_reward)
             self.embed.add_field(name="Monster Defeated!", value=msg, inline=False)
-            self.embed.add_field(name="", value=f"{hp_msg}\n{globalitems.exp_icon} {exp_msg} Exp Acquired.", inline=False)
+            self.embed.add_field(name="", value=f"{hp_msg}\n{gli.exp_icon} {exp_msg} Exp Acquired.", inline=False)
             if self.expedition.player_obj.player_equipped[4] != 0:
                 e_ring = await inventory.read_custom_item(self.expedition.player_obj.player_equipped[4])
                 if e_ring.item_base_type == "Crown of Skulls":
@@ -475,7 +475,7 @@ class AdventureRoomView(discord.ui.View):
                     await e_ring.update_stored_item()
             await interaction_obj.response.edit_message(embed=self.embed, view=self.new_view)
             if lvl_change != 0:
-                await sharedmethods.send_notification(self.expedition.ctx_object, temp_user, "Level", lvl_change)
+                await sm.send_notification(self.expedition.ctx_object, temp_user, "Level", lvl_change)
 
         async def stealth_callback():
             # Handle stealth success
@@ -486,7 +486,7 @@ class AdventureRoomView(discord.ui.View):
                 return
             # Handle stealth failure
             damage = self.expedition.take_damage(min_dmg, max_dmg, active_room.room_element)
-            hp_msg = sharedmethods.display_hp(self.expedition.player_obj.player_cHP, self.expedition.player_obj.player_mHP)
+            hp_msg = sm.display_hp(self.expedition.player_obj.player_cHP, self.expedition.player_obj.player_mHP)
             dmg_msg = f'You take {damage:,} damage!'
             self.embed.add_field(name="Stealth Failed", value=f"{dmg_msg}\n{hp_msg}", inline=False)
             if await self.check_death(interaction_obj):
@@ -553,17 +553,17 @@ class AdventureRoomView(discord.ui.View):
             # Build the embed.
             temp_player = await player.get_player_by_id(self.expedition.player_obj.player_id)
             reward_msg = temp_player.adjust_coins(reward_coins + bonus_coins)
-            title, description = "Treasures Obtained!", f"Acquired {globalitems.coin_icon} {reward_msg} lotus coins!"
+            title, description = "Treasures Obtained!", f"Acquired {gli.coin_icon} {reward_msg} lotus coins!"
             # Check for trove drops
             if random.randint(1, 100) <= trove_rate:
                 trove_tier = inventory.generate_random_tier(max_tier=8, luck_bonus=self.expedition.luck)
                 trove_item = inventory.BasicItem(f"Trove{trove_tier}")
                 await inventory.update_stock(self.player_obj, trove_item.item_id, 1)
-                description += f"\n{sharedmethods.reward_message(trove_item)} acquired!"
+                description += f"\n{sm.reward_message(trove_item)} acquired!"
             self.embed = discord.Embed(colour=self.expedition.colour, title=title, description=description)
             # Add jackpot message.
             if bonus_coins > 0:
-                bonus_msg = f"Acquired {globalitems.coin_icon} {bonus_coins:,} bonus lotus coins!"
+                bonus_msg = f"Acquired {gli.coin_icon} {bonus_coins:,} bonus lotus coins!"
                 self.embed.add_field(name=reward_title, value=bonus_msg, inline=False)
             await interaction_obj.response.edit_message(embed=self.embed, view=self.new_view)
 
@@ -578,7 +578,7 @@ class AdventureRoomView(discord.ui.View):
             await inventory.update_stock(self.expedition.player_obj, target_item.item_id, 1)
             luck_value = 1
             title = "Heart Preserved!"
-            description = f"{sharedmethods.reward_message(target_item)} acquired!\n Luck +{luck_value}"
+            description = f"{sm.reward_message(target_item)} acquired!\n Luck +{luck_value}"
         self.expedition.luck = max(1, self.expedition.luck + luck_value)
         self.embed = discord.Embed(colour=self.expedition.colour, title=title, description=description)
         await interaction_obj.response.edit_message(embed=self.embed, view=self.new_view)
@@ -590,8 +590,8 @@ class AdventureRoomView(discord.ui.View):
             title, description = "Item Selected!", f"{target_item.item_emoji} 1x {target_item.item_name} acquired!"
             self.embed = discord.Embed(colour=self.expedition.colour, title=title, description=description)
             await interaction_obj.response.edit_message(embed=self.embed, view=self.new_view)
-            if sharedmethods.check_rare_item(target_item.item_id):
-                await sharedmethods.send_notification(self.expedition.ctx_object, self.expedition.player_obj,
+            if sm.check_rare_item(target_item.item_id):
+                await sm.send_notification(self.expedition.ctx_object, self.expedition.player_obj,
                                                       "Item", target_item.item_id)
 
         async def speed_callback():
@@ -607,11 +607,11 @@ class AdventureRoomView(discord.ui.View):
             title = "Received Both Items!"
             self.embed = discord.Embed(colour=self.expedition.colour, title=title, description=output_msg)
             await interaction_obj.response.edit_message(embed=self.embed, view=self.new_view)
-            if sharedmethods.check_rare_item(self.reward_items[0].item_id):
-                await sharedmethods.send_notification(self.expedition.ctx_object, self.expedition.player_obj,
+            if sm.check_rare_item(self.reward_items[0].item_id):
+                await sm.send_notification(self.expedition.ctx_object, self.expedition.player_obj,
                                                       "Item", self.reward_items[0].item_id)
-            if sharedmethods.check_rare_item(self.reward_items[1].item_id):
-                await sharedmethods.send_notification(self.expedition.ctx_object, self.expedition.player_obj,
+            if sm.check_rare_item(self.reward_items[1].item_id):
+                await sm.send_notification(self.expedition.ctx_object, self.expedition.player_obj,
                                                       "Item", self.reward_items[1].item_id)
         callbacks = {0: option_callback, 1: option_callback, 2: speed_callback}
         await callbacks[variant]()
@@ -638,7 +638,7 @@ class AdventureRoomView(discord.ui.View):
         # Handle failure
         damage = self.expedition.take_damage((adjuster * 100), (adjuster * 300), active_room.room_element)
         dmg_msg = f'Unable to hold out you took {damage:,} damage.'
-        hp_msg = sharedmethods.display_hp(self.expedition.player_obj.player_cHP, self.expedition.player_obj.player_mHP)
+        hp_msg = sm.display_hp(self.expedition.player_obj.player_cHP, self.expedition.player_obj.player_mHP)
         self.embed.title, self.embed.description = "Ritual Failed!", dmg_msg
         if await self.check_death(interaction_obj):
             return
@@ -657,7 +657,7 @@ class AdventureRoomView(discord.ui.View):
             cost = int(0.1 * reward * player_obj.player_mHP)
             if cost < player_obj.player_cHP:
                 player_obj.player_cHP -= cost
-                hp_msg = sharedmethods.display_hp(player_obj.player_cHP, player_obj.player_mHP)
+                hp_msg = sm.display_hp(player_obj.player_cHP, player_obj.player_mHP)
                 return True, f"Sacrificed {cost:,} HP\n{hp_msg}\nGained +{reward} luck!"
             return False, output_msg
 
@@ -741,16 +741,16 @@ class AdventureRoomView(discord.ui.View):
             trigger_return, description = await self.handle_combat(interaction_obj, 200, 600, self.expedition.luck)
             if trigger_return:
                 return
-            hp_msg = sharedmethods.display_hp(self.expedition.player_obj.player_cHP, self.expedition.player_obj.player_mHP)
+            hp_msg = sm.display_hp(self.expedition.player_obj.player_cHP, self.expedition.player_obj.player_mHP)
             temp_user = await player.get_player_by_id(self.expedition.player_obj.player_id)
             exp_value = 500 + (100 * self.expedition.tier) + (25 * self.expedition.luck)
             exp_message, lvl_change = temp_user.adjust_exp(exp_value)
-            description = f"{description}\n{hp_msg}\n{globalitems.exp_icon} {exp_message} Exp Acquired."
+            description = f"{description}\n{hp_msg}\n{gli.exp_icon} {exp_message} Exp Acquired."
             self.embed.add_field(name=f"{demon_type} Defeated!", value=description, inline=False)
             await interaction_obj.response.edit_message(embed=self.embed, view=self.new_view)
             if lvl_change == 0:
                 return
-            await sharedmethods.send_notification(self.expedition.ctx_object, temp_user, "Level", lvl_change)
+            await sm.send_notification(self.expedition.ctx_object, temp_user, "Level", lvl_change)
         callbacks = {0: refuse_pact, 1: forge_pact}
         await callbacks[variant]()
 
@@ -801,7 +801,7 @@ class AdventureRoomView(discord.ui.View):
         self.embed.add_field(name="", value=dmg_msg, inline=False)
         if await self.check_death(interaction):
             return
-        hp_msg = sharedmethods.display_hp(self.expedition.player_obj.player_cHP, self.expedition.player_obj.player_mHP)
+        hp_msg = sm.display_hp(self.expedition.player_obj.player_cHP, self.expedition.player_obj.player_mHP)
         self.embed.add_field(name="", value=hp_msg, inline=False)
         await interaction.response.edit_message(embed=self.embed, view=self.new_view)
         return
@@ -878,7 +878,7 @@ class AdventureRoomView(discord.ui.View):
         player_obj, active_room = self.expedition.player_obj, self.expedition.room
         boss_num = 3
         if self.expedition.room.room_deity not in tarot.card_dict.keys():
-            boss_num = globalitems.boss_list.index(self.expedition.room.room_deity)
+            boss_num = gli.boss_list.index(self.expedition.room.room_deity)
         shrine_data = adventuredata.shrine_dict[boss_num]
         reward_2_id = f"Unrefined{boss_num}" if boss_num != 4 else f"Token{inventory.generate_random_tier(max_tier=7)}"
         self.reward_items = [inventory.BasicItem(f"Gem{boss_num}"), inventory.BasicItem(reward_2_id), None]
@@ -889,9 +889,9 @@ class AdventureRoomView(discord.ui.View):
         self.option1.label = f"Ritual of {shrine_data[0]} ({self.success_rates[0]}%)"
         self.option2.label = f"Ritual of {shrine_data[2]} ({self.success_rates[1]}%)"
         self.option3.label = f"Ritual of Chaos ({self.success_rates[2]}%)"
-        self.option1.emoji = globalitems.global_element_list[selected_elements[0]]
-        self.option2.emoji = globalitems.global_element_list[selected_elements[1]]
-        self.option3.emoji = globalitems.global_element_list[selected_elements[2]]
+        self.option1.emoji = gli.global_element_list[selected_elements[0]]
+        self.option2.emoji = gli.global_element_list[selected_elements[1]]
+        self.option3.emoji = gli.global_element_list[selected_elements[2]]
 
     def assign_trial_data(self):
         variant = self.expedition.room.variant
@@ -899,13 +899,13 @@ class AdventureRoomView(discord.ui.View):
         variant_index = list(adventuredata.trial_variants_dict.keys()).index(variant)
         self.option1.label = trial_details[1][0]
         self.option1.emoji = trial_details[2][0]
-        self.option1.style = globalitems.button_colour_list[variant_index]
+        self.option1.style = gli.button_colour_list[variant_index]
         self.option2.label = trial_details[1][1]
         self.option2.emoji = trial_details[2][1]
-        self.option2.style = globalitems.button_colour_list[variant_index]
+        self.option2.style = gli.button_colour_list[variant_index]
         self.option3.label = trial_details[1][2]
         self.option3.emoji = trial_details[2][2]
-        self.option3.style = globalitems.button_colour_list[variant_index]
+        self.option3.style = gli.button_colour_list[variant_index]
 
     def assign_sanctuary_data(self):
         random_numbers = random.sample(range(9), 3)
@@ -963,7 +963,7 @@ class ItemView(discord.ui.View):
         sell_value = inventory.sell_value_by_tier[self.item.item_tier]
         temp_user = await player.get_player_by_id(self.expedition.player_obj.player_id)
         sell_msg = temp_user.adjust_coins(sell_value)
-        title, description = "Item Sold!", f"{globalitems.coin_icon} {sell_msg} lotus coins acquired."
+        title, description = "Item Sold!", f"{gli.coin_icon} {sell_msg} lotus coins acquired."
         self.embed = discord.Embed(colour=self.expedition.colour, title=title, description=description)
         await interaction.response.edit_message(embed=self.embed, view=self.new_view)
 
@@ -1049,10 +1049,10 @@ async def handle_hunt(ctx_object, player_obj, success_rate):
         total_exp += (player_obj.player_echelon * 500)
     total_exp = int(total_exp)
     exp_msg, lvl_change = player_obj.adjust_exp(total_exp)
-    output_msg += f"{globalitems.exp_icon} {exp_msg} EXP awarded!\n" if temp_dict else "No monsters were slain.\n"
+    output_msg += f"{gli.exp_icon} {exp_msg} EXP awarded!\n" if temp_dict else "No monsters were slain.\n"
     if lvl_change == 0:
         return output_msg
-    await sharedmethods.send_notification(ctx_object, player_obj, "Level", lvl_change)
+    await sm.send_notification(ctx_object, player_obj, "Level", lvl_change)
     return output_msg
 
 
@@ -1060,18 +1060,18 @@ async def handle_mine(ctx_object, player_obj, success_rate):
     item_obj, item_icon = None, " "
     item_id_dict = {"GEMSTONE": f"Gemstone{random.randint(1, 10)}", "Bismuth Ore": "Gemstone0",
                     "Lotus of Abundance": "Lotus5", "Aurora Tear": "Gemstone11", "Stone of the True Void": "Gemstone12"}
-    outcome_index = sharedmethods.generate_ramping_reward(success_rate, 15, 18)
+    outcome_index = sm.generate_ramping_reward(success_rate, 15, 18)
     outcome_index = max(outcome_index, player_obj.player_echelon)
     outcome_item, outcome_coins = gem_list[outcome_index][0], gem_list[outcome_index][1]
     if outcome_item in item_id_dict.keys():
         item_obj = inventory.BasicItem(item_id_dict[outcome_item])
         item_icon = f" {item_obj.item_emoji}"
     if outcome_item == "Lotus of Abundance":
-        await sharedmethods.send_notification(ctx_object, player_obj, "Item", item_obj.item_id)
+        await sm.send_notification(ctx_object, player_obj, "Item", item_obj.item_id)
     await inventory.update_stock(player_obj, item_obj.item_id, 1)
     coin_msg = player_obj.adjust_coins(outcome_coins)
     item_name = item_obj.item_name if item_obj is not None else outcome_item
-    return f"You found{item_icon} 1x {item_name}!\nReceived {globalitems.coin_icon} {coin_msg} Lotus Coins!"
+    return f"You found{item_icon} 1x {item_name}!\nReceived {gli.coin_icon} {coin_msg} Lotus Coins!"
 
 
 async def handle_gather(ctx_object, player_obj, success_rate):
@@ -1083,9 +1083,9 @@ async def handle_gather(ctx_object, player_obj, success_rate):
     for (reward_id, item_qty) in reward_list:
         reward_object = inventory.BasicItem(reward_id)
         output_msg += f"{reward_object.item_emoji} {item_qty}x {reward_object.item_name} received!\n"
-        if sharedmethods.check_rare_item(reward_object.item_id):
-            await sharedmethods.send_notification(ctx_object, player_obj, "Item", reward_object.item_id)
-    batch_df = sharedmethods.list_to_batch(player_obj, reward_list)
+        if sm.check_rare_item(reward_object.item_id):
+            await sm.send_notification(ctx_object, player_obj, "Item", reward_object.item_id)
+    batch_df = sm.list_to_batch(player_obj, reward_list)
     await inventory.update_stock(None, None, None, batch=batch_df)
     return output_msg
 
@@ -1119,7 +1119,7 @@ class ManifestView(discord.ui.View):
         await self.manifest_callback(interaction, "Mine")
 
     async def manifest_callback(self, interaction, method):
-        if await sharedmethods.check_click(interaction, self.player_user, self.new_embed, self.new_view):
+        if await sm.check_click(interaction, self.player_user, self.new_embed, self.new_view):
             return
         await self.player_user.reload_player()
         existing_timestamp, _ = self.player_user.check_cooldown("manifest")
@@ -1155,14 +1155,14 @@ class SkipView(discord.ui.View):
 
     @discord.ui.button(label="Advance Cooldown", style=discord.ButtonStyle.danger, emoji="⏩")
     async def skip_cooldown(self, interaction: discord.Interaction, button: discord.ui.Button):
-        if await sharedmethods.check_click(interaction, self.player_user, self.new_embed, self.new_view):
+        if await sm.check_click(interaction, self.player_user, self.new_embed, self.new_view):
             return
-        colour, _ = sharedmethods.get_gear_tier_colours(self.player_user.player_echelon)
+        colour, _ = sm.get_gear_tier_colours(self.player_user.player_echelon)
         self.new_embed = discord.Embed(colour=colour, title="", description="")
         cost_stock = await inventory.check_stock(self.player_user, self.cost_item.item_id)
         if cost_stock < 5:
             self.new_embed.title = "Manifest - Out of Stock"
-            self.new_embed.description = sharedmethods.get_stock_msg(self.cost_item, cost_stock, cost=5)
+            self.new_embed.description = sm.get_stock_msg(self.cost_item, cost_stock, cost=5)
             self.new_view = SkipView(self.ctx_obj, self.player_user, self.method_info)
             await interaction.response.edit_message(embed=self.new_embed, view=self)
             return
@@ -1189,10 +1189,10 @@ class RepeatView(discord.ui.View):
 
     @discord.ui.button(label="Repeat Last Manifest", style=discord.ButtonStyle.primary, emoji="🔁")
     async def repeat_manifest(self, interaction: discord.Interaction, button: discord.ui.Button):
-        if await sharedmethods.check_click(interaction, self.player_user, self.new_embed, self.new_view):
+        if await sm.check_click(interaction, self.player_user, self.new_embed, self.new_view):
             return
         await self.player_user.reload_player()
-        colour, _ = sharedmethods.get_gear_tier_colours(self.player_user.player_echelon)
+        colour, _ = sm.get_gear_tier_colours(self.player_user.player_echelon)
         self.new_embed = discord.Embed(colour=colour, title="", description="")
 
         # Check existing manifestation

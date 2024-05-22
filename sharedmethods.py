@@ -5,7 +5,7 @@ import pandas as pd
 import random
 
 # Data imports
-import globalitems
+import globalitems as gli
 
 # Core imports
 import player
@@ -14,7 +14,7 @@ import pilengine
 
 
 async def check_registration(ctx):
-    if not any(ctx.channel.id in sl for sl in globalitems.global_server_channels):
+    if not any(ctx.channel.id in sl for sl in gli.global_server_channels):
         await ctx.send("This command may not be used in this channel.")
         return None
     command_user = await player.get_player_by_discord(ctx.author.id)
@@ -36,7 +36,7 @@ async def check_click(interaction, player_obj, new_embed, new_view):
 
 
 def check_rare_item(item_id):
-    id_list = ["DarkStar", "LightStar", "Gemstone12", "Skull4"]
+    id_list = ["DarkStar", "LightStar", "Gemstone12", "Skull4", "Nadir"]
     return True if "Lotus" in item_id or item_id in id_list else False
 
 
@@ -53,7 +53,7 @@ async def send_notification(ctx_object, player_obj, notification_type, value):
     title, message = notification_dict[notification_type][0]
     filepath = pilengine.build_notification(player_obj, message, notification_type, title, item=item)
     channels = ctx_object.guild.channels
-    channel_object = discord.utils.get(channels, id=globalitems.channel_list[0])
+    channel_object = discord.utils.get(channels, id=gli.channel_list[0])
     await ctx_object.send(file=discord.File(filepath))
 
 
@@ -66,18 +66,18 @@ def get_gear_thumbnail(item):
     tag_dict = {"A": "Armour", "V": "Greaves", "Y": "Amulet", "R": "Ring", "G": "Wings", "C": "Crest"}
     item_tag = item.item_base_type
     if item.item_type == "W":
-        item_tag = globalitems.gear_category_dict[item.item_base_type]
+        item_tag = gli.gear_category_dict[item.item_base_type]
     else:
         item_tag = "Gem" if "D" in item.item_type else tag_dict[item.item_type]
     # Ensure image is currently available.
-    if item_tag not in globalitems.availability_list:
+    if item_tag not in gli.availability_list:
         return None
     return f"https://kyleportfolio.ca/botimages/itemicons/{item_tag}/Frame_{item_tag}_{item.item_tier}.png"
 
 
 def get_gear_tier_colours(base_tier):
     checked_tier = min(9, max(0, base_tier))
-    return globalitems.tier_colors[checked_tier], globalitems.augment_icons[checked_tier - 1]
+    return gli.tier_colors[checked_tier], gli.augment_icons[checked_tier - 1]
 
 
 def reset_all_cooldowns():
@@ -99,9 +99,9 @@ def display_hp(current_hp, max_hp):
 def display_stars(num_stars):
     stars_msg = ""
     for x in range(num_stars):
-        stars_msg += globalitems.star_icon[min(8, num_stars)]
+        stars_msg += gli.star_icon[min(8, num_stars)]
     for y in range(max(0, (8 - num_stars))):
-        stars_msg += globalitems.star_icon[0]
+        stars_msg += gli.star_icon[0]
     return stars_msg
 
 

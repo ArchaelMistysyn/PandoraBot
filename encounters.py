@@ -3,8 +3,8 @@ import discord
 import random
 
 # Data imports
-import globalitems
-import sharedmethods
+import globalitems as gli
+import sharedmethods as sm
 
 # Core imports
 import player
@@ -34,7 +34,7 @@ async def restore_solo_bosses(channel_id):
 
 def get_raid_boss_details(channel_num):
     random_boss_type = random.randint(0, channel_num)
-    selected_boss_type = globalitems.boss_list[random_boss_type]
+    selected_boss_type = gli.boss_list[random_boss_type]
     boss_tier, selected_boss_type = bosses.get_random_bosstier(selected_boss_type)
     level = 500
     if boss_tier < 5 and selected_boss_type not in ["Arbiter", "Incarnate"]:

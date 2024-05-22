@@ -2,12 +2,12 @@
 import discord
 
 # Data imports
-import globalitems
+import globalitems as gli
 import itemdata
 
 # Core imports
 import inventory
-import sharedmethods
+import sharedmethods as sm
 
 
 class TradeObject:
@@ -23,7 +23,7 @@ class TradeObject:
         if select_qty == 0:
             return
         if select_obj is None:
-            trade_details = f"{globalitems.coin_icon} {select_qty:,}x Lotus Coins"
+            trade_details = f"{gli.coin_icon} {select_qty:,}x Lotus Coins"
         else:
             trade_details = f"{select_obj.item_emoji} {select_obj.item_name} {select_qty:,}x"
         self.trade_msg.add_field(name=f"{select_player.player_username} Offers:", value=trade_details, inline=True)
@@ -79,9 +79,9 @@ async def create_trade(offer_player, target_player, offer_item, offer_qty, recei
         return None, err_msg
     # Validate coin amounts.
     if offer_obj is None and offer_player.player_coins < offer_qty:
-        return None, f"{offer_player.player_username} only has {globalitems.coin_icon} {offer_player.player_coins:,}x Lotus Coins"
+        return None, f"{offer_player.player_username} only has {gli.coin_icon} {offer_player.player_coins:,}x Lotus Coins"
     elif receive_obj is None and target_player.player_coins < receive_qty:
-        return None, f"{target_player.player_username} only has {globalitems.coin_icon} {target_player.player_coins:,}x Lotus Coins"
+        return None, f"{target_player.player_username} only has {gli.coin_icon} {target_player.player_coins:,}x Lotus Coins"
 
     # Create the trade object
     trade_obj = TradeObject(offer_player, target_player, offer_obj, offer_qty, receive_obj, receive_qty)

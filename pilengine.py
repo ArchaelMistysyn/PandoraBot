@@ -5,10 +5,10 @@ import os
 from ftplib import FTP
 
 # Data imports
-import globalitems
+import globalitems as gli
 import inventory
 import itemdata
-import sharedmethods
+import sharedmethods as sm
 
 # Core imports
 import player
@@ -52,7 +52,7 @@ metal_url_list = [f"{profile_url}{metal_url}Bronze.png", f"{profile_url}{metal_u
                   f"{profile_url}{metal_url}Gold.png", f"{profile_url}{metal_url}GoldPlus.png",
                   f"{profile_url}{metal_url}Stygian.png"]
 url_dict = {'cardBG': rank_card_url_list, 'metal': metal_url_list, 'wing': wing_gem_url_list,
-            'exp_bar': exp_bar_url_list, 'role_icon': rank_url_list, 'frame_icon': globalitems.frame_icon_list}
+            'exp_bar': exp_bar_url_list, 'role_icon': rank_url_list, 'frame_icon': gli.frame_icon_list}
 url_index_dict = {'cardBG': 0, 'metal': 1, 'wing': 2, 'exp_bar': 3, 'role_icon': 4, 'frame_icon': 5}
 # Load Resources
 font_url = f"{web_url}//botimages/profilecards/fonts/"
@@ -94,8 +94,8 @@ class RankCard:
             if attr != 'frame_icon':
                 index = loc[url_index_dict[attr]]
                 setattr(self, attr, url_list[index])
-        self.frame_icon = globalitems.frame_icon_list[loc[5]].replace("[EXT]", globalitems.frame_extension[1])
-        self.class_icon = sharedmethods.get_thumbnail_by_class(self.user.player_class)
+        self.frame_icon = gli.frame_icon_list[loc[5]].replace("[EXT]", gli.frame_extension[1])
+        self.class_icon = sm.get_thumbnail_by_class(self.user.player_class)
         self.fill_percent = round(self.user.player_exp / player.get_max_exp(self.user.player_level), 2)
 
 
@@ -175,15 +175,15 @@ def generate_exp_bar(exp_bar_image, exp_bar_start, exp_bar_end, fill_percent):
 
 def generate_and_combine_gear(item_type, start_tier=1, end_tier=8, fetch_type=False):
     if fetch_type:
-        item_type = globalitems.gear_category_dict[item_type]
+        item_type = gli.gear_category_dict[item_type]
     # Ensure image is currently available.
-    if item_type not in globalitems.availability_list:
+    if item_type not in gli.availability_list:
         return 0
     ftp = create_ftp_connection(web_data[0], web_data[1], web_data[2])
     for item_tier in range(start_tier, end_tier + 1):
         # Handle the urls and paths.
-        frame_url = globalitems.frame_icon_list[item_tier - 1]
-        frame_url = frame_url.replace("[EXT]", globalitems.frame_extension[0])
+        frame_url = gli.frame_icon_list[item_tier - 1]
+        frame_url = frame_url.replace("[EXT]", gli.frame_extension[0])
         icon_url = f"{web_url}/botimages/itemicons/{item_type}/{item_type}{item_tier}.png"
         output_dir, file_name = f'{image_path}itemicons\\{item_type}\\', f"Frame_{item_type}_{item_tier}.png"
         file_path = f"{output_dir}{file_name}"
@@ -219,13 +219,13 @@ def generate_and_combine_images():
     ftp = create_ftp_connection(web_data[0], web_data[1], web_data[2])
     for item_id in itemdata.itemdata_dict.keys():
         # Ensure image is currently available.
-        if item_id not in globalitems.availability_list_nongear:
+        if item_id not in gli.availability_list_nongear:
             continue
         count += 1
         temp_item = inventory.BasicItem(item_id)
         # Handle the urls and paths.
-        frame_url = globalitems.frame_icon_list[temp_item.item_tier - 1]
-        frame_url = frame_url.replace("[EXT]", globalitems.frame_extension[0])
+        frame_url = gli.frame_icon_list[temp_item.item_tier - 1]
+        frame_url = frame_url.replace("[EXT]", gli.frame_extension[0])
         icon_url = f"{web_url}/botimages/nongear/{temp_item.item_category}/{item_id}.png"
         output_dir, file_name = f'{image_path}nongear\\{temp_item.item_category}\\', f"Frame_{item_id}.png"
         file_path = f"{output_dir}{file_name}"

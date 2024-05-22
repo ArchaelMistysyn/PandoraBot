@@ -5,8 +5,8 @@ from discord.ui import Button, View
 import pandas as pd
 
 # Data imports
-import globalitems
-import sharedmethods
+import globalitems as gli
+import sharedmethods as sm
 from pandoradb import run_query as rq
 
 # Core imports
@@ -94,7 +94,7 @@ async def rerank_leaderboard(ctx_object):
             new_player_obj = await player.get_player_by_id(new_id)
             new_user = ctx.guild.get_member(new_player_obj.discord_id)
             await new_user.add_roles(role_object)
-            await sharedmethods.send_notification(ctx_object, new_player_obj, "Achievement", role_name)
+            await sm.send_notification(ctx_object, new_player_obj, "Achievement", role_name)
             # If previous ranker exists remove their role.
             if original_id != -1:
                 original_player_obj = await player.get_player_by_id(original_id)
@@ -139,8 +139,8 @@ async def display_leaderboard(leaderboard_title, player_id):
         for index, row in rank_df.iterrows():
             current_player = await player.get_player_by_id(int(row['player_id']))
             current_rank = row[f'player_{leaderboard_type}_rank']
-            current_stat = sharedmethods.number_conversion(int(row[f'player_{leaderboard_type}']))
-            class_icon = globalitems.class_icon_dict[current_player.player_class]
+            current_stat = sm.number_conversion(int(row[f'player_{leaderboard_type}']))
+            class_icon = gli.class_icon_dict[current_player.player_class]
             ranking_row = f"{class_icon} Rank {current_rank}: {current_player.player_username} ({current_stat})"
             if current_player.player_id == player_id:
                 ranking_row = f"**{ranking_row}**"

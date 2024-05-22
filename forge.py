@@ -5,8 +5,8 @@ import random
 import asyncio
 
 # Data imports
-import globalitems
-import sharedmethods
+import globalitems as gli
+import sharedmethods as sm
 from pandoradb import run_query as rq
 
 # Core imports
@@ -98,7 +98,7 @@ class PurifyView(discord.ui.View):
             self.purify.emoji, self.purify_check = self.material.item_emoji, self.material.item_base_rate
             self.purify.label += f": {self.purify_check}%]"
         else:
-            self.purify.disabled, self.purify.style = True, globalitems.button_colour_list[3]
+            self.purify.disabled, self.purify.style = True, gli.button_colour_list[3]
 
     @discord.ui.button(style=discord.ButtonStyle.success)
     async def purify(self, interaction: discord.Interaction, button: discord.Button):
@@ -121,7 +121,7 @@ class PurifyView(discord.ui.View):
         if interaction.user.id != self.player_obj.discord_id:
             return
         if not self.embed:
-            self.embed = discord.Embed(colour=discord.Colour.blurple(), title="Echo of Oblivia", description=globalitems.abyss_msg)
+            self.embed = discord.Embed(colour=discord.Colour.blurple(), title="Echo of Oblivia", description=gli.abyss_msg)
             self.new_view = SelectView(self.player_obj, "purify")
         await interaction.response.edit_message(embed=self.embed, view=self.new_view)
 
@@ -184,7 +184,7 @@ class SubSelectView(discord.ui.View):
 
         def build_select_option(i, option, craft_method, item_tier, cost_qty):
             if craft_method in ["Fae", "Origin"]:
-                label, emoji = f"{option} Enhancement", globalitems.global_element_list[i]
+                label, emoji = f"{option} Enhancement", gli.global_element_list[i]
                 item_1 = inventory.BasicItem(f"{craft_method}{i}")
                 description = f"{cost_qty}x {item_1.item_name} "
                 if item_tier >= 5:
@@ -210,11 +210,11 @@ class SubSelectView(discord.ui.View):
         quantity = 1
         if self.method == "Enhance":
             self.menu_type = "Fae"
-            selected_list = globalitems.element_names
+            selected_list = gli.element_names
             quantity = 10
         elif self.method == "Implant Element":
             self.menu_type = "Origin"
-            selected_list = globalitems.element_names
+            selected_list = gli.element_names
         else:
             self.menu_type = "Fusion"
             selected_list = ["Star", "Radiant", "Chaos", "Void", "Wish", "Abyss", "Divine"]
@@ -255,7 +255,7 @@ class UpgradeView(discord.ui.View):
                                    "Divine Fusion (Unique)"],
                                ["any fusion", "defensive fusion", "all fusion", "damage fusion",
                                 "penetration fusion", "curse fusion", "unique fusion"], ["Hammer"]],
-            "Implant Element": [1, [f"Implant ({globalitems.element_names[self.element]})"], ["Implant"],
+            "Implant Element": [1, [f"Implant ({gli.element_names[self.element]})"], ["Implant"],
                                 [f"Origin{self.element}"]]
         }
         self.menu_details = method_dict[self.menu_type]
@@ -273,11 +273,11 @@ class UpgradeView(discord.ui.View):
             is_maxed, success_rate = check_maxed(self.selected_item, self.method[button_num], material_id, self.element)
             temp_material = inventory.BasicItem(material_id)
             button_label, button_emoji = self.menu_details[1][button_num], temp_material.item_emoji
-            button_style = globalitems.button_colour_list[1]
+            button_style = gli.button_colour_list[1]
             if not is_maxed:
                 button_label += f" ({success_rate}%)"
             else:
-                button_style = globalitems.button_colour_list[3]
+                button_style = gli.button_colour_list[3]
                 button_label += " [MAX]"
 
             # Assign values to the buttons
@@ -349,7 +349,7 @@ async def run_button(player_obj, selected_item, material_id, method):
     else:
         no_stock_item = inventory.BasicItem(result)
         item_stock = await inventory.check_stock(player_obj, no_stock_item.item_id)
-        outcome = sharedmethods.get_stock_msg(no_stock_item, item_stock, cost)
+        outcome = sm.get_stock_msg(no_stock_item, item_stock, cost)
     new_embed_msg = await reload_item.create_citem_embed()
     new_embed_msg.add_field(name=outcome, value="", inline=False)
     return new_embed_msg, reload_item
@@ -361,7 +361,7 @@ def check_maxed(target_item, method, material_id, element):
     match method:
         case "Enhance":
             success_rate = max(5, (100 - (target_item.item_enhancement // 10) * 5))
-            if target_item.item_enhancement >= globalitems.max_enhancement[(target_item.item_tier - 1)]:
+            if target_item.item_enhancement >= gli.max_enhancement[(target_item.item_tier - 1)]:
                 return True, 0
             return False, success_rate
         case "ReforgveA" | "ReforgeV":
@@ -453,7 +453,7 @@ async def handle_craft_costs(player_obj, cost_list, cost_1=1, cost_2=1):
 async def enhance_item(player_obj, selected_item, cost_list, success_check):
     success_rate = max(5, (100 - (selected_item.item_enhancement // 10) * 5))
     # Check if enhancement is already maxed.
-    if selected_item.item_enhancement >= globalitems.max_enhancement[(selected_item.item_tier - 1)]:
+    if selected_item.item_enhancement >= gli.max_enhancement[(selected_item.item_tier - 1)]:
         return 4
     # Check if the material being used is eligible.
     element_location = int(cost_list[0].item_id[3])
@@ -582,7 +582,7 @@ async def purify_item(player_obj, selected_item, cost_list, success_rate, succes
     check_aug = itemrolls.check_augment(selected_item)
     if check_aug != selected_item.item_tier * 6:
         return 3
-    if selected_item.item_enhancement < globalitems.max_enhancement[(selected_item.item_tier - 1)]:
+    if selected_item.item_enhancement < gli.max_enhancement[(selected_item.item_tier - 1)]:
         return 3
     if selected_item.item_num_sockets == 0:
         return 3
@@ -709,7 +709,7 @@ class RefineItemView(discord.ui.View):
         new_view = RefSelectView(self.player_user)
         new_embed = discord.Embed(colour=discord.Colour.dark_orange(),
                                   title='Refinery', description="Please select the item to refine")
-        new_embed.set_image(url=globalitems.forge_img)
+        new_embed.set_image(url=gli.forge_img)
         await interaction.response.edit_message(embed=new_embed, view=new_view)
 
 
@@ -718,13 +718,13 @@ async def refine_item(player_user, selected_type, selected_tier, required_materi
     loot_item = inventory.BasicItem(required_material)
     item_stock = await inventory.check_stock(player_user, required_material)
     if item_stock == 0:
-        stock_message = sharedmethods.get_stock_msg(loot_item, item_stock)
+        stock_message = sm.get_stock_msg(loot_item, item_stock)
         return discord.Embed(colour=discord.Colour.red(), title="Cannot Refine!", description=stock_message)
     # Pay the cost and attempt to refine.
     await inventory.update_stock(player_user, required_material, (cost * -1))
     new_item, is_success = inventory.try_refine(player_user.player_id, selected_type, selected_tier)
     if not is_success:
-        stock_message = sharedmethods.get_stock_msg(loot_item, (item_stock - cost))
+        stock_message = sm.get_stock_msg(loot_item, (item_stock - cost))
         return discord.Embed(colour=discord.Colour.red(), title="Refinement Failed! The item is destroyed",
                              description=stock_message)
     result_id = inventory.add_custom_item(new_item)
