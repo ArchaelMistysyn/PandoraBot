@@ -24,10 +24,10 @@ web_url = "https://kyleportfolio.ca/botimages/"
 # IMAGE DATA
 forge_img, refinery_img = f"{web_url}scenes/Forge.png", f"{web_url}scenes/Refinery.png"
 abyss_img = f"{web_url}scenes/Abyss.png"
-planetarium_img = ""
+planetarium_img = f"{web_url}scenes/Tarot_Planetarium.png"
 market_img, bazaar_img = "", ""
-infuse_img = ""
-sanctuary_img = ""
+infuse_img = f"{web_url}scenes/Infuse.png"
+sanctuary_img, cathedral_img = "", ""
 archdragon_logo = f"{web_url}ArchDragon.png"
 
 # ICON DATA
@@ -101,7 +101,7 @@ skill_names_dict = {
 # ITEM LISTS
 crafting_gem = ["Blazing Ruby", "Drowned Sapphire", "Silent Topaz", "Ancient Agate", "Whispering Emerald",
                 "Arctic Zircon", "Haunted Obsidian", "Prismatic Opal", "Spatial Lapis", "Soul Diamond"]
-availability_list_nongear = ["RoyalCoin"]
+availability_list_nongear = ["Gemstone", "Misc"]
 availability_list = ["Sword", "Bow", "Threads", "Armour", "Wings", "Amulet", "Crest", "Greaves", "Gem", "Pact"]
 
 # Weapon lists

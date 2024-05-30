@@ -396,7 +396,7 @@ def pvp_defences(attacker, defender, player_damage, e_weapon):
                 highest = idx
     stun_status = gli.element_status_list[highest]
     stun_status = stun_status if (stun_status is not None and random.randint(1, 100) <= 1) else None
-    return stun_status, int(sum(attacker.elemental_damage) * (1 + attacker.aura) * (1 + attacker.banes[5]))
+    return stun_status, int(sum(attacker.elemental_damage) * (1 + attacker.banes[5]))
 
 
 async def pvp_attack(attacker, defender):

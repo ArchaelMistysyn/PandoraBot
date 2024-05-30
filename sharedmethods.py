@@ -72,7 +72,7 @@ def get_gear_thumbnail(item):
     # Ensure image is currently available.
     if item_tag not in gli.availability_list:
         return None
-    return f"https://kyleportfolio.ca/botimages/itemicons/{item_tag}/Frame_{item_tag}_{item.item_tier}.png"
+    return f"https://kyleportfolio.ca/botimages/GearIcon/{item_tag}/Frame_{item_tag}_{item.item_tier}.png"
 
 
 def get_gear_tier_colours(base_tier):

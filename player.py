@@ -40,8 +40,8 @@ class PlayerProfile:
         self.luck_bonus = 0
 
         # Initialize player gear/stats info.
-        self.player_stats, self.gear_points = [0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0]
-        self.player_equipped = [0, 0, 0, 0, 0, 0, 0]
+        self.player_stats, self.gear_points = [0] * 7, [0] * 7
+        self.player_equipped = [0] * 7
         self.pact, self.insignia, self.equipped_tarot = "", "", ""
 
         # Initialize player health stats.
@@ -52,14 +52,11 @@ class PlayerProfile:
         self.player_damage, self.player_total_damage = 0.0, 0.0
 
         # Initialize elemental stats.
-        self.elemental_damage = [0, 0, 0, 0, 0, 0, 0, 0, 0]
-        self.elemental_multiplier = [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
-        self.elemental_penetration = [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
-        self.elemental_curse = [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
-        self.elemental_conversion = [1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0]
+        self.elemental_damage = [0] * 9
+        self.elemental_multiplier, self.elemental_penetration, self.elemental_curse = [0.0] * 9, [0.0] * 9, [0.0] * 9
+        self.elemental_conversion = [1.0] * 9
         self.all_elemental_multiplier, self.all_elemental_penetration, self.all_elemental_curse = 0.0, 0.0, 0.0
         self.singularity_damage, self.singularity_penetration, self.singularity_curse = 0.0, 0.0, 0.0
-        self.aura = 0.0
 
         # Initialize class specialization stats.
         self.unique_glyph_ability = [False, False, False, False, False, False, False]
@@ -73,11 +70,11 @@ class PlayerProfile:
 
         # Initialize misc stats.
         self.charge_generation = 1
-        self.banes = [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
-        self.skill_damage_bonus = [0, 0, 0, 0]
-        self.spec_rate, self.spec_conv = [0.0, 0.0, 0.0, 0.0, 0.0], [0, 0, 0, 0]
+        self.banes = [0.0] * 7
+        self.skill_damage_bonus = [0] * 4
+        self.spec_rate, self.spec_conv, self.unique_conversion = [0.0] * 5, [0] * 4, [0.0] * 4
+        self.resonance = [0] * 31
         self.bloom_multiplier = 10.0
-        self.unique_conversion = [0.0, 0.0, 0.0, 0.0]
         self.attack_speed = 0.0
         self.bonus_hits = 0.0
         self.defence_penetration = 0.0
@@ -91,7 +88,7 @@ class PlayerProfile:
         self.recovery = 3
         self.block, self.dodge = 0, 0
         self.damage_mitigation, self.mitigation_bonus = 0.0, 0.0
-        self.elemental_resistance = [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+        self.elemental_resistance = [0.0] * 9
         self.all_elemental_resistance = 0.1
 
     async def get_player_stats(self, method):
@@ -214,7 +211,6 @@ class PlayerProfile:
             stats += f"\nClass Mastery: {show_num(self.class_multiplier)}%"
             stats += f"\nFinal Damage: {show_num(self.final_damage)}%"
             stats += f"\nDefence Penetration: {show_num(self.defence_penetration)}%"
-            stats += f"\nOmni Aura: {show_num(self.aura)}%"
             embed_msg.add_field(name=title_msg, value=stats, inline=False)
             return embed_msg
         if method == 5:
@@ -406,7 +402,7 @@ class PlayerProfile:
         insignia.assign_insignia_values(self)
         if self.equipped_tarot != "":
             e_tarot = tarot.check_tarot(self.player_id, tarot.card_dict[self.equipped_tarot][0])
-            e_tarot.assign_tarot_values(self)
+            await e_tarot.assign_tarot_values(self)
 
         # Assign Path Multipliers
         total_points = skillpaths.assign_path_multipliers(self)
@@ -495,7 +491,7 @@ class PlayerProfile:
                 self.elemental_damage[idx] *= resist_multi * penetration_multi * self.elemental_conversion[idx]
                 if self.elemental_damage[idx] > self.elemental_damage[highest]:
                     highest = idx
-        damage = sum(self.elemental_damage) * (1 + boss_obj.aura) * combat.boss_true_mitigation(boss_obj.boss_level)
+        damage = sum(self.elemental_damage) * combat.boss_true_mitigation(boss_obj.boss_level)
         # Apply status
         stun_status = gli.element_status_list[highest]
         if stun_status is not None and random.randint(1, 100) <= 1:

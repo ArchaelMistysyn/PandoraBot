@@ -310,7 +310,7 @@ class DivineView(discord.ui.View):
             embed_msg = discord.Embed(colour=discord.Colour.blurple(), title="???", description=denial_msg)
             await interaction.response.edit_message(embed=embed_msg)
             return
-        entry_msg = ("Have you come to deseChest my holy gardens once more? Well, I suppose it no longer matters, "
+        entry_msg = ("Have you come to desecrate my holy gardens once more? Well, I suppose it no longer matters, "
                      "I know you will inevitably find what you desire even without my guidance. "
                      "If you intend to sever the divine lotus, then I suppose the rest are nothing but pretty flowers.")
         embed_msg = discord.Embed(colour=discord.Colour.blurple(), title=title, description=entry_msg)
@@ -388,7 +388,9 @@ class SkullsView(discord.ui.View):
         self.new_embed, self.new_view = None, None
         self.skull_items = [inventory.BasicItem(f"Skull{i}") for i in range(1, 5)]
         for index, button in enumerate(self.children[:-1]):
-            button.label = self.skull_items[index].item_name
+            skull_parts = self.skull_items[index].item_name.split()
+            button.label = f"{skull_parts[0]}"
+            button.emoji = self.skull_items[index].item_emoji
 
     async def handle_skull_interaction(self, interaction_obj, item):
         if interaction_obj.user.id != self.player_obj.discord_id:
@@ -691,7 +693,7 @@ class GearView(discord.ui.View):
             if tarot_item == "":
                 return no_item_msg
             tarot_card = tarot.check_tarot(self.target_user.player_id, tarot.card_dict[self.target_user.equipped_tarot][0])
-            return tarot_card.create_tarot_embed()
+            return await tarot_card.create_tarot_embed()
         # Handle insignia position.
         if self.current_position == 8:
             insignia_item = self.target_user.insignia

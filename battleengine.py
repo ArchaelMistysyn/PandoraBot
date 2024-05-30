@@ -160,7 +160,6 @@ def run_discord_bot():
         for idy, y in enumerate(player_list):
             temp_user.append(await player.get_player_by_id(int(y)))
             await temp_user[idy].get_player_multipliers()
-            active_boss.aura += temp_user[idy].aura
             curse_lists = [active_boss.curse_debuffs, temp_user[idy].elemental_curse]
             active_boss.curse_debuffs = [sum(z) for z in zip(*curse_lists)]
             if idy >= len(combat_tracker_list):
@@ -200,7 +199,6 @@ def run_discord_bot():
                         gauntlet=False, mode=-1):
         active_boss.reset_modifiers()
         active_boss.curse_debuffs = player_obj.elemental_curse
-        active_boss.aura = player_obj.aura
         embed, player_alive, boss_alive = await combat.run_solo_cycle(combat_tracker, active_boss, player_obj)
         await bosses.update_boss_cHP(channel_id, active_boss.player_id, active_boss.boss_cHP)
         if not player_alive:

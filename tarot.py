@@ -5,6 +5,7 @@ import pandas as pd
 
 # Data imports
 import globalitems as gli
+import market
 import sharedmethods as sm
 import itemdata
 
@@ -39,7 +40,7 @@ card_dict = {
     "XVII": ["Nova, The Star", 2],
     "XVIII": ["Luna, The Moon", 2],
     "XIX": ["Luma, The Sun", 2],
-    "XX": ["Aria, The Requiem", 1],
+    "XX": ["Aria, The Requiem", 2],
     "XXI": ["Ultima, The Creation", 3],
     "XXII": ["Mysmir, Changeling of the True Laws", 1],
     "XXIII": ["Avalon, Pathwalker of the True Laws", 2],
@@ -69,37 +70,32 @@ card_stat_dict = {
                           ["Critical Application", 1, "critical_app", None]],
                   "IV": [0, ["Critical Application", 1, "critical_app", None],
                          ["Critical Application", 1, "critical_app", None]],
+                  "V": [3, ["Bleed Penetration", 20, "bleed_penetration", 6],
+                        ["Bleed Application", 1, "bleed_app", None]],
                   # Lesser Path Cards
                   "XVII": [4, ["Celestial Damage", 25, "elemental_multiplier", 8],
                            ["Celestial Damage", 25, "elemental_multiplier", 8]],
                   "I": [5, ["Fire Damage", 25, "elemental_multiplier", 0],
                         ["Ice Damage", 25, "elemental_multiplier", 5]],
-                  "XVIII": [3, ["Shadow Penetration", 20, "elemental_penetration", 6],
-                            ["Light Penetration", 20, "elemental_penetration", 7]],
                   # Greater Path Cards
                   "XX": [0, ["Water Penetration", 20, "elemental_penetration", 0],
                          ["Lightning Penetration", 20, "elemental_penetration", 2]],
                   "XV": [1, ["Ice Penetration", 20, "elemental_penetration", 5],
                          ["Fire Penetration", 20, "elemental_penetration", 0]],
+                  "XVIII": [3, ["Shadow Penetration", 20, "elemental_penetration", 6],
+                            ["Light Penetration", 20, "elemental_penetration", 7]],
                   "XIX": [2, ["Earth Penetration", 20, "elemental_penetration", 3],
                           ["Wind Penetration", 20, "elemental_penetration", 4]],
-                  "V": [3, ["Shadow Penetration", 20, "elemental_penetration", 6],
-                        ["Light Penetration", 20, "elemental_penetration", 7]],
                   "II": [4, ["Celestial Penetration", 20, "elemental_penetration", 8],
                          ["Celestial Curse", 15, "elemental_curse", 8]],
-                  "XXI": [6, ["Temporal Application", 1, "temporal_app", None],
-                          ["Elemental Overflow", 1, "elemental_app", None]],
+                  "XXI": [6, ["Singularity Penetration", 20, "singularity_penetration", None],
+                          ["Singularity Curse", 15, "singularity_curse", None]],
                   # Bane Cards
-                  "XVI": [2, ["Fortress Bane", 25, "banes", 0],
-                          ["Fortress Bane", 25, "banes", 0]],
-                  "VII": [1, ["Dragon Bane", 25, "banes", 1],
-                          ["Dragon Bane", 25, "banes", 1]],
-                  "VIII": [3, ["Demon Bane", 25, "banes", 2],
-                           ["Demon Bane", 25, "banes", 2]],
-                  "0": [1, ["Paragon Bane", 25, "banes", 3],
-                        ["Paragon Bane", 25, "banes", 3]],
-                  "VI": [4, ["Human Bane", 25, "banes", 5],
-                         ["Human Bane", 25, "banes", 5]],
+                  "XVI": [2, ["Earth Curse", 15, "elemental_curse", 3], ["Fortress Bane", 25, "banes", 0]],
+                  "VII": [1, ["Celestial Curse", 15, "elemental_curse", 8], ["Dragon Bane", 25, "banes", 1]],
+                  "VIII": [3, ["Lightning Curse", 15, "elemental_curse", 2], ["Demon Bane", 25, "banes", 2]],
+                  "0": [1, ["Paragon Bane", 25, "banes", 3], ["Paragon Bane", 25, "banes", 3]],
+                  "VI": [4, ["Omni Damage", 25, "all_elemental_multiplier", None], ["Human Bane", 25, "banes", 5]],
                   # Solitude Cards
                   "IX": [6, ["Wind Penetration", 20, "elemental_penetration", 4],
                          ["Wind Curse", 15, "elemental_curse", 4]],
@@ -128,7 +124,7 @@ card_stat_dict = {
                            ["Bloom Damage", 500, "bloom_multiplier", None]],
                   "XXX": ["All", ["X% Chance to trigger Bloom on hit", 5, "spec_rate", 0],
                           ["Bloom Damage", 1000, "bloom_multiplier", None]],
-                  "XXV": ["All", ["Omni Aura", 25, "aura", None],
+                  "XXV": ["All", ["Omni Damage", 25, "all_elemental_multiplier", None],
                           ["Omni Curse", 25, "all_elemental_curse", None]]
                   }
 synthesis_success_rate = {0: 0, 1: 75, 2: 50, 3: 40, 4: 30, 5: 20, 6: 10, 7: 99, 8: 0}
@@ -140,35 +136,34 @@ path_point_values = [0, 1, 2, 3, 4, 5, 7, 10, 20]
 
 
 class SearchTierView(discord.ui.View):
-    def __init__(self, player_user):
+    def __init__(self, player_user, cathedral=False):
         super().__init__(timeout=None)
         self.player_user = player_user
+        self.cathedral = cathedral
 
         # Build the option list.
         select_options = [
             discord.SelectOption(
                 label=f"Tier {tier} Tarot Cards", description="", value=f"{tier}"
-            ) for tier in range(1, 9)]
+            ) for tier in range(1, 9) if tier != 8 or (tier == 8 and not self.cathedral)]
         select_menu = discord.ui.Select(placeholder="Select Card Tier!",
                                         min_values=1, max_values=1, options=select_options)
         select_menu.callback = self.tier_select_callback
         self.add_item(select_menu)
 
     async def tier_select_callback(self, interaction: discord.Interaction):
-        try:
-            if interaction.user.id == self.player_user.discord_id:
-                selected_option = interaction.data['values'][0]
-                new_view = SearchCardView(self.player_user, int(selected_option))
-                await interaction.response.edit_message(view=new_view)
-        except Exception as e:
-            print(e)
+        if interaction.user.id == self.player_user.discord_id:
+            selected_option = interaction.data['values'][0]
+            new_view = SearchCardView(self.player_user, int(selected_option), cathedral=self.cathedral)
+            await interaction.response.edit_message(view=new_view)
 
 
 class SearchCardView(discord.ui.View):
-    def __init__(self, player_user, selected_tier):
+    def __init__(self, player_user, selected_tier, cathedral):
         super().__init__(timeout=None)
         self.player_user = player_user
         self.selected_tier = selected_tier
+        self.cathedral = cathedral
         selected_data = [(card_number, card_name) for card_number, (card_name, tier) in card_dict.items() if
                          tier == selected_tier]
 
@@ -184,15 +179,23 @@ class SearchCardView(discord.ui.View):
         self.add_item(select_menu)
 
     async def card_select_callback(self, interaction: discord.Interaction):
-        try:
-            if interaction.user.id == self.player_user.discord_id:
-                selected_numeral = interaction.data['values'][0]
-                selected_card = get_index_by_key(selected_numeral)
-                new_embed = await tarot_menu_embed(self.player_user, selected_numeral)
-                new_view = TarotView(self.player_user, selected_card)
-                await interaction.response.edit_message(embed=new_embed, view=new_view)
-        except Exception as e:
-            print(e)
+        if interaction.user.id != self.player_user.discord_id:
+            return
+        selected_numeral = interaction.data['values'][0]
+        selected_card = get_index_by_key(selected_numeral)
+        new_embed = await tarot_menu_embed(self.player_user, selected_numeral)
+        new_view = TarotView(self.player_user, selected_card)
+        if self.cathedral:
+            essence_obj = inventory.BasicItem(f"Essence{selected_numeral}")
+            token_obj = inventory.BasicItem("Token7")
+            token_stock = await inventory.check_stock(self.player_user, token_obj.item_id)
+            msg = (f"I should have some traces of this particular essence. "
+                   f"\n{essence_obj.item_emoji} {essence_obj.item_name}")
+            cost_msg = f"{token_stock} / {essence_obj.item_tier} {token_obj.item_emoji} {token_obj.item_name}"
+            new_embed = discord.Embed(colour=discord.Colour.blurple(), title=market.Yubelle, description=msg)
+            new_embed.add_field(name="Offering", value=cost_msg, inline=False)
+            new_view = market.EssencePurchaseView(self.player_user, token_obj, essence_obj)
+        await interaction.response.edit_message(embed=new_embed, view=new_view)
 
 
 class CollectionView(discord.ui.View):
@@ -384,57 +387,69 @@ class TarotCard:
         else:
             self.card_image_link = f"https://kyleportfolio.ca/botimages/tarot/{self.card_numeral}.png"
 
-    def create_tarot_embed(self):
+    async def create_tarot_embed(self):
         gear_colour, _ = sm.get_gear_tier_colours(self.num_stars)
         display_stars = sm.display_stars(self.num_stars)
         card_title = f"{self.card_numeral} - {self.card_name}"
         card_title += f" [{card_variant[self.num_stars]}]"
         tarot_embed = discord.Embed(colour=gear_colour, title=card_title, description=display_stars)
         if self.num_stars != 0:
-            tarot_embed.add_field(name=f"", value=self.display_tarot_stats(), inline=False)
+            tarot_embed.add_field(name=f"", value=await self.display_tarot_stats(), inline=False)
         tarot_embed.set_image(url=self.card_image_link)
         return tarot_embed
 
-    def display_tarot_stats(self):
+    async def display_tarot_stats(self):
+        player_obj = await player.get_player_by_id(self.player_id)
+        resonance_bonus = await self.check_resonance(player_obj)
         card_data = card_stat_dict[self.card_numeral]
         pearl = gli.augment_icons[self.num_stars - 1]
-        path_string = f"Path of {gli.path_names[card_data[0]]}" if card_data[0] != "All" else "All Paths"
-        stat_string = f"{path_string} +{path_point_values[self.num_stars]}\n"
-        stat_string += (f"{pearl} Base Damage {self.damage:,} - {self.damage:,}\n"
-                        f"{pearl} HP Bonus +{self.hp:,}\n"
-                        f"{pearl} Final Damage {self.fd:,}%")
+        path_string = "**Active Resonance**\n" if resonance_bonus == 2 else ""
+        path_string += f"Path of {gli.path_names[card_data[0]]}" if card_data[0] != "All" else "All Paths"
+        stat_string = f"{path_string} +{path_point_values[self.num_stars] * resonance_bonus}\n"
+        stat_string += (f"{pearl} Base Damage {self.damage * resonance_bonus:,} - {self.damage * resonance_bonus:,}\n"
+                        f"{pearl} HP Bonus +{self.hp * resonance_bonus:,}\n"
+                        f"{pearl} Final Damage {self.fd * resonance_bonus:,}%")
         for ability_data in card_data[1:]:
+            ability_value = ability_data[1] * self.num_stars * resonance_bonus
             if "X" in ability_data[0]:
-                stat_string += f'\n{pearl} {ability_data[0].replace("X", str(ability_data[1] * self.num_stars))}'
+                stat_string += f'\n{pearl} {ability_data[0].replace("X", str(ability_value))}'
             else:
                 stat_string += f"\n{pearl} {ability_data[0]}"
-                bonus = ability_data[1] * self.num_stars
-                stat_string += f" +{bonus}" if "Application" in ability_data[0] else f" {bonus}%"
+                stat_string += f" +{bonus}" if "Application" in ability_data[0] else f" {ability_value}%"
         return stat_string
 
-    def assign_tarot_values(self, player_obj):
+    async def assign_tarot_values(self, player_obj):
+        resonance_bonus = await self.check_resonance(player_obj)
         card_data = card_stat_dict[self.card_numeral]
         # Apply Path bonuses
-        path_bonus = path_point_values[self.num_stars]
+        path_bonus = path_point_values[self.num_stars] * resonance_bonus
         if card_data[0] != "All":
             player_obj.gear_points[card_data[0]] += path_bonus
         else:
             player_obj.gear_points = [path + path_bonus for path in player_obj.gear_points]
         # Apply modifier bonuses
-        player_obj.player_damage += self.damage
-        player_obj.hp_bonus += self.hp
-        player_obj.final_damage += self.fd * 0.01
-        card_multiplier = self.num_stars * 0.01
+        player_obj.player_damage += self.damage * resonance_bonus
+        player_obj.hp_bonus += self.hp * resonance_bonus
+        player_obj.final_damage += self.fd * 0.01 * resonance_bonus
+        card_multiplier = self.num_stars * 0.01 * resonance_bonus
         for bonus_roll in card_data[1:]:
             attribute_value, attribute_name, attribute_position = bonus_roll[1], bonus_roll[2], bonus_roll[3]
             if "application" not in attribute_name:
                 attribute_value *= 0.01
-            attribute_value *= self.num_stars
+            attribute_value *= self.num_stars * resonance_bonus
             if attribute_position is None:
                 setattr(player_obj, attribute_name, getattr(player_obj, attribute_name) + attribute_value)
             else:
                 target_list = getattr(player_obj, attribute_name)
                 target_list[attribute_position] += attribute_value
+
+    async def check_resonance(self, player_obj):
+        if player_obj.player_equipped[4] == 0:
+            return 1
+        e_ring = await inventory.read_custom_item(player_obj.player_equipped[4])
+        index = e_ring.item_roll_values[0] if e_ring.item_base_type != "Crown of Skulls" else e_ring.item_roll_values[2]
+        numeral_key = get_key_by_index(int(index))
+        return 2 if numeral_key == self.card_numeral else 1
 
     def synthesize_tarot(self):
         new_qty = self.card_qty - 1
@@ -450,16 +465,13 @@ class TarotCard:
     def set_tarot_field(self, field_name, field_value):
         tarot_check = check_tarot(self.player_id, self.card_name)
         if tarot_check:
-            
             raw_query = (f"UPDATE TarotInventory SET {field_name} = :input_1 "
                          f"WHERE player_id = :player_check AND card_numeral = :numeral_check ")
             params = {'input_1': field_value, 'player_check': self.player_id, 'numeral_check': self.card_numeral}
             rq(raw_query, params=params)
-            
 
     def add_tarot_card(self):
         tarot_check = check_tarot(self.player_id, self.card_name)
-        
         if tarot_check:
             return
         raw_query = ("INSERT INTO TarotInventory (player_id, card_numeral, "
@@ -468,15 +480,12 @@ class TarotCard:
         params = {'input_1': self.player_id, 'input_2': self.card_numeral, 'input_3': self.card_name,
                   'input_4': self.card_qty, 'input_5': self.num_stars, 'input_6': self.card_enhancement}
         rq(raw_query, params=params)
-        
 
 
 def check_tarot(player_id, card_name):
     selected_tarot = None
-    
     raw_query = "SELECT * FROM TarotInventory WHERE player_id = :id_check AND card_name = :card_check"
     df = rq(raw_query, return_value=True, params={'id_check': player_id, 'card_check': card_name})
-    
     if len(df.index) != 0:
         player_id = int(df['player_id'].values[0])
         card_numeral, card_qty = str(df['card_numeral'].values[0]), int(df['card_qty'].values[0])
@@ -491,7 +500,7 @@ async def tarot_menu_embed(player_obj, card_numeral):
     if tarot_card is None:
         tarot_card = TarotCard(player_obj.player_id, card_numeral, 0, 0, 0)
     # Build the card embed message.
-    embed_msg = tarot_card.create_tarot_embed()
+    embed_msg = await tarot_card.create_tarot_embed()
     loot_item = inventory.BasicItem(f"Essence{card_numeral}")
     essence_stock = await inventory.check_stock(player_obj, loot_item.item_id)
     description = f"Card Quantity: {tarot_card.card_qty}\nEssence Quantity: {essence_stock}"
@@ -517,9 +526,8 @@ def get_resonance(card_num):
                       'The Duality', 'The Love', 'The Dragon', 'The Behemoth', 'The Memory',
                       'The Temporal', 'The Heavens', 'The Abyss', 'The Death', 'The Clarity',
                       'The Primordial', 'The Fortress', 'The Star', 'The Moon', 'The Sun',
-                      'The Requiem', 'The Creation', 'The Creation', 'The Changeling', 'The Pathwalker',
-                      'The Soulweaver', 'The Scribe', 'The Oracle', 'The Adjudicator', 'The Lotus',
-                      'The Wish']
+                      'The Requiem', 'The Creation', 'The Changeling', 'The Pathwalker', 'The Soulweaver',
+                      'The Wish', 'The Lifeblood', 'The Scribe', 'The Oracle', 'The Adjudicator', 'The Lotus']
     if card_num == -1:
         random.choice(resonance_list)
     return resonance_list[card_num]
@@ -527,10 +535,8 @@ def get_resonance(card_num):
 
 def collection_check(player_obj):
     collection_count = 0
-    
     raw_query = "SELECT * FROM TarotInventory WHERE player_id = :id_check"
     df = rq(raw_query, return_value=True, params={'id_check': player_obj.player_id})
-    
     if len(df.index) != 0:
         collection_count = df.shape[0]
     return collection_count

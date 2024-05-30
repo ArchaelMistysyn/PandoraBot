@@ -176,7 +176,7 @@ quests_data = {
          "\nWhat could possibly go wrong?",
          1, 9, None,
          "Forge a pact at the demonic altar in /map",
-         'Core1', 5, None],
+         'Core1', 6, None],
 
     22: [0, "Arms of Steel",
          "The 'black flames' that shroud demons are actually comprised of metallic dust or shrapnel. "
@@ -239,7 +239,7 @@ quests_data = {
          "\nIf you pursue this path you must take great effort not to lose yourself in the process.",
          60, None, None,
          "Breakthrough to level 60",
-         'Core2', 5, None],
+         'Core2', 6, None],
 
     30: [2, "Messenger Of Celestia",
          "We must continue to seal as many of the True Paragons as we can. "
@@ -310,7 +310,7 @@ quests_data = {
          "\nPerhaps in those depths we may find the power we seek.",
          1, 18, None,
          "Visit the Gateway of the True Abyss using /abyss",
-         'Core3', 5, None],
+         'Core3', 6, None],
 
     39: [1, "Cultivate Divinity (Part 5)",
          "Oblivia is right. We're approaching the limits of what I can forge for you. "
@@ -364,7 +364,7 @@ quests_data = {
          "\nInvert her wish for the end into a new beginning.",
          1, 20, None,
          "Defeat XXV - Eleuia, The Wish",
-         'EssenceXXV', 3, 'Echelon 9'],
+         'Gemstone11', 1, 'Echelon 9'],
 
     46: [1, "Through The Ether",
          "Our efforts were not in vain. You have crossed planes, realms, and dimensions. "
@@ -372,7 +372,7 @@ quests_data = {
          "\nThe arbiters won't overlook this, but this time, I know you'll be strong enough to face them.",
          95, None, None,
          "Breakthrough to level 95",
-         'Core4', 2, None],
+         'Core4', 3, None],
 
     47: [3, "A Flower Foregone",
          "This reality belongs to no one. We will usurp those who seek to control and manipulate it."
@@ -410,7 +410,7 @@ quests_data = {
          "\nAscend, and face the finale! (/palace)",
          1, 23, None,
          "Defeat XXX - Amaryllis, Incarnate of the Divine Lotus [Challenger]",
-         'Core4', 2, 'Echelon 10 (MAX)'],
+         'Core4', 3, 'Echelon 10 (MAX)'],
 
     51: [10, "Pandora's Box",
          "The one left standing ascends to take their place as the new high arbiter of the divine plane. "

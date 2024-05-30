@@ -417,10 +417,10 @@ class BasicItem:
             self.item_base_rate, self.item_cost = item['rate'], item['cost']
             self.item_emoji = item['emoji']
             self.item_image = ""
-            if self.item_id in gli.availability_list_nongear:
-                self.item_image = f"{gli.web_url}/nongear/{self.item_category}/Frame_{self.item_id}.png"
-            # if "Fish" in self.item_id:
-                # self.item_image = ""
+            if self.item_category in gli.availability_list_nongear:
+                self.item_image = f"{gli.web_url}/NonGear/{self.item_category}/Frame_{self.item_id}.png"
+            if "Fish" in self.item_id:
+                self.item_image = f"{gli.web_url}/Fish/{self.item_id}.png"
         else:
             print(f"Item with ID '{item_id}' not found in itemdata_dict.")
 

@@ -31,13 +31,11 @@ class CurrentBoss:
         self.boss_typeweak = [0, 0, 0, 0, 0, 0, 0]
         self.boss_eleweak = [0, 0, 0, 0, 0, 0, 0, 0, 0]
         self.curse_debuffs = [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
-        self.aura = 0.0
         self.boss_element, self.damage_cap = 0, -1
         self.stun_cycles, self.stun_status = 0, ""
 
     def reset_modifiers(self):
         self.curse_debuffs = [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
-        self.aura = 0.0
 
     def calculate_hp(self) -> bool:
         return self.boss_cHP > 0

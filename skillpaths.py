@@ -51,7 +51,7 @@ path_perks = {
                 ["Dark Resistance X%", 1], ["Light Resistance X%", 1], ["Ultimate Damage X%", 10]],
     "Stars": [["Celestial Damage X%", 7], ["Celestial Resistance X%", 1], ["Combo Damage X%", 3]],
     "Solitude": [["Singularity Damage X%", 10], ["Singularity Penetration X%", 5], ["Singularity Curse X%", 1]],
-    "Confluence": [["Omni Aura X%", 1], ["Omni Curse X%", 1]],
+    "Confluence": [["Omni Damage X%", 1], ["Omni Curse X%", 1]],
     "Waterfalls": [["Water Damage X%", 25], ["Water Resistance X%", 1]]
 }
 
@@ -229,7 +229,7 @@ def assign_path_multipliers(player_obj):
 
     # Confluence Path
     confluence_bonus = total_points[5]
-    player_obj.aura += 0.01 * confluence_bonus
+    player_obj.all_elemental_multiplier += 0.01 * confluence_bonus
     player_obj.all_elemental_curse += 0.01 * confluence_bonus
     player_obj.elemental_app += 2 * confluence_bonus // 20
     if confluence_bonus >= 80:

@@ -32,7 +32,7 @@ boss_loot_dict = {
               [1, "Gem2", 10], [2, "Gem2", 20], [3, "Gem2", 30], [4, "Jewel2", 40]],
     "Paragon": [[0, "Summon1", 5], [0, "Summon2", 1], [0, "Unrefined3", 25], [0, "Stone4", 45],
                 [1, "Gem3", 10], [2, "Gem3", 20], [3, "Gem3", 30],
-                [4, "Jewel3", 40], [5, "Jewel3", 50], [6, "Jewel3", 60]],
+                [4, "Jewel3", 40], [5, "Jewel3", 50], [6, "Jewel3", 60], [6, "Gemstone11", 5]],
     "Arbiter": [[0, "Summon3", 5], [0, "Stone6", 40], [7, "Lotus4", 5],
                 [1, "Token1", 5], [2, "Token2", 5], [3, "Token3", 5], [4, "Token4", 5],
                 [5, "Token5", 5], [6, "Token6", 5], [7, "Token7", 5],

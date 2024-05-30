@@ -131,7 +131,7 @@ def run_discord_bot():
         return False, player_obj, target_player
 
     async def validate_admin_inputs(ctx_obj, item_id, value, id_check="nocheck", value_check="nocheck"):
-        if (id_check == "nongear" and item_id == "") or (id_check == "gear" and item_id == 0):
+        if (id_check == "NonGear" and item_id == "") or (id_check == "gear" and item_id == 0):
             await ctx_obj.send(f"Item ID not recognized.")
             return True
         if (value_check == "numeric" and not value.isnumeric()) or (value_check == "alpha" and not value.isalnum()):
@@ -180,7 +180,7 @@ def run_discord_bot():
             return
         if method == "SetQTY":
             target_item = inventory.BasicItem(item_id)
-            if await validate_admin_inputs(ctx, target_item.item_id, value, id_check="nongear", value_check="numeric"):
+            if await validate_admin_inputs(ctx, target_item.item_id, value, id_check="NonGear", value_check="numeric"):
                 return
             stock = await inventory.check_stock(target_player, target_item.item_id)
             await inventory.update_stock(target_player, target_item.item_id, (int(value) - stock))
@@ -483,7 +483,7 @@ def run_discord_bot():
         await message.edit(embed=embed_msg)
 
     @set_command_category('game', 7)
-    @pandora_bot.hybrid_command(name='sanctuary', help="Speak with ??? in the lotus sanctuary.")
+    @pandora_bot.hybrid_command(name='sanctuary', help="Speak with Fleur in the lotus sanctuary of the divine plane.")
     @app_commands.guilds(discord.Object(id=guild_id))
     async def sanctuary(ctx):
         await ctx.defer()
@@ -496,14 +496,34 @@ def run_discord_bot():
             embed_msg = discord.Embed(colour=discord.Colour.blurple(), title="???", description=denial_msg)
             await ctx.send(embed=embed_msg)
             return
-        entry_msg = ("Have you come to deseChest my holy gardens once more? Well, I suppose it no longer matters, "
+        entry_msg = ("Have you come to desecrate my holy gardens once more? Well, I suppose it no longer matters, "
                      "I know you will inevitably find what you desire even without my guidance. "
                      "If you intend to sever the divine lotus, then I suppose the rest are nothing but pretty flowers.")
         embed_msg = discord.Embed(colour=discord.Colour.blurple(), title=title, description=entry_msg)
         embed_msg.set_image(url=gli.sanctuary_img)
         await ctx.send(embed=embed_msg, view=market.LotusSelectView(player_obj))
 
-    @set_command_category('fish', 8)
+    @set_command_category('game', 8)
+    @pandora_bot.hybrid_command(name='cathedral', help="Speak with Yubelle in the cathedral of the divine plane.")
+    @app_commands.guilds(discord.Object(id=guild_id))
+    async def cathedral(ctx):
+        await ctx.defer()
+        player_obj = await sm.check_registration(ctx)
+        if player_obj is None:
+            return
+        title = "Yubelle, Adjudicator the True Laws"
+        if player_obj.player_quest < 51:
+            denial_msg = "The cathedral radiates with divinity. Entry is impossible."
+            embed_msg = discord.Embed(colour=discord.Colour.blurple(), title="???", description=denial_msg)
+            await ctx.send(embed=embed_msg)
+            return
+        entry_msg = ("You would still follow Pandora's path in her place? Very well, I am no longer in a position "
+                     "to object. I suppose such things do indeed fall within my purview.")
+        embed_msg = discord.Embed(colour=discord.Colour.blurple(), title=title, description=entry_msg)
+        embed_msg.set_image(url=gli.cathedral_img)
+        await ctx.send(embed=embed_msg, view=tarot.SearchTierView(player_obj, cathedral=True))
+
+    @set_command_category('fish', 9)
     @pandora_bot.hybrid_command(name='fishing', help="Catch a fish! Consumes 250 stamina.")
     @app_commands.guilds(discord.Object(id=guild_id))
     async def catch_fish(ctx):
@@ -621,19 +641,15 @@ def run_discord_bot():
         if not caught_fish:
             await sent_msg.edit(embed=embed_msg)
             return
-        fish_output, biggest_fish = "", None
+        fish_output = ""
         for fish_id, fish_qty in caught_fish.items():
             fish = inventory.BasicItem(fish_id)
-            if biggest_fish is None:
-                biggest_fish = fish
             fish_output += f"🪝 Caught: {fish.item_emoji} {fish_qty}x {fish.item_name}\n"
-            biggest_fish = fish if fish.item_tier > biggest_fish.item_tier else biggest_fish
             if sm.check_rare_item(fish_id):
                 await sm.send_notification(ctx, player_obj, "Item", fish_id)
         batch_df = sm.list_to_batch(player_obj, [(fish_id, fish_qty) for fish_id, fish_qty in caught_fish.items()])
         await inventory.update_stock(None, None, None, batch=batch_df)
         embed_msg.add_field(name="Fish Caught", value=fish_output, inline=False)
-        embed_msg.set_thumbnail(url=biggest_fish.item_image)
         await sent_msg.edit(embed=embed_msg)
 
     # Location Commands

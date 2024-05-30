@@ -127,7 +127,7 @@ shared_unique_rolls = {
     "unique-0-s": ["Attack Speed", 5, 50, [["attack_speed", -1]]],
     "unique-1-s": ["Critical Strike Chance", 20, 100, [["critical_chance", -1]]],
     "unique-2-s": ["Critical Strike Multiplier", 25, 100, [["critical_multiplier", -1]]],
-    "unique-3-s": ["Omni Aura", 5, 50, [["aura", -1]]],
+    "unique-3-s": ["NEED TO CHANGE", 0, 50, [["all_elemental_multiplier", -1]]],
     "unique-4-s": ["Class Mastery Bonus", 3, 50, [["class_multiplier", -1]]],
     "unique-5-s": ["Human Bane", 20, 200, [["banes", 5]]]
 }

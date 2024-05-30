@@ -161,13 +161,13 @@ crystallized_data = [
 itemdata_dict = build_item_dict(itemdata_dict, crystallized_data, category="Crystal")
 
 # Skull List Data
-skull_data = [[None, 'Cursed Golden Skull', 1, 4, '💀',
+skull_data = [[None, 'Cursed Golden Skull', 1, 4, '<:Skull1:1243422766775009420>',
                'A skull of pure gold that whispers to you softly.', 100000],
-              [None, 'Haunted Golden Skull', 10, 5, '💀',
+              [None, 'Haunted Golden Skull', 10, 5, '<:Skull2:1243422767567736852>',
                "A golden skull that exudes darkness. Placing it against your ear is clearly a bad idea.", 1000000],
-              [None, 'Radiant Golden Skull', 100, 7, '💀',
+              [None, 'Radiant Golden Skull', 100, 7, '<:Skull3:1243422764971462686>',
                "A golden skull with a serene aura. Yet screaming can occasionally be heard from within.", 10000000],
-              [None, 'Prismatic Golden Skull', 1000, 8, '💀',
+              [None, 'Prismatic Golden Skull', 1000, 8, '<:Skull4:1243422765885952000>',
                "A golden skull that sparkles extraordinarily. Beware the lustful voices calling your name.", 100000000]]
 itemdata_dict = build_item_dict(itemdata_dict, skull_data, category="Skull")
 
@@ -288,7 +288,7 @@ gemstone_data = [
     [None, 'Spatial Lapis', 100, 6, '<a:elootitem:1144477550379274322>', gem_description, 0],
     [None, 'Soul Diamond', 100, 6, '<a:elootitem:1144477550379274322>', gem_description, 0],
     [None, 'Aurora Tear', 100, 7, '<a:elootitem:1144477550379274322>', gem_description, 2000000],
-    [None, 'Stone of the True Void', 100, 8, '<a:elootitem:1144477550379274322>', gem_description, 0]]
+    [None, 'Stone of the True Void', 100, 8, '<:Gemstone12:1243800661385023529>', gem_description, 0]]
 itemdata_dict = build_item_dict(itemdata_dict, gemstone_data, starting_index=0, category="Gemstone")
 
 # Fish Item Data
@@ -320,18 +320,18 @@ itemdata_dict = build_item_dict(itemdata_dict, heart_data, category="Heart")
 # Uncategorized Item Data
 uncategorized_data = [
     ['OriginZ', 'Origin Catalyst', 100, 5, '<a:eorigin:1145520263954440313>', 'Used for elemental infusion.', 500000],
-    ["Hammer", 'Astral Hammer', 80, 2, '<:ehammer:1145520259248427069>',
+    ["Hammer", 'Astral Hammer', 80, 2, '<:Hammer:1243800065013714955>',
      'Used to reroll specific item rolls. Works on tier 4 and lower gear items.', 50000],
-    ["Pearl", 'Stellar Pearl', 75, 4, '<:eprl:1148390531345432647>',
+    ["Pearl", 'Stellar Pearl', 75, 4, '<:Pearl:1243800038195331122>',
      'Augments an item roll. Increases the tier by 1.', 50000],
     ["Matrix", 'Socket Matrix', 5, 3, '<a:elootitem:1144477550379274322>',
      '5% Chance to add a socket to a gear item.', 5000],
     ['Chest', 'Chest', 100, 1, '<a:elootitem:1144477550379274322>', 'Contains a random item.', 50000],
     ['Shard', "Shard of Pandora's Hammer", 100, 7, '<a:elootitem:1144477550379274322>',
      'Contains a random item.', 50000],
-    ['Scrap', 'Equipment Scrap', 100, 1, '<a:elootitem:1144477550379274322>',
+    ['Scrap', 'Equipment Scrap', 100, 1, '<:Scrap:1243800038866686053>',
      "One of many countless pieces of Pandora's Legendary Hammer.", 0],
-    ['Compass', 'Illusory Compass', 100, 6, '<a:elootitem:1144477550379274322>',
+    ['Compass', 'Illusory Compass', 100, 6, '<:Compass:1243800035007922248>',
      'An enigmatic compass said to be capable of locating the Spire of Illusions.', 500000],
     ['DarkStar', 'Dark Star of Shattered Dreams', 100, 8, '<a:elootitem:1144477550379274322>',
      "Legend tells of a star engulfed in black flames that heralds great disasters. "
