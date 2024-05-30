@@ -58,15 +58,15 @@ ring_values_dict = {
     "Gambler's Masterpiece": [[("All-In!", "rng_bonus", 777, None),
                                ("[RESONANCE]", "resonance", 100, 0)], (0, None)],
     # Sovereign Rings
-    "Stygian Calamity": [[("X% chance for Non-Bloom hits to trigger Calamity", "spec_conv", 99, 2)],
-                         [("X% Hybrid Curse (Chaos)", "elemental_curse", 999, (0, 2, 3, 6))], (0, None)],
-    "Heavenly Calamity": [[("X% chance for Non-Bloom hits to trigger Calamity", "spec_conv", 99, 2)],
-                          [("X% Hybrid Curse (Holy)", "elemental_curse", 999, (1, 4, 5, 7))], (0, None)],
-    "Hadal's Raindrop": [[("Aqua Cascade", "aqua_mode", 100, None)], [("Aqua Conversion", None, 0, None)],
-                         [("Aqua Manifestation", None, 0, None)], (0, None)],
-    "Sacred Ring of Divergent Stars": [[("X% chance for Bloom hits to trigger Sacred Bloom", "spec_conv", 50, 0)],
-                                       [("X% chance for Non-Bloom hits to trigger Abyssal Bloom", "spec_conv", 50, 1)],
-                                       [("Omni Curse X%", "all_elemental_curse", 300, None)], (0, None)],
+    "Stygian Calamity": [[("X% chance for Non-Bloom hits to trigger Calamity", "spec_conv", 99, 2),
+                         ("X% Hybrid Curse (Chaos)", "elemental_curse", 999, (0, 2, 3, 6))], (0, None)],
+    "Heavenly Calamity": [[("X% chance for Non-Bloom hits to trigger Calamity", "spec_conv", 99, 2),
+                          ("X% Hybrid Curse (Holy)", "elemental_curse", 999, (1, 4, 5, 7))], (0, None)],
+    "Hadal's Raindrop": [[("Aqua Cascade", "aqua_mode", 100, None), ("Aqua Conversion", None, 0, None),
+                         ("Aqua Manifestation", None, 0, None)], (0, None)],
+    "Sacred Ring of Divergent Stars": [[("X% chance for Bloom hits to trigger Sacred Bloom", "spec_conv", 50, 0),
+                                       ("X% chance for Non-Bloom hits to trigger Abyssal Bloom", "spec_conv", 50, 1),
+                                       ("Omni Curse X%", "all_elemental_curse", 300, None)], (0, None)],
     "Crown of Skulls": [["Avaricious Ruin", "Banquet of Bones"], (0, None)]
 }
 

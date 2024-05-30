@@ -263,12 +263,12 @@ class CraftView(discord.ui.View):
             # Handle ring
             new_ring = inventory.CustomItem(self.player_user.player_id, "R", self.recipe_object.outcome_item)
             new_ring.item_base_type = self.recipe_object.recipe_name
-            new_ring.item_roll_values[0] = random.randint(0, 30) if new_ring.item_tier == 8 else rrd[new_ring.item_name]
+            new_ring.set_item_name()
+            new_ring.item_roll_values[0] = random.randint(0, 30) if new_ring.item_tier == 8 else rrd[new_ring.item_base_type]
             # Handle ring exceptions.
             if new_ring.item_base_type == "Crown of Skulls":
                 new_ring.item_roll_values[2] = new_ring.item_roll_values[0]
-                new_ring.item_roll_values[0] = 1000
-            new_ring.set_item_name()
+                new_ring.item_roll_values[0], new_ring.item_roll_values[1] = 1000, 0
             inventory.add_custom_item(new_ring)
             self.embed_msg = await new_ring.create_citem_embed()
             await interaction.response.edit_message(embed=self.embed_msg, view=self.new_view)

@@ -1214,7 +1214,7 @@ class RepeatView(discord.ui.View):
         method, card_numeral, num_stars = self.method_info.split(';')
         card_name = "Pandora, The Celestial"
         if self.player_user.equipped_tarot != "":
-            e_tarot = tarot.check_tarot(self.player_user.player_id, tarot.card_dict[self.player_user.equipped_tarot][0])
+            e_tarot = await tarot.check_tarot(self.player_user.player_id, tarot.card_dict[self.player_user.equipped_tarot][0])
             card_name, num_stars = e_tarot.card_name, e_tarot.num_stars
         new_method_info = f"{method};{card_numeral};{num_stars}"
         self.player_user.set_cooldown("manifest", new_method_info)

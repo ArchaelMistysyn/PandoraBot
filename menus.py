@@ -205,7 +205,7 @@ class CelestialView(discord.ui.View):
     async def planetarium_callback(self, interaction: discord.Interaction, button: discord.Button):
         if interaction.user.id != self.player_obj.discord_id:
             return
-        completion_count = tarot.collection_check(self.player_obj)
+        completion_count = await tarot.collection_check(self.player_obj)
         title, description = "Pandora, The Celestial", "Welcome to the planetarium. Sealed tarots are stored here."
         embed_msg = discord.Embed(colour=discord.Colour.magenta(), title=title, description=description)
         name, value = f"{self.player_obj.player_username}'s Tarot Collection", f"Completion Total: {completion_count} / 31"
@@ -692,7 +692,7 @@ class GearView(discord.ui.View):
             tarot_item = self.target_user.equipped_tarot
             if tarot_item == "":
                 return no_item_msg
-            tarot_card = tarot.check_tarot(self.target_user.player_id, tarot.card_dict[self.target_user.equipped_tarot][0])
+            tarot_card = await tarot.check_tarot(self.target_user.player_id, tarot.card_dict[self.target_user.equipped_tarot][0])
             return await tarot_card.create_tarot_embed()
         # Handle insignia position.
         if self.current_position == 8:
@@ -981,11 +981,11 @@ class PointsView(discord.ui.View):
             await self.player_obj.reload_player()
             selected_path = select.values[0]
             if selected_path == "Reset":
-                token_object = inventory.BasicItem("Token3")
+                token_obj = inventory.BasicItem("Token3")
                 token_cost = sum(self.player_obj.player_stats) // 10
                 token_stock = await inventory.check_stock(self.player_obj, "Token3")
                 response = (f"The farther you are, the harder it is to go back to the start.\nReset Cost:\n "
-                            f"{token_object.item_emoji} {token_object.item_name}: {token_stock} / {token_cost}")
+                            f"{token_obj.item_emoji} {token_obj.item_name}: {token_stock} / {token_cost}")
                 embed_msg = discord.Embed(colour=discord.Colour.dark_orange(),
                                           title="Avalon, Pathwalker of the True Laws",
                                           description=response)

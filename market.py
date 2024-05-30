@@ -170,44 +170,44 @@ class LotusSelectView(discord.ui.View):
         lotus_id = str(interaction.data['values'][0])
         if interaction.user.id != self.player_obj.discord_id:
             return
-        token_object = inventory.BasicItem("Token6")
-        token_stock = await inventory.check_stock(self.player_obj, token_object.item_id)
+        token_obj = inventory.BasicItem("Token6")
+        token_stock = await inventory.check_stock(self.player_obj, token_obj.item_id)
         lotus_object = inventory.BasicItem(lotus_id)
         # Handle regular lotus.
         if lotus_id != "Lotus10":
             purchase_msg = (f"Are you absolutely certain this is the one you're looking for? It's not every day I let "
                             f"somebody lay their hands on my forbidden flowers."
                             f"\n{lotus_object.item_emoji} {lotus_object.item_name}")
-            cost_msg = f"{token_stock} / 20 {token_object.item_emoji} {token_object.item_name}"
+            cost_msg = f"{token_stock} / 20 {token_obj.item_emoji} {token_obj.item_name}"
             embed_msg = discord.Embed(colour=discord.Colour.blurple(), title=Fleur_Name, description=purchase_msg)
             embed_msg.add_field(name="Offering", value=cost_msg, inline=False)
-            new_view = LotusPurchaseView(self.player_obj, token_object, lotus_object)
+            new_view = LotusPurchaseView(self.player_obj, token_obj, lotus_object)
             await interaction.response.edit_message(embed=embed_msg, view=new_view)
             return
         # Handle divine lotus.
         purchase_msg = (f"You've evaded my foresight again. Truly remarkable. ... I suppose it could be done. "
                         f"\nSurely you understand that the cost equivalent to your request will be ... unfathomable."
                         f"\n{lotus_object.item_emoji} {lotus_object.item_name}")
-        cost_msg = f"{token_stock} / 20 {token_object.item_name}"
+        cost_msg = f"{token_stock} / 20 {token_obj.item_name}"
         for item in lotus_list[:-1]:
             temp_object = inventory.BasicItem(item['item_id'])
             stock = await inventory.check_stock(self.player_obj, temp_object.item_id)
             cost_msg += f"\n{temp_object.item_emoji} {temp_object.item_name} {stock} / 1"
         embed_msg = discord.Embed(colour=discord.Colour.blurple(), title=Fleur_Name, description=purchase_msg)
         embed_msg.add_field(name="Offering", value=cost_msg, inline=False)
-        new_view = LotusPurchaseView(self.player_obj, token_object, lotus_object)
+        new_view = LotusPurchaseView(self.player_obj, token_obj, lotus_object)
         await interaction.response.edit_message(embed=embed_msg, view=new_view)
         return
 
 
 class LotusPurchaseView(discord.ui.View):
-    def __init__(self, player_obj, token_object, lotus_object):
+    def __init__(self, player_obj, token_obj, lotus_object):
         super().__init__(timeout=None)
         self.player_obj = player_obj
-        self.token_object, self.lotus_object = token_object, lotus_object
+        self.token_obj, self.lotus_object = token_obj, lotus_object
         self.embed_msg = None
         self.token_cost = 20
-        self.pluck.emoji = self.token_object.item_emoji
+        self.pluck.emoji = self.token_obj.item_emoji
         if self.lotus_object.item_id == "Lotus10":
             self.pluck.label = "Divine Seed"
             self.token_cost = 20
@@ -218,7 +218,7 @@ class LotusPurchaseView(discord.ui.View):
             return
         token_stock = await inventory.check_stock(self.player_obj, "Token6")
         temp_embed = discord.Embed(colour=discord.Colour.dark_orange(), title=Fleur_Name, description="")
-        new_view = LotusPurchaseView(self.player_obj, self.token_object, self.lotus_object)
+        new_view = LotusPurchaseView(self.player_obj, self.token_obj, self.lotus_object)
         if self.embed_msg is not None:
             await interaction.response.edit_message(embed=self.embed_msg, view=None)
             return
@@ -258,32 +258,34 @@ class LotusPurchaseView(discord.ui.View):
 
 
 class EssencePurchaseView(discord.ui.View):
-    def __init__(self, player_obj, token_object, essence_obj):
+    def __init__(self, player_obj, token_obj, essence_obj):
         super().__init__(timeout=None)
         self.player_obj = player_obj
-        self.token_object, self.essence_obj = token_object, essence_obj
+        self.token_obj, self.essence_obj = token_obj, essence_obj
         self.embed_msg = None
         self.token_cost = essence_obj.item_tier
-        self.exchange.emoji = self.token_object.item_emoji
+        self.exchange.emoji = self.token_obj.item_emoji
 
     @discord.ui.button(label="Exchange", style=discord.ButtonStyle.success)
     async def exchange(self, interaction: discord.Interaction, button: discord.Button):
         if interaction.user.id != self.player_obj.discord_id:
             return
-        token_stock = await inventory.check_stock(self.player_obj, "Token7")
-        temp_embed = discord.Embed(colour=discord.Colour.dark_orange(), title=Yubelle, description="")
-        new_view = EssencePurchaseView(self.player_obj, self.token_object, self.essence_obj)
+        token_stock = await inventory.check_stock(self.player_obj, self.token_obj.item_id)
+        new_view = EssencePurchaseView(self.player_obj, self.token_obj, self.essence_obj)
         if self.embed_msg is not None:
             await interaction.response.edit_message(embed=self.embed_msg, view=None)
             return
         if token_stock < self.token_cost:
-            temp_embed.description = "I'm not your servant *hero*, you must compensate me appropriately."
+            temp_embed = await cathedral_cost_msg(self.token_obj, token_stock, self.essence_obj)
+            cost_msg = "I'm not your servant *hero*, you must compensate me appropriately."
+            temp_embed.add_field(name="Insufficient Tokens", value=cost_msg, inline=False)
             await interaction.response.edit_message(embed=temp_embed, view=new_view)
             return
-        await inventory.update_stock(self.player_obj, "Token7", (self.token_cost * -1))
+        self.embed_msg = await cathedral_cost_msg(self.token_obj, token_stock - self.token_cost, self.essence_obj)
+        acquisition_msg = f"{self.essence_obj.item_emoji} 1x {self.essence_obj.item_name} acquired"
+        self.embed_msg.add_field(name="", value=acquisition_msg, inline=False)
+        await inventory.update_stock(self.player_obj, self.token_obj.item_id, (self.token_cost * -1))
         await inventory.update_stock(self.player_obj, self.essence_obj.item_id, 1)
-        temp_embed.description = f"{self.essence_obj.item_emoji} 1x {self.essence_obj.item_name} acquired"
-        self.embed_msg = temp_embed
         await interaction.response.edit_message(embed=self.embed_msg, view=new_view)
 
     @discord.ui.button(label="Reselect", style=discord.ButtonStyle.blurple, emoji="↩️")
@@ -294,3 +296,12 @@ class EssencePurchaseView(discord.ui.View):
         embed_msg = discord.Embed(colour=discord.Colour.dark_orange(), title=Yubelle, description=description)
         new_view = tarot.SearchTierView(self.player_obj, cathedral=True)
         await interaction.response.edit_message(embed=embed_msg, view=new_view)
+
+
+async def cathedral_cost_msg(token_obj, token_stock, essence_obj):
+    temp_embed = discord.Embed(colour=discord.Colour.blurple(), title=Yubelle, description="")
+    msg = f"I should have some traces of this particular essence.\n{essence_obj.item_emoji} {essence_obj.item_name}"
+    cost_msg = f"{token_stock} / {essence_obj.item_tier} {token_obj.item_emoji} {token_obj.item_name}"
+    temp_embed.description = msg
+    temp_embed.add_field(name="Offering", value=cost_msg, inline=False)
+    return temp_embed

@@ -368,7 +368,7 @@ def run_discord_bot():
             new_view = adventure.ManifestView(ctx, player_obj, embed_msg, e_tarot, colour, num_hours)
             await ctx.send(embed=embed_msg, view=new_view)
             return
-        e_tarot = tarot.check_tarot(player_obj.player_id, tarot.card_dict[player_obj.equipped_tarot][0])
+        e_tarot = await tarot.check_tarot(player_obj.player_id, tarot.card_dict[player_obj.equipped_tarot][0])
         embed_msg.set_image(url=e_tarot.card_image_link)
         embed_msg.title = f"Echo of {e_tarot.card_name}"
         embed_msg.description = "What do you need me to help you with?"
@@ -791,7 +791,7 @@ def run_discord_bot():
         if start_location not in range(0, 31):
             await ctx.send("Please enter a valid start location from 0-30 or leave the start location blank.")
             return
-        completion_count = tarot.collection_check(player_obj)
+        completion_count = await tarot.collection_check(player_obj)
         title, description = "Pandora, The Celestial", "Welcome to the planetarium. Sealed tarots are stored here."
         embed_msg = discord.Embed(colour=discord.Colour.magenta(), title=title, description=description)
         name, value = f"{player_obj.player_username}'s Tarot Collection", f"Completion Total: {completion_count} / 31"
@@ -886,9 +886,9 @@ def run_discord_bot():
         secondary_gem_info = itemrolls.display_rolls(gem_2)
         embed_msg.add_field(name=f"Secondary Jewel - ID: {secondary_gem_id}", value=secondary_gem_info, inline=False)
         # Build the cost display.
-        stock, token_object = await inventory.check_stock(player_obj, "Token4"), inventory.BasicItem("Token4")
+        stock, token_obj = await inventory.check_stock(player_obj, "Token4"), inventory.BasicItem("Token4")
         cost = gem_1.item_tier + gem_2.item_tier - 8
-        cost_msg = f"{token_object.item_emoji} {token_object.item_name}: {stock}/{cost}"
+        cost_msg = f"{token_obj.item_emoji} {token_obj.item_name}: {stock}/{cost}"
         embed_msg.add_field(name="Token Cost", value=cost_msg, inline=False)
         # Display the view.
         new_view = forge.MeldView(player_obj, gem_1, gem_2, cost)

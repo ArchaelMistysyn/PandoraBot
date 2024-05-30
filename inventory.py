@@ -344,7 +344,7 @@ class CustomItem:
         if self.item_type != "R":
             rolls_msg = itemrolls.display_rolls(self, roll_change_list)
         else:
-            rolls_msg = ring.display_ring_values(self)
+            rolls_msg = await ring.display_ring_values(self)
         display_stars = sm.display_stars(self.item_tier)
         if "D" not in self.item_type:
             elements = [gli.global_element_list[idz] for idz, z in enumerate(self.item_elements) if z == 1]
@@ -385,7 +385,7 @@ class CustomItem:
             return
         # Handle unique base damage exceptions
         if self.item_base_type == "Crown of Skulls":
-            flat_bonus, mult_bonus = (self.item_roll_values[0] * 100000), (1 + (self.item_roll_values[1] * 0.1))
+            flat_bonus, mult_bonus = (int(self.item_roll_values[0]) * 100000), (1 + (int(self.item_roll_values[1]) * 0.1))
         # calculate item's damage per hit
         enh_multiplier = 1 + self.item_enhancement * (0.01 * self.item_tier)
         quality_damage = 1 + (self.item_quality_tier * 0.2)

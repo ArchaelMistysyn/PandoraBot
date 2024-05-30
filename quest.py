@@ -58,7 +58,7 @@ class Quest:
         elif player_obj.player_quest == 31:
             return (False, 0) if player_obj.equipped_tarot == "" else (True, 1)
         elif player_obj.player_quest == 51:
-            collection_count = tarot.collection_check(player_obj)
+            collection_count = await tarot.collection_check(player_obj)
             return (True, collection_count) if collection_count == 31 else (False, collection_count)
 
         # Token, Feature Token, or Boss Token Quests.

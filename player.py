@@ -382,7 +382,7 @@ class PlayerProfile:
                 e_item.append(await inventory.read_custom_item(x))
                 e_item[idx].update_damage()
                 self.player_damage += random.randint(e_item[idx].item_damage_min, e_item[idx].item_damage_max)
-                itemrolls.assign_roll_values(self, e_item[idx])
+                await itemrolls.assign_roll_values(self, e_item[idx])
                 itemrolls.assign_item_element_stats(self, e_item[idx])
                 if e_item[idx].item_num_sockets == 1:
                     await itemrolls.assign_gem_values(self, e_item[idx])
@@ -401,7 +401,7 @@ class PlayerProfile:
         # Non-Gear Item Multipliers
         insignia.assign_insignia_values(self)
         if self.equipped_tarot != "":
-            e_tarot = tarot.check_tarot(self.player_id, tarot.card_dict[self.equipped_tarot][0])
+            e_tarot = await tarot.check_tarot(self.player_id, tarot.card_dict[self.equipped_tarot][0])
             await e_tarot.assign_tarot_values(self)
 
         # Assign Path Multipliers

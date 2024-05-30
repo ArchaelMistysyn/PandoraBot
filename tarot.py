@@ -182,19 +182,17 @@ class SearchCardView(discord.ui.View):
         if interaction.user.id != self.player_user.discord_id:
             return
         selected_numeral = interaction.data['values'][0]
-        selected_card = get_index_by_key(selected_numeral)
-        new_embed = await tarot_menu_embed(self.player_user, selected_numeral)
-        new_view = TarotView(self.player_user, selected_card)
+        selected_card = await get_index_by_key(selected_numeral)
+        tarot = await check_tarot(self.player_user.player_id, card_dict[selected_numeral][0])
+        new_view = TarotView(self.player_user, selected_card, tarot)
         if self.cathedral:
             essence_obj = inventory.BasicItem(f"Essence{selected_numeral}")
             token_obj = inventory.BasicItem("Token7")
             token_stock = await inventory.check_stock(self.player_user, token_obj.item_id)
-            msg = (f"I should have some traces of this particular essence. "
-                   f"\n{essence_obj.item_emoji} {essence_obj.item_name}")
-            cost_msg = f"{token_stock} / {essence_obj.item_tier} {token_obj.item_emoji} {token_obj.item_name}"
-            new_embed = discord.Embed(colour=discord.Colour.blurple(), title=market.Yubelle, description=msg)
-            new_embed.add_field(name="Offering", value=cost_msg, inline=False)
+            new_embed = await market.cathedral_cost_msg(token_obj, token_stock, essence_obj)
             new_view = market.EssencePurchaseView(self.player_user, token_obj, essence_obj)
+        else:
+            new_embed = await tarot_menu_embed(self.player_user, selected_numeral)
         await interaction.response.edit_message(embed=new_embed, view=new_view)
 
 
@@ -206,14 +204,12 @@ class CollectionView(discord.ui.View):
 
     @discord.ui.button(label="View Collection", style=discord.ButtonStyle.blurple)
     async def view_collection(self, interaction: discord.Interaction, button: discord.Button):
-        try:
-            if interaction.user.id == self.player_user.discord_id:
-                selected_numeral = get_key_by_index(self.current_position)
-                new_msg = await tarot_menu_embed(self.player_user, selected_numeral)
-                new_view = TarotView(self.player_user, self.current_position)
-                await interaction.response.edit_message(embed=new_msg, view=new_view)
-        except Exception as e:
-            print(e)
+        if interaction.user.id == self.player_user.discord_id:
+            selected_numeral = get_key_by_index(self.current_position)
+            new_msg = await tarot_menu_embed(self.player_user, selected_numeral)
+            tarot = await check_tarot(self.player_user.player_id, card_dict[selected_numeral][0])
+            new_view = TarotView(self.player_user, self.current_position, tarot)
+            await interaction.response.edit_message(embed=new_msg, view=new_view)
 
     @discord.ui.button(label="Search Card", style=discord.ButtonStyle.blurple, emoji="🔎")
     async def search_collection(self, interaction: discord.Interaction, button: discord.Button):
@@ -226,7 +222,7 @@ class CollectionView(discord.ui.View):
 
 
 class TarotView(discord.ui.View):
-    def __init__(self, player_user, starting_location):
+    def __init__(self, player_user, starting_location, tarot):
         super().__init__(timeout=None)
         self.player_user = player_user
         self.current_position = starting_location
@@ -234,7 +230,6 @@ class TarotView(discord.ui.View):
         self.selected_numeral = get_key_by_index(self.current_position)
 
         # Adjust non-positional buttons.
-        tarot = check_tarot(self.player_user.player_id, card_dict[self.selected_numeral][0])
         self.bind_success_rate = 90 - (card_dict[self.selected_numeral][1] * 5)
         self.attempt_bind.label = f"Bind ({self.bind_success_rate}%)"
         if tarot is not None:
@@ -266,51 +261,44 @@ class TarotView(discord.ui.View):
         max_position = 30
         self.current_position = (self.current_position + direction) % (max_position + 1)
         self.selected_numeral = get_key_by_index(self.current_position)
-        tarot = check_tarot(self.player_user, self.selected_numeral)
+        tarot = await check_tarot(self.player_user, card_dict[self.selected_numeral][0])
         # Display the tarot card.
         embed_msg = await tarot_menu_embed(self.player_user, self.selected_numeral)
         return embed_msg
 
     @discord.ui.button(label="Previous", style=discord.ButtonStyle.blurple, row=1)
     async def previous_card(self, interaction: discord.Interaction, button: discord.Button):
-        try:
-            if interaction.user.id == self.player_user.discord_id:
-                new_msg = await self.cycle_tarot(-1)
-                reload_view = TarotView(self.player_user, self.current_position)
-                await interaction.response.edit_message(embed=new_msg, view=reload_view)
-        except Exception as e:
-            print(e)
+        if interaction.user.id == self.player_user.discord_id:
+            new_msg = await self.cycle_tarot(-1)
+            tarot = await check_tarot(self.player_user, card_dict[self.selected_numeral][0])
+            reload_view = TarotView(self.player_user, self.current_position, tarot)
+            await interaction.response.edit_message(embed=new_msg, view=reload_view)
 
     @discord.ui.button(label="Search", style=discord.ButtonStyle.blurple, emoji="🔎", row=1)
     async def search_card(self, interaction: discord.Interaction, button: discord.Button):
-        try:
-            if interaction.user.id == self.player_user.discord_id:
-                completion_count = collection_check(self.player_user)
-                embed_msg = discord.Embed(colour=discord.Colour.magenta(),
-                                          title=f"{self.player_user.player_username}'s Tarot Collection",
-                                          description=f"Completion Total: {completion_count} / 31")
-                embed_msg.set_image(url=gli.planetarium_img)
-                new_view = SearchTierView(self.player_user)
-                await interaction.response.edit_message(embed=embed_msg, view=new_view)
-        except Exception as e:
-            print(e)
+        if interaction.user.id == self.player_user.discord_id:
+            completion_count = await collection_check(self.player_user)
+            embed_msg = discord.Embed(colour=discord.Colour.magenta(),
+                                      title=f"{self.player_user.player_username}'s Tarot Collection",
+                                      description=f"Completion Total: {completion_count} / 31")
+            embed_msg.set_image(url=gli.planetarium_img)
+            new_view = SearchTierView(self.player_user)
+            await interaction.response.edit_message(embed=embed_msg, view=new_view)
 
     @discord.ui.button(label="Next", style=discord.ButtonStyle.blurple, row=1)
     async def next_card(self, interaction: discord.Interaction, button: discord.Button):
-        try:
-            if interaction.user.id == self.player_user.discord_id:
-                new_msg = await self.cycle_tarot(1)
-                reload_view = TarotView(self.player_user, self.current_position)
-                await interaction.response.edit_message(embed=new_msg, view=reload_view)
-        except Exception as e:
-            print(e)
+        if interaction.user.id == self.player_user.discord_id:
+            new_msg = await self.cycle_tarot(1)
+            tarot = await check_tarot(self.player_user.player_id, card_dict[self.selected_numeral][0])
+            reload_view = TarotView(self.player_user, self.current_position, tarot)
+            await interaction.response.edit_message(embed=new_msg, view=reload_view)
 
     @discord.ui.button(label="Equip", style=discord.ButtonStyle.success, row=2)
     async def equip(self, interaction: discord.Interaction, button: discord.Button):
         try:
             if interaction.user.id == self.player_user.discord_id:
                 embed_msg = await tarot_menu_embed(self.player_user, self.selected_numeral)
-                active_card = check_tarot(self.player_user.player_id, card_dict[self.selected_numeral][0])
+                active_card = await check_tarot(self.player_user.player_id, card_dict[self.selected_numeral][0])
                 if active_card:
                     await self.player_user.reload_player()
                     self.player_user.equipped_tarot = f"{active_card.card_numeral}"
@@ -318,7 +306,8 @@ class TarotView(discord.ui.View):
                     embed_msg.add_field(name="Equipped!", value="", inline=False)
                 else:
                     embed_msg.add_field(name="Cannot Equip!", value="You do not own this card.", inline=False)
-                reload_view = TarotView(self.player_user, self.current_position)
+                tarot = await check_tarot(self.player_user.player_id, card_dict[self.selected_numeral][0])
+                reload_view = TarotView(self.player_user, self.current_position, tarot)
                 await interaction.response.edit_message(embed=embed_msg, view=reload_view)
         except Exception as e:
             print(e)
@@ -329,7 +318,8 @@ class TarotView(discord.ui.View):
             if interaction.user.id == self.player_user.discord_id:
                 if not self.embed:
                     self.embed = await binding_ritual(self.player_user, self.selected_numeral, self.bind_success_rate)
-                reload_view = TarotView(self.player_user, self.current_position)
+                tarot = await check_tarot(self.player_user.player_id, card_dict[self.selected_numeral][0])
+                reload_view = TarotView(self.player_user, self.current_position, tarot)
                 await interaction.response.edit_message(embed=self.embed, view=reload_view)
         except Exception as e:
             print(e)
@@ -338,8 +328,8 @@ class TarotView(discord.ui.View):
     async def synthesize(self, interaction: discord.Interaction, button: discord.Button):
         if interaction.user.id != self.player_user.discord_id:
             return
-        active_card = check_tarot(self.player_user.player_id, card_dict[self.selected_numeral][0])
-        reload_view = TarotView(self.player_user, self.current_position)
+        active_card = await check_tarot(self.player_user.player_id, card_dict[self.selected_numeral][0])
+        reload_view = TarotView(self.player_user, self.current_position, active_card)
         title = "Cannot Synthesize!"
         if not self.embed:
             self.embed = await tarot_menu_embed(self.player_user, self.selected_numeral)
@@ -366,10 +356,11 @@ class TarotView(discord.ui.View):
                     return
                 await inventory.update_stock(player_obj, lotus_item.item_id, -1)
             # Attempt Synthesis
-            title, description = active_card.synthesize_tarot()
+            title, description = await active_card.synthesize_tarot()
             self.embed = await self.cycle_tarot(0)
             self.embed.add_field(name=title, value=description, inline=False)
-            reload_view = TarotView(self.player_user, self.current_position)
+            tarot = await check_tarot(self.player_user.player_id, card_dict[self.selected_numeral][0])
+            reload_view = TarotView(self.player_user, self.current_position, tarot)
         await interaction.response.edit_message(embed=self.embed, view=reload_view)
 
 
@@ -415,7 +406,7 @@ class TarotCard:
                 stat_string += f'\n{pearl} {ability_data[0].replace("X", str(ability_value))}'
             else:
                 stat_string += f"\n{pearl} {ability_data[0]}"
-                stat_string += f" +{bonus}" if "Application" in ability_data[0] else f" {ability_value}%"
+                stat_string += f" +{ability_value}" if "Application" in ability_data[0] else f" {ability_value}%"
         return stat_string
 
     async def assign_tarot_values(self, player_obj):
@@ -451,27 +442,27 @@ class TarotCard:
         numeral_key = get_key_by_index(int(index))
         return 2 if numeral_key == self.card_numeral else 1
 
-    def synthesize_tarot(self):
+    async def synthesize_tarot(self):
         new_qty = self.card_qty - 1
-        self.set_tarot_field("card_qty", new_qty)
+        await self.set_tarot_field("card_qty", new_qty)
         random_num = random.randint(1, 100)
         success_rate = synthesis_success_rate[self.num_stars]
         if random_num > success_rate:
             return "Synthesis Failed!", "One of the cards dissipates."
         self.num_stars += 1
-        self.set_tarot_field("num_stars", self.num_stars)
+        await self.set_tarot_field("num_stars", self.num_stars)
         return "Synthesis Success!", "The two cards combine into one."
 
-    def set_tarot_field(self, field_name, field_value):
-        tarot_check = check_tarot(self.player_id, self.card_name)
+    async def set_tarot_field(self, field_name, field_value):
+        tarot_check = await check_tarot(self.player_id, self.card_name)
         if tarot_check:
             raw_query = (f"UPDATE TarotInventory SET {field_name} = :input_1 "
                          f"WHERE player_id = :player_check AND card_numeral = :numeral_check ")
             params = {'input_1': field_value, 'player_check': self.player_id, 'numeral_check': self.card_numeral}
             rq(raw_query, params=params)
 
-    def add_tarot_card(self):
-        tarot_check = check_tarot(self.player_id, self.card_name)
+    async def add_tarot_card(self):
+        tarot_check = await check_tarot(self.player_id, self.card_name)
         if tarot_check:
             return
         raw_query = ("INSERT INTO TarotInventory (player_id, card_numeral, "
@@ -482,11 +473,11 @@ class TarotCard:
         rq(raw_query, params=params)
 
 
-def check_tarot(player_id, card_name):
+async def check_tarot(player_id, card_name):
     selected_tarot = None
     raw_query = "SELECT * FROM TarotInventory WHERE player_id = :id_check AND card_name = :card_check"
     df = rq(raw_query, return_value=True, params={'id_check': player_id, 'card_check': card_name})
-    if len(df.index) != 0:
+    if df is not None and len(df.index) != 0:
         player_id = int(df['player_id'].values[0])
         card_numeral, card_qty = str(df['card_numeral'].values[0]), int(df['card_qty'].values[0])
         num_stars, card_enhancement = int(df['num_stars'].values[0]), int(df['card_enhancement'].values[0])
@@ -496,7 +487,7 @@ def check_tarot(player_id, card_name):
 
 async def tarot_menu_embed(player_obj, card_numeral):
     # Pull the card information
-    tarot_card = check_tarot(player_obj.player_id, card_dict[card_numeral][0])
+    tarot_card = await check_tarot(player_obj.player_id, card_dict[card_numeral][0])
     if tarot_card is None:
         tarot_card = TarotCard(player_obj.player_id, card_numeral, 0, 0, 0)
     # Build the card embed message.
@@ -509,7 +500,7 @@ async def tarot_menu_embed(player_obj, card_numeral):
     return embed_msg
 
 
-def get_index_by_key(numeral):
+async def get_index_by_key(numeral):
     keys_list = list(card_dict.keys())
     key_index = keys_list.index(numeral)
     return key_index
@@ -521,7 +512,7 @@ def get_key_by_index(key_index):
     return key_value
 
 
-def get_resonance(card_num):
+async def get_resonance(card_num):
     resonance_list = ['The Reflection', 'The Magic', 'The Celestial', 'The Void', 'The Infinite',
                       'The Duality', 'The Love', 'The Dragon', 'The Behemoth', 'The Memory',
                       'The Temporal', 'The Heavens', 'The Abyss', 'The Death', 'The Clarity',
@@ -533,7 +524,7 @@ def get_resonance(card_num):
     return resonance_list[card_num]
 
 
-def collection_check(player_obj):
+async def collection_check(player_obj):
     collection_count = 0
     raw_query = "SELECT * FROM TarotInventory WHERE player_id = :id_check"
     df = rq(raw_query, return_value=True, params={'id_check': player_obj.player_id})
@@ -562,13 +553,13 @@ async def binding_ritual(player_obj, essence_type, success_rate):
         return embed_msg
     # Update the tarot inventory.
     card_name = card_dict[essence_type][0]
-    tarot_check = check_tarot(player_obj.player_id, card_name)
+    tarot_check = await check_tarot(player_obj.player_id, card_name)
     if tarot_check:
         new_qty = tarot_check.card_qty + 1
-        tarot_check.set_tarot_field("card_qty", new_qty)
+        await tarot_check.set_tarot_field("card_qty", new_qty)
     else:
         new_tarot = TarotCard(player_obj.player_id, essence_type, 1, 1, 0)
-        new_tarot.add_tarot_card()
+        await new_tarot.add_tarot_card()
     embed_msg = await tarot_menu_embed(player_obj, essence_type)
     description_msg = "The sealed tarot card has been added to your collection."
     embed_msg.add_field(name="Ritual Successful!", value=description_msg)

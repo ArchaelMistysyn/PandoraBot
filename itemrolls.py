@@ -286,8 +286,8 @@ class SkillSelectView(discord.ui.View):
                         if current_roll.roll_code == "unique-0-y":
                             npc_comment = "Oooh, you have impeccable taste.\n"
                     summary_msg = npc_comment + skill_display
-                    token_object = inventory.BasicItem("Token4")
-                    summary_msg += f"\n{token_object.item_emoji} {token_object.item_name} Offering: {cost_list[self.total_rolls - 1]:,}"
+                    token_obj = inventory.BasicItem("Token4")
+                    summary_msg += f"\n{token_obj.item_emoji} {token_obj.item_name} Offering: {cost_list[self.total_rolls - 1]:,}"
                     self.embed = discord.Embed(title=NPC_name, description=summary_msg, color=discord.Color.green())
                     self.new_view = SkillPurchaseView(self.player_obj, self.selected_item,
                                                       self.total_rolls, self.selected_skills)
@@ -537,12 +537,12 @@ async def assign_gem_values(player_obj, e_item):
         player_obj.player_damage += (e_gem.item_damage_min + e_gem.item_damage_max) / 2
         points_value = int(inventory.gem_point_dict[e_gem.item_tier])
         player_obj.gear_points[int(e_gem.item_bonus_stat)] += points_value
-        assign_roll_values(player_obj, e_gem)
+        await assign_roll_values(player_obj, e_gem)
 
 
-def assign_roll_values(player_obj, equipped_item):
+async def assign_roll_values(player_obj, equipped_item):
     if equipped_item.item_type == "R":
-        ring.assign_ring_values(player_obj, equipped_item)
+        await ring.assign_ring_values(player_obj, equipped_item)
         return
     for roll_id in equipped_item.item_roll_values:
         current_roll = ItemRoll(roll_id)
