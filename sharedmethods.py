@@ -3,6 +3,7 @@ import discord
 from discord.utils import get
 import pandas as pd
 import random
+import re
 
 # Data imports
 import globalitems as gli
@@ -36,7 +37,7 @@ async def check_click(interaction, player_obj, new_embed, new_view):
 
 
 def check_rare_item(item_id):
-    id_list = ["DarkStar", "LightStar", "Gemstone12", "Skull4", "Nadir"]
+    id_list = ["DarkStar", "LightStar", "Gemstone11", "Skull4", "Nadir"]
     return True if "Lotus" in item_id or item_id in id_list else False
 
 
@@ -150,4 +151,24 @@ def list_to_batch(player_obj, item_list):
     for item_id, item_qty in item_list:
         batch_df.loc[len(batch_df)] = [player_obj.player_id, item_id, item_qty]
     return batch_df
+
+
+def hide_text(msg, method="Enigma"):
+    if method == "Clear":
+        return
+
+    def enigma_transform(match):
+        char = match.group(0)
+        if method == "Enigma":
+            return '?' if char.isalnum() else char
+        elif method == "Shrouded":
+            return '?' if char.isalnum() and random.random() > 0.5 else char
+        return char
+
+    parts = re.split(r'(<[^>]+>)', msg)
+    adjusted = [part if part.startswith('<') and part.endswith('>') else re.sub(r'\w', enigma_transform, part)
+                for part in parts]
+
+    return ''.join(adjusted)
+
 

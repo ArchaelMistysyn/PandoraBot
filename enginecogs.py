@@ -64,7 +64,7 @@ class RaidCog(commands.Cog):
 
 
 class SoloCog(commands.Cog):
-    def __init__(self, bot, player_obj, active_boss, channel_id, sent_message, ctx_object, gauntlet=False, mode=-1):
+    def __init__(self, bot, player_obj, active_boss, channel_id, sent_message, ctx_object, gauntlet=False, mode=0):
         self.bot = bot
         self.player_obj, self.active_boss = player_obj, active_boss
         self.channel_id, self.sent_message = channel_id, sent_message
@@ -374,7 +374,7 @@ class MapCog(commands.Cog):
         if self.player_obj.player_equipped[4] != 0:
             e_ring = await inventory.read_custom_item(self.player_obj.player_equipped[4])
             if e_ring.item_base_type == "Crown of Skulls":
-                e_ring.item_roll_values[1] += adjust
+                e_ring.roll_values[1] = str(int(e_ring.roll_values[1]) + adjust)
                 await e_ring.update_stored_item()
 
         # EXP Handling

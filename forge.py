@@ -122,6 +122,7 @@ class PurifyView(discord.ui.View):
             return
         if not self.embed:
             self.embed = discord.Embed(colour=discord.Colour.blurple(), title="Echo of Oblivia", description=gli.abyss_msg)
+            self.embed.set_image(url=gli.abyss_img)
             self.new_view = SelectView(self.player_obj, "purify")
         await interaction.response.edit_message(embed=self.embed, view=self.new_view)
 
@@ -158,6 +159,7 @@ class ForgeView(discord.ui.View):
         selected_option = interaction.data['values'][0]
         if interaction.user.id != self.player_obj.discord_id:
             return
+        await self.selected_item.reload_item()
         # Handle Element Selections
         if selected_option in ["Enhance", "Implant Element"]:
             new_view = SubSelectView(self.player_obj, self.selected_item, selected_option)
@@ -183,9 +185,9 @@ class SubSelectView(discord.ui.View):
         self.player_obj, self.selected_item, self.method = player_obj, selected_item, method
 
         def build_select_option(i, option, craft_method, item_tier, cost_qty):
-            if craft_method in ["Fae", "Origin"]:
+            if craft_method in ["Fae", "Gemstone"]:
                 label, emoji = f"{option} Enhancement", gli.global_element_list[i]
-                item_1 = inventory.BasicItem(f"{craft_method}{i}")
+                item_1 = inventory.BasicItem(f"{craft_method}{i if craft_method == 'Fae' else i + 1}")
                 description = f"{cost_qty}x {item_1.item_name} "
                 if item_tier >= 5:
                     item_2 = inventory.BasicItem(f"Fragment{item_tier - 4}")
@@ -213,7 +215,7 @@ class SubSelectView(discord.ui.View):
             selected_list = gli.element_names
             quantity = 10
         elif self.method == "Implant Element":
-            self.menu_type = "Origin"
+            self.menu_type = "Gemstone"
             selected_list = gli.element_names
         else:
             self.menu_type = "Fusion"
@@ -256,7 +258,7 @@ class UpgradeView(discord.ui.View):
                                ["any fusion", "defensive fusion", "all fusion", "damage fusion",
                                 "penetration fusion", "curse fusion", "unique fusion"], ["Hammer"]],
             "Implant Element": [1, [f"Implant ({gli.element_names[self.element]})"], ["Implant"],
-                                [f"Origin{self.element}"]]
+                                [f"Gemstone{self.element}"]]
         }
         self.menu_details = method_dict[self.menu_type]
         self.method = self.menu_details[2]
@@ -562,7 +564,7 @@ async def implant_item(player_obj, selected_item, cost_list, success_rate, succe
     if sum(selected_item.item_elements) == 9:
         return 2
     # Determine the element to add.
-    check_element = cost_list[0].item_id[6]
+    check_element = int(cost_list[0].item_id[8]) - 1
     selected_element = int(check_element)
     # Confirm if the element already exists.
     if selected_item.item_elements[selected_element] == 1:
@@ -792,23 +794,22 @@ class MeldView(discord.ui.View):
 async def meld_gems(player_obj, gem_1, gem_2):
     if not inventory.if_custom_exists(gem_1.item_id) or not inventory.if_custom_exists(gem_2.item_id):
         return "Melding interrupted : Jewels no longer recognized before processing.", None
-    if gem_1.item_tier >= 7:
-        return "Melding interrupted : Jewel eligibility changed before processing.", None
+    # Might be a good idea to run a reload on the gems here and compare tier to input tier
     inventory.delete_item(player_obj, gem_2)
-    if gem_1.item_tier == gem_2.item_tier and gem_1.item_tier < 8 and gem_2.item_tier < 8:
+    if gem_1.item_tier <= gem_2.item_tier and gem_1.item_tier < 8:
         gem_1.item_tier += 1
         gem_1.base_damage_min, gem_1.base_damage_max = inventory.get_tier_damage(gem_1.item_tier, gem_1.item_type)
         gem_1.set_gem_name()
     roll_change_list = []
-    for roll_index, secondary_roll in enumerate(gem_2.item_roll_values):
+    for roll_index, secondary_roll in enumerate(gem_2.roll_values):
         random_roll = random.randint(0, 1)
         if random_roll == 1:
             new_roll_value = secondary_roll[1:]
             roll_change_list.append(True)
         else:
-            new_roll_value = gem_1.item_roll_values[roll_index][1:]
+            new_roll_value = gem_1.roll_values[roll_index][1:]
             roll_change_list.append(False)
-        gem_1.item_roll_values[roll_index] = f"{gem_1.item_tier}{new_roll_value}"
+        gem_1.roll_values[roll_index] = f"{gem_1.item_tier}{new_roll_value}"
     await gem_1.update_stored_item()
     return "", roll_change_list
 

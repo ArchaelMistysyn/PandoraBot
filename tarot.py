@@ -70,13 +70,13 @@ card_stat_dict = {
                           ["Critical Application", 1, "critical_app", None]],
                   "IV": [0, ["Critical Application", 1, "critical_app", None],
                          ["Critical Application", 1, "critical_app", None]],
-                  "V": [3, ["Bleed Penetration", 20, "bleed_penetration", 6],
-                        ["Bleed Application", 1, "bleed_app", None]],
                   # Lesser Path Cards
                   "XVII": [4, ["Celestial Damage", 25, "elemental_multiplier", 8],
                            ["Celestial Damage", 25, "elemental_multiplier", 8]],
                   "I": [5, ["Fire Damage", 25, "elemental_multiplier", 0],
                         ["Ice Damage", 25, "elemental_multiplier", 5]],
+                  "V": [2, ["Bleed Penetration", 20, "bleed_penetration", 6],
+                        ["Bleed Application", 1, "bleed_app", None]],
                   # Greater Path Cards
                   "XX": [0, ["Water Penetration", 20, "elemental_penetration", 0],
                          ["Lightning Penetration", 20, "elemental_penetration", 2]],
@@ -295,22 +295,19 @@ class TarotView(discord.ui.View):
 
     @discord.ui.button(label="Equip", style=discord.ButtonStyle.success, row=2)
     async def equip(self, interaction: discord.Interaction, button: discord.Button):
-        try:
-            if interaction.user.id == self.player_user.discord_id:
-                embed_msg = await tarot_menu_embed(self.player_user, self.selected_numeral)
-                active_card = await check_tarot(self.player_user.player_id, card_dict[self.selected_numeral][0])
-                if active_card:
-                    await self.player_user.reload_player()
-                    self.player_user.equipped_tarot = f"{active_card.card_numeral}"
-                    self.player_user.set_player_field("player_tarot", self.player_user.equipped_tarot)
-                    embed_msg.add_field(name="Equipped!", value="", inline=False)
-                else:
-                    embed_msg.add_field(name="Cannot Equip!", value="You do not own this card.", inline=False)
-                tarot = await check_tarot(self.player_user.player_id, card_dict[self.selected_numeral][0])
-                reload_view = TarotView(self.player_user, self.current_position, tarot)
-                await interaction.response.edit_message(embed=embed_msg, view=reload_view)
-        except Exception as e:
-            print(e)
+        if interaction.user.id == self.player_user.discord_id:
+            embed_msg = await tarot_menu_embed(self.player_user, self.selected_numeral)
+            active_card = await check_tarot(self.player_user.player_id, card_dict[self.selected_numeral][0])
+            if active_card:
+                await self.player_user.reload_player()
+                self.player_user.equipped_tarot = f"{active_card.card_numeral}"
+                self.player_user.set_player_field("player_tarot", self.player_user.equipped_tarot)
+                embed_msg.add_field(name="Equipped!", value="", inline=False)
+            else:
+                embed_msg.add_field(name="Cannot Equip!", value="You do not own this card.", inline=False)
+            tarot = await check_tarot(self.player_user.player_id, card_dict[self.selected_numeral][0])
+            reload_view = TarotView(self.player_user, self.current_position, tarot)
+            await interaction.response.edit_message(embed=embed_msg, view=reload_view)
 
     @discord.ui.button(label="Bind", style=discord.ButtonStyle.success, row=2)
     async def attempt_bind(self, interaction: discord.Interaction, button: discord.Button):
@@ -425,7 +422,7 @@ class TarotCard:
         card_multiplier = self.num_stars * 0.01 * resonance_bonus
         for bonus_roll in card_data[1:]:
             attribute_value, attribute_name, attribute_position = bonus_roll[1], bonus_roll[2], bonus_roll[3]
-            if "application" not in attribute_name:
+            if "_app" not in attribute_name:
                 attribute_value *= 0.01
             attribute_value *= self.num_stars * resonance_bonus
             if attribute_position is None:
@@ -438,7 +435,7 @@ class TarotCard:
         if player_obj.player_equipped[4] == 0:
             return 1
         e_ring = await inventory.read_custom_item(player_obj.player_equipped[4])
-        index = e_ring.item_roll_values[0] if e_ring.item_base_type != "Crown of Skulls" else e_ring.item_roll_values[2]
+        index = e_ring.roll_values[0] if e_ring.item_base_type != "Crown of Skulls" else e_ring.roll_values[2]
         numeral_key = get_key_by_index(int(index))
         return 2 if numeral_key == self.card_numeral else 1
 

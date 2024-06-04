@@ -14,7 +14,7 @@ import sharedmethods as sm
 import player
 
 web_url = f"https://kyleportfolio.ca"
-image_path = 'C:\\Users\\GamerTech\\PycharmProjects\\PandoraBot\\'
+image_path = 'C:\\Users\\GamerTech\\PycharmProjects\\PandoraBot\\botimages\\'
 
 echelon_0 = "https://kyleportfolio.ca/botimages/roleicon/echelon1.png"
 echelon_1 = "https://kyleportfolio.ca/botimages/roleicon/echelon1.png"

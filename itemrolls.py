@@ -333,7 +333,7 @@ class SkillPurchaseView(discord.ui.View):
             if (roll_index + 1) > temp_num_rolls:
                 temp_tier = 1
             else:
-                current_roll = ItemRoll(reload_item.item_roll_values[roll_index])
+                current_roll = ItemRoll(reload_item.roll_values[roll_index])
                 temp_tier = current_roll.roll_tier
             roll_tier_list.append(temp_tier)
             # Build a list of the new roll ids.
@@ -341,14 +341,14 @@ class SkillPurchaseView(discord.ui.View):
                 new_roll = f"1-{self.selected_skills[roll_index]}"
                 new_roll_list.append(new_roll)
         # Add all the new selected and unselected rolls. Compare the Proxy after updating the value.
-        reload_item.item_roll_values = new_roll_list
+        reload_item.roll_values = new_roll_list
         reload_item.item_num_rolls = self.total_rolls
         if temp_num_rolls > self.total_rolls:
             add_roll(reload_item, (temp_num_rolls - self.total_rolls))
         # Set all the roll tiers
         for idx in range(reload_item.item_num_rolls):
-            unassigned_roll = reload_item.item_roll_values[idx][1:]
-            reload_item.item_roll_values[idx] = f"{roll_tier_list[idx]}{unassigned_roll}"
+            unassigned_roll = reload_item.roll_values[idx][1:]
+            reload_item.roll_values[idx] = f"{roll_tier_list[idx]}{unassigned_roll}"
         # Save the item.
         await reload_item.update_stored_item()
         self.embed = await reload_item.create_citem_embed()
@@ -396,7 +396,7 @@ class ItemRoll:
 
 def display_rolls(selected_item, roll_change_list=None):
     item_rolls_msg = ""
-    for roll_idx, roll_information in enumerate(selected_item.item_roll_values):
+    for roll_idx, roll_information in enumerate(selected_item.roll_values):
         current_roll = ItemRoll(roll_information)
         item_rolls_msg += f'\n{current_roll.roll_icon} {current_roll.roll_msg}'
         if roll_change_list is not None:
@@ -417,7 +417,7 @@ def add_roll(selected_item, num_rolls):
             roll_list = item_roll_master_dict[new_roll_type][0]
             total_weighting = item_roll_master_dict[new_roll_type][1]
         # Build the list of available options from the exclusions.
-        for roll_id in selected_item.item_roll_values:
+        for roll_id in selected_item.roll_values:
             current_roll = ItemRoll(roll_id)
             if current_roll.roll_category == new_roll_type:
                 exclusions_list.append(current_roll.roll_code)
@@ -430,18 +430,18 @@ def add_roll(selected_item, num_rolls):
         if "D" in selected_item.item_type:
             roll_tier = selected_item.item_tier
         new_roll_id = f"{roll_tier}-{selected_roll_code}"
-        selected_item.item_roll_values.append(new_roll_id)
+        selected_item.roll_values.append(new_roll_id)
         selected_item.item_num_rolls += 1
 
 
 def reroll_roll(selected_item, method_type):
     # Handle full reroll
     if method_type == "all":
-        tier_list = [ItemRoll(roll_id).roll_tier for roll_id in selected_item.item_roll_values]
-        selected_item.item_num_rolls, selected_item.item_roll_values = 0, []
+        tier_list = [ItemRoll(roll_id).roll_tier for roll_id in selected_item.roll_values]
+        selected_item.item_num_rolls, selected_item.roll_values = 0, []
         add_roll(selected_item, 6)
-        selected_item.item_roll_values = [f"{tier_list[i]}-{ItemRoll(roll_id).roll_code}"
-                                          for i, roll_id in enumerate(selected_item.item_roll_values)]
+        selected_item.roll_values = [f"{tier_list[i]}-{ItemRoll(roll_id).roll_code}"
+                                          for i, roll_id in enumerate(selected_item.roll_values)]
         return
 
     # Handle single reroll
@@ -457,7 +457,7 @@ def reroll_roll(selected_item, method_type):
         roll_list, total_weighting = item_roll_master_dict[method][0], item_roll_master_dict[method][1]
 
     # Build the list of exclusions and identify the roll to be replaced
-    for roll_index, roll_id in enumerate(selected_item.item_roll_values):
+    for roll_index, roll_id in enumerate(selected_item.roll_values):
         current_roll = ItemRoll(roll_id)
         if current_roll.roll_category != method:
             continue
@@ -470,7 +470,7 @@ def reroll_roll(selected_item, method_type):
     # Select and set a new roll.
     selected_roll_code = select_roll(total_weighting, exclusions_weighting, available_rolls, roll_list)
     new_roll_id = f"{original_roll_tier}-{selected_roll_code}"
-    selected_item.item_roll_values[original_roll_location] = new_roll_id
+    selected_item.roll_values[original_roll_location] = new_roll_id
 
 
 def handle_unique(selected_item):
@@ -506,14 +506,14 @@ def check_augment(selected_item):
     if selected_item.item_num_rolls == 0:
         return aug_total
     # Calculate the number of augments
-    for roll in selected_item.item_roll_values:
+    for roll in selected_item.roll_values:
         current_roll = ItemRoll(roll)
         aug_total += current_roll.roll_tier
     return aug_total
 
 
 def add_augment(selected_item):
-    rolls_copy = selected_item.item_roll_values.copy()
+    rolls_copy = selected_item.roll_values.copy()
     random.shuffle(rolls_copy)
     selected_id = ""
     selected_tier = 0
@@ -526,15 +526,18 @@ def add_augment(selected_item):
             break
     # If a roll was selected then upgrade the tier.
     if selected_id != "":
-        roll_location = selected_item.item_roll_values.index(selected_id)
-        selected_item.item_roll_values[roll_location] = str(selected_tier + 1) + selected_id[1:]
+        roll_location = selected_item.roll_values.index(selected_id)
+        selected_item.roll_values[roll_location] = str(selected_tier + 1) + selected_id[1:]
 
 
-async def assign_gem_values(player_obj, e_item):
+async def assign_gem_values(player_obj, e_item, sovereign_buff):
     gem_id = e_item.item_inlaid_gem_id
     if gem_id != 0:
         e_gem = await inventory.read_custom_item(gem_id)
-        player_obj.player_damage += (e_gem.item_damage_min + e_gem.item_damage_max) / 2
+        if sovereign_buff:
+            player_obj.player_damage += e_gem.item_damage_max
+        else:
+            player_obj.player_damage += random.randint(e_gem.item_damage_min, e_gem.item_damage_max)
         points_value = int(inventory.gem_point_dict[e_gem.item_tier])
         player_obj.gear_points[int(e_gem.item_bonus_stat)] += points_value
         await assign_roll_values(player_obj, e_gem)
@@ -544,7 +547,7 @@ async def assign_roll_values(player_obj, equipped_item):
     if equipped_item.item_type == "R":
         await ring.assign_ring_values(player_obj, equipped_item)
         return
-    for roll_id in equipped_item.item_roll_values:
+    for roll_id in equipped_item.roll_values:
         current_roll = ItemRoll(roll_id)
         # Locate the roll information.
         if current_roll.roll_category == "unique":

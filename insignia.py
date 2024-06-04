@@ -43,7 +43,7 @@ class Insignia:
 
         # Stats
         hp_bonus, luck_bonus = insignia_hp_list[self.stars], self.stars
-        final_damage, attack_speed = self.player_obj.player_level * mutation_adjust, self.stars * 10
+        final_damage, attack_speed = self.player_obj.player_level * mutation_adjust, self.stars * 5
         self.bonus_stats = {'hp_bonus': hp_bonus, 'luck_bonus': luck_bonus,
                             'final_damage': final_damage * 0.01, 'attack_speed': attack_speed * 0.01}
 
@@ -87,44 +87,45 @@ class InsigniaView(discord.ui.View):
         self.add_item(self.select_menu)
 
     async def insignia_select_callback(self, interaction: discord.Interaction):
-        try:
-            if interaction.user.id == self.player_user.discord_id:
-                num_elements = int(interaction.data['values'][0])
-                token_item = inventory.BasicItem("Token2")
-                embed_msg = discord.Embed(colour=discord.Colour.dark_orange(), title=NPC_name, description="")
-                # Proceed to element selection for regular options.
-                if num_elements < 9:
-                    current_selection, num_selected = [0, 0, 0, 0, 0, 0, 0, 0, 0], 0
-                    new_view = ElementSelectView(self.player_user, num_elements, num_selected, current_selection)
-                    embed_msg.description = "What is the desired affinity?"
-                    await interaction.response.edit_message(embed=embed_msg, view=new_view)
-                    return
-                # Proceed directly to confirmation for omni option.
-                if num_elements == 9:
-                    current_selection, num_selected = [1, 1, 1, 1, 1, 1, 1, 1, 1], 9
-                    new_view = ConfirmSelectionView(self.player_user, num_selected, current_selection)
-                    embed_msg.description = ("I applaud your greed. In addition to the payment I hope your "
-                                             "sanity can afford the cost.")
-                    cost_msg = await payment_embed(self.player_user, num_elements, current_selection)
-                    embed_msg.add_field(name="Cost:", value=cost_msg, inline=False)
-                    await interaction.response.edit_message(embed=embed_msg, view=new_view)
-                    return
-                # Confirm eligibility for mutation
-                if self.player_user.insignia == "" or self.player_user.player_echelon < 10:
-                    embed_msg.description = "Sweetie you'll break if I do that. Maybe get a bit stronger first?"
-                    await interaction.response.edit_message(embed=embed_msg)
-                    return
-                # Determine mutation cost and proceed to confirmation.
-                mutation_tier = int(self.player_user.insignia[-1])
-                embed_msg.description = "Do you not value the sanctity of your soul?"
-                if mutation_tier in mutation_upgrade_data:
-                    token_cost = mutation_upgrade_data[mutation_tier][0]
-                    cost_msg = await payment_embed(self.player_user, token_cost, mutation_cost_list[mutation_tier])
-                    embed_msg.add_field(name="Cost:", value=cost_msg, inline=False)
-                new_view = ConfirmSelectionView(self.player_user, 0, "mutation")
-                await interaction.response.edit_message(embed=embed_msg, view=new_view)
-        except Exception as e:
-            print(e)
+        if interaction.user.id != self.player_user.discord_id:
+            return
+        num_elements = int(interaction.data['values'][0])
+        token_item = inventory.BasicItem("Token2")
+        embed_msg = discord.Embed(colour=discord.Colour.dark_orange(), title=NPC_name, description="")
+        # Proceed to element selection for regular options.
+        if num_elements < 9:
+            current_selection, num_selected = [0, 0, 0, 0, 0, 0, 0, 0, 0], 0
+            new_view = ElementSelectView(self.player_user, num_elements, num_selected, current_selection)
+            embed_msg.description = "What is the desired affinity?"
+            await interaction.response.edit_message(embed=embed_msg, view=new_view)
+            return
+        # Proceed directly to confirmation for omni option.
+        if num_elements == 9:
+            current_selection, num_selected = [1, 1, 1, 1, 1, 1, 1, 1, 1], 9
+            new_view = ConfirmSelectionView(self.player_user, num_selected, current_selection)
+            embed_msg.description = ("I applaud your greed. In addition to the payment I hope your "
+                                     "sanity can afford the cost.")
+            cost_msg = await payment_embed(self.player_user, num_elements, current_selection)
+            embed_msg.add_field(name="Cost:", value=cost_msg, inline=False)
+            await interaction.response.edit_message(embed=embed_msg, view=new_view)
+            return
+        # Confirm eligibility for mutation
+        if self.player_user.insignia == "" or self.player_user.player_echelon < 10:
+            embed_msg.description = "Sweetie you'll break if I do that. Maybe get a bit stronger first?"
+            await interaction.response.edit_message(embed=embed_msg)
+            return
+        # Determine mutation cost and proceed to confirmation.
+        mutation_tier = int(self.player_user.insignia[-1])
+        embed_msg.description = "Do you not value the sanctity of your soul?"
+        if mutation_tier in mutation_upgrade_data:
+            token_cost = mutation_upgrade_data[mutation_tier][0]
+            cost_msg = await payment_embed(self.player_user, token_cost, mutation_cost_list[mutation_tier])
+            embed_msg.add_field(name="Cost:", value=cost_msg, inline=False)
+            new_view = ConfirmSelectionView(self.player_user, 0, "mutation")
+            await interaction.response.edit_message(embed=embed_msg, view=new_view)
+            return
+        embed_msg.description = "You seek the impossible, there's nothing else I can engrave on your soul."
+        await interaction.response.edit_message(embed=embed_msg, view=self)
 
 
 class ElementSelectView(discord.ui.View):
@@ -274,7 +275,7 @@ class ConfirmSelectionView(discord.ui.View):
         insignia_obj = Insignia(self.player_user)
         self.embed_msg = insignia_obj.insignia_output
         self.embed_msg.add_field(name=NPC_name, value="Mutation Successful!", inline=False)
-        if mutation_tier != 3:
+        if new_tier != 3:
             cost_msg = await payment_embed(self.player_user, token_cost, mutation_cost_list[mutation_tier + 1])
             self.embed_msg.add_field(name="Cost:", value=cost_msg, inline=False)
         reload_view = ConfirmSelectionView(self.player_user, 0, "mutation")

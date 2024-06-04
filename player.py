@@ -376,16 +376,21 @@ class PlayerProfile:
             setattr(self, class_multipliers[self.player_class][0], class_multipliers[self.player_class][1])
 
         # Item Multipliers
-        e_item = []
+        e_item, sovereign_buff = [], False
         for idx, x in enumerate(self.player_equipped):
             if x != 0:
                 e_item.append(await inventory.read_custom_item(x))
                 e_item[idx].update_damage()
-                self.player_damage += random.randint(e_item[idx].item_damage_min, e_item[idx].item_damage_max)
+                # Sovereign's Omniscience
+                if e_item[0] is not None and e_item[0].item_base_type in gli.sovereign_item_list:
+                    self.player_damage += e_item[idx].item_damage_max
+                    sovereign_buff = True
+                else:
+                    self.player_damage += random.randint(e_item[idx].item_damage_min, e_item[idx].item_damage_max)
                 await itemrolls.assign_roll_values(self, e_item[idx])
                 itemrolls.assign_item_element_stats(self, e_item[idx])
                 if e_item[idx].item_num_sockets == 1:
-                    await itemrolls.assign_gem_values(self, e_item[idx])
+                    await itemrolls.assign_gem_values(self, e_item[idx], sovereign_buff)
             else:
                 e_item.append(None)
         if e_item[0]:
@@ -463,6 +468,9 @@ class PlayerProfile:
         self.final_damage += self.unique_conversion[3]
         if self.aqua_mode != 0 and self.equipped_tarot != "" and e_tarot.card_numeral == "XIV":
             self.critical_multiplier += self.elemental_multiplier[1]
+
+        # Attack speed hard cap
+        self.attack_speed = min(10, self.attack_speed)
 
     def get_player_initial_damage(self):
         return self.player_damage * (1 + self.class_multiplier) * (1 + self.final_damage)

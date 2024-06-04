@@ -471,7 +471,7 @@ class AdventureRoomView(discord.ui.View):
             if self.expedition.player_obj.player_equipped[4] != 0:
                 e_ring = await inventory.read_custom_item(self.expedition.player_obj.player_equipped[4])
                 if e_ring.item_base_type == "Crown of Skulls":
-                    e_ring.item_roll_values[1] += adjuster
+                    e_ring.roll_values[1] = str(int(e_ring.roll_values[1]) + adjuster)
                     await e_ring.update_stored_item()
             await interaction_obj.response.edit_message(embed=self.embed, view=self.new_view)
             if lvl_change != 0:
@@ -709,8 +709,8 @@ class AdventureRoomView(discord.ui.View):
         await interaction_obj.response.edit_message(embed=self.embed, view=self.new_view)
 
     async def sanctuary_callback(self, interaction_obj, variant, active_room):
-        item_type = "Origin" if "Origin" in self.reward_items[variant].item_id else "Cores"
-        qty = 1 if item_type == "Origin" else random.randint((1 + self.expedition.luck), (10 + self.expedition.luck))
+        item_type = "Gemstone" if "Gemstone" in self.reward_items[variant].item_id else "Cores"
+        qty = 1 if item_type == "Gemstone" else random.randint((1 + self.expedition.luck), (10 + self.expedition.luck))
         await inventory.update_stock(self.expedition.player_obj, self.reward_items[variant].item_id, qty)
         title = f"{item_type} Collected!"
         output_msg = f"{self.reward_items[variant].item_emoji} {qty}x {self.reward_items[variant].item_name}"
@@ -909,10 +909,14 @@ class AdventureRoomView(discord.ui.View):
 
     def assign_sanctuary_data(self):
         random_numbers = random.sample(range(9), 3)
-        item_type = "Fae" if random.randint(1, 1000) > self.expedition.luck else "Origin"
-        self.reward_items = [inventory.BasicItem(f"{item_type}{random_numbers[0]}"),
-                             inventory.BasicItem(f"{item_type}{random_numbers[1]}"),
-                             inventory.BasicItem(f"{item_type}{random_numbers[2]}")]
+        if random.randint(1, 1000) > self.expedition.luck:
+            self.reward_items = [inventory.BasicItem(f"Fae{random_numbers[0]}"),
+                                 inventory.BasicItem(f"Fae{random_numbers[1]}"),
+                                 inventory.BasicItem(f"Fae{random_numbers[2]}")]
+        else:
+            self.reward_items = [inventory.BasicItem(f"Gemstone{random_numbers[0]}"),
+                                 inventory.BasicItem(f"Gemstone{random_numbers[1]}"),
+                                 inventory.BasicItem(f"Gemstone{random_numbers[2]}")]
         for i in range(3):
             option = getattr(self, f'option{i + 1}')
             setattr(option, 'label', f"{self.reward_items[i].item_name}")
@@ -998,9 +1002,9 @@ monster_dict = {
 gem_list = [("Rock", 1), ("Bronze Chunk", 500), ("Silver Chunk", 1000),
             ("Gold Ore", 5000), ("Platinum Ore", 10000), ("Bismuth Ore", 20000),
             ("GEMSTONE", 30000), ("GEMSTONE", 40000), ("GEMSTONE", 50000),
-            ("GEMSTONE", 75000), ("GEMSTONE", 100000), ("GEMSTONE", 150000),
+            ("GEMSTONE", 75000), ("GEMSTONE", 100000), ("Aurora Tear", 150000),
             ("Aurora Tear", 250000), ("Aurora Tear", 500000), ("Aurora Tear", 1000000),
-            ("Aurora Tear", 2500000), ("Lotus of Abundance", 5000000), ("Stone of the True Void", 10000000)]
+            ("Lotus of Abundance", 2500000), ("Lotus of Abundance", 5000000), ("Stone of the True Void", 10000000)]
 
 
 async def build_manifest_return_embed(ctx_object, player_obj, method, colour):
@@ -1013,24 +1017,24 @@ async def build_manifest_return_embed(ctx_object, player_obj, method, colour):
     if method_info[2] != "0":
         title_msg = f"Echo of __{card_name}__ - Returns ({method_info[0]})"
     if method_info[0] == "Hunt":
-        output_msg = await handle_hunt(ctx_object, player_obj, success_rate)
+        output_msg = await handle_hunt(ctx_object, player_obj, success_rate, card_stars)
     elif method_info[0] == "Mine":
-        output_msg = await handle_mine(ctx_object, player_obj, success_rate)
+        output_msg = await handle_mine(ctx_object, player_obj, success_rate, card_stars)
     else:
-        output_msg = await handle_gather(ctx_object, player_obj, success_rate)
+        output_msg = await handle_gather(ctx_object, player_obj, success_rate, card_stars)
     embed_msg = discord.Embed(colour=colour, title=title_msg, description=output_msg)
     return embed_msg
 
 
-async def handle_hunt(ctx_object, player_obj, success_rate):
+async def handle_hunt(ctx_object, player_obj, success_rate, card_stars):
     death_dict = {1: "defeated", 2: "slain", 3: "slaughtered", 4: "massacred"}
     temp_dict = {}
     total_exp = 0
     output_msg = ""
     # Build the result dict.
-    for _ in range(player_obj.player_echelon + 5):
+    for _ in range(card_stars + 5):
         if random.randint(1, 100) <= success_rate:
-            enemy_num = random.randint(0, 9) + random.randint(0, player_obj.player_echelon)
+            enemy_num = random.randint(0, 11) + random.randint(0, card_stars)
             random_enemy = list(monster_dict.keys())[enemy_num]
             temp_dict[random_enemy] = temp_dict.get(random_enemy, 0) + 1
     temp_dict = dict(sorted(temp_dict.items(), key=lambda m: monster_dict.get(m[0], 0) * m[1], reverse=True))
@@ -1056,27 +1060,30 @@ async def handle_hunt(ctx_object, player_obj, success_rate):
     return output_msg
 
 
-async def handle_mine(ctx_object, player_obj, success_rate):
+async def handle_mine(ctx_object, player_obj, success_rate, card_stars):
     item_obj, item_icon = None, " "
-    item_id_dict = {"GEMSTONE": f"Gemstone{random.randint(1, 10)}", "Bismuth Ore": "Gemstone0",
-                    "Lotus of Abundance": "Lotus5", "Aurora Tear": "Gemstone11", "Stone of the True Void": "Gemstone12"}
+    item_id_dict = {"GEMSTONE": f"Gemstone{random.randint(0, 9)}",
+                    "Lotus of Abundance": "Lotus5", "Aurora Tear": "Gemstone10", "Stone of the True Void": "Gemstone11"}
     outcome_index = sm.generate_ramping_reward(success_rate, 15, 18)
-    outcome_index = max(outcome_index, player_obj.player_echelon)
+    outcome_index = max(outcome_index, card_stars)
     outcome_item, outcome_coins = gem_list[outcome_index][0], gem_list[outcome_index][1]
     if outcome_item in item_id_dict.keys():
         item_obj = inventory.BasicItem(item_id_dict[outcome_item])
         item_icon = f" {item_obj.item_emoji}"
+    else:
+        coin_msg = player_obj.adjust_coins(outcome_coins)
+        return f"You found {outcome_item}! Sold for {gli.coin_icon} {coin_msg} Lotus Coins!"
     if outcome_item == "Lotus of Abundance":
         await sm.send_notification(ctx_object, player_obj, "Item", item_obj.item_id)
     await inventory.update_stock(player_obj, item_obj.item_id, 1)
     coin_msg = player_obj.adjust_coins(outcome_coins)
-    item_name = item_obj.item_name if item_obj is not None else outcome_item
+    item_name = item_obj.item_name
     return f"You found{item_icon} 1x {item_name}!\nReceived {gli.coin_icon} {coin_msg} Lotus Coins!"
 
 
-async def handle_gather(ctx_object, player_obj, success_rate):
+async def handle_gather(ctx_object, player_obj, success_rate, card_stars):
     output_msg = ""
-    num_items = sum(success_rate >= random.randint(1, 100) for _ in range(player_obj.player_echelon + 4))
+    num_items = sum(success_rate >= random.randint(1, 100) for _ in range(card_stars + 5))
     if num_items == 0:
         return "No items found."
     reward_list = loot.generate_random_item(quantity=num_items)

@@ -15,7 +15,7 @@ import inventory
 
 
 boss_loot_dict = {
-    "All": [[0, "Chest", 25], [0, "Matrix", 15], [0, "Core1", 1], [0, "OriginZ", 1],
+    "All": [[0, "Chest", 25], [0, "Matrix", 15], [0, "Core1", 1], [0, "Catalyst", 1],
             [0, "Skull4", 0.005], [0, "Skull3", 0.05], [0, "Skull2", 0.5], [0, "Skull1", 5],
             [0, "Hammer", 25], [0, "Pearl", 15], [0, "Heart1", 2], [0, "Heart2", 1],
             [1, "Ore1", 25], [2, "Ore2", 25], [3, "Ore3", 25], [4, "Ore4", 25],
@@ -32,7 +32,7 @@ boss_loot_dict = {
               [1, "Gem2", 10], [2, "Gem2", 20], [3, "Gem2", 30], [4, "Jewel2", 40]],
     "Paragon": [[0, "Summon1", 5], [0, "Summon2", 1], [0, "Unrefined3", 25], [0, "Stone4", 45],
                 [1, "Gem3", 10], [2, "Gem3", 20], [3, "Gem3", 30],
-                [4, "Jewel3", 40], [5, "Jewel3", 50], [6, "Jewel3", 60], [6, "Gemstone11", 5]],
+                [4, "Jewel3", 40], [5, "Jewel3", 50], [6, "Jewel3", 60], [6, "Gemstone10", 5]],
     "Arbiter": [[0, "Summon3", 5], [0, "Stone6", 40], [7, "Lotus4", 5],
                 [1, "Token1", 5], [2, "Token2", 5], [3, "Token3", 5], [4, "Token4", 5],
                 [5, "Token5", 5], [6, "Token6", 5], [7, "Token7", 5],
@@ -89,7 +89,7 @@ async def award_loot(boss_object, player_list, exp_amount, coin_amount, loot_mul
         if temp_player.player_equipped[4] != 0:
             e_ring = await inventory.read_custom_item(temp_player.player_equipped[4])
             if e_ring.item_base_type == "Crown of Skulls":
-                e_ring.item_roll_values[1] += 1
+                e_ring.roll_values[1] = str(int(e_ring.roll_values[1]) + 1)
                 await e_ring.update_stored_item()
 
         # Check unscaled drops.
@@ -101,7 +101,7 @@ async def award_loot(boss_object, player_list, exp_amount, coin_amount, loot_mul
             loot_msg, batch_df = update_loot_and_df(temp_player, "Stone5", 1,
                                                     loot_msg, counter, batch_df)
         # Check essence drops.
-        if ' - ' in boss_object.boss_name:
+        if ' - ' in boss_object.boss_name and "XXX" not in boss_object.boss_name:
             card_qty = sum(is_dropped(25) for attempt in range(loot_multiplier))
             if card_qty > 0:
                 numeral = boss_object.boss_name.split(" ", 1)
@@ -109,7 +109,8 @@ async def award_loot(boss_object, player_list, exp_amount, coin_amount, loot_mul
                                                         card_qty, loot_msg, counter, batch_df)
         # Check gauntlet drops.
         if gauntlet:
-            loot_msg, batch_df = update_loot_and_df(temp_player, f"Shard", 1, loot_msg, counter, batch_df)
+            num_shards = random.randint(1, 5)
+            loot_msg, batch_df = update_loot_and_df(temp_player, f"Shard", num_shards, loot_msg, counter, batch_df)
             if "XXVIII" in boss_object.boss_name and is_dropped(5):
                 loot_msg, batch_df = update_loot_and_df(temp_player, f"Lotus9", 1, loot_msg, counter, batch_df)
                 await sm.send_notification(ctx, temp_player, "Item", "Lotus9")
@@ -140,9 +141,9 @@ def generate_random_item(quantity=1):
     rewards = {}
     quantity_table = [1, 1, 1, 1, 1, 1, 2, 2, 2, 3]
     probability_rewards = [
-        [10, None, "Lotus"], [1, "DarkStar", None], [1, "LightStar", None], [1, None, "Skull"], [24, None, "Gemstone"],
-        [99, None, "Essence"], [200, None, "Trove"], [100, None, "Origin"], [100, None, "Core"], [50, None, "Crystal"],
-        [5, None, "Skull3"], [30, None, "Skull2"], [65, None, "Skull1"],
+        [10, None, "Lotus"], [1, "DarkStar", None], [1, "LightStar", None], [1, None, "Skull"], [22, None, "Gemstone"],
+        [99, None, "Essence"], [200, None, "Trove"], [100, "Catalyst", None], [100, None, "Core"], [50, None, "Crystal"],
+        [5, None, "Skull3"], [30, None, "Skull2"], [67, None, "Skull1"],
         [200, None, "Token"], [100, None, "Jewel"], [200, None, "Summon"], [50, "Compass", None],
         [1000, "Pearl", None], [2000, "Hammer", None], [250, None, "Gem"], [2500, None, "Ore"],
         [750, None, "Fragment"], [500, "Flame1", None], [500, "Matrix", None], [400, None, "Potion"],

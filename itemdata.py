@@ -28,24 +28,6 @@ fae_data = [[None, f'Fae Core ({element})', 100, 1, emoji,
             for i, element, emoji in zip(range(9), gli.element_names, fae_emoji_list)]
 itemdata_dict = build_item_dict(itemdata_dict, fae_data, starting_index=0, category="Fae")
 
-# Elemental Origin Data List
-fire_origin_emoji = "<a:eorigin:1145520263954440313>"
-water_origin_emoji = "<a:eorigin:1145520263954440313>"
-lightning_origin_emoji = "<a:eorigin:1145520263954440313>"
-earth_origin_emoji = "<a:eorigin:1145520263954440313>"
-wind_origin_emoji = "<a:eorigin:1145520263954440313>"
-ice_origin_emoji = "<a:eorigin:1145520263954440313>"
-shadow_origin_emoji = "<a:eorigin:1145520263954440313>"
-light_origin_emoji = "<a:eorigin:1145520263954440313>"
-celestial_origin_emoji = "<a:eorigin:1145520263954440313>"
-origin_emoji_list = [fire_origin_emoji, water_origin_emoji, lightning_origin_emoji,
-                     earth_origin_emoji, wind_origin_emoji, ice_origin_emoji,
-                     shadow_origin_emoji, light_origin_emoji, celestial_origin_emoji]
-origin_data = [[None, f'Elemental Origin ({element})', 90, 6, emoji,
-                f'90% chance to add the {element.lower()} element to a gear item.', 0]
-               for element, emoji in zip(gli.element_names, origin_emoji_list)]
-itemdata_dict = build_item_dict(itemdata_dict, origin_data, starting_index=0, category="Origin")
-
 # Token List Data
 token_data = [[None, 'Changeling Token', 100, 1, '<a:elootitem:1144477550379274322>',
                'An ancient token. Can be used to change your class or username.', 100000],
@@ -173,14 +155,14 @@ itemdata_dict = build_item_dict(itemdata_dict, skull_data, category="Skull")
 
 # Unrefined Void Items List Data
 unrefined_item_types = ['Weapon', 'Armour', 'Amulet', 'Wing', 'Crest', 'Gem']
-unrefined_void_data = [[None, "Unrefined Void Item (Weapon)", 100, 5, '<a:elootitem:1144477550379274322>', None, 0],
-                       [None, "Unrefined Void Item (Armour)", 80, 5, '<a:elootitem:1144477550379274322>', None, 0],
-                       [None, "Unrefined Void Item (Greaves)", 80, 5, '<a:elootitem:1144477550379274322>', None, 0],
-                       [None, "Unrefined Void Item (Amulet)", 80, 5, '<a:elootitem:1144477550379274322>', None, 0],
-                       [None, "Unrefined Void Item (Wing)", 80, 5, '<a:elootitem:1144477550379274322>', None, 0],
-                       [None, "Unrefined Void Item (Crest)", 80, 5, '<a:elootitem:1144477550379274322>', None, 0]]
-for index, row in enumerate(unrefined_void_data):
-    row[5] = f'Refine for 50% chance to receive a tier 5 {unrefined_item_types[index].lower()}.'
+unrefined_emoji = ['<:Sword5:1246945708939022367>', '<:Armour5:1246945463630823438>', '<:Greaves5:1246945410707095565>',
+                   '<:Amulet5:1246945347637346315>', '<:Wings5:1246945596821082197>', '<:Crest5:1246945508048637972>']
+unrefined_void_data = []
+for index in range(6):
+    success_rate = 80 if index != 0 else 100
+    temp_list = [None, f"Unrefined Void Item ({unrefined_item_types[index]})", success_rate, 5, unrefined_emoji[index],
+                 f'Refine for 50% chance to receive a tier 5 {unrefined_item_types[index].lower()}.', 0]
+    unrefined_void_data.append(temp_list)
 itemdata_dict = build_item_dict(itemdata_dict, unrefined_void_data, category="Void")
 
 # Unrefined Misc Items List Data
@@ -261,7 +243,7 @@ lotus_data = [[None, 'Lotus of Prosperity', 100, 8, '<a:eorigin:1145520263954440
                'Used for Divine Melding (Jewels). Increases the tier to 8.', 0],
               [None, 'Lotus of Abundance', 100, 8, '<a:eorigin:1145520263954440313>',
                'Used for Divine Purification (Armour). Increases the tier to 8.', 0],
-              [None, 'Lotus of Domincation', 100, 8, '<a:eorigin:1145520263954440313>',
+              [None, 'Lotus of Domination', 100, 8, '<a:eorigin:1145520263954440313>',
                'Used for Divine Purification (Crest).  Increases the tier to 8.', 0],
               [None, 'Lotus of Divergence', 100, 8, '<a:eorigin:1145520263954440313>',
                'Used for Divine Mutation (Insignia).  Increases the tier to 8.', 0],
@@ -276,7 +258,6 @@ itemdata_dict = build_item_dict(itemdata_dict, lotus_data, category="Lotus")
 # Gemstone Item Data
 gem_description = 'A precious stone used for ring crafting.'
 gemstone_data = [
-    [None, 'Bismuth Ore', 100, 5, '<a:elootitem:1144477550379274322>', 'A precious ore used for ring crafting.', 0],
     [None, 'Blazing Ruby', 100, 6, '<a:elootitem:1144477550379274322>', gem_description, 0],
     [None, 'Drowned Sapphire', 100, 6, '<a:elootitem:1144477550379274322>', gem_description, 0],
     [None, 'Silent Topaz', 100, 6, '<a:elootitem:1144477550379274322>', gem_description, 0],
@@ -319,7 +300,8 @@ itemdata_dict = build_item_dict(itemdata_dict, heart_data, category="Heart")
 
 # Uncategorized Item Data
 uncategorized_data = [
-    ['OriginZ', 'Origin Catalyst', 100, 5, '<a:eorigin:1145520263954440313>', 'Used for elemental infusion.', 500000],
+    ['Catalyst', 'Gemstone Catalyst', 100, 5, '<a:eorigin:1145520263954440313>',
+     "A hollow transparent gemstone. It's true nature can be revealed through elemental infusion.", 500000],
     ["Hammer", 'Astral Hammer', 80, 2, '<:Hammer:1243800065013714955>',
      'Used to reroll specific item rolls. Works on tier 4 and lower gear items.', 50000],
     ["Pearl", 'Stellar Pearl', 75, 4, '<:Pearl:1243800038195331122>',
@@ -328,7 +310,7 @@ uncategorized_data = [
      '5% Chance to add a socket to a gear item.', 5000],
     ['Chest', 'Chest', 100, 1, '<a:elootitem:1144477550379274322>', 'Contains a random item.', 50000],
     ['Shard', "Shard of Pandora's Hammer", 100, 7, '<a:elootitem:1144477550379274322>',
-     'Contains a random item.', 50000],
+     "One of many broken pieces of Pandora's Universe Hammer.", 50000],
     ['Scrap', 'Equipment Scrap', 100, 1, '<:Scrap:1243800038866686053>',
      "One of many countless pieces of Pandora's Legendary Hammer.", 0],
     ['Compass', 'Illusory Compass', 100, 6, '<:Compass:1243800035007922248>',
@@ -346,5 +328,7 @@ uncategorized_data = [
      "Amidst the vastest oceans, this tiny fish is exceedingly elusive. They dwell in the deepest trenches. "
      "Their pitch-black scales conceal precious and unique gems that grow inside their small bodies. ", 0],
     ['RoyalCoin', 'Royal Lotus Coin', 100, 8, '<:Royal_Lotus_Coin:1236080235313893417>',
-     "A sacred coin blessed by gods. It is said to be indestructible.", 0]]
+     "A sacred coin blessed by gods. It is said to be indestructible.", 0],
+    ['Metamorphite', 'Metamorphite', 100, 7, '<a:elootitem:1144477550379274322>',
+     "A mysterious ore that can drastically change an item.", 0]]
 itemdata_dict = build_item_dict(itemdata_dict, uncategorized_data, unique_index=True)

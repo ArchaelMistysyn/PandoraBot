@@ -26,16 +26,16 @@ recipe_dict = {
         "Twin Rings of Divergent Stars": [("DarkStar", 1), ("LightStar", 1), 100, "TwinRings"]},
     "Elemental Ring Infusion": {}, "Primordial Signet Infusion": {}, "Path Ring Infusion": {},
     "Legendary Ring Infusion": {
-        "Dragon's Eye Diamond": [("Gemstone10", 10), ("Gemstone11", 3), 100, "7"],
-        "Chromatic Tears": [("Gemstone11", 10), 100, "7"],
-        "Bleeding Hearts": [("Heart1", 99), ("Heart2", 99), ("Gemstone11", 3), 100, "7"],
-        "Gambler's Masterpiece": [("Gemstone11", 1), 1, "7"]},
+        "Dragon's Eye Diamond": [("Gemstone9", 10), ("Gemstone10", 3), 100, "7"],
+        "Chromatic Tears": [("Gemstone10", 10), 100, "7"],
+        "Bleeding Hearts": [("Heart1", 99), ("Heart2", 99), ("Gemstone10", 3), 100, "7"],
+        "Gambler's Masterpiece": [("Gemstone10", 1), 1, "7"]},
     "Sovereign Ring Infusion": {
-        "Stygian Calamity": [("Gemstone12", 1), ("Crystal3", 10), ("Gemstone11", 5), 100, "8"],
-        "Heavenly Calamity": [("Gemstone12", 1), ("Ore5", 10), ("Gemstone11", 5), 100, "8"],
-        "Hadal's Raindrop": [("Nadir", 1), ("EssenceXIV", 10), ("Gemstone11", 5), 100, "8"],
-        "Sacred Ring of Divergent Stars": [("TwinRings", 1), ("Gemstone11", 5), 100, "8"],
-        "Crown of Skulls": [("Skull4", 1), ("Lotus1", 1), ("Gemstone11", 5), 100, "8"]}
+        "Stygian Calamity": [("Gemstone11", 1), ("Crystal3", 10), ("Gemstone10", 5), ("Crystal4", 1), 100, "8"],
+        "Heavenly Calamity": [("Gemstone11", 1), ("Ore5", 10), ("Gemstone10", 5), ("Crystal4", 1), 100, "8"],
+        "Hadal's Raindrop": [("Nadir", 1), ("EssenceXIV", 10), ("Gemstone10", 5), ("Crystal4", 1), 100, "8"],
+        "Sacred Ring of Divergent Stars": [("TwinRings", 1), ("Gemstone10", 5), ("Crystal4", 1), 100, "8"],
+        "Crown of Skulls": [("Skull4", 1), ("Lotus1", 1), ("Gemstone10", 5), ("Crystal4", 1), 100, "8"]}
 }
 
 
@@ -55,15 +55,17 @@ primordial_rings = [("Ruby", "Incineration"), ("Sapphire", "Atlantis"), ("Topaz"
                     ("Obsidian", "Tormented Souls"), ("Opal", "Scintillation"), ("Amethyst", "Shifting Stars")]
 # Elemental Infusions
 for idx, (element, (gemstone, ring_name)) in enumerate(zip(gli.element_names, primordial_rings)):
-    # Elemental Origins
-    add_recipe("Elemental Infusion", f"Elemental Origin ({element})",
-               [("OriginZ", 1), (f"Fae{idx}", 300), 80, f"Origin{idx}"])
+    # Elemental Gemstones
+    gemstone_id = f"Gemstone{idx}"
+    temp_item = inventory.BasicItem(gemstone_id)
+    add_recipe("Elemental Infusion", temp_item.item_name,
+               [("Catalyst", 1), (f"Fae{idx}", 300), 80, gemstone_id])
     # Elemental Rings
     add_recipe("Elemental Ring Infusion", f"Elemental Ring of {element}",
-               [(f"Gemstone{idx + 1}", 1), ("Scrap", 100), 100, "4"])
+               [(gemstone_id, 1), ("Scrap", 100), 100, "4"])
     # Primordial Rings
     add_recipe("Primordial Signet Infusion", f"{gemstone} Signet of {ring_name}",
-               [(f"Gemstone{idx + 1}", 5), ("Gemstone11", 1), 100, "5"])
+               [(gemstone_id, 5), ("Gemstone10", 1), 100, "5"])
 void_cost = [('Weapon', ("Scrap", 200)), ('Armour', ("Scrap", 100)), ('Greaves', ("Unrefined2", 10)),
              ('Amulet', ("Scrap", 100)),  ('Wing', ("Unrefined1", 10)), ('Crest', ("Unrefined3", 10))]
 # Skull Infusions
@@ -89,13 +91,13 @@ for idx, jewel_type in enumerate(['Dragon', 'Demon', 'Paragon'], start=1):
                [(f"Gem{idx}", 10), 75, f"Jewel{idx}"])
 # Path Ring Infusions
 path_rings = [
-    ("Invoking Ring of Storms", [(1, 5), (3, 5), (11, 2)]),
-    ("Primordial Ring of Frostfire", [(2, 5), (6, 5), (11, 2)]),
-    ("Boundary Ring of Horizon", [(4, 5), (5, 5), (11, 2)]),
-    ("Hidden Ring of Eclipse", [(7, 5), (8, 5), (11, 2)]),
-    ("Cosmic Ring of Stars", [(9, 10), (11, 2)]),
-    ("Rainbow Ring of Confluence", [(1, 2), (2, 2), (3, 2), (4, 2), (5, 2), (6, 2), (7, 2), (8, 2), (9, 2), (11, 2)]),
-    ("Lonely Ring of Solitude", [(0, 20), (11, 1)])]
+    ("Invoking Ring of Storms", [(1, 5), (2, 5), (10, 2)]),
+    ("Primordial Ring of Frostfire", [(0, 5), (5, 5), (10, 2)]),
+    ("Boundary Ring of Horizon", [(3, 5), (4, 5), (10, 2)]),
+    ("Hidden Ring of Eclipse", [(6, 5), (7, 5), (10, 2)]),
+    ("Cosmic Ring of Stars", [(8, 10), (10, 2)]),
+    ("Rainbow Ring of Confluence", [(0, 2), (1, 2), (2, 2), (3, 2), (4, 2), (5, 2), (6, 2), (7, 2), (8, 2), (11, 2)]),
+    ("Lonely Ring of Solitude", [(9, 10), (11, 1)])]
 for ring_name, gemstones in path_rings:
     add_recipe("Path Ring Infusion", ring_name, [(f"Gemstone{idx}", qty) for idx, qty in gemstones] + [100, "6"])
 
@@ -110,7 +112,8 @@ class RecipeObject:
         # Initialize cost items dynamically
         self.cost_items = []
         self.success_rate = self.recipe_info[-2]
-        self.outcome_item = inventory.BasicItem(self.recipe_info[-1]) if "Ring" not in self.category else int(self.recipe_info[-1])
+        self.outcome_item = inventory.BasicItem(self.recipe_info[-1]) \
+            if "Ring" not in self.category and "Signet" not in self.category else int(self.recipe_info[-1])
         for item_info in self.recipe_info[:-2]:
             item_id, qty = item_info
             self.cost_items.append((inventory.BasicItem(item_id), qty))
@@ -194,7 +197,7 @@ class SelectRecipeView(discord.ui.View):
         category_recipes = recipe_dict.get(self.category, {})
         options_data_list = []
         for recipe_name, recipe in category_recipes.items():
-            if "Ring" in self.category:
+            if "Ring" in self.category or "Signet" in self.category:
                 option_emoji = "💍"
             else:
                 result_item = inventory.BasicItem(recipe[-1])
@@ -231,7 +234,7 @@ class CraftView(discord.ui.View):
         super().__init__(timeout=None)
         self.player_user, self.recipe_object = player_user, recipe_object
         self.embed_msg, self.new_view = None, None
-        if "Ring" in self.recipe_object.category:
+        if "Ring" in self.recipe_object.category or "Signet" in self.recipe_object.category:
             self.infuse_1.label = "Infuse Ring"
             if "Gambler's Masterpiece" in self.recipe_object.recipe_name:
                 self.infuse_1.label += f" (1%)"
@@ -261,14 +264,14 @@ class CraftView(discord.ui.View):
         # Handle infusion
         if is_ring and result == 1:
             # Handle ring
-            new_ring = inventory.CustomItem(self.player_user.player_id, "R", self.recipe_object.outcome_item)
-            new_ring.item_base_type = self.recipe_object.recipe_name
+            new_ring = inventory.CustomItem(self.player_user.player_id, "R", int(self.recipe_object.outcome_item),
+                                            base_type=self.recipe_object.recipe_name)
             new_ring.set_item_name()
-            new_ring.item_roll_values[0] = random.randint(0, 30) if new_ring.item_tier == 8 else rrd[new_ring.item_base_type]
+            new_ring.roll_values[0] = random.randint(0, 30) if new_ring.item_tier == 8 else rrd[new_ring.item_base_type]
             # Handle ring exceptions.
             if new_ring.item_base_type == "Crown of Skulls":
-                new_ring.item_roll_values[2] = new_ring.item_roll_values[0]
-                new_ring.item_roll_values[0], new_ring.item_roll_values[1] = 1000, 0
+                new_ring.roll_values[2] = new_ring.roll_values[0]
+                new_ring.roll_values[0], new_ring.roll_values[1] = 1000, 0
             inventory.add_custom_item(new_ring)
             self.embed_msg = await new_ring.create_citem_embed()
             await interaction.response.edit_message(embed=self.embed_msg, view=self.new_view)

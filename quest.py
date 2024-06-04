@@ -126,6 +126,8 @@ def assign_unique_tokens(player_obj, token_string, mode=0):
         location = token_quest_dict[mode]
     elif token_string in token_quest_dict:
         location = token_quest_dict[token_string]
+    else:
+        return
     player_obj.quest_tokens[location] += 1
     quest_tokens = ";".join(map(str, player_obj.quest_tokens))
     player_obj.set_player_field("quest_tokens", quest_tokens)

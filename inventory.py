@@ -21,6 +21,8 @@ from pandoradb import run_query as rq
 import loot
 import itemrolls
 import ring
+from ringdata import ring_element_dict as red
+import sovereignweapon as sw
 import tarot
 
 
@@ -139,28 +141,42 @@ class CInventoryView(discord.ui.View):
 
 
 class CustomItem:
-    def __init__(self, player_owner, item_type, item_tier):
+    def __init__(self, player_owner, item_type, item_tier, base_type=""):
         # initialize input data.
         self.player_owner = player_owner
         self.item_type, self.item_tier = item_type, item_tier
         # Initialize single default values
         self.item_id, self.item_name = 0, ""
         self.item_enhancement, self.item_quality_tier = 0, 1
-        self.item_elements = [0, 0, 0, 0, 0, 0, 0, 0, 0]
+        self.item_elements = [0] * 9
         # Initialize associated default values.
-        self.item_num_rolls, self.item_roll_values = 0, []
+        self.item_num_rolls, self.roll_values = 0, []
         self.item_base_stat, self.item_bonus_stat = 0.0, ""
         self.item_damage_min, self.item_damage_max = 0, 0
         self.item_num_sockets, self.item_inlaid_gem_id = 0, 0
-
         # Generate an item type and base.
-        self.item_damage_type, self.item_base_type = random.choice(list(gli.class_names)), ""
+        self.item_damage_type, self.item_base_type = random.choice(list(gli.class_names)), base_type
         self.generate_base()
+        # Exceptions
+        if self.item_type == "R":
+            self.item_quality_tier = 0
+            ring_element_data = red[self.item_base_type]
+            if ring_element_data[0] == "all":
+                self.item_elements = [1] * 9
+            else:
+                for element_index in ring_element_data:
+                    self.item_elements[element_index] = 1
+        elif self.item_base_type != "" and self.item_base_type in gli.sovereign_item_list:
+            self.item_quality_tier = 0
+            sw.assign_sovereign_data(self)
         # Generate base damage.
         self.base_damage_min, self.base_damage_max = get_tier_damage(self.item_tier, self.item_type)
         self.update_damage()
         # Set the item name.
         self.set_item_name()
+
+    async def reload_item(self):
+        _ = await read_custom_item(self.item_id, reloading=self)
 
     def reforge_stats(self, unlock=False):
         self.base_damage_min, self.base_damage_max = get_tier_damage(self.item_tier, self.item_type)
@@ -218,11 +234,11 @@ class CustomItem:
             item_elements += str(x) + ";"
         if item_elements != "":
             item_elements = item_elements[:-1]
-        item_roll_values = ""
-        for x in self.item_roll_values:
-            item_roll_values += str(x) + ";"
-        if item_roll_values != "":
-            item_roll_values = item_roll_values[:-1]
+        roll_values = ""
+        for x in self.roll_values:
+            roll_values += str(x) + ";"
+        if roll_values != "":
+            roll_values = roll_values[:-1]
         
         raw_query = ("UPDATE CustomInventory SET player_id = :input_1, item_type = :input_2, item_name = :input_3, "
                      "item_damage_type = :input_4, item_elements = :input_5, item_enhancement = :input_6, "
@@ -236,7 +252,7 @@ class CustomItem:
             'input_1': int(self.player_owner),'input_2': str(self.item_type), 'input_3': str(self.item_name),
             'input_4': str(self.item_damage_type), 'input_5': str(item_elements), 'input_6': int(self.item_enhancement),
             'input_7': int(self.item_tier), 'input_8': int(self.item_quality_tier),
-            'input_9': str(self.item_base_type), 'input_10': str(item_roll_values),
+            'input_9': str(self.item_base_type), 'input_10': str(roll_values),
             'input_11': str(self.item_base_stat), 'input_12': str(self.item_bonus_stat),
             'input_13': int(self.base_damage_min), 'input_14': int(self.base_damage_max),
             'input_15': int(self.item_num_sockets), 'input_16': int(self.item_inlaid_gem_id)
@@ -245,6 +261,8 @@ class CustomItem:
 
     def set_item_name(self):
         # Handle naming exceptions.
+        if self.item_type != "R" and self.item_base_type in gli.sovereign_item_list:
+            return
         if "D" in self.item_type:
             self.set_gem_name()
             return
@@ -252,23 +270,27 @@ class CustomItem:
         if (self.item_damage_type == "Summoner" or self.item_damage_type == "Rider") and self.item_type == "W":
             target_list = summon_tier_keywords
         tier_keyword = target_list[self.item_tier]
-        quality_name = gli.quality_damage_map[max(4, self.item_tier), self.item_quality_tier]
-        if "R" in self.item_type:
-            item_name = f"+{self.item_enhancement} {self.item_base_type} [{quality_name}]"
+        if self.item_type == "R":
+            item_name = f"{self.item_base_type}"
         else:
+            quality_name = gli.quality_damage_map[max(4, self.item_tier), self.item_quality_tier]
             item_name = f"+{self.item_enhancement} {tier_keyword} {self.item_base_type} [{quality_name}]"
         self.item_name = item_name
 
     def generate_base(self):
+        if self.item_base_type != "":
+            return
         if "R" in self.item_type:
             self.assign_bonus_stat()
             # Default unique values for rings.
-            self.item_roll_values = [-1] * 6
+            self.roll_values = [-1] * 6
             return
         if "D" in self.item_type:
             itemrolls.add_roll(self, 6)
             path = random.randint(0, 6)
             self.item_bonus_stat = f"{path}"
+            return
+        if self.item_base_type in gli.sovereign_item_list:
             return
 
         # Add a roll and element to non-gem items.
@@ -306,8 +328,6 @@ class CustomItem:
                 self.item_base_type = "base_type_error"
 
     def set_gem_name(self):
-        # resonance = tarot.get_resonance(-1)
-        # self.item_name = f"{self.item_name} - {resonance}"
         tier_keyword = tier_keywords[self.item_tier]
         type_keyword = gem_tier_keywords[self.item_tier]
         item_type = "Gem" if self.item_tier <= 4 else "Jewel"
@@ -361,12 +381,17 @@ class CustomItem:
         damage_min, damage_max = str(gem_min + self.item_damage_min), str(gem_max + self.item_damage_max)
         damage_bonus = f'Base Damage: {int(damage_min):,} - {int(damage_max):,}'
         embed_msg = discord.Embed(colour=tier_colour, title=item_title, description=display_stars)
+        if self.item_base_type == "Bathyal, Chasm Bauble":
+            name_data = self.item_name.split()
+            method = name_data[-1].strip('[]')
+            damage_bonus = sm.hide_text(damage_bonus, method=method)
+            stat_msg = sm.hide_text(stat_msg, method=method)
+            rolls_msg = sm.hide_text(rolls_msg, method=method) if rolls_msg != "" else rolls_msg
         embed_msg.add_field(name=item_types, value=damage_bonus, inline=False)
         embed_msg.add_field(name="Item Rolls", value=stat_msg, inline=False)
         if rolls_msg != "":
             embed_msg.add_field(name="", value=rolls_msg, inline=False)
-        item_info = f'Item ID: {self.item_id}'
-        embed_msg.add_field(name=item_info, value="", inline=False)
+        embed_msg.add_field(name=f'Item ID: {self.item_id}', value="", inline=False)
         thumbnail_url = sm.get_gear_thumbnail(self)
         if thumbnail_url is not None:
             # timestamp = int(time.time())
@@ -385,7 +410,7 @@ class CustomItem:
             return
         # Handle unique base damage exceptions
         if self.item_base_type == "Crown of Skulls":
-            flat_bonus, mult_bonus = (int(self.item_roll_values[0]) * 100000), (1 + (int(self.item_roll_values[1]) * 0.1))
+            flat_bonus, mult_bonus = (int(self.roll_values[0]) * 100000), (1 + (int(self.roll_values[1]) * 0.001))
         # calculate item's damage per hit
         enh_multiplier = 1 + self.item_enhancement * (0.01 * self.item_tier)
         quality_damage = 1 + (self.item_quality_tier * 0.2)
@@ -412,15 +437,29 @@ class BasicItem:
     def get_bitem_by_id(self, item_id):
         if item_id in itemdata.itemdata_dict:
             item = itemdata.itemdata_dict[item_id]
-            self.item_id, self.item_name, self.item_tier = item_id, item['name'], item['tier']
+            self.item_id, self.item_name, self.item_tier = item_id, item['name'], int(item['tier'])
             self.item_category, self.item_description = item['category'], item['description']
-            self.item_base_rate, self.item_cost = item['rate'], item['cost']
+            self.item_base_rate, self.item_cost = int(item['rate']), int(item['cost'])
             self.item_emoji = item['emoji']
             self.item_image = ""
-            if self.item_category in gli.availability_list_nongear:
-                self.item_image = f"{gli.web_url}/NonGear/{self.item_category}/Frame_{self.item_id}.png"
             if "Fish" in self.item_id:
                 self.item_image = f"{gli.web_url}/Fish/{self.item_id}.png"
+                return
+            elif "Void" in self.item_id:
+                name_data = self.item_name.split()
+                item_type = name_data[-1].strip('()')
+                self.item_image = f"{gli.web_url}/GearIcon/Frame_{item_type}_5.png"
+                return
+            elif "Gem" in self.item_id and "Gemstone" not in self.item_id:
+                self.item_image = f"{gli.web_url}/GearIcon/Frame_{self.item_id.replace('Gem', 'Gem_')}.png"
+                return
+            elif "Jewel" in self.item_id:
+                icon = {"Jewel1": "Gem_1", "Jewel2": "Gem_1", "Jewel3": "Gem_5", "Jewel4": "Gem_7", "Jewel5": "Gem_8"}
+                self.item_image = f"{gli.web_url}/GearIcon/Frame_{icon[self.item_id]}.png"
+                return
+            elif self.item_category in gli.availability_list_nongear:
+                self.item_image = f"{gli.web_url}/NonGear/{self.item_category}/Frame_{self.item_id}.png"
+
         else:
             print(f"Item with ID '{item_id}' not found in itemdata_dict.")
 
@@ -451,23 +490,26 @@ def get_item_shop_list(item_tier):
     return item_list
 
 
-async def read_custom_item(item_id):
+async def read_custom_item(item_id, reloading=None):
     raw_query = "SELECT * FROM CustomInventory WHERE item_id = :id_check"
     df = rq(raw_query, return_value=True, params={'id_check': item_id})
     if df is None or len(df.index) == 0:
         return None
-    item = CustomItem(int(df['player_id'].values[0]), str(df['item_type'].values[0]), 1)
+    base_type, item_tier = str(df['item_base_type'].values[0]), int(df['item_tier'].values[0])
+    item = CustomItem(int(df['player_id'].values[0]), str(df['item_type'].values[0]), item_tier, base_type=base_type)
     item.item_id, item.item_name = int(df['item_id'].values[0]), str(df['item_name'].values[0])
     temp_elements = list(df['item_elements'].values[0].split(';'))
     item.item_elements, item.item_damage_type = list(map(int, temp_elements)), df['item_damage_type'].values[0]
-    item.item_tier, item.item_enhancement = int(df['item_tier'].values[0]), int(df['item_enhancement'].values[0])
-    item.item_quality_tier, item.item_base_type = int(df['item_quality_tier'].values[0]), str(df['item_base_type'].values[0])
-    item.item_roll_values = list(df['item_roll_values'].values[0].split(';'))
-    item.item_num_rolls = len(item.item_roll_values)
+    item.item_enhancement = int(df['item_enhancement'].values[0])
+    item.item_quality_tier = int(df['item_quality_tier'].values[0])
+    item.roll_values = list(df['item_roll_values'].values[0].split(';'))
+    item.item_num_rolls = len(item.roll_values)
     item.item_base_stat, item.item_bonus_stat = float(df['item_base_stat'].values[0]), str(df['item_bonus_stat'].values[0])
     item.base_damage_min, item.base_damage_max = int(df['item_base_dmg_min'].values[0]), int(df['item_base_dmg_max'].values[0])
     item.item_num_sockets, item.item_inlaid_gem_id = int(df['item_num_sockets'].values[0]), int(df['item_inlaid_gem_id'].values[0])
     item.update_damage()
+    if reloading is not None:
+        reloading.__dict__.update(item.__dict__)
     return item
 
 
@@ -491,10 +533,10 @@ def add_custom_item(item):
         item_elements = item_elements[:-1]
 
     # Item roll string.
-    item_roll_values = ""
-    for x in item.item_roll_values:
-        item_roll_values += str(x) + ";"
-    item_roll_values = item_roll_values[:-1]
+    roll_values = ""
+    for x in item.roll_values:
+        roll_values += str(x) + ";"
+    roll_values = roll_values[:-1]
 
     # Insert the item if applicable.
     
@@ -513,7 +555,7 @@ def add_custom_item(item):
         'input_1': item.player_owner, 'input_2': item.item_type, 'input_3': item.item_name,
         'input_4': item.item_damage_type, 'input_5': item_elements, 'input_6': item.item_enhancement,
         'input_7': item.item_tier, 'input_8': item.item_quality_tier, 'input_9': item.item_base_type,
-        'input_10': item_roll_values, 'input_11': item.item_base_stat, 'input_12': item.item_bonus_stat,
+        'input_10': roll_values, 'input_11': item.item_base_stat, 'input_12': item.item_bonus_stat,
         'input_13': item.base_damage_min, 'input_14': item.base_damage_max,
         'input_15': item.item_num_sockets, 'input_16': item.item_inlaid_gem_id
     }
@@ -551,13 +593,13 @@ def display_cinventory(player_id, item_type) -> str:
 
 def display_binventory(player_id, method):
     regex_dict = {
-        "Crafting": "^(Matrix|Hammer|Pearl|Origin)",
+        "Crafting": "^(Matrix|Hammer|Pearl)",
         "Cores": "^(Fae|Core|Crystal)",
-        "Materials": "^(Scrap|Ore|Heart|Fragment)",
+        "Materials": "^(Scrap|Ore|Shard|Heart|Fragment)",
         "Unprocessed": "^(Unrefined|Gem|Jewel|Void)",
         "Essences": "^(Essence)",
         "Summoning": "^(Compass|Summon)",
-        "Gemstone": "^(Gemstone([0-9]|1[01]))$",
+        "Gemstone": "^(Catalyst|Gemstone([0-9]|1[0]))$",
         "Fish": "^(Fish)",
         "Misc": "^(Potion|Trove|Chest|Stone|Token|Skull[0-3])",
         "Ultra Rare": "^(Lotus|LightStar|DarkStar|Gemstone12|Skull4|Nadir|RoyalCoin)"
@@ -813,7 +855,7 @@ async def generate_item(ctx, target_player, tier, elements, item_type, base_type
             return
         new_roll_values.append(roll)
         count += 1
-    new_item.item_roll_values = new_roll_values
+    new_item.roll_values = new_roll_values
     if count != 6 and ("D" in item_type or tier >= 6):
         await ctx.send(f'Please input 6 item rolls.')
         return

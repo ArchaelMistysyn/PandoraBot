@@ -1,17 +1,50 @@
-import sharedmethods as sm
+# General imports
 import discord
+import datetime
+import random
+import pandas as pd
+
+# Data imports
+import sharedmethods as sm
+import globalitems as gli
+
+# Core imports
 import inventory
 import player
-import tarot
-import globalitems as gli
-import itemdata
-import pandas as pd
 from pandoradb import run_query as rq
 
+# Item/gear imports
+import tarot
+import itemdata
+
+
 lotus_list = [itemdata.itemdata_dict[key] for key in itemdata.itemdata_dict.keys() if "Lotus" in key]
-essence_list = [itemdata.itemdata_dict[key] for key in itemdata.itemdata_dict.keys() if "Essence" in key]
+fish_list = [itemdata.itemdata_dict[key] for key in itemdata.itemdata_dict.keys() if "Fish" in key]
 Fleur_Name = "Fleur, Oracle of the True Laws"
 Yubelle = "Yubelle, Adjudicator the True Laws"
+
+
+def get_daily_fish_items():
+    current_date = datetime.datetime.now().date()
+    date_seed = int(current_date.strftime('%Y%m%d'))
+    fish_random = random.Random(date_seed)
+    daily_fish = fish_random.choice(fish_list)
+    fish_obj = inventory.BasicItem(daily_fish['item_id'])
+    item_list = [itemdata.itemdata_dict[key] for key in itemdata.itemdata_dict.keys()
+                 if fish_obj.item_tier == itemdata.itemdata_dict[key]['tier'] and "Fish" not in key]
+    trade_obj = inventory.BasicItem(fish_random.choice(item_list)['item_id'])
+    return fish_obj, trade_obj
+
+
+async def display_fish_shop(player_obj, fish_obj, trade_obj):
+    title = f"Black Market - Daily Fish Exchange"
+    item_msg = f"Today's Item: {trade_obj.item_emoji} {trade_obj.item_name}"
+    embed_msg = discord.Embed(colour=discord.Colour.blue(), title=title, description=item_msg)
+    fish_stock = await inventory.check_stock(player_obj, fish_obj.item_id)
+    cost_msg = f"{fish_stock} / 10 {fish_obj.item_emoji} {fish_obj.item_name}"
+    embed_msg.add_field(name="Cost", value=cost_msg, inline=False)
+    exchange_view = ExchangeView(player_obj, fish_obj, trade_obj)
+    return fish_stock, embed_msg, exchange_view
 
 
 class TierSelectView(discord.ui.View):
@@ -31,8 +64,12 @@ class TierSelectView(discord.ui.View):
         select_options = [discord.SelectOption(label="Fae Cores", emoji=emoji_list[0], description=description_list[0])]
         for i in range(1, 7):
             select_options.append(discord.SelectOption(
-                label=f'Tier {i if i != 6 else "6+"} Items', emoji=emoji_list[i], description=description_list[i - 1]
-            ))
+                label=f'Tier {i if i != 6 else "6+"} Items', emoji=emoji_list[i], description=description_list[i - 1]))
+        self.fish_obj, self.trade_obj = get_daily_fish_items()
+        title, fish_emoji = "Daily Fish Exchange", self.fish_obj.item_emoji
+        fish_text = self.fish_obj.item_name.split("**")
+        description = f"Daily Fish: {fish_text[1]}"
+        select_options.append(discord.SelectOption(label=title, emoji=fish_emoji, description=description))
         self.select_menu = discord.ui.Select(
             placeholder="Select a shop.", min_values=1, max_values=1, options=select_options)
         self.select_menu.callback = self.tier_select_callback
@@ -52,8 +89,11 @@ class TierSelectView(discord.ui.View):
         selected_type = interaction.data['values'][0]
         if selected_type == "Fae Cores":
             shop_msg = f"Black Market - Fae Cores."
-            selected_tier, tier_colour = 0, discord.Colour.dark_orange()
-            await self.display_shop(interaction, selected_tier, tier_colour, shop_msg)
+            await self.display_shop(interaction, 0, discord.Colour.dark_orange(), shop_msg)
+            return
+        elif selected_type == "Daily Fish Exchange":
+            _, fish_embed, exchange_view = await display_fish_shop(self.player_obj, self.fish_obj, self.trade_obj)
+            await interaction.response.edit_message(embed=fish_embed, view=exchange_view)
             return
         else:
             selected_tier = int(selected_type[5])
@@ -72,16 +112,13 @@ class ShopView(discord.ui.View):
     def __init__(self, player_user, tier_colour, selected_shop, item_list):
         super().__init__(timeout=None)
         self.player_obj = player_user
-        self.tier_colour = tier_colour
-        self.selected_shop = selected_shop
+        self.tier_colour, self.selected_shop = tier_colour, selected_shop
         self.item_list = item_list
         select_options = [
             discord.SelectOption(emoji=item.item_emoji, label=item.item_name, value=item.item_id)
-            for item in item_list
-        ]
+            for item in item_list]
         self.select_menu = discord.ui.Select(
-            placeholder="Choose an item.", min_values=1, max_values=1, options=select_options
-        )
+            placeholder="Choose an item.", min_values=1, max_values=1, options=select_options)
         self.select_menu.callback = self.shop_callback
         self.add_item(self.select_menu)
 
@@ -99,6 +136,46 @@ async def show_item(player_user, selected_info):
     embed_msg.add_field(name="Cost", value=f"{cost:,}", inline=False)
     purchase_view = PurchaseView(player_user, selected_item)
     return embed_msg, purchase_view
+
+
+class ExchangeView(discord.ui.View):
+    def __init__(self, player_user, fish_obj, trade_obj):
+        super().__init__(timeout=None)
+        self.player_obj = player_user
+        self.fish_obj, self.trade_obj = fish_obj, trade_obj
+        self.handle_exchange.emoji = trade_obj.item_emoji
+        self.is_paid = False
+
+    @discord.ui.button(label="Exchange", style=discord.ButtonStyle.success)
+    async def handle_exchange(self, interaction: discord.Interaction, button: discord.Button):
+        if interaction.user.id != self.player_obj.discord_id:
+            return
+        fish_stock, fish_embed, exchange_view = await display_fish_shop(self.player_obj, self.fish_obj, self.trade_obj)
+        if fish_stock < 10:
+            stock_msg = sm.get_stock_msg(self.fish_obj, fish_stock, 10)
+            fish_embed.add_field(name="Insufficient Fish!", value=stock_msg, inline=False)
+            await interaction.response.edit_message(embed=fish_embed, view=exchange_view)
+            return
+        if not self.is_paid:
+            labels = ['player_id', 'item_id', 'item_qty']
+            batch_df = pd.DataFrame(columns=labels)
+            batch_df.loc[len(batch_df)] = [self.player_obj.player_id, self.fish_obj.item_id, -10]
+            batch_df.loc[len(batch_df)] = [self.player_obj.player_id, self.trade_obj.item_id, 1]
+            await inventory.update_stock(None, None, None, batch=batch_df)
+            self.is_paid = True
+        _, fish_embed, exchange_view = await display_fish_shop(self.player_obj, self.fish_obj, self.trade_obj)
+        swap_msg = f"1x {self.trade_obj.item_emoji} {self.trade_obj.item_name} received."
+        fish_embed.add_field(name="Swap Successful", value=swap_msg, inline=False)
+        await interaction.response.edit_message(embed=fish_embed, view=exchange_view)
+
+    @discord.ui.button(label="Return", style=discord.ButtonStyle.blurple, emoji="↩️")
+    async def return_callback(self, interaction: discord.Interaction, button: discord.Button):
+        if interaction.user.id != self.player_obj.discord_id:
+            return
+        colour, title, description = discord.Colour.dark_orange(), "Black Market", "Everything has a price."
+        embed_msg = discord.Embed(colour=colour, title=title, description=description)
+        new_view = TierSelectView(self.player_obj)
+        await interaction.response.edit_message(embed=embed_msg, view=new_view)
 
 
 class PurchaseView(discord.ui.View):
@@ -148,8 +225,8 @@ class PurchaseView(discord.ui.View):
     async def reselect_callback(self, interaction: discord.Interaction, button: discord.Button):
         if interaction.user.id != self.player_obj.discord_id:
             return
-        embed_msg = discord.Embed(colour=discord.Colour.dark_orange(),
-                                  title="Black Market", description="Everything has a price.")
+        colour, title, description = discord.Colour.dark_orange(), "Black Market", "Everything has a price."
+        embed_msg = discord.Embed(colour=colour, title=title, description=description)
         new_view = TierSelectView(self.player_obj)
         await interaction.response.edit_message(embed=embed_msg, view=new_view)
 

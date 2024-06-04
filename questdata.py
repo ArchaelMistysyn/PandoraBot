@@ -128,7 +128,7 @@ quests_data = {
          "Remember this is a one-way trip and there is no turning back.",
          30, None, None,
          "Breakthrough to level 30",
-         'OriginZ', 1, 'Echelon 3'],
+         'Catalyst', 1, 'Echelon 3'],
 
     16: [2, "Enter The Hellscape",
          "The situation is worse then we thought and the mortal plane faces danger yet again. "
@@ -168,7 +168,7 @@ quests_data = {
          "I know you can do it! Show her your resolve!",
          1, 8, None,
          "Engrave an Insignia",
-         'OriginZ', 1, 'Echelon 4'],
+         'Catalyst', 1, 'Echelon 4'],
 
     21: [0, "Cursed By Contract",
          "With your newfound power not only will defeating the demons be easier, but you might be able to forge "
@@ -207,7 +207,7 @@ quests_data = {
          "This is a disaster. If Tyra has come here then it's only a matter of time until the others make their move.",
          1, 11, None,
          "Defeat the Demon Paragon",
-         'OriginZ', 1, 'Echelon 5'],
+         'Catalyst', 1, 'Echelon 5'],
 
     26: [1, "Crossing Of Worlds",
          "Tyra may be gone, but the floodgates have opened. We failed to stop him from opening the celestial rift. "
@@ -364,7 +364,7 @@ quests_data = {
          "\nInvert her wish for the end into a new beginning.",
          1, 20, None,
          "Defeat XXV - Eleuia, The Wish",
-         'Gemstone11', 1, 'Echelon 9'],
+         'Gemstone10', 1, 'Echelon 9'],
 
     46: [1, "Through The Ether",
          "Our efforts were not in vain. You have crossed planes, realms, and dimensions. "

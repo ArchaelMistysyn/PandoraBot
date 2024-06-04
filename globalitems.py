@@ -104,28 +104,16 @@ crafting_gem = ["Blazing Ruby", "Drowned Sapphire", "Silent Topaz", "Ancient Aga
 availability_list_nongear = ["Gemstone", "Misc"]
 availability_list = ["Sword", "Bow", "Threads", "Armour", "Wings", "Amulet", "Crest", "Greaves", "Gem", "Pact"]
 
+sovereign_item_list = ["Crown of Skulls", "Sacred Ring of Divergent Stars", "Hadal's Raindrop", "Heavenly Calamity",
+                       "Stygian Calamity", "Pandora's Universe Hammer", ""]
+
 # Weapon lists
 weapon_list_low = [
-    [["Shortsword", "Javelin"],
-     ["Sword", "Spear"],
-     ["Longsword", "Longspear"],
-     ["Greatsword", "Trident"]],
-    [["Shortbow", "Ballista"],
-     ["Longbow", "Arbalest"],
-     ["Recurve Bow", "Gun"],
-     ["Greatbow", "Blaster"]],
-    [["Staff", "Tome"],
-     ["Magic Staff", "Magic Tome"],
-     ["Quarterstaff", "Grimoire"],
-     ["Crescent Staff", "Spellbook"]],
-    [["Dagger", "Claws"],
-     ["Stiletto", "Tiger Claws"],
-     ["Kris", "Eagle Claws"],
-     ["Sai", "Dragon Claws"]],
-    [["Steel String"],
-     ["Cutting Wire"],
-     ["Razor Threads"],
-     ["Infused Threads"]],
+    [["Shortsword", "Javelin"], ["Sword", "Spear"], ["Longsword", "Longspear"], ["Greatsword", "Trident"]],
+    [["Shortbow"], ["Longbow"], ["Recurve Bow"], ["Greatbow"]],
+    [["Staff", "Tome"], ["Magic Staff", "Magic Tome"], ["Quarterstaff", "Grimoire"], ["Crescent Staff", "Spellbook"]],
+    [["Dagger", "Claws"], ["Stiletto", "Tiger Claws"], ["Kris", "Eagle Claws"],["Sai", "Dragon Claws"]],
+    [["Steel String"], ["Cutting Wire"], ["Razor Threads"], ["Infused Threads"]],
     [["Pegacorn", "Hatchling"],
      ["Night Mare", "Wyvern"],
      ["Unicorn", "Wyrm"],

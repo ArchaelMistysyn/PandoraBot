@@ -247,7 +247,7 @@ class CelestialView(discord.ui.View):
         skull_ring = False
         if self.player_obj.player_equipped[4] != 0:
             e_ring = await inventory.read_custom_item(self.player_obj.player_equipped[4])
-            if e_ring.item_name == "Crown of Skulls":
+            if e_ring.item_base_type == "Crown of Skulls":
                 skull_ring = True
         await interaction.response.edit_message(embed=embed_msg, view=SkullSelectView(self.player_obj, skull_ring))
 
@@ -334,7 +334,7 @@ async def add_skull_fields(player_obj, embed_msg, method="Return"):
         elif method == "Purchase":
             field_value += f"{item.item_emoji} __**{item.item_name}**__: {coin_msg}"
         else:
-            field_value += f"{item.item_emoji} {skull_stock}x __**{item.item_name}**__"
+            field_value += f"{item.item_emoji} {skull_stock}x __**{item.item_name}**__\n"
     embed_msg.add_field(name=f"{method} Value", value=field_value, inline=False)
     return embed_msg
 
@@ -405,7 +405,7 @@ class SkullsView(discord.ui.View):
         if self.method == "Sacrifice":
             ring_id = self.player_obj.player_equipped[4]
             e_ring = await inventory.read_custom_item(ring_id) if ring_id != 0 else None
-            if e_ring is None or e_ring.item_name != "Crown of Skulls":
+            if e_ring is None or e_ring.item_base_type != "Crown of Skulls":
                 self.new_embed.description = "Put the ring back on or I will *END* you. Okay darling?"
                 await interaction_obj.response.edit_message(embed=self.new_embed, view=self.new_view)
                 return
@@ -417,7 +417,7 @@ class SkullsView(discord.ui.View):
                 await interaction_obj.response.edit_message(embed=self.new_embed, view=self.new_view)
                 return
             await inventory.update_stock(self.player_obj, item.item_id, -1)
-            e_ring.item_roll_values[1] += item.success_rate
+            e_ring.roll_values[0] = str(int(e_ring.roll_values[0]) + item.item_base_rate)
             await e_ring.update_stored_item()
             self.new_embed = await e_ring.create_citem_embed()
             self.new_embed = await add_skull_fields(self.player_obj, self.new_embed, self.method)
@@ -483,7 +483,7 @@ class SkullsView(discord.ui.View):
         skull_ring = False
         if self.player_obj.player_equipped[4] != 0:
             e_ring = await inventory.read_custom_item(self.player_obj.player_equipped[4])
-            if e_ring.item_name == "Crown of Skulls":
+            if e_ring.item_base_type == "Crown of Skulls":
                 skull_ring = True
         await interaction.response.edit_message(embed=embed_msg, view=SkullSelectView(self.player_obj, skull_ring))
 

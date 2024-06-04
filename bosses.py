@@ -169,7 +169,7 @@ class CurrentBoss:
             case "Demon":
                 if boss_tier != 4:
                     self.boss_element = random.randint(0, 8)
-                    boss_colour = demon_colours[boss_element]
+                    boss_colour = demon_colours[self.boss_element]
                     if boss_colour not in ["Crimson", "Azure", "Jade", "Violet", "Gold"]:
                         self.boss_image = ""
                     self.boss_image = f'{url_base}Demon/{boss_colour}/{self.boss_name}_{boss_colour}.png'

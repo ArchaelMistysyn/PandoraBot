@@ -81,7 +81,7 @@ def run_discord_bot():
         except KeyboardInterrupt:
             sys.exit(0)
 
-    async def run_solo_cog(player_obj, active_boss, channel_id, sent_message, ctx, gauntlet=False, mode=-1):
+    async def run_solo_cog(player_obj, active_boss, channel_id, sent_message, ctx, gauntlet=False, mode=0):
         return enginecogs.SoloCog(engine_bot, player_obj, active_boss, channel_id, sent_message, ctx,
                                   gauntlet=gauntlet, mode=mode)
 
@@ -196,7 +196,7 @@ def run_discord_bot():
 
     @engine_bot.event
     async def solo_boss(combat_tracker, player_obj, active_boss, channel_id, sent_message, ctx_object,
-                        gauntlet=False, mode=-1):
+                        gauntlet=False, mode=0):
         active_boss.reset_modifiers()
         active_boss.curse_debuffs = player_obj.elemental_curse
         embed, player_alive, boss_alive = await combat.run_solo_cycle(combat_tracker, active_boss, player_obj)
@@ -389,7 +389,7 @@ def run_discord_bot():
             elif self.player_obj.player_level < 200:
                 self.samsara.disabled, self.samsara.style = True, gli.button_colour_list[3]
 
-        @discord.ui.button(label="Challenger", style=discord.ButtonStyle.blurple)
+        @discord.ui.button(label="Challenger", style=discord.ButtonStyle.success)
         async def challenger(self, interaction: discord.Interaction, button: discord.Button):
             if interaction.user.id != self.player_obj.discord_id:
                 return
@@ -401,7 +401,7 @@ def run_discord_bot():
                 return
             await self.begin_encounter(interaction, 2)
 
-        @discord.ui.button(label="Samsara", style=discord.ButtonStyle.blurple)
+        @discord.ui.button(label="Samsara", style=discord.ButtonStyle.red)
         async def samsara(self, interaction: discord.Interaction, button: discord.Button):
             if interaction.user.id != self.player_obj.discord_id:
                 return
@@ -418,7 +418,7 @@ def run_discord_bot():
             await inventory.update_stock(self.player_obj, self.lotus_object.item_id, -1)
             boss_obj = await bosses.spawn_boss(self.ctx.channel.id, self.player_obj.player_id, 8,
                                                "Incarnate", boss_level, 0)
-            label_list = {0: " [Challenger]", 1: " [Usurper]", 2: " [Samsara]"}
+            label_list = {1: " [Challenger]", 2: " [Usurper]", 3: " [Samsara]"}
             embed_msg = boss_obj.create_boss_embed(extension=label_list[difficulty])
             await interaction_obj.response.edit_message(embed=embed_msg, view=None)
             solo_cog = await run_solo_cog(self.player_obj, boss_obj, self.ctx.channel.id, self.sent_message, self.ctx,
