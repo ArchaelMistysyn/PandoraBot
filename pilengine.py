@@ -14,7 +14,7 @@ import sharedmethods as sm
 import player
 
 web_url = f"https://kyleportfolio.ca"
-image_path = 'C:\\Users\\GamerTech\\PycharmProjects\\PandoraBot\\botimages\\'
+image_path = 'C:\\Users\\GamerTech\\PycharmProjects\\PandoraBot\\botart\\'
 
 echelon_0 = "https://kyleportfolio.ca/botimages/roleicon/echelon1.png"
 echelon_1 = "https://kyleportfolio.ca/botimages/roleicon/echelon1.png"
@@ -222,14 +222,14 @@ def generate_and_combine_images():
         temp_item = inventory.BasicItem(item_id)
         if temp_item.item_category not in gli.availability_list_nongear:
             continue
-        if temp_item.item_id not in ["Gemstone11", "Scrap"]:
+        if temp_item.item_id not in ["Gemstone10", "Scrap"]:
             continue
         count += 1
         # Handle the urls and paths.
         frame_url = gli.frame_icon_list[temp_item.item_tier - 1]
         frame_url = frame_url.replace("[EXT]", gli.frame_extension[0])
-        icon_url = f"{web_url}/botimages/NonGear/{temp_item.item_category}/{item_id}.png"
-        output_dir, file_name = f'{image_path}NonGear\\{temp_item.item_category}\\', f"Frame_{item_id}.png"
+        icon_url = f"{web_url}/botimages/NonGearIcon/{temp_item.item_category}/{item_id}.png"
+        output_dir, file_name = f'{image_path}NonGearIcon\\{temp_item.item_category}\\', f"Frame_{item_id}.png"
         file_path = f"{output_dir}{file_name}"
         frame = Image.open(requests.get(frame_url, stream=True).raw).convert("RGBA")
         icon = Image.open(requests.get(icon_url, stream=True).raw).convert("RGBA")
@@ -242,7 +242,7 @@ def generate_and_combine_images():
             result.paste(icon, (17, 16), icon)
             result.save(file_path, format="PNG")
         # Upload the file.
-        upload_file_to_ftp(ftp, file_path, f"/public_html/botimages/NonGear/{temp_item.item_category}/", file_name)
+        upload_file_to_ftp(ftp, file_path, f"/public_html/botimages/NonGearIcon/{temp_item.item_category}/", file_name)
     ftp.quit()
     return count
 

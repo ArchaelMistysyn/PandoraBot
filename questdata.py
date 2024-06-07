@@ -409,7 +409,7 @@ quests_data = {
          "Lamenting will have to wait, the divine palace beckons."
          "\nAscend, and face the finale! (/palace)",
          1, 23, None,
-         "Defeat XXX - Amaryllis, Incarnate of the Divine Lotus [Challenger]",
+         "Defeat XXX - Nephilim, Incarnate of the Divine Lotus [Challenger]",
          'Core4', 3, 'Echelon 10 (MAX)'],
 
     51: [10, "Pandora's Box",
@@ -426,7 +426,7 @@ quests_data = {
          "Even knowing this, will you still chase after your demise? "
          "\nAscend, and face the trial of the usurper!",
          1, 25, None,
-         "Defeat XXX - Amaryllis, Incarnate of the Divine Lotus [Usurper]",
+         "Defeat XXX - Nephilim, Incarnate of the Divine Lotus [Usurper]",
          'Chest', 20, None],
 
     53: [3, "A Heartfelt Wish",
@@ -435,7 +435,7 @@ quests_data = {
          "Perhaps, I can entrust to you my true wish."
          "\nPlease, save us all.",
          1, 26, None,
-         "Defeat XXX - Amaryllis, Incarnate of the Divine Lotus [Samsara]",
+         "Defeat XXX - Nephilim, Incarnate of the Divine Lotus [Samsara]",
          'Chest', 30, None],
 
     54: [2, "A Moment Forever",

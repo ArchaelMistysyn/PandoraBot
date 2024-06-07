@@ -41,7 +41,7 @@ boss_loot_dict = {
     "Incarnate": [[8, "Core3", 50], [8, "Core4", 25], [8, "Jewel5", 80],
                   [8, "Lotus1", 5], [8, "Lotus2", 5], [8, "Lotus3", 5], [8, "Lotus4", 5], [8, "Lotus5", 5],
                   [8, "Lotus6", 5], [8, "Lotus7", 5], [8, "Lotus8", 5], [8, "Lotus9", 5],
-                  [8, "Lotus10", 1], [8, "DarkStar", 1], [8, "EssenceXXX", 99]]}
+                  [8, "Lotus10", 1], [8, "DarkStar", 1], [8, "Nephilim", 1], [8, "EssenceXXX", 99]]}
 incarnate_attempts_dict = {300: 1, 600: 2, 999: 5}
 
 

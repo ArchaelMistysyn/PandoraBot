@@ -256,20 +256,31 @@ lotus_data = [[None, 'Lotus of Prosperity', 100, 8, '<a:eorigin:1145520263954440
 itemdata_dict = build_item_dict(itemdata_dict, lotus_data, category="Lotus")
 
 # Gemstone Item Data
-gem_description = 'A precious stone used for ring crafting.'
 gemstone_data = [
-    [None, 'Blazing Ruby', 100, 6, '<a:elootitem:1144477550379274322>', gem_description, 0],
-    [None, 'Drowned Sapphire', 100, 6, '<a:elootitem:1144477550379274322>', gem_description, 0],
-    [None, 'Silent Topaz', 100, 6, '<a:elootitem:1144477550379274322>', gem_description, 0],
-    [None, 'Ancient Agate', 100, 6, '<a:elootitem:1144477550379274322>', gem_description, 0],
-    [None, 'Whispering Emerald', 100, 6, '<a:elootitem:1144477550379274322>', gem_description, 0],
-    [None, 'Arctic Zircon', 100, 6, '<a:elootitem:1144477550379274322>', gem_description, 0],
-    [None, 'Haunted Obsidian', 100, 6, '<a:elootitem:1144477550379274322>', gem_description, 0],
-    [None, 'Prismatic Opal', 100, 6, '<a:elootitem:1144477550379274322>', gem_description, 0],
-    [None, 'Spatial Lapis', 100, 6, '<a:elootitem:1144477550379274322>', gem_description, 0],
-    [None, 'Soul Diamond', 100, 6, '<a:elootitem:1144477550379274322>', gem_description, 0],
-    [None, 'Aurora Tear', 100, 7, '<a:elootitem:1144477550379274322>', gem_description, 2000000],
-    [None, 'Stone of the True Void', 100, 8, '<:Gemstone12:1243800661385023529>', gem_description, 0]]
+    [None, 'Blazing Ruby', 100, 6, '<a:elootitem:1144477550379274322>',
+     "Pulsing with volcanic force, this gem radiates with an intense heat.", 0],
+    [None, 'Drowned Sapphire', 100, 6, '<a:elootitem:1144477550379274322>',
+     "Formed from colliding waves and tides, this gem holds the depths of the ocean within.", 0],
+    [None, 'Silent Topaz', 100, 6, '<a:elootitem:1144477550379274322>',
+     "Crackling with electricity, this gem is often used as an energy source.", 0],
+    [None, 'Ancient Agate', 100, 6, '<a:elootitem:1144477550379274322>',
+     "Hardened by the earth, this gem has a high density and is exceptionally sturdy.", 0],
+    [None, 'Whispering Emerald', 100, 6, '<a:elootitem:1144477550379274322>',
+     "A destructive gale condensed into a single stone, air leaks out from this gem creating a gentle breeze.", 0],
+    [None, 'Arctic Zircon', 100, 6, '<a:elootitem:1144477550379274322>',
+     "Despite the chilling aura, this gem's pure surface mirrors it's surroundings.", 0],
+    [None, 'Haunted Obsidian', 100, 6, '<a:elootitem:1144477550379274322>',
+     "Dark and ominous, this small gem casts a foreboding shadow.", 0],
+    [None, 'Prismatic Opal', 100, 6, '<a:elootitem:1144477550379274322>',
+     "Gleaming with radiance, it shines with all kinds of vibrant colours.", 0],
+    [None, 'Spatial Lapis', 100, 6, '<a:elootitem:1144477550379274322>',
+     "Shimmering endlessly, the inside of this gem is boundless like the starry night.", 0],
+    [None, 'Soul Diamond', 100, 6, '<a:elootitem:1144477550379274322>',
+     "A gem of crystallized soul, a priceless treasure.", 0],
+    [None, 'Aurora Tear', 100, 7, '<:Gemstone10:1247725283990175756>',
+     "If you gaze within you can make out the remnants of the dream from which it was formed.", 2000000],
+    [None, 'Stone of the True Void', 100, 8, '<:Gemstone11:1243800661385023529>',
+     "An impossible gem, it embodies the infinite nothingness within the depths of the void.", 0]]
 itemdata_dict = build_item_dict(itemdata_dict, gemstone_data, starting_index=0, category="Gemstone")
 
 # Fish Item Data
@@ -329,6 +340,9 @@ uncategorized_data = [
      "Their pitch-black scales conceal precious and unique gems that grow inside their small bodies. ", 0],
     ['RoyalCoin', 'Royal Lotus Coin', 100, 8, '<:Royal_Lotus_Coin:1236080235313893417>',
      "A sacred coin blessed by gods. It is said to be indestructible.", 0],
-    ['Metamorphite', 'Metamorphite', 100, 7, '<a:elootitem:1144477550379274322>',
+    ['Nephilim', "Nephilim's Heart", 100, 8, '<a:elootitem:1144477550379274322>',
+     "The heart of the lotus incarnate. It's divine luster has long since withered away "
+     "leaving a lingering resentment in it's place.", 0],
+    ['Metamorphite', 'Metamorphite Ore', 100, 7, '<a:elootitem:1144477550379274322>',
      "A mysterious ore that can drastically change an item.", 0]]
 itemdata_dict = build_item_dict(itemdata_dict, uncategorized_data, unique_index=True)

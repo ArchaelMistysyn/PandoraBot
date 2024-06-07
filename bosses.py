@@ -44,12 +44,10 @@ class CurrentBoss:
         img_link = "https://i.ibb.co/0ngNM7h/castle.png"
         if "Demon" in self.boss_image or "Dragon" in self.boss_image:
             img_link = self.boss_image
-        tier_colour_dict = {
-            1: [0x43B581, "<:Gem1:1242206599481659442>"], 2: [0x3498DB, "<:Gem2:1242206600555532421>"],
-            3: [0x9B59B6, "<:Gem3:1242206601385873498>"], 4: [0xF1C40F, "<:Gem4:1242206602405347459>"],
-            5: [0xCC0000, "<:Gem5:1242206603441078363>"], 6: [0xE91E63, "<:Gem6:1242206603953049721>"],
-            7: [0xFFFFFF, "<:Gem7:1242206605211205662>"], 8: [0x000000, "<:Gem8:1242206660513108029>"]
-        }
+        tier_colour_dict = {1: [0x43B581, "<:Gem1:1242206599481659442>"], 2: [0x3498DB, "<:Gem2:1242206600555532421>"],
+                            3: [0x9B59B6, "<:Gem3:1242206601385873498>"], 4: [0xF1C40F, "<:Gem4:1242206602405347459>"],
+                            5: [0xCC0000, "<:Gem5:1242206603441078363>"], 6: [0xE91E63, "<:Gem6:1242206603953049721>"],
+                            7: [0xFFFFFF, "<:Gem7:1242206605211205662>"], 8: [0x000000, "<:Gem8:1242206660513108029>"]}
         tier_info = tier_colour_dict[self.boss_tier]
         tier_colour = tier_info[0]
         life_emoji = tier_info[1]
@@ -60,7 +58,7 @@ class CurrentBoss:
         # Set boss hp
         if not self.calculate_hp():
             self.boss_cHP = 0
-        hp_bar_icons = gli.hp_bar_dict[min(7, self.boss_tier)]  # Adjust if needed for t8
+        hp_bar_icons = gli.hp_bar_dict[min(8, self.boss_tier)]
         boss_hp = f'{life_emoji} ({sm.display_hp(int(self.boss_cHP), int(self.boss_mHP))})'
         bar_length = 0
         if int(self.boss_cHP) >= 1:
@@ -136,7 +134,7 @@ class CurrentBoss:
                          arbiter_list_t6, arbiter_list_t7]
 
         # Incarnate names
-        incarnate_names = [("XXX - Amaryllis, Incarnate of the Divine Lotus", "")]
+        incarnate_names = [("XXX - Nephilim, Incarnate of the Divine Lotus", "")]
 
         # All names
         all_names_dict = {"Fortress": fortress_names, "Dragon": dragon_names, "Demon": demon_names,

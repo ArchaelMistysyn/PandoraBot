@@ -50,7 +50,7 @@ card_dict = {
     "XXVII": ["Vexia, Scribe of the True Laws", 5],
     "XXVIII": ["Fleur, Oracle of the True Laws", 6],
     "XXIX": ["Yubelle, Adjudicator of the True Laws", 7],
-    "XXX": ["Amaryllis, Incarnate of the Divine Lotus", 8]
+    "XXX": ["Nephilim, Incarnate of the Divine Lotus", 8]
 }
 card_type_dict = {
     "0": "Paragon", "I": "Paragon", "II": "Paragon", "III": "Paragon", "IV": "Paragon", "V": "Paragon",
@@ -128,8 +128,9 @@ card_stat_dict = {
                           ["Omni Curse", 25, "all_elemental_curse", None]]
                   }
 synthesis_success_rate = {0: 0, 1: 75, 2: 50, 3: 40, 4: 30, 5: 20, 6: 10, 7: 99, 8: 0}
-card_variant = ["Empty", "Prelude", "Chromatic", "Prismatic", "Resplendent", "Iridescent", "Divine", "Transcendent"]
-tarot_damage = [0, 5000, 25000, 50000, 100000, 250000, 500000, 1000000]
+card_variant = ["Empty", "Prelude", "Emergence", "Chromatic", "Prismatic",
+                "Resplendent", "Iridescent", "Transcendent", "Masterpiece"]
+tarot_damage = [0, 5000, 25000, 50000, 100000, 250000, 500000, 750000, 1000000]
 tarot_hp = [0, 500, 1000, 1500, 2000, 2500, 5000, 10000, 20000]
 tarot_fd = [0, 10, 20, 30, 40, 50, 70, 100, 200]
 path_point_values = [0, 1, 2, 3, 4, 5, 7, 10, 20]
@@ -345,13 +346,13 @@ class TarotView(discord.ui.View):
             # Handle tier 7 exception.
             if active_card.num_stars == 7:
                 lotus_item = inventory.BasicItem("Lotus8")
-                player_stock = await inventory.check_stock(player_obj, lotus_item.item_id)
+                player_stock = await inventory.check_stock(self.player_user, lotus_item.item_id)
                 if player_stock < 1:
                     description = f"Divine Synthesis requires: {lotus_item.item_emoji} 1x {lotus_item.item_name}"
                     self.embed.title, self.embed.description = title, description
                     await interaction.response.edit_message(embed=self.embed, view=reload_view)
                     return
-                await inventory.update_stock(player_obj, lotus_item.item_id, -1)
+                await inventory.update_stock(self.player_user, lotus_item.item_id, -1)
             # Attempt Synthesis
             title, description = await active_card.synthesize_tarot()
             self.embed = await self.cycle_tarot(0)
@@ -371,9 +372,9 @@ class TarotCard:
         self.damage, self.hp, self.fd = tarot_damage[self.num_stars], tarot_hp[self.num_stars], tarot_fd[self.num_stars]
         self.card_enhancement = card_enhancement
         if self.card_qty == 0:
-            self.card_image_link = "https://kyleportfolio.ca/botimages/tarot/cardback.png"
+            self.card_image_link = f"{gli.web_url}tarot/cardback.png"
         else:
-            self.card_image_link = f"https://kyleportfolio.ca/botimages/tarot/{self.card_numeral}.png"
+            self.card_image_link = f"{gli.web_url}tarot/{self.card_numeral}/{self.card_numeral}_{self.num_stars}.png"
 
     async def create_tarot_embed(self):
         gear_colour, _ = sm.get_gear_tier_colours(self.num_stars)

@@ -48,7 +48,7 @@ boss_attack_dict = {
     "Yubelle, Adjudicator of the True Laws":
         ["Tainted Smite", "Distorted Gavel", "Alter Verdict", "Counterfeit Retribution",
          "**Weight Of Sin**", "**Scales Of Judgement**", "**__White Abyss__**"],
-    "Amaryllis, Incarnate of the Divine Lotus":
+    "Nephilim, Incarnate of the Divine Lotus":
         ["Lotus Slash", "Propagate Ruin", "Divine Purgation", "Chaos Bloom", "**Sacred Revelation**",
          "**Eye Of The Annihilator**", "**Nightmare Saber**", "**__Fabricate Apotheosis__**"]
 }

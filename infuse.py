@@ -35,8 +35,12 @@ recipe_dict = {
         "Heavenly Calamity": [("Gemstone11", 1), ("Ore5", 10), ("Gemstone10", 5), ("Crystal4", 1), 100, "8"],
         "Hadal's Raindrop": [("Nadir", 1), ("EssenceXIV", 10), ("Gemstone10", 5), ("Crystal4", 1), 100, "8"],
         "Sacred Ring of Divergent Stars": [("TwinRings", 1), ("Gemstone10", 5), ("Crystal4", 1), 100, "8"],
-        "Crown of Skulls": [("Skull4", 1), ("Lotus1", 1), ("Gemstone10", 5), ("Crystal4", 1), 100, "8"]}
-}
+        "Crown of Skulls": [("Skull4", 1), ("Lotus1", 1), ("Gemstone10", 5), ("Crystal4", 1), 100, "8"]},
+    "Sovereign Weapon Infusion": {
+        "Pandora's Universe Hammer": [("Shard", 100), ("Lotus10", 1), ("Crystal4", 1)],
+        "Fallen Lotus of Nephilim": [("Nephilim", 1), ("Lotus10", 1), ("Crystal4", 1)],
+        "Solar Flare Blaster": [("Shard", 100), ("Lotus10", 1), ("Crystal4", 1)],
+        "Bathyal, Chasm Bauble": [("Nadir", 1), ("Crystal4", 1)]}}
 
 
 def add_recipe(category, name, data_list):

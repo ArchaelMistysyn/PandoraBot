@@ -458,7 +458,7 @@ class BasicItem:
                 self.item_image = f"{gli.web_url}/GearIcon/Frame_{icon[self.item_id]}.png"
                 return
             elif self.item_category in gli.availability_list_nongear:
-                self.item_image = f"{gli.web_url}/NonGear/{self.item_category}/Frame_{self.item_id}.png"
+                self.item_image = f"{gli.web_url}/NonGearIcon/{self.item_category}/Frame_{self.item_id}.png"
 
         else:
             print(f"Item with ID '{item_id}' not found in itemdata_dict.")

@@ -1183,7 +1183,7 @@ def run_discord_bot():
         await ctx.defer()
         title = "Game created by: Kyle Mistysyn (Archael)"
         artist_data = [
-            ("Daerun Pro", "Character Illustrator (Upwork)"),
+            ("Daerun", "Character Illustrator (Upwork)"),
             ("Nong Dit @Nong Dit", "Frame Artist (Fiverr)"),
             ("Aztra.studio @Artherrera", "Emoji/Icon Artist (Fiverr)"),
             ("Labs @labcornerr", "Emoji/Icon Artist (Fiverr)"),
@@ -1208,11 +1208,14 @@ def run_discord_bot():
         programmer_list = "\n".join(f"**{name}** - {role}" for name, role in programming_data)
         tester_list = "\n".join(f"**{name}** - {role}" for name, role in tester_data)
         misc_list = "\n".join(f"**{name}** - {role}" for name, role in misc_data)
+        # Unauthorized use of this bot, it's associated contents, code, and assets are strictly prohibited.
+        copy_msg = f"© 2024 Kyle Mistysyn. All rights reserved."
         embed_msg = discord.Embed(colour=discord.Colour.light_gray(), title=title, description="")
         embed_msg.add_field(name="__Artists__", value=artist_list.rstrip(), inline=False)
         embed_msg.add_field(name="__Programmers__", value=programmer_list.rstrip(), inline=False)
         embed_msg.add_field(name="__Testers__", value=tester_list.rstrip(), inline=False)
         embed_msg.add_field(name="__Misc__", value=misc_list.rstrip(), inline=False)
+        embed_msg.add_field(name="__Copyright__", value=copy_msg, inline=False)
         embed_msg.set_thumbnail(url=gli.archdragon_logo)
         file_path = pilengine.build_title_box("Pandora Bot Credits")
         await ctx.send(file=discord.File(file_path))
