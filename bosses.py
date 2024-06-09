@@ -47,7 +47,7 @@ class CurrentBoss:
         tier_colour_dict = {1: [0x43B581, "<:Gem1:1242206599481659442>"], 2: [0x3498DB, "<:Gem2:1242206600555532421>"],
                             3: [0x9B59B6, "<:Gem3:1242206601385873498>"], 4: [0xF1C40F, "<:Gem4:1242206602405347459>"],
                             5: [0xCC0000, "<:Gem5:1242206603441078363>"], 6: [0xE91E63, "<:Gem6:1242206603953049721>"],
-                            7: [0xFFFFFF, "<:Gem7:1242206605211205662>"], 8: [0x000000, "<:Gem8:1242206660513108029>"]}
+                            7: [0xFFFFFF, "<:Gem7:1248490896379478129>"], 8: [0x000000, "<:Gem8:1242206660513108029>"]}
         tier_info = tier_colour_dict[self.boss_tier]
         tier_colour = tier_info[0]
         life_emoji = tier_info[1]
@@ -85,8 +85,6 @@ class CurrentBoss:
         return embed_msg
 
     def generate_boss_name_image(self, boss_type, boss_tier):
-        url_base = "https://kyleportfolio.ca/botimages/bosses/"
-
         # Fortress names
         fortress_list_t1 = [("Ominous Keep", ""), ("Twisted Stronghold", "")]
         fortress_list_t2 = [("Malignant Fortress", ""), ("Malevolant Castle", "")]
@@ -109,27 +107,26 @@ class CurrentBoss:
         demon_names = [demon_list_t1, demon_list_t2, demon_list_t3, demon_list_t4]
 
         # Paragon names
-        paragon_list_t1 = [("0 - Karma, The Reflection", ""), ("I - Runa, The Magic", ""), ("VI - Kama, The Love", ""),
-                           ("IX - Alaya, The Memory", ""), ("XIV - Arcelia, The Clarity", "")]
-        paragon_list_t2 = [("XVII - Nova, The Star", ""), ("XVIII - Luna, The Moon", ""), ("XIX - Luma, The Sun", ""),
-                           ("XX - Aria, The Reqiuem", ""), ("XXI - Ultima, The Creation", "")]
-        paragon_list_t3 = [("V - Arkaya, The Duality", ""), ("X - Chrona, The Temporal", ""),
-                           ("XI - Nua, The Heavens", ""),
-                           ("XII - Rua, The Abyss", ""), ("XIII - Thana, The Death", "")]
-        paragon_list_t4 = [("II - Pandora, The Celestial", ""), ("XV - Diabla, The Primordial", "")]
-        paragon_list_t5 = [("III - Oblivia, The Void", ""), ("IV - Akasha, The Infinite", "")]
-        paragon_list_t6 = [("XXV - Eleuia, The Wish", "")]
+        paragon_list_t1 = ["0 - Karma, The Reflection", "I - Runa, The Magic", "VI - Kama, The Love",
+                           "IX - Alaya, The Memory", "XIV - Arcelia, The Clarity"]
+        paragon_list_t2 = ["XVII - Nova, The Star", "XVIII - Luna, The Moon", "XIX - Luma, The Sun",
+                           "XX - Aria, The Reqiuem", "XXI - Ultima, The Creation"]
+        paragon_list_t3 = ["V - Arkaya, The Duality", "X - Chrona, The Temporal", "XI - Nua, The Heavens",
+                           "XII - Rua, The Abyss", "XIII - Thana, The Death"]
+        paragon_list_t4 = ["II - Pandora, The Celestial", "XV - Diabla, The Primordial"]
+        paragon_list_t5 = ["III - Oblivia, The Void", "IV - Akasha, The Infinite"]
+        paragon_list_t6 = ["XXV - Eleuia, The Wish"]
         paragon_names = [paragon_list_t1, paragon_list_t2, paragon_list_t3, paragon_list_t4, paragon_list_t5,
                          paragon_list_t6]
 
         # Arbiter names
-        arbiter_list_t1 = [("XXII - Mysmir, Changeling of the True Laws", "")]
-        arbiter_list_t2 = [("XXIII - Avalon, Pathwalker of the True Laws", "")]
-        arbiter_list_t3 = [("XXIV - Isolde, Soulweaver of the True Laws", "")]
-        arbiter_list_t4 = [("XXVI - Vexia, Scribe of the True Laws", "")]
-        arbiter_list_t5 = [("XXVII - Kazyth, Lifeblood of the True Laws", "")]
-        arbiter_list_t6 = [("XXVIII - Fleur, Oracle of the True Laws", "")]
-        arbiter_list_t7 = [("XXIX - Yubelle, Adjudicator of the True Laws", "")]
+        arbiter_list_t1 = ["XXII - Mysmir, Changeling of the True Laws"]
+        arbiter_list_t2 = ["XXIII - Avalon, Pathwalker of the True Laws"]
+        arbiter_list_t3 = ["XXIV - Isolde, Soulweaver of the True Laws"]
+        arbiter_list_t4 = ["XXVI - Vexia, Scribe of the True Laws"]
+        arbiter_list_t5 = ["XXVII - Kazyth, Lifeblood of the True Laws"]
+        arbiter_list_t6 = ["XXVIII - Fleur, Oracle of the True Laws"]
+        arbiter_list_t7 = ["XXIX - Yubelle, Adjudicator of the True Laws"]
         arbiter_names = [arbiter_list_t1, arbiter_list_t2, arbiter_list_t3, arbiter_list_t4, arbiter_list_t5,
                          arbiter_list_t6, arbiter_list_t7]
 
@@ -142,9 +139,13 @@ class CurrentBoss:
 
         # Assign a random boss default values.
         target_list = all_names_dict[boss_type][(boss_tier - 1)] if boss_tier < 8 else incarnate_names
-        if boss_type not in ["Demon", "Dragon"]:
+        if boss_type in ["Paragon", "Arbiter"]:
+            self.boss_name = random.choice(target_list)
+            numeral = self.boss_name.split()[0]
+            self.boss_image = f'{gli.web_url}tarot/{numeral}/{numeral}_8.png'
+        elif boss_type not in ["Demon", "Dragon"]:
             self.boss_name, self.boss_image = random.choice(target_list)
-            self.boss_image = f'{url_base}{boss_type}/{boss_tier}.png' if self.boss_image == "" else f'{url_base}{boss_type}/{self.boss_image}.png'
+            self.boss_image = f'{gli.web_url}bosses/{boss_type}/{boss_tier}.png' if self.boss_image == "" else f'{gli.web_url}{boss_type}/{self.boss_image}.png'
         else:
             self.boss_name = random.choice(target_list)
         self.boss_element = 9
@@ -163,14 +164,14 @@ class CurrentBoss:
                 if boss_tier != 4:
                     self.boss_element = gli.element_names.index(boss_element)
                     self.boss_name += " Dragon"
-                self.boss_image = f'{url_base}{boss_type}/{gli.element_names[self.boss_element]}_Dragon.png'
+                self.boss_image = f'{gli.web_url}bosses/{boss_type}/{gli.element_names[self.boss_element]}_Dragon.png'
             case "Demon":
                 if boss_tier != 4:
                     self.boss_element = random.randint(0, 8)
                     boss_colour = demon_colours[self.boss_element]
                     if boss_colour not in ["Crimson", "Azure", "Jade", "Violet", "Gold"]:
                         self.boss_image = ""
-                    self.boss_image = f'{url_base}Demon/{boss_colour}/{self.boss_name}_{boss_colour}.png'
+                    self.boss_image = f'{gli.web_url}bosses/Demon/{boss_colour}/{self.boss_name}_{boss_colour}.png'
                     self.boss_name = f'{boss_colour} {self.boss_name}'
             case _:
                 pass

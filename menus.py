@@ -211,7 +211,7 @@ class CelestialView(discord.ui.View):
         name, value = f"{self.player_obj.player_username}'s Tarot Collection", f"Completion Total: {completion_count} / 31"
         embed_msg.add_field(name=name, value=value, inline=False)
         embed_msg.set_image(url=gli.planetarium_img)
-        await interaction.response.edit_message(embed=embed_msg, view=tarot.CollectionView(self.player_obj, 0))
+        await interaction.response.edit_message(embed=embed_msg, view=tarot.CollectionView(self.player_obj))
 
     @discord.ui.button(label="?????", style=discord.ButtonStyle.blurple, row=0)
     async def summon_callback(self, interaction: discord.Interaction, button: discord.Button):

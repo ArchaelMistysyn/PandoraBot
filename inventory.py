@@ -55,13 +55,14 @@ sell_value_by_tier = {0: 0, 1: 500, 2: 1000, 3: 2500, 4: 5000, 5: 10000, 6: 2500
 
 
 class BInventoryView(discord.ui.View):
-    def __init__(self, user):
+    def __init__(self, user, current_menu="Crafting", include_id=False):
         super().__init__(timeout=None)
         self.user = user
+        self.current_menu, self.include_id = current_menu, include_id
+        self.show_id.label = "Hide ID" if self.include_id else "Show ID"
 
     @discord.ui.select(
-        placeholder="Select Inventory Type!",
-        min_values=1, max_values=1,
+        placeholder="Select Inventory Type!", min_values=1, max_values=1,
         options=[
             discord.SelectOption(
                 emoji="<a:eenergy:1145534127349706772>", label="Crafting", description="Crafting Items"),
@@ -82,35 +83,45 @@ class BInventoryView(discord.ui.View):
             discord.SelectOption(
                 emoji="🐟", label="Fish", description="Fish Items"),
             discord.SelectOption(
-                emoji="<a:eenergy:1145534127349706772>", label="Ultra Rare", description="Unprocessed Items")])
+                emoji="<:Gemstone11:1243800661385023529>", label="Ultra Rare", description="Unprocessed Items")])
     async def inventory_callback(self, interaction: discord.Interaction, inventory_select: discord.ui.Select):
-        if interaction.user.id == self.user.discord_id:
-            inventory_title = f'{self.user.player_username}\'s {inventory_select.values[0]} Inventory:\n'
-            inv = display_binventory(self.user.player_id, inventory_select.values[0])
-            new_embed = discord.Embed(colour=discord.Colour.dark_orange(), title=inventory_title, description=inv)
-            await interaction.response.edit_message(embed=new_embed)
+        if interaction.user.id != self.user.discord_id:
+            return
+        self.current_menu = inventory_select.values[0]
+        title = f'{self.user.player_username}\'s {self.current_menu} Inventory:\n'
+        inv = display_binventory(self.user.player_id, self.current_menu, self.include_id)
+        new_view = BInventoryView(self.user, self.current_menu, self.include_id)
+        new_embed = discord.Embed(colour=discord.Colour.dark_orange(), title=title, description=inv)
+        await interaction.response.edit_message(embed=new_embed, view=new_view)
 
-    @discord.ui.button(label="Gear", style=discord.ButtonStyle.blurple, emoji="✅")
+    @discord.ui.button(label="Gear", style=discord.ButtonStyle.blurple, emoji="<:Sword5:1246945708939022367>")
     async def toggle_callback(self, interaction: discord.Interaction, button: discord.Button):
-        if interaction.user.id == self.user.discord_id:
-            new_view = CInventoryView(self.user)
-            inventory_title = f'{self.user.player_username}\'s Equipment:\n'
-            player_inventory = display_cinventory(self.user.player_id, "W")
-            new_embed = discord.Embed(colour=discord.Colour.dark_orange(),
-                                      title=inventory_title, description=player_inventory)
-            await interaction.response.edit_message(embed=new_embed, view=new_view)
+        if interaction.user.id != self.user.discord_id:
+            return
+        title = f'{self.user.player_username}\'s Equipment:\n'
+        player_inv = display_cinventory(self.user.player_id, "W")
+        new_embed = discord.Embed(colour=discord.Colour.dark_orange(), title=title, description=player_inv)
+        await interaction.response.edit_message(embed=new_embed, view=CInventoryView(self.user, self.include_id))
+
+    @discord.ui.button(label="Show ID", style=discord.ButtonStyle.blurple)
+    async def show_id(self, interaction: discord.Interaction, button: discord.Button):
+        if interaction.user.id != self.user.discord_id:
+            return
+        title = f'{self.user.player_username}\'s {self.current_menu} Inventory:\n'
+        self.include_id = True if not self.include_id else False
+        inv = display_binventory(self.user.player_id, self.current_menu, self.include_id)
+        new_view = BInventoryView(self.user, self.current_menu, self.include_id)
+        new_embed = discord.Embed(colour=discord.Colour.dark_orange(), title=title, description=inv)
+        await interaction.response.edit_message(embed=new_embed, view=new_view)
 
 
 class CInventoryView(discord.ui.View):
-    def __init__(self, user):
+    def __init__(self, user, include_id=False):
         super().__init__(timeout=None)
-        self.user = user
-        select_options = [
-            discord.SelectOption(
-                emoji="<a:eenergy:1145534127349706772>", label=custom_item_dict[key], value=reverse_item_loc_dict[value],
-                description=f"{custom_item_dict[key]} storage"
-            ) for key, value in list(item_loc_dict.items())
-        ]
+        self.user, self.include_id = user, include_id
+        select_options = [discord.SelectOption(
+            emoji="<a:eenergy:1145534127349706772>", label=custom_item_dict[key], value=reverse_item_loc_dict[value],
+            description=f"{custom_item_dict[key]} storage") for key, value in list(item_loc_dict.items())]
         self.select_menu = discord.ui.Select(
             placeholder="Select crafting base.", min_values=1, max_values=1, options=select_options)
         self.select_menu.callback = self.inventory_callback
@@ -121,23 +132,19 @@ class CInventoryView(discord.ui.View):
             return
         selected_item = interaction.data['values'][0]
         inventory_title = f'{self.user.player_username}\'s Inventory:\n'
-        player_inventory = display_cinventory(self.user.player_id, selected_item)
-        new_embed = discord.Embed(colour=discord.Colour.dark_orange(),
-                                  title=inventory_title, description=player_inventory)
+        player_inv = display_cinventory(self.user.player_id, selected_item)
+        new_embed = discord.Embed(colour=discord.Colour.dark_orange(), title=inventory_title, description=player_inv)
         await interaction.response.edit_message(embed=new_embed)
 
-    @discord.ui.button(label="Items", style=discord.ButtonStyle.blurple, emoji="✅")
+    @discord.ui.button(label="Items", style=discord.ButtonStyle.blurple)
     async def toggle_callback(self, interaction: discord.Interaction, button: discord.Button):
-        try:
-            if interaction.user.id == self.user.discord_id:
-                new_view = BInventoryView(self.user)
-                inventory_title = f'{self.user.player_username}\'s Inventory:\n'
-                player_inventory = display_binventory(self.user.player_id, "Crafting")
-                new_embed = discord.Embed(colour=discord.Colour.dark_orange(),
-                                          title=inventory_title, description=player_inventory)
-                await interaction.response.edit_message(embed=new_embed, view=new_view)
-        except Exception as e:
-            print(e)
+        if interaction.user.id != self.user.discord_id:
+            return
+        new_view = BInventoryView(self.user)
+        inventory_title = f'{self.user.player_username}\'s Inventory:\n'
+        player_inv = display_binventory(self.user.player_id, "Crafting", self.include_id)
+        new_embed = discord.Embed(colour=discord.Colour.dark_orange(), title=inventory_title, description=player_inv)
+        await interaction.response.edit_message(embed=new_embed, view=new_view)
 
 
 class CustomItem:
@@ -373,7 +380,6 @@ class CustomItem:
             gem_id = self.item_inlaid_gem_id if self.item_num_sockets == 1 else 0
             e_gem = await read_custom_item(gem_id)
             if e_gem is not None:
-                e_gem = await read_custom_item(gem_id)
                 display_stars += f" Socket: {gli.augment_icons[e_gem.item_tier - 1]} ({gem_id})"
                 gem_min, gem_max = e_gem.item_damage_min, e_gem.item_damage_max
             elif self.item_num_sockets != 0:
@@ -490,26 +496,50 @@ def get_item_shop_list(item_tier):
     return item_list
 
 
-async def read_custom_item(item_id, reloading=None):
-    raw_query = "SELECT * FROM CustomInventory WHERE item_id = :id_check"
-    df = rq(raw_query, return_value=True, params={'id_check': item_id})
-    if df is None or len(df.index) == 0:
+async def read_custom_item(item_id=None, reloading=None, fetch_equipped=None):
+    # Handle single item
+    if fetch_equipped is None:
+        raw_query = "SELECT * FROM CustomInventory WHERE item_id = :id_check"
+        df = rq(raw_query, return_value=True, params={'id_check': item_id})
+        if df is None or len(df.index) == 0:
+            return None
+        item = await assign_item_values(df.to_dict('records')[0])
+        if reloading is not None:  # Reloading is only supported for single item input at this time.
+            reloading.__dict__.update(item.__dict__)
+        return item
+
+    # Handle multiple items
+    id_list = [item_id if item_id != 0 else None for item_id in fetch_equipped]
+    query_id_list = [item_id for item_id in id_list if item_id is not None]
+    if not query_id_list:
         return None
-    base_type, item_tier = str(df['item_base_type'].values[0]), int(df['item_tier'].values[0])
-    item = CustomItem(int(df['player_id'].values[0]), str(df['item_type'].values[0]), item_tier, base_type=base_type)
-    item.item_id, item.item_name = int(df['item_id'].values[0]), str(df['item_name'].values[0])
-    temp_elements = list(df['item_elements'].values[0].split(';'))
-    item.item_elements, item.item_damage_type = list(map(int, temp_elements)), df['item_damage_type'].values[0]
-    item.item_enhancement = int(df['item_enhancement'].values[0])
-    item.item_quality_tier = int(df['item_quality_tier'].values[0])
-    item.roll_values = list(df['item_roll_values'].values[0].split(';'))
+    id_data = ', '.join([str(item_id) for item_id in query_id_list])
+    raw_query = f"SELECT * FROM CustomInventory WHERE item_id IN ({id_data})"
+    df = rq(raw_query, return_value=True)
+    if df is None or len(df.index) == 0:
+        return
+    equipped_items, item_list, count = [], [], 0
+    for row in df.to_dict('records'):
+        equipped_items.append(await assign_item_values(row))
+    item_iterable = iter(equipped_items)
+    item_list = [None if item_id is None else next(item_iterable) for item_id in id_list]
+    return item_list
+
+
+async def assign_item_values(row):
+    base_type, item_tier = str(row['item_base_type']), int(row['item_tier'])
+    item = CustomItem(int(row['player_id']), str(row['item_type']), item_tier, base_type=base_type)
+    item.item_id, item.item_name = int(row['item_id']), str(row['item_name'])
+    temp_elements = list(row['item_elements'].split(';'))
+    item.item_elements, item.item_damage_type = list(map(int, temp_elements)), row['item_damage_type']
+    item.item_enhancement = int(row['item_enhancement'])
+    item.item_quality_tier = int(row['item_quality_tier'])
+    item.roll_values = list(row['item_roll_values'].split(';'))
     item.item_num_rolls = len(item.roll_values)
-    item.item_base_stat, item.item_bonus_stat = float(df['item_base_stat'].values[0]), str(df['item_bonus_stat'].values[0])
-    item.base_damage_min, item.base_damage_max = int(df['item_base_dmg_min'].values[0]), int(df['item_base_dmg_max'].values[0])
-    item.item_num_sockets, item.item_inlaid_gem_id = int(df['item_num_sockets'].values[0]), int(df['item_inlaid_gem_id'].values[0])
+    item.item_base_stat, item.item_bonus_stat = float(row['item_base_stat']), str(row['item_bonus_stat'])
+    item.base_damage_min, item.base_damage_max = int(row['item_base_dmg_min']), int(row['item_base_dmg_max'])
+    item.item_num_sockets, item.item_inlaid_gem_id = int(row['item_num_sockets']), int(row['item_inlaid_gem_id'])
     item.update_damage()
-    if reloading is not None:
-        reloading.__dict__.update(item.__dict__)
     return item
 
 
@@ -591,7 +621,7 @@ def display_cinventory(player_id, item_type) -> str:
     return player_inventory
 
 
-def display_binventory(player_id, method):
+def display_binventory(player_id, method, include_id=False):
     regex_dict = {
         "Crafting": "^(Matrix|Hammer|Pearl)",
         "Cores": "^(Fae|Core|Crystal)",
@@ -622,7 +652,8 @@ def display_binventory(player_id, method):
                 continue
             inventory_list.append([current_item, str(row['item_qty'])])
     for item, quantity in inventory_list:
-        player_inventory += f"{item.item_emoji} {quantity}x {item.item_name}\n"
+        id_text = "" if not include_id else f" [**Item ID:** {item.item_id}]"
+        player_inventory += f"{item.item_emoji} {quantity}x {item.item_name}{id_text}\n"
     return player_inventory
 
 
@@ -730,11 +761,10 @@ async def purge(player_obj, item_type, tier):
     player_obj.get_equipped()
     exclusion_list = player_obj.player_equipped
     inlaid_gem_list = []
-    for x in exclusion_list:
-        if x != 0:
-            e_item = await inventory.read_custom_item(x)
-            if e_item.item_inlaid_gem_id != 0:
-                inlaid_gem_list.append(e_item.item_inlaid_gem_id)
+    item_list = await inventory.read_custom_item(fetch_equipped=exclusion_list)
+    for e_item in item_list:
+        if e_item.item_inlaid_gem_id != 0:
+            inlaid_gem_list.append(e_item.item_inlaid_gem_id)
     exclusion_list += inlaid_gem_list
     params = {'id_check': player_obj.player_id, 'tier_check': tier}
     exclusion_ids = ', '.join([str(item_id) for item_id in exclusion_list])

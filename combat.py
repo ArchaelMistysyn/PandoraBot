@@ -60,6 +60,7 @@ class CombatTracker:
     def __init__(self, player_obj):
         self.player_obj = player_obj
         self.player_cHP = player_obj.player_mHP
+        self.current_mana, self.mana_limit = self.player_obj.mana_limit, self.player_obj.mana_limit
         self.charges, self.remaining_hits = 0, 0
         self.total_dps, self.highest_damage = 0, 0.0
         self.recovery, self.hp_regen = player_obj.recovery, int(player_obj.hp_regen * player_obj.player_mHP)
@@ -203,6 +204,7 @@ async def hit_boss(tracker_obj, boss_obj, player_obj, combo_count, hit_type="Reg
     update_bleed(tracker_obj, player_obj)
     hit_damage, critical_type = await player_obj.get_player_boss_damage(boss_obj)
     damage, skill_name = skill_adjuster(player_obj, tracker_obj, hit_damage, combo_count, (hit_type == "Ultimate"))
+    damage, mana_msg = check_mana(player_obj, tracker_obj, damage)
     damage, status_msg = check_lock(player_obj, tracker_obj, damage)
     damage, second_msg = check_bloom(player_obj, damage)
     damage, extension = (boss_obj.damage_cap, " *LIMIT*") if damage >= boss_obj.damage_cap != -1 else (damage, "")
@@ -211,7 +213,7 @@ async def hit_boss(tracker_obj, boss_obj, player_obj, combo_count, hit_type="Reg
     hit_msg = f"{combo_count}x Combo: {skill_name} {sm.number_conversion(damage)}{extension}"
     if hit_type == "Ultimate":
         hit_msg = f"Ultimate: {skill_name} {sm.number_conversion(damage)}{extension}"
-    hit_msg += f"{status_msg}{second_msg}{critical_type}"
+    hit_msg += f"{mana_msg}{status_msg}{second_msg}{critical_type}"
     boss_obj.boss_cHP -= damage
     return [damage, hit_msg]
 
@@ -295,6 +297,14 @@ def check_bloom(player_obj, input_damage):
     return damage, status_msg
 
 
+def check_mana(player_obj, combat_tracker, damage):
+    if combat_tracker.current_mana > 0:
+        return "", damage
+    combat_tracker.current_mana = combat_tracker.mana_limit
+    damage *= player_obj.mana_mult
+    return " *MANA BURST*", damage
+
+
 def check_lock(player_obj, combat_tracker, damage):
     status_msg = ""
     # Create a new time lock.
@@ -372,6 +382,7 @@ def skill_adjuster(player_obj, combat_tracker, hit_damage, combo_count, is_ultim
         damage = int(hit_damage * combo_mult * ultimate_mult * (mult_dict[3] + player_obj.skill_damage_bonus[3]))
         return damage, skill_list[3]
     # Handle non-ultimates.
+    combat_tracker.current_mana -= combo_mult
     index = 0 if combo_count < 3 else 1 if combo_count < 5 else 2
     damage = int(hit_damage * combo_mult * (mult_dict[index] + player_obj.skill_damage_bonus[index]))
     if player_obj.unique_glyph_ability[3]:

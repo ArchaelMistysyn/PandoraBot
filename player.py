@@ -63,6 +63,7 @@ class PlayerProfile:
         self.temporal_app = 0
         self.elemental_capacity, self.elemental_app = 3, 0
         self.bleed_mult, self.bleed_penetration, self.bleed_app = 0.0, 0.0, 0
+        self.mana_mult, self.mana_limit, self.mana_app = 200, 250, 0
         self.combo_mult, self.combo_penetration, self.combo_application = 0.05, 0.0, 0
         self.ultimate_mult, self.ultimate_penetration, self.ultimate_app = 0.0, 0.0, 0
         self.perfect_crit, self.critical_chance, self.critical_multiplier = 0, 0.0, 1.0
@@ -160,7 +161,7 @@ class PlayerProfile:
                     section_string = f"\n{header}: "
                     for tag_index, (tag, value) in enumerate(zip(tag_list, value_list)):
                         extension = "%" if tag not in ["App", "Cap"] else ""
-                        section_string += f"({tag}: {value}{extension})"
+                        section_string += f"({tag}: {value:,}{extension})"
                         if (tag_index + 1) < len(tag_list):
                             section_string += " - "
                     return f"{section_string}"
@@ -188,6 +189,8 @@ class PlayerProfile:
                 stats += set_section("Time Details", ["Dmg", "App", "LCK"],
                                      [((self.temporal_app + 1) * 100), self.temporal_app,
                                      (self.temporal_app * 5 + show_num(self.spec_rate[4]))])
+                stats += set_section("Mana Details", ["Dmg", "App", "Lmt"],
+                                     [show_num(self.mana_mult), self.mana_app, self.mana_limit])
                 stats += set_section("Bloom Details", ["BLM", "Dmg"],
                                      [show_num(self.spec_rate[0]), show_num(self.bloom_multiplier)])
                 embed_msg.add_field(name=title_msg, value=stats, inline=False)
@@ -367,11 +370,9 @@ class PlayerProfile:
         base_player_hp = 1000 + 10 * self.player_level
 
         # Class Multipliers
-        class_multipliers = {
-            "Ranger": ["critical_app", 1], "Weaver": ["elemental_app", 2],
-            "Assassin": ["bleed_app", 1], "Mage": ["temporal_app", 1],
-            "Summoner": ["combo_application", 1], "Knight": ["ultimate_app", 1]
-        }
+        class_multipliers = {"Ranger": ["critical_app", 1], "Weaver": ["elemental_app", 2],
+                             "Assassin": ["bleed_app", 1], "Mage": ["mana_app", 1],
+                             "Summoner": ["combo_application", 1], "Knight": ["ultimate_app", 1]}
         if self.player_class in class_multipliers:
             setattr(self, class_multipliers[self.player_class][0], class_multipliers[self.player_class][1])
 
@@ -535,11 +536,11 @@ class PlayerProfile:
             rq(raw_query, params={'player_check': int(self.player_id), 'input_1': equipped_gear})
             return
         # Remove inlaid dragon gems
-        for item_id in [x for x in self.player_equipped if x != 0]:
-            e_item = await inventory.read_custom_item(item_id)
+        item_list = await inventory.read_custom_item(fetch_equipped=self.player_equipped)
+        for e_item in item_list:
             if selected_item.item_id == e_item.item_inlaid_gem_id:
                 e_item.item_inlaid_gem_id = 0
-                await e_item.update_stored_item()
+                await e_item.update_stored_item()  # BATCH_REQUIRED
 
     async def check_equipped(self, item):
         response = ""
@@ -549,8 +550,8 @@ class PlayerProfile:
         if item.item_id in self.player_equipped:
             return f"Item {item.item_id} is equipped."
         elif "D" in item.item_type:
-            for item_id in [x for x in self.player_equipped if x != 0]:
-                e_item = await inventory.read_custom_item(item_id)
+            item_list = await inventory.read_custom_item(None, fetch_equipped=self.player_equipped)
+            for e_item in item_list:
                 if item.item_id == e_item.item_inlaid_gem_id:
                     response = f"Dragon Heart Gem {item.item_id} is currently inlaid in item {e_item.item_id}."
         return response

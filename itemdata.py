@@ -13,16 +13,9 @@ def build_item_dict(input_dict, input_data, starting_index=1, category="Misc", u
 
 
 # Fae Data List
-fae_fire = "<:e1:1179726491311947829>"
-fae_water = "<:e2:1179726472995405854>"
-fae_lightning = "<:e3:1179726450056761364>"
-fae_earth = "<:e4:1179726402296221787>"
-fae_wind = "<:e5:1179726383224733706>"
-fae_ice = "<:e6:1179726426509946900>"
-fae_dark = "<:e7:1179726335678107698>"
-fae_light = "<:e8:1179726361049452554>"
-fae_celestial = "<:e9:1179726302480183396>"
-fae_emoji_list = [fae_fire, fae_water, fae_lightning, fae_earth, fae_wind, fae_ice, fae_dark, fae_light, fae_celestial]
+fae_emoji_list = ["<:Fae0:1249158371337306112>", "<:Fae1:1249158373925060759>", "<:Fae2:1249158374680166544>",
+                  "<:Fae3:1249158375543930911>", "<:Fae4:1249158376416346184>", "<:Fae5:1249158402706378813>",
+                  fae_dark, "<:Fae7:1249158403486519297>", "<:Fae8:1249158403952214087>"]
 fae_data = [[None, f'Fae Core ({element})', 100, 1, emoji,
              f'The core harvested from a {element.lower()} fae spirit. Brimming with elemental energies.', 500]
             for i, element, emoji in zip(range(9), gli.element_names, fae_emoji_list)]
@@ -190,7 +183,7 @@ unrefined_jewel_data = [[None, 'Unrefined Dragon Jewel', 75, 5, '<:Gem5:12422066
                          'Refine for 50% chance to receive a tier 5-8 demon jewel.', 0],
                         [None, 'Unrefined Paragon Jewel', 75, 5, '<:Gem5:1242206603441078363>',
                          'Refine for 50% chance to receive a tier 5-8 paragon jewel.', 0],
-                        [None, 'Unrefined Arbiter Jewel', 75, 7, '<:Gem7:1242206605211205662>',
+                        [None, 'Unrefined Arbiter Jewel', 75, 7, '<:Gem7:1248490896379478129>',
                          'Refine for 50% chance to receive a tier 6-8 arbiter jewel.', 0],
                         [None, 'Unrefined Incarnate Jewel', 75, 8, '<:Gem8:1242206660513108029>',
                          'Refine for 50% chance to receive a tier 7-8 incarnate jewel.', 0]]
@@ -321,7 +314,7 @@ uncategorized_data = [
      '5% Chance to add a socket to a gear item.', 5000],
     ['Chest', 'Chest', 100, 1, '<a:elootitem:1144477550379274322>', 'Contains a random item.', 50000],
     ['Shard', "Shard of Pandora's Hammer", 100, 7, '<a:elootitem:1144477550379274322>',
-     "One of many broken pieces of Pandora's Universe Hammer.", 50000],
+     "One of many broken pieces of Pandora's Universe Hammer.", 0],
     ['Scrap', 'Equipment Scrap', 100, 1, '<:Scrap:1243800038866686053>',
      "One of many countless pieces of Pandora's Legendary Hammer.", 0],
     ['Compass', 'Illusory Compass', 100, 6, '<:Compass:1243800035007922248>',

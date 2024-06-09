@@ -211,6 +211,7 @@ class PvPCog(commands.Cog):
         combo_count[attacker] += 1 + combatants[attacker].combo_application
         hit_damage, skill_name = combat.skill_adjuster(combatants[attacker], trackers[attacker], hit_damage,
                                                        combo_count[attacker], False)
+        hit_damage, mana_msg = combat.check_mana(combatants[attacker], trackers[attacker], hit_damage)
         hit_damage, status_msg = combat.check_lock(combatants[attacker], trackers[attacker], hit_damage)
         hit_damage, second_msg = combat.check_bloom(combatants[attacker], hit_damage)
         hit_damage, evade = combat.handle_evasions(combatants[defender].block, combatants[defender].dodge, hit_damage)
@@ -218,7 +219,7 @@ class PvPCog(commands.Cog):
             hit_damage *= random.randint(1, combatants[attacker].rng_bonus)
         scaled_dmg = combat.pvp_scale_damage(role_order, combatants, hit_damage)
         hit_msg = f"{combatants[attacker].player_username} - {combo_count[attacker]}x Combo: {skill_name} {sm.number_conversion(scaled_dmg)}"
-        hit_msg += f"{status_msg}{second_msg}{critical_type}{evade}"
+        hit_msg += f"{mana_msg}{status_msg}{second_msg}{critical_type}{evade}"
         hit_list.append([scaled_dmg, hit_msg])
         attack_counter[attacker] += player_interval[attacker]
         trackers[defender].player_cHP -= scaled_dmg
@@ -237,11 +238,12 @@ class PvPCog(commands.Cog):
         hit_damage, skill_name = combat.skill_adjuster(combatant[attacker], tracker[attacker], hit_damage,
                                                        combo_count[attacker], True)
         scaled_dmg = combat.pvp_scale_damage(role_order, combatant, hit_damage)
+        scaled_dmg, mana_msg = combat.check_mana(combatant[attacker], tracker[attacker], scaled_dmg)
         scaled_dmg, status_msg = combat.check_lock(combatant[attacker], tracker[attacker], scaled_dmg)
         scaled_dmg, second_msg = combat.check_bloom(combatant[attacker], scaled_dmg)
         scaled_dmg, evade = combat.handle_evasions(combatant[defender].block, combatant[defender].dodge, scaled_dmg)
         hit_msg = f"{combatant[attacker].player_username} - Ultimate: {skill_name} {sm.number_conversion(scaled_dmg)}"
-        hit_msg += f"{status_msg}{second_msg}{critical_type}{evade}"
+        hit_msg += f"{mana_msg}{status_msg}{second_msg}{critical_type}{evade}"
         hit_list.append([scaled_dmg, hit_msg])
         tracker[defender].player_cHP -= scaled_dmg
         if combatant[attacker].bleed_app >= 1:

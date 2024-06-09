@@ -257,6 +257,12 @@ def run_discord_bot():
             await encounters.startup_clear_automaps()
             await bosses.clear_boss_info(ctx.channel.id, "All")
             await ctx.send('Pandora Bot startup tasks completed!')
+        elif keyword == "Test":
+            title = ""
+            description = gli.t57_hpbar_empty[0]
+            print(description)
+            test_embed = discord.Embed(colour=discord.Colour.red(), title=title, description=description)
+            await ctx.send(embed=test_embed)
 
     @set_command_category('admin', 5)
     @pandora_bot.hybrid_command(name='shutdown', help="Admin shutdown command. Admin Only.")
@@ -665,21 +671,34 @@ def run_discord_bot():
     @set_command_category('gear', 3)
     @pandora_bot.hybrid_command(name='tarot', help="View your tarot collection.")
     @app_commands.guilds(discord.Object(id=guild_id))
-    async def tarot_collection(ctx, start_location: int = 0):
+    async def tarot_collection(ctx, specific_card_number: str = ""):
         await ctx.defer()
         player_obj = await sm.check_registration(ctx)
         if player_obj is None:
             return
-        if start_location not in range(0, 31):
-            await ctx.send("Please enter a valid start location from 0-30 or leave the start location blank.")
+        elif specific_card_number.isdigit():
+            card_num = int(specific_card_number)
+        elif specific_card_number == "":
+            card_num = None
+        else:
+            card_num = await tarot.get_index_by_key(specific_card_number)
+        if card_num is not None and card_num not in range(31):
+            await ctx.send("Please enter a valid number or numeral from 0-30. Blank input is accepted.")
             return
-        completion_count = await tarot.collection_check(player_obj)
+        if card_num is not None:
+            selected_numeral = tarot.get_key_by_index(card_num)
+            embed_msg = await tarot.tarot_menu_embed(player_obj, selected_numeral)
+            tarot_card = await tarot.check_tarot(player_obj.player_id, tarot.card_dict[selected_numeral][0])
+            tarot_view = tarot.TarotView(player_obj, card_num, tarot_card)
+            await ctx.send(embed=embed_msg, view=tarot_view)
+            return
         title, description = "Pandora, The Celestial", "Welcome to the planetarium. Sealed tarots are stored here."
         embed_msg = discord.Embed(colour=discord.Colour.magenta(), title=title, description=description)
+        completion_count = await tarot.collection_check(player_obj)
         name, value = f"{player_obj.player_username}'s Tarot Collection", f"Completion Total: {completion_count} / 31"
         embed_msg.add_field(name=name, value=value, inline=False)
         embed_msg.set_image(url=gli.planetarium_img)
-        tarot_view = tarot.CollectionView(player_obj, start_location)
+        tarot_view = tarot.CollectionView(player_obj)
         await ctx.send(embed=embed_msg, view=tarot_view)
 
     @set_command_category('gear', 4)
@@ -1215,7 +1234,7 @@ def run_discord_bot():
         embed_msg.add_field(name="__Programmers__", value=programmer_list.rstrip(), inline=False)
         embed_msg.add_field(name="__Testers__", value=tester_list.rstrip(), inline=False)
         embed_msg.add_field(name="__Misc__", value=misc_list.rstrip(), inline=False)
-        embed_msg.add_field(name="__Copyright__", value=copy_msg, inline=False)
+        embed_msg.set_footer(text=f"Copyright: {copy_msg}")
         embed_msg.set_thumbnail(url=gli.archdragon_logo)
         file_path = pilengine.build_title_box("Pandora Bot Credits")
         await ctx.send(file=discord.File(file_path))

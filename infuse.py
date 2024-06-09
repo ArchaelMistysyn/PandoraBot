@@ -26,10 +26,10 @@ recipe_dict = {
         "Twin Rings of Divergent Stars": [("DarkStar", 1), ("LightStar", 1), 100, "TwinRings"]},
     "Elemental Ring Infusion": {}, "Primordial Signet Infusion": {}, "Path Ring Infusion": {},
     "Legendary Ring Infusion": {
-        "Dragon's Eye Diamond": [("Gemstone9", 10), ("Gemstone10", 3), 100, "7"],
-        "Chromatic Tears": [("Gemstone10", 10), 100, "7"],
-        "Bleeding Hearts": [("Heart1", 99), ("Heart2", 99), ("Gemstone10", 3), 100, "7"],
-        "Gambler's Masterpiece": [("Gemstone10", 1), 1, "7"]},
+        "Dragon's Eye Diamond": [("Gemstone9", 15), ("Gemstone10", 3), 100, "7"],
+        "Chromatic Tears": [("Gemstone9", 5), ("Gemstone10", 10), 100, "7"],
+        "Bleeding Hearts": [("Gemstone9", 5), ("Heart1", 50), ("Heart2", 50), ("Gemstone10", 3), 100, "7"],
+        "Gambler's Masterpiece": [("Gemstone9", 1), ("Gemstone10", 1), 1, "7"]},
     "Sovereign Ring Infusion": {
         "Stygian Calamity": [("Gemstone11", 1), ("Crystal3", 10), ("Gemstone10", 5), ("Crystal4", 1), 100, "8"],
         "Heavenly Calamity": [("Gemstone11", 1), ("Ore5", 10), ("Gemstone10", 5), ("Crystal4", 1), 100, "8"],
@@ -100,8 +100,8 @@ path_rings = [
     ("Boundary Ring of Horizon", [(3, 5), (4, 5), (10, 2)]),
     ("Hidden Ring of Eclipse", [(6, 5), (7, 5), (10, 2)]),
     ("Cosmic Ring of Stars", [(8, 10), (10, 2)]),
-    ("Rainbow Ring of Confluence", [(0, 2), (1, 2), (2, 2), (3, 2), (4, 2), (5, 2), (6, 2), (7, 2), (8, 2), (11, 2)]),
-    ("Lonely Ring of Solitude", [(9, 10), (11, 1)])]
+    ("Rainbow Ring of Confluence", [(0, 2), (1, 2), (2, 2), (3, 2), (4, 2), (5, 2), (6, 2), (7, 2), (8, 2), (10, 2)]),
+    ("Lonely Ring of Solitude", [(9, 10), (10, 2)])]
 for ring_name, gemstones in path_rings:
     add_recipe("Path Ring Infusion", ring_name, [(f"Gemstone{idx}", qty) for idx, qty in gemstones] + [100, "6"])
 

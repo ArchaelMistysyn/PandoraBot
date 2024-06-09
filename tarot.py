@@ -64,6 +64,8 @@ card_type_dict = {
 # Key: [path, [description1, value1, reference1, location1], [description2, value2, reference2, location2]]
 card_stat_dict = {
                   # Application Cards
+                  "I": [5, ["Mana Application", 1, "mana_app", None],
+                        ["Mana Damage", 25, "mana_mult", 5]],
                   "X": [6, ["Temporal Application", 1, "temporal_app", None],
                         ["Ultimate Application", 1, "ultimate_app", None]],
                   "III": [4, ["Critical Application", 1, "critical_app", None],
@@ -73,8 +75,6 @@ card_stat_dict = {
                   # Lesser Path Cards
                   "XVII": [4, ["Celestial Damage", 25, "elemental_multiplier", 8],
                            ["Celestial Damage", 25, "elemental_multiplier", 8]],
-                  "I": [5, ["Fire Damage", 25, "elemental_multiplier", 0],
-                        ["Ice Damage", 25, "elemental_multiplier", 5]],
                   "V": [2, ["Bleed Penetration", 20, "bleed_penetration", 6],
                         ["Bleed Application", 1, "bleed_app", None]],
                   # Greater Path Cards
@@ -94,7 +94,7 @@ card_stat_dict = {
                   "XVI": [2, ["Earth Curse", 15, "elemental_curse", 3], ["Fortress Bane", 25, "banes", 0]],
                   "VII": [1, ["Celestial Curse", 15, "elemental_curse", 8], ["Dragon Bane", 25, "banes", 1]],
                   "VIII": [3, ["Lightning Curse", 15, "elemental_curse", 2], ["Demon Bane", 25, "banes", 2]],
-                  "0": [1, ["Paragon Bane", 25, "banes", 3], ["Paragon Bane", 25, "banes", 3]],
+                  "0": [1, ["Arbiter Bane", 25, "banes", 4], ["Paragon Bane", 25, "banes", 3]],
                   "VI": [4, ["Omni Damage", 25, "all_elemental_multiplier", None], ["Human Bane", 25, "banes", 5]],
                   # Solitude Cards
                   "IX": [6, ["Wind Penetration", 20, "elemental_penetration", 4],
@@ -198,28 +198,23 @@ class SearchCardView(discord.ui.View):
 
 
 class CollectionView(discord.ui.View):
-    def __init__(self, player_user, start_location):
+    def __init__(self, player_user):
         super().__init__(timeout=None)
         self.player_user = player_user
-        self.current_position = start_location
 
     @discord.ui.button(label="View Collection", style=discord.ButtonStyle.blurple)
     async def view_collection(self, interaction: discord.Interaction, button: discord.Button):
         if interaction.user.id == self.player_user.discord_id:
-            selected_numeral = get_key_by_index(self.current_position)
-            new_msg = await tarot_menu_embed(self.player_user, selected_numeral)
-            tarot = await check_tarot(self.player_user.player_id, card_dict[selected_numeral][0])
-            new_view = TarotView(self.player_user, self.current_position, tarot)
+            new_msg = await tarot_menu_embed(self.player_user, "0")
+            tarot = await check_tarot(self.player_user.player_id, card_dict["0"][0])
+            new_view = TarotView(self.player_user, 0, tarot)
             await interaction.response.edit_message(embed=new_msg, view=new_view)
 
     @discord.ui.button(label="Search Card", style=discord.ButtonStyle.blurple, emoji="🔎")
     async def search_collection(self, interaction: discord.Interaction, button: discord.Button):
-        try:
-            if interaction.user.id == self.player_user.discord_id:
-                new_view = SearchTierView(self.player_user)
-                await interaction.response.edit_message(view=new_view)
-        except Exception as e:
-            print(e)
+        if interaction.user.id == self.player_user.discord_id:
+            new_view = SearchTierView(self.player_user)
+            await interaction.response.edit_message(view=new_view)
 
 
 class TarotView(discord.ui.View):
@@ -500,6 +495,8 @@ async def tarot_menu_embed(player_obj, card_numeral):
 
 async def get_index_by_key(numeral):
     keys_list = list(card_dict.keys())
+    if numeral not in keys_list:
+        return -1
     key_index = keys_list.index(numeral)
     return key_index
 
