@@ -6,6 +6,7 @@ import random
 
 # Data imports
 import globalitems as gli
+import itemdata
 
 # Core imports
 import player
@@ -184,10 +185,10 @@ class TownView(discord.ui.View):
 
 
 class CelestialView(discord.ui.View):
-    def __init__(self, player_obj):
+    def __init__(self, player_obj, num_visits):
         super().__init__(timeout=None)
         self.player_obj = player_obj
-        self.num_visits = int(self.player_obj.check_misc_data("thana_visits"))
+        self.num_visits = num_visits
         if self.num_visits > 0:
             self.summon_callback.label = "Call Thana"
 
@@ -228,13 +229,13 @@ class CelestialView(discord.ui.View):
                            f"This skull belonged to a general of my fallen undead legion during the last paragon war. "
                            f"Their remains have been stolen and scattered. Return them to me and I shall reward you.\n")
             await inventory.update_stock(self.player_obj, item_obj.item_id, 1)
-            self.player_obj.update_misc_data("thana_visits", 1)
+            await self.player_obj.update_misc_data("thana_visits", 1)
             name = f"Heed my words human. I will not tolerate disobedience."
             value = (f"If you overestimate yourself and try to seal me, I will *KILL* you.\n"
                      f"If tell anyone I was here, I will *KILL* you.\n"
                      f"If you hurt my little sister, I will *KILL* you.\n")
         else:
-            player_deaths = int(self.player_obj.check_misc_data('deaths'))
+            player_deaths = await int(self.player_obj.check_misc_data('deaths'))
             description = (f"I will continue to revive your mortal body so long as you continue to aid me. "
                            f"Though, should you ever want to remain dead you are more than welcome to stay by my side. "
                            f"You've died {player_deaths} times you know. It'd save me quite the hassle. "
@@ -256,6 +257,29 @@ class DivineView(discord.ui.View):
     def __init__(self, player_obj):
         super().__init__(timeout=None)
         self.player_obj = player_obj
+        if self.player_obj.player_quest < 10:
+            self.changeling_callback.disabled, self.changeling_callback.style = True, gli.button_colour_list[3]
+            self.points_callback.disabled, self.points_callback.style = True, gli.button_colour_list[3]
+        if self.player_obj.player_quest < 20:
+            self.engrave_callback.disabled, self.engrave_callback.style = True, gli.button_colour_list[3]
+        if self.player_obj.player_quest < 46:
+            self.scribe_callback.disabled, self.scribe_callback.style = True, gli.button_colour_list[3]
+        if self.player_obj.player_quest < 48:
+            self.sanctuary_callback.disabled, self.sanctuary_callback.style = True, gli.button_colour_list[3]
+        if self.player_obj.player_quest < 51:
+            self.cathedral_callback.disabled, self.cathedral_callback.style = True, gli.button_colour_list[3]
+
+    @discord.ui.button(label="Mysmir", style=discord.ButtonStyle.blurple, row=0)
+    async def changeling_callback(self, interaction: discord.Interaction, button: discord.Button):
+        if interaction.user.id != self.player_obj.discord_id:
+            return
+        title = "Mysmir, Changeling of the True Laws"
+        token_obj, ore_obj = inventory.BasicItem("Token1"), inventory.BasicItem("Metamorphite")
+        token_stock = await inventory.check_stock(self.player_obj, token_obj.item_id)
+        embed_msg = await market.changeling_cost_msg(token_obj, token_stock, ore_obj)
+        new_view = market.ChangelingShopView(self.player_obj, token_obj, ore_obj)
+        embed_msg.set_image(url=gli.cathedral_img)
+        await interaction.response.edit_message(embed=embed_msg, view=new_view)
 
     @discord.ui.button(label="Avalon", style=discord.ButtonStyle.blurple, row=0)
     async def points_callback(self, interaction: discord.Interaction, button: discord.Button):
@@ -273,49 +297,46 @@ class DivineView(discord.ui.View):
         if self.player_obj.player_quest == 17:
             quest.assign_unique_tokens(self.player_obj, "Arbiter")
         title = "Isolde, Soulweaver of the True Laws"
-        if self.player_obj.player_quest < 20:
-            description = "You can't yet handle my threads. This is no place for the weak."
-            embed_msg = discord.Embed(colour=discord.Colour.dark_orange(), title=title, description=description)
-            await interaction.response.edit_message(embed=embed_msg)
-            return
         description = "You've come a long way from home child. Tell me, what kind of power do you seek?"
         embed_msg = discord.Embed(colour=discord.Colour.dark_orange(), title=title, description=description)
         await interaction.response.edit_message(embed=embed_msg, view=insignia.InsigniaView(self.player_obj))
 
-    @discord.ui.button(label="Vexia", style=discord.ButtonStyle.blurple, row=0)
+    @discord.ui.button(label="Vexia", style=discord.ButtonStyle.blurple, row=1)
     async def scribe_callback(self, interaction: discord.Interaction, button: discord.Button):
         if interaction.user.id != self.player_obj.discord_id:
             return
         e_weapon = await inventory.read_custom_item(self.player_obj.player_equipped[0])
         title = "Vexia, Scribe of the True Laws"
-        if self.player_obj.player_quest < 46:
-            denial_msg = "I have permitted your passage, but you are not yet qualified to speak with me. Begone."
-            embed_msg = discord.Embed(colour=discord.Colour.blurple(), title=title, description=denial_msg)
-            await interaction.response.edit_message(embed=embed_msg)
-            return
         entry_msg = ("You are the only recorded mortal to have entered the divine plane. "
                      "We are not your allies, but we will not treat you unfairly."
                      "\nThe oracle has already foretold your failure. Now it need only be written into truth.")
         embed_msg = discord.Embed(colour=discord.Colour.blurple(), title=title, description=entry_msg)
-        embed_msg.set_image(url=gli.forge_img)
+        embed_msg.set_image(url=gli.cathedral_img)
         await interaction.response.edit_message(embed=embed_msg, view=forge.SelectView(self.player_obj, "custom"))
 
-    @discord.ui.button(label="Fleur", style=discord.ButtonStyle.blurple, row=0)
+    @discord.ui.button(label="Fleur", style=discord.ButtonStyle.blurple, row=1)
     async def sanctuary_callback(self, interaction: discord.Interaction, button: discord.Button):
         if interaction.user.id != self.player_obj.discord_id:
             return
         title = "Fleur, Oracle of the True Laws"
-        if self.player_obj.player_quest < 48:
-            denial_msg = "The sanctuary radiates with divinity. Entry is impossible."
-            embed_msg = discord.Embed(colour=discord.Colour.blurple(), title="???", description=denial_msg)
-            await interaction.response.edit_message(embed=embed_msg)
-            return
         entry_msg = ("Have you come to desecrate my holy gardens once more? Well, I suppose it no longer matters, "
                      "I know you will inevitably find what you desire even without my guidance. "
                      "If you intend to sever the divine lotus, then I suppose the rest are nothing but pretty flowers.")
         embed_msg = discord.Embed(colour=discord.Colour.blurple(), title=title, description=entry_msg)
         embed_msg.set_image(url=gli.sanctuary_img)
         await interaction.response.edit_message(embed=embed_msg, view=market.LotusSelectView(self.player_obj))
+
+    @discord.ui.button(label="Yubelle", style=discord.ButtonStyle.blurple, row=1)
+    async def cathedral_callback(self, interaction: discord.Interaction, button: discord.Button):
+        if interaction.user.id != self.player_obj.discord_id:
+            return
+        title = "Yubelle, Adjudicator the True Laws"
+        entry_msg = ("You would still follow Pandora's path in her place? Very well, I am no longer in a position "
+                     "to object. I suppose such things do indeed fall within my purview.")
+        embed_msg = discord.Embed(colour=discord.Colour.blurple(), title=title, description=entry_msg)
+        embed_msg.set_image(url=gli.cathedral_img)
+        new_view = tarot.SearchTierView(self.player_obj, cathedral=True)
+        await interaction.response.edit_message(embed=embed_msg, view=new_view)
 
 
 async def add_skull_fields(player_obj, embed_msg, method="Return"):
@@ -470,7 +491,7 @@ class SkullsView(discord.ui.View):
     async def return_callback(self, interaction: discord.Interaction, button: discord.Button):
         if interaction.user.id != self.player_obj.discord_id:
             return
-        player_deaths = int(self.player_obj.check_misc_data('deaths'))
+        player_deaths = await int(self.player_obj.check_misc_data('deaths'))
         description = (f"I will continue to revive your mortal body so long as you continue to aid me. "
                        f"Though, should you ever want to remain dead you are more than welcome to stay by my side. "
                        f"You've died {player_deaths} times you know. It'd save me quite the hassle. "
@@ -786,7 +807,7 @@ class ManageCustomItemView(discord.ui.View):
 
 
 def create_error_embed(error_msg):
-    embed_msg = discord.Embed(colour=discord.Colour.dark_orange(), title="Error", description=error_msg)
+    embed_msg = discord.Embed(colour=discord.Colour.dark_red(), title="Error", description=error_msg)
     return embed_msg
 
 

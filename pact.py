@@ -64,7 +64,8 @@ def assign_pact_values(player_obj):
             player_obj.recovery *= 2
             player_obj.attack_speed = int(round(player_obj.attack_speed / 2)) if player_obj.attack_speed != 0 else 0
         case "Greed":
-            player_obj.spec_rate = [rate * 2 for rate in player_obj.spec_rate]
+            for key in ["Omega", "Hyperbleed", "Fractal", "Time Lock", "Bloom"]:
+                player_obj.trigger_rate[key] *= 2
             player_obj.charge_generation = int(round(player_obj.charge_generation / 2))
         case "Gluttony":
             player_obj.charge_generation *= 2
@@ -75,14 +76,14 @@ def assign_pact_values(player_obj):
             player_obj.player_mHP = int(round(player_obj.player_mHP / 2))
             player_obj.recovery = int(round(player_obj.recovery / 2)) if player_obj.recovery != 0 else 0
         case "Pride":
-            player_obj.singularity_damage *= 2
+            player_obj.singularity_mult *= 2
             player_obj.banes[5] *= 2
             player_obj.dodge = int(round(player_obj.dodge / 2)) if player_obj.dodge != 0 else 0
             player_obj.block = int(round(player_obj.block / 2)) if player_obj.block != 0 else 0
         case "Lust":
             player_obj.bleed_mult *= 2
             player_obj.class_multiplier *= 2
-            player_obj.singularity_damage = int(round(player_obj.singularity_damage / 2))
+            player_obj.singularity_mult = int(round(player_obj.singularity_mult / 2))
             player_obj.mana_mult = int(round(player_obj.mana_mult / 2))
         case _:
             pass

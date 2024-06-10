@@ -63,7 +63,7 @@ class Expedition:
 
     def take_damage(self, min_dmg, max_dmg, dmg_element, bypass_immortality=False):
         damage = random.randint(min_dmg, max_dmg) * self.tier
-        damage -= damage * (self.player_obj.elemental_resistance[dmg_element] if dmg_element != -1 else 0)
+        damage -= damage * (self.player_obj.elemental_res[dmg_element] if dmg_element != -1 else 0)
         damage = int(damage - damage * self.player_obj.damage_mitigation * 0.01)
         self.player_obj.player_cHP -= damage
         if self.player_obj.player_cHP < 0:
@@ -260,7 +260,7 @@ class AdventureRoomView(discord.ui.View):
 
         # Stored information
         self.room_element = self.expedition.room.room_element
-        self.player_resist = self.expedition.player_obj.elemental_resistance[self.room_element]
+        self.player_resist = self.expedition.player_obj.elemental_res[self.room_element]
         self.reward_items = [None, None, None]
 
         # Set room details
@@ -378,7 +378,7 @@ class AdventureRoomView(discord.ui.View):
                     self.new_view = None
                     await interaction_obj.response.edit_message(embed=self.embed, view=self.new_view)
                     self.embed.add_field(name=f"{embed_title} - Run Ended", value=wrath_msg, inline=False)
-                    self.expedition.player_obj.update_misc_data("deaths", 1)
+                    await self.expedition.player_obj.update_misc_data("deaths", 1)
                     return
                 # Handle Regular/Teleport
                 elif outcome in [0, 2]:
@@ -767,7 +767,7 @@ class AdventureRoomView(discord.ui.View):
         if active_room.room_type != "treasure":
             trap_msg = "You have fallen for the ultimate elder mimic's clever ruse!"
             self.embed.add_field(name="Eaten - Run Ended", value=trap_msg, inline=False)
-            self.expedition.player_obj.update_misc_data("deaths", 1)
+            await self.expedition.player_obj.update_misc_data("deaths", 1)
             self.expedition.player_obj.player_cHP = 0
             if await self.check_death(interaction_obj):
                 return
@@ -822,7 +822,7 @@ class AdventureRoomView(discord.ui.View):
             title_msg = "Slain"
         if self.expedition.player_obj.player_cHP > 0:
             return False
-        self.expedition.player_obj.update_misc_data("deaths", 1)
+        await self.expedition.player_obj.update_misc_data("deaths", 1)
         death_header, death_msg = "__Thana, The Death__", random.choice(adventuredata.death_msg_list)
         self.embed = discord.Embed(colour=self.expedition.colour, title=title_msg, description=result_msg)
         self.embed.add_field(name=death_header, value=death_msg, inline=False)
@@ -882,8 +882,8 @@ class AdventureRoomView(discord.ui.View):
         shrine_data = adventuredata.shrine_dict[boss_num]
         reward_2_id = f"Unrefined{boss_num}" if boss_num != 4 else f"Token{inventory.generate_random_tier(max_tier=7)}"
         self.reward_items = [inventory.BasicItem(f"Gem{boss_num}"), inventory.BasicItem(reward_2_id), None]
-        res_list = [player_obj.elemental_resistance[3], player_obj.elemental_resistance[4],
-                    player_obj.elemental_resistance[active_room.room_element]]
+        res_list = [player_obj.elemental_res[3], player_obj.elemental_res[4],
+                    player_obj.elemental_res[active_room.room_element]]
         selected_elements = [shrine_data[1], shrine_data[3], active_room.room_element]
         self.success_rates = [min(100, int(resistance * 100) + 5) for resistance in res_list]
         self.option1.label = f"Ritual of {shrine_data[0]} ({self.success_rates[0]}%)"
@@ -949,7 +949,7 @@ class ItemView(discord.ui.View):
     async def claim_callback(self, interaction: discord.Interaction, button: discord.Button):
         if await handle_map_interaction(self, interaction):
             return
-        self.item.item_id = inventory.add_custom_item(self.item)
+        self.item.item_id = await inventory.add_custom_item(self.item)
         self.new_view = TransitionView(self.expedition)
         if self.item.item_id == 0:
             self.embed = inventory.full_inventory_embed(self.item, self.expedition.colour)

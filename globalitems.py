@@ -67,6 +67,11 @@ global_element_list = ["<:e1:1179726491311947829>", "<:e2:1179726472995405854>",
                        "<:e4:1179726402296221787>", "<:e5:1179726383224733706>", "<:e6:1179726426509946900>",
                        "<:e7:1179726335678107698>", "<:e8:1179726361049452554>", "<:e9:1179726302480183396>"]
 omni_icon = "🌈"
+element_dict = {
+    'Fire': [0], 'Water': [1], 'Lightning': [2], 'Earth': [3], 'Wind': [4],
+    'Ice': [5], 'Shadow': [6], 'Light': [7], 'Celestial': [8],
+    'Storm': [1, 2], 'Frostfire': [0, 5], 'Eclipse': [7, 6], 'Horizon': [3, 4], 'Stars': [8],
+    'Chaos': [0, 6, 2, 3], 'Holy': [1, 7, 4, 5], 'Solar': [0, 7, 4]}
 
 # NAME LISTS
 # Path Names
@@ -81,11 +86,11 @@ boss_list = ["Fortress", "Dragon", "Demon", "Paragon", "Arbiter", "Incarnate"]
 
 # DATA STRUCTURES
 # Unique Ability Data
-rare_ability_dict = {"Overflow": ["elemental_app", 2], "Mastery": ["class_multiplier", 0.1],
-                     "Immortality": ["immortal", True], "Omega": ["critical_app", 1],
-                     "Combo": ["combo_application", 1], "Reaper": ["bleed_app", 1],
-                     "Overdrive": ["ultimate_app", 1], "Unravel": ["temporal_app", 1],
-                     "Vitality": ["hp_multiplier", 5], "Manatide": ["mana_app", 1]}
+rare_ability_dict = {"Overflow": ["Elemental", 2], "Mastery": ["class_multiplier", 0.1],
+                     "Immortality": ["immortal", True], "Omega": ["Critical", 1],
+                     "Combo": ["Combo", 1], "Reaper": ["Bleed", 1],
+                     "Overdrive": ["Ultimate", 1], "Unravel": ["Temporal", 1],
+                     "Vitality": ["hp_multiplier", 5], "Manatide": ["Mana", 1]}
 # Skill Names
 skill_names_dict = {
     "Knight": ["Destructive Cleave", "Merciless Blade", "Ruinous Slash", "Destiny Divider"],
@@ -100,57 +105,22 @@ skill_names_dict = {
 # ITEM LISTS
 crafting_gem = ["Blazing Ruby", "Drowned Sapphire", "Silent Topaz", "Ancient Agate", "Whispering Emerald",
                 "Arctic Zircon", "Haunted Obsidian", "Prismatic Opal", "Spatial Lapis", "Soul Diamond"]
-availability_list_nongear = ["Gemstone", "Misc"]
-availability_list = ["Sword", "Bow", "Threads", "Armour", "Wings", "Amulet", "Crest", "Greaves", "Gem", "Pact"]
+availability_list_nongear = ["Fae"]
+availability_list = ["Sword", "Saber", "Bow", "Threads", "Armour", "Wings", "Amulet", "Crest", "Greaves", "Gem", "Pact"]
 
 sovereign_item_list = ["Crown of Skulls", "Sacred Ring of Divergent Stars", "Hadal's Raindrop", "Heavenly Calamity",
-                       "Stygian Calamity", "Pandora's Universe Hammer", ""]
+                       "Stygian Calamity", "Pandora's Universe Hammer", "Solar Flare Blaster", "Bathyal, Chasm Bauble"]
+sovereign_batch_data = ', '.join([str(base_type) for base_type in sovereign_item_list])
 
-# Weapon lists
-weapon_list_low = [
-    [["Shortsword", "Javelin"], ["Sword", "Spear"], ["Longsword", "Longspear"], ["Greatsword", "Trident"]],
-    [["Shortbow"], ["Longbow"], ["Recurve Bow"], ["Greatbow"]],
-    [["Staff", "Tome"], ["Magic Staff", "Magic Tome"], ["Quarterstaff", "Grimoire"], ["Crescent Staff", "Spellbook"]],
-    [["Dagger", "Claws"], ["Stiletto", "Tiger Claws"], ["Kris", "Eagle Claws"], ["Sai", "Dragon Claws"]],
-    [["Steel String"], ["Cutting Wire"], ["Razor Threads"], ["Infused Threads"]],
-    [["Pegacorn", "Hatchling"],
-     ["Night Mare", "Wyvern"],
-     ["Unicorn", "Wyrm"],
-     ["Pegasus", "Couatl"]],
-    [["Roc", "Viper"],
-     ["Garuda", "Cobra"],
-     ["Gryphon", "Serpent"],
-     ["Horus", "Basilisk"]]
-]
-weapon_list_high = [
-    ["Saber", "Scythe"],
-    ["Bow", "Cannon"],
-    ["Rod", "Codex"],
-    ["Bloodletter", "Talons"],
-    ["Threads"],
-    ["Cerberus", "Dragon"],
-    ["Sky Manta", "Leviathan"]
-]
-# Build Category Dictionary
-category_names = {
-    0: {0: "Sword", 1: "Spear"},
-    1: {0: "Bow", 1: "Launcher"},
-    2: {0: "Staff", 1: "Tome"},
-    3: {0: "Dagger", 1: "Claws"},
-    4: {0: "Threads"},
-    5: {0: "Ground", 1: "Dragon"},
-    6: {0: "Flying", 1: "Serpent"}
-}
-gear_category_dict = {}
-for class_index, (low_type, high_type) in enumerate(zip(weapon_list_low, weapon_list_high)):
-    categories = category_names[class_index]
-    for tier_list in low_type:
-        for idx, item in enumerate(tier_list):
-            if idx in categories:
-                gear_category_dict[item] = categories[idx]
-    for idx, variant in enumerate(high_type):
-        if idx in categories:
-            gear_category_dict[variant] = categories[idx]
+# WEAPON LISTS
+# Class: [[tier 1-4 bases], [tier 1-8 bases], [tier 5-8 bases]]
+weapon_type_dict = {"Knight": [["Sword"], [], ["Saber", "Scythe"]],
+                    "Ranger": [[], ["Bow"], ["Blaster"]],
+                    "Assassin": [[], ["Dagger"], ["Claws"]],
+                    "Mage": [[], ["Rod"], ["Codex"]],
+                    "Weaver": [[], ["Threads"], []],
+                    "Rider": [["Hatchling", "Mare"], [], ["Dragon", "Pegasus"]],
+                    "Summoner": [["Serpent"], [], ["Basilisk", "Cerberus"]]}
 
 # Quality Map
 quality_damage_map = {

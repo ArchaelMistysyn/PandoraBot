@@ -82,12 +82,12 @@ async def run_cycle(tracker_obj, boss_obj, player_obj, method):
     if not player_alive:
         tracker_obj.hp_regen = 0
         battle_msg = f"{player_obj.player_username} has been felled!"
-        player_obj.update_misc_data("deaths", 1)
+        await player_obj.update_misc_data("deaths", 1)
         return hit_list, battle_msg, player_alive, boss_alive, total_damage
     # Step 3: Player takes action
     hit_list = await handle_player_actions(hit_list, tracker_obj, boss_obj, player_obj)
     # Step 4: Handle Cyclic DoT
-    if player_obj.bleed_app > 0:
+    if player_obj.appli["Bleed"] > 0:
         hit_list.append(await trigger_bleed(tracker_obj, player_obj, boss_obj=boss_obj))
     # Step 5: Compile final battle message and return results
     total_damage = sum(hit[0] for hit in hit_list)
@@ -154,7 +154,7 @@ def handle_boss_actions(boss_obj, tracker_obj, player_obj):
 async def handle_player_actions(hit_list, tracker_obj, boss_obj, player_obj):
     regen_value = tracker_obj.hp_regen if tracker_obj.player_cHP != 0 else 0
     tracker_obj.player_cHP = min(player_obj.player_mHP, regen_value + tracker_obj.player_cHP)
-    combo_count, hits_per_cycle = 1 + player_obj.combo_application, int(player_obj.attack_speed)
+    combo_count, hits_per_cycle = 1 + player_obj.appli["Combo"], int(player_obj.attack_speed)
     tracker_obj.remaining_hits += player_obj.attack_speed - hits_per_cycle
     while tracker_obj.remaining_hits >= 1:
         hits_per_cycle += 1
@@ -163,11 +163,11 @@ async def handle_player_actions(hit_list, tracker_obj, boss_obj, player_obj):
     for x in range(hits_per_cycle):
         hit_list.append(await hit_boss(tracker_obj, boss_obj, player_obj, combo_count))
         combo_count += 1
-        tracker_obj.charges += player_obj.ultimate_app
+        tracker_obj.charges += player_obj.appli["Ultimate"]
         # Handle Ultimate
         if tracker_obj.charges >= 20:
             hit_list.append(await hit_boss(tracker_obj, boss_obj, player_obj, combo_count, hit_type="Ultimate"))
-            if player_obj.bleed_app > 0:
+            if player_obj.appli["Bleed"] > 0:
                 hit_list.append(await trigger_bleed(tracker_obj, player_obj, hit_type="Ultimate", boss_obj=boss_obj))
         # Stop iterating if boss dies
         if not boss_obj.calculate_hp():
@@ -179,7 +179,7 @@ def take_combat_damage(player_obj, tracker_obj, damage_set, dmg_element, bypass_
     damage = random.randint(damage_set[0], damage_set[1])
     player_resist = 0
     if dmg_element != -1:
-        player_resist = player_obj.elemental_resistance[dmg_element]
+        player_resist = player_obj.elemental_res[dmg_element]
         if (tracker_obj.stun_status != "stunned" and random.randint(1, 100) <= 1 and
                 gli.element_status_list[dmg_element] is not None):
             tracker_obj.stun_status = gli.element_status_list[dmg_element]
@@ -221,14 +221,14 @@ async def hit_boss(tracker_obj, boss_obj, player_obj, combo_count, hit_type="Reg
 async def trigger_bleed(tracker_obj, player_obj, hit_type="Normal", boss_obj=None, pvp_data=None):
     bleed_dict = {1: "Single", 2: "Double", 3: "Triple", 4: "Quadra", 5: "Penta"}
     hit_multiplier, keyword = (1.5, "Sanguine") if hit_type == "Ultimate" else (0.75, "Blood")
-    count = "Zenith" if player_obj.bleed_app > 5 else bleed_dict[player_obj.bleed_app]
+    count = "Zenith" if player_obj.appli["Bleed"] > 5 else bleed_dict[player_obj.appli["Bleed"]]
     # Calculate damage
     damage = pvp_data[2] if pvp_data is not None else int(hit_multiplier * await player_obj.get_bleed_damage(boss_obj))
     damage *= tracker_obj.bleed_tracker
     damage, bleed_type = check_hyper_bleed(player_obj, damage)
-    damage = int(damage * (1 + player_obj.bleed_penetration))
+    damage = int(damage * (1 + player_obj.bleed_pen))
     # Handle application scaling
-    for b in range(player_obj.bleed_app):
+    for b in range(player_obj.appli["Bleed"]):
         damage += damage
     # Determine boss or pvp specific damage adjustments.
     if boss_obj is not None:
@@ -241,7 +241,7 @@ async def trigger_bleed(tracker_obj, player_obj, hit_type="Normal", boss_obj=Non
 
 
 def check_hyper_bleed(player_obj, bleed_damage):
-    hyper_bleed_rate = player_obj.bleed_app * 5 + int(round(player_obj.spec_rate[1] * 100))
+    hyper_bleed_rate = player_obj.appli["Bleed"] * 5 + int(round(player_obj.trigger_rate["Hyperbleed"] * 100))
     bleed_type = "BLEED"
     if random.randint(1, 100) <= hyper_bleed_rate:
         bleed_type = "HYPERBLEED"
@@ -250,9 +250,9 @@ def check_hyper_bleed(player_obj, bleed_damage):
 
 
 def update_bleed(tracker_obj, player_obj):
-    if player_obj.bleed_app <= 0:
+    if player_obj.appli["Bleed"] <= 0:
         return
-    tracker_obj.bleed_tracker += 0.05 * player_obj.bleed_app
+    tracker_obj.bleed_tracker += 0.05 * player_obj.appli["Bleed"]
     tracker_obj.bleed_tracker = min(1, tracker_obj.bleed_tracker)
 
 
@@ -286,13 +286,13 @@ async def run_raid_cycle(tracker_obj, boss_obj, player_obj):
 
 def check_bloom(player_obj, input_damage):
     damage, status_msg = input_damage, ""
-    if random.randint(1, 100) <= int(round(player_obj.spec_rate[0] * 100)):
-        damage, status_msg = int(damage * player_obj.bloom_multiplier), " *BLOOM*"
-        if random.randint(1, 100) <= int(round(player_obj.spec_conv[0] * 10)):
+    if random.randint(1, 100) <= int(round(player_obj.trigger_rate["Bloom"] * 100)):
+        damage, status_msg = int(damage * player_obj.bloom_mult), " *BLOOM*"
+        if random.randint(1, 100) <= int(round(player_obj.spec_conv["Sacred"] * 10)):
             damage, status_msg = damage * 10, " *SACRED BLOOM*"
-    elif random.randint(1, 100) <= int(round(player_obj.spec_conv[1] * 100)):
-        damage, status_msg = int(damage * player_obj.bloom_multiplier * 3), " *ABYSSAL BLOOM*"
-    elif random.randint(1, 100) <= int(round(player_obj.spec_conv[2] * 100)):
+    elif random.randint(1, 100) <= int(round(player_obj.spec_conv["Abyssal"] * 100)):
+        damage, status_msg = int(damage * player_obj.bloom_mult * 3), " *ABYSSAL BLOOM*"
+    elif random.randint(1, 100) <= int(round(player_obj.spec_conv["Calamity"] * 100)):
         damage, status_msg = int(damage * 9.99), " *CALAMITY*"
     return damage, status_msg
 
@@ -300,8 +300,13 @@ def check_bloom(player_obj, input_damage):
 def check_mana(player_obj, combat_tracker, damage):
     if combat_tracker.current_mana > 0:
         return "", damage
-    combat_tracker.current_mana = combat_tracker.mana_limit
-    damage *= player_obj.mana_mult
+    if not player_obj.mana_shatter:
+        combat_tracker.current_mana = combat_tracker.mana_limit
+    else:
+        combat_tracker.current_mana = max((combat_tracker.mana_limit * -1), combat_tracker.current_mana)
+        damage *= 1 + (player_obj.mana_mult + combat_tracker.current_mana * -1)
+        return " *MANA SHATTER*", damage
+    damage *= (1 + player_obj.mana_mult)
     return " *MANA BURST*", damage
 
 
@@ -309,10 +314,10 @@ def check_lock(player_obj, combat_tracker, damage):
     status_msg = ""
     # Create a new time lock.
     if combat_tracker.time_lock == 0:
-        lock_rate = 5 * player_obj.temporal_app + int(round(player_obj.spec_rate[4] * 100))
+        lock_rate = 5 * player_obj.appli["Temporal"] + int(round(player_obj.trigger_rate["Time Lock"] * 100))
         if random.randint(1, 100) > lock_rate:
             return damage, status_msg
-        combat_tracker.time_lock = player_obj.temporal_app + 1
+        combat_tracker.time_lock = player_obj.appli["Temporal"] + 1
         status_msg = " *TIME LOCK*"
     # Handle existing time lock.
     elif combat_tracker.time_lock > 0:
@@ -320,7 +325,7 @@ def check_lock(player_obj, combat_tracker, damage):
         combat_tracker.time_damage += damage
         # Trigger time shatter.
         if combat_tracker.time_lock == 0:
-            damage = combat_tracker.time_damage * (player_obj.temporal_app + 1)
+            damage = combat_tracker.time_damage * (player_obj.appli["Temporal"] + 1)
             combat_tracker.time_damage = 0
             return damage, " *TIME SHATTER*"
         damage, status_msg = 0, " *LOCKED*"
@@ -354,25 +359,25 @@ def boss_true_mitigation(boss_level):
 def critical_check(player_obj, player_damage, num_elements):
     critical_type, critical_roll = "", random.randint(1, 100)
     # Check for fractal type critical.
-    if critical_roll <= (player_obj.elemental_app * 5 + int(round(player_obj.spec_rate[3] * 100))):
+    if critical_roll <= (player_obj.appli["Elemental"] * 5 + int(round(player_obj.trigger_rate["Fractal"] * 100))):
         player_damage *= num_elements
         critical_type = " *FRACTAL*"
     # Check for regular critical.
-    elif critical_roll < player_obj.critical_chance:
-        player_damage *= (1 + player_obj.critical_multiplier)
+    elif critical_roll < player_obj.trigger_rate["Critical"]:
+        player_damage *= (1 + player_obj.critical_mult)
         critical_type = " *CRITICAL*"
         # Check for omega critical.
-        if random.randint(1, 100) <= player_obj.critical_app * 3 + int(round(player_obj.spec_rate[2] * 100)):
+        if random.randint(1, 100) <= player_obj.appli["Critical"] * 3 + int(round(player_obj.trigger_rate["Omega"] * 100)):
             critical_type = " *OMEGA CRITICAL*"
-            player_damage *= (1 + player_obj.critical_multiplier)
-        player_damage *= (1 + player_obj.critical_penetration)
+            player_damage *= (1 + player_obj.critical_mult)
+        player_damage *= (1 + player_obj.critical_pen)
     return player_damage, critical_type
 
 
 def skill_adjuster(player_obj, combat_tracker, hit_damage, combo_count, is_ultimate):
     mult_dict = {0: 0.5, 1: 0.75, 2: 1, 3: 2}
-    combo_mult = (1 + (player_obj.combo_mult * combo_count)) * (1 + player_obj.combo_penetration)
-    ultimate_mult = (1 + player_obj.ultimate_mult) * (1 + player_obj.ultimate_penetration)
+    combo_mult = (1 + (player_obj.combo_mult * combo_count)) * (1 + player_obj.combo_pen)
+    ultimate_mult = (1 + player_obj.ultimate_mult) * (1 + player_obj.ultimate_pen)
     skill_list = gli.skill_names_dict[player_obj.player_class]
     if player_obj.aqua_points >= 100:
         skill_list = ["Sea of Subjugation", "Ocean of Oppression", "Deluge of Domination", "Tides of Annihilation"]
@@ -399,9 +404,9 @@ def pvp_defences(attacker, defender, player_damage, e_weapon):
     highest = 0
     for idx, x in enumerate(temp_ele):
         if x == 1:
-            attacker.elemental_damage[idx] = adjusted_damage * (1 + attacker.elemental_multiplier[idx])
-            resist_multi = 1 - defender.elemental_resistance[idx]
-            penetration_multi = 1 + attacker.elemental_penetration[idx]
+            attacker.elemental_damage[idx] = adjusted_damage * (1 + attacker.elemental_mult[idx])
+            resist_multi = 1 - defender.elemental_res[idx]
+            penetration_multi = 1 + attacker.elemental_pen[idx]
             attacker.elemental_damage[idx] *= resist_multi * penetration_multi * attacker.elemental_conversion[idx]
             if attacker.elemental_damage[idx] > attacker.elemental_damage[highest]:
                 highest = idx
@@ -461,7 +466,7 @@ def limit_elements(player_obj, e_weapon):
         return temp_list
     for x, is_used in enumerate(temp_list):
         if is_used:
-            temp_total = player_obj.elemental_multiplier[x] * player_obj.elemental_penetration[x]
+            temp_total = player_obj.elemental_mult[x] * player_obj.elemental_pen[x]
             temp_total *= player_obj.elemental_curse[x]
             elemental_breakdown.append([x, temp_total])
     sorted_indices = sorted(elemental_breakdown, key=lambda e: e[1], reverse=True)

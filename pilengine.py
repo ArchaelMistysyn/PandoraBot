@@ -173,9 +173,7 @@ def generate_exp_bar(exp_bar_image, exp_bar_start, exp_bar_end, fill_percent):
     return exp_bar_result
 
 
-def generate_and_combine_gear(item_type, start_tier=1, end_tier=8, fetch_type=False):
-    if fetch_type:
-        item_type = gli.gear_category_dict[item_type]
+def generate_and_combine_gear(item_type, start_tier=1, end_tier=8):
     # Ensure image is currently available.
     if item_type not in gli.availability_list:
         return 0
@@ -221,8 +219,6 @@ def generate_and_combine_images():
         # Ensure image is currently available.
         temp_item = inventory.BasicItem(item_id)
         if temp_item.item_category not in gli.availability_list_nongear:
-            continue
-        if temp_item.item_category not in ["Fae"]:
             continue
         count += 1
         # Handle the urls and paths.

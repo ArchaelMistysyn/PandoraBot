@@ -11,7 +11,6 @@ import sys
 import random
 from datetime import datetime as dt, timedelta
 
-import globalitems
 # Data imports
 import globalitems as gli
 import sharedmethods as sm
@@ -62,6 +61,8 @@ with open("pandora_bot_token.txt", 'r') as token_file:
     for line in token_file:
         token_info = line
 TOKEN = token_info
+
+Mysmir_title = "Mysmir, Changeling of the True Laws"
 
 
 class PandoraBot(commands.Bot):
@@ -231,11 +232,15 @@ def run_discord_bot():
             await ctx.send(f"Admin leaderboard task completed.")
         elif keyword == "MergeGear":
             count = 0
-            for (_, low_types), high_types in zip(gli.category_names.items(), gli.weapon_list_high):
-                for _, name in low_types.items():
-                    count += pilengine.generate_and_combine_gear(name, end_tier=4)
-                for name in high_types:
-                    count += pilengine.generate_and_combine_gear(name, start_tier=5, fetch_type=True)
+            for class_name, (low_base, both_tiers, high_tiers) in gli.weapon_type_dict.items():
+                for item_type in low_base:
+                    count += pilengine.generate_and_combine_gear(item_type, start_tier=1, end_tier=4)
+                for item_type in both_tiers:
+                    count += pilengine.generate_and_combine_gear(item_type, start_tier=1, end_tier=8)
+                for item_type in high_tiers:
+                    count += pilengine.generate_and_combine_gear(item_type, start_tier=5, end_tier=8)
+            for item_type in gli.sovereign_item_list:
+                count += pilengine.generate_and_combine_gear(item_type, start_tier=8, end_tier=8)
             non_weapon_list = ["Armour", "Greaves", "Amulet", "Wings", "Crest", "Gem", "Pact"]
             for gear_type in non_weapon_list:
                 count += pilengine.generate_and_combine_gear(gear_type)
@@ -565,7 +570,8 @@ def run_discord_bot():
         player_obj = await sm.check_registration(ctx)
         if player_obj is None:
             return
-        location_view = menus.CelestialView(player_obj)
+        num_visits = await int(player_obj.check_misc_data("thana_visits"))
+        location_view = menus.CelestialView(player_obj, num_visits)
         title, description = "Celestial Realm", "Pandora's domain and home to her celestial forge."
         embed_msg = discord.Embed(colour=discord.Colour.dark_purple(), title=title, description=description)
         embed_msg.set_image(url="")
@@ -581,8 +587,13 @@ def run_discord_bot():
             return
         location_view = menus.DivineView(player_obj)
         title, description = "Divine Plane", "You are permitted to visit the higher plane by the grace of the arbiters."
-        embed_msg = discord.Embed(colour=discord.Colour.gold(), title=title, description=description)
+        embed_msg = discord.Embed(colour=discord.Colour.gold(), title=title, description="")
         embed_msg.set_image(url="")
+        if player_obj.player_quest < 10:
+            description = "You are unable to enter the divine plane in your current state."
+            location_view = None
+            embed_msg.set_image(url="")
+        embed_msg.description=description
         await ctx.send(embed=embed_msg, view=location_view)
 
     # Gear commands
@@ -616,11 +627,10 @@ def run_discord_bot():
         player_obj = await sm.check_registration(ctx)
         if player_obj is None:
             return
-        inventory_view = inventory.BInventoryView(player_obj)
-        inv_title = f'{player_obj.player_username}\'s Crafting Inventory:\n'
-        player_inventory = inventory.display_binventory(player_obj.player_id, "Crafting")
-        embed_msg = discord.Embed(colour=discord.Colour.dark_orange(), title=inv_title, description=player_inventory)
-        await ctx.send(embed=embed_msg, view=inventory_view)
+        view_type = int(await player_obj.check_misc_data("toggle_inv"))
+        inventory_view = inventory.BInventoryView(player_obj, "Crafting", view_type)
+        content, embed = await inventory.display_binventory(player_obj, "Crafting", view_type)
+        await ctx.send(content=content, embed=embed, view=inventory_view)
 
     @set_command_category('gear', 2)
     @pandora_bot.hybrid_command(name='display', help="Display a specific item.")
@@ -630,9 +640,8 @@ def run_discord_bot():
         player_obj = await sm.check_registration(ctx)
         if player_obj is None:
             return
-        # Assign default outputs.
-        embed_msg = discord.Embed(colour=discord.Colour.dark_orange(),
-                                  title="An item with this ID does not exist.", description=f"Inputted ID: {item_id}")
+        title, description = "An item with this ID does not exist.", f"Inputted ID: {item_id}"
+        embed_msg = discord.Embed(colour=discord.Colour.dark_orange(), title=title, description=description)
         if item_id.isnumeric():
             gear_id = int(item_id)
             # Check the item exists
@@ -1156,8 +1165,7 @@ def run_discord_bot():
             return
         stock = await inventory.check_stock(player_obj, "Token1")
         description = f"Bring me enough tokens and even you can be rewritten.\n{stock} / 50"
-        embed_msg = discord.Embed(colour=discord.Colour.dark_orange(),
-                                  title="Mysmir, Changeling of the True Laws", description=description)
+        embed_msg = discord.Embed(colour=discord.Colour.green(), title=Mysmir_title, description=description)
         new_view = menus.ClassChangeView(player_obj)
         await ctx.send(embed=embed_msg, view=new_view)
 
@@ -1169,8 +1177,7 @@ def run_discord_bot():
         player_obj = await sm.check_registration(ctx)
         if player_obj is None:
             return
-        Mysmir_title = "Mysmir, Changeling of the True Laws"
-        embed_msg = discord.Embed(colour=discord.Colour.dark_orange(), title=Mysmir_title, description="")
+        embed_msg = discord.Embed(colour=discord.Colour.green(), title=Mysmir_title, description="")
         if not new_username.isalpha():
             embed_msg.description = "This name is unacceptable. I refuse."
             await ctx.send(embed=embed_msg)

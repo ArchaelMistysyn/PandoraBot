@@ -15,7 +15,7 @@ def build_item_dict(input_dict, input_data, starting_index=1, category="Misc", u
 # Fae Data List
 fae_emoji_list = ["<:Fae0:1249158371337306112>", "<:Fae1:1249158373925060759>", "<:Fae2:1249158374680166544>",
                   "<:Fae3:1249158375543930911>", "<:Fae4:1249158376416346184>", "<:Fae5:1249158402706378813>",
-                  fae_dark, "<:Fae7:1249158403486519297>", "<:Fae8:1249158403952214087>"]
+                  "<:Fae6:1249230107537838101>", "<:Fae7:1249158403486519297>", "<:Fae8:1249158403952214087>"]
 fae_data = [[None, f'Fae Core ({element})', 100, 1, emoji,
              f'The core harvested from a {element.lower()} fae spirit. Brimming with elemental energies.', 500]
             for i, element, emoji in zip(range(9), gli.element_names, fae_emoji_list)]

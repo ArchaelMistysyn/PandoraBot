@@ -65,15 +65,16 @@ def get_thumbnail_by_class(class_name):
 
 def get_gear_thumbnail(item):
     tag_dict = {"A": "Armour", "V": "Greaves", "Y": "Amulet", "R": "Ring", "G": "Wings", "C": "Crest"}
-    item_tag = item.item_base_type
-    if item.item_type == "W":
-        item_tag = gli.gear_category_dict[item.item_base_type]
-    else:
+    folder = item_tag = item.item_base_type
+    if item.item_type == "W" and item.item_base_type in gli.sovereign_item_list:
+        folder = "Sovereign"
+    elif item.item_type != "W":
         item_tag = "Gem" if "D" in item.item_type else tag_dict[item.item_type]
+        folder = item_tag
     # Ensure image is currently available.
     if item_tag not in gli.availability_list:
         return None
-    return f"https://kyleportfolio.ca/botimages/GearIcon/{item_tag}/Frame_{item_tag}_{item.item_tier}.png"
+    return f"https://kyleportfolio.ca/botimages/GearIcon/{folder}/Frame_{item_tag}_{item.item_tier}.png"
 
 
 def get_gear_tier_colours(base_tier):
@@ -164,11 +165,9 @@ def hide_text(msg, method="Enigma"):
         elif method == "Shrouded":
             return '?' if char.isalnum() and random.random() > 0.5 else char
         return char
-
     parts = re.split(r'(<[^>]+>)', msg)
     adjusted = [part if part.startswith('<') and part.endswith('>') else re.sub(r'\w', enigma_transform, part)
                 for part in parts]
-
     return ''.join(adjusted)
 
 

@@ -195,9 +195,9 @@ class PvPCog(commands.Cog):
         combatants, trackers = [self.player1, self.player2], [self.combat_tracker1, self.combat_tracker2]
         while attack_counter[0] <= 60 or attack_counter[1] <= 60:
             await self.handle_pvp_attack(combatants, trackers, combo_count, attack_counter, player_interval, hit_list)
-        if self.player1.bleed_app >= 1:
+        if self.player1.appli["Bleed"] >= 1:
             await self.handle_pvp_bleed([0, 1], combatants, trackers, hit_list, False)
-        if self.player1.bleed_app >= 1:
+        if self.player1.appli["Bleed"] >= 1:
             await self.handle_pvp_bleed([1, 0], combatants, trackers, hit_list, False)
         return stun_list, hit_list, self.combat_tracker1.player_cHP > 0, self.combat_tracker2.player_cHP > 0
 
@@ -208,7 +208,7 @@ class PvPCog(commands.Cog):
         if stun_status is not None:
             trackers[defender].stun_status = stun_status
             trackers[defender].stun_cycles += 1
-        combo_count[attacker] += 1 + combatants[attacker].combo_application
+        combo_count[attacker] += 1 + combatants[attacker].appli["Combo"]
         hit_damage, skill_name = combat.skill_adjuster(combatants[attacker], trackers[attacker], hit_damage,
                                                        combo_count[attacker], False)
         hit_damage, mana_msg = combat.check_mana(combatants[attacker], trackers[attacker], hit_damage)
@@ -234,7 +234,7 @@ class PvPCog(commands.Cog):
         if stun_status is not None:
             tracker[defender].stun_status = stun_status
             tracker[defender].stun_cycles += 1
-        combo_count[attacker] += 1 + combatant[attacker].combo_application
+        combo_count[attacker] += 1 + combatant[attacker].appli["Combo"]
         hit_damage, skill_name = combat.skill_adjuster(combatant[attacker], tracker[attacker], hit_damage,
                                                        combo_count[attacker], True)
         scaled_dmg = combat.pvp_scale_damage(role_order, combatant, hit_damage)
@@ -246,7 +246,7 @@ class PvPCog(commands.Cog):
         hit_msg += f"{mana_msg}{status_msg}{second_msg}{critical_type}{evade}"
         hit_list.append([scaled_dmg, hit_msg])
         tracker[defender].player_cHP -= scaled_dmg
-        if combatant[attacker].bleed_app >= 1:
+        if combatant[attacker].appli["Bleed"] >= 1:
             await self.handle_pvp_bleed(role_order, combatant, tracker, hit_list, True)
 
     async def handle_pvp_bleed(self, role_order, combatant, tracker, hit_list, is_ultimate):
@@ -360,7 +360,7 @@ class MapCog(commands.Cog):
         await asyncio.sleep(60)
         # Damage Handling
         base_damage = random.randint(1000 * self.map_tier, 2000 * self.map_tier) * adjust
-        damage = base_damage - base_damage * (self.player_obj.elemental_resistance[dmg_element] if dmg_element != -1 else 0)
+        damage = base_damage - base_damage * (self.player_obj.elemental_res[dmg_element] if dmg_element != -1 else 0)
         damage = int(damage - damage * self.player_obj.damage_mitigation * 0.01)
         self.player_cHP -= damage
         self.player_cHP = 1 if self.player_cHP <= 0 and adjust < 3 else max(0, self.player_cHP)

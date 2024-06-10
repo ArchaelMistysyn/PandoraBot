@@ -42,6 +42,10 @@ class BazaarView(discord.ui.View):
     async def class_filter(self, interaction: discord.Interaction, button: discord.Button):
         await self.handle_sort_and_filter(interaction, filter_type="Class")
 
+    @discord.ui.button(label="Filter: Sovereign", style=discord.ButtonStyle.blurple, row=2)
+    async def sovereign_filter(self, interaction: discord.Interaction, button: discord.Button):
+        await self.handle_sort_and_filter(interaction, filter_type="Sovereign")
+
 
 def check_num_listings(player_obj):
     raw_query = "SELECT * FROM CustomBazaar WHERE seller_id = :id_check"
@@ -74,7 +78,8 @@ async def retrieve_items(player_id):
 async def show_bazaar_items(player_obj, sort_type="Tier", filter_type=""):
     sort_dict = {"Cost": " ORDER BY CustomBazaar.cost DESC",
                  "Tier": " ORDER BY CustomInventory.item_tier DESC, CustomInventory.item_base_dmg_max DESC"}
-    filter_dict = {"Class": f" WHERE CustomInventory.item_damage_type = '{player_obj.player_class}' "}
+    filter_dict = {"Class": f" WHERE CustomInventory.item_damage_type = '{player_obj.player_class}' ",
+                   "Sovereign": f" WHERE CustomInventory.item_base_type IN ({gli.sovereign_batch_data}) "}
     if sort_type in sort_dict:
         sort_type = sort_dict[sort_type]
     if filter_type in filter_dict:
@@ -84,10 +89,8 @@ async def show_bazaar_items(player_obj, sort_type="Tier", filter_type=""):
                  f"CustomInventory.item_damage_type, CustomInventory.item_elements, "
                  f"CustomInventory.item_tier, CustomInventory.item_bonus_stat, "
                  f"CustomInventory.item_base_dmg_min, CustomInventory.item_base_dmg_max "
-                 f"FROM CustomBazaar "
-                 f"INNER JOIN CustomInventory ON CustomBazaar.item_id = CustomInventory.item_id"
-                 f"{filter_type}"
-                 f"{sort_type}")
+                 f"FROM CustomBazaar INNER JOIN CustomInventory ON CustomBazaar.item_id = CustomInventory.item_id"
+                 f"{filter_type}{sort_type}")
     df = rq(raw_query, return_value=True)
     bazaar_embed = discord.Embed(colour=discord.Colour.dark_orange(), title="The Bazaar", description="Open Marketplace")
     if df is None or len(df.index) == 0:

@@ -231,6 +231,36 @@ class PurchaseView(discord.ui.View):
         await interaction.response.edit_message(embed=embed_msg, view=new_view)
 
 
+class ChangelingShopView(discord.ui.View):
+    def __init__(self, player_obj, token_obj, ore_obj):
+        super().__init__(timeout=None)
+        self.player_obj = player_obj
+        self.token_obj, self.ore_obj = token_obj, ore_obj
+        self.embed_msg = None
+
+    @discord.ui.button(label="Exchange", style=discord.ButtonStyle.success)
+    async def exchange(self, interaction: discord.Interaction, button: discord.Button):
+        if interaction.user.id != self.player_obj.discord_id:
+            return
+        token_stock = await inventory.check_stock(self.player_obj, self.token_obj.item_id)
+        new_view = ChangelingShopView(self.player_obj, self.token_obj, self.ore_obj)
+        if self.embed_msg is not None:
+            await interaction.response.edit_message(embed=self.embed_msg, view=None)
+            return
+        if token_stock < 10:
+            temp_embed = await changeling_cost_msg(self.token_obj, token_stock, self.ore_obj)
+            cost_msg = "It seems you're not prepared. I'll be waiting."
+            temp_embed.add_field(name="Insufficient Tokens", value=cost_msg, inline=False)
+            await interaction.response.edit_message(embed=temp_embed, view=new_view)
+            return
+        self.embed_msg = await changeling_cost_msg(self.token_obj, token_stock - 10, self.ore_obj)
+        acquisition_msg = f"{self.ore_obj.item_emoji} 1x {self.ore_obj.item_name} acquired"
+        self.embed_msg.add_field(name="", value=acquisition_msg, inline=False)
+        await inventory.update_stock(self.player_obj, self.token_obj.item_id, -10)
+        await inventory.update_stock(self.player_obj, self.ore_obj.item_id, 1)
+        await interaction.response.edit_message(embed=self.embed_msg, view=new_view)
+
+
 class LotusSelectView(discord.ui.View):
     def __init__(self, player_obj):
         super().__init__(timeout=None)
@@ -379,6 +409,17 @@ async def cathedral_cost_msg(token_obj, token_stock, essence_obj):
     temp_embed = discord.Embed(colour=discord.Colour.blurple(), title=Yubelle, description="")
     msg = f"I should have some traces of this particular essence.\n{essence_obj.item_emoji} {essence_obj.item_name}"
     cost_msg = f"{token_stock} / {essence_obj.item_tier} {token_obj.item_emoji} {token_obj.item_name}"
+    temp_embed.description = msg
+    temp_embed.add_field(name="Offering", value=cost_msg, inline=False)
+    return temp_embed
+
+
+async def changeling_cost_msg(token_obj, token_stock, ore_obj):
+    Mysmir = "Mysmir, Changeling of the True Laws"
+    temp_embed = discord.Embed(colour=discord.Colour.blurple(), title=Mysmir, description="")
+    msg = (f"All things are malleable. One simply requires the right materials. "
+           f"Shall I give you the {ore_obj.item_emoji} {ore_obj.item_name} that you seek?")
+    cost_msg = f"{token_stock} / 10 {token_obj.item_emoji} {token_obj.item_name}"
     temp_embed.description = msg
     temp_embed.add_field(name="Offering", value=cost_msg, inline=False)
     return temp_embed

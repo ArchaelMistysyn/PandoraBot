@@ -25,7 +25,6 @@ from ringdata import ring_element_dict as red
 import sovereignweapon as sw
 import tarot
 
-
 # Inventory Dictionaries.
 custom_item_dict = {"W": "Weapon", "A": "Armour", "V": "Greaves", "Y": "Amulet",
                     "R": "Ring", "G": "Wings", "C": "Crest", "D": "Gems",
@@ -48,18 +47,18 @@ wing_base_dict = {1: "Webbed Wings", 2: "Feathered Wings", 3: "Mystical Wings", 
                   5: "Rift Wings", 6: "Wonderous Wings", 7: "Bone Wings", 8: "Ethereal Wings"}
 crest_base_list = ["Halo", "Horns", "Crown", "Tiara"]
 
-
 # Misc Data.
 gem_point_dict = {1: 1, 2: 2, 3: 3, 4: 4, 5: 6, 6: 8, 7: 10, 8: 15}
 sell_value_by_tier = {0: 0, 1: 500, 2: 1000, 3: 2500, 4: 5000, 5: 10000, 6: 25000, 7: 50000, 8: 100000}
 
 
 class BInventoryView(discord.ui.View):
-    def __init__(self, user, current_menu="Crafting", include_id=False):
+    def __init__(self, player_obj, current_menu, view_type, include_id=False):
         super().__init__(timeout=None)
-        self.user = user
-        self.current_menu, self.include_id = current_menu, include_id
+        self.player_obj = player_obj
+        self.current_menu, self.view_type, self.include_id = current_menu, view_type, include_id
         self.show_id.label = "Hide ID" if self.include_id else "Show ID"
+        self.toggle_view.label = "Basic View" if view_type == 0 else "Embed View"
 
     @discord.ui.select(
         placeholder="Select Inventory Type!", min_values=1, max_values=1,
@@ -85,40 +84,49 @@ class BInventoryView(discord.ui.View):
             discord.SelectOption(
                 emoji="<:Gemstone11:1243800661385023529>", label="Ultra Rare", description="Unprocessed Items")])
     async def inventory_callback(self, interaction: discord.Interaction, inventory_select: discord.ui.Select):
-        if interaction.user.id != self.user.discord_id:
+        if interaction.user.id != self.player_obj.discord_id:
             return
         self.current_menu = inventory_select.values[0]
-        title = f'{self.user.player_username}\'s {self.current_menu} Inventory:\n'
-        inv = display_binventory(self.user.player_id, self.current_menu, self.include_id)
-        new_view = BInventoryView(self.user, self.current_menu, self.include_id)
-        new_embed = discord.Embed(colour=discord.Colour.dark_orange(), title=title, description=inv)
-        await interaction.response.edit_message(embed=new_embed, view=new_view)
+        self.view_type = int(await self.player_obj.check_misc_data("toggle_inv"))
+        content, embed = await display_binventory(self.player_obj, self.current_menu, self.view_type, self.include_id)
+        new_view = BInventoryView(self.player_obj, self.current_menu, self.view_type, self.include_id)
+        await interaction.response.edit_message(content=content, embed=embed, view=new_view)
 
     @discord.ui.button(label="Gear", style=discord.ButtonStyle.blurple, emoji="<:Sword5:1246945708939022367>")
     async def toggle_callback(self, interaction: discord.Interaction, button: discord.Button):
-        if interaction.user.id != self.user.discord_id:
+        if interaction.user.id != self.player_obj.discord_id:
             return
-        title = f'{self.user.player_username}\'s Equipment:\n'
-        player_inv = display_cinventory(self.user.player_id, "W")
+        title = f'{self.player_obj.player_username}\'s Equipment:\n'
+        player_inv = display_cinventory(self.player_obj, "W")
         new_embed = discord.Embed(colour=discord.Colour.dark_orange(), title=title, description=player_inv)
-        await interaction.response.edit_message(embed=new_embed, view=CInventoryView(self.user, self.include_id))
+        await interaction.response.edit_message(embed=new_embed, view=CInventoryView(self.player_obj, self.include_id))
 
     @discord.ui.button(label="Show ID", style=discord.ButtonStyle.blurple)
     async def show_id(self, interaction: discord.Interaction, button: discord.Button):
-        if interaction.user.id != self.user.discord_id:
+        if interaction.user.id != self.player_obj.discord_id:
             return
-        title = f'{self.user.player_username}\'s {self.current_menu} Inventory:\n'
+        self.view_type = int(await self.player_obj.check_misc_data("toggle_inv"))
         self.include_id = True if not self.include_id else False
-        inv = display_binventory(self.user.player_id, self.current_menu, self.include_id)
-        new_view = BInventoryView(self.user, self.current_menu, self.include_id)
-        new_embed = discord.Embed(colour=discord.Colour.dark_orange(), title=title, description=inv)
-        await interaction.response.edit_message(embed=new_embed, view=new_view)
+        content, embed = await display_binventory(self.player_obj, self.current_menu, self.view_type, self.include_id)
+        new_view = BInventoryView(self.player_obj, self.current_menu, self.view_type, self.include_id)
+        await interaction.response.edit_message(content=content, embed=embed, view=new_view)
+
+    @discord.ui.button(label="Toggle View", style=discord.ButtonStyle.blurple)
+    async def toggle_view(self, interaction: discord.Interaction, button: discord.Button):
+        if interaction.user.id != self.player_obj.discord_id:
+            return
+        self.view_type = int(await self.player_obj.check_misc_data("toggle_inv"))
+        self.view_type = 1 if self.view_type == 0 else 0
+        await self.player_obj.update_misc_data("toggle_inv", self.view_type, overwrite_value=True)
+        content, embed = await display_binventory(self.player_obj, self.current_menu, self.view_type, self.include_id)
+        new_view = BInventoryView(self.player_obj, self.current_menu, self.view_type, self.include_id)
+        await interaction.response.edit_message(content=content, embed=embed, view=new_view)
 
 
 class CInventoryView(discord.ui.View):
-    def __init__(self, user, include_id=False):
+    def __init__(self, player_obj, include_id=False):
         super().__init__(timeout=None)
-        self.user, self.include_id = user, include_id
+        self.player_obj, self.include_id = player_obj, include_id
         select_options = [discord.SelectOption(
             emoji="<a:eenergy:1145534127349706772>", label=custom_item_dict[key], value=reverse_item_loc_dict[value],
             description=f"{custom_item_dict[key]} storage") for key, value in list(item_loc_dict.items())]
@@ -128,23 +136,22 @@ class CInventoryView(discord.ui.View):
         self.add_item(self.select_menu)
 
     async def inventory_callback(self, interaction: discord.Interaction):
-        if interaction.user.id != self.user.discord_id:
+        if interaction.user.id != self.player_obj.discord_id:
             return
         selected_item = interaction.data['values'][0]
-        inventory_title = f'{self.user.player_username}\'s Inventory:\n'
-        player_inv = display_cinventory(self.user.player_id, selected_item)
+        inventory_title = f'{self.player_obj.player_username}\'s Inventory:\n'
+        player_inv = display_cinventory(self.player_obj, selected_item)
         new_embed = discord.Embed(colour=discord.Colour.dark_orange(), title=inventory_title, description=player_inv)
         await interaction.response.edit_message(embed=new_embed)
 
     @discord.ui.button(label="Items", style=discord.ButtonStyle.blurple)
     async def toggle_callback(self, interaction: discord.Interaction, button: discord.Button):
-        if interaction.user.id != self.user.discord_id:
+        if interaction.user.id != self.player_obj.discord_id:
             return
-        new_view = BInventoryView(self.user)
-        inventory_title = f'{self.user.player_username}\'s Inventory:\n'
-        player_inv = display_binventory(self.user.player_id, "Crafting", self.include_id)
-        new_embed = discord.Embed(colour=discord.Colour.dark_orange(), title=inventory_title, description=player_inv)
-        await interaction.response.edit_message(embed=new_embed, view=new_view)
+        view_type = int(await self.player_obj.check_misc_data("toggle_inv"))
+        new_view = BInventoryView(self.player_obj, "Crafting", view_type)
+        content, embed = await display_binventory(self.player_obj, "Crafting", view_type, self.include_id)
+        await interaction.response.edit_message(content=content, embed=embed, view=new_view)
 
 
 class CustomItem:
@@ -164,6 +171,7 @@ class CustomItem:
         # Generate an item type and base.
         self.item_damage_type, self.item_base_type = random.choice(list(gli.class_names)), base_type
         self.generate_base()
+        self.base_damage_min, self.base_damage_max = get_tier_damage(self.item_tier, self.item_type)
         # Exceptions
         if self.item_type == "R":
             self.item_quality_tier = 0
@@ -175,15 +183,16 @@ class CustomItem:
                     self.item_elements[element_index] = 1
         elif self.item_base_type != "" and self.item_base_type in gli.sovereign_item_list:
             self.item_quality_tier = 0
-            sw.assign_sovereign_data(self)
-        # Generate base damage.
-        self.base_damage_min, self.base_damage_max = get_tier_damage(self.item_tier, self.item_type)
+            sw.build_sovereign_item(self)
+        # Finalize item
         self.update_damage()
-        # Set the item name.
         self.set_item_name()
 
     async def reload_item(self):
         _ = await read_custom_item(self.item_id, reloading=self)
+
+    def reforge_class(self, specific_class=""):
+        self.item_damage_type = specific_class if specific_class != "" else random.choice(gli.class_names)
 
     def reforge_stats(self, unlock=False):
         self.base_damage_min, self.base_damage_max = get_tier_damage(self.item_tier, self.item_type)
@@ -246,7 +255,7 @@ class CustomItem:
             roll_values += str(x) + ";"
         if roll_values != "":
             roll_values = roll_values[:-1]
-        
+
         raw_query = ("UPDATE CustomInventory SET player_id = :input_1, item_type = :input_2, item_name = :input_3, "
                      "item_damage_type = :input_4, item_elements = :input_5, item_enhancement = :input_6, "
                      "item_tier = :input_7, item_quality_tier = :input_8, item_base_type = :input_9, "
@@ -256,7 +265,7 @@ class CustomItem:
                      "WHERE item_id = :id_check")
         params = {
             'id_check': int(self.item_id),
-            'input_1': int(self.player_owner),'input_2': str(self.item_type), 'input_3': str(self.item_name),
+            'input_1': int(self.player_owner), 'input_2': str(self.item_type), 'input_3': str(self.item_name),
             'input_4': str(self.item_damage_type), 'input_5': str(item_elements), 'input_6': int(self.item_enhancement),
             'input_7': int(self.item_tier), 'input_8': int(self.item_quality_tier),
             'input_9': str(self.item_base_type), 'input_10': str(roll_values),
@@ -307,12 +316,9 @@ class CustomItem:
         # Handle weapon items.
         if self.item_type == "W":
             self.set_base_attack_speed()
-            class_checker = gli.class_names.index(self.item_damage_type)
-            if self.item_tier >= 5:
-                target_list = gli.weapon_list_high[class_checker]
-            else:
-                target_list = gli.weapon_list_low[class_checker][self.item_tier - 1]
-            self.item_base_type = random.choice(target_list)
+            item_data = gli.weapon_type_dict[self.item_damage_type]
+            combined_list = item_data[1] + item_data[2] if self.item_tier >= 5 else item_data[0] + item_data[1]
+            self.item_base_type = random.choice(combined_list)
             return
 
         # Handle non-weapon, non-gem items.
@@ -368,10 +374,12 @@ class CustomItem:
         if self.item_tier >= 5 and self.item_type != "W":
             bonus_stat = f"{tier_specifier[self.item_tier]} Application ({self.item_bonus_stat})"
         stat_msg += bonus_stat if "D" not in self.item_type else f"{self.get_gem_stat_message()}"
-        if self.item_type != "R":
+        if self.item_type == "R":
+            rolls_msg = await ring.display_ring_values(self)
+        elif self.item_base_type not in gli.sovereign_item_list:
             rolls_msg = itemrolls.display_rolls(self, roll_change_list)
         else:
-            rolls_msg = await ring.display_ring_values(self)
+            rolls_msg = sw.display_sovereign_rolls(self)
         display_stars = sm.display_stars(self.item_tier)
         if "D" not in self.item_type:
             elements = [gli.global_element_list[idz] for idz, z in enumerate(self.item_elements) if z == 1]
@@ -432,7 +440,7 @@ class CustomItem:
 class BasicItem:
     def __init__(self, item_id):
         self.item_id, self.item_name, self.item_tier = 1, "", ""
-        self.item_category, self.item_description,  = "", ""
+        self.item_category, self.item_description, = "", ""
         self.item_emoji, self.item_image = "", ""
         self.item_cost, self.item_base_rate = 0, 0
         self.get_bitem_by_id(item_id)
@@ -465,7 +473,6 @@ class BasicItem:
                 return
             elif self.item_category in gli.availability_list_nongear:
                 self.item_image = f"{gli.web_url}/NonGearIcon/{self.item_category}/Frame_{self.item_id}.png"
-
         else:
             print(f"Item with ID '{item_id}' not found in itemdata_dict.")
 
@@ -554,7 +561,7 @@ def get_tier_damage(item_tier, item_type):
     return min(temp_damage), max(temp_damage)
 
 
-def add_custom_item(item):
+async def add_custom_item(item):
     # Item element string.
     item_elements = ""
     for x in item.item_elements:
@@ -569,7 +576,7 @@ def add_custom_item(item):
     roll_values = roll_values[:-1]
 
     # Insert the item if applicable.
-    
+
     raw_query = "SELECT * FROM CustomInventory WHERE player_id = :player_check AND item_type = :item_check"
     params = {'player_check': item.player_owner, 'item_check': item.item_type}
     check_df = rq(raw_query, return_value=True, params=params)
@@ -608,20 +615,18 @@ def if_custom_exists(item_id) -> bool:
     return False if len(df.index) == 0 else True
 
 
-def display_cinventory(player_id, item_type) -> str:
-    
+def display_cinventory(player_obj, item_type) -> str:
     raw_query = ("SELECT item_id, item_name FROM CustomInventory "
                  "WHERE player_id = :player_id AND item_type LIKE :item_type "
                  "ORDER BY item_tier DESC")
-    params = {'player_id': player_id, 'item_type': f'%{item_type}%'}
+    params = {'player_id': player_obj.player_id, 'item_type': f'%{item_type}%'}
     df = rq(raw_query, True, params=params)
-    
     temp = df.style.set_properties(**{'text-align': 'left'}).hide(axis='index').hide(axis='columns')
     player_inventory = temp.to_string()
     return player_inventory
 
 
-def display_binventory(player_id, method, include_id=False):
+async def display_binventory(player_obj, method, view_type, include_id=False):
     regex_dict = {
         "Crafting": "^(Matrix|Hammer|Pearl)",
         "Cores": "^(Fae|Core|Crystal)",
@@ -632,12 +637,11 @@ def display_binventory(player_id, method, include_id=False):
         "Gemstone": "^(Catalyst|Gemstone([0-9]|1[0]))$",
         "Fish": "^(Fish)",
         "Misc": "^(Potion|Trove|Chest|Stone|Token|Skull[0-3])",
-        "Ultra Rare": "^(Lotus|LightStar|DarkStar|Gemstone12|Skull4|Nadir|RoyalCoin)"
-    }
-    player_inventory = ""
+        "Ultra Rare": "^(Lotus|LightStar|DarkStar|Gemstone12|Skull4|Nadir|RoyalCoin)"}
+    content, title = "", f'__**{player_obj.player_username}\'s {method} Inventory:\n**__'
     raw_query = ("SELECT item_id, item_qty FROM BasicInventory "
                  "WHERE player_id = :id_check AND item_qty <> 0 ORDER BY item_id ASC")
-    df = rq(raw_query, True, params={'id_check': player_id})
+    df = rq(raw_query, True, params={'id_check': player_obj.player_id})
 
     # Filter the data, pull associated data by the id, and build the output string.
     inventory_list = []
@@ -653,8 +657,13 @@ def display_binventory(player_id, method, include_id=False):
             inventory_list.append([current_item, str(row['item_qty'])])
     for item, quantity in inventory_list:
         id_text = "" if not include_id else f" [**Item ID:** {item.item_id}]"
-        player_inventory += f"{item.item_emoji} {quantity}x {item.item_name}{id_text}\n"
-    return player_inventory
+        content += f"{item.item_emoji} {quantity}x {item.item_name}{id_text}\n"
+    if view_type == 0:
+        colour, _ = sm.get_gear_tier_colours(player_obj.player_echelon)
+        embed = discord.Embed(colour=colour, title=title, description=content)
+        return None, embed
+    content = f"{title}{content}"
+    return content, None
 
 
 def generate_random_tier(min_tier=1, max_tier=8, luck_bonus=0):
@@ -736,10 +745,10 @@ async def sell(user, item, embed_msg):
         return response_embed
     # Sell the item.
     sell_msg = user.adjust_coins(sell_value)
-    
+
     raw_query = "DELETE FROM CustomInventory WHERE item_id = :item_check"
     rq(raw_query, params={'item_check': item.item_id})
-    
+
     currency_msg = f'You now have {user.player_coins:,} lotus coins!'
     response_embed.add_field(name=f"Item Sold! {gli.coin_icon} {sell_msg} lotus coins acquired!",
                              value=currency_msg, inline=False)
@@ -747,7 +756,6 @@ async def sell(user, item, embed_msg):
 
 
 def delete_item(user_object, item):
-    
     if "D" in item.item_type:
         raw_query = "UPDATE CustomInventory SET item_inlaid_gem_id = 0 WHERE item_inlaid_gem_id = :item_check"
         rq(raw_query, params={'item_check': item.item_id})
@@ -777,13 +785,11 @@ async def purge(player_obj, item_type, tier):
                     f"WHERE player_id = :id_check AND item_tier <= :tier_check "
                     f"AND item_id NOT IN ({exclusion_ids}){type_checker}")
     rq(delete_query, params=params)
-    
-    result = len(df)
     coin_total = 0
     for item_tier in df['item_tier']:
         coin_total += inventory.sell_value_by_tier[int(item_tier)]
     coin_msg = player_obj.adjust_coins(coin_total)
-    return f"{player_obj.player_username} sold {result} items and received {gli.coin_icon} {coin_msg} lotus coins"
+    return f"{player_obj.player_username} sold {len(df):,} items and received {gli.coin_icon} {coin_msg} lotus coins"
 
 
 def full_inventory_embed(lost_item, embed_colour):
@@ -850,15 +856,9 @@ async def generate_item(ctx, target_player, tier, elements, item_type, base_type
                     await ctx.send('Bonus stat input not valid.')
                     return None
         else:
-            # Set the item weapon item base.
-            class_checker = gli.class_names.index(new_item.item_damage_type)
-            if tier >= 5:
-                target_list = gli.weapon_list_high[class_checker]
-            else:
-                target_list = gli.weapon_list_low[class_checker][tier - 1]
-            new_item.item_base_type = random.choice(target_list)
-            if base_type != "" and base_type in target_list:
-                new_item.item_base_type = base_type
+            item_data = gli.weapon_type_dict[new_item.item_damage_type]
+            combined_list = item_data[1] + item_data[2] if new_item.item_tier >= 5 else item_data[0] + item_data[1]
+            new_item.item_base_type = random.choice(combined_list)
         # Assign base/bonus stats.
         new_item.item_bonus_stat = bonus_stat if item_type != "W" else ""
         new_item.item_base_stat = base_stat if item_type in ["W", "A"] else new_item.item_base_stat
@@ -892,5 +892,5 @@ async def generate_item(ctx, target_player, tier, elements, item_type, base_type
 
     new_item.base_damage_min, new_item.base_damage_max = min(base_dmg), max(base_dmg)
     new_item.set_item_name()
-    new_item.item_id = add_custom_item(new_item)
+    new_item.item_id = await add_custom_item(new_item)
     return new_item

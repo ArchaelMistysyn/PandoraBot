@@ -146,15 +146,15 @@ def assign_path_multipliers(player_obj):
     if player_obj.aqua_mode != 0:
         player_obj.aqua_points = sum(total_points)
         total_points = [0] * len(total_points)
-        player_obj.critical_multiplier += 0.03 * storm_bonus
-        player_obj.aqua_app += player_obj.aqua_mode // 20
-        player_obj.aqua_app += player_obj.critical_app + player_obj.bleed_app + player_obj.elemental_app
-        player_obj.aqua_app += player_obj.temporal_app + player_obj.ultimate_app
-        player_obj.critical_app = player_obj.bleed_app = player_obj.elemental_app = 0
-        player_obj.temporal_app = player_obj.ultimate_app = 0
-        player_obj.elemental_resistance[1] += 0.01 * player_obj.aqua_points
-        player_obj.elemental_multiplier[1] += 0.25 * player_obj.aqua_points
-        player_obj.elemental_multiplier[1] += 100 * player_obj.aqua_app
+        player_obj.critical_mult += 0.03 * storm_bonus
+        player_obj.appli["Aqua"] += player_obj.aqua_mode // 20
+        player_obj.appli["Aqua"] += player_obj.appli["Critical"] + player_obj.appli["Bleed"] + player_obj.appli["Elemental"]
+        player_obj.appli["Aqua"] += player_obj.appli["Temporal"] + player_obj.appli["Ultimate"]
+        player_obj.appli["Critical"] = player_obj.appli["Bleed"] = player_obj.appli["Elemental"] = 0
+        player_obj.appli["Temporal"] = player_obj.appli["Ultimate"] = 0
+        player_obj.elemental_res[1] += 0.01 * player_obj.aqua_points
+        player_obj.elemental_mult[1] += 0.25 * player_obj.aqua_points
+        player_obj.elemental_mult[1] += 100 * player_obj.appli["Aqua"]
         return total_points
 
     unique_breakpoints = [80, 80, 80, 80, 100, 80, 100]
@@ -164,39 +164,39 @@ def assign_path_multipliers(player_obj):
 
     # Storm Path
     storm_bonus = total_points[0]
-    player_obj.elemental_multiplier[1] += 0.05 * storm_bonus
-    player_obj.elemental_multiplier[2] += 0.05 * storm_bonus
-    player_obj.elemental_resistance[1] += 0.01 * storm_bonus
-    player_obj.elemental_resistance[2] += 0.01 * storm_bonus
-    player_obj.critical_multiplier += 0.03 * storm_bonus
-    player_obj.critical_app += storm_bonus // 20
+    player_obj.elemental_mult[1] += 0.05 * storm_bonus
+    player_obj.elemental_mult[2] += 0.05 * storm_bonus
+    player_obj.elemental_res[1] += 0.01 * storm_bonus
+    player_obj.elemental_res[2] += 0.01 * storm_bonus
+    player_obj.critical_mult += 0.03 * storm_bonus
+    player_obj.appli["Critical"] += storm_bonus // 20
     if storm_bonus >= 80:
-        player_obj.critical_app += 5
+        player_obj.appli["Critical"] += 5
     if storm_bonus >= 100:
-        player_obj.critical_app += 10
+        player_obj.appli["Critical"] += 10
 
     # Horizon Path
     horizon_bonus = total_points[2]
-    player_obj.elemental_multiplier[3] += 0.05 * horizon_bonus
-    player_obj.elemental_multiplier[4] += 0.05 * horizon_bonus
-    player_obj.elemental_resistance[3] += 0.01 * horizon_bonus
-    player_obj.elemental_resistance[4] += 0.01 * horizon_bonus
+    player_obj.elemental_mult[3] += 0.05 * horizon_bonus
+    player_obj.elemental_mult[4] += 0.05 * horizon_bonus
+    player_obj.elemental_res[3] += 0.01 * horizon_bonus
+    player_obj.elemental_res[4] += 0.01 * horizon_bonus
     player_obj.bleed_mult += 0.1 * horizon_bonus
-    player_obj.bleed_app += horizon_bonus // 20
+    player_obj.appli["Bleed"] += horizon_bonus // 20
     if storm_bonus >= 80:
         player_obj.bleed_mult *= 2
     if storm_bonus >= 100:
-        player_obj.bleed_penetration *= 2
+        player_obj.bleed_pen *= 2
 
     # Frostfire Path
     frostfire_bonus = total_points[1]
-    player_obj.elemental_multiplier[5] += 0.05 * frostfire_bonus
-    player_obj.elemental_multiplier[0] += 0.05 * frostfire_bonus
-    player_obj.elemental_resistance[5] += 0.01 * frostfire_bonus
-    player_obj.elemental_resistance[0] += 0.01 * frostfire_bonus
+    player_obj.elemental_mult[5] += 0.05 * frostfire_bonus
+    player_obj.elemental_mult[0] += 0.05 * frostfire_bonus
+    player_obj.elemental_res[5] += 0.01 * frostfire_bonus
+    player_obj.elemental_res[0] += 0.01 * frostfire_bonus
     player_obj.class_multiplier += 0.01 * frostfire_bonus
-    player_obj.elemental_penetration[5] += frostfire_bonus // 20
-    player_obj.elemental_penetration[0] += frostfire_bonus // 20
+    player_obj.elemental_pen[5] += frostfire_bonus // 20
+    player_obj.elemental_pen[0] += frostfire_bonus // 20
 
     def apply_cascade(bonus, data_list):
         temp_list = data_list.copy()
@@ -205,43 +205,43 @@ def assign_path_multipliers(player_obj):
         data_list[highest_index] += data_list[0] + data_list[5]
 
     if frostfire_bonus >= 80:
-        apply_cascade(player_obj.elemental_multiplier, frostfire_bonus)
-        apply_cascade(player_obj.elemental_penetration, frostfire_bonus)
+        apply_cascade(player_obj.elemental_mult, frostfire_bonus)
+        apply_cascade(player_obj.elemental_pen, frostfire_bonus)
         apply_cascade(player_obj.elemental_curse, frostfire_bonus)
     if frostfire_bonus >= 100:
-        player_obj.elemental_multiplier[0] *= 3
-        player_obj.elemental_multiplier[5] *= 3
-        player_obj.elemental_penetration[0] *= 3
-        player_obj.elemental_penetration[5] *= 3
+        player_obj.elemental_mult[0] *= 3
+        player_obj.elemental_mult[5] *= 3
+        player_obj.elemental_pen[0] *= 3
+        player_obj.elemental_pen[5] *= 3
         player_obj.elemental_curse[0] *= 3
         player_obj.elemental_curse[5] *= 3
 
     # Eclipse Path
     eclipse_bonus = total_points[3]
-    player_obj.elemental_multiplier[6] += 0.05 * eclipse_bonus
-    player_obj.elemental_multiplier[7] += 0.05 * eclipse_bonus
-    player_obj.elemental_resistance[6] += 0.01 * eclipse_bonus
-    player_obj.elemental_resistance[7] += 0.01 * eclipse_bonus
+    player_obj.elemental_mult[6] += 0.05 * eclipse_bonus
+    player_obj.elemental_mult[7] += 0.05 * eclipse_bonus
+    player_obj.elemental_res[6] += 0.01 * eclipse_bonus
+    player_obj.elemental_res[7] += 0.01 * eclipse_bonus
     player_obj.ultimate_mult += 0.1 * eclipse_bonus
-    player_obj.ultimate_app += eclipse_bonus // 20
+    player_obj.appli["Ultimate"] += eclipse_bonus // 20
     if eclipse_bonus >= 100:
         player_obj.skill_damage_bonus[3] += 3
 
     # Confluence Path
     confluence_bonus = total_points[5]
-    player_obj.all_elemental_multiplier += 0.01 * confluence_bonus
+    player_obj.all_elemental_mult += 0.01 * confluence_bonus
     player_obj.all_elemental_curse += 0.01 * confluence_bonus
-    player_obj.elemental_app += 2 * confluence_bonus // 20
+    player_obj.appli["Elemental"] += 2 * confluence_bonus // 20
     if confluence_bonus >= 80:
-        player_obj.all_elemental_multiplier *= 2
+        player_obj.all_elemental_mult *= 2
     if confluence_bonus >= 100:
-        player_obj.all_elemental_penetration *= 2
+        player_obj.all_elemental_pen *= 2
         player_obj.all_elemental_curse *= 2
 
     # Star Path
     star_bonus = total_points[4]
-    player_obj.elemental_multiplier[8] += 0.07 * star_bonus
-    player_obj.elemental_resistance[8] += 0.01 * star_bonus
+    player_obj.elemental_mult[8] += 0.07 * star_bonus
+    player_obj.elemental_res[8] += 0.01 * star_bonus
     player_obj.combo_mult += 0.03 * star_bonus
     star_skill_bonus = 0.25 * star_bonus // 20
     player_obj.skill_damage_bonus[0] += star_skill_bonus
@@ -252,10 +252,10 @@ def assign_path_multipliers(player_obj):
 
     # Solitude Path
     solitude_bonus = total_points[6] * 2 if total_points[6] >= 100 else total_points[6]
-    player_obj.singularity_damage += (0.10 * solitude_bonus)
-    player_obj.singularity_penetration += (0.05 * solitude_bonus)
+    player_obj.singularity_mult += (0.10 * solitude_bonus)
+    player_obj.singularity_pen += (0.05 * solitude_bonus)
     player_obj.singularity_curse += (0.01 * solitude_bonus)
-    player_obj.temporal_app += solitude_bonus // 20
+    player_obj.appli["Temporal"] += solitude_bonus // 20
 
     return total_points
         

@@ -25,6 +25,7 @@ import itemrolls
 import tarot
 import insignia
 import pact
+import sovereignweapon as sw
 
 
 class PlayerProfile:
@@ -38,7 +39,6 @@ class PlayerProfile:
         self.quest_tokens[1] = 1
         self.player_coins, self.player_stamina, self.vouch_points = 0, 0, 0
         self.luck_bonus = 0
-
         # Initialize player gear/stats info.
         self.player_stats, self.gear_points = [0] * 7, [0] * 7
         self.player_equipped = [0] * 7
@@ -47,50 +47,46 @@ class PlayerProfile:
         # Initialize player health stats.
         self.player_mHP, self.player_cHP = 1000, 1000
         self.immortal = False
-
         # Initialize player damage values.
         self.player_damage, self.player_total_damage = 0.0, 0.0
-
         # Initialize elemental stats.
         self.elemental_damage = [0] * 9
-        self.elemental_multiplier, self.elemental_penetration, self.elemental_curse = [0.0] * 9, [0.0] * 9, [0.0] * 9
+        self.elemental_mult, self.elemental_pen, self.elemental_curse = [0.0] * 9, [0.0] * 9, [0.0] * 9
         self.elemental_conversion = [1.0] * 9
-        self.all_elemental_multiplier, self.all_elemental_penetration, self.all_elemental_curse = 0.0, 0.0, 0.0
-        self.singularity_damage, self.singularity_penetration, self.singularity_curse = 0.0, 0.0, 0.0
-
-        # Initialize class specialization stats.
+        self.all_elemental_mult, self.all_elemental_pen, self.all_elemental_curse = 0.0, 0.0, 0.0
+        self.singularity_mult, self.singularity_pen, self.singularity_curse = 0.0, 0.0, 0.0
+        # Initialize specialization stats.
         self.unique_glyph_ability = [False, False, False, False, False, False, False]
-        self.temporal_app = 0
-        self.elemental_capacity, self.elemental_app = 3, 0
-        self.bleed_mult, self.bleed_penetration, self.bleed_app = 0.0, 0.0, 0
-        self.mana_mult, self.mana_limit, self.mana_app = 200, 250, 0
-        self.combo_mult, self.combo_penetration, self.combo_application = 0.05, 0.0, 0
-        self.ultimate_mult, self.ultimate_penetration, self.ultimate_app = 0.0, 0.0, 0
-        self.perfect_crit, self.critical_chance, self.critical_multiplier = 0, 0.0, 1.0
-        self.critical_penetration, self.critical_app = 0.0, 0
-
-        # Initialize misc stats.
-        self.charge_generation = 1
+        self.elemental_capacity = 3
+        self.mana_mult, self.mana_limit, self.mana_shatter = 1.0, 250, False
+        self.bleed_mult, self.bleed_pen = 0.0, 0.0
+        self.combo_mult, self.combo_pen = 0.05, 0.0
+        self.ultimate_mult, self.ultimate_pen, = 0.0, 0.0
+        self.critical_mult, self.critical_pen = 1.0, 0.0
+        self.bloom_mult = 10.0
+        self.trigger_rate = {"Fractal": 0.0, "Hyperbleed": 0.0, "Critical": 0.0, "Omega": 0.0,
+                             "Time Lock": 0.0, "Bloom": 0.0, "Status": 1.0}
+        self.perfect_rate = {"Fractal": 0, "Hyperbleed": 0, "Critical": 0, "Time Lock": 0, "Bloom": 0}
+        self.appli = {"Elemental": 0, "Bleed": 0, "Combo": 0, "Critical": 0, 
+                      "Ultimate": 0, "Temporal": 0, "Mana": 0, "Aqua": 0}
+        # Initialize misc Datasets.
+        self.resonance = [0] * 31
         self.banes = [0.0] * 7
         self.skill_damage_bonus = [0] * 4
-        self.spec_rate, self.spec_conv, self.unique_conversion = [0.0] * 5, [0] * 4, [0.0] * 4
-        self.resonance = [0] * 31
-        self.bloom_multiplier = 10.0
+        self.unique_conversion = [0.0] * 4
+        self.spec_conv = {"Sacred": 0.0, "Abyssal": 0.0, "Calamity": 0.0, "Chain Flare": False}
+        # Initialize misc stats.
+        self.charge_generation = 1
         self.attack_speed = 0.0
-        self.bonus_hits = 0.0
-        self.defence_penetration = 0.0
-        self.class_multiplier = 0.0
-        self.final_damage = 0.0
-        self.rng_bonus = 0
-        self.aqua_mode, self.aqua_points, self.aqua_app = 0, 0, 0
-
+        self.class_multiplier, self.final_damage, self.defence_pen, self.rng_bonus = 0.0, 0.0, 0.0, 0.0
+        self.aqua_mode, self.aqua_points = 0, 0
         # Initialize defensive stats.
         self.hp_bonus, self.hp_regen, self.hp_multiplier = 0.0, 0.0, 0.0
         self.recovery = 3
         self.block, self.dodge = 0, 0
         self.damage_mitigation, self.mitigation_bonus = 0.0, 0.0
-        self.elemental_resistance = [0.0] * 9
-        self.all_elemental_resistance = 0.1
+        self.elemental_res = [0.0] * 9
+        self.all_elemental_res = 0.1
 
     async def get_player_stats(self, method):
         await self.reload_player()
@@ -117,14 +113,14 @@ class PlayerProfile:
             # Calculate the damage spread.
             element_breakdown = []
             for x in range(9):
-                total_multi = (1 + self.elemental_multiplier[x]) * (1 + self.elemental_penetration[x])
+                total_multi = (1 + self.elemental_mult[x]) * (1 + self.elemental_pen[x])
                 total_multi *= (1 + self.elemental_curse[x]) * self.elemental_conversion[x]
                 element_breakdown.append((x, total_multi * 100))
             sorted_element_breakdown = sorted(element_breakdown, key=lambda v: v[1], reverse=True)
             for z, total_multi in sorted_element_breakdown:
                 temp_icon = gli.global_element_list[z]
-                temp_dmg_str = f"(Dmg: {int(round(self.elemental_multiplier[z] * 100)):,}%)"
-                temp_pen_str = f"(Pen: {int(round(self.elemental_penetration[z] * 100)):,}%)"
+                temp_dmg_str = f"(Dmg: {int(round(self.elemental_mult[z] * 100)):,}%)"
+                temp_pen_str = f"(Pen: {int(round(self.elemental_pen[z] * 100)):,}%)"
                 temp_curse_str = f"(Curse: {int(round(self.elemental_curse[z] * 100)):,}%)"
                 if method == 1:
                     stats += f"\n{temp_icon} Total Damage: {int(round(total_multi)):,}%"
@@ -170,36 +166,36 @@ class PlayerProfile:
                 embed_msg.add_field(name=title_msg, value=stats, inline=False)
                 title_msg, stats = "Application Details", ""
                 stats += set_section("Elemental Details", ["Cap", "App", "FRC"],
-                                     [self.elemental_capacity, self.elemental_app,
-                                     (self.elemental_app * 5 + show_num(self.spec_rate[3]))])
+                                     [self.elemental_capacity, self.appli["Elemental"],
+                                      (self.appli["Elemental"] * 5 + show_num(self.trigger_rate["Fractal"]))])
                 stats += set_section("Critical Details", ["CRT", "Dmg", "Pen", "App", "OMG"],
-                                     [show_num(self.critical_chance, 1), show_num(self.critical_multiplier),
-                                     show_num(self.critical_penetration), show_num(self.critical_app),
-                                     (self.critical_app * 10 + show_num(self.spec_rate[2]))])
+                                     [show_num(self.trigger_rate["Critical"], 1), show_num(self.critical_mult),
+                                      show_num(self.critical_pen), show_num(self.appli["Critical"]),
+                                      (self.appli["Critical"] * 10 + show_num(self.trigger_rate["Omega"]))])
                 stats += set_section("Combo Details", ["Dmg", "Pen", "App"],
-                                     [show_num(self.combo_mult), show_num(self.combo_penetration),
-                                     self.combo_application])
+                                     [show_num(self.combo_mult), show_num(self.combo_pen),
+                                      self.appli["Combo"]])
                 stats += set_section("Ultimate Details", ["Dmg", "Pen", "App"],
-                                     [show_num(self.ultimate_mult), show_num(self.ultimate_penetration),
-                                     self.ultimate_app])
+                                     [show_num(self.ultimate_mult), show_num(self.ultimate_pen),
+                                      self.appli["Ultimate"]])
                 stats += set_section("Bleed Details", ["Dmg", "Pen", "App", "HPR"],
-                                     [show_num(self.bleed_mult), show_num(self.bleed_penetration),
-                                     self.bleed_app,
-                                     (self.bleed_app * 10 + show_num(self.spec_rate[1]))])
+                                     [show_num(self.bleed_mult), show_num(self.bleed_pen),
+                                      self.appli["Bleed"],
+                                      (self.appli["Bleed"] * 10 + show_num(self.trigger_rate["Hyperbleed"]))])
                 stats += set_section("Time Details", ["Dmg", "App", "LCK"],
-                                     [((self.temporal_app + 1) * 100), self.temporal_app,
-                                     (self.temporal_app * 5 + show_num(self.spec_rate[4]))])
+                                     [((self.appli["Temporal"] + 1) * 100), self.appli["Temporal"],
+                                      (self.appli["Temporal"] * 5 + show_num(self.trigger_rate["Time Lock"]))])
                 stats += set_section("Mana Details", ["Dmg", "App", "Lmt"],
-                                     [show_num(self.mana_mult), self.mana_app, self.mana_limit])
+                                     [show_num(self.mana_mult), self.appli["Mana"], self.mana_limit])
                 stats += set_section("Bloom Details", ["BLM", "Dmg"],
-                                     [show_num(self.spec_rate[0]), show_num(self.bloom_multiplier)])
+                                     [show_num(self.trigger_rate["Bloom"]), show_num(self.bloom_mult)])
                 embed_msg.add_field(name=title_msg, value=stats, inline=False)
                 return embed_msg
         if method == 3:
             # Defensive display.
             title_msg = "Defensive Stats"
             stats = f"Player HP: {self.player_mHP:,}\nRecovery: {self.recovery}"
-            for idy, y in enumerate(self.elemental_resistance):
+            for idy, y in enumerate(self.elemental_res):
                 stats += f"\n{gli.global_element_list[idy]} Resistance: {show_num(y)}%"
             stats += f"\nDamage Mitigation: {show_num(self.damage_mitigation, 1)}%"
             stats += f"\nBlock Rate: {show_num(self.block, 1)}%"
@@ -213,7 +209,7 @@ class PlayerProfile:
                 stats += f"\n{gli.boss_list[idh]} Bane: {show_num(h)}%" if idh < 5 else f"\nHuman Bane: {show_num(h)}%"
             stats += f"\nClass Mastery: {show_num(self.class_multiplier)}%"
             stats += f"\nFinal Damage: {show_num(self.final_damage)}%"
-            stats += f"\nDefence Penetration: {show_num(self.defence_penetration)}%"
+            stats += f"\nDefence Penetration: {show_num(self.defence_pen)}%"
             embed_msg.add_field(name=title_msg, value=stats, inline=False)
             return embed_msg
         if method == 5:
@@ -320,19 +316,20 @@ class PlayerProfile:
         }
         rq(raw_query, params=params)
         registered_player = await get_player_by_discord(self.discord_id)
-        raw_query = "INSERT INTO MiscPlayerData (player_id, thana_visits, deaths) VALUES (:input_1, :input_2, :input_3)"
-        params = {"input_1": registered_player.player_id, "input_2": 0, "input_3": 0}
+        raw_query = ("INSERT INTO MiscPlayerData (player_id, thana_visits, deaths, toggle_inv) "
+                     "VALUES (:input_1, :input_2, :input_3, :input_4)")
+        params = {"input_1": registered_player.player_id, "input_2": 0, "input_3": 0, "input_4": 0}
         rq(raw_query, params=params)
         return f"Welcome {self.player_username}!\nUse /quest to begin."
 
-    def update_misc_data(self, field_name, change, overwrite_value=False):
-        raw_query = f"UPDATE MiscPlayerData SET {field_name} = {field_name} + :new_value WHERE player_id = :player_check"
+    async def update_misc_data(self, field_name, change, overwrite_value=False):
+        raw_query = f"UPDATE MiscPlayerData SET {field_name} = {field_name} + :new_value WHERE player_id = :check"
         if overwrite_value:
-            raw_query = f"UPDATE MiscPlayerData SET {field_name} = :new_value WHERE player_id = :player_check"
-        params = {"new_value": change, "player_check": self.player_id}
+            raw_query = f"UPDATE MiscPlayerData SET {field_name} = :new_value WHERE player_id = :check"
+        params = {"new_value": change, "check": self.player_id}
         rq(raw_query, params=params)
 
-    def check_misc_data(self, field_name):
+    async def check_misc_data(self, field_name):
         raw_query = f"SELECT {field_name} FROM MiscPlayerData WHERE player_id = :player_check"
         params = {"player_check": self.player_id}
         result_df = rq(raw_query, params=params, return_value=True)
@@ -365,16 +362,29 @@ class PlayerProfile:
     async def reload_player(self):
         _ = await get_player_by_id(self.player_id, reloading=self)
 
+    def apply_elemental_conversion(self, index_data, reduction_value, increase_value):
+        # Apply more multipliers.
+        if isinstance(index_data, (tuple, list)):
+            other_positions = [i for i in range(len(self.elemental_conversion)) if i not in index_data]
+            for position in index_data:
+                self.elemental_conversion[position] += increase_value
+        else:
+            other_positions = [i for i in range(len(self.elemental_conversion)) if i != index_data]
+            self.elemental_conversion[index_data] += increase_value
+        # Apply less multipliers.
+        for position in other_positions:
+            self.elemental_conversion[position] -= reduction_value
+
     async def get_player_multipliers(self):
         base_critical_chance, base_attack_speed, base_mitigation = 10.0, 1.0, 0.0
         base_player_hp = 1000 + 10 * self.player_level
 
         # Class Multipliers
-        class_multipliers = {"Ranger": ["critical_app", 1], "Weaver": ["elemental_app", 2],
-                             "Assassin": ["bleed_app", 1], "Mage": ["mana_app", 1],
-                             "Summoner": ["combo_application", 1], "Knight": ["ultimate_app", 1]}
-        if self.player_class in class_multipliers:
-            setattr(self, class_multipliers[self.player_class][0], class_multipliers[self.player_class][1])
+        class_bonus = {"Ranger": ["Critical", 1], "Weaver": ["Elemental", 2],
+                       "Assassin": ["Bleed", 1], "Mage": ["Mana", 1],
+                       "Summoner": ["Combo", 1], "Knight": ["Ultimate", 1]}
+        if self.player_class in class_bonus:
+            self.appli[class_bonus[self.player_class][0]] += class_bonus[self.player_class][1]
 
         # Item Multipliers
         e_item, sovereign_buff = [], False
@@ -388,7 +398,10 @@ class PlayerProfile:
                     sovereign_buff = True
                 else:
                     self.player_damage += random.randint(e_item[idx].item_damage_min, e_item[idx].item_damage_max)
-                await itemrolls.assign_roll_values(self, e_item[idx])
+                if e_item[idx].item_base_type in gli.sovereign_item_list:
+                    await sw.assign_sovereign_values(self, e_item[idx])
+                else:
+                    await itemrolls.assign_roll_values(self, e_item[idx])
                 itemrolls.assign_item_element_stats(self, e_item[idx])
                 if e_item[idx].item_num_sockets == 1:
                     await itemrolls.assign_gem_values(self, e_item[idx], sovereign_buff)
@@ -414,14 +427,14 @@ class PlayerProfile:
         total_points = skillpaths.assign_path_multipliers(self)
 
         # Application Calculations
-        base_critical_chance += self.critical_app
-        self.critical_multiplier += self.critical_app
-        self.skill_damage_bonus[3] += self.ultimate_app * 0.25
-        self.charge_generation += self.ultimate_app
-        self.all_elemental_multiplier += self.elemental_app * 0.25
+        base_critical_chance += self.appli["Critical"]
+        self.critical_mult += self.appli["Critical"]
+        self.skill_damage_bonus[3] += self.appli["Ultimate"] * 0.25
+        self.charge_generation += self.appli["Ultimate"]
+        self.all_elemental_mult += self.appli["Elemental"] * 0.25
 
         # Elemental Capacity
-        self.elemental_capacity += max(0, self.elemental_app)
+        self.elemental_capacity += max(0, self.appli["Elemental"])
 
         # Pact Bonus Multipliers (Occurs after stat adjustments, but before stat hard limits)
         pact.assign_pact_values(self)
@@ -429,14 +442,19 @@ class PlayerProfile:
         # Capacity Hard Limits
         self.elemental_capacity = min(self.elemental_capacity, 9)
         # Solitude/Frostfire and Aqua exceptions
-        self.elemental_capacity = 1 if total_points[6] >= 100 or self.aqua_mode != 0 else 3 if total_points[1] >= 80 else self.elemental_capacity
+        self.elemental_capacity = 1 if total_points[6] >= 100 or self.aqua_mode != 0 else 3 \
+            if total_points[1] >= 80 else self.elemental_capacity
 
         # General Calculations
-        self.critical_chance = (1 + self.critical_chance) * base_critical_chance
-        self.critical_chance = 100.00 if self.perfect_crit > 0 or self.aqua_points >= 80 else self.critical_chance
+        self.trigger_rate["Critical"] = (1 + self.trigger_rate["Critical"]) * base_critical_chance
         self.attack_speed = (1 + self.attack_speed) * base_attack_speed
         self.damage_mitigation = min((1 + (self.mitigation_bonus + self.damage_mitigation)) * base_mitigation, 90)
         self.player_cHP = self.player_mHP = int((base_player_hp + self.hp_bonus) * (1 + self.hp_multiplier))
+        
+        # Fixed Perfect Rates
+        self.perfect_rate["Critical"] = 1 if self.aqua_points >= 80 else self.perfect_rate["Critical"]
+        for mechanic in self.perfect_rate.keys():  
+            self.trigger_rate[mechanic] = 100.00 if self.perfect_rate[mechanic] > 0 >= 80 else self.trigger_rate[mechanic]
 
         match_count = sum(1 for item in e_item if item is not None and item.item_damage_type == self.player_class)
         if self.unique_conversion[2] >= 1:
@@ -446,20 +464,19 @@ class PlayerProfile:
         self.class_multiplier *= match_count
 
         # Singularity multipliers
-        apply_singularity(self.elemental_multiplier, self.singularity_damage)
-        apply_singularity(self.elemental_penetration, self.singularity_penetration)
+        apply_singularity(self.elemental_mult, self.singularity_mult)
+        apply_singularity(self.elemental_pen, self.singularity_pen)
         apply_singularity(self.elemental_curse, self.singularity_curse)
 
         # Apply omni multipliers.
         for x in range(9):
-            self.elemental_multiplier[x] += self.all_elemental_multiplier
-            self.elemental_penetration[x] += self.all_elemental_penetration
-            self.elemental_resistance[x] += self.all_elemental_resistance
+            self.elemental_mult[x] += self.all_elemental_mult
+            self.elemental_pen[x] += self.all_elemental_pen
+            self.elemental_res[x] += self.all_elemental_res
             self.elemental_curse[x] += self.all_elemental_curse
-            if self.elemental_resistance[x] >= 0.9:
-                self.elemental_resistance[x] = 0.9
+            self.elemental_res[x] = min(0.9, self.elemental_res[x])
             # Apply unique resistance conversion.
-            self.elemental_multiplier[x] += self.elemental_resistance[x] * self.unique_conversion[0]
+            self.elemental_mult[x] += self.elemental_res[x] * self.unique_conversion[0]
         for y in range(6):
             self.banes[y] += self.banes[6]
         # Calculate unique conversions
@@ -468,7 +485,7 @@ class PlayerProfile:
         self.final_damage += int(round(hp_reduction / 100)) / 100
         self.final_damage += self.unique_conversion[3]
         if self.aqua_mode != 0 and self.equipped_tarot != "" and e_tarot.card_numeral == "XIV":
-            self.critical_multiplier += self.elemental_multiplier[1]
+            self.critical_mult += self.elemental_mult[1]
 
         # Attack speed hard cap
         self.attack_speed = min(10, self.attack_speed)
@@ -488,15 +505,15 @@ class PlayerProfile:
         # Boss type multipliers
         damage = player_damage * (1 + self.banes[boss_obj.boss_type_num - 1])
         # Type Defences
-        defences_multiplier = (combat.boss_defences("", self, boss_obj, -1) + self.defence_penetration)
+        defences_multiplier = (combat.boss_defences("", self, boss_obj, -1) + self.defence_pen)
         damage *= defences_multiplier
         # Elemental Defences
         highest = 0
         for idx, x in enumerate(combat.limit_elements(self, e_weapon)):
             if x == 1:
-                self.elemental_damage[idx] = damage * (1 + self.elemental_multiplier[idx])
+                self.elemental_damage[idx] = damage * (1 + self.elemental_mult[idx])
                 resist_multi = combat.boss_defences("Element", self, boss_obj, idx)
-                penetration_multi = 1 + self.elemental_penetration[idx]
+                penetration_multi = 1 + self.elemental_pen[idx]
                 self.elemental_damage[idx] *= resist_multi * penetration_multi * self.elemental_conversion[idx]
                 if self.elemental_damage[idx] > self.elemental_damage[highest]:
                     highest = idx
@@ -575,7 +592,10 @@ class PlayerProfile:
         if item.item_tier >= 5:
             current_ability = gli.rare_ability_dict[item.item_bonus_stat]
             self.final_damage += 0.25 * (item.item_tier - 4)
-            setattr(self, current_ability[0], current_ability[1])
+            if current_ability[0] in self.appli.keys():
+                self.appli[current_ability[0]] += current_ability[1]
+            else:
+                setattr(self, current_ability[0], current_ability[1])
         else:
             keywords = item.item_bonus_stat.split()
             if item.item_type == "Y":
@@ -586,10 +606,10 @@ class PlayerProfile:
                 return
             element_position = gli.element_special_names.index(keywords[0])
             if item.item_type == "G":
-                self.elemental_multiplier[element_position] += 0.25
+                self.elemental_mult[element_position] += 0.25
                 return
             if item.item_type == "C":
-                self.elemental_penetration[element_position] += 0.25
+                self.elemental_pen[element_position] += 0.25
                 return
 
     def check_cooldown(self, command_name):
@@ -662,8 +682,10 @@ async def df_to_player(row, reloading=None):
         temp.player_username = str(row["player_username"].values[0])
         temp.player_level, temp.player_exp = int(row['player_level'].values[0]), int(row['player_exp'].values[0])
         temp_string = str(row['quest_tokens'].values[0])
-        temp.player_echelon, temp.player_quest = int(row['player_echelon'].values[0]), int(row['player_quest'].values[0])
-        temp.player_stamina, temp.player_coins = int(row['player_stamina'].values[0]), int(row['player_coins'].values[0])
+        temp.player_echelon, temp.player_quest = int(row['player_echelon'].values[0]), int(
+            row['player_quest'].values[0])
+        temp.player_stamina, temp.player_coins = int(row['player_stamina'].values[0]), int(
+            row['player_coins'].values[0])
         temp.player_class = str(row['player_class'].values[0])
         temp.vouch_points = int(row['vouch_points'].values[0])
     string_list = temp_string.split(';')

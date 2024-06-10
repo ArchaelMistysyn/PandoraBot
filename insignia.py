@@ -323,6 +323,6 @@ def assign_insignia_values(player_obj):
     if insignia_obj.num_elements != 9:
         for y, has_element in enumerate(insignia_obj.element_list):
             if has_element:
-                player_obj.elemental_penetration[y] += adjusted_penetration
+                player_obj.elemental_pen[y] += adjusted_penetration
     else:
-        player_obj.all_elemental_penetration += adjusted_penetration
+        player_obj.all_elemental_pen += adjusted_penetration

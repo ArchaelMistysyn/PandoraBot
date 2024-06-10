@@ -27,52 +27,52 @@ roll_structure_dict = {"W": ["damage", "damage", "penetration", "penetration", "
                        "D5": ["damage", "damage", "penetration", "penetration", "curse", "curse"]}
 
 damage_rolls = {
-    "damage-0": ["Fire Damage", 25, 10, [["elemental_multiplier", 0]]],
-    "damage-1": ["Water Damage", 25, 10, [["elemental_multiplier", 1]]],
-    "damage-2": ["Lightning Damage", 25, 10, [["elemental_multiplier", 2]]],
-    "damage-3": ["Earth Damage", 25, 10, [["elemental_multiplier", 3]]],
-    "damage-4": ["Wind Damage", 25, 10, [["elemental_multiplier", 4]]],
-    "damage-5": ["Ice Damage", 25, 10, [["elemental_multiplier", 5]]],
-    "damage-6": ["Shadow Damage", 25, 10, [["elemental_multiplier", 6]]],
-    "damage-7": ["Light Damage", 25, 10, [["elemental_multiplier", 7]]],
-    "damage-8": ["Celestial Damage", 25, 10, [["elemental_multiplier", 8]]],
-    "damage-9": ["Hybrid Damage (Eclipse)", 20, 8, [["elemental_multiplier", 7], ["elemental_multiplier", 6]]],
-    "damage-10": ["Hybrid Damage (Horizon)", 20, 8, [["elemental_multiplier", 4], ["elemental_multiplier", 3]]],
-    "damage-11": ["Hybrid Damage (Frostfire)", 20, 8, [["elemental_multiplier", 5], ["elemental_multiplier", 0]]],
-    "damage-12": ["Hybrid Damage (Storm)", 20, 8, [["elemental_multiplier", 1], ["elemental_multiplier", 2]]],
-    "damage-13": ["Omni Damage", 15, 5, [["all_elemental_multiplier", -1]]],
+    "damage-0": ["Fire Damage", 25, 10, [["elemental_mult", 0]]],
+    "damage-1": ["Water Damage", 25, 10, [["elemental_mult", 1]]],
+    "damage-2": ["Lightning Damage", 25, 10, [["elemental_mult", 2]]],
+    "damage-3": ["Earth Damage", 25, 10, [["elemental_mult", 3]]],
+    "damage-4": ["Wind Damage", 25, 10, [["elemental_mult", 4]]],
+    "damage-5": ["Ice Damage", 25, 10, [["elemental_mult", 5]]],
+    "damage-6": ["Shadow Damage", 25, 10, [["elemental_mult", 6]]],
+    "damage-7": ["Light Damage", 25, 10, [["elemental_mult", 7]]],
+    "damage-8": ["Celestial Damage", 25, 10, [["elemental_mult", 8]]],
+    "damage-9": ["Hybrid Damage (Eclipse)", 20, 8, [["elemental_mult", 7], ["elemental_mult", 6]]],
+    "damage-10": ["Hybrid Damage (Horizon)", 20, 8, [["elemental_mult", 4], ["elemental_mult", 3]]],
+    "damage-11": ["Hybrid Damage (Frostfire)", 20, 8, [["elemental_mult", 5], ["elemental_mult", 0]]],
+    "damage-12": ["Hybrid Damage (Storm)", 20, 8, [["elemental_mult", 1], ["elemental_mult", 2]]],
+    "damage-13": ["Omni Damage", 15, 5, [["all_elemental_mult", -1]]],
     "damage-14": ["Ultimate Damage", 25, 5, [["ultimate_mult", -1]]],
     "damage-15": ["Bleed Damage", 25, 5, [["bleed_mult", -1]]],
     "damage-16": ["Combo Damage", 10, 5, [["combo_mult", -1]]],
-    "damage-17": ["Hybrid Damage (Chaos)", 18, 5, [["elemental_multiplier", 0], ["elemental_multiplier", 2],
-                                                   ["elemental_multiplier", 3], ["elemental_multiplier", 6]]],
-    "damage-18": ["Hybrid Damage (Holy)", 18, 5, [["elemental_multiplier", 1], ["elemental_multiplier", 4],
-                                                  ["elemental_multiplier", 5], ["elemental_multiplier", 7]]]
+    "damage-17": ["Hybrid Damage (Chaos)", 18, 5, [["elemental_mult", 0], ["elemental_mult", 2],
+                                                   ["elemental_mult", 3], ["elemental_mult", 6]]],
+    "damage-18": ["Hybrid Damage (Holy)", 18, 5, [["elemental_mult", 1], ["elemental_mult", 4],
+                                                  ["elemental_mult", 5], ["elemental_mult", 7]]]
 }
 
 penetration_rolls = {
-    "penetration-0": ["Fire Penetration", 15, 10, [["elemental_penetration", 0]]],
-    "penetration-1": ["Water Penetration", 15, 10, [["elemental_penetration", 1]]],
-    "penetration-2": ["Lightning Penetration", 15, 10, [["elemental_penetration", 2]]],
-    "penetration-3": ["Earth Penetration", 15, 10, [["elemental_penetration", 3]]],
-    "penetration-4": ["Wind Penetration", 15, 10, [["elemental_penetration", 4]]],
-    "penetration-5": ["Ice Penetration", 15, 10, [["elemental_penetration", 5]]],
-    "penetration-6": ["Shadow Penetration", 15, 10, [["elemental_penetration", 6]]],
-    "penetration-7": ["Light Penetration", 15, 10, [["elemental_penetration", 7]]],
-    "penetration-8": ["Celestial Penetration", 15, 10, [["elemental_penetration", 8]]],
-    "penetration-9": ["Hybrid Penetration (Eclipse)", 10, 8, [["elemental_penetration", 7], ["elemental_penetration", 6]]],
-    "penetration-10": ["Hybrid Penetration (Horizon)", 10, 8, [["elemental_penetration", 4], ["elemental_penetration", 3]]],
-    "penetration-11": ["Hybrid Penetration (Frostfire)", 10, 8, [["elemental_penetration", 5], ["elemental_penetration", 0]]],
-    "penetration-12": ["Hybrid Penetration (Storm)", 10, 8, [["elemental_penetration", 1], ["elemental_penetration", 2]]],
-    "penetration-13": ["Omni Penetration", 8, 5, [["all_elemental_penetration", -1]]],
-    "penetration-14": ["Critical Penetration", 25, 5, [["critical_penetration", -1]]],
-    "penetration-15": ["Bleed Penetration", 25, 5, [["bleed_penetration", -1]]],
-    "penetration-16": ["Combo Penetration", 20, 5, [["combo_penetration", -1]]],
-    "penetration-17": ["Ultimate Penetration", 20, 5, [["ultimate_penetration", -1]]],
-    "penetration-18": ["Hybrid Penetration (Chaos)", 9, 8, [["elemental_penetration", 0], ["elemental_penetration", 2],
-                                                            ["elemental_penetration", 3], ["elemental_penetration", 6]]],
-    "penetration-19": ["Hybrid Penetration (Holy)", 9, 8, [["elemental_penetration", 1], ["elemental_penetration", 4],
-                                                           ["elemental_penetration", 5], ["elemental_penetration", 7]]]
+    "penetration-0": ["Fire Penetration", 15, 10, [["elemental_pen", 0]]],
+    "penetration-1": ["Water Penetration", 15, 10, [["elemental_pen", 1]]],
+    "penetration-2": ["Lightning Penetration", 15, 10, [["elemental_pen", 2]]],
+    "penetration-3": ["Earth Penetration", 15, 10, [["elemental_pen", 3]]],
+    "penetration-4": ["Wind Penetration", 15, 10, [["elemental_pen", 4]]],
+    "penetration-5": ["Ice Penetration", 15, 10, [["elemental_pen", 5]]],
+    "penetration-6": ["Shadow Penetration", 15, 10, [["elemental_pen", 6]]],
+    "penetration-7": ["Light Penetration", 15, 10, [["elemental_pen", 7]]],
+    "penetration-8": ["Celestial Penetration", 15, 10, [["elemental_pen", 8]]],
+    "penetration-9": ["Hybrid Penetration (Eclipse)", 10, 8, [["elemental_pen", 7], ["elemental_pen", 6]]],
+    "penetration-10": ["Hybrid Penetration (Horizon)", 10, 8, [["elemental_pen", 4], ["elemental_pen", 3]]],
+    "penetration-11": ["Hybrid Penetration (Frostfire)", 10, 8, [["elemental_pen", 5], ["elemental_pen", 0]]],
+    "penetration-12": ["Hybrid Penetration (Storm)", 10, 8, [["elemental_pen", 1], ["elemental_pen", 2]]],
+    "penetration-13": ["Omni Penetration", 8, 5, [["all_elemental_pen", -1]]],
+    "penetration-14": ["Critical Penetration", 25, 5, [["critical_pen", -1]]],
+    "penetration-15": ["Bleed Penetration", 25, 5, [["bleed_pen", -1]]],
+    "penetration-16": ["Combo Penetration", 20, 5, [["combo_pen", -1]]],
+    "penetration-17": ["Ultimate Penetration", 20, 5, [["ultimate_pen", -1]]],
+    "penetration-18": ["Hybrid Penetration (Chaos)", 9, 8, [["elemental_pen", 0], ["elemental_pen", 2],
+                                                            ["elemental_pen", 3], ["elemental_pen", 6]]],
+    "penetration-19": ["Hybrid Penetration (Holy)", 9, 8, [["elemental_pen", 1], ["elemental_pen", 4],
+                                                           ["elemental_pen", 5], ["elemental_pen", 7]]]
 }
 
 curse_rolls = {
@@ -100,40 +100,40 @@ defensive_rolls = {
     "defensive-0": ["Health Regen", 0.5, 3, [["hp_regen", -1]]],
     "defensive-1": ["Health Multiplier", 15, 10, [["hp_multiplier", -1]]],
     "defensive-2": ["Mitigation Bonus", 15, 5, [["damage_mitigation", -1]]],
-    "defensive-3": ["Fire Resistance", 10, 5, [["elemental_resistance", 0]]],
-    "defensive-4": ["Water Resistance", 10, 5, [["elemental_resistance", 1]]],
-    "defensive-5": ["Lightning Resistance", 10, 5, [["elemental_resistance", 2]]],
-    "defensive-6": ["Earth Resistance", 10, 5, [["elemental_resistance", 3]]],
-    "defensive-7": ["Wind Resistance", 10, 5, [["elemental_resistance", 4]]],
-    "defensive-8": ["Ice Resistance", 10, 5, [["elemental_resistance", 5]]],
-    "defensive-9": ["Shadow Resistance", 10, 5, [["elemental_resistance", 6]]],
-    "defensive-10": ["Light Resistance", 10, 5, [["elemental_resistance", 7]]],
-    "defensive-11": ["Celestial Resistance", 10, 5, [["elemental_resistance", 8]]],
-    "defensive-12": ["Hybrid Resistance (Eclipse)", 8, 3, [["elemental_resistance", 7], ["elemental_resistance", 6]]],
-    "defensive-13": ["Hybrid Resistance (Horizon)", 8, 3, [["elemental_resistance", 4], ["elemental_resistance", 3]]],
-    "defensive-14": ["Hybrid Resistance (Frostfire)", 8, 3, [["elemental_resistance", 5], ["elemental_resistance", 0]]],
-    "defensive-15": ["Hybrid Resistance (Storm)", 8, 3, [["elemental_resistance", 1], ["elemental_resistance", 2]]],
-    "defensive-16": ["Omni Resistance", 5, 2, [["all_elemental_resistance", -1]]],
+    "defensive-3": ["Fire Resistance", 10, 5, [["elemental_res", 0]]],
+    "defensive-4": ["Water Resistance", 10, 5, [["elemental_res", 1]]],
+    "defensive-5": ["Lightning Resistance", 10, 5, [["elemental_res", 2]]],
+    "defensive-6": ["Earth Resistance", 10, 5, [["elemental_res", 3]]],
+    "defensive-7": ["Wind Resistance", 10, 5, [["elemental_res", 4]]],
+    "defensive-8": ["Ice Resistance", 10, 5, [["elemental_res", 5]]],
+    "defensive-9": ["Shadow Resistance", 10, 5, [["elemental_res", 6]]],
+    "defensive-10": ["Light Resistance", 10, 5, [["elemental_res", 7]]],
+    "defensive-11": ["Celestial Resistance", 10, 5, [["elemental_res", 8]]],
+    "defensive-12": ["Hybrid Resistance (Eclipse)", 8, 3, [["elemental_res", 7], ["elemental_res", 6]]],
+    "defensive-13": ["Hybrid Resistance (Horizon)", 8, 3, [["elemental_res", 4], ["elemental_res", 3]]],
+    "defensive-14": ["Hybrid Resistance (Frostfire)", 8, 3, [["elemental_res", 5], ["elemental_res", 0]]],
+    "defensive-15": ["Hybrid Resistance (Storm)", 8, 3, [["elemental_res", 1], ["elemental_res", 2]]],
+    "defensive-16": ["Omni Resistance", 5, 2, [["all_elemental_res", -1]]],
     "defensive-17": ["Recovery", 1, 2, [["recovery", -1]]],
     "defensive-18": ["Block Rate", 2, 3, [["block", -1]]],
     "defensive-19": ["Dodge Rate", 1, 3, [["dodge", -1]]],
-    "defensive-20": ["Hybrid Resistance (Chaos)", 5, 5, [["elemental_resistance", 0], ["elemental_resistance", 2],
-                                                         ["elemental_resistance", 3], ["elemental_resistance", 6]]],
-    "defensive-21": ["Hybrid Resistance (Holy)", 5, 5, [["elemental_resistance", 1], ["elemental_resistance", 4],
-                                                        ["elemental_resistance", 5], ["elemental_resistance", 7]]]
+    "defensive-20": ["Hybrid Resistance (Chaos)", 5, 5, [["elemental_res", 0], ["elemental_res", 2],
+                                                         ["elemental_res", 3], ["elemental_res", 6]]],
+    "defensive-21": ["Hybrid Resistance (Holy)", 5, 5, [["elemental_res", 1], ["elemental_res", 4],
+                                                        ["elemental_res", 5], ["elemental_res", 7]]]
 }
 
 shared_unique_rolls = {
     "unique-0-s": ["Attack Speed", 5, 50, [["attack_speed", -1]]],
-    "unique-1-s": ["Critical Strike Chance", 20, 100, [["critical_chance", -1]]],
-    "unique-2-s": ["Critical Strike Multiplier", 25, 100, [["critical_multiplier", -1]]],
-    "unique-3-s": ["NEED TO CHANGE", 0, 50, [["all_elemental_multiplier", -1]]],
+    "unique-1-s": ["Critical Strike Chance", 20, 100, [["trigger_rate", "Critical"]]],
+    "unique-2-s": ["Critical Strike Multiplier", 25, 100, [["critical_mult", -1]]],
+    "unique-3-s": ["NEED TO CHANGE", 0, 50, [["all_elemental_mult", -1]]],
     "unique-4-s": ["Class Mastery Bonus", 3, 50, [["class_multiplier", -1]]],
     "unique-5-s": ["Human Bane", 20, 200, [["banes", 5]]]
 }
 
 weapon_unique_rolls = {
-    "unique-0-w": ["X% Chance to trigger Bloom on hit", 5, 1, [["spec_rate", 0]]],
+    "unique-0-w": ["X% Chance to trigger Bloom on hit", 5, 1, [["trigger_rate", "Bloom"]]],
     "unique-1-w": ["X% Less Non-Fire, X% More Fire Damage", 12, 10, [["elemental_conversion", 0]]],
     "unique-2-w": ["X% Less Non-Water, X% More Water Damage", 12, 10, [["elemental_conversion", 1]]],
     "unique-3-w": ["X% Less Non-Lightning, X% More Lightning Damage", 12, 10, [["elemental_conversion", 2]]],
@@ -160,18 +160,18 @@ armour_unique_rolls = {
 }
 
 accessory_unique_rolls = {
-    "unique-0-y": ["Hyper Bleed Rate", 2, 15, [["spec_rate", 1]]],
-    "unique-1-y": ["Omega Critical Rate", 2, 15, [["spec_rate", 2]]],
-    "unique-2-y": ["Fractal Rate", 2, 15, [["spec_rate", 3]]],
-    "unique-3-y": ["Time Lock Rate", 2, 15, [["spec_rate", 4]]],
+    "unique-0-y": ["Hyperbleed Rate", 2, 15, [["trigger_rate", "Hyperbleed"]]],
+    "unique-1-y": ["Omega Critical Rate", 2, 15, [["trigger_rate", "Omega"]]],
+    "unique-2-y": ["Fractal Rate", 2, 15, [["trigger_rate", "Fractal"]]],
+    "unique-3-y": ["Time Lock Rate", 2, 15, [["trigger_rate", "Time Lock"]]],
     "unique-4-y": ["Fortress Bane", 25, 10, [["banes", 0]]],
     "unique-5-y": ["Dragon Bane", 25, 10, [["banes", 1]]],
     "unique-6-y": ["Demon Bane", 25, 10, [["banes", 2]]],
     "unique-7-y": ["Paragon Bane", 25, 10, [["banes", 3]]],
     "unique-8-y": ["Arbiter Bane", 25, 10, [["banes", 4]]],
     "unique-9-y": ["Class Mastery Bonus X%. Class Mastery is inverted", 5, 5, [["unique_conversion", 2]]],
-    "unique-10-y": ["X% Singularity Damage, Penetration, and Curse", 5, 5, [["singularity_damage", -1],
-                                                                            ["singularity_penetration", -1],
+    "unique-10-y": ["X% Singularity Damage, Penetration, and Curse", 5, 5, [["singularity_mult", -1],
+                                                                            ["singularity_pen", -1],
                                                                             ["singularity_curse", -1]]]
 }
 
@@ -571,29 +571,17 @@ def handle_roll_exceptions(player_obj, selected_roll, selected_data):
     if selected_roll.roll_id.endswith(player_obj.player_class):
         return True
     if "elemental_conversion" in selected_data[0]:
-        attribute_name, attribute_position = selected_data[0]
-        target_list = getattr(player_obj, attribute_name)
-        # Apply more multipliers.
-        if isinstance(attribute_position, tuple):
-            other_positions = [i for i in range(len(target_list)) if i not in attribute_position]
-            for position in attribute_position:
-                target_list[position] += selected_roll.roll_value
-        else:
-            other_positions = [i for i in range(len(target_list)) if i != attribute_position]
-            target_list[attribute_position] += selected_roll.roll_value
-        # Apply less multipliers.
-        for position in other_positions:
-            other_positions = [i for i in range(len(target_list)) if i != attribute_position]
-            target_list[position] -= selected_roll.roll_value
+        _, attribute_position = selected_data[0]
+        player_obj.apply_elemental_conversion(attribute_position, selected_roll.roll_value, selected_roll.roll_value)
         return True
     return False
 
 
 def assign_item_element_stats(player_obj, equipped_item):
     associated_stats = {
-        "A": [player_obj.elemental_resistance, 0.1], "V": [player_obj.elemental_resistance, 0.1],
+        "A": [player_obj.elemental_res, 0.1], "V": [player_obj.elemental_res, 0.1],
         "Y": [player_obj.elemental_damage, 0.25],
-        "G": [player_obj.elemental_penetration, 0.15],
+        "G": [player_obj.elemental_pen, 0.15],
         "C": [player_obj.elemental_curse, 0.1],
     }
     # Assign stats from elements on the item.
