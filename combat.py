@@ -324,7 +324,7 @@ def check_lock(player_obj, combat_tracker, damage):
         combat_tracker.time_lock -= 1
         combat_tracker.time_damage += damage
         # Trigger time shatter.
-        if combat_tracker.time_lock == 0:
+        if combat_tracker.time_lock == 0 or player_obj.unique_glyph_ability[7]:
             damage = combat_tracker.time_damage * (player_obj.appli["Temporal"] + 1)
             combat_tracker.time_damage = 0
             return damage, " *TIME SHATTER*"
@@ -411,7 +411,7 @@ def pvp_defences(attacker, defender, player_damage, e_weapon):
             if attacker.elemental_damage[idx] > attacker.elemental_damage[highest]:
                 highest = idx
     stun_status = gli.element_status_list[highest]
-    stun_status = stun_status if (stun_status is not None and random.randint(1, 100) <= 1) else None
+    stun_status = stun_status if (stun_status is not None and random.randint(1, 100) <= attacker.trigger_rate["Status"]) else None
     return stun_status, int(sum(attacker.elemental_damage) * (1 + attacker.banes[5]))
 
 

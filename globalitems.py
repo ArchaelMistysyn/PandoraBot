@@ -42,6 +42,7 @@ class_names = list(class_icon_dict.keys())
 class_icon_list = [class_icon_dict[class_name] for class_name in class_names]
 # Path Icons
 path_icon = ["<a:eenergy:1145534127349706772>", "<a:eenergy:1145534127349706772>", "<a:eenergy:1145534127349706772>",
+             "<a:eenergy:1145534127349706772>", "<a:eenergy:1145534127349706772>", "<a:eenergy:1145534127349706772>",
              "<a:eenergy:1145534127349706772>", "<a:eenergy:1145534127349706772>", "<a:eenergy:1145534127349706772>"]
 # Icon Frames
 frame_icon_list = [f"{web_url}iconframes/Icon_Border_[EXT]/Icon_border_Bronze_[EXT].png",
@@ -63,19 +64,21 @@ augment_icons = ["<:P1:1201567117414244372>", "<:P2:1201567119368798239>", "<:P3
                  "<:P4:1201567121411407944>", "<:P5:1201567122569048154>", "<:P6:1201567123999313930>",
                  "<:P7:1201567125035286628>", "<:P8:1201567463859556503>", "<:PX:1201567126088056862>"]
 # Element Icons
-global_element_list = ["<:e1:1179726491311947829>", "<:e2:1179726472995405854>", "<:e3:1179726450056761364>",
-                       "<:e4:1179726402296221787>", "<:e5:1179726383224733706>", "<:e6:1179726426509946900>",
-                       "<:e7:1179726335678107698>", "<:e8:1179726361049452554>", "<:e9:1179726302480183396>"]
+ele_icon = ["<:e1:1179726491311947829>", "<:e2:1179726472995405854>", "<:e3:1179726450056761364>",
+            "<:e4:1179726402296221787>", "<:e5:1179726383224733706>", "<:e6:1179726426509946900>",
+            "<:e7:1179726335678107698>", "<:e8:1179726361049452554>", "<:e9:1179726302480183396>"]
 omni_icon = "🌈"
 element_dict = {
     'Fire': [0], 'Water': [1], 'Lightning': [2], 'Earth': [3], 'Wind': [4],
     'Ice': [5], 'Shadow': [6], 'Light': [7], 'Celestial': [8],
-    'Storm': [1, 2], 'Frostfire': [0, 5], 'Eclipse': [7, 6], 'Horizon': [3, 4], 'Stars': [8],
-    'Chaos': [0, 6, 2, 3], 'Holy': [1, 7, 4, 5], 'Solar': [0, 7, 4]}
+    'Storms': [1, 2], 'Frostfire': [0, 5], 'Eclipse': [7, 6], 'Horizon': [3, 4], 'Stars': [8],
+    'Solar': [0, 7, 4], 'Lunar': [1, 5, 6], 'Terrestria': [2, 3, 8], 'Chaos': [0, 6, 2, 3], 'Holy': [1, 7, 4, 5],
+    'Confluence': [0, 1, 2, 3, 4, 5, 6, 7, 8]}
 
 # NAME LISTS
 # Path Names
-path_names = ["Storms", "Frostfire", "Horizon", "Eclipse", "Stars", "Confluence", "Solitude"]
+path_names = ["Storms", "Frostfire", "Horizon", "Eclipse", "Stars",
+              "Solar Flux", "Lunar Tides", "Terrestria", "Confluence"]
 # Element Names
 element_names = ["Fire", "Water", "Lightning", "Earth", "Wind", "Ice", "Shadow", "Light", "Celestial"]
 element_special_names = ["Volcanic", "Aquatic", "Voltaic", "Seismic", "Sonic", "Arctic", "Lunar", "Solar", "Cosmic"]
@@ -90,7 +93,7 @@ rare_ability_dict = {"Overflow": ["Elemental", 2], "Mastery": ["class_multiplier
                      "Immortality": ["immortal", True], "Omega": ["Critical", 1],
                      "Combo": ["Combo", 1], "Reaper": ["Bleed", 1],
                      "Overdrive": ["Ultimate", 1], "Unravel": ["Temporal", 1],
-                     "Vitality": ["hp_multiplier", 5], "Manatide": ["Mana", 1]}
+                     "Vitality": ["Life", 1], "Manatide": ["Mana", 1]}
 # Skill Names
 skill_names_dict = {
     "Knight": ["Destructive Cleave", "Merciless Blade", "Ruinous Slash", "Destiny Divider"],

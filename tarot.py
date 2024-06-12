@@ -18,115 +18,77 @@ from pandoradb import run_query as rq
 # Item/crafting imports
 import itemrolls
 
-
 card_dict = {
-    "0": ["Karma, The Reflection", 1],
-    "I": ["Runa, The Magic", 1],
-    "II": ["Pandora, The Celestial", 4],
-    "III": ["Oblivia, The Void", 5],
-    "IV": ["Akasha, The Infinite", 5],
-    "V": ["Arkaya, The Duality", 1],
-    "VI": ["Kama, The Love", 1],
-    "VII": ["Astratha, The Dimensional", 4],
-    "VIII": ["Tyra, The Behemoth", 4],
-    "IX": ["Alaya, The Memory", 1],
-    "X": ["Chrona, The Temporal", 3],
-    "XI": ["Nua, The Heavens", 3],
-    "XII": ["Rua, The Abyss", 3],
-    "XIII": ["Thana, The Death", 3],
-    "XIV": ["Arcelia, The Clarity", 2],
-    "XV": ["Diabla, The Primordial", 4],
-    "XVI": ["Aurora, The Fortress", 4],
-    "XVII": ["Nova, The Star", 2],
-    "XVIII": ["Luna, The Moon", 2],
-    "XIX": ["Luma, The Sun", 2],
-    "XX": ["Aria, The Requiem", 2],
-    "XXI": ["Ultima, The Creation", 3],
-    "XXII": ["Mysmir, Changeling of the True Laws", 1],
-    "XXIII": ["Avalon, Pathwalker of the True Laws", 2],
-    "XXIV": ["Isolde, Soulweaver of the True Laws", 3],
-    "XXV": ["Eleuia, The Wish", 6],
-    "XXVI": ["Kazyth, Lifeblood of the True Laws", 4],
-    "XXVII": ["Vexia, Scribe of the True Laws", 5],
-    "XXVIII": ["Fleur, Oracle of the True Laws", 6],
-    "XXIX": ["Yubelle, Adjudicator of the True Laws", 7],
-    "XXX": ["Nephilim, Incarnate of the Divine Lotus", 8]
-}
+    "0": ["Karma, The Reflection", 1], "I": ["Runa, The Magic", 1], "II": ["Pandora, The Celestial", 4],
+    "III": ["Oblivia, The Void", 5], "IV": ["Akasha, The Infinite", 5], "V": ["Arkaya, The Duality", 1],
+    "VI": ["Kama, The Love", 1], "VII": ["Astratha, The Dimensional", 4], "VIII": ["Tyra, The Behemoth", 4],
+    "IX": ["Alaya, The Memory", 1], "X": ["Chrona, The Temporal", 3], "XI": ["Nua, The Heavens", 3],
+    "XII": ["Rua, The Abyss", 3], "XIII": ["Thana, The Death", 3], "XIV": ["Arcelia, The Clarity", 2],
+    "XV": ["Diabla, The Primordial", 4], "XVI": ["Aurora, The Fortress", 4], "XVII": ["Nova, The Star", 2],
+    "XVIII": ["Luna, The Moon", 2], "XIX": ["Luma, The Sun", 2], "XX": ["Aria, The Requiem", 2],
+    "XXI": ["Ultima, The Creation", 3], "XXII": ["Mysmir, Changeling of the True Laws", 1],
+    "XXIII": ["Avalon, Pathwalker of the True Laws", 2], "XXIV": ["Isolde, Soulweaver of the True Laws", 3],
+    "XXV": ["Eleuia, The Wish", 6], "XXVI": ["Kazyth, Lifeblood of the True Laws", 4],
+    "XXVII": ["Vexia, Scribe of the True Laws", 5], "XXVIII": ["Fleur, Oracle of the True Laws", 6],
+    "XXIX": ["Yubelle, Adjudicator of the True Laws", 7], "XXX": ["Nephilim, Incarnate of the Divine Lotus", 8]}
 card_type_dict = {
     "0": "Paragon", "I": "Paragon", "II": "Paragon", "III": "Paragon", "IV": "Paragon", "V": "Paragon",
     "VI": "Paragon", "VII": "Paragon", "VIII": "Paragon", "IX": "Paragon", "X": "Paragon",
     "XI": "Paragon", "XII": "Paragon", "XIII": "Paragon", "XIV": "Paragon", "XV": "Paragon",
     "XVI": "Paragon", "XVII": "Paragon", "XVIII": "Paragon", "XIX": "Paragon", "XX": "Paragon",
     "XXI": "Paragon", "XXII": "Arbiter", "XXIII": "Arbiter", "XXIV": "Arbiter", "XXV": "Paragon",
-    "XXVI": "Arbiter", "XXVII": "Arbiter", "XXVIII": "Arbiter", "XXIX": "Arbiter", "XXX": "Incarnate"
-}
+    "XXVI": "Arbiter", "XXVII": "Arbiter", "XXVIII": "Arbiter", "XXIX": "Arbiter", "XXX": "Incarnate"}
 
 # Key: [path, [description1, value1, reference1, location1], [description2, value2, reference2, location2]]
 card_stat_dict = {
-                  # Application Cards
-                  "I": [5, ["Mana Application", 1, "appli", "Mana"],
-                        ["Mana Damage", 25, "mana_mult", 5]],
-                  "X": [6, ["Temporal Application", 1, "appli", "Temporal"],
-                        ["Ultimate Application", 1, "appli", "Ultimate"]],
-                  "III": [4, ["Critical Application", 1, "appli", "Critical"],
-                          ["Critical Application", 1, "appli", "Critical"]],
-                  "IV": [0, ["Critical Application", 1, "appli", "Critical"],
-                         ["Critical Application", 1, "appli", "Critical"]],
-                  # Lesser Path Cards
-                  "XVII": [4, ["Celestial Damage", 25, "elemental_mult", 8],
-                           ["Celestial Damage", 25, "elemental_mult", 8]],
-                  "V": [2, ["Bleed Penetration", 20, "bleed_pen", 6],
-                        ["Bleed Application", 1, "appli", "Bleed"]],
-                  # Greater Path Cards
-                  "XX": [0, ["Water Penetration", 20, "elemental_pen", 0],
-                         ["Lightning Penetration", 20, "elemental_pen", 2]],
-                  "XV": [1, ["Ice Penetration", 20, "elemental_pen", 5],
-                         ["Fire Penetration", 20, "elemental_pen", 0]],
-                  "XVIII": [3, ["Shadow Penetration", 20, "elemental_pen", 6],
-                            ["Light Penetration", 20, "elemental_pen", 7]],
-                  "XIX": [2, ["Earth Penetration", 20, "elemental_pen", 3],
-                          ["Wind Penetration", 20, "elemental_pen", 4]],
-                  "II": [4, ["Celestial Penetration", 20, "elemental_pen", 8],
-                         ["Celestial Curse", 15, "elemental_curse", 8]],
-                  "XXI": [6, ["Singularity Penetration", 20, "singularity_pen", None],
-                          ["Singularity Curse", 15, "singularity_curse", None]],
-                  # Bane Cards
-                  "XVI": [2, ["Earth Curse", 15, "elemental_curse", 3], ["Fortress Bane", 25, "banes", 0]],
-                  "VII": [1, ["Celestial Curse", 15, "elemental_curse", 8], ["Dragon Bane", 25, "banes", 1]],
-                  "VIII": [3, ["Lightning Curse", 15, "elemental_curse", 2], ["Demon Bane", 25, "banes", 2]],
-                  "0": [1, ["Arbiter Bane", 25, "banes", 4], ["Paragon Bane", 25, "banes", 3]],
-                  "VI": [4, ["Omni Damage", 25, "all_elemental_mult", None], ["Human Bane", 25, "banes", 5]],
-                  # Solitude Cards
-                  "IX": [6, ["Wind Penetration", 20, "elemental_pen", 4],
-                         ["Wind Curse", 15, "elemental_curse", 4]],
-                  "XI": [6, ["Light Penetration", 20, "elemental_pen", 7],
-                         ["Light Curse", 15, "elemental_curse", 7]],
-                  "XII": [6, ["Shadow Penetration", 20, "elemental_pen", 6],
-                          ["Shadow Curse", 15, "elemental_curse", 6]],
-                  "XIII": [6, ["Ice Penetration", 20, "elemental_pen", 5],
-                           ["Ice Curse", 15, "elemental_curse", 5]],
-                  "XIV": [6, ["Water Penetration", 20, "elemental_pen", 1],
-                          ["Water Curse", 15, "elemental_curse", 1]],
-                  # Arbiter Cards
-                  "XXII": [1, ["X% Chance to trigger Bloom on hit", 5, "trigger_rate", "Bloom"],
-                           ["Arbiter Bane", 25, "banes", 4]],
-                  "XXIII": [3, ["X% Chance to trigger Bloom on hit", 5, "trigger_rate", "Bloom"],
-                            ["Ultimate Application", 1, "appli", "Ultimate"]],
-                  "XXIV": [5, ["X% Chance to trigger Bloom on hit", 5, "trigger_rate", "Bloom"],
-                           ["Elemental Overflow", 1, "appli", "Elemental"]],
-                  "XXVI": [2, ["X% Chance to trigger Bloom on hit", 5, "trigger_rate", "Bloom"],
-                           ["Bleed Application", 1, "appli", "Bleed"]],
-                  "XXVII": [0, ["X% Chance to trigger Bloom on hit", 5, "trigger_rate", "Bloom"],
-                            ["Critical Application", 1, "appli", "Critical"]],
-                  "XXVIII": [6, ["X% Chance to trigger Bloom on hit", 5, "trigger_rate", "Bloom"],
-                             ["Temporal Application", 1, "appli", "Temporal"]],
-                  "XXIX": ["All", ["X% Chance to trigger Bloom on hit", 5, "trigger_rate", "Bloom"],
-                           ["Bloom Damage", 500, "bloom_mult", None]],
-                  "XXX": ["All", ["X% Chance to trigger Bloom on hit", 5, "trigger_rate", "Bloom"],
-                          ["Bloom Damage", 1000, "bloom_mult", None]],
-                  "XXV": ["All", ["Omni Damage", 25, "all_elemental_mult", None],
-                          ["Omni Curse", 25, "all_elemental_curse", None]]
-                  }
+    # Application Cards
+    "I": [1, ["Fire Damage", 1, "elemental_mult", 0], ["Mana Damage", 25, "mana_mult", 5]],
+    "X": [7, ["Temporal Application", 1, "appli", "Temporal"], ["Ultimate Application", 1, "appli", "Ultimate"]],
+    "III": [6, ["Mana Application", 1, "appli", "Mana"], ["Critical Application", 1, "appli", "Critical"]],
+    "IV": [5, ["Life Application", 1, "appli", "Life"], ["Critical Application", 1, "appli", "Critical"]],
+    # Lesser Path Cards
+    "XVII": [4, ["Celestial Damage", 25, "elemental_mult", 8], ["Celestial Damage", 25, "elemental_mult", 8]],
+    "V": [2, ["Bleed Penetration", 20, "bleed_pen", 6], ["Bleed Application", 1, "appli", "Bleed"]],
+    # Greater Path Cards
+    "XX": [0, ["Water Penetration", 20, "elemental_pen", 0], ["Lightning Penetration", 20, "elemental_pen", 2]],
+    "XV": [1, ["Ice Penetration", 20, "elemental_pen", 5], ["Fire Penetration", 20, "elemental_pen", 0]],
+    "XVIII": [6, ["Water Penetration", 20, "elemental_pen", 1], ["Ice Penetration", 20, "elemental_pen", 5],
+              ["Shadow Penetration", 20, "elemental_pen", 6]], "XIX": [5, ["Fire Penetration", 20, "elemental_pen", 0],
+            ["Wind Penetration", 20, "elemental_pen", 4], ["Light Penetration", 20, "elemental_pen", 7]],
+    "II": [4, ["Celestial Penetration", 20, "elemental_pen", 8], ["Celestial Curse", 15, "elemental_curse", 8]],
+    "XXI": [6, ["Singularity Penetration", 20, "singularity_pen", None],
+            ["Singularity Curse", 15, "singularity_curse", None]],
+    # Bane Cards
+    "XVI": [2, ["Earth Curse", 15, "elemental_curse", 3], ["Fortress Bane", 25, "banes", 0]],
+    "VII": [7, ["Celestial Curse", 15, "elemental_curse", 8], ["Dragon Bane", 25, "banes", 1]],
+    "VIII": [3, ["Lightning Curse", 15, "elemental_curse", 2], ["Demon Bane", 25, "banes", 2]],
+    "0": [1, ["Arbiter Bane", 25, "banes", 4], ["Paragon Bane", 25, "banes", 3]],
+    "VI": [4, ["Omni Damage", 25, "all_elemental_mult", None], ["Human Bane", 25, "banes", 5]],
+    # Solitude Cards
+    "IX": [5, ["Wind Penetration", 20, "elemental_pen", 4], ["Wind Curse", 15, "elemental_curse", 4]],
+    "XI": [2, ["Earth Penetration", 20, "elemental_pen", 3], ["Wind Penetration", 20, "elemental_pen", 4]],
+    "XII": [3, ["Shadow Penetration", 20, "elemental_pen", 6], ["Light Penetration", 20, "elemental_pen", 7]],
+    "XIII": [6, ["Ice Penetration", 20, "elemental_pen", 5], ["Ice Curse", 15, "elemental_curse", 5]],
+    "XIV": [6, ["Water Penetration", 20, "elemental_pen", 1], ["Water Curse", 15, "elemental_curse", 1]],
+    # Arbiter Cards
+    "XXII": [7, ["X% Chance to trigger Bloom on hit", 5, "trigger_rate", "Bloom"],
+             ["Arbiter Bane", 25, "banes", 4]],
+    "XXIII": [3, ["X% Chance to trigger Bloom on hit", 5, "trigger_rate", "Bloom"],
+              ["Ultimate Application", 1, "appli", "Ultimate"]],
+    "XXIV": [8, ["X% Chance to trigger Bloom on hit", 5, "trigger_rate", "Bloom"],
+             ["Elemental Overflow", 1, "appli", "Elemental"]],
+    "XXVI": [2, ["X% Chance to trigger Bloom on hit", 5, "trigger_rate", "Bloom"],
+             ["Bleed Application", 1, "appli", "Bleed"]],
+    "XXVII": [0, ["X% Chance to trigger Bloom on hit", 5, "trigger_rate", "Bloom"],
+              ["Critical Application", 1, "appli", "Critical"]],
+    "XXVIII": [7, ["X% Chance to trigger Bloom on hit", 5, "trigger_rate", "Bloom"],
+               ["Temporal Application", 1, "appli", "Temporal"]],
+    "XXIX": ["All", ["X% Chance to trigger Bloom on hit", 5, "trigger_rate", "Bloom"],
+             ["Bloom Damage", 500, "bloom_mult", None]],
+    "XXX": ["All", ["X% Chance to trigger Bloom on hit", 5, "trigger_rate", "Bloom"],
+            ["Bloom Damage", 1000, "bloom_mult", None]],
+    "XXV": ["All", ["Omni Damage", 25, "all_elemental_mult", None],
+            ["Omni Curse", 25, "all_elemental_curse", None]]}
 synthesis_success_rate = {0: 0, 1: 75, 2: 50, 3: 40, 4: 30, 5: 20, 6: 10, 7: 99, 8: 0}
 card_variant = ["Empty", "Prelude", "Emergence", "Chromatic", "Prismatic",
                 "Resplendent", "Iridescent", "Transcendent", "Masterpiece"]
@@ -559,5 +521,3 @@ async def binding_ritual(player_obj, essence_type, success_rate):
     description_msg = "The sealed tarot card has been added to your collection."
     embed_msg.add_field(name="Ritual Successful!", value=description_msg)
     return embed_msg
-
-

@@ -382,7 +382,7 @@ class CustomItem:
             rolls_msg = sw.display_sovereign_rolls(self)
         display_stars = sm.display_stars(self.item_tier)
         if "D" not in self.item_type:
-            elements = [gli.global_element_list[idz] for idz, z in enumerate(self.item_elements) if z == 1]
+            elements = [gli.ele_icon[idz] for idz, z in enumerate(self.item_elements) if z == 1]
             item_types = f'{gli.class_icon_dict[self.item_damage_type]}' + ''.join(elements)
             # Handle socket and inlaid gem.
             gem_id = self.item_inlaid_gem_id if self.item_num_sockets == 1 else 0

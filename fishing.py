@@ -132,6 +132,11 @@ async def go_fishing(ctx, player_obj):
         elif grid[fish_pos[1]][fish_pos[0]] == water_icon:
             grid[fish_pos[1]][fish_pos[0]] = fish_icon
         elif grid[fish_pos[1]][fish_pos[0]] == star_icon:
+            for _ in range(5):
+                random_grid = generate_random_colored_grid(grid_x, grid_y)
+                fish_embed.description = "\n".join("".join(row) for row in random_grid)
+                await sent_msg.edit(embed=fish_embed)
+                await asyncio.sleep(1)
             grid = [[star_process_cell(cell) for cell in row] for row in grid]
             colour = discord.Colour.green()
             title = f"{player_obj.player_username} Caught All {num_worms:,} Fish!"
@@ -155,3 +160,8 @@ async def go_fishing(ctx, player_obj):
     await inventory.update_stock(None, None, None, batch=batch_df)
     embed_msg.add_field(name="Fish Caught", value=fish_output, inline=False)
     await sent_msg.edit(embed=embed_msg)
+
+
+def generate_random_colored_grid(grid_x, grid_y):
+    color_emojis = ["🟥", "🟧", "🟨", "🟩", "🟦", "🟪"]
+    return [[random.choice(color_emojis) for _ in range(grid_x)] for _ in range(grid_y)]

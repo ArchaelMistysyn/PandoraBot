@@ -76,7 +76,7 @@ class CurrentBoss:
                 boss_weakness += gli.class_icon_list[idx]
         for idy, y in enumerate(self.boss_eleweak):
             if y == 1:
-                boss_weakness += gli.global_element_list[idy]
+                boss_weakness += gli.ele_icon[idy]
         embed_msg = discord.Embed(colour=tier_colour, title=boss_title, description="")
         embed_msg.set_image(url=img_link)
         embed_msg.add_field(name=boss_field, value=boss_hp, inline=False)
@@ -285,7 +285,7 @@ def get_random_bosstier(boss_type):
 # generate ele weakness
 def get_element(chosen_weakness):
     random_number = chosen_weakness if chosen_weakness == 0 else random.randint(0, 8)
-    element_temp = gli.global_element_list[random_number]
+    element_temp = gli.ele_icon[random_number]
     return element_temp
 
 

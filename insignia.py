@@ -135,7 +135,7 @@ class ElementSelectView(discord.ui.View):
         self.num_elements, self.num_selected, self.current_selection = num_elements, num_selected, current_selection
         self.embed = None
         available_options = [(index, (name, emoji)) for index, (name, emoji, selection) in
-                             enumerate(zip(gli.element_names, gli.global_element_list,
+                             enumerate(zip(gli.element_names, gli.ele_icon,
                                            self.current_selection)) if selection != 1]
 
         options = [discord.SelectOption(emoji=emoji, label=option, value=str(i), description=f"{option} affinity")

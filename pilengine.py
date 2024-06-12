@@ -273,10 +273,14 @@ def upload_file_to_ftp(ftp, local_path, remote_directory, remote_filename):
         print(f"An error occurred while uploading {remote_filename}: {e}")
 
 
-def build_notification(player_obj, message, notification_type, title_msg, item=None):
+def build_notification(player_obj, message, notification_type, title_msg, item=None, rarity=None):
     # Initializations.
     width, height = 800, 200
-    cardBG = Image.open(requests.get(f"{web_url}/botimages/banners/achievement_banner.png", stream=True).raw)
+    if rarity == "Uber Rare":
+        banner_url = f"{web_url}/botimages/banners/achievement_banner.png"  # Red version to be added
+    else:
+        banner_url = f"{web_url}/botimages/banners/achievement_banner.png"
+    cardBG = Image.open(requests.get(banner_url, stream=True).raw)
     result = Image.new("RGBA", (width, height))
     result.paste(cardBG, (0, 0), cardBG)
     name_font_file = requests.get((font_url + name_font), stream=True).raw

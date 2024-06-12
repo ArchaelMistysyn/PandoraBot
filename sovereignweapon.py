@@ -26,7 +26,7 @@ sov_weapon = {"Pandora's Universe Hammer":
 random_values_dict = {"Solar Flare Blaster": (100, 500)}
 variant_values_dict = {"Pandora's Universe Hammer":
                        {"Restored": 1000, "Deviation": 1000, "Big Bang": 2000, "Spectrum": 1000}}
-variant_type_dict = {"Restored": gli.element_names, "Deviation": gli.path_names[:-3],
+variant_type_dict = {"Restored": gli.element_names, "Deviation": gli.path_names[:-5],
                      "Big Bang": ["Stars"], "Spectrum": ["Omni"]}
 non_variant_type_dict = {"Bathyal, Chasm Bauble": ["Critical", "Fractal", "Time Lock", "Hyperbleed", "Bloom"]}
 

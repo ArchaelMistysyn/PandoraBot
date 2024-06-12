@@ -16,7 +16,6 @@ import inventory
 # Gear/item imports
 from ringdata import ring_resonance_dict as rrd
 
-
 recipe_dict = {
     "Heavenly Infusion": {}, "Elemental Infusion": {}, "Core Infusion": {},
     "Void Infusion": {}, "Jewel Infusion": {}, "Skull Infusion": {},
@@ -33,17 +32,17 @@ recipe_dict = {
         "Bleeding Hearts": [("Gemstone9", 5), ("Heart1", 50), ("Heart2", 50), ("Gemstone10", 3), 100, "7"],
         "Gambler's Masterpiece": [("Gemstone9", 1), ("Gemstone10", 1), 1, "7"]},
     "Sovereign Ring Infusion": {
-        "Stygian Calamity": [("Gemstone11", 1), ("Crystal3", 10), ("Gemstone10", 5), ("Crystal4", 1), 100, "8"],
-        "Heavenly Calamity": [("Gemstone11", 1), ("Ore5", 10), ("Gemstone10", 5), ("Crystal4", 1), 100, "8"],
-        "Hadal's Raindrop": [("Nadir", 1), ("EssenceXIV", 10), ("Gemstone10", 5), ("Crystal4", 1), 100, "8"],
+        "Stygian Calamity": [("Shard", 25), ("Gemstone11", 1), ("Crystal3", 10), ("Gemstone10", 5), ("Crystal4", 1), 100, "8"],
+        "Heavenly Calamity": [("Shard", 25), ("Gemstone11", 1), ("Ore5", 10), ("Gemstone10", 5), ("Crystal4", 1), 100, "8"],
+        "Hadal's Raindrop": [("Shard", 25), ("Nadir", 1), ("EssenceXIV", 10), ("Gemstone10", 5), ("Crystal4", 1), 100, "8"],
         "Sacred Ring of Divergent Stars": [("TwinRings", 1), ("Gemstone10", 5), ("Crystal4", 1), 100, "8"],
-        "Crown of Skulls": [("Skull4", 1), ("Lotus1", 1), ("Gemstone10", 5), ("Crystal4", 1), 100, "8"]},
+        "Crown of Skulls": [("Shard", 50), ("Skull4", 1), ("Lotus1", 1), ("Gemstone10", 5), ("Crystal4", 1), 100, "8"]},
     "Sovereign Weapon Infusion": {
-        "Pandora's Universe Hammer": [("Shard", 100), ("Lotus10", 1), ("Crystal4", 1), 100, "KEY"],
-        "Fallen Lotus of Nephilim": [("Nephilim", 1), ("Lotus10", 1), ("Crystal4", 1), 100, "KEY"],
-        "Solar Flare Blaster": [("Gemstone0", 10), ("Gemstone4", 10), ("Gemstone7", 10), ("Gemstone9", 10),
+        "Pandora's Universe Hammer": [("Shard", 50), ("Lotus10", 1), ("Crystal4", 1), 100, "KEY"],
+        "Fallen Lotus of Nephilim": [("Shard", 50), ("Nephilim", 1), ("Lotus10", 1), ("Crystal4", 1), 100, "KEY"],
+        "Solar Flare Blaster": [("Shard", 25), ("Gemstone0", 10), ("Gemstone4", 10), ("Gemstone7", 10), ("Gemstone9", 10),
                                 ("EssenceXIX", 10), ("Crystal4", 1), 100, "KEY"],
-        "Bathyal, Chasm Bauble": [("Nadir", 1), ("Crystal4", 1), 100, "KEY"]}}
+        "Bathyal, Chasm Bauble": [("Shard", 25), ("Nadir", 1), ("Crystal4", 1), 100, "KEY"]}}
 
 
 def add_recipe(category, name, data_list):
@@ -69,12 +68,12 @@ for idx, (element, (gemstone, ring_name)) in enumerate(zip(gli.element_names, pr
                [("Catalyst", 1), (f"Fae{idx}", 300), 80, gemstone_id])
     # Elemental Rings
     add_recipe("Elemental Ring Infusion", f"Elemental Ring of {element}",
-               [(gemstone_id, 1), ("Scrap", 100), 100, "4"])
+               [(gemstone_id, 2), ("Scrap", 100), 100, "4"])
     # Primordial Rings
     add_recipe("Primordial Signet Infusion", f"{gemstone} Signet of {ring_name}",
                [(gemstone_id, 5), ("Gemstone10", 1), 100, "5"])
 void_cost = [('Weapon', ("Scrap", 200)), ('Armour', ("Scrap", 100)), ('Greaves', ("Unrefined2", 10)),
-             ('Amulet', ("Scrap", 100)),  ('Wing', ("Unrefined1", 10)), ('Crest', ("Unrefined3", 10))]
+             ('Amulet', ("Scrap", 100)), ('Wing', ("Unrefined1", 10)), ('Crest', ("Unrefined3", 10))]
 # Skull Infusions
 skull_types = ["Cursed Golden Skull", "Haunted Golden Skull", "Radiant Golden Skull", "Prismatic Golden Skull"]
 for idx, skull_type in enumerate(skull_types[1:], start=1):
@@ -174,16 +173,11 @@ class InfuseView(discord.ui.View):
         self.selected_item, self.value = None, None
 
         # Build the option menu dynamically based on recipe categories.
-        select_options = [
-            discord.SelectOption(
-                emoji="<a:eenergy:1145534127349706772>", label=category,
-                description=f"Creates {category.lower()} items."
-            ) for category in recipe_dict
-        ]
+        opt = [discord.SelectOption(
+            emoji="<a:eenergy:1145534127349706772>", label=category, description=f"Creates {category.lower()} items."
+        ) for category in recipe_dict]
         self.select_menu = discord.ui.Select(
-            placeholder="What kind of infusion do you want to perform?",
-            min_values=1, max_values=1, options=select_options
-        )
+            placeholder="What kind of infusion do you want to perform?", min_values=1, max_values=1, options=opt)
         self.select_menu.callback = self.select_callback
         self.add_item(self.select_menu)
 

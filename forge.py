@@ -176,7 +176,7 @@ class SubSelectView(discord.ui.View):
 
         def build_select_option(i, option, craft_method, item_tier, cost_qty):
             if craft_method in ["Fae", "Gemstone"]:
-                label, emoji = f"{option} Enhancement", gli.global_element_list[i]
+                label, emoji = f"{option} Enhancement", gli.ele_icon[i]
                 item_1 = inventory.BasicItem(f"{craft_method}{i}")
                 description = f"{cost_qty}x {item_1.item_name} "
                 if item_tier >= 5:

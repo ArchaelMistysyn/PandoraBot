@@ -889,9 +889,9 @@ class AdventureRoomView(discord.ui.View):
         self.option1.label = f"Ritual of {shrine_data[0]} ({self.success_rates[0]}%)"
         self.option2.label = f"Ritual of {shrine_data[2]} ({self.success_rates[1]}%)"
         self.option3.label = f"Ritual of Chaos ({self.success_rates[2]}%)"
-        self.option1.emoji = gli.global_element_list[selected_elements[0]]
-        self.option2.emoji = gli.global_element_list[selected_elements[1]]
-        self.option3.emoji = gli.global_element_list[selected_elements[2]]
+        self.option1.emoji = gli.ele_icon[selected_elements[0]]
+        self.option2.emoji = gli.ele_icon[selected_elements[1]]
+        self.option3.emoji = gli.ele_icon[selected_elements[2]]
 
     def assign_trial_data(self):
         variant = self.expedition.room.variant

@@ -114,7 +114,7 @@ async def show_bazaar_items(player_obj, sort_type="Tier", filter_type=""):
         seller = await player.get_player_by_id(seller_id)
         display_stars = sm.display_stars(item_tier)
         item_type = f'{gli.class_icon_dict[item_damage_type]}'
-        # elements = ''.join(gli.global_element_list[idz] for idz, z in enumerate(item_elements) if z == 1)
+        # elements = ''.join(gli.ele_icon[idz] for idz, z in enumerate(item_elements) if z == 1)
         sub_data = f"{display_stars}\nCost: {gli.coin_icon} {cost:,}x -- Item ID: {item_id}"
         sub_data += f"\n{item_main_info}\nListed by: {seller.player_username}"
         bazaar_embed.add_field(name=f"{item_name} {item_type}", value=sub_data, inline=False)

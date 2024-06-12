@@ -47,7 +47,6 @@ intermediate_guide += "\n7. Use /refinery to refine powerful unprocessed gear it
 intermediate_guide += "\n8. Use /tarot [card number] to bind essence items to tarot cards."
 intermediate_guide += "\n9. Use /bazaar, /sell, /give, /trade, and /buy to trade items."
 
-
 advanced_guide = "1. Use /summon and spend summoning items to fight powerful opponents above tier 5!"
 advanced_guide += "\n2. Use /gauntlet to challenge the difficult Spire of Illusions for great rewards!"
 advanced_guide += "\n3. Use /abyss to upgrade gear items past tier 5. Req Quest: 38"
@@ -63,6 +62,7 @@ guide_dict = {0: ["Beginner Guide", starter_guide],
               2: ["Advanced Guide", advanced_guide]}
 
 thana_title = "XIII - Thana, The Death"
+
 
 class GuideMenu(discord.ui.View):
     def __init__(self):
@@ -94,7 +94,7 @@ class HelpView(discord.ui.View):
 
     @discord.ui.button(label="Game", style=discord.ButtonStyle.blurple, row=0, emoji="🐉")
     async def game_help_callback(self, interaction: discord.Interaction, button: discord.Button):
-        embed_msg = build_help_embed(self.category_dict,'game')
+        embed_msg = build_help_embed(self.category_dict, 'game')
         await interaction.response.edit_message(embed=embed_msg)
 
     @discord.ui.button(label="Combat", style=discord.ButtonStyle.blurple, row=0, emoji="⚔️")
@@ -104,17 +104,17 @@ class HelpView(discord.ui.View):
 
     @discord.ui.button(label="Gear", style=discord.ButtonStyle.blurple, row=0, emoji="⚔️")
     async def gear_help_callback(self, interaction: discord.Interaction, button: discord.Button):
-        embed_msg = build_help_embed(self.category_dict,'gear')
+        embed_msg = build_help_embed(self.category_dict, 'gear')
         await interaction.response.edit_message(embed=embed_msg)
 
     @discord.ui.button(label="Craft", style=discord.ButtonStyle.blurple, row=1, emoji="<:ehammer:1145520259248427069>")
     async def craft_help_callback(self, interaction: discord.Interaction, button: discord.Button):
-        embed_msg = build_help_embed(self.category_dict,'craft')
+        embed_msg = build_help_embed(self.category_dict, 'craft')
         await interaction.response.edit_message(embed=embed_msg)
 
     @discord.ui.button(label="Trade", style=discord.ButtonStyle.blurple, row=1, emoji="💲")
     async def trade_help_callback(self, interaction: discord.Interaction, button: discord.Button):
-        embed_msg = build_help_embed(self.category_dict,'trade')
+        embed_msg = build_help_embed(self.category_dict, 'trade')
         await interaction.response.edit_message(embed=embed_msg)
 
     @discord.ui.button(label="Areas", style=discord.ButtonStyle.blurple, row=1, emoji="ℹ️")
@@ -657,7 +657,7 @@ class StaminaView(discord.ui.View):
         return embed_msg
 
 
-gear_button_list = ["Weapon", "Armour", "Greaves", "Amulet",  "Ring", "Wing", "Crest", "Pact", "Insignia", "Tarot"]
+gear_button_list = ["Weapon", "Armour", "Greaves", "Amulet", "Ring", "Wing", "Crest", "Pact", "Insignia", "Tarot"]
 
 
 class GearView(discord.ui.View):
@@ -713,7 +713,8 @@ class GearView(discord.ui.View):
             tarot_item = self.target_user.equipped_tarot
             if tarot_item == "":
                 return no_item_msg
-            tarot_card = await tarot.check_tarot(self.target_user.player_id, tarot.card_dict[self.target_user.equipped_tarot][0])
+            tarot_card = await tarot.check_tarot(self.target_user.player_id,
+                                                 tarot.card_dict[self.target_user.equipped_tarot][0])
             return await tarot_card.create_tarot_embed()
         # Handle insignia position.
         if self.current_position == 8:
@@ -975,32 +976,22 @@ class PointsView(discord.ui.View):
         super().__init__()
         self.path_names = gli.path_names
         self.player_obj = player_obj
+        icon_strings = [", ".join(gli.element_names[idx] for idx in gli.element_dict[path.split()[0]])
+                        for path in gli.path_names if path.split()[0] in gli.element_dict]
+        icon_strings[8] = f"Multi Element"
+        # Build the option menu dynamically based on recipe categories.
+        opt = [discord.SelectOption(
+            emoji=gli.path_icon[idx], label=f"Path of {path_name}", description=icon_strings[idx]
+            ) for idx, path_name in enumerate(gli.path_names)]
+        opt.append(discord.SelectOption(emoji="✖️", label="Reset", description="Reset all skill points"))
+        self.select_menu = discord.ui.Select(placeholder="Select a Path", min_values=1, max_values=1, options=opt)
+        self.select_menu.callback = self.path_select_callback
+        self.add_item(self.select_menu)
 
-    @discord.ui.select(
-        placeholder="Select a Path", min_values=1, max_values=1,
-        options=[
-            discord.SelectOption(emoji=gli.path_icon[0], label="Path of Storms",
-                                 description="Water, Lightning, and Critical Specialist"),
-            discord.SelectOption(emoji=gli.path_icon[1], label="Path of Frostfire",
-                                 description="Ice, Fire, and Class Specialist"),
-            discord.SelectOption(emoji=gli.path_icon[2], label="Path of Horizon",
-                                 description="Earth, Wind, and Bleed Specialist"),
-            discord.SelectOption(emoji=gli.path_icon[3], label="Path of Eclipse",
-                                 description="Dark, Light, and Ultimate Specialist"),
-            discord.SelectOption(emoji=gli.path_icon[4], label="Path of Stars",
-                                 description="Celestial and Combo Specialist"),
-            discord.SelectOption(emoji=gli.path_icon[5], label="Path of Solitude",
-                                 description="Mono Element and Time Specialist"),
-            discord.SelectOption(emoji=gli.path_icon[5], label="Path of Confluence",
-                                 description="Multi Elemental Specialist"),
-            discord.SelectOption(emoji="✖️", label="Reset",
-                                 description="Reset all skill points")
-        ]
-    )
-    async def path_select_callback(self, interaction: discord.Interaction, select: discord.ui.Select):
+    async def path_select_callback(self, interaction: discord.Interaction):
         if interaction.user.id == self.player_obj.discord_id:
             await self.player_obj.reload_player()
-            selected_path = select.values[0]
+            selected_path = interaction.data['values'][0]
             if selected_path == "Reset":
                 token_obj = inventory.BasicItem("Token3")
                 token_cost = sum(self.player_obj.player_stats) // 10

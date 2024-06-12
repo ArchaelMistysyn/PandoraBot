@@ -40,7 +40,7 @@ class PlayerProfile:
         self.player_coins, self.player_stamina, self.vouch_points = 0, 0, 0
         self.luck_bonus = 0
         # Initialize player gear/stats info.
-        self.player_stats, self.gear_points = [0] * 7, [0] * 7
+        self.player_stats, self.gear_points = [0] * 9, [0] * 9
         self.player_equipped = [0] * 7
         self.pact, self.insignia, self.equipped_tarot = "", "", ""
 
@@ -56,7 +56,7 @@ class PlayerProfile:
         self.all_elemental_mult, self.all_elemental_pen, self.all_elemental_curse = 0.0, 0.0, 0.0
         self.singularity_mult, self.singularity_pen, self.singularity_curse = 0.0, 0.0, 0.0
         # Initialize specialization stats.
-        self.unique_glyph_ability = [False, False, False, False, False, False, False]
+        self.unique_glyph_ability = [False] * 9
         self.elemental_capacity = 3
         self.mana_mult, self.mana_limit, self.mana_shatter = 1.0, 250, False
         self.bleed_mult, self.bleed_pen = 0.0, 0.0
@@ -67,8 +67,8 @@ class PlayerProfile:
         self.trigger_rate = {"Fractal": 0.0, "Hyperbleed": 0.0, "Critical": 0.0, "Omega": 0.0,
                              "Time Lock": 0.0, "Bloom": 0.0, "Status": 1.0}
         self.perfect_rate = {"Fractal": 0, "Hyperbleed": 0, "Critical": 0, "Time Lock": 0, "Bloom": 0}
-        self.appli = {"Elemental": 0, "Bleed": 0, "Combo": 0, "Critical": 0, 
-                      "Ultimate": 0, "Temporal": 0, "Mana": 0, "Aqua": 0}
+        self.appli = {"Critical": 0, "Bleed": 0, "Ultimate": 0, "Life": 0, "Mana": 0, "Temporal": 0, "Elemental": 0,
+                      "Combo": 0, "Aqua": 0}
         # Initialize misc Datasets.
         self.resonance = [0] * 31
         self.banes = [0.0] * 7
@@ -118,7 +118,7 @@ class PlayerProfile:
                 element_breakdown.append((x, total_multi * 100))
             sorted_element_breakdown = sorted(element_breakdown, key=lambda v: v[1], reverse=True)
             for z, total_multi in sorted_element_breakdown:
-                temp_icon = gli.global_element_list[z]
+                temp_icon = gli.ele_icon[z]
                 temp_dmg_str = f"(Dmg: {int(round(self.elemental_mult[z] * 100)):,}%)"
                 temp_pen_str = f"(Pen: {int(round(self.elemental_pen[z] * 100)):,}%)"
                 temp_curse_str = f"(Curse: {int(round(self.elemental_curse[z] * 100)):,}%)"
@@ -137,7 +137,7 @@ class PlayerProfile:
                     # Build the list of used elements/multipliers.
                     for i, is_used in enumerate(temp_element_list):
                         if is_used:
-                            used_elements.append(gli.global_element_list[i])
+                            used_elements.append(gli.ele_icon[i])
                             used_multipliers.append(element_breakdown[i][1] / 100)
                     used_elements, used_multipliers = zip(*sorted(zip(used_elements, used_multipliers),
                                                                   key=lambda e: e[1], reverse=True))
@@ -196,7 +196,7 @@ class PlayerProfile:
             title_msg = "Defensive Stats"
             stats = f"Player HP: {self.player_mHP:,}\nRecovery: {self.recovery}"
             for idy, y in enumerate(self.elemental_res):
-                stats += f"\n{gli.global_element_list[idy]} Resistance: {show_num(y)}%"
+                stats += f"\n{gli.ele_icon[idy]} Resistance: {show_num(y)}%"
             stats += f"\nDamage Mitigation: {show_num(self.damage_mitigation, 1)}%"
             stats += f"\nBlock Rate: {show_num(self.block, 1)}%"
             stats += f"\nDodge Rate: {show_num(self.dodge, 1)}%"
@@ -226,10 +226,14 @@ class PlayerProfile:
             if self.aqua_mode != 0:
                 embed_msg = await skillpaths.display_glyph("Waterfalls", self.aqua_points, embed_msg)
                 return embed_msg
+            inline_count = 0
             for path_index, path_type in enumerate(gli.path_names):
                 total_points = self.player_stats[path_index] + self.gear_points[path_index]
                 if total_points >= 20:
-                    embed_msg = await skillpaths.display_glyph(path_type, total_points, embed_msg)
+                    inline_count += 1
+                    embed_msg = await skillpaths.display_glyph(path_type, total_points, embed_msg, is_inline=True)
+                    if inline_count % 2 == 0:
+                        embed_msg.add_field(name="", value="", inline=False)
             return embed_msg
 
     def adjust_coins(self, coin_change, reduction=False, apply_pact=True):
@@ -288,7 +292,7 @@ class PlayerProfile:
         self.player_class = selected_class
         self.player_quest, self.player_level = 1, 1
         self.player_stamina = 5000
-        player_stats, equipped_gear = "0;0;0;0;0;0;0", "0;0;0;0;0;0;0"
+        player_stats, equipped_gear = "0;0;0;0;0;0;0;0;0", "0;0;0;0;0;0;0"
         quest_tokens = ";".join(map(str, self.quest_tokens))
         raw_query = "SELECT * FROM PlayerList WHERE discord_id = :id_check"
         df = rq(raw_query, return_value=True, params={'id_check': self.discord_id})
@@ -355,8 +359,8 @@ class PlayerProfile:
         self.pact = str(df['player_pact'].values[0])
 
     def reset_skill_points(self):
-        self.player_stats = [0, 0, 0, 0, 0, 0, 0]
-        reset_points = "0;0;0;0;0;0;0"
+        self.player_stats = [0] * 9
+        reset_points = "0;0;0;0;0;0;0;0;0"
         self.set_player_field("player_stats", reset_points)
 
     async def reload_player(self):
@@ -432,6 +436,7 @@ class PlayerProfile:
         self.skill_damage_bonus[3] += self.appli["Ultimate"] * 0.25
         self.charge_generation += self.appli["Ultimate"]
         self.all_elemental_mult += self.appli["Elemental"] * 0.25
+        self.hp_multiplier += 0.1 * self.appli["Life"]
 
         # Elemental Capacity
         self.elemental_capacity += max(0, self.appli["Elemental"])
@@ -479,6 +484,7 @@ class PlayerProfile:
             self.elemental_mult[x] += self.elemental_res[x] * self.unique_conversion[0]
         for y in range(6):
             self.banes[y] += self.banes[6]
+
         # Calculate unique conversions
         hp_reduction = self.player_mHP * self.unique_conversion[1]
         self.player_mHP = int(self.player_mHP - hp_reduction)
@@ -486,7 +492,8 @@ class PlayerProfile:
         self.final_damage += self.unique_conversion[3]
         if self.aqua_mode != 0 and self.equipped_tarot != "" and e_tarot.card_numeral == "XIV":
             self.critical_mult += self.elemental_mult[1]
-
+        # Flat Damage Bonuses
+        self.player_damage += self.appli["Life"] * self.player_mHP * 5
         # Attack speed hard cap
         self.attack_speed = min(10, self.attack_speed)
 
@@ -520,7 +527,7 @@ class PlayerProfile:
         damage = sum(self.elemental_damage) * combat.boss_true_mitigation(boss_obj.boss_level)
         # Apply status
         stun_status = gli.element_status_list[highest]
-        if stun_status is not None and random.randint(1, 100) <= 1:
+        if stun_status is not None and random.randint(1, 100) <= self.trigger_rate["Status"]:
             boss_obj.stun_status = stun_status
             boss_obj.stun_cycles += 1
         return int(damage)
