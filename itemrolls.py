@@ -163,7 +163,7 @@ accessory_unique_rolls = {
     "unique-0-y": ["Hyperbleed Rate", 2, 15, [["trigger_rate", "Hyperbleed"]]],
     "unique-1-y": ["Omega Critical Rate", 2, 15, [["trigger_rate", "Omega"]]],
     "unique-2-y": ["Fractal Rate", 2, 15, [["trigger_rate", "Fractal"]]],
-    "unique-3-y": ["Time Lock Rate", 2, 15, [["trigger_rate", "Time Lock"]]],
+    "unique-3-y": ["Time Lock Rate", 2, 15, [["trigger_rate", "Temporal"]]],
     "unique-4-y": ["Fortress Bane", 25, 10, [["banes", 0]]],
     "unique-5-y": ["Dragon Bane", 25, 10, [["banes", 1]]],
     "unique-6-y": ["Demon Bane", 25, 10, [["banes", 2]]],

@@ -669,7 +669,7 @@ class AdventureRoomView(discord.ui.View):
             return False, output_msg
 
         async def soul_callback():
-            cost = int(200 * variant - 100)
+            cost = int((1 + variant) * 100)
             if temp_player.player_stamina >= cost:
                 temp_player.player_stamina -= cost
                 temp_player.set_player_field("player_stamina", temp_player.player_stamina)

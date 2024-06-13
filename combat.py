@@ -54,6 +54,7 @@ boss_attack_dict = {
 }
 boss_attack_exceptions = list(boss_attack_dict.keys())
 skill_multiplier_list = [1, 2, 3, 5, 7, 10, 15, 20]
+skill_multiplier_list_high = [5, 7, 10, 15, 25, 50, 99]
 
 
 class CombatTracker:
@@ -127,14 +128,14 @@ def handle_boss_actions(boss_obj, tracker_obj, player_obj):
     boss_element = boss_obj.boss_element if boss_obj.boss_element != 9 else random.randint(0, 8)
     specific_key = [key for key in boss_attack_exceptions if key in boss_obj.boss_name]
     skill_list = boss_attack_dict[specific_key[0]] if specific_key else boss_attack_dict[boss_obj.boss_type]
-    target_index = random.randint(0, len(skill_list) - 1)
-    skill = skill_list[target_index]
+    idx = random.randint(0, len(skill_list) - 1)
+    skill = skill_list[idx]
     if "[ELEMENT]" in skill:
         skill = skill.replace("[ELEMENT]", gli.element_special_names[boss_element])
     base_set = [100, 100] if "_" in skill else [25, 50]
     bypass1 = True if "_" in skill else False
     bypass2 = True if "**" in skill else False
-    skill_bonus = skill_multiplier_list[target_index]
+    skill_bonus = skill_multiplier_list[idx] if boss_obj.boss_level < 500 else skill_multiplier_list_high[idx]
     # Handle boss enrage.
     if boss_obj.boss_type_num >= 2 and boss_obj.boss_cHP <= int(boss_obj.boss_mHP / 2):
         base_set = [2 * value for value in base_set]
@@ -241,9 +242,8 @@ async def trigger_bleed(tracker_obj, player_obj, hit_type="Normal", boss_obj=Non
 
 
 def check_hyper_bleed(player_obj, bleed_damage):
-    hyper_bleed_rate = player_obj.appli["Bleed"] * 5 + int(round(player_obj.trigger_rate["Hyperbleed"] * 100))
     bleed_type = "BLEED"
-    if random.randint(1, 100) <= hyper_bleed_rate:
+    if random.randint(1, 100) <= player_obj.trigger_rate["Hyperbleed"]:
         bleed_type = "HYPERBLEED"
         bleed_damage *= (1 + player_obj.bleed_mult)
     return int(bleed_damage), bleed_type
@@ -299,25 +299,24 @@ def check_bloom(player_obj, input_damage):
 
 def check_mana(player_obj, combat_tracker, damage):
     if combat_tracker.current_mana > 0:
-        return "", damage
+        return damage, ""
     if not player_obj.mana_shatter:
         combat_tracker.current_mana = combat_tracker.mana_limit
     else:
         combat_tracker.current_mana = max((combat_tracker.mana_limit * -1), combat_tracker.current_mana)
         damage *= 1 + (player_obj.mana_mult + combat_tracker.current_mana * -1)
-        return " *MANA SHATTER*", damage
+        return damage, " *MANA SHATTER*"
     damage *= (1 + player_obj.mana_mult)
-    return " *MANA BURST*", damage
+    return damage, " *MANA BURST*"
 
 
 def check_lock(player_obj, combat_tracker, damage):
     status_msg = ""
     # Create a new time lock.
     if combat_tracker.time_lock == 0:
-        lock_rate = 5 * player_obj.appli["Temporal"] + int(round(player_obj.trigger_rate["Time Lock"] * 100))
-        if random.randint(1, 100) > lock_rate:
+        if random.randint(1, 100) > player_obj.trigger_rate["Temporal"]:
             return damage, status_msg
-        combat_tracker.time_lock = player_obj.appli["Temporal"] + 1
+        combat_tracker.time_lock = player_obj.appli["Temporal"]
         status_msg = " *TIME LOCK*"
     # Handle existing time lock.
     elif combat_tracker.time_lock > 0:
@@ -325,7 +324,7 @@ def check_lock(player_obj, combat_tracker, damage):
         combat_tracker.time_damage += damage
         # Trigger time shatter.
         if combat_tracker.time_lock == 0 or player_obj.unique_glyph_ability[7]:
-            damage = combat_tracker.time_damage * (player_obj.appli["Temporal"] + 1)
+            damage = combat_tracker.time_damage * player_obj.temporal_mult
             combat_tracker.time_damage = 0
             return damage, " *TIME SHATTER*"
         damage, status_msg = 0, " *LOCKED*"
@@ -356,10 +355,10 @@ def boss_true_mitigation(boss_level):
     return a - (a - b) * boss_level / 99 if boss_level <= 99 else b - (b - c) * (boss_level - 100) / 899
 
 
-def critical_check(player_obj, player_damage, num_elements):
+def check_critical(player_obj, player_damage, num_elements):
     critical_type, critical_roll = "", random.randint(1, 100)
     # Check for fractal type critical.
-    if critical_roll <= (player_obj.appli["Elemental"] * 5 + int(round(player_obj.trigger_rate["Fractal"] * 100))):
+    if critical_roll <= player_obj.trigger_rate["Fractal"]:
         player_damage *= num_elements
         critical_type = " *FRACTAL*"
     # Check for regular critical.
@@ -367,7 +366,7 @@ def critical_check(player_obj, player_damage, num_elements):
         player_damage *= (1 + player_obj.critical_mult)
         critical_type = " *CRITICAL*"
         # Check for omega critical.
-        if random.randint(1, 100) <= player_obj.appli["Critical"] * 3 + int(round(player_obj.trigger_rate["Omega"] * 100)):
+        if random.randint(1, 100) <= player_obj.trigger_rate["Omega"]:
             critical_type = " *OMEGA CRITICAL*"
             player_damage *= (1 + player_obj.critical_mult)
         player_damage *= (1 + player_obj.critical_pen)
@@ -419,7 +418,7 @@ async def pvp_attack(attacker, defender):
     e_weapon = await inventory.read_custom_item(attacker.player_equipped[0])
     num_elements = sum(e_weapon.item_elements)
     player_damage = attacker.get_player_initial_damage()
-    player_damage, critical_type = critical_check(attacker, player_damage, num_elements)
+    player_damage, critical_type = check_critical(attacker, player_damage, num_elements)
     stun_status, player_damage = pvp_defences(attacker, defender, player_damage, e_weapon)
     return stun_status, player_damage, critical_type
 

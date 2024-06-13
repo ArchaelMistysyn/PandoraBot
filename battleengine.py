@@ -258,36 +258,39 @@ def run_discord_bot():
 
     @engine_bot.hybrid_command(name='fortress', help="Challenge a fortress boss. Cost: 1 Fortress Stone + 200 Stamina")
     @app_commands.guilds(discord.Object(id=1011375205999968427))
-    async def fortress(ctx):
-        await solo(ctx, boss_type="Fortress")
+    async def fortress(ctx, magnitude=0):
+        await solo(ctx, boss_type="Fortress", magnitude=magnitude)
 
     @engine_bot.hybrid_command(name='dragon', help="Challenge a dragon boss. Cost: 1 Dragon Stone + 200 Stamina")
     @app_commands.guilds(discord.Object(id=1011375205999968427))
-    async def dragon(ctx):
-        await solo(ctx, boss_type="Dragon")
+    async def dragon(ctx, magnitude=0):
+        await solo(ctx, boss_type="Dragon", magnitude=magnitude)
 
     @engine_bot.hybrid_command(name='demon', help="Challenge a demon boss. Cost: 1 Demon Stone + 200 Stamina")
     @app_commands.guilds(discord.Object(id=1011375205999968427))
-    async def demon(ctx):
-        await solo(ctx, boss_type="Demon")
+    async def demon(ctx, magnitude=0):
+        await solo(ctx, boss_type="Demon", magnitude=magnitude)
 
     @engine_bot.hybrid_command(name='paragon', help="Challenge a paragon boss. Cost: 1 Paragon Stone + 200 Stamina")
     @app_commands.guilds(discord.Object(id=1011375205999968427))
-    async def paragon(ctx):
-        await solo(ctx, boss_type="Paragon")
+    async def paragon(ctx, magnitude=0):
+        await solo(ctx, boss_type="Paragon", magnitude=magnitude)
 
     @engine_bot.hybrid_command(name='arbiter', help="Challenge a paragon boss. Cost: 1 Arbiter Stone + 200 Stamina")
     @app_commands.guilds(discord.Object(id=1011375205999968427))
-    async def arbiter(ctx):
-        await solo(ctx, boss_type="Arbiter")
+    async def arbiter(ctx, magnitude=0):
+        await solo(ctx, boss_type="Arbiter", magnitude=magnitude)
 
     @engine_bot.hybrid_command(name='solo',
                                help="Options: [Random/Fortress/Dragon/Demon/Paragon/Arbiter]. Stamina Cost: 200")
     @app_commands.guilds(discord.Object(id=1011375205999968427))
-    async def solo(ctx, boss_type="random"):
+    async def solo(ctx, boss_type="random", magnitude=0):
         await ctx.defer()
         player_obj = await sm.check_registration(ctx)
         if player_obj is None:
+            return
+        if magnitude not in range(10):
+            await ctx.send("Selected magnitude must be between 0-10. Default 0.")
             return
         if player_obj.player_equipped[0] == 0:
             await ctx.send("You must have a weapon equipped.")
@@ -328,8 +331,8 @@ def run_discord_bot():
 
         # Spawn the boss
         new_boss_tier, boss_type = bosses.get_random_bosstier(boss_type)
-        active_boss = await bosses.spawn_boss(ctx.channel.id, player_obj.player_id, new_boss_tier,
-                                        boss_type, player_obj.player_level, 0)
+        active_boss = await bosses.spawn_boss(ctx.channel.id, player_obj.player_id, new_boss_tier, boss_type,
+                                              player_obj.player_level, 0, magnitude=magnitude)
         active_boss.player_id = player_obj.player_id
         embed_msg = active_boss.create_boss_embed()
         spawn_msg = f"{player_obj.player_username} has spawned a tier {active_boss.boss_tier} boss!"
@@ -428,10 +431,13 @@ def run_discord_bot():
 
     @engine_bot.hybrid_command(name='gauntlet', help="Challenge the gauntlet in the Spire of Illusions.")
     @app_commands.guilds(discord.Object(id=1011375205999968427))
-    async def run_gauntlet(ctx):
+    async def run_gauntlet(ctx, magnitude=0):
         await ctx.defer()
         player_obj = await sm.check_registration(ctx)
         if player_obj is None:
+            return
+        if magnitude not in range(10):
+            await ctx.send("Selected magnitude must be between 0-10. Default 0.")
             return
         if player_obj.player_equipped[0] == 0:
             await ctx.send("You must have a weapon equipped.")
@@ -450,8 +456,9 @@ def run_discord_bot():
             return
         await inventory.update_stock(player_obj, "Compass", -1)
         quest.assign_unique_tokens(player_obj, "Gauntlet")
-        active_boss = await bosses.spawn_boss(ctx.channel.id, player_obj.player_id, 1,
-                                              "Fortress", player_obj.player_level, 0, gauntlet=True)
+        active_boss = await bosses.spawn_boss(
+            ctx.channel.id, player_obj.player_id, 1, "Fortress",
+            player_obj.player_level, 0, gauntlet=True, magnitude=magnitude)
         active_boss.player_id = player_obj.player_id
         await ctx.send(f"{player_obj.player_username} has entered the Spire of Illusions!")
         embed_msg = active_boss.create_boss_embed(extension=" [Gauntlet]")
@@ -462,10 +469,13 @@ def run_discord_bot():
 
     @engine_bot.hybrid_command(name='summon', help="Challenge a paragon boss.")
     @app_commands.guilds(discord.Object(id=1011375205999968427))
-    async def summon(ctx, token_version: int):
+    async def summon(ctx, token_version: int, magnitude=0):
         await ctx.defer()
         player_obj = await sm.check_registration(ctx)
         if player_obj is None:
+            return
+        if magnitude not in range(10):
+            await ctx.send("Selected magnitude must be between 0-10. Default 0.")
             return
         if token_version not in range(1, 4):
             await ctx.send("Selected token not between 1 and 3.")
@@ -497,7 +507,7 @@ def run_discord_bot():
         boss_type = "Paragon" if token_version < 3 else "Arbiter"
         new_boss_tier = 4 + token_version
         active_boss = await bosses.spawn_boss(ctx.channel.id, player_obj.player_id, new_boss_tier,
-                                              boss_type, player_obj.player_level, 0)
+                                              boss_type, player_obj.player_level, 0, magnitude=magnitude)
         active_boss.player_id = player_obj.player_id
         spawn_msg = f"{player_obj.player_username} has summoned a tier {active_boss.boss_tier} boss!"
         await ctx.send(spawn_msg)

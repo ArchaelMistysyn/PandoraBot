@@ -37,12 +37,12 @@ async def check_click(interaction, player_obj, new_embed, new_view):
 
 
 def check_rare_item(item_id):
-    id_list = ["DarkStar", "LightStar", "Gemstone11", "Skull3", "Skull4", "Nadir"]
+    id_list = ["DarkStar", "LightStar", "Gemstone11", "Skull3", "Skull4", "Nadir", "EssenceXXX"]
     return True if "Lotus" in item_id or item_id in id_list else False
 
 
 async def send_notification(ctx_object, player_obj, notification_type, value):
-    uber_id_list = ["Skull4", "DarkStar", "LightStar", "Gemstone11", "Nadir"]
+    uber_id_list = ["Skull4", "DarkStar", "LightStar", "Gemstone11", "Nadir", "Lotus10"]
     rarity = "Uber Rare" if value in uber_id_list else "Ultra Rare"
     item = inventory.BasicItem(value) if notification_type == "Item" and value is not None else None
     notification_dict = {"Level": [(f"Congratulations {player_obj.player_username}",

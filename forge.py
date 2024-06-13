@@ -309,7 +309,7 @@ class UpgradeView(discord.ui.View):
             return
         view = ForgeView(self.player_obj, self.selected_item) if method == "change_method" \
             else SelectView(self.player_obj, "celestial")
-        embed_msg = await reload_item.create_citem_embed()
+        embed_msg = await self.selected_item.create_citem_embed()
         await button_interaction.response.edit_message(embed=embed_msg, view=view)
 
 
@@ -319,7 +319,7 @@ async def run_button(player_obj, selected_item, material_id, method):
     result, cost = await craft_item(player_obj, selected_item, cost_item, method)
     result_dict = {0: "Failed!", 1: "Success!", 2: "Cannot upgrade further.", 3: "Item not eligible",
                    4: "This element cannot be used",
-                   5: f"Success! The item evolved to tier {reload_item.item_tier}!"}
+                   5: f"Success! The item evolved to tier {selected_item.item_tier}!"}
     if result in result_dict:
         outcome = result_dict[result]
     else:
@@ -332,7 +332,8 @@ async def run_button(player_obj, selected_item, material_id, method):
 
 
 def check_maxed(target_item, method, material_id, element):
-    material_item, success_rate = inventory.BasicItem(material_id), material_item.item_base_rate
+    material_item = inventory.BasicItem(material_id)
+    success_rate = material_item.item_base_rate
     match method:
         case "Enhance":
             success_rate = max(5, (100 - (target_item.item_enhancement // 10) * 5))

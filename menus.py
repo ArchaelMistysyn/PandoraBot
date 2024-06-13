@@ -926,8 +926,8 @@ class StatView(discord.ui.View):
         new_msg = await self.target_user.get_player_stats(2)
         await interaction.response.edit_message(embed=new_msg)
 
-    @discord.ui.button(label="Multipliers", style=discord.ButtonStyle.blurple, row=1)
-    async def multiplier_stats(self, interaction: discord.Interaction, button: discord.Button):
+    @discord.ui.button(label="Application", style=discord.ButtonStyle.blurple, row=1)
+    async def appli_stats(self, interaction: discord.Interaction, button: discord.Button):
         new_msg = await self.target_user.get_player_stats(4)
         await interaction.response.edit_message(embed=new_msg)
 
@@ -939,6 +939,11 @@ class StatView(discord.ui.View):
     @discord.ui.button(label="Glyphs", style=discord.ButtonStyle.blurple, row=2)
     async def glyphs(self, interaction: discord.Interaction, button: discord.Button):
         new_msg = await self.target_user.get_player_stats(6)
+        await interaction.response.edit_message(embed=new_msg)
+
+    @discord.ui.button(label="Misc", style=discord.ButtonStyle.blurple, row=2)
+    async def misc(self, interaction: discord.Interaction, button: discord.Button):
+        new_msg = await self.target_user.get_player_stats(7)
         await interaction.response.edit_message(embed=new_msg)
 
 

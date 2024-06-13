@@ -177,7 +177,8 @@ class CurrentBoss:
                 pass
 
 
-async def spawn_boss(channel_id, player_id, new_boss_tier, selected_boss_type, boss_level, channel_num, gauntlet=False):
+async def spawn_boss(channel_id, player_id, new_boss_tier, selected_boss_type, boss_level, channel_num,
+                     gauntlet=False, magnitude=0):
     raid_id = await encounters.get_raid_id(channel_id, player_id)
 
     # Handle existing boss.
@@ -227,7 +228,7 @@ async def spawn_boss(channel_id, player_id, new_boss_tier, selected_boss_type, b
     boss_typeweak = boss_typeweak.rstrip(';')
 
     # Set boss hp and damage cap.
-    total_hp = int(10 ** (min(100, boss_object.boss_level) // 10 + 5))
+    total_hp = int(10 ** (min(100, boss_object.boss_level) // 10 + 5)) * (10 ** (1 + magnitude))
     if boss_object.boss_level >= 100:
         multiplier_count = (boss_object.boss_level - 100) // 100 + 1
         total_hp *= (10 ** multiplier_count)

@@ -255,7 +255,7 @@ trial_variants_dict = {"Offering": ["Pay with your life.", ["Pain (10%)", "Blood
                                     ["🗡️", "💧", "💀"]],
                        "Greed": ["Pay with your wealth.", ["Poor (1,000)", "Affluent (5,000)", "Rich (10,000)"],
                                  ["💸", "💍", "👑"]],
-                       "Soul": ["Pay with your stamina.", ["Vitality (100)", "Spirit (300)", "Essence (500)"],
+                       "Soul": ["Pay with your stamina.", ["Vitality (100)", "Spirit (200)", "Essence (300)"],
                                 ["🟢", "🟡", "🔴"]]}
 greed_cost_list = [1000, 5000, 10000]
 

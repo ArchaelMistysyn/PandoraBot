@@ -64,9 +64,10 @@ class PlayerProfile:
         self.ultimate_mult, self.ultimate_pen, = 0.0, 0.0
         self.critical_mult, self.critical_pen = 1.0, 0.0
         self.bloom_mult = 10.0
+        self.temporal_mult = 1.0
         self.trigger_rate = {"Fractal": 0.0, "Hyperbleed": 0.0, "Critical": 0.0, "Omega": 0.0,
-                             "Time Lock": 0.0, "Bloom": 0.0, "Status": 1.0}
-        self.perfect_rate = {"Fractal": 0, "Hyperbleed": 0, "Critical": 0, "Time Lock": 0, "Bloom": 0}
+                             "Temporal": 0.0, "Bloom": 0.0, "Status": 1.0}
+        self.perfect_rate = {"Fractal": 0, "Hyperbleed": 0, "Critical": 0, "Temporal": 0, "Bloom": 0}
         self.appli = {"Critical": 0, "Bleed": 0, "Ultimate": 0, "Life": 0, "Mana": 0, "Temporal": 0, "Elemental": 0,
                       "Combo": 0, "Aqua": 0}
         # Initialize misc Datasets.
@@ -105,11 +106,6 @@ class PlayerProfile:
         temp_embed = None
 
         if method in [1, 2]:
-            if method == 1:
-                # Offensive Stat Display.
-                title_msg = "Offensive Stats"
-                stats = f"Item Base Damage: {int(round(self.player_damage)):,}"
-                stats += f"\nAttack Speed: {round(math.floor(self.attack_speed * 10) / 10, 1)} / min"
             # Calculate the damage spread.
             element_breakdown = []
             for x in range(9):
@@ -127,10 +123,13 @@ class PlayerProfile:
                 if method == 2:
                     stats += f"\n{temp_icon} {temp_dmg_str} - {temp_pen_str} - {temp_curse_str}"
             if method == 1:
-                embed_msg.add_field(name=title_msg, value=stats, inline=False)
+                # Offensive Stat Display.
+                base_stats = f"Item Base Damage: {int(round(self.player_damage)):,}"
+                base_stats += f"\nAttack Speed: {round(math.floor(self.attack_speed * 10) / 10, 1)} / min"
+                embed_msg.add_field(name="Offensive Stats", value=f"{base_stats}{stats}", inline=False)
                 # Construct the damage spread field.
                 if self.player_equipped[0] != 0:
-                    title_msg, stats = "Damage Spread", ""
+                    stats = ""
                     e_weapon = await inventory.read_custom_item(self.player_equipped[0])
                     used_elements, used_multipliers = [], []
                     temp_element_list = combat.limit_elements(self, e_weapon)
@@ -149,68 +148,58 @@ class PlayerProfile:
                             stats += f"{element} {int(contribution)}% "
                             if index % 3 == 0:
                                 stats += "\n"
-                        embed_msg.add_field(name=title_msg, value=stats, inline=False)
+                        embed_msg.add_field(name="Damage Spread", value=stats, inline=False)
                 return embed_msg
             if method == 2:
                 # Stat Breakdown Display.
-                def set_section(header, tag_list, value_list):
-                    section_string = f"\n{header}: "
-                    for tag_index, (tag, value) in enumerate(zip(tag_list, value_list)):
-                        extension = "%" if tag not in ["App", "Cap"] else ""
-                        section_string += f"({tag}: {value:,}{extension})"
-                        if (tag_index + 1) < len(tag_list):
-                            section_string += " - "
-                    return f"{section_string}"
-
-                title_msg = "Elemental Breakdown"
-                embed_msg.add_field(name=title_msg, value=stats, inline=False)
-                title_msg, stats = "Application Details", ""
-                stats += set_section("Elemental Details", ["Cap", "App", "FRC"],
-                                     [self.elemental_capacity, self.appli["Elemental"],
-                                      (self.appli["Elemental"] * 5 + show_num(self.trigger_rate["Fractal"]))])
-                stats += set_section("Critical Details", ["CRT", "Dmg", "Pen", "App", "OMG"],
-                                     [show_num(self.trigger_rate["Critical"], 1), show_num(self.critical_mult),
-                                      show_num(self.critical_pen), show_num(self.appli["Critical"]),
-                                      (self.appli["Critical"] * 10 + show_num(self.trigger_rate["Omega"]))])
-                stats += set_section("Combo Details", ["Dmg", "Pen", "App"],
-                                     [show_num(self.combo_mult), show_num(self.combo_pen),
-                                      self.appli["Combo"]])
-                stats += set_section("Ultimate Details", ["Dmg", "Pen", "App"],
-                                     [show_num(self.ultimate_mult), show_num(self.ultimate_pen),
-                                      self.appli["Ultimate"]])
-                stats += set_section("Bleed Details", ["Dmg", "Pen", "App", "HPR"],
-                                     [show_num(self.bleed_mult), show_num(self.bleed_pen),
-                                      self.appli["Bleed"],
-                                      (self.appli["Bleed"] * 10 + show_num(self.trigger_rate["Hyperbleed"]))])
-                stats += set_section("Time Details", ["Dmg", "App", "LCK"],
-                                     [((self.appli["Temporal"] + 1) * 100), self.appli["Temporal"],
-                                      (self.appli["Temporal"] * 5 + show_num(self.trigger_rate["Time Lock"]))])
-                stats += set_section("Mana Details", ["Dmg", "App", "Lmt"],
-                                     [show_num(self.mana_mult), self.appli["Mana"], self.mana_limit])
-                stats += set_section("Bloom Details", ["BLM", "Dmg"],
-                                     [show_num(self.trigger_rate["Bloom"]), show_num(self.bloom_mult)])
-                embed_msg.add_field(name=title_msg, value=stats, inline=False)
+                embed_msg.add_field(name="Elemental Breakdown", value=stats, inline=False)
                 return embed_msg
         if method == 3:
             # Defensive display.
-            title_msg = "Defensive Stats"
             stats = f"Player HP: {self.player_mHP:,}\nRecovery: {self.recovery}"
             for idy, y in enumerate(self.elemental_res):
                 stats += f"\n{gli.ele_icon[idy]} Resistance: {show_num(y)}%"
             stats += f"\nDamage Mitigation: {show_num(self.damage_mitigation, 1)}%"
             stats += f"\nBlock Rate: {show_num(self.block, 1)}%"
             stats += f"\nDodge Rate: {show_num(self.dodge, 1)}%"
-            embed_msg.add_field(name=title_msg, value=stats, inline=False)
+            embed_msg.add_field(name="Defensive Stats", value=stats, inline=False)
             return embed_msg
         if method == 4:
-            # Multiplier Display.
-            title_msg = "Multipliers"
-            for idh, h in enumerate(self.banes):
-                stats += f"\n{gli.boss_list[idh]} Bane: {show_num(h)}%" if idh < 5 else f"\nHuman Bane: {show_num(h)}%"
-            stats += f"\nClass Mastery: {show_num(self.class_multiplier)}%"
-            stats += f"\nFinal Damage: {show_num(self.final_damage)}%"
-            stats += f"\nDefence Penetration: {show_num(self.defence_pen)}%"
-            embed_msg.add_field(name=title_msg, value=stats, inline=False)
+            # Application Display.
+            def set_appli(appli, data):
+                if appli not in ["Elemental", "Critical"] and self.appli[appli] <= 0:
+                    return ""
+                section_string = f"**{appli} Application: {self.appli[appli]}**\n"
+                for tag, value in data:
+                    extension = "%" if tag not in ["Elemental Capacity"] else ""
+                    section_string += f"{tag}: {value:,}{extension}\n"
+                return f"{section_string}"
+
+            stats += set_appli(appli="Elemental",
+                               data=[("Elemental Capacity", self.elemental_capacity),
+                                     ("Fractal Rate", self.trigger_rate["Fractal"])])
+            stats += set_appli(appli="Critical",
+                               data=[("Critical Rate", self.trigger_rate["Critical"]),
+                                     ("Critical Damage", show_num(self.critical_mult)),
+                                     ("Critical Penetration", show_num(self.critical_pen)),
+                                     ("Omega Rate", self.trigger_rate["Omega"])])
+            stats += set_appli(appli="Combo",
+                               data=[("Combo Damage", show_num(self.combo_mult)),
+                                     ("Combo Penetration", show_num(self.combo_pen))])
+            stats += set_appli(appli="Ultimate",
+                               data=[("Ultimate Damage", show_num(self.ultimate_mult)),
+                                     ("Ultimate Penetration", show_num(self.ultimate_pen))])
+            stats += set_appli(appli="Bleed",
+                               data=[("Bleed Damage", show_num(self.bleed_mult)),
+                                     ("Bleed Penetration", show_num(self.bleed_pen)),
+                                     ("Hyperbleed Rate", self.trigger_rate["Hyperbleed"])])
+            stats += set_appli(appli="Temporal",
+                               data=[("Time Shatter Damage", show_num(self.temporal_mult)),
+                                     ("Time Lock Rate", self.trigger_rate["Temporal"])])
+            stats += set_appli(appli="Mana",
+                               data=[("Mana Damage", show_num(self.mana_mult)),
+                                     ("Mana Limit", self.mana_limit)])
+            embed_msg.add_field(name="", value=stats, inline=False)
             return embed_msg
         if method == 5:
             # Points Display.
@@ -234,6 +223,18 @@ class PlayerProfile:
                     embed_msg = await skillpaths.display_glyph(path_type, total_points, embed_msg, is_inline=True)
                     if inline_count % 2 == 0:
                         embed_msg.add_field(name="", value="", inline=False)
+            return embed_msg
+        if method == 7:
+            # Misc Multipliers
+            title_msg = "Misc Multipliers"
+            for idh, h in enumerate(self.banes[:-1]):
+                stats += f"\n{gli.boss_list[idh]} Bane: {show_num(h)}%" if idh < 5 else f"\nHuman Bane: {show_num(h)}%"
+            stats += f"\nClass Mastery: {show_num(self.class_multiplier):,}%"
+            stats += f"\nFinal Damage: {show_num(self.final_damage):,}%"
+            stats += f"\nDefence Penetration: {show_num(self.defence_pen):,}%"
+            stats += f"\nBloom Damage: {show_num(self.bloom_mult):,}%"
+            stats += f"\nBloom Rate: {show_num(self.trigger_rate['Bloom']):,}%"
+            embed_msg.add_field(name=title_msg, value=stats, inline=False)
             return embed_msg
 
     def adjust_coins(self, coin_change, reduction=False, apply_pact=True):
@@ -316,8 +317,7 @@ class PlayerProfile:
             'input_6': int(self.player_quest), 'input_7': quest_tokens,
             'input_8': int(self.player_stamina), 'input_9': str(self.player_class), 'input_10': int(self.player_coins),
             'input_11': player_stats, 'input_12': equipped_gear, 'input_13': str(self.equipped_tarot),
-            'input_14': str(self.insignia), 'input_15': str(self.pact), 'input_16': int(self.vouch_points)
-        }
+            'input_14': str(self.insignia), 'input_15': str(self.pact), 'input_16': int(self.vouch_points)}
         rq(raw_query, params=params)
         registered_player = await get_player_by_discord(self.discord_id)
         raw_query = ("INSERT INTO MiscPlayerData (player_id, thana_visits, deaths, toggle_inv) "
@@ -381,14 +381,12 @@ class PlayerProfile:
 
     async def get_player_multipliers(self):
         base_critical_chance, base_attack_speed, base_mitigation = 10.0, 1.0, 0.0
-        base_player_hp = 1000 + 10 * self.player_level
+        base_player_hp = 1000 + 50 * self.player_level
 
         # Class Multipliers
-        class_bonus = {"Ranger": ["Critical", 1], "Weaver": ["Elemental", 2],
-                       "Assassin": ["Bleed", 1], "Mage": ["Mana", 1],
-                       "Summoner": ["Combo", 1], "Knight": ["Ultimate", 1]}
-        if self.player_class in class_bonus:
-            self.appli[class_bonus[self.player_class][0]] += class_bonus[self.player_class][1]
+        class_bonus = {"Ranger": ["Critical", 1], "Weaver": ["Elemental", 2], "Assassin": ["Bleed", 1],
+                       "Mage": ["Mana", 1], "Summoner": ["Combo", 1], "Knight": ["Ultimate", 1], "Rider": ["Life", 1]}
+        self.appli[class_bonus[self.player_class][0]] += class_bonus[self.player_class][1]
 
         # Item Multipliers
         e_item, sovereign_buff = [], False
@@ -411,16 +409,15 @@ class PlayerProfile:
                     await itemrolls.assign_gem_values(self, e_item[idx], sovereign_buff)
             else:
                 e_item.append(None)
-        if e_item[0]:
+        if e_item[0] is not None:
             base_attack_speed *= float(e_item[0].item_base_stat)
             if self.player_class == "Rider":
                 base_attack_speed *= 1.25
-        if e_item[1]:
+        if e_item[1] is not None:
             base_mitigation = e_item[1].item_base_stat
         for y in range(1, 5):
             if e_item[y]:
                 self.unique_ability_multipliers(e_item[y])
-
         # Non-Gear Item Multipliers
         insignia.assign_insignia_values(self)
         if self.equipped_tarot != "":
@@ -430,14 +427,13 @@ class PlayerProfile:
         # Assign Path Multipliers
         total_points = skillpaths.assign_path_multipliers(self)
 
-        # Application Calculations
+        # Application Bonuses
         base_critical_chance += self.appli["Critical"]
         self.critical_mult += self.appli["Critical"]
         self.skill_damage_bonus[3] += self.appli["Ultimate"] * 0.25
         self.charge_generation += self.appli["Ultimate"]
         self.all_elemental_mult += self.appli["Elemental"] * 0.25
         self.hp_multiplier += 0.1 * self.appli["Life"]
-
         # Elemental Capacity
         self.elemental_capacity += max(0, self.appli["Elemental"])
 
@@ -445,21 +441,27 @@ class PlayerProfile:
         pact.assign_pact_values(self)
 
         # Capacity Hard Limits
-        self.elemental_capacity = min(self.elemental_capacity, 9)
+        self.elemental_capacity = min(9, self.elemental_capacity)
+        self.mana_limit = max(10, self.mana_limit)
         # Solitude/Frostfire and Aqua exceptions
         self.elemental_capacity = 1 if total_points[6] >= 100 or self.aqua_mode != 0 else 3 \
             if total_points[1] >= 80 else self.elemental_capacity
 
         # General Calculations
-        self.trigger_rate["Critical"] = (1 + self.trigger_rate["Critical"]) * base_critical_chance
+        self.trigger_rate["Critical"] = int((1 + self.trigger_rate["Critical"]) * base_critical_chance)
         self.attack_speed = (1 + self.attack_speed) * base_attack_speed
         self.damage_mitigation = min((1 + (self.mitigation_bonus + self.damage_mitigation)) * base_mitigation, 90)
         self.player_cHP = self.player_mHP = int((base_player_hp + self.hp_bonus) * (1 + self.hp_multiplier))
         
-        # Fixed Perfect Rates
+        # Trigger Rates
+        self.trigger_rate["Omega"] += min(100, int(round(self.appli["Critical"])) * 3)
+        self.trigger_rate["Hyperbleed"] += min(100, int(round(self.appli["Bleed"])) * 4)
+        self.trigger_rate["Fractal"] += min(100, int(round(self.appli["Elemental"])) * 4)
+        self.trigger_rate["Temporal"] += min(100, int(round(self.appli["Temporal"])) * 4)
+        # Perfect Rates
         self.perfect_rate["Critical"] = 1 if self.aqua_points >= 80 else self.perfect_rate["Critical"]
         for mechanic in self.perfect_rate.keys():  
-            self.trigger_rate[mechanic] = 100.00 if self.perfect_rate[mechanic] > 0 >= 80 else self.trigger_rate[mechanic]
+            self.trigger_rate[mechanic] = 100 if self.perfect_rate[mechanic] > 0 >= 80 else self.trigger_rate[mechanic]
 
         match_count = sum(1 for item in e_item if item is not None and item.item_damage_type == self.player_class)
         if self.unique_conversion[2] >= 1:
@@ -504,7 +506,7 @@ class PlayerProfile:
         e_weapon = await inventory.read_custom_item(self.player_equipped[0])
         num_elements = sum(e_weapon.item_elements)
         player_damage = self.get_player_initial_damage()
-        player_damage, critical_type = combat.critical_check(self, player_damage, num_elements)
+        player_damage, critical_type = combat.check_critical(self, player_damage, num_elements)
         self.player_total_damage = self.boss_adjustments(player_damage, boss_object, e_weapon)
         return self.player_total_damage, critical_type
 
@@ -689,10 +691,8 @@ async def df_to_player(row, reloading=None):
         temp.player_username = str(row["player_username"].values[0])
         temp.player_level, temp.player_exp = int(row['player_level'].values[0]), int(row['player_exp'].values[0])
         temp_string = str(row['quest_tokens'].values[0])
-        temp.player_echelon, temp.player_quest = int(row['player_echelon'].values[0]), int(
-            row['player_quest'].values[0])
-        temp.player_stamina, temp.player_coins = int(row['player_stamina'].values[0]), int(
-            row['player_coins'].values[0])
+        temp.player_echelon, temp.player_quest = int(row['player_echelon'].values[0]), int(row['player_quest'].values[0])
+        temp.player_stamina, temp.player_coins = int(row['player_stamina'].values[0]), int(row['player_coins'].values[0])
         temp.player_class = str(row['player_class'].values[0])
         temp.vouch_points = int(row['vouch_points'].values[0])
     string_list = temp_string.split(';')
