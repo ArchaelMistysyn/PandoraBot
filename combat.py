@@ -9,7 +9,7 @@ import sharedmethods as sm
 import player
 import quest
 import inventory
-from pandoradb import run_query as rq
+from pandoradb import run_query as rqy
 
 
 combat_command_list = [("solo", "Challenge a solo boss. Stamina Cost: 200", 0),
@@ -203,12 +203,14 @@ def take_combat_damage(player_obj, tracker_obj, damage_set, dmg_element, bypass_
 
 async def hit_boss(tracker_obj, boss_obj, player_obj, combo_count, hit_type="Regular"):
     update_bleed(tracker_obj, player_obj)
-    hit_damage, critical_type = await player_obj.get_player_boss_damage(boss_obj)
-    damage, skill_name = skill_adjuster(player_obj, tracker_obj, hit_damage, combo_count, (hit_type == "Ultimate"))
+    critical_type = await player_obj.get_player_boss_damage(boss_obj)
+    damage, skill_name = skill_adjuster(player_obj, tracker_obj, player_obj.total_damage, combo_count, (hit_type == "Ultimate"))
     damage, mana_msg = check_mana(player_obj, tracker_obj, damage)
     damage, status_msg = check_lock(player_obj, tracker_obj, damage)
     damage, second_msg = check_bloom(player_obj, damage)
     damage, extension = (boss_obj.damage_cap, " *LIMIT*") if damage >= boss_obj.damage_cap != -1 else (damage, "")
+    if player_obj.unique_glyph_ability[2]:
+        damage *= (1 + player_obj.bleed_mult)
     if status_msg == " *TIME SHATTER*" or critical_type != "":
         damage *= random.randint(1, max(1, player_obj.rng_bonus))
     hit_msg = f"{combo_count}x Combo: {skill_name} {sm.number_conversion(damage)}{extension}"
@@ -224,13 +226,12 @@ async def trigger_bleed(tracker_obj, player_obj, hit_type="Normal", boss_obj=Non
     hit_multiplier, keyword = (1.5, "Sanguine") if hit_type == "Ultimate" else (0.75, "Blood")
     count = "Zenith" if player_obj.appli["Bleed"] > 5 else bleed_dict[player_obj.appli["Bleed"]]
     # Calculate damage
-    damage = pvp_data[2] if pvp_data is not None else int(hit_multiplier * await player_obj.get_bleed_damage(boss_obj))
-    damage *= tracker_obj.bleed_tracker
+    await player_obj.get_bleed_damage(boss_obj)
+    damage = pvp_data[2] if pvp_data is not None else int(hit_multiplier * player_obj.total_damage)
+    damage *= tracker_obj.bleed_tracker * (1 + player_obj.bleed_mult) * (1 + player_obj.bleed_pen)
     damage, bleed_type = check_hyper_bleed(player_obj, damage)
-    damage = int(damage * (1 + player_obj.bleed_pen))
     # Handle application scaling
-    for b in range(player_obj.appli["Bleed"]):
-        damage += damage
+    damage *= (1 + player_obj.appli["Bleed"])
     # Determine boss or pvp specific damage adjustments.
     if boss_obj is not None:
         damage, extension = (boss_obj.damage_cap, " *LIMIT*") if damage >= boss_obj.damage_cap != -1 else (damage, "")
@@ -277,7 +278,7 @@ async def run_raid_cycle(tracker_obj, boss_obj, player_obj):
     hit_list, battle_msg, player_alive, boss_alive, total_damage = await run_cycle(tracker_obj, boss_obj, player_obj, "Raid")
     tracker_obj.total_cycles += 1
     if not boss_alive and boss_obj.boss_tier >= 4:
-        quest.assign_unique_tokens(player_obj, boss_obj.boss_name)
+        await quest.assign_unique_tokens(player_obj, boss_obj.boss_name)
     player_msg = battle_msg
     if total_damage != 0 and player_alive:
         player_msg = f"{battle_msg} - dealt {sm.number_conversion(total_damage)} damage!"
@@ -342,12 +343,14 @@ def handle_evasions(block_rate, dodge_rate, damage, bypass1=False, bypass2=False
     return (damage_set[0], "") if not isinstance(damage, list) else (damage_set, "")
 
 
-def boss_defences(method, player_obj, boss_object, location):
-    mult = (1 - 0.05 * boss_object.boss_tier)
-    if method == "Element":
-        return 1 + boss_object.curse_debuffs[location] if boss_object.boss_eleweak[location] == 1 else mult
-    else:
-        return 1 if boss_object.boss_typeweak[gli.class_names.index(player_obj.player_class)] == 1 else mult
+def boss_defences(method, player_obj, boss_object, location, e_weapon):
+    mult = (1 - (0.05 * boss_object.boss_tier - 1))
+    if method == "Element" and boss_object.boss_eleweak[location] != 1:
+        return mult
+    c_idx, w_idx = gli.class_names.index(player_obj.player_class), gli.class_names.index(e_weapon.item_damage_type)
+    if method != "Element" and boss_object.boss_typeweak[c_idx] != 1 and boss_object.boss_typeweak[w_idx] != 1:
+        return mult
+    return 1.1
 
 
 def boss_true_mitigation(boss_level):
@@ -417,7 +420,7 @@ def pvp_defences(attacker, defender, player_damage, e_weapon):
 async def pvp_attack(attacker, defender):
     e_weapon = await inventory.read_custom_item(attacker.player_equipped[0])
     num_elements = sum(e_weapon.item_elements)
-    player_damage = attacker.get_player_initial_damage()
+    player_damage = await attacker.get_player_initial_damage()
     player_damage, critical_type = check_critical(attacker, player_damage, num_elements)
     stun_status, player_damage = pvp_defences(attacker, defender, player_damage, e_weapon)
     return stun_status, player_damage, critical_type
@@ -440,22 +443,22 @@ async def get_random_opponent(player_echelon):
     return opponent_object
 
 
-def check_flag(player_obj):
+async def check_flag(player_obj):
     raw_query = "SELECT * FROM AbandonEncounter WHERE player_id = :player_check"
-    df = rq(raw_query, return_value=True, params={'player_check': int(player_obj.player_id)})
+    df = await rqy(raw_query, return_value=True, params={'player_check': int(player_obj.player_id)})
     return True if df is not None and len(df) != 0 else False
 
 
-def toggle_flag(player_obj):
+async def toggle_flag(player_obj):
     player_id = int(player_obj.player_id)
     # Check if a flag exists
     check_query = "SELECT * FROM AbandonEncounter WHERE player_id = :player_check"
-    df = rq(check_query, return_value=True, params={'player_check': player_id})
+    df = await rqy(check_query, return_value=True, params={'player_check': player_id})
     if len(df) != 0:
         toggle_query = "DELETE FROM AbandonEncounter WHERE player_id = :player_check"
     else:
         toggle_query = "INSERT INTO AbandonEncounter (player_id) VALUES (:player_check)"
-    rq(toggle_query, params={'player_check': player_id})
+    await rqy(toggle_query, params={'player_check': player_id})
 
 
 def limit_elements(player_obj, e_weapon):

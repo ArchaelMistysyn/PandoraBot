@@ -13,7 +13,7 @@ import itemdata
 import player
 import inventory
 import pilengine
-from pandoradb import run_query as rq
+from pandoradb import run_query as rqy
 
 # Item/crafting imports
 import itemrolls
@@ -259,7 +259,7 @@ class TarotView(discord.ui.View):
             if active_card:
                 await self.player_user.reload_player()
                 self.player_user.equipped_tarot = f"{active_card.card_numeral}"
-                self.player_user.set_player_field("player_tarot", self.player_user.equipped_tarot)
+                await self.player_user.set_player_field("player_tarot", self.player_user.equipped_tarot)
                 embed_msg.add_field(name="Equipped!", value="", inline=False)
             else:
                 embed_msg.add_field(name="Cannot Equip!", value="You do not own this card.", inline=False)
@@ -374,7 +374,8 @@ class TarotCard:
         else:
             player_obj.gear_points = [path + path_bonus for path in player_obj.gear_points]
         # Apply modifier bonuses
-        player_obj.player_damage += self.damage * resonance_bonus
+        player_obj.player_damage_min += self.damage * resonance_bonus
+        player_obj.player_damage_max += self.damage * resonance_bonus
         player_obj.hp_bonus += self.hp * resonance_bonus
         player_obj.final_damage += self.fd * 0.01 * resonance_bonus
         card_multiplier = self.num_stars * 0.01 * resonance_bonus
@@ -414,7 +415,7 @@ class TarotCard:
             raw_query = (f"UPDATE TarotInventory SET {field_name} = :input_1 "
                          f"WHERE player_id = :player_check AND card_numeral = :numeral_check ")
             params = {'input_1': field_value, 'player_check': self.player_id, 'numeral_check': self.card_numeral}
-            rq(raw_query, params=params)
+            await rqy(raw_query, params=params)
 
     async def add_tarot_card(self):
         tarot_check = await check_tarot(self.player_id, self.card_name)
@@ -425,13 +426,13 @@ class TarotCard:
                      "VALUES (:input_1, :input_2, :input_3, :input_4, :input_5, :input_6)")
         params = {'input_1': self.player_id, 'input_2': self.card_numeral, 'input_3': self.card_name,
                   'input_4': self.card_qty, 'input_5': self.num_stars, 'input_6': self.card_enhancement}
-        rq(raw_query, params=params)
+        await rqy(raw_query, params=params)
 
 
 async def check_tarot(player_id, card_name):
     selected_tarot = None
     raw_query = "SELECT * FROM TarotInventory WHERE player_id = :id_check AND card_name = :card_check"
-    df = rq(raw_query, return_value=True, params={'id_check': player_id, 'card_check': card_name})
+    df = await rqy(raw_query, return_value=True, params={'id_check': player_id, 'card_check': card_name})
     if df is not None and len(df.index) != 0:
         player_id = int(df['player_id'].values[0])
         card_numeral, card_qty = str(df['card_numeral'].values[0]), int(df['card_qty'].values[0])
@@ -484,7 +485,7 @@ async def get_resonance(card_num):
 async def collection_check(player_obj):
     collection_count = 0
     raw_query = "SELECT * FROM TarotInventory WHERE player_id = :id_check"
-    df = rq(raw_query, return_value=True, params={'id_check': player_obj.player_id})
+    df = await rqy(raw_query, return_value=True, params={'id_check': player_obj.player_id})
     if len(df.index) != 0:
         collection_count = df.shape[0]
     return collection_count

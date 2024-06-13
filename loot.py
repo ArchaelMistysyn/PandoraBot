@@ -7,7 +7,7 @@ import random
 import globalitems as gli
 import itemdata
 import sharedmethods as sm
-from pandoradb import run_query as rq
+from pandoradb import run_query as rqy
 
 # Core imports
 import player
@@ -52,14 +52,14 @@ def update_loot_and_df(player_obj, item_id, quantity, loot_msg, counter, batch_d
     return loot_msg, batch_df
 
 
-async def create_loot_embed(current_embed, active_boss, player_list, ctx=None, loot_multiplier=1, gauntlet=False):
+async def create_loot_embed(current_embed, active_boss, player_list, ctx=None, loot_mult=1, gauntlet=False, magnitude=0):
     type_bonus = (active_boss.boss_type_num + 1) * 100
     level_bonus = random.randint(active_boss.boss_level, (active_boss.boss_level * 10))
-    multiplier_bonus = 2 if active_boss.player_id != 0 else loot_multiplier
-    total = (1000 + type_bonus + level_bonus) * multiplier_bonus
+    multiplier_bonus = 2 if active_boss.player_id != 0 else loot_mult
+    total = (1000 + type_bonus + level_bonus) * multiplier_bonus * (1 + magnitude)
     exp_amount, coin_amount = total, total * active_boss.boss_tier
     # Build and return the loot output.
-    loot_output = await award_loot(active_boss, player_list, exp_amount, coin_amount, loot_multiplier, gauntlet, ctx)
+    loot_output = await award_loot(active_boss, player_list, exp_amount, coin_amount, loot_mult, gauntlet, ctx)
     for counter, loot_section in enumerate(loot_output):
         temp_player = await player.get_player_by_id(player_list[counter])
         loot_msg = f'{temp_player.player_username} received:'
@@ -67,7 +67,7 @@ async def create_loot_embed(current_embed, active_boss, player_list, ctx=None, l
     return current_embed
 
 
-async def award_loot(boss_object, player_list, exp_amount, coin_amount, loot_multiplier, gauntlet, ctx):
+async def award_loot(boss_object, player_list, exp_amount, coin_amount, loot_mult, gauntlet, ctx):
     boss_tier = boss_object.boss_tier
     loot_msg = []
     labels = ['player_id', 'item_id', 'item_qty']
@@ -75,10 +75,10 @@ async def award_loot(boss_object, player_list, exp_amount, coin_amount, loot_mul
     for counter, x in enumerate(player_list):
         # Handle coins and exp.
         temp_player = await player.get_player_by_id(x)
-        coin_msg = temp_player.adjust_coins(coin_amount)
+        coin_msg = await temp_player.adjust_coins(coin_amount)
         exp_amount = 200000 if 'XXX' in boss_object.boss_name else exp_amount
 
-        exp_msg, lvl_change = temp_player.adjust_exp(exp_amount)
+        exp_msg, lvl_change = await temp_player.adjust_exp(exp_amount)
         if lvl_change != 0 and boss_object.player_id != 0:
             await sm.send_notification(ctx, temp_player, "Level", lvl_change)
         base_reward_msg = f"{gli.exp_icon} {exp_msg} EXP\n"
@@ -95,14 +95,14 @@ async def award_loot(boss_object, player_list, exp_amount, coin_amount, loot_mul
         # Check unscaled drops.
         core_element = boss_object.boss_element if boss_object.boss_element != 9 else random.randint(0, 8)
         fae_id, fae_qty = f"Fae{core_element}", random.randint(5, max(5, min(100, boss_object.boss_level)))
-        fae_qty *= loot_multiplier
+        fae_qty *= loot_mult
         loot_msg, batch_df = update_loot_and_df(temp_player, fae_id, fae_qty, loot_msg, counter, batch_df)
         if boss_object.player_id == 0 and is_dropped(75):
             loot_msg, batch_df = update_loot_and_df(temp_player, "Stone5", 1,
                                                     loot_msg, counter, batch_df)
         # Check essence drops.
         if ' - ' in boss_object.boss_name and "XXX" not in boss_object.boss_name:
-            card_qty = sum(is_dropped(25) for attempt in range(loot_multiplier))
+            card_qty = sum(is_dropped(25) for attempt in range(loot_mult))
             if card_qty > 0:
                 numeral = boss_object.boss_name.split(" ", 1)
                 loot_msg, batch_df = update_loot_and_df(temp_player, f"Essence{numeral[0]}",
@@ -122,7 +122,7 @@ async def award_loot(boss_object, player_list, exp_amount, coin_amount, loot_mul
         possible_loot = boss_loot_dict[boss_object.boss_type] + boss_loot_dict['All']
         possible_loot = [loot_entry for loot_entry in possible_loot if loot_entry[0] == boss_tier or loot_entry[0] == 0]
         for _, drop_id, drop_rate in possible_loot:
-            qty = sum(is_dropped(drop_rate) for attempt in range(loot_multiplier))
+            qty = sum(is_dropped(drop_rate) for attempt in range(loot_mult))
             if qty > 0:
                 loot_msg, batch_df = update_loot_and_df(temp_player, drop_id, qty, loot_msg, counter, batch_df)
                 if sm.check_rare_item(drop_id):

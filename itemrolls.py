@@ -530,14 +530,12 @@ def add_augment(selected_item):
         selected_item.roll_values[roll_location] = str(selected_tier + 1) + selected_id[1:]
 
 
-async def assign_gem_values(player_obj, e_item, sovereign_buff):
+async def assign_gem_values(player_obj, e_item):
     gem_id = e_item.item_inlaid_gem_id
     if gem_id != 0:
         e_gem = await inventory.read_custom_item(gem_id)
-        if sovereign_buff:
-            player_obj.player_damage += e_gem.item_damage_max
-        else:
-            player_obj.player_damage += random.randint(e_gem.item_damage_min, e_gem.item_damage_max)
+        player_obj.player_damage_min += e_gem.item_damage_min
+        player_obj.player_damage_max += e_gem.item_damage_max
         points_value = int(inventory.gem_point_dict[e_gem.item_tier])
         player_obj.gear_points[int(e_gem.item_bonus_stat)] += points_value
         await assign_roll_values(player_obj, e_gem)

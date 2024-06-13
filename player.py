@@ -9,7 +9,7 @@ import math
 # Data imports
 import globalitems as gli
 import sharedmethods as sm
-from pandoradb import run_query as rq
+from pandoradb import run_query as rqy
 
 # Core imports
 import quest
@@ -48,7 +48,7 @@ class PlayerProfile:
         self.player_mHP, self.player_cHP = 1000, 1000
         self.immortal = False
         # Initialize player damage values.
-        self.player_damage, self.player_total_damage = 0.0, 0.0
+        self.player_damage_min, self.player_damage_max, self.total_damage = 0, 0, 0.0
         # Initialize elemental stats.
         self.elemental_damage = [0] * 9
         self.elemental_mult, self.elemental_pen, self.elemental_curse = [0.0] * 9, [0.0] * 9, [0.0] * 9
@@ -123,8 +123,9 @@ class PlayerProfile:
                 if method == 2:
                     stats += f"\n{temp_icon} {temp_dmg_str} - {temp_pen_str} - {temp_curse_str}"
             if method == 1:
+                await self.get_player_base_damage()
                 # Offensive Stat Display.
-                base_stats = f"Item Base Damage: {int(round(self.player_damage)):,}"
+                base_stats = f"Item Base Damage: {self.player_damage_min:,} - {self.player_damage_max:,}"
                 base_stats += f"\nAttack Speed: {round(math.floor(self.attack_speed * 10) / 10, 1)} / min"
                 embed_msg.add_field(name="Offensive Stats", value=f"{base_stats}{stats}", inline=False)
                 # Construct the damage spread field.
@@ -237,7 +238,7 @@ class PlayerProfile:
             embed_msg.add_field(name=title_msg, value=stats, inline=False)
             return embed_msg
 
-    def adjust_coins(self, coin_change, reduction=False, apply_pact=True):
+    async def adjust_coins(self, coin_change, reduction=False, apply_pact=True):
         adjust_msg = ""
         coin_change *= -1 if reduction else 1
         if apply_pact and not reduction:
@@ -249,10 +250,10 @@ class PlayerProfile:
                 coin_change = int(round(coin_change / 2))
                 adjust_msg = " [Gluttony Penalty]"
         self.player_coins += coin_change
-        self.set_player_field("player_coins", self.player_coins)
+        await self.set_player_field("player_coins", self.player_coins)
         return f"{coin_change:,}x{adjust_msg}"
 
-    def adjust_exp(self, exp_change, apply_pact=True):
+    async def adjust_exp(self, exp_change, apply_pact=True):
         adjust_msg = ""
         if apply_pact:
             pact_object = pact.Pact(self.pact)
@@ -275,18 +276,18 @@ class PlayerProfile:
         change_message = "" if level_increase == 0 else f"(Level +{level_increase}) "
         change_message += f"{exp_change:,}x{adjust_msg}"
         # This could be further improved to be one single adjustment.
-        self.set_player_field("player_level", self.player_level)
-        self.set_player_field("player_exp", self.player_exp)
+        await self.set_player_field("player_level", self.player_level)
+        await self.set_player_field("player_exp", self.player_exp)
         return change_message, level_increase
 
-    def set_player_field(self, field_name, field_value):
+    async def set_player_field(self, field_name, field_value):
         raw_query = f"UPDATE PlayerList SET {field_name} = :input_1 WHERE player_id = :player_check"
-        rq(raw_query, params={'player_check': int(self.player_id), 'input_1': field_value})
+        await rqy(raw_query, params={'player_check': int(self.player_id), 'input_1': field_value})
 
-    def unequip_item(self, item):
+    async def unequip_item(self, item):
         self.player_equipped = [0 if element == item.item_id else element for element in self.player_equipped]
         equipped_gear = ";".join(map(str, self.player_equipped))
-        self.set_player_field("player_equipped", equipped_gear)
+        await self.set_player_field("player_equipped", equipped_gear)
 
     async def add_new_player(self, selected_class, discord_id):
         self.discord_id = discord_id
@@ -296,13 +297,13 @@ class PlayerProfile:
         player_stats, equipped_gear = "0;0;0;0;0;0;0;0;0", "0;0;0;0;0;0;0"
         quest_tokens = ";".join(map(str, self.quest_tokens))
         raw_query = "SELECT * FROM PlayerList WHERE discord_id = :id_check"
-        df = rq(raw_query, return_value=True, params={'id_check': self.discord_id})
+        df = await rqy(raw_query, return_value=True, params={'id_check': self.discord_id})
 
-        if len(df.index) != 0:
+        if df is not None and len(df.index) != 0:
             return f"Player with discord ID: ({self.discord_id}) is already registered."
         raw_query = "SELECT * FROM PlayerList WHERE player_username = :username_check"
-        df = rq(raw_query, return_value=True, params={'username_check': self.player_username})
-        if len(df.index) != 0:
+        df = await rqy(raw_query, return_value=True, params={'username_check': self.player_username})
+        if df is not None and len(df.index) != 0:
             return f"Username {self.player_username} is taken. Please pick a new username."
         raw_query = ("INSERT INTO PlayerList "
                      "(discord_id, player_username, player_level, player_exp, player_echelon, player_quest, "
@@ -318,12 +319,12 @@ class PlayerProfile:
             'input_8': int(self.player_stamina), 'input_9': str(self.player_class), 'input_10': int(self.player_coins),
             'input_11': player_stats, 'input_12': equipped_gear, 'input_13': str(self.equipped_tarot),
             'input_14': str(self.insignia), 'input_15': str(self.pact), 'input_16': int(self.vouch_points)}
-        rq(raw_query, params=params)
+        await rqy(raw_query, params=params)
         registered_player = await get_player_by_discord(self.discord_id)
         raw_query = ("INSERT INTO MiscPlayerData (player_id, thana_visits, deaths, toggle_inv) "
                      "VALUES (:input_1, :input_2, :input_3, :input_4)")
         params = {"input_1": registered_player.player_id, "input_2": 0, "input_3": 0, "input_4": 0}
-        rq(raw_query, params=params)
+        await rqy(raw_query, params=params)
         return f"Welcome {self.player_username}!\nUse /quest to begin."
 
     async def update_misc_data(self, field_name, change, overwrite_value=False):
@@ -331,25 +332,25 @@ class PlayerProfile:
         if overwrite_value:
             raw_query = f"UPDATE MiscPlayerData SET {field_name} = :new_value WHERE player_id = :check"
         params = {"new_value": change, "check": self.player_id}
-        rq(raw_query, params=params)
+        await rqy(raw_query, params=params)
 
     async def check_misc_data(self, field_name):
         raw_query = f"SELECT {field_name} FROM MiscPlayerData WHERE player_id = :player_check"
         params = {"player_check": self.player_id}
-        result_df = rq(raw_query, params=params, return_value=True)
+        result_df = await rqy(raw_query, params=params, return_value=True)
         return result_df[field_name].values[0]
 
-    def spend_stamina(self, cost) -> bool:
+    async def spend_stamina(self, cost) -> bool:
         is_spent = False
         if self.player_stamina >= cost:
             self.player_stamina -= cost
-            self.set_player_field("player_stamina", self.player_stamina)
+            await self.set_player_field("player_stamina", self.player_stamina)
             is_spent = True
         return is_spent
 
-    def get_equipped(self):
+    async def get_equipped(self):
         raw_query = "SELECT * FROM PlayerList WHERE player_id = :player_check"
-        df = rq(raw_query, return_value=True, params={'player_check': self.player_id})
+        df = await rqy(raw_query, return_value=True, params={'player_check': self.player_id})
         temp_equipped = list(df['player_equipped'].values[0].split(';'))
         self.player_equipped = list(map(int, temp_equipped))
         temp_stats = list(df['player_stats'].values[0].split(';'))
@@ -358,10 +359,10 @@ class PlayerProfile:
         self.insignia = str(df['player_insignia'].values[0])
         self.pact = str(df['player_pact'].values[0])
 
-    def reset_skill_points(self):
+    async def reset_skill_points(self):
         self.player_stats = [0] * 9
         reset_points = "0;0;0;0;0;0;0;0;0"
-        self.set_player_field("player_stats", reset_points)
+        await self.set_player_field("player_stats", reset_points)
 
     async def reload_player(self):
         _ = await get_player_by_id(self.player_id, reloading=self)
@@ -389,24 +390,20 @@ class PlayerProfile:
         self.appli[class_bonus[self.player_class][0]] += class_bonus[self.player_class][1]
 
         # Item Multipliers
-        e_item, sovereign_buff = [], False
+        e_item = []
         for idx, x in enumerate(self.player_equipped):
             if x != 0:
                 e_item.append(await inventory.read_custom_item(x))
                 e_item[idx].update_damage()
-                # Sovereign's Omniscience
-                if e_item[0] is not None and e_item[0].item_base_type in gli.sovereign_item_list:
-                    self.player_damage += e_item[idx].item_damage_max
-                    sovereign_buff = True
-                else:
-                    self.player_damage += random.randint(e_item[idx].item_damage_min, e_item[idx].item_damage_max)
+                self.player_damage_min += e_item[idx].item_damage_min
+                self.player_damage_max += e_item[idx].item_damage_max
                 if e_item[idx].item_base_type in gli.sovereign_item_list:
                     await sw.assign_sovereign_values(self, e_item[idx])
                 else:
                     await itemrolls.assign_roll_values(self, e_item[idx])
                 itemrolls.assign_item_element_stats(self, e_item[idx])
                 if e_item[idx].item_num_sockets == 1:
-                    await itemrolls.assign_gem_values(self, e_item[idx], sovereign_buff)
+                    await itemrolls.assign_gem_values(self, e_item[idx])
             else:
                 e_item.append(None)
         if e_item[0] is not None:
@@ -454,10 +451,10 @@ class PlayerProfile:
         self.player_cHP = self.player_mHP = int((base_player_hp + self.hp_bonus) * (1 + self.hp_multiplier))
         
         # Trigger Rates
-        self.trigger_rate["Omega"] += min(100, int(round(self.appli["Critical"])) * 3)
-        self.trigger_rate["Hyperbleed"] += min(100, int(round(self.appli["Bleed"])) * 4)
-        self.trigger_rate["Fractal"] += min(100, int(round(self.appli["Elemental"])) * 4)
-        self.trigger_rate["Temporal"] += min(100, int(round(self.appli["Temporal"])) * 4)
+        self.trigger_rate["Omega"] = min(100, int(self.trigger_rate["Omega"] + round(self.appli["Critical"])) * 3)
+        self.trigger_rate["Hyperbleed"] = min(100, int(round(self.trigger_rate["Hyperbleed"] + self.appli["Bleed"])) * 4)
+        self.trigger_rate["Fractal"] = min(100, int(round(self.trigger_rate["Fractal"] + self.appli["Elemental"])) * 4)
+        self.trigger_rate["Temporal"] = min(100, int(round(self.trigger_rate["Temporal"] + self.appli["Temporal"])) * 4)
         # Perfect Rates
         self.perfect_rate["Critical"] = 1 if self.aqua_points >= 80 else self.perfect_rate["Critical"]
         for mechanic in self.perfect_rate.keys():  
@@ -495,52 +492,60 @@ class PlayerProfile:
         if self.aqua_mode != 0 and self.equipped_tarot != "" and e_tarot.card_numeral == "XIV":
             self.critical_mult += self.elemental_mult[1]
         # Flat Damage Bonuses
-        self.player_damage += self.appli["Life"] * self.player_mHP * 5
+        self.player_damage_min += self.appli["Life"] * self.player_mHP * 5
+        self.player_damage_max += self.appli["Life"] * self.player_mHP * 5
         # Attack speed hard cap
         self.attack_speed = min(10, self.attack_speed)
 
-    def get_player_initial_damage(self):
-        return self.player_damage * (1 + self.class_multiplier) * (1 + self.final_damage)
+    async def get_player_base_damage(self):
+        if self.player_equipped[0] == 0:
+            return
+        e_weapon = await inventory.read_custom_item(self.player_equipped[0])
+        if e_weapon is not None and e_weapon.item_base_type in gli.sovereign_item_list:
+            # Sovereign's Omniscience
+            self.player_damage_min = self.player_damage_max
+
+    async def get_player_initial_damage(self):
+        await self.get_player_base_damage()
+        random_damage = random.randint(self.player_damage_min, self.player_damage_max)
+        return int(random_damage * (1 + self.class_multiplier) * (1 + self.final_damage))
 
     async def get_player_boss_damage(self, boss_object):
         e_weapon = await inventory.read_custom_item(self.player_equipped[0])
         num_elements = sum(e_weapon.item_elements)
-        player_damage = self.get_player_initial_damage()
+        player_damage = await self.get_player_initial_damage()
         player_damage, critical_type = combat.check_critical(self, player_damage, num_elements)
-        self.player_total_damage = self.boss_adjustments(player_damage, boss_object, e_weapon)
-        return self.player_total_damage, critical_type
+        self.total_damage = self.boss_adjustments(player_damage, boss_object, e_weapon)
+        return critical_type
 
     def boss_adjustments(self, player_damage, boss_obj, e_weapon):
         # Boss type multipliers
         damage = player_damage * (1 + self.banes[boss_obj.boss_type_num - 1])
         # Type Defences
-        defences_multiplier = (combat.boss_defences("", self, boss_obj, -1) + self.defence_pen)
-        damage *= defences_multiplier
+        damage *= combat.boss_defences("", self, boss_obj, -1, e_weapon) + self.defence_pen
         # Elemental Defences
         highest = 0
         for idx, x in enumerate(combat.limit_elements(self, e_weapon)):
             if x == 1:
+                resist_multi = combat.boss_defences("Element", self, boss_obj, idx, e_weapon)
                 self.elemental_damage[idx] = damage * (1 + self.elemental_mult[idx])
-                resist_multi = combat.boss_defences("Element", self, boss_obj, idx)
-                penetration_multi = 1 + self.elemental_pen[idx]
-                self.elemental_damage[idx] *= resist_multi * penetration_multi * self.elemental_conversion[idx]
+                pen_mult, curse_mult = 1 + self.elemental_pen[idx], 1 + boss_obj.curse_debuffs[idx]
+                self.elemental_damage[idx] *= resist_multi * pen_mult * curse_mult * self.elemental_conversion[idx]
                 if self.elemental_damage[idx] > self.elemental_damage[highest]:
                     highest = idx
-        damage = sum(self.elemental_damage) * combat.boss_true_mitigation(boss_obj.boss_level)
         # Apply status
         stun_status = gli.element_status_list[highest]
         if stun_status is not None and random.randint(1, 100) <= self.trigger_rate["Status"]:
             boss_obj.stun_status = stun_status
             boss_obj.stun_cycles += 1
-        return int(damage)
+        return int(sum(self.elemental_damage) * combat.boss_true_mitigation(boss_obj.boss_level))
 
     async def get_bleed_damage(self, boss_obj):
         weapon = await inventory.read_custom_item(self.player_equipped[0])
-        player_damage = self.get_player_initial_damage()
-        self.player_total_damage = self.boss_adjustments(player_damage, boss_obj, weapon) * (1 + self.bleed_mult)
-        return self.player_total_damage
+        player_damage = await self.get_player_initial_damage()
+        self.total_damage = self.boss_adjustments(player_damage, boss_obj, weapon)
 
-    def equip(self, selected_item):
+    async def equip(self, selected_item):
         if selected_item.item_type not in ["W", "A", "V", "Y", "R", "G", "C"]:
             return "Item is not equipable."
         # Equip the item and update the database.
@@ -549,7 +554,7 @@ class PlayerProfile:
         self.player_equipped[location] = selected_item.item_id
         equipped_gear = ";".join(map(str, self.player_equipped))
         raw_query = f"UPDATE PlayerList SET player_equipped = :input_1 WHERE player_id = :player_check"
-        rq(raw_query, params={'player_check': int(self.player_id), 'input_1': equipped_gear})
+        await rqy(raw_query, params={'player_check': int(self.player_id), 'input_1': equipped_gear})
         return f"{item_type} {selected_item.item_id} is now equipped."
 
     async def unequip(self, selected_item):
@@ -559,7 +564,7 @@ class PlayerProfile:
             self.player_equipped[location] = 0
             equipped_gear = ";".join(map(str, self.player_equipped))
             raw_query = f"UPDATE PlayerList SET player_equipped = :input_1 WHERE player_id = :player_check"
-            rq(raw_query, params={'player_check': int(self.player_id), 'input_1': equipped_gear})
+            await rqy(raw_query, params={'player_check': int(self.player_id), 'input_1': equipped_gear})
             return
         # Remove inlaid dragon gems
         item_list = await inventory.read_custom_item(fetch_equipped=self.player_equipped)
@@ -570,7 +575,7 @@ class PlayerProfile:
 
     async def check_equipped(self, item):
         response = ""
-        self.get_equipped()
+        await self.get_equipped()
         if item.item_type not in inventory.item_loc_dict and "D" not in item.item_type:
             return f"Item {item.item_id} is not recognized."
         if item.item_id in self.player_equipped:
@@ -621,11 +626,11 @@ class PlayerProfile:
                 self.elemental_pen[element_position] += 0.25
                 return
 
-    def check_cooldown(self, command_name):
+    async def check_cooldown(self, command_name):
         difference = None
         raw_query = "SELECT * FROM CommandCooldowns WHERE player_id = :player_check AND command_name = :cmd_check"
         params = {'player_check': self.player_id, 'cmd_check': command_name}
-        df = rq(raw_query, return_value=True, params=params)
+        df = await rqy(raw_query, return_value=True, params=params)
         method = ""
         if len(df) != 0:
             date_string = str(df["time_used"].values[0])
@@ -635,11 +640,11 @@ class PlayerProfile:
             method = str(df["method"].values[0])
         return difference, method
 
-    def set_cooldown(self, command_name, method, rewind_days=0):
+    async def set_cooldown(self, command_name, method, rewind_days=0):
         difference = None
         raw_query = "SELECT * FROM CommandCooldowns WHERE player_id = :player_check AND command_name = :cmd_check"
         params = {'player_check': self.player_id, 'cmd_check': command_name}
-        df = rq(raw_query, return_value=True, params=params)
+        df = await rqy(raw_query, return_value=True, params=params)
         raw_query = ("INSERT INTO CommandCooldowns (player_id, command_name, method, time_used) "
                      "VALUES (:player_check, :cmd_check, :method, :time_check)")
         if len(df) != 0:
@@ -649,29 +654,29 @@ class PlayerProfile:
         current_time = timestamp.strftime(gli.date_formatting)
         params = {'player_check': self.player_id, 'cmd_check': command_name,
                   'method': method, 'time_check': current_time}
-        rq(raw_query, params=params)
+        await rqy(raw_query, params=params)
         return difference
 
-    def clear_cooldown(self, command_name):
+    async def clear_cooldown(self, command_name):
         raw_query = "DELETE FROM CommandCooldowns WHERE player_id = :player_check AND command_name = :cmd_check"
-        rq(raw_query, params={'player_check': self.player_id, 'cmd_check': command_name})
+        await rqy(raw_query, params={'player_check': self.player_id, 'cmd_check': command_name})
 
 
-def check_username(new_name: str):
+async def check_username(new_name: str):
     raw_query = "SELECT * FROM PlayerList WHERE player_username = :player_check"
-    df = rq(raw_query, return_value=True, params={'player_check': new_name})
+    df = await rqy(raw_query, return_value=True, params={'player_check': new_name})
     return False if len(df) != 0 else True
 
 
 async def get_player_by_id(player_id, reloading=None):
     raw_query = "SELECT * FROM PlayerList WHERE player_id = :id_check"
-    df = rq(raw_query, return_value=True, params={'id_check': player_id})
+    df = await rqy(raw_query, return_value=True, params={'id_check': player_id})
     return None if len(df.index) == 0 else await df_to_player(df, reloading=reloading)
 
 
 async def get_player_by_discord(discord_id, reloading=None):
     raw_query = "SELECT * FROM PlayerList WHERE discord_id = :id_check"
-    df = rq(raw_query, return_value=True, params={'id_check': discord_id})
+    df = await rqy(raw_query, return_value=True, params={'id_check': discord_id})
     return None if len(df.index) == 0 else await df_to_player(df, reloading=reloading)
 
 
@@ -697,7 +702,7 @@ async def df_to_player(row, reloading=None):
         temp.vouch_points = int(row['vouch_points'].values[0])
     string_list = temp_string.split(';')
     temp.quest_tokens = list(map(int, string_list))
-    temp.get_equipped()
+    await temp.get_equipped()
     await temp.get_player_multipliers()
     if reloading is not None:
         reloading.__dict__.update(temp.__dict__)
@@ -707,7 +712,7 @@ async def df_to_player(row, reloading=None):
 async def get_players_by_echelon(player_echelon):
     user_list = []
     raw_query = "SELECT * FROM PlayerList WHERE player_echelon = :echelon_check"
-    player_df = rq(raw_query, return_value=True, params={'echelon_check': player_echelon})
+    player_df = await rqy(raw_query, return_value=True, params={'echelon_check': player_echelon})
     if len(player_df.index) == 0:
         return None
     for index, row in player_df.iterrows():
@@ -718,7 +723,7 @@ async def get_players_by_echelon(player_echelon):
 async def get_all_users():
     user_list = []
     raw_query = "SELECT * FROM PlayerList"
-    df = rq(raw_query, return_value=True)
+    df = await rqy(raw_query, return_value=True)
     if df is None or len(df.index) == 0:
         return None
     for index, row in df.iterrows():

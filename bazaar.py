@@ -6,7 +6,7 @@ import globalitems as gli
 import sharedmethods as sm
 
 # Core imports
-from pandoradb import run_query as rq
+from pandoradb import run_query as rqy
 import player
 import inventory
 
@@ -47,31 +47,31 @@ class BazaarView(discord.ui.View):
         await self.handle_sort_and_filter(interaction, filter_type="Sovereign")
 
 
-def check_num_listings(player_obj):
+async def check_num_listings(player_obj):
     raw_query = "SELECT * FROM CustomBazaar WHERE seller_id = :id_check"
     params = {'id_check': player_obj.player_id}
-    df = rq(raw_query, return_value=True, params=params)
+    df = await rqy(raw_query, return_value=True, params=params)
     return len(df)
 
 
 async def list_custom_item(item, cost):
     raw_query = "INSERT INTO CustomBazaar (item_id, seller_id, cost) VALUES (:item_id, :seller_id, :cost)"
     params = {'item_id': item.item_id, 'seller_id': item.player_owner, 'cost': cost}
-    rq(raw_query, params=params)
+    await rqy(raw_query, params=params)
     item.item_inlaid_gem_id, item.player_owner = 0, -1
     await item.update_stored_item()
 
 
 async def retrieve_items(player_id):
     raw_query = "SELECT item_id FROM CustomBazaar WHERE seller_id = :player_id"
-    df = rq(raw_query, return_value=True, params={'player_id': player_id})
+    df = await rqy(raw_query, return_value=True, params={'player_id': player_id})
     item_ids = []
     if len(df) != 0:
         item_ids = df['item_id'].tolist()
         update_query = "UPDATE CustomInventory SET player_id = :player_id WHERE item_id IN :item_ids"
         delete_query = "DELETE FROM CustomBazaar WHERE item_id IN :item_ids"
-        rq(update_query, params={'player_id': player_id, 'item_ids': tuple(item_ids)})
-        rq(delete_query, params={'item_ids': tuple(item_ids)})
+        await rqy(update_query, params={'player_id': player_id, 'item_ids': tuple(item_ids)})
+        await rqy(delete_query, params={'item_ids': tuple(item_ids)})
     return len(item_ids) if item_ids else 0
 
 
@@ -91,7 +91,7 @@ async def show_bazaar_items(player_obj, sort_type="Tier", filter_type=""):
                  f"CustomInventory.item_base_dmg_min, CustomInventory.item_base_dmg_max "
                  f"FROM CustomBazaar INNER JOIN CustomInventory ON CustomBazaar.item_id = CustomInventory.item_id"
                  f"{filter_type}{sort_type}")
-    df = rq(raw_query, return_value=True)
+    df = await rqy(raw_query, return_value=True)
     bazaar_embed = discord.Embed(colour=discord.Colour.dark_orange(), title="The Bazaar", description="Open Marketplace")
     if df is None or len(df.index) == 0:
         return None
@@ -121,23 +121,23 @@ async def show_bazaar_items(player_obj, sort_type="Tier", filter_type=""):
     return bazaar_embed
 
 
-def get_seller_by_item(item_id):
+async def get_seller_by_item(item_id):
     raw_query = "SELECT seller_id FROM CustomBazaar WHERE item_id = :item_check"
-    df = rq(raw_query, return_value=True, params={'item_check': item_id})
+    df = await rqy(raw_query, return_value=True, params={'item_check': item_id})
     return int(df['seller_id'].values[0]) if len(df.index) != 0 else 0
 
 
-def get_item_cost(item_id):
+async def get_item_cost(item_id):
     raw_query = "SELECT cost FROM CustomBazaar WHERE item_id = :item_check"
-    df = rq(raw_query, return_value=True, params={'item_check': item_id})
+    df = await rqy(raw_query, return_value=True, params={'item_check': item_id})
     return int(df['cost'].values[0]) if len(df.index) != 0 else 0
 
 
 async def buy_item(item_id):
     raw_query = "DELETE FROM CustomBazaar WHERE item_id = :item_check"
-    rq(raw_query, params={'item_check': item_id})
-    seller_id = get_seller_by_item(item_id)
+    await rqy(raw_query, params={'item_check': item_id})
+    seller_id = await get_seller_by_item(item_id)
     seller_object = await player.get_player_by_id(seller_id)
     if seller_object is not None:
-        item_cost = get_item_cost(item_id)
-        _ = seller_object.adjust_coins(item_cost)
+        item_cost = await get_item_cost(item_id)
+        _ = await seller_object.adjust_coins(item_cost)

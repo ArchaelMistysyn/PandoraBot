@@ -11,7 +11,7 @@ import globalitems as gli
 # Core imports
 import inventory
 import player
-from pandoradb import run_query as rq
+from pandoradb import run_query as rqy
 
 # Item/gear imports
 import tarot
@@ -193,7 +193,7 @@ class PurchaseView(discord.ui.View):
                                       title="Cannot Afford!", description="Please come back when you have more coins.")
             return embed_msg, self
         if not self.is_paid:
-            _ = self.player_obj.adjust_coins(total_cost, True)
+            _ = await self.player_obj.adjust_coins(total_cost, True)
             await inventory.update_stock(self.player_obj, self.selected_item.item_id, quantity)
             self.is_paid = True
         embed_title = "Purchase Successful!"

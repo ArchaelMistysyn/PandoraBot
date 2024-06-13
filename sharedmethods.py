@@ -4,6 +4,7 @@ from discord.utils import get
 import pandas as pd
 import random
 import re
+from decimal import Decimal, getcontext
 
 # Data imports
 import globalitems as gli
@@ -54,7 +55,7 @@ async def send_notification(ctx_object, player_obj, notification_type, value):
         return
     await inventory.update_stock(player_obj, "RoyalCoin", notification_dict[notification_type][1])
     title, message = notification_dict[notification_type][0]
-    filepath = pilengine.build_notification(player_obj, message, notification_type, title, item=item, rarity=rarity)
+    filepath = await pilengine.build_notification(player_obj, message, notification_type, title, item=item, rarity=rarity)
     channels = ctx_object.guild.channels
     channel_object = discord.utils.get(channels, id=gli.channel_list[0])
     await ctx_object.send(file=discord.File(filepath))
@@ -84,9 +85,9 @@ def get_gear_tier_colours(base_tier):
     return gli.tier_colors[checked_tier], gli.augment_icons[checked_tier - 1]
 
 
-def reset_all_cooldowns():
+async def reset_all_cooldowns():
     raw_query = "DELETE FROM CommandCooldowns"
-    rq(raw_query)
+    await rqy(raw_query)
 
 
 def display_hp(current_hp, max_hp):
@@ -140,7 +141,7 @@ def number_conversion(input_number):
         return f"{input_number}"
     num_digits = len(str(int(input_number)))
     idx = (num_digits - 1) // 3
-    scaled_number = input_number / (10 ** (3 * idx))
+    scaled_number = Decimal(input_number) / (10 ** (3 * idx))
     truncated_scaled_number = int(scaled_number * 100) / 100.0
     number_msg = f"{int(scaled_number)}" if scaled_number == int(scaled_number) else f"{truncated_scaled_number:.2f}"
     if idx != 0:

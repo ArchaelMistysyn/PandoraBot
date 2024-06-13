@@ -237,14 +237,14 @@ class MapSelectView(discord.ui.View):
             await interaction.response.edit_message(embed=self.current_embed, view=self)
             return
         # Handle stamina cost
-        if not self.player_user.spend_stamina((200 + selected_tier * 50)):
+        if not await self.player_user.spend_stamina((200 + selected_tier * 50)):
             self.current_embed.clear_fields()
             self.current_embed.add_field(name="Not Enough Stamina!", value="Please check your /stamina!", inline=False)
             await interaction.response.edit_message(embed=self.current_embed, view=self)
             return
         # Assign quest token
         if self.player_user.player_quest == 2:
-            quest.assign_unique_tokens(self.player_user, "Map")
+            await quest.assign_unique_tokens(self.player_user, "Map")
         # Begin expedition
         new_expedition = Expedition(self.ctx_object, self.player_user, selected_tier)
         self.new_embed, self.new_view = await new_expedition.display_next_room(self.ctx_object, self.player_user)
@@ -465,7 +465,7 @@ class AdventureRoomView(discord.ui.View):
             if trigger:
                 return
             hp_msg = sm.display_hp(self.expedition.player_obj.player_cHP, self.expedition.player_obj.player_mHP)
-            exp_msg, lvl_change = temp_user.adjust_exp(exp_reward)
+            exp_msg, lvl_change = await temp_user.adjust_exp(exp_reward)
             self.embed.add_field(name="Monster Defeated!", value=msg, inline=False)
             self.embed.add_field(name="", value=f"{hp_msg}\n{gli.exp_icon} {exp_msg} Exp Acquired.", inline=False)
             if self.expedition.player_obj.player_equipped[4] != 0:
@@ -552,7 +552,7 @@ class AdventureRoomView(discord.ui.View):
                         break
             # Build the embed.
             temp_player = await player.get_player_by_id(self.expedition.player_obj.player_id)
-            reward_msg = temp_player.adjust_coins(reward_coins + bonus_coins)
+            reward_msg = await temp_player.adjust_coins(reward_coins + bonus_coins)
             title, description = "Treasures Obtained!", f"Acquired {gli.coin_icon} {reward_msg} lotus coins!"
             # Check for trove drops
             if random.randint(1, 100) <= trove_rate:
@@ -664,7 +664,7 @@ class AdventureRoomView(discord.ui.View):
         async def greed_callback():
             cost = adventuredata.greed_cost_list[variant]
             if temp_player.player_coins >= cost:
-                cost_msg = temp_player.adjust_coins(cost, True)
+                cost_msg = await temp_player.adjust_coins(cost, True)
                 return True, f"Sacrificed {cost_msg} lotus coins\nRemaining: {temp_player.player_coins}\nGained +{reward} luck!"
             return False, output_msg
 
@@ -672,7 +672,7 @@ class AdventureRoomView(discord.ui.View):
             cost = int((1 + variant) * 100)
             if temp_player.player_stamina >= cost:
                 temp_player.player_stamina -= cost
-                temp_player.set_player_field("player_stamina", temp_player.player_stamina)
+                await temp_player.set_player_field("player_stamina", temp_player.player_stamina)
                 return True, f"Sacrificed {cost} stamina\nRemaining: {temp_player.player_stamina}\nGained +{reward} luck!"
             return False, output_msg,
 
@@ -733,7 +733,7 @@ class AdventureRoomView(discord.ui.View):
             self.expedition.player_obj.player_cHP -= blood_cost
             temp_user = await player.get_player_by_discord(self.expedition.player_obj.discord_id)
             temp_user.pact = active_room.variant
-            temp_user.set_player_field("player_pact", temp_user.pact)
+            await temp_user.set_player_field("player_pact", temp_user.pact)
             self.embed = pact.display_pact(temp_user)
             await interaction_obj.response.edit_message(embed=self.embed, view=self.new_view)
 
@@ -744,7 +744,7 @@ class AdventureRoomView(discord.ui.View):
             hp_msg = sm.display_hp(self.expedition.player_obj.player_cHP, self.expedition.player_obj.player_mHP)
             temp_user = await player.get_player_by_id(self.expedition.player_obj.player_id)
             exp_value = 500 + (100 * self.expedition.tier) + (25 * self.expedition.luck)
-            exp_message, lvl_change = temp_user.adjust_exp(exp_value)
+            exp_message, lvl_change = await temp_user.adjust_exp(exp_value)
             description = f"{description}\n{hp_msg}\n{gli.exp_icon} {exp_message} Exp Acquired."
             self.embed.add_field(name=f"{demon_type} Defeated!", value=description, inline=False)
             await interaction_obj.response.edit_message(embed=self.embed, view=self.new_view)
@@ -966,7 +966,7 @@ class ItemView(discord.ui.View):
         self.new_view = TransitionView(self.expedition)
         sell_value = inventory.sell_value_by_tier[self.item.item_tier]
         temp_user = await player.get_player_by_id(self.expedition.player_obj.player_id)
-        sell_msg = temp_user.adjust_coins(sell_value)
+        sell_msg = await temp_user.adjust_coins(sell_value)
         title, description = "Item Sold!", f"{gli.coin_icon} {sell_msg} lotus coins acquired."
         self.embed = discord.Embed(colour=self.expedition.colour, title=title, description=description)
         await interaction.response.edit_message(embed=self.embed, view=self.new_view)
@@ -1052,7 +1052,7 @@ async def handle_hunt(ctx_object, player_obj, success_rate, card_stars):
     if total_monsters_slain >= 1:
         total_exp += (player_obj.player_echelon * 500)
     total_exp = int(total_exp)
-    exp_msg, lvl_change = player_obj.adjust_exp(total_exp)
+    exp_msg, lvl_change = await player_obj.adjust_exp(total_exp)
     output_msg += f"{gli.exp_icon} {exp_msg} EXP awarded!\n" if temp_dict else "No monsters were slain.\n"
     if lvl_change == 0:
         return output_msg
@@ -1071,12 +1071,12 @@ async def handle_mine(ctx_object, player_obj, success_rate, card_stars):
         item_obj = inventory.BasicItem(item_id_dict[outcome_item])
         item_icon = f" {item_obj.item_emoji}"
     else:
-        coin_msg = player_obj.adjust_coins(outcome_coins)
+        coin_msg = await player_obj.adjust_coins(outcome_coins)
         return f"You found {outcome_item}! Sold for {gli.coin_icon} {coin_msg} Lotus Coins!"
     if outcome_item == "Lotus of Abundance":
         await sm.send_notification(ctx_object, player_obj, "Item", item_obj.item_id)
     await inventory.update_stock(player_obj, item_obj.item_id, 1)
-    coin_msg = player_obj.adjust_coins(outcome_coins)
+    coin_msg = await player_obj.adjust_coins(outcome_coins)
     item_name = item_obj.item_name
     return f"You found{item_icon} 1x {item_name}!\nReceived {gli.coin_icon} {coin_msg} Lotus Coins!"
 
@@ -1129,7 +1129,7 @@ class ManifestView(discord.ui.View):
         if await sm.check_click(interaction, self.player_user, self.new_embed, self.new_view):
             return
         await self.player_user.reload_player()
-        existing_timestamp, _ = self.player_user.check_cooldown("manifest")
+        existing_timestamp, _ = await self.player_user.check_cooldown("manifest")
         # Check existing manifestation
         if existing_timestamp:
             self.current_embed.clear_fields()
@@ -1137,9 +1137,9 @@ class ManifestView(discord.ui.View):
             await interaction.response.edit_message(embed=self.current_embed, view=self.new_view)
             return
         # Handle successful embark
-        if self.player_user.spend_stamina(500):
+        if await self.player_user.spend_stamina(500):
             method_info = f"{method};{self.e_tarot.card_numeral};{self.e_tarot.num_stars}"
-            self.player_user.set_cooldown("manifest", method_info)
+            await self.player_user.set_cooldown("manifest", method_info)
             self.new_embed = discord.Embed(colour=self.colour, title=f"{self.e_tarot.card_name} Embarks [{method}]",
                                            description=f"Expected return time: {self.num_hours} hours.")
             self.new_view = SkipView(self.ctx_obj, self.player_user, method_info)
@@ -1173,17 +1173,17 @@ class SkipView(discord.ui.View):
             self.new_view = SkipView(self.ctx_obj, self.player_user, self.method_info)
             await interaction.response.edit_message(embed=self.new_embed, view=self)
             return
-        difference, method_info = self.player_user.check_cooldown("manifest")
+        difference, method_info = await self.player_user.check_cooldown("manifest")
         if not difference:
             await interaction.response.edit_message(view=self.new_view)
             return
         wait_time = timedelta(hours=(14 + self.player_user.player_echelon))
         if difference <= wait_time:
             await inventory.update_stock(self.player_user, self.cost_item.item_id, -5)
-            self.player_user.set_cooldown("manifest", "", rewind_days=2)
+            await self.player_user.set_cooldown("manifest", "", rewind_days=2)
         self.new_embed = await build_manifest_return_embed(self.ctx_obj, self.player_user, method_info, colour)
         self.new_view = RepeatView(self.ctx_obj, self.player_user, self.method_info)
-        self.player_user.clear_cooldown("manifest")
+        await self.player_user.clear_cooldown("manifest")
         await interaction.response.edit_message(embed=self.new_embed, view=self.new_view)
 
 
@@ -1203,14 +1203,14 @@ class RepeatView(discord.ui.View):
         self.new_embed = discord.Embed(colour=colour, title="", description="")
 
         # Check existing manifestation
-        existing_timestamp, _ = self.player_user.check_cooldown("manifest")
+        existing_timestamp, _ = await self.player_user.check_cooldown("manifest")
         if existing_timestamp:
             self.new_embed.title = "In Progress!"
             self.new_embed.description = "You've already got a manifestation running!"
             await interaction.response.edit_message(embed=self.new_embed, view=self.new_view)
             return
         # Ensure there's enough stamina to perform the action
-        if not self.player_user.spend_stamina(500):
+        if not await self.player_user.spend_stamina(500):
             self.new_embed.title = "Insufficient Stamina"
             self.new_embed.description = "You do not have enough stamina to repeat the action."
             self.new_view = RepeatView(self.ctx_obj, self.player_user, self.method_info)
@@ -1224,7 +1224,7 @@ class RepeatView(discord.ui.View):
             e_tarot = await tarot.check_tarot(self.player_user.player_id, tarot.card_dict[self.player_user.equipped_tarot][0])
             card_name, num_stars = e_tarot.card_name, e_tarot.num_stars
         new_method_info = f"{method};{card_numeral};{num_stars}"
-        self.player_user.set_cooldown("manifest", new_method_info)
+        await self.player_user.set_cooldown("manifest", new_method_info)
         self.new_embed = discord.Embed(colour=colour, title=f"{card_name} Embarks [{method}]",
                                        description=f"Expected return time: {14 + self.player_user.player_echelon} hours.")
         self.new_view = SkipView(self.ctx_obj, self.player_user, new_method_info)

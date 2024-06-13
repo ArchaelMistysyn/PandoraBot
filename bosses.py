@@ -9,7 +9,7 @@ import sharedmethods as sm
 # Core imports
 import player
 import encounters
-from pandoradb import run_query as rq
+from pandoradb import run_query as rqy
 
 fortress_variants = [['Devouring', 0], ['Vengeful', 0], ['Blighted', 1], ['Plagued', 1],
                      ['Writhing', 2], ['Agony', 2], ['Overgrown', 3], ['Man-Eating', 3],
@@ -184,7 +184,7 @@ async def spawn_boss(channel_id, player_id, new_boss_tier, selected_boss_type, b
     # Handle existing boss.
     if raid_id != 0:
         raw_query = "SELECT * FROM BossList WHERE raid_id = :id_check"
-        df = rq(raw_query, return_value=True, params={'id_check': raid_id})
+        df = await rqy(raw_query, return_value=True, params={'id_check': raid_id})
         player_id = int(df["player_id"].values[0])
         boss_tier, boss_level = int(df["boss_tier"].values[0]), int(df["boss_level"].values[0])
         boss_type, boss_type_num = str(df["boss_type"].values[0]), int(df["boss_type_num"].values[0])
@@ -212,27 +212,25 @@ async def spawn_boss(channel_id, player_id, new_boss_tier, selected_boss_type, b
     boss_object = CurrentBoss(boss_type_num, selected_boss_type, new_boss_tier, boss_level)
 
     # Assign elemental weaknesses.
-    num_eleweak = 3
-    eleweak_list = random.sample(range(9), num_eleweak)
+    eleweak_list = random.sample(range(9), 3)
     for x in eleweak_list:
         boss_object.boss_eleweak[x] = 1
     boss_eleweak = ";".join(str(y) for y in boss_object.boss_eleweak)
     boss_eleweak = boss_eleweak.rstrip(';')
 
     # Assign type weaknesses.
-    num_typeweak = 2
-    typeweak_list = random.sample(range(7), num_typeweak)
+    typeweak_list = random.sample(range(7), 2)
     for x in typeweak_list:
         boss_object.boss_typeweak[x] = 1
     boss_typeweak = ";".join(str(y) for y in boss_object.boss_typeweak)
     boss_typeweak = boss_typeweak.rstrip(';')
 
     # Set boss hp and damage cap.
-    total_hp = int(10 ** (min(100, boss_object.boss_level) // 10 + 5)) * (10 ** (1 + magnitude))
+    total_hp = int(10 ** (min(100, boss_object.boss_level) // 10 + 5)) * (10 ** magnitude)
     if boss_object.boss_level >= 100:
         multiplier_count = (boss_object.boss_level - 100) // 100 + 1
         total_hp *= (10 ** multiplier_count)
-    boss_object.damage_cap = (total_hp / 10) - 1
+    boss_object.damage_cap = total_hp // 10 - 1
     if boss_object.boss_type == "Incarnate":
         boss_object.damage_cap = -1
 
@@ -250,7 +248,7 @@ async def spawn_boss(channel_id, player_id, new_boss_tier, selected_boss_type, b
     # Apply the new boss to the database.
     raw_query = ("INSERT INTO ActiveRaids (channel_id, player_id, encounter_type) "
                  "VALUES (:input_1, :player_id, :raid_type)")
-    rq(raw_query, params={'input_1': str(channel_id), 'player_id': player_id, 'raid_type': raid_type})
+    await rqy(raw_query, params={'input_1': str(channel_id), 'player_id': player_id, 'raid_type': raid_type})
     raid_id = await encounters.get_raid_id(channel_id, player_id)
     raw_query = ("INSERT INTO BossList "
                  "(raid_id, player_id, boss_name, boss_tier, boss_level, boss_type_num, boss_type, "
@@ -261,7 +259,7 @@ async def spawn_boss(channel_id, player_id, new_boss_tier, selected_boss_type, b
               'input_3': boss_level, 'input_4': boss_type_num, 'input_5': selected_boss_type,
               'input_6': str(int(total_hp)), 'input_7': str(int(total_hp)), 'input_8': boss_typeweak,
               'input_9': boss_eleweak, 'input_10': boss_object.boss_image}
-    rq(raw_query, params=params)
+    await rqy(raw_query, params=params)
     return boss_object
 
 
@@ -293,19 +291,19 @@ def get_element(chosen_weakness):
 async def update_player_damage(channel_id, player_id, player_damage):
     raid_id = await encounters.get_raid_id(channel_id, 0)
     raw_query = "UPDATE RaidPlayers SET player_dps = :new_dps WHERE raid_id = :id_check AND player_id = :player_check"
-    rq(raw_query, params={'new_dps': player_damage, 'id_check': raid_id, 'player_check': player_id})
+    await rqy(raw_query, params={'new_dps': player_damage, 'id_check': raid_id, 'player_check': player_id})
 
 
 async def update_boss_cHP(channel_id, player_id, new_boss_cHP):
     raid_id = await encounters.get_raid_id(channel_id, player_id)
     raw_query = "UPDATE BossList SET boss_cHP = :new_cHP WHERE raid_id = :id_check"
-    rq(raw_query, params={'new_cHP': str(int(new_boss_cHP)), 'id_check': raid_id})
+    await rqy(raw_query, params={'new_cHP': str(int(new_boss_cHP)), 'id_check': raid_id})
 
 
 async def get_damage_list(channel_id):
     raid_id = await encounters.get_raid_id(channel_id, 0)
     raw_query = "SELECT player_id, player_dps FROM RaidPlayers WHERE raid_id = :id_check"
-    df = rq(raw_query, True, params={'id_check': raid_id})
+    df = await rqy(raw_query, True, params={'id_check': raid_id})
     if df is None or len(df.index) == 0:
         return [], []
     username = df["player_id"].values.tolist()
@@ -325,7 +323,7 @@ async def clear_boss_info(channel_id, player_id):
                        "DELETE FROM RaidPlayers WHERE raid_id = :id_check"]
         params = {'id_check': raid_id}
     for query in raw_queries:
-        rq(query, params=params)
+        await rqy(query, params=params)
 
 
 async def create_dead_boss_embed(channel_id, active_boss, dps, extension=""):

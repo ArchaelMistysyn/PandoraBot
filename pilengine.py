@@ -99,7 +99,7 @@ class RankCard:
         self.fill_percent = round(self.user.player_exp / player.get_max_exp(self.user.player_level), 2)
 
 
-def get_player_profile(player_obj, achievement_list):
+async def get_player_profile(player_obj, achievement_list):
     rank_card = RankCard(player_obj, achievement_list)
     temp_path = f'{image_path}profilecard\\'
     cardBG = Image.open(requests.get(rank_card.cardBG, stream=True).raw)
@@ -150,7 +150,7 @@ def get_player_profile(player_obj, achievement_list):
     # Exp Bar
     exp_bar_start = 197
     exp_bar_end = 750
-    exp_bar_result = generate_exp_bar(exp_bar_image, exp_bar_start, exp_bar_end, rank_card.fill_percent)
+    exp_bar_result = await generate_exp_bar(exp_bar_image, exp_bar_start, exp_bar_end, rank_card.fill_percent)
     result.paste(exp_bar_result, (exp_bar_start, 0), mask=exp_bar_result)
 
     # Level and Exp Text
@@ -164,7 +164,7 @@ def get_player_profile(player_obj, achievement_list):
     return file_path
 
 
-def generate_exp_bar(exp_bar_image, exp_bar_start, exp_bar_end, fill_percent):
+async def generate_exp_bar(exp_bar_image, exp_bar_start, exp_bar_end, fill_percent):
     card_height = exp_bar_image.height
     exp_width = int((exp_bar_end - exp_bar_start) * fill_percent)
     exp_bar_cropped = exp_bar_image.crop((exp_bar_start, 0, exp_bar_start + exp_width, card_height))
@@ -173,11 +173,11 @@ def generate_exp_bar(exp_bar_image, exp_bar_start, exp_bar_end, fill_percent):
     return exp_bar_result
 
 
-def generate_and_combine_gear(item_type, start_tier=1, end_tier=8):
+async def generate_and_combine_gear(item_type, start_tier=1, end_tier=8):
     # Ensure image is currently available.
     if item_type not in gli.availability_list:
         return 0
-    ftp = create_ftp_connection(web_data[0], web_data[1], web_data[2])
+    ftp = await create_ftp_connection(web_data[0], web_data[1], web_data[2])
     for item_tier in range(start_tier, end_tier + 1):
         # Handle the urls and paths.
         frame_url = gli.frame_icon_list[item_tier - 1]
@@ -200,21 +200,21 @@ def generate_and_combine_gear(item_type, start_tier=1, end_tier=8):
                 result.paste(icon, (17, 16), icon)
                 result.paste(variant_img, (17, 16), variant_img)
                 result.save(file_path, format="PNG")
-                upload_file_to_ftp(ftp, file_path, remote_dir, file_name)
+                await upload_file_to_ftp(ftp, file_path, remote_dir, file_name)
         # Construct the new image
         result = Image.new("RGBA", (106, 106))
         result.paste(frame, (0, 0), frame)
         result.paste(icon, (17, 16), icon)
         result.save(file_path, format="PNG")
         # Upload the file.
-        upload_file_to_ftp(ftp, file_path, f"/public_html/botimages/GearIcon/{item_type}/", file_name)
+        await upload_file_to_ftp(ftp, file_path, f"/public_html/botimages/GearIcon/{item_type}/", file_name)
     ftp.quit()
     return end_tier + 1 - start_tier
 
 
-def generate_and_combine_images():
+async def generate_and_combine_images():
     count = 0
-    ftp = create_ftp_connection(web_data[0], web_data[1], web_data[2])
+    ftp = await create_ftp_connection(web_data[0], web_data[1], web_data[2])
     for item_id in itemdata.itemdata_dict.keys():
         # Ensure image is currently available.
         temp_item = inventory.BasicItem(item_id)
@@ -238,7 +238,7 @@ def generate_and_combine_images():
             result.paste(icon, (17, 16), icon)
             result.save(file_path, format="PNG")
         # Upload the file.
-        upload_file_to_ftp(ftp, file_path, f"/public_html/botimages/NonGearIcon/{temp_item.item_category}/", file_name)
+        await upload_file_to_ftp(ftp, file_path, f"/public_html/botimages/NonGearIcon/{temp_item.item_category}/", file_name)
     ftp.quit()
     return count
 
@@ -254,7 +254,7 @@ def pixel_blend(image_1, image_2):
     return result_img
 
 
-def create_ftp_connection(hostname, username, password):
+async def create_ftp_connection(hostname, username, password):
     try:
         ftp = FTP(hostname)
         ftp.login(user=username, passwd=password)
@@ -264,7 +264,7 @@ def create_ftp_connection(hostname, username, password):
         return None
 
 
-def upload_file_to_ftp(ftp, local_path, remote_directory, remote_filename):
+async def upload_file_to_ftp(ftp, local_path, remote_directory, remote_filename):
     try:
         ftp.cwd(remote_directory)
         with open(local_path, 'rb') as file:
@@ -273,7 +273,7 @@ def upload_file_to_ftp(ftp, local_path, remote_directory, remote_filename):
         print(f"An error occurred while uploading {remote_filename}: {e}")
 
 
-def build_notification(player_obj, message, notification_type, title_msg, item=None, rarity=None):
+async def build_notification(player_obj, message, notification_type, title_msg, item=None, rarity=None):
     # Initializations.
     width, height = 800, 200
     if rarity == "Uber Rare":
@@ -305,7 +305,7 @@ def build_notification(player_obj, message, notification_type, title_msg, item=N
     return file_path
 
 
-def build_message_box(player_obj, message, header=""):
+async def build_message_box(player_obj, message, header=""):
     width, height = 800, 200
     cardBG = Image.open(requests.get(f"{web_url}/botimages/banners/game_banner.png", stream=True).raw)
     result = Image.new("RGBA", (width, height))
@@ -326,7 +326,7 @@ def build_message_box(player_obj, message, header=""):
     return file_path
 
 
-def build_title_box(message):
+async def build_title_box(message):
     width, height = 800, 200
     cardBG = Image.open(requests.get(f"{web_url}/botimages/banners/game_banner.png", stream=True).raw)
     result = Image.new("RGBA", (width, height))

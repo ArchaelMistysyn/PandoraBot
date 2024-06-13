@@ -15,7 +15,7 @@ from datetime import datetime as dt, timedelta
 import globalitems as gli
 import sharedmethods as sm
 import itemdata
-from pandoradb import run_query as rq
+from pandoradb import run_query as rqy
 
 # Core imports
 import player
@@ -191,7 +191,15 @@ def run_discord_bot():
             if await validate_admin_inputs(ctx, target_item.item_id, None, id_check="gear"):
                 return
             await target_player.unequip(target_item)
-            inventory.delete_item(target_player, target_item)
+            await inventory.delete_item(target_player, target_item)
+        if method == "Gift":
+            target_item = inventory.BasicItem(item_id)
+            if await validate_admin_inputs(ctx, target_item.item_id, value, id_check="NonGear", value_check="Numeric"):
+                return
+            await inventory.set_gift(player_obj, target_item, value)
+            message, header = f"{player_obj.player_username} issued a gift to all players. /claim", "Event Gift"
+            await ctx.send(file=discord.File(await pilengine.build_message_box(player_obj, message, header)))
+            return
         await ctx.send('Admin task completed.')
 
     @set_command_category('admin', 3)
@@ -205,18 +213,18 @@ def run_discord_bot():
         if method in ["coins", "level", "echelon", "quest", "exp"]:
             if await validate_admin_inputs(ctx, None, value, value_check="numeric"):
                 return
-            target_player.set_player_field(f"player_{method}", int(value))
+            await target_player.set_player_field(f"player_{method}", int(value))
         elif method in ["class", "name"]:
             if await validate_admin_inputs(ctx, None, value, value_check="alpha"):
                 return
-            target_player.set_player_field(f"player_{method}", int(value))
+            await target_player.set_player_field(f"player_{method}", int(value))
         elif method in ["cooldown"]:
             if await validate_admin_inputs(ctx, None, value, value_check="alpha"):
                 return
             if value not in ["manifest", "arena", "fishing"]:
                 await ctx.send(f'Cooldown value "{value}" not recognized.')
                 return
-            target_player.clear_cooldown(value)
+            await target_player.clear_cooldown(value)
         await ctx.send('Admin task completed.')
 
     @set_command_category('admin', 4)
@@ -234,19 +242,19 @@ def run_discord_bot():
             count = 0
             for class_name, (low_base, both_tiers, high_tiers) in gli.weapon_type_dict.items():
                 for item_type in low_base:
-                    count += pilengine.generate_and_combine_gear(item_type, start_tier=1, end_tier=4)
+                    count += await pilengine.generate_and_combine_gear(item_type, start_tier=1, end_tier=4)
                 for item_type in both_tiers:
-                    count += pilengine.generate_and_combine_gear(item_type, start_tier=1, end_tier=8)
+                    count += await pilengine.generate_and_combine_gear(item_type, start_tier=1, end_tier=8)
                 for item_type in high_tiers:
-                    count += pilengine.generate_and_combine_gear(item_type, start_tier=5, end_tier=8)
+                    count += await pilengine.generate_and_combine_gear(item_type, start_tier=5, end_tier=8)
             for item_type in gli.sovereign_item_list:
-                count += pilengine.generate_and_combine_gear(item_type, start_tier=8, end_tier=8)
+                count += await pilengine.generate_and_combine_gear(item_type, start_tier=8, end_tier=8)
             non_weapon_list = ["Armour", "Greaves", "Amulet", "Wings", "Crest", "Gem", "Pact"]
             for gear_type in non_weapon_list:
-                count += pilengine.generate_and_combine_gear(gear_type)
+                count += await pilengine.generate_and_combine_gear(gear_type)
             await ctx.send(f"Admin item task completed. Task Count: {count}")
         elif keyword == "MergeNongear":
-            count = pilengine.generate_and_combine_images()
+            count = await pilengine.generate_and_combine_images()
             await ctx.send(f"Admin item task completed. Task Count: {count}")
         elif keyword == "TestNotification":
             test_dict = {"Level": 1, "Achievement": "Echelon 9", "Item": "LightStar"}
@@ -278,8 +286,7 @@ def run_discord_bot():
         if trigger_return:
             return
         message, header = f"Turned off by Admin: {player_obj.player_username}", "Pandora Bot Shutdown"
-        file_path = pilengine.build_message_box(player_obj, message, header=header)
-        await ctx.send(file=discord.File(file_path))
+        await ctx.send(file=discord.File(await pilengine.build_message_box(player_obj, message, header=header)))
         await on_shutdown()
 
     # Game Commands
@@ -337,7 +344,7 @@ def run_discord_bot():
             return
         embed_msg = await skillpaths.create_path_embed(player_obj)
         if player_obj.player_quest == 17:
-            quest.assign_unique_tokens(player_obj, "Arbiter")
+            await quest.assign_unique_tokens(player_obj, "Arbiter")
         points_view = menus.PointsView(player_obj)
         await ctx.send(embed=embed_msg, view=points_view)
 
@@ -349,7 +356,7 @@ def run_discord_bot():
         player_obj = await sm.check_registration(ctx)
         if player_obj is None:
             return
-        difference, method_info = player_obj.check_cooldown("manifest")
+        difference, method_info = await player_obj.check_cooldown("manifest")
         colour, _ = sm.get_gear_tier_colours(player_obj.player_echelon)
         num_hours = 14 + player_obj.player_echelon
 
@@ -363,7 +370,7 @@ def run_discord_bot():
                 embed_msg = discord.Embed(colour=colour, title="Echo Manifestation", description=time_msg)
                 new_view = adventure.SkipView(ctx, player_obj, method_info)
             else:
-                player_obj.clear_cooldown("manifest")
+                await player_obj.clear_cooldown("manifest")
                 embed_msg = await adventure.build_manifest_return_embed(ctx, player_obj, method_info, colour)
                 new_view = adventure.RepeatView(ctx, player_obj, method_info)
             await ctx.send(embed=embed_msg, view=new_view)
@@ -482,7 +489,7 @@ def run_discord_bot():
                 trove_object = inventory.BasicItem(trove_id)
                 trove_coins, trove_msg = loot.generate_trove_reward(trove_object, abs(trove_qty))
                 reward_coins += trove_coins
-                coin_msg = player_obj.adjust_coins(trove_coins)
+                coin_msg = await player_obj.adjust_coins(trove_coins)
                 loot_msg += f" {trove_msg}{gli.coin_icon} {coin_msg} lotus coins!\n"
                 embed_msg.add_field(name="", value=loot_msg, inline=False)
                 await message.edit(embed=embed_msg)
@@ -555,7 +562,7 @@ def run_discord_bot():
         if player_obj is None:
             return
         if player_obj.player_quest == 11:
-            quest.assign_unique_tokens(player_obj, "Town")
+            await quest.assign_unique_tokens(player_obj, "Town")
         location_view = menus.TownView(player_obj)
         title, description = "Nearby Town", "A bustling town thriving with opportunity."
         embed_msg = discord.Embed(colour=discord.Colour.dark_orange(), title=title, description=description)
@@ -645,14 +652,14 @@ def run_discord_bot():
         if item_id.isnumeric():
             gear_id = int(item_id)
             # Check the item exists
-            if not inventory.if_custom_exists(gear_id):
+            if not await inventory.if_custom_exists(gear_id):
                 await ctx.send(embed=embed_msg)
                 return
             selected_item = await inventory.read_custom_item(gear_id)
             embed_msg = await selected_item.create_citem_embed()
             # Check if item is on the bazaar.
             if selected_item.player_owner == -1:
-                seller_id = bazaar.get_seller_by_item(gear_id)
+                seller_id = await bazaar.get_seller_by_item(gear_id)
                 seller_object = await player.get_player_by_id(seller_id)
                 owner_msg = f"Listed for sale by: {seller_object.player_username}"
                 embed_msg.add_field(name="", value=owner_msg)
@@ -719,7 +726,7 @@ def run_discord_bot():
         if player_obj is None:
             return
         if player_obj.player_quest == 17:
-            quest.assign_unique_tokens(player_obj, "Arbiter")
+            await quest.assign_unique_tokens(player_obj, "Arbiter")
         title = "Isolde, Soulweaver of the True Laws"
         if player_obj.player_quest < 20:
             description = "You can't yet handle my threads. This is no place for the weak."
@@ -748,11 +755,11 @@ def run_discord_bot():
             await ctx.send(embed=embed_msg)
             return
         if player_obj.player_quest == 42:
-            quest.assign_unique_tokens(player_obj, "Meld")
+            await quest.assign_unique_tokens(player_obj, "Meld")
 
         # Confirm gems are valid.
         async def can_meld(input_gem_id, command_user):
-            if not inventory.if_custom_exists(input_gem_id):
+            if not await inventory.if_custom_exists(input_gem_id):
                 description = f"Gem id not recognized.\nID: {input_gem_id}"
                 return False, None, description
             gem_object = await inventory.read_custom_item(input_gem_id)
@@ -764,7 +771,7 @@ def run_discord_bot():
                 description = f"Owned by: {item_owner.player_username}"
                 return False, None, description
             if gem_object.player_owner == -1:
-                seller_id = bazaar.get_seller_by_item(input_gem_id)
+                seller_id = await bazaar.get_seller_by_item(input_gem_id)
                 seller_object = await player.get_player_by_id(seller_id)
                 description = (f"Jewel item currently listed for sale by: {seller_object.player_username}"
                                f"\nID: {input_gem_id}")
@@ -813,11 +820,11 @@ def run_discord_bot():
         player_obj = await sm.check_registration(ctx)
         if player_obj is None:
             return
-        num_listings = bazaar.check_num_listings(player_obj)
+        num_listings = await bazaar.check_num_listings(player_obj)
         if num_listings >= 5:
             await ctx.send("Already at maximum allowed listings.")
             return
-        if not inventory.if_custom_exists(item_id):
+        if not await inventory.if_custom_exists(item_id):
             await ctx.send(f"Item {item_id} could not be listed.")
             return
         selected_item = await inventory.read_custom_item(item_id)
@@ -839,7 +846,7 @@ def run_discord_bot():
         player_obj = await sm.check_registration(ctx)
         if player_obj is None:
             return
-        if not inventory.if_custom_exists(item_id):
+        if not await inventory.if_custom_exists(item_id):
             await ctx.send(f"Item {item_id} does not exist.")
             return
         selected_item = await inventory.read_custom_item(item_id)
@@ -941,8 +948,7 @@ def run_discord_bot():
         # Transfer and display item.
         await selected_item.give_item(target_player.player_id)
         header, message = "Transfer Complete!", f"{target_player.player_username} has received Item ID: {item_id}!"
-        file_path = pilengine.build_message_box(player_obj, message, header=header)
-        await ctx.send(file=discord.File(file_path))
+        await ctx.send(file=discord.File(await pilengine.build_message_box(player_obj, message, header=header)))
 
     @set_command_category('trade', 7)
     @pandora_bot.hybrid_command(name='purge', help="Sells all gear in or below a tier. "
@@ -1020,7 +1026,7 @@ def run_discord_bot():
             await ctx.send(embed=embed_msg)
             return
         if player_obj.player_quest == 38:
-            quest.assign_unique_tokens(player_obj, "Abyss")
+            await quest.assign_unique_tokens(player_obj, "Abyss")
         embed_msg = discord.Embed(colour=discord.Colour.blurple(), title="Echo of Oblivia", description=gli.abyss_msg)
         embed_msg.set_image(url=gli.abyss_img)
         new_view = forge.SelectView(player_obj, "purify")
@@ -1048,6 +1054,140 @@ def run_discord_bot():
         embed_msg.set_image(url=gli.forge_img)
         await ctx.send(embed=embed_msg, view=forge.SelectView(player_obj, "custom"))
 
+    # Misc commands
+    @set_command_category('misc', 0)
+    @pandora_bot.hybrid_command(name='claim', help="Claim any pending gifts from the event gift storage.")
+    @app_commands.guilds(discord.Object(id=guild_id))
+    async def claim_gift(ctx):
+        await ctx.defer()
+        player_obj = await sm.check_registration(ctx)
+        if player_obj is None:
+            return
+        gifts = await inventory.claim_gifts(player_obj)
+        if gifts is None:
+            await ctx.send("No gifts available to claim. Check again later!")
+            return
+        colour, output = discord.Colour.gold(), ""
+        for item_id, qty in gifts:
+            temp_item = inventory.BasicItem(item_id)
+            output += f"{sm.reward_message(temp_item, qty)}\n"
+        embed = discord.Embed(colour=colour, title=f"{player_obj.player_username}: Gifts Claimed", description=output)
+        await ctx.send(embed=embed)
+
+    @set_command_category('misc', 1)
+    @pandora_bot.hybrid_command(name='savequote', help="Add a quote to the quote database")
+    @app_commands.guilds(discord.Object(id=guild_id))
+    async def add_quote(ctx: commands.Context, message_id: str = None):
+        await ctx.defer()
+        if message_id:
+            if not message_id.isnumeric():
+                await ctx.send("Message ID must be numeric")
+                return
+            try:
+                message = await ctx.channel.fetch_message(message_id)
+            except discord.NotFound:
+                await ctx.send("Message not found.")
+                return
+        elif ctx.message.reference:
+            message = await ctx.channel.fetch_message(ctx.message.reference.message_id)
+        else:
+            await ctx.send("You need to reply to a message (! only) or provide a message ID to add a quote.")
+            return
+
+        async def insert_quote(quote_id, user_discord_id, user_quote, quote_date):
+            raw_query = ("INSERT INTO UserQuotes (message_id, user_discord_id, user_quote, quote_date) "
+                         "VALUES (:message_id, :discord_id, :quote, :date) "
+                         "ON DUPLICATE KEY UPDATE user_discord_id=VALUES(user_discord_id), "
+                         "user_quote=VALUES(user_quote), quote_date=VALUES(quote_date)")
+            await rqy(raw_query, params={'message_id': quote_id, 'discord_id': user_discord_id,
+                                         'quote': user_quote, 'date': quote_date})
+
+        await insert_quote(message.id, message.author.id, message.content, message.created_at.strftime('%Y-%m-%d'))
+        await ctx.send(f"Quote successfully added.")
+
+    @set_command_category('misc', 2)
+    @pandora_bot.hybrid_command(name='deletequote', help="Remove a quote by message id.")
+    @app_commands.guilds(discord.Object(id=guild_id))
+    async def delete_quote(ctx: commands.Context, message_id: str):
+        await ctx.defer()
+        if ctx.author.id not in gli.GM_id_dict.keys():
+            await ctx.send("Only game admins can execute this command.")
+            return
+        if not message_id.isnumeric():
+            await ctx.send("Message ID must be numeric")
+            return
+        raw_query = "DELETE FROM UserQuotes WHERE message_id = :message_id"
+        await rqy(raw_query, params={'message_id': message_id})
+        await ctx.send(f"Quote {message_id} successfully removed.")
+
+    @set_command_category('misc', 3)
+    @pandora_bot.hybrid_command(name='quote', help="Send a random quote. Specific user or quote can be selected.")
+    @app_commands.guilds(discord.Object(id=guild_id))
+    async def post_quote(ctx: commands.Context, target_user: discord.User = None, message_id: str = None):
+        await ctx.defer()
+        if message_id is not None:
+            if not message_id.isnumeric():
+                await ctx.send("Message ID must be numeric")
+                return
+            raw_query = "SELECT * FROM UserQuotes WHERE message_id = :message_id"
+            quote_df = await rqy(raw_query, params={'message_id': message_id}, return_value=True)
+        elif target_user is not None:
+            raw_query = "SELECT * FROM UserQuotes WHERE user_discord_id = :discord_id"
+            quote_df = await rqy(raw_query, params={'discord_id': target_user.id}, return_value=True)
+        else:
+            raw_query = "SELECT * FROM UserQuotes"
+            quote_df = await rqy(raw_query, return_value=True)
+        if quote_df.empty:
+            await ctx.send("No quotes available with these inputs.")
+            return
+        quote_list = quote_df.to_dict(orient='records')
+        selected_quote = random.choice(quote_list)
+        user_discord_id = selected_quote['user_discord_id']
+        user_quote, message_id = selected_quote['user_quote'], selected_quote['message_id']
+        quote_date = selected_quote['quote_date']
+        user = await pandora_bot.fetch_user(user_discord_id)
+        if not user:
+            await ctx.send("User not found in the server.")
+            return
+        quote_embed = discord.Embed(title=user.display_name, description=user_quote, color=discord.Color.blue())
+        quote_embed.add_field(name="", value=f"Quoted from {quote_date} [ID: {message_id}]", inline=True)
+        quote_embed.set_thumbnail(url=user.avatar)
+        await ctx.send(embed=quote_embed)
+
+    @set_command_category('misc', 4)
+    @pandora_bot.hybrid_command(name='listquotes', help="List all quotes from a selected user.")
+    @app_commands.guilds(discord.Object(id=guild_id))
+    async def list_quotes(ctx: commands.Context, target_user: discord.User):
+        await ctx.defer()
+        raw_query = "SELECT * FROM UserQuotes WHERE user_discord_id = :discord_id"
+        quote_df = await rqy(raw_query, params={'discord_id': target_user.id}, return_value=True)
+        if quote_df.empty:
+            await ctx.send("No quotes available for this user.")
+            return
+        quote_list = quote_df.to_dict(orient='records')
+        random_quote = random.choice(quote_list)
+        user_discord_id = random_quote['user_discord_id']
+        user = await pandora_bot.fetch_user(user_discord_id)
+        if not user:
+            await ctx.send("User not found in the server.")
+            return
+        max_fields_per_embed = 25
+        embed_list = []
+        total_quotes = len(quote_list)
+
+        for i in range(0, total_quotes, max_fields_per_embed):
+            chunk = quote_list[i:i + max_fields_per_embed]
+            title, description = user.display_name, f"Quotes {i + 1}-{i + len(chunk)} of {total_quotes}"
+            quote_embed = discord.Embed(title=title, description=description, color=discord.Color.blue())
+            for selected_quote in chunk:
+                user_quote, message_id = selected_quote['user_quote'], selected_quote['message_id']
+                quote_date = selected_quote['quote_date']
+                quote_embed.add_field(name=f"Date: {quote_date} [ID: {message_id}]", value=user_quote, inline=False)
+            quote_embed.set_thumbnail(url=user.avatar.url if user.avatar else discord.Embed.Empty)
+            embed_list.append(quote_embed)
+        for embed in embed_list:
+            await ctx.send(embed=embed)
+
     # Info commands
     @set_command_category('info', 0)
     @pandora_bot.hybrid_command(name='info', help="Display the help menu.")
@@ -1074,7 +1214,7 @@ def run_discord_bot():
         if not username.isalpha():
             await ctx.send("Please enter a valid username.")
             return
-        if not player.check_username(username):
+        if not await player.check_username(username):
             await ctx.send("Username already in use.")
             return
         if len(username) > 10:
@@ -1141,7 +1281,7 @@ def run_discord_bot():
         if target_user.player_class == "":
             await ctx.send(f"Target user {user_object.name} is not registered.")
             return
-        filepath = pilengine.get_player_profile(target_user, achv_list)
+        filepath = await pilengine.get_player_profile(target_user, achv_list)
         file_object = discord.File(filepath)
         await ctx.send(file=file_object)
 
@@ -1182,7 +1322,7 @@ def run_discord_bot():
             embed_msg.description = "This name is unacceptable. I refuse."
             await ctx.send(embed=embed_msg)
             return
-        if not player.check_username(new_username):
+        if not await player.check_username(new_username):
             embed_msg.description = "This name belongs to another. I refuse."
             await ctx.send(embed=embed_msg)
             return
@@ -1198,7 +1338,7 @@ def run_discord_bot():
         else:
             await inventory.update_stock(player_obj, "Token1", -50)
             player_obj.player_username = new_username
-            player_obj.set_player_field("player_username", new_username)
+            await player_obj.set_player_field("player_username", new_username)
             embed_msg.description = f'{player_obj.player_username} you say? Fine, I accept.'
             await ctx.send(embed=embed_msg)
 
@@ -1243,123 +1383,9 @@ def run_discord_bot():
         embed_msg.add_field(name="__Misc__", value=misc_list.rstrip(), inline=False)
         embed_msg.set_footer(text=f"Copyright: {copy_msg}")
         embed_msg.set_thumbnail(url=gli.archdragon_logo)
-        file_path = pilengine.build_title_box("Pandora Bot Credits")
+        file_path = await pilengine.build_title_box("Pandora Bot Credits")
         await ctx.send(file=discord.File(file_path))
         await ctx.send(embed=embed_msg)
-
-    @set_command_category('misc', 0)
-    @pandora_bot.hybrid_command(name='savequote', help="Add a quote to the quote database")
-    @app_commands.guilds(discord.Object(id=guild_id))
-    async def add_quote(ctx: commands.Context, message_id: str = None):
-        await ctx.defer()
-        if message_id:
-            if not message_id.isnumeric():
-                await ctx.send("Message ID must be numeric")
-                return
-            try:
-                message = await ctx.channel.fetch_message(message_id)
-            except discord.NotFound:
-                await ctx.send("Message not found.")
-                return
-        elif ctx.message.reference:
-            message = await ctx.channel.fetch_message(ctx.message.reference.message_id)
-        else:
-            await ctx.send("You need to reply to a message (! only) or provide a message ID to add a quote.")
-            return
-
-        def insert_quote(quote_id, user_discord_id, user_quote, quote_date):
-            raw_query = ("INSERT INTO UserQuotes (message_id, user_discord_id, user_quote, quote_date) "
-                         "VALUES (:message_id, :discord_id, :quote, :date) "
-                         "ON DUPLICATE KEY UPDATE user_discord_id=VALUES(user_discord_id), "
-                         "user_quote=VALUES(user_quote), quote_date=VALUES(quote_date)")
-            rq(raw_query, params={'message_id': quote_id, 'discord_id': user_discord_id,
-                                  'quote': user_quote, 'date': quote_date})
-
-        insert_quote(message.id, message.author.id, message.content, message.created_at.strftime('%Y-%m-%d'))
-        await ctx.send(f"Quote successfully added.")
-
-    @set_command_category('misc', 1)
-    @pandora_bot.hybrid_command(name='deletequote', help="Remove a quote by message id.")
-    @app_commands.guilds(discord.Object(id=guild_id))
-    async def delete_quote(ctx: commands.Context, message_id: str):
-        await ctx.defer()
-        if ctx.author.id not in gli.GM_id_dict.keys():
-            await ctx.send("Only game admins can execute this command.")
-            return
-        if not message_id.isnumeric():
-            await ctx.send("Message ID must be numeric")
-            return
-        raw_query = "DELETE FROM UserQuotes WHERE message_id = :message_id"
-        rq(raw_query, params={'message_id': message_id})
-        await ctx.send(f"Quote {message_id} successfully removed.")
-
-    @set_command_category('misc', 2)
-    @pandora_bot.hybrid_command(name='quote', help="Send a random quote. Specific user or quote can be selected.")
-    @app_commands.guilds(discord.Object(id=guild_id))
-    async def post_quote(ctx: commands.Context, target_user: discord.User = None, message_id: str = None):
-        await ctx.defer()
-        if message_id is not None:
-            if not message_id.isnumeric():
-                await ctx.send("Message ID must be numeric")
-                return
-            raw_query = "SELECT * FROM UserQuotes WHERE message_id = :message_id"
-            quote_df = rq(raw_query, params={'message_id': message_id}, return_value=True)
-        elif target_user is not None:
-            raw_query = "SELECT * FROM UserQuotes WHERE user_discord_id = :discord_id"
-            quote_df = rq(raw_query, params={'discord_id': target_user.id}, return_value=True)
-        else:
-            raw_query = "SELECT * FROM UserQuotes"
-            quote_df = rq(raw_query, return_value=True)
-        if quote_df.empty:
-            await ctx.send("No quotes available with these inputs.")
-            return
-        quote_list = quote_df.to_dict(orient='records')
-        selected_quote = random.choice(quote_list)
-        user_discord_id = selected_quote['user_discord_id']
-        user_quote, message_id = selected_quote['user_quote'], selected_quote['message_id']
-        quote_date = selected_quote['quote_date']
-        user = await pandora_bot.fetch_user(user_discord_id)
-        if not user:
-            await ctx.send("User not found in the server.")
-            return
-        quote_embed = discord.Embed(title=user.display_name, description=user_quote, color=discord.Color.blue())
-        quote_embed.add_field(name="", value=f"Quoted from {quote_date} [ID: {message_id}]", inline=True)
-        quote_embed.set_thumbnail(url=user.avatar)
-        await ctx.send(embed=quote_embed)
-
-    @set_command_category('misc', 3)
-    @pandora_bot.hybrid_command(name='listquotes', help="List all quotes from a selected user.")
-    @app_commands.guilds(discord.Object(id=guild_id))
-    async def list_quotes(ctx: commands.Context, target_user: discord.User):
-        await ctx.defer()
-        raw_query = "SELECT * FROM UserQuotes WHERE user_discord_id = :discord_id"
-        quote_df = rq(raw_query, params={'discord_id': target_user.id}, return_value=True)
-        if quote_df.empty:
-            await ctx.send("No quotes available for this user.")
-            return
-        quote_list = quote_df.to_dict(orient='records')
-        random_quote = random.choice(quote_list)
-        user_discord_id = random_quote['user_discord_id']
-        user = await pandora_bot.fetch_user(user_discord_id)
-        if not user:
-            await ctx.send("User not found in the server.")
-            return
-        max_fields_per_embed = 25
-        embed_list = []
-        total_quotes = len(quote_list)
-
-        for i in range(0, total_quotes, max_fields_per_embed):
-            chunk = quote_list[i:i + max_fields_per_embed]
-            title, description = user.display_name, f"Quotes {i + 1}-{i + len(chunk)} of {total_quotes}"
-            quote_embed = discord.Embed(title=title, description=description, color=discord.Color.blue())
-            for selected_quote in chunk:
-                user_quote, message_id = selected_quote['user_quote'], selected_quote['message_id']
-                quote_date = selected_quote['quote_date']
-                quote_embed.add_field(name=f"Date: {quote_date} [ID: {message_id}]", value=user_quote, inline=False)
-            quote_embed.set_thumbnail(url=user.avatar.url if user.avatar else discord.Embed.Empty)
-            embed_list.append(quote_embed)
-        for embed in embed_list:
-            await ctx.send(embed=embed)
 
     def build_category_dict():
         temp_dict = {}

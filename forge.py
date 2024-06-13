@@ -7,7 +7,7 @@ import asyncio
 # Data imports
 import globalitems as gli
 import sharedmethods as sm
-from pandoradb import run_query as rq
+from pandoradb import run_query as rqy
 
 # Core imports
 import player
@@ -751,7 +751,7 @@ class MeldView(discord.ui.View):
         await inventory.update_stock(self.player_obj, "Token4", (self.cost * -1))
         # Process the meld attempt.
         if random.randint(1, 100) > self.affinity:
-            inventory.delete_item(self.player_obj, self.gem_2)
+            await inventory.delete_item(self.player_obj, self.gem_2)
             self.embed.description = "The jewels were not compatible enough, the sacrificial heart died."
             await interaction.response.edit_message(embed=self.embed, view=self.new_view)
             return
@@ -767,10 +767,10 @@ class MeldView(discord.ui.View):
 
 
 async def meld_gems(player_obj, gem_1, gem_2):
-    if not inventory.if_custom_exists(gem_1.item_id) or not inventory.if_custom_exists(gem_2.item_id):
+    if not await inventory.if_custom_exists(gem_1.item_id) or not await inventory.if_custom_exists(gem_2.item_id):
         return "Melding interrupted : Jewels no longer recognized before processing.", None
     # Might be a good idea to run a reload on the gems here and compare tier to input tier
-    inventory.delete_item(player_obj, gem_2)
+    await inventory.delete_item(player_obj, gem_2)
     if gem_1.item_tier <= gem_2.item_tier and gem_1.item_tier < 8:
         gem_1.item_tier += 1
         gem_1.base_damage_min, gem_1.base_damage_max = inventory.get_tier_damage(gem_1.item_tier, gem_1.item_type)

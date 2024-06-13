@@ -38,7 +38,7 @@ class Database:
     def __init__(self, session):
         self.session = session
 
-    def run_session_query(self, raw_query, return_value=False, batch=False, params=None):
+    async def run_session_query(self, raw_query, return_value=False, batch=False, params=None):
         retries, max_retries, backoff_factor = 0, 3, 0.5
 
         while retries < max_retries:
@@ -82,8 +82,8 @@ class Database:
 pandora_database = start_engine()
 
 
-def run_query(raw_query, return_value=False, batch=False, params=None):
-    return pandora_database.run_session_query(raw_query, return_value=return_value, batch=batch, params=params)
+async def run_query(raw_query, return_value=False, batch=False, params=None):
+    return await pandora_database.run_session_query(raw_query, return_value=return_value, batch=batch, params=params)
 
 
 async def close_database_session():

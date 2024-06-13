@@ -287,7 +287,7 @@ class DivineView(discord.ui.View):
             return
         embed_msg = await skillpaths.create_path_embed(self.player_obj)
         if self.player_obj.player_quest == 17:
-            quest.assign_unique_tokens(self.player_obj, "Arbiter")
+            await quest.assign_unique_tokens(self.player_obj, "Arbiter")
         await interaction.response.edit_message(embed=embed_msg, view=PointsView(self.player_obj))
 
     @discord.ui.button(label="Isolde", style=discord.ButtonStyle.blurple, row=0)
@@ -295,7 +295,7 @@ class DivineView(discord.ui.View):
         if interaction.user.id != self.player_obj.discord_id:
             return
         if self.player_obj.player_quest == 17:
-            quest.assign_unique_tokens(self.player_obj, "Arbiter")
+            await quest.assign_unique_tokens(self.player_obj, "Arbiter")
         title = "Isolde, Soulweaver of the True Laws"
         description = "You've come a long way from home child. Tell me, what kind of power do you seek?"
         embed_msg = discord.Embed(colour=discord.Colour.dark_orange(), title=title, description=description)
@@ -449,7 +449,7 @@ class SkullsView(discord.ui.View):
                 self.new_embed.description = "You'll need more coins than that to convince me to part with these."
                 await interaction_obj.response.edit_message(embed=self.new_embed, view=self.new_view)
                 return
-            _ = self.player_obj.adjust_coins(item.item_cost, reduction=True)
+            _ = await self.player_obj.adjust_coins(item.item_cost, reduction=True)
             self.new_embed.description = (f"Alright, please take good care of it. Each one is precious to me.\n"
                                           f"Thana hands you a valuable item: {item.item_emoji} 1x {item.item_name}")
             self.new_embed = await add_skull_fields(self.player_obj, self.new_embed, method=self.method)
@@ -465,7 +465,7 @@ class SkullsView(discord.ui.View):
                 await interaction_obj.response.edit_message(embed=self.new_embed, view=self.new_view)
                 return
             await inventory.update_stock(self.player_obj, item.item_id, -1)
-            coin_msg = self.player_obj.adjust_coins(item.item_cost // 2, apply_pact=False)
+            coin_msg = await self.player_obj.adjust_coins(item.item_cost // 2, apply_pact=False)
             self.new_embed.description = (f"Thank you for bringing him home. As promised here's your reward.\n"
                                           f"Thana hands you {gli.coin_icon} {coin_msg} Lotus Coins")
             self.new_embed = await add_skull_fields(self.player_obj, self.new_embed, method=self.method)
@@ -588,12 +588,12 @@ class ConfirmInlayView(discord.ui.View):
     async def tier_one_callback(self, interaction: discord.Interaction, button: discord.Button):
         try:
             if interaction.user.id == self.player_user.discord_id:
-                if not inventory.if_custom_exists(self.e_item.item_id):
+                if not await inventory.if_custom_exists(self.e_item.item_id):
                     embed_msg = await self.e_item.create_citem_embed()
                     embed_msg.add_field(name="Inlay Failed!", value=f"Item with id {self.e_item.item_id}", inline=False)
                     await interaction.response.edit_message(embed=embed_msg, view=None)
                     return
-                if not inventory.if_custom_exists(self.gem_id):
+                if not await inventory.if_custom_exists(self.gem_id):
                     embed_msg = await self.e_item.create_citem_embed()
                     embed_msg.add_field(name="Inlay Failed!", value=f"Item with id {self.gem_id}", inline=False)
                     await interaction.response.edit_message(embed=embed_msg, view=None)
@@ -652,7 +652,7 @@ class StaminaView(discord.ui.View):
             self.player.player_stamina += restore_amount
             if self.player.player_stamina > max_stamina:
                 self.player.player_stamina = max_stamina
-            self.player.set_player_field("player_stamina", self.player.player_stamina)
+            await self.player.set_player_field("player_stamina", self.player.player_stamina)
         embed_msg = await self.player.create_stamina_embed()
         return embed_msg
 
@@ -776,18 +776,15 @@ class ManageCustomItemView(discord.ui.View):
 
     @discord.ui.button(label="Equip", style=discord.ButtonStyle.blurple, emoji="⚔️")
     async def equip_item(self, interaction: discord.Interaction, button: discord.Button):
-        try:
-            if interaction.user.id == self.player_user.discord_id:
-                new_msg = await self.selected_item.create_citem_embed()
-                if "D" in self.selected_item.item_type:
-                    new_view = InlaySelectView(self.player_user, self.selected_item.item_id)
-                    await interaction.response.edit_message(view=new_view)
-                else:
-                    response = self.player_user.equip(self.selected_item)
-                    new_msg.add_field(name=response, value="", inline=False)
-                    await interaction.response.edit_message(embed=new_msg, view=None)
-        except Exception as e:
-            print(e)
+        if interaction.user.id == self.player_user.discord_id:
+            new_msg = await self.selected_item.create_citem_embed()
+            if "D" in self.selected_item.item_type:
+                new_view = InlaySelectView(self.player_user, self.selected_item.item_id)
+                await interaction.response.edit_message(view=new_view)
+            else:
+                response = await self.player_user.equip(self.selected_item)
+                new_msg.add_field(name=response, value="", inline=False)
+                await interaction.response.edit_message(embed=new_msg, view=None)
 
     @discord.ui.button(label="Sell", style=discord.ButtonStyle.success, emoji="💲")
     async def sell_item(self, interaction: discord.Interaction, button: discord.Button):
@@ -891,7 +888,7 @@ class ClassChangeView(discord.ui.View):
         token_stock = await inventory.check_stock(self.player_obj, "Token1")
         if token_stock >= 50:
             token_stock = await inventory.update_stock(self.player_obj, "Token1", -50)
-            self.player_obj.set_player_field("player_class", chosen_class)
+            await self.player_obj.set_player_field("player_class", chosen_class)
             add_role = discord.utils.get(interaction.guild.roles, name=f"Class Role - {chosen_class}")
             remove_role = discord.utils.get(interaction.guild.roles, name=f"Class Role - {current_class}")
             await interaction.user.add_roles(add_role)
@@ -1071,7 +1068,7 @@ class ResetView(discord.ui.View):
                 token_stock = await inventory.check_stock(self.player_obj, "Token3")
                 if token_stock >= token_cost:
                     await inventory.update_stock(self.player_obj, "Token3", -1)
-                    self.player_obj.reset_skill_points()
+                    await self.player_obj.reset_skill_points()
                     result_msg = "ALL SKILL POINTS RESET!"
                 else:
                     result_msg = "Come back when you have a token."

@@ -46,14 +46,14 @@ class TradeObject:
             await inventory.update_stock(self.offer_player, self.offer_obj.item_id, (self.offer_qty * -1))
             await inventory.update_stock(self.target_player, self.offer_obj.item_id, self.offer_qty)
         else:
-            _ = self.offer_player.adjust_coins(self.offer_qty, reduction=True)
-            _ = self.target_player.adjust_coins(self.offer_qty, apply_pact=False)
+            _ = await self.offer_player.adjust_coins(self.offer_qty, reduction=True)
+            _ = await self.target_player.adjust_coins(self.offer_qty, apply_pact=False)
         if self.receive_obj:
             await inventory.update_stock(self.target_player, self.receive_obj.item_id, (self.receive_qty * -1))
             await inventory.update_stock(self.offer_player, self.receive_obj.item_id, self.receive_qty)
         else:
-            _ = self.target_player.adjust_coins(self.receive_qty, reduction=True)
-            _ = self.offer_player.adjust_coins(self.receive_qty, apply_pact=False)
+            _ = await self.target_player.adjust_coins(self.receive_qty, reduction=True)
+            _ = await self.offer_player.adjust_coins(self.receive_qty, apply_pact=False)
         return ""
 
 

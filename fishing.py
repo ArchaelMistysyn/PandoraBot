@@ -18,7 +18,7 @@ import loot
 
 async def go_fishing(ctx, player_obj):
     colour, title = discord.Colour.blue(), f"{player_obj.player_username} Goes Fishing!"
-    difference, _ = player_obj.check_cooldown("fishing")
+    difference, _ = await player_obj.check_cooldown("fishing")
     num_minutes = 5
 
     # Handle existing cooldown.
@@ -31,11 +31,11 @@ async def go_fishing(ctx, player_obj):
             embed_msg = discord.Embed(colour=colour, title="Fish On Vacation!", description=time_msg)
             await ctx.send(embed=embed_msg)
             return
-        player_obj.clear_cooldown("fishing")
-    if not player_obj.spend_stamina(250):
+        await player_obj.clear_cooldown("fishing")
+    if not await player_obj.spend_stamina(250):
         await ctx.send("Insufficient stamina to go fishing.")
         return
-    player_obj.set_cooldown("fishing", "")
+    await player_obj.set_cooldown("fishing", "")
     # Initialize the fishing grid
     fish_icon, water_icon = "🐠", "🟦"
     mine_icon, boom_icon, boom_water = "💣", "💥", "🟥"

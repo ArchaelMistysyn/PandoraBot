@@ -79,7 +79,7 @@ def run_discord_bot():
             await ctx.send("You cannot vouch for yourself.")
         command_user = await player.get_player_by_discord(ctx.author.id)
         if command_user.player_class != "":
-            difference, method = command_user.check_cooldown("vouch")
+            difference, method = await command_user.check_cooldown("vouch")
             run_command = False
             if difference:
                 six_hours = timedelta(hours=6)
@@ -92,7 +92,7 @@ def run_discord_bot():
             else:
                 run_command = True
             if run_command:
-                command_user.set_cooldown("vouch", "")
+                await command_user.set_cooldown("vouch", "")
                 player_obj = await player.get_player_by_discord(user.id)
                 if player_obj.player_class != "":
                     role_points = {
@@ -106,7 +106,7 @@ def run_discord_bot():
                     highest_role_id = max(user_roles, key=lambda role_id: role_points.get(role_id, default_points))
                     num_points = role_points.get(highest_role_id, default_points)
                     new_points = num_points + player_obj.vouch_points
-                    player_obj.set_player_field("vouch_points", new_points)
+                    await player_obj.set_player_field("vouch_points", new_points)
                     if new_points >= 1000:
                         trusted_rat_role = discord.utils.get(ctx.guild.roles, name='Trusted Rat')
                         if trusted_rat_role not in user.roles:

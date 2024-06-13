@@ -16,8 +16,8 @@ glyph_data = {
                   ["Paradox", "Triple Hybrid Damage, Hybrid Penetration, and Hybrid Curse (Frostfire)", 100]],
     "Horizon": [["Bleed Application +X", 1],
                 ["Red Boundary", None, 20], ["Vermilion Dawn", None, 40], ["Scarlet Sunset", None, 60],
-                ["Ruby Skies", "Bleed Application is Doubled", 80],
-                ["Scarlet Divide", "Bleed Penetration is Doubled", 100]],
+                ["Ruby Skies", "Bleed Penetration is Doubled", 80],
+                ["Scarlet Divide", "Bleed Damage applies to all hits", 100]],
     "Eclipse": [["Ultimate Application +X", 1],
                 ["Nightfall", None, 20], ["Moonshadow", None, 40], ["Umbra", None, 60],
                 ["Twilight", "Ultimate Application is Doubled", 80],
@@ -29,7 +29,7 @@ glyph_data = {
     "Solar Flux": [["Life Application +X", 1],
                    ["Blue Giant", None, 20], ["White Dwarf", None, 40], ["Yellow Dwarf", None, 60],
                    ["Orange Dwarf", "Life Application is doubled", 80],
-                   ["Red Dwarf", "NEED TO ADD", 100]],
+                   ["Red Dwarf", "HP Bonus is doubled", 100]],
     "Lunar Tides": [["Mana Application +X", 1],
                     ["New Moon", None, 20], ["Crescent Moon", None, 40], ["Quarter Moon", None, 60],
                     ["Waxing Moon", "Mana Application is Doubled", 80],
@@ -103,7 +103,7 @@ async def allocate_points(player_obj, selected_path, num_change):
         return "Not enough remaining skill points to allocate!"
     player_obj.player_stats[path_location] += num_change
     condensed_stats = ';'.join(map(str, player_obj.player_stats))
-    player_obj.set_player_field("player_stats", condensed_stats)
+    await player_obj.set_player_field("player_stats", condensed_stats)
     return "Skill point has been allocated!"
 
 
@@ -184,7 +184,7 @@ def assign_path_multipliers(player_obj):
         player_obj.elemental_res[ele_idx] += 0.01 * horizon_bonus
     player_obj.bleed_mult += 0.1 * horizon_bonus
     player_obj.appli["Bleed"] += horizon_bonus // 20
-    if storm_bonus >= 100:
+    if horizon_bonus >= 80:
         player_obj.bleed_pen *= 2
 
     # Eclipse Path (3)
@@ -264,7 +264,7 @@ def assign_path_multipliers(player_obj):
             player_obj.elemental_pen[ele_idx] *= 3
             player_obj.elemental_curse[ele_idx] *= 3
 
-    appli_dict = {0: "Critical", 2: "Bleed", 3: "Ultimate", 4: "Combo",
+    appli_dict = {0: "Critical", 3: "Ultimate", 4: "Combo",
                   5: "Life", 6: "Mana", 7: "Temporal", 8: "Elemental"}
     for idx, points in enumerate(total_points):
         if points >= 80 and idx in appli_dict.keys():

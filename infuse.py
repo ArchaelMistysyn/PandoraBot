@@ -9,7 +9,7 @@ import globalitems as gli
 import tarot
 
 # Core imports
-from pandoradb import run_query as rq
+from pandoradb import run_query as rqy
 import player
 import inventory
 

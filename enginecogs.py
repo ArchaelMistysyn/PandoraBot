@@ -33,11 +33,9 @@ class RaidCog(commands.Cog):
     def __init__(self, bot, active_boss, channel_id, channel_num, sent_message, channel_object):
         self.bot = bot
         self.active_boss = active_boss
-        self.channel_id = channel_id
-        self.channel_num = channel_num
+        self.channel_object, self.channel_id, self.channel_num = channel_num, channel_object, channel_id
         self.sent_message = sent_message
-        self.channel_object = channel_object
-        self.combat_tracker_list = []
+        self.tracker_list = []
         self.lock = asyncio.Lock()
         self.raid_manager.start()
 
@@ -47,16 +45,15 @@ class RaidCog(commands.Cog):
     @tasks.loop(seconds=60)
     async def raid_manager(self):
         async with self.lock:
-            is_alive = await self.bot.raid_boss(self.combat_tracker_list, self.active_boss,
-                                                self.channel_id, self.channel_num,
-                                                self.sent_message, self.channel_object)
+            is_alive = await self.bot.raid_boss(self.tracker_list, self.active_boss, self.channel_id,
+                                                self.channel_num, self.sent_message, self.channel_object)
             if is_alive:
                 return
             await bosses.clear_boss_info(self.channel_id, 0)
             level, boss_type, boss_tier = encounters.get_raid_boss_details(self.channel_num)
             active_boss = await bosses.spawn_boss(self.channel_id, 0, boss_tier, boss_type, level, self.channel_num)
             self.active_boss = active_boss
-            self.combat_tracker_list = []
+            self.tracker_list = []
             embed_msg = active_boss.create_boss_embed()
             raid_button = battleengine.RaidView(self.channel_num)
             sent_message = await self.channel_object.send(embed=embed_msg, view=raid_button)
@@ -64,13 +61,14 @@ class RaidCog(commands.Cog):
 
 
 class SoloCog(commands.Cog):
-    def __init__(self, bot, player_obj, active_boss, channel_id, sent_message, ctx_object, gauntlet=False, mode=0):
+    def __init__(self, bot, player_obj, active_boss, channel_id, sent_message, ctx_object,
+                 gauntlet=False, mode=0, magnitude=0):
         self.bot = bot
         self.player_obj, self.active_boss = player_obj, active_boss
-        self.channel_id, self.sent_message = channel_id, sent_message
-        self.ctx_object, self.channel_object = ctx_object, ctx_object.channel
+        self.sent_message = sent_message
+        self.ctx_object, self.channel_object, self.channel_id = ctx_object, ctx_object.channel, channel_id
         self.combat_tracker = combat.CombatTracker(player_obj)
-        self.gauntlet, self.mode = gauntlet, mode
+        self.gauntlet, self.mode, self.magnitude = gauntlet, mode, magnitude
         self.lock = asyncio.Lock()
 
     async def run(self):
@@ -83,14 +81,14 @@ class SoloCog(commands.Cog):
     async def solo_manager(self):
         async with self.lock:
             # Handle abandon
-            if combat.check_flag(self.player_obj):
-                combat.toggle_flag(self.player_obj)
+            if await combat.check_flag(self.player_obj):
+                await combat.toggle_flag(self.player_obj)
                 await bosses.clear_boss_info(self.channel_id, self.player_obj.player_id)
                 self.cog_unload()
                 return
             is_alive, self.active_boss = await self.bot.solo_boss(
-                self.combat_tracker, self.player_obj, self.active_boss,
-                self.channel_id, self.sent_message, self.channel_object, gauntlet=self.gauntlet, mode=self.mode)
+                self.combat_tracker, self.player_obj, self.active_boss, self.channel_id, self.sent_message,
+                self.channel_object, gauntlet=self.gauntlet, mode=self.mode, magnitude=self.magnitude)
             if is_alive:
                 return
             self.cog_unload()
@@ -146,7 +144,7 @@ class PvPCog(commands.Cog):
             result_message = f"{winner.player_username} wins!"
             await inventory.update_stock(winner, "Chest", quantity)
             loot_msg = f"{winner.player_username} {loot_item.item_emoji} {quantity}x Chests acquired!"
-        exp_msg, lvl_adjust = self.player1.adjust_exp(exp_amount)
+        exp_msg, lvl_adjust = await self.player1.adjust_exp(exp_amount)
         exp_description = f"{exp_msg} EXP acquired!"
         pvp_embed.add_field(name=result_message, value=f"{exp_description}\n{loot_msg}", inline=False)
         await self.sent_message.edit(embed=pvp_embed)
@@ -176,7 +174,7 @@ class PvPCog(commands.Cog):
     async def calculate_pvp_cycle(self):
         self.combat_tracker1.total_cycles += 1
         hit_list, stun_list = [], []
-        combo_count = [0, 0]
+        combo_count = [self.player1.appli["Combo"], self.player2.appli["Combo"]]
         num_hits1, excess_hits1 = divmod(self.combat_tracker1.remaining_hits + self.player1.attack_speed, 1)
         num_hits2, excess_hits2 = divmod(self.combat_tracker2.remaining_hits + self.player2.attack_speed, 1)
         self.combat_tracker1.remaining_hits, self.combat_tracker2.remaining_hits = excess_hits1, excess_hits2
@@ -204,20 +202,8 @@ class PvPCog(commands.Cog):
     async def handle_pvp_attack(self, combatants, trackers, combo_count, attack_counter, player_interval, hit_list):
         attacker, defender = (0, 1) if attack_counter[0] <= attack_counter[1] else (1, 0)
         role_order = [attacker, defender]
-        stun_status, hit_damage, critical_type = await combat.pvp_attack(combatants[attacker], combatants[defender])
-        if stun_status is not None:
-            trackers[defender].stun_status = stun_status
-            trackers[defender].stun_cycles += 1
-        combo_count[attacker] += 1 + combatants[attacker].appli["Combo"]
-        hit_damage, skill_name = combat.skill_adjuster(combatants[attacker], trackers[attacker], hit_damage,
-                                                       combo_count[attacker], False)
-        hit_damage, mana_msg = combat.check_mana(combatants[attacker], trackers[attacker], hit_damage)
-        hit_damage, status_msg = combat.check_lock(combatants[attacker], trackers[attacker], hit_damage)
-        hit_damage, second_msg = combat.check_bloom(combatants[attacker], hit_damage)
-        hit_damage, evade = combat.handle_evasions(combatants[defender].block, combatants[defender].dodge, hit_damage)
-        if status_msg == " *TIME SHATTER*" or critical_type != "":
-            hit_damage *= random.randint(1, combatants[attacker].rng_bonus)
-        scaled_dmg = combat.pvp_scale_damage(role_order, combatants, hit_damage)
+        hit_data = await self.handle_pvp_hit_damage(role_order, combatants, trackers, combo_count, hit_list)
+        scaled_dmg, skill_name, mana_msg, status_msg, second_msg, critical_type, evade = hit_data
         hit_msg = f"{combatants[attacker].player_username} - {combo_count[attacker]}x Combo: {skill_name} {sm.number_conversion(scaled_dmg)}"
         hit_msg += f"{mana_msg}{status_msg}{second_msg}{critical_type}{evade}"
         hit_list.append([scaled_dmg, hit_msg])
@@ -230,18 +216,8 @@ class PvPCog(commands.Cog):
         attacker, defender = role_order[0], role_order[1]
         if tracker[attacker].charges < 20:
             return
-        stun_status, hit_damage, critical_type = await combat.pvp_attack(combatant[attacker], combatant[defender])
-        if stun_status is not None:
-            tracker[defender].stun_status = stun_status
-            tracker[defender].stun_cycles += 1
-        combo_count[attacker] += 1 + combatant[attacker].appli["Combo"]
-        hit_damage, skill_name = combat.skill_adjuster(combatant[attacker], tracker[attacker], hit_damage,
-                                                       combo_count[attacker], True)
-        scaled_dmg = combat.pvp_scale_damage(role_order, combatant, hit_damage)
-        scaled_dmg, mana_msg = combat.check_mana(combatant[attacker], tracker[attacker], scaled_dmg)
-        scaled_dmg, status_msg = combat.check_lock(combatant[attacker], tracker[attacker], scaled_dmg)
-        scaled_dmg, second_msg = combat.check_bloom(combatant[attacker], scaled_dmg)
-        scaled_dmg, evade = combat.handle_evasions(combatant[defender].block, combatant[defender].dodge, scaled_dmg)
+        hit_data = await self.handle_pvp_hit_damage(role_order, combatants, trackers, combo_count, hit_list, True)
+        scaled_dmg, skill_name, mana_msg, status_msg, second_msg, critical_type, evade = hit_data
         hit_msg = f"{combatant[attacker].player_username} - Ultimate: {skill_name} {sm.number_conversion(scaled_dmg)}"
         hit_msg += f"{mana_msg}{status_msg}{second_msg}{critical_type}{evade}"
         hit_list.append([scaled_dmg, hit_msg])
@@ -249,10 +225,30 @@ class PvPCog(commands.Cog):
         if combatant[attacker].appli["Bleed"] >= 1:
             await self.handle_pvp_bleed(role_order, combatant, tracker, hit_list, True)
 
+    async def handle_pvp_hit_damage(self, role_order, combatants, trackers, combo_count, hit_list, is_ultimate=False):
+        attacker, defender = role_order[0], role_order[1]
+        stun_status, hit_damage, critical_type = await combat.pvp_attack(combatants[attacker], combatants[defender])
+        if stun_status is not None:
+            trackers[defender].stun_status = stun_status
+            trackers[defender].stun_cycles += 1
+        combo_count[attacker] += 1
+        hit_damage, skill_name = combat.skill_adjuster(combatants[attacker], trackers[attacker], hit_damage,
+                                                       combo_count[attacker], is_ultimate)
+        hit_damage, mana_msg = combat.check_mana(combatants[attacker], trackers[attacker], hit_damage)
+        hit_damage, status_msg = combat.check_lock(combatants[attacker], trackers[attacker], hit_damage)
+        hit_damage, second_msg = combat.check_bloom(combatants[attacker], hit_damage)
+        hit_damage, evade = combat.handle_evasions(combatants[defender].block, combatants[defender].dodge, hit_damage)
+        if combatants[attacker].unique_glyph_ability[2]:
+            hit_damage *= (1 + combatants[attacker].bleed_mult)
+        if status_msg == " *TIME SHATTER*" or critical_type != "":
+            hit_damage *= random.randint(1, combatants[attacker].rng_bonus)
+        scaled_dmg = combat.pvp_scale_damage(role_order, combatants, hit_damage)
+        return scaled_dmg, skill_name, mana_msg, status_msg, second_msg, critical_type, evade
+
     async def handle_pvp_bleed(self, role_order, combatant, tracker, hit_list, is_ultimate):
         attacker, defender = role_order[0], role_order[1]
         e_weapon = await inventory.read_custom_item(combatant[attacker].player_equipped[0])
-        bleed_damage = combatant[attacker].get_player_initial_damage()
+        bleed_damage = await combatant[attacker].get_player_initial_damage()
         _, bleed_damage = combat.pvp_defences(combatant[attacker], combatant[defender], bleed_damage, e_weapon)
         bleed_data = await combat.trigger_bleed(tracker[attacker], combatant[attacker],
                                                 pvp_data=[role_order, combatant, bleed_damage])
@@ -382,7 +378,7 @@ class MapCog(commands.Cog):
         # EXP Handling
         exp_awarded = int(base_damage / 10)
         self.exp_accumulated += exp_awarded
-        exp_msg, lvl_adjust = self.player_obj.adjust_exp(exp_awarded)
+        exp_msg, lvl_adjust = await self.player_obj.adjust_exp(exp_awarded)
         combined_msg = f"{dmg_msg}\n{gli.exp_icon} {exp_msg} Exp Acquired."
         new_embed.add_field(name="Monster Defeated", value=combined_msg, inline=False)
         if lvl_adjust != 0:
@@ -406,7 +402,7 @@ class MapCog(commands.Cog):
             field_value = f"{hp_msg} HP\n{reward_object.item_emoji} 1x {reward_object.item_name}"
         else:
             self.coins_accumulated += 1000 * bonus
-            coin_msg = self.player_obj.adjust_coins(1000 * bonus)
+            coin_msg = await self.player_obj.adjust_coins(1000 * bonus)
             field_value = f"Acquired {gli.coin_icon} {coin_msg} lotus coins!"
         new_embed.add_field(name="", value=field_value, inline=False)
         return new_embed

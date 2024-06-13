@@ -6,7 +6,7 @@ import discord
 import globalitems as gli
 import sharedmethods as sm
 import questdata
-from pandoradb import run_query as rq
+from pandoradb import run_query as rqy
 
 # Core imports
 import player
@@ -77,9 +77,9 @@ class Quest:
     async def handle_completion(self, ctx_object, player_obj, progress_count):
         # Update player data. Handle EXP/Coin Awards.
         player_obj.player_quest += 1
-        player_obj.set_player_field("player_quest", player_obj.player_quest)
-        exp_msg, lvl_change = player_obj.adjust_exp(self.award_exp)
-        coin_msg = player_obj.adjust_coins(self.award_coins)
+        await player_obj.set_player_field("player_quest", player_obj.player_quest)
+        exp_msg, lvl_change = await player_obj.adjust_exp(self.award_exp)
+        coin_msg = await player_obj.adjust_coins(self.award_coins)
         rewards = f"{gli.exp_icon} {exp_msg} EXP\n"
         rewards += f"{gli.coin_icon} {coin_msg} Lotus Coins\n"
         if lvl_change != 0:
@@ -94,7 +94,7 @@ class Quest:
         if self.award_role:
             rewards += f"New Role Achieved: {self.award_role}!"
             player_obj.player_echelon += 1
-            player_obj.set_player_field("player_echelon", player_obj.player_echelon)
+            await player_obj.set_player_field("player_echelon", player_obj.player_echelon)
             await sm.send_notification(ctx_object, player_obj, "Achievement", self.award_role)
         return discord.Embed(colour=self.colour, title="QUEST COMPLETED!", description=rewards)
 
@@ -110,7 +110,7 @@ class Quest:
         return quest_embed
 
 
-def assign_unique_tokens(player_obj, token_string, mode=0):
+async def assign_unique_tokens(player_obj, token_string, mode=0):
     token_quest_dict = {
         # Boss Tokens
         "XVI - Aurora, The Fortress": 4, "VII - Astratha, The Dimensional": 6, "VIII - Tyra, The Behemoth": 11,
@@ -130,7 +130,7 @@ def assign_unique_tokens(player_obj, token_string, mode=0):
         return
     player_obj.quest_tokens[location] += 1
     quest_tokens = ";".join(map(str, player_obj.quest_tokens))
-    player_obj.set_player_field("quest_tokens", quest_tokens)
+    await player_obj.set_player_field("quest_tokens", quest_tokens)
 
 
 def initialize_quest_list():

@@ -51,7 +51,7 @@ class Insignia:
         item_rolls = f"{pearl} HP Bonus +{hp_bonus:,}\n{pearl} Luck +{luck_bonus}"
         item_rolls += f"\n{pearl} Final Damage {final_damage:,}%\n{pearl} Attack Speed {attack_speed}%"
         display_stars = sm.display_stars(self.stars)
-        self.name = f"{insignia_name_list[self.num_elements]} Insignia [{insignia_prefix[self.stars - 1]}]"
+        self.name = f"{insignia_name_list[self.num_elements]} Insignia [{insignia_prefix[self.stars]}]"
         self.pen = insignia_multipliers[self.num_elements][0]
         self.pen += insignia_multipliers[self.num_elements][1] * self.stars * mutation_adjust
         if self.num_elements == 9:
@@ -227,7 +227,7 @@ class ConfirmSelectionView(discord.ui.View):
             insignia_code += ";0"
             insignia_obj = Insignia(self.player_user, insignia_code=insignia_code)
             self.embed_msg = insignia_obj.insignia_output
-            self.player_user.set_player_field("player_insignia", insignia_code)
+            await self.player_user.set_player_field("player_insignia", insignia_code)
             await interaction.response.edit_message(embed=self.embed_msg, view=None)
             return
 
@@ -271,7 +271,7 @@ class ConfirmSelectionView(discord.ui.View):
         # Handle the successful mutation.
         new_tier = int(self.player_user.insignia[-1]) + 1
         self.player_user.insignia = f"{self.player_user.insignia[:-1]}{new_tier}"
-        self.player_user.set_player_field("player_insignia", self.player_user.insignia)
+        await self.player_user.set_player_field("player_insignia", self.player_user.insignia)
         insignia_obj = Insignia(self.player_user)
         self.embed_msg = insignia_obj.insignia_output
         self.embed_msg.add_field(name=NPC_name, value="Mutation Successful!", inline=False)

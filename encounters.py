@@ -9,7 +9,7 @@ import sharedmethods as sm
 # Core imports
 import player
 import bosses
-from pandoradb import run_query as rq
+from pandoradb import run_query as rqy
 
 
 async def restore_solo_bosses(channel_id):
@@ -19,7 +19,7 @@ async def restore_solo_bosses(channel_id):
         return restore_raid_list
     for index, row in raid_id_df.iterrows():
         raw_query = "SELECT * FROM BossList WHERE raid_id = :id_check"
-        df = rq(raw_query, return_value=True, params={'id_check': int(row["raid_id"])})
+        df = await rqy(raw_query, return_value=True, params={'id_check': int(row["raid_id"])})
         boss_tier, boss_level = int(df["boss_tier"].values[0]), int(df["boss_level"].values[0])
         boss_type, boss_type_num = str(df["boss_type"].values[0]), int(df["boss_type_num"].values[0])
         boss_object = CurrentBoss(boss_type_num, boss_type, boss_tier, boss_level)
@@ -49,28 +49,28 @@ async def add_participating_player(channel_id, player_obj):
     raid_id = await get_raid_id(channel_id, 0)
     # Check if player is already part of the raid
     raw_query = "SELECT * FROM RaidPlayers WHERE raid_id = :id_check AND player_id = :player_check"
-    df_check = rq(raw_query, True, params={'id_check': raid_id, 'player_check': player_obj.player_id})
+    df_check = await rqy(raw_query, True, params={'id_check': raid_id, 'player_check': player_obj.player_id})
     if len(df_check.index) != 0:
         return " is already in the raid."
     # Add player to the raid
     raw_query = "INSERT INTO RaidPlayers (raid_id, player_id, player_dps) VALUES(:raid_id, :player_id, :player_dps)"
-    rq(raw_query, params={'raid_id': raid_id, 'player_id': player_obj.player_id, 'player_dps': 0})
+    await rqy(raw_query, params={'raid_id': raid_id, 'player_id': player_obj.player_id, 'player_dps': 0})
     return f"{player_obj.player_username} joined the raid"
 
 
 async def add_automapper(channel_id, player_id):
     raw_query = ("INSERT INTO ActiveRaids (channel_id, player_id, encounter_type) "
                  "VALUES (:input_1, :player_id, :raid_type)")
-    rq(raw_query, params={'input_1': str(channel_id), 'player_id': player_id, 'raid_type': "automap"})
+    await rqy(raw_query, params={'input_1': str(channel_id), 'player_id': player_id, 'raid_type': "automap"})
 
 
 async def clear_automapper(player_id):
     raw_query = "DELETE FROM ActiveRaids WHERE player_id = :player_id AND encounter_type = 'automap'"
-    rq(raw_query, params={'player_id': player_id})
+    await rqy(raw_query, params={'player_id': player_id})
 
 
 async def startup_clear_automaps():
-    rq("DELETE FROM ActiveRaids WHERE encounter_type = 'automap'")
+    await rqy("DELETE FROM ActiveRaids WHERE encounter_type = 'automap'")
 
 
 async def get_raid_id(channel_id, player_id, return_multiple=False):
@@ -80,7 +80,7 @@ async def get_raid_id(channel_id, player_id, return_multiple=False):
     else:
         raw_query = "SELECT raid_id FROM ActiveRaids WHERE player_id = :player_check"
         params = {'player_check': player_id}
-    df_check = rq(raw_query, return_value=True, params=params)
+    df_check = await rqy(raw_query, return_value=True, params=params)
     if df_check is None or len(df_check) == 0:
         return 0
     if return_multiple:

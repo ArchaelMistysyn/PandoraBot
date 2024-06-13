@@ -5,7 +5,8 @@ import discord
 import re
 import string
 from discord.ui import Button, View
-import time
+from datetime import datetime as dt, timedelta
+# import time
 
 # Data imports
 import globalitems as gli
@@ -15,7 +16,7 @@ import itemdata
 # Core imports
 import player
 import inventory
-from pandoradb import run_query as rq
+from pandoradb import run_query as rqy
 
 # Item/crafting imports
 import loot
@@ -97,7 +98,7 @@ class BInventoryView(discord.ui.View):
         if interaction.user.id != self.player_obj.discord_id:
             return
         title = f'{self.player_obj.player_username}\'s Equipment:\n'
-        player_inv = display_cinventory(self.player_obj, "W")
+        player_inv = await display_cinventory(self.player_obj, "W")
         new_embed = discord.Embed(colour=discord.Colour.dark_orange(), title=title, description=player_inv)
         await interaction.response.edit_message(embed=new_embed, view=CInventoryView(self.player_obj, self.include_id))
 
@@ -140,7 +141,7 @@ class CInventoryView(discord.ui.View):
             return
         selected_item = interaction.data['values'][0]
         inventory_title = f'{self.player_obj.player_username}\'s Inventory:\n'
-        player_inv = display_cinventory(self.player_obj, selected_item)
+        player_inv = await display_cinventory(self.player_obj, selected_item)
         new_embed = discord.Embed(colour=discord.Colour.dark_orange(), title=inventory_title, description=player_inv)
         await interaction.response.edit_message(embed=new_embed)
 
@@ -273,7 +274,7 @@ class CustomItem:
             'input_13': int(self.base_damage_min), 'input_14': int(self.base_damage_max),
             'input_15': int(self.item_num_sockets), 'input_16': int(self.item_inlaid_gem_id)
         }
-        rq(raw_query, params=params)
+        await rqy(raw_query, params=params)
 
     def set_item_name(self):
         # Handle naming exceptions.
@@ -507,7 +508,7 @@ async def read_custom_item(item_id=None, reloading=None, fetch_equipped=None):
     # Handle single item
     if fetch_equipped is None:
         raw_query = "SELECT * FROM CustomInventory WHERE item_id = :id_check"
-        df = rq(raw_query, return_value=True, params={'id_check': item_id})
+        df = await rqy(raw_query, return_value=True, params={'id_check': item_id})
         if df is None or len(df.index) == 0:
             return None
         item = await assign_item_values(df.to_dict('records')[0])
@@ -522,7 +523,7 @@ async def read_custom_item(item_id=None, reloading=None, fetch_equipped=None):
         return None
     id_data = ', '.join([str(item_id) for item_id in query_id_list])
     raw_query = f"SELECT * FROM CustomInventory WHERE item_id IN ({id_data})"
-    df = rq(raw_query, return_value=True)
+    df = await rqy(raw_query, return_value=True)
     if df is None or len(df.index) == 0:
         return
     equipped_items, item_list, count = [], [], 0
@@ -579,7 +580,7 @@ async def add_custom_item(item):
 
     raw_query = "SELECT * FROM CustomInventory WHERE player_id = :player_check AND item_type = :item_check"
     params = {'player_check': item.player_owner, 'item_check': item.item_type}
-    check_df = rq(raw_query, return_value=True, params=params)
+    check_df = await rqy(raw_query, return_value=True, params=params)
     if len(check_df) > 40:
         return 0
     insert_query = ("INSERT INTO CustomInventory "
@@ -596,10 +597,10 @@ async def add_custom_item(item):
         'input_13': item.base_damage_min, 'input_14': item.base_damage_max,
         'input_15': item.item_num_sockets, 'input_16': item.item_inlaid_gem_id
     }
-    rq(insert_query, params=params)
+    await rqy(insert_query, params=params)
     # Fetch the item id of the inserted item
     select_query = "SELECT item_id FROM CustomInventory WHERE player_id = :player_check AND item_name = :name_check"
-    df = rq(select_query, return_value=True, params={'player_check': item.player_owner, 'name_check': item.item_name})
+    df = await rqy(select_query, return_value=True, params={'player_check': item.player_owner, 'name_check': item.item_name})
     if len(df) == 0:
         return 0
     id_list = list(df['item_id'])
@@ -609,18 +610,18 @@ async def add_custom_item(item):
 
 
 # check if item already exists. Prevent duplication
-def if_custom_exists(item_id) -> bool:
+async def if_custom_exists(item_id) -> bool:
     raw_query = "SELECT * FROM CustomInventory WHERE item_id = :id_check"
-    df = rq(raw_query, True, params={'id_check': item_id})
+    df = await rqy(raw_query, True, params={'id_check': item_id})
     return False if len(df.index) == 0 else True
 
 
-def display_cinventory(player_obj, item_type) -> str:
+async def display_cinventory(player_obj, item_type) -> str:
     raw_query = ("SELECT item_id, item_name FROM CustomInventory "
                  "WHERE player_id = :player_id AND item_type LIKE :item_type "
                  "ORDER BY item_tier DESC")
     params = {'player_id': player_obj.player_id, 'item_type': f'%{item_type}%'}
-    df = rq(raw_query, True, params=params)
+    df = await rqy(raw_query, True, params=params)
     temp = df.style.set_properties(**{'text-align': 'left'}).hide(axis='index').hide(axis='columns')
     player_inventory = temp.to_string()
     return player_inventory
@@ -641,7 +642,7 @@ async def display_binventory(player_obj, method, view_type, include_id=False):
     content, title = "", f'__**{player_obj.player_username}\'s {method} Inventory:\n**__'
     raw_query = ("SELECT item_id, item_qty FROM BasicInventory "
                  "WHERE player_id = :id_check AND item_qty <> 0 ORDER BY item_id ASC")
-    df = rq(raw_query, True, params={'id_check': player_obj.player_id})
+    df = await rqy(raw_query, True, params={'id_check': player_obj.player_id})
 
     # Filter the data, pull associated data by the id, and build the output string.
     inventory_list = []
@@ -688,7 +689,7 @@ async def check_stock(player_obj, item_id):
     player_stock = 0
     raw_query = ("SELECT item_qty FROM BasicInventory "
                  "WHERE player_id = :id_check AND item_id = :item_check")
-    df = rq(raw_query, True, params={'id_check': player_obj.player_id, 'item_check': item_id})
+    df = await rqy(raw_query, True, params={'id_check': player_obj.player_id, 'item_check': item_id})
     if len(df.index) != 0:
         player_stock = int(df['item_qty'].values[0])
     return player_stock
@@ -700,13 +701,13 @@ async def update_stock(player_obj, item_id, change, batch=None):
                      "VALUES (:player_id, :item_id, :item_qty) "
                      "ON DUPLICATE KEY UPDATE item_qty = item_qty + VALUES(item_qty);")
         batch_params = batch.to_dict('records')
-        rq(raw_query, batch=True, params=batch_params)
+        await rqy(raw_query, batch=True, params=batch_params)
         return
     if player_obj is None or item_id is None or change is None:
         return
     raw_query = ("SELECT item_qty FROM BasicInventory "
                  "WHERE player_id = :id_check AND item_id = :item_check")
-    df = rq(raw_query, True, params={'id_check': player_obj.player_id, 'item_check': item_id})
+    df = await rqy(raw_query, True, params={'id_check': player_obj.player_id, 'item_check': item_id})
     raw_query = ("INSERT INTO BasicInventory (player_id, item_id, item_qty) "
                  "VALUES(:player_check, :item_check, :new_qty)")
     player_stock = change
@@ -716,7 +717,7 @@ async def update_stock(player_obj, item_id, change, batch=None):
                      "WHERE player_id = :player_check AND item_id = :item_check")
     player_stock = max(player_stock, 0)
     params = {'new_qty': player_stock, 'player_check': player_obj.player_id, 'item_check': item_id}
-    rq(raw_query, params=params)
+    await rqy(raw_query, params=params)
 
 
 def try_refine(player_owner, item_type, target_tier):
@@ -744,10 +745,10 @@ async def sell(user, item, embed_msg):
         response_embed.add_field(name="Item Not Sold!", value=response, inline=False)
         return response_embed
     # Sell the item.
-    sell_msg = user.adjust_coins(sell_value)
+    sell_msg = await user.adjust_coins(sell_value)
 
     raw_query = "DELETE FROM CustomInventory WHERE item_id = :item_check"
-    rq(raw_query, params={'item_check': item.item_id})
+    await rqy(raw_query, params={'item_check': item.item_id})
 
     currency_msg = f'You now have {user.player_coins:,} lotus coins!'
     response_embed.add_field(name=f"Item Sold! {gli.coin_icon} {sell_msg} lotus coins acquired!",
@@ -755,18 +756,18 @@ async def sell(user, item, embed_msg):
     return response_embed
 
 
-def delete_item(user_object, item):
+async def delete_item(user_object, item):
     if "D" in item.item_type:
         raw_query = "UPDATE CustomInventory SET item_inlaid_gem_id = 0 WHERE item_inlaid_gem_id = :item_check"
-        rq(raw_query, params={'item_check': item.item_id})
+        await rqy(raw_query, params={'item_check': item.item_id})
     else:
-        user_object.unequip_item(item)
+        await user_object.unequip_item(item)
     raw_query = "DELETE FROM CustomInventory WHERE item_id = :item_check"
-    rq(raw_query, params={'item_check': item.item_id})
+    await rqy(raw_query, params={'item_check': item.item_id})
 
 
 async def purge(player_obj, item_type, tier):
-    player_obj.get_equipped()
+    await player_obj.get_equipped()
     exclusion_list = player_obj.player_equipped
     inlaid_gem_list = []
     item_list = await inventory.read_custom_item(fetch_equipped=exclusion_list)
@@ -780,15 +781,15 @@ async def purge(player_obj, item_type, tier):
     raw_query = (f"SELECT item_tier FROM CustomInventory "
                  f"WHERE player_id = :id_check AND item_tier <= :tier_check "
                  f"AND item_id NOT IN ({exclusion_ids}){type_checker}")
-    df = rq(raw_query, return_value=True, params=params)
+    df = await rqy(raw_query, return_value=True, params=params)
     delete_query = (f"DELETE FROM CustomInventory "
                     f"WHERE player_id = :id_check AND item_tier <= :tier_check "
                     f"AND item_id NOT IN ({exclusion_ids}){type_checker}")
-    rq(delete_query, params=params)
+    await rqy(delete_query, params=params)
     coin_total = 0
     for item_tier in df['item_tier']:
         coin_total += inventory.sell_value_by_tier[int(item_tier)]
-    coin_msg = player_obj.adjust_coins(coin_total)
+    coin_msg = await player_obj.adjust_coins(coin_total)
     return f"{player_obj.player_username} sold {len(df):,} items and received {gli.coin_icon} {coin_msg} lotus coins"
 
 
@@ -894,3 +895,54 @@ async def generate_item(ctx, target_player, tier, elements, item_type, base_type
     new_item.set_item_name()
     new_item.item_id = await add_custom_item(new_item)
     return new_item
+
+
+async def set_gift(player_obj, item, qty):
+    raw_query = ("INSERT INTO GiftBox (issued_by_id, valid_until, claimed_by, gift_item_id, item_qty) "
+                 "VALUES (:input_1, :input_2, :input_3, :input_4, :input_5)")
+    v_date = dt.now() + timedelta(days=7)
+    v_date = v_date.strftime(gli.date_formatting)
+    param = {"input_1": player_obj.player_id, "input_2": v_date, "input_3": "", "input_4": item.item_id, "input_5": qty}
+    await rqy(raw_query, params=param)
+
+
+async def claim_gifts(player_obj):
+    raw_query = "SELECT * FROM GiftBox"
+    df = await rqy("SELECT * FROM GiftBox", return_value=True)
+    if df is None or len(df.index) == 0:
+        return None
+    gift_data, expired_listing, item_dict = [], [], {}
+    current_date = dt.now()
+    for _, row in df.iterrows():
+        v_date = dt.strptime(str(row['valid_until']), gli.date_formatting)
+        gift_id = int(row['gift_id'])
+        if current_date > v_date:
+            expired_listing.append(gift_id)
+            continue
+        issuer, claimed = await player.get_player_by_id(str(row['issued_by_id'])), str(row['claimed_by']).split(";")
+        if str(player_obj.player_id) in claimed:
+            continue
+        item_id, qty = str(row['gift_item_id']), int(row['item_qty'])
+        temp = {"gift_id": gift_id, "issuer": issuer, "v_date": v_date, "claimed": claimed, "item": item_id, "qty": qty}
+        gift_data.append(temp)
+        item_dict[item_id] = item_dict[item_id] + qty if item_id in item_dict else qty
+    # Assign items
+    item_list = [(item_id, qty) for item_id, qty in item_dict.items()]
+    batch_df = sm.list_to_batch(player_obj, item_list)
+    await inventory.update_stock(None, None, None, batch=batch_df)
+    # Add user to claimed listings
+    if gift_data:
+        params = []
+        for data in gift_data:
+            if data["claimed"] == ['']:
+                data["claimed"] = [str(player_obj.player_id)]
+            else:
+                data["claimed"].append(str(player_obj.player_id))
+            params.append({"player_data": ";".join(data["claimed"]), "gift_id": data["gift_id"]})
+        raw_query = "UPDATE GiftBox SET claimed_by = :player_data WHERE gift_id = :gift_id"
+        await rqy(raw_query, params=params, batch=True)
+    # Clear expired listings
+    if expired_listing:
+        params = [{"gift_id": id_to_remove} for id_to_remove in expired_listing]
+        await rqy("DELETE * FROM GiftBox WHERE gift_id = :gift_id", params=params, batch=True)
+    return item_list if len(item_list) != 0 else None

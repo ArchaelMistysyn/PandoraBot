@@ -5,7 +5,7 @@ from discord.ext import commands, tasks
 import asyncio
 
 # Core imports
-from pandoradb import run_query as rq
+from pandoradb import run_query as rqy
 import player
 
 # Item/crafting imports
@@ -34,4 +34,4 @@ class StaminaCog(commands.Cog):
                     update_params.append({'player_check': player_user.player_id, 'input_1': new_stamina_value})
                 if update_params:
                     raw_query = "UPDATE PlayerList SET player_stamina = :input_1 WHERE player_id = :player_check"
-                    rq(raw_query, batch=True, params=update_params)
+                    await rqy(raw_query, batch=True, params=update_params)
