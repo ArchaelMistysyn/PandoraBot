@@ -13,6 +13,7 @@
     <file url="file://$PROJECT_DIR$/player.py" dialect="GenericSQL" />
     <file url="file://$PROJECT_DIR$/quest.py" dialect="GenericSQL" />
     <file url="file://$PROJECT_DIR$/sharedmethods.py" dialect="GenericSQL" />
+    <file url="file://$PROJECT_DIR$/sovereignweapon.py" dialect="GenericSQL" />
     <file url="file://$PROJECT_DIR$/tarot.py" dialect="GenericSQL" />
   </component>
 </project>

@@ -22,14 +22,24 @@ lotus_list = [itemdata.itemdata_dict[key] for key in itemdata.itemdata_dict.keys
 fish_list = [itemdata.itemdata_dict[key] for key in itemdata.itemdata_dict.keys() if "Fish" in key]
 Fleur_Name = "Fleur, Oracle of the True Laws"
 Yubelle = "Yubelle, Adjudicator the True Laws"
+description_list = [
+            "These are our best sellers.",
+            "Browse our common wares.",
+            "Browse our rarer items.",
+            "Browse our special stock.",
+            "Browse our premium goods.",
+            "There are too many prying eyes here.",
+            "Do you even realize what you're asking for?"]
 
 
-def get_daily_fish_items():
+async def get_daily_fish_items(fish_only=False):
     current_date = datetime.datetime.now().date()
     date_seed = int(current_date.strftime('%Y%m%d'))
     fish_random = random.Random(date_seed)
     daily_fish = fish_random.choice(fish_list)
     fish_obj = inventory.BasicItem(daily_fish['item_id'])
+    if fish_only:
+        return fish_obj
     item_list = [itemdata.itemdata_dict[key] for key in itemdata.itemdata_dict.keys()
                  if fish_obj.item_tier == itemdata.itemdata_dict[key]['tier'] and "Fish" not in key]
     trade_obj = inventory.BasicItem(fish_random.choice(item_list)['item_id'])
@@ -48,24 +58,15 @@ async def display_fish_shop(player_obj, fish_obj, trade_obj):
 
 
 class TierSelectView(discord.ui.View):
-    def __init__(self, player_user):
+    def __init__(self, player_user, fish_obj, trade_obj):
         super().__init__(timeout=None)
         self.player_obj = player_user
+        self.fish_obj, self.trade_obj = fish_obj, trade_obj
         emoji_list = ["<a:eenergy:1145534127349706772>"] * 7
-        description_list = [
-            "These are our best sellers.",
-            "Browse our common wares.",
-            "Browse our rarer items.",
-            "Browse our special stock.",
-            "Browse our premium goods.",
-            "There are too many prying eyes here.",
-            "Do you even realize what you're asking for?"
-        ]
         select_options = [discord.SelectOption(label="Fae Cores", emoji=emoji_list[0], description=description_list[0])]
         for i in range(1, 7):
             select_options.append(discord.SelectOption(
                 label=f'Tier {i if i != 6 else "6+"} Items', emoji=emoji_list[i], description=description_list[i - 1]))
-        self.fish_obj, self.trade_obj = get_daily_fish_items()
         title, fish_emoji = "Daily Fish Exchange", self.fish_obj.item_emoji
         fish_text = self.fish_obj.item_name.split("**")
         description = f"Daily Fish: {fish_text[1]}"
@@ -174,7 +175,8 @@ class ExchangeView(discord.ui.View):
             return
         colour, title, description = discord.Colour.dark_orange(), "Black Market", "Everything has a price."
         embed_msg = discord.Embed(colour=colour, title=title, description=description)
-        new_view = TierSelectView(self.player_obj)
+        fish_obj, trade_obj = await market.get_daily_fish_items()
+        new_view = TierSelectView(self.player_obj, fish_obj, trade_obj)
         await interaction.response.edit_message(embed=embed_msg, view=new_view)
 
 
@@ -227,7 +229,8 @@ class PurchaseView(discord.ui.View):
             return
         colour, title, description = discord.Colour.dark_orange(), "Black Market", "Everything has a price."
         embed_msg = discord.Embed(colour=colour, title=title, description=description)
-        new_view = TierSelectView(self.player_obj)
+        fish_obj, trade_obj = await market.get_daily_fish_items()
+        new_view = TierSelectView(self.player_obj, fish_obj, trade_obj)
         await interaction.response.edit_message(embed=embed_msg, view=new_view)
 
 

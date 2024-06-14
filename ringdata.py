@@ -72,16 +72,12 @@ ring_values_dict = {
                            ("X% Hybrid Curse (Holy)", "elemental_curse", 999, (1, 4, 5, 7))], (0, None), [1, 4, 5, 7]],
     "Hadal's Raindrop": [[("Aqua Cascade", "aqua_mode", 100, None), ("Aqua Conversion", None, 0, None),
                           ("Aqua Manifestation", None, 0, None)], (0, None), [1]],
-    "Sacred Ring of Divergent Stars": [[("X% chance for Bloom hits to trigger Sacred Bloom", "spec_conv", 50, "Sacred"),
-                                        ("X% chance for Non-Bloom hits to trigger Abyssal Bloom", "spec_conv", 50,
-                                         "Abyssal"),
-                                        ("Omni Curse X%", "all_elemental_curse", 300, None)], (0, None), [6, 7, 8]],
-    "Crown of Skulls": [["Avaricious Ruin", "Banquet of Bones"], (0, None), [5]]
-}
+    "Twin Rings of Divergent Stars": [[("X% chance for Bloom hits to trigger Sacred Bloom", "spec_conv", 50, "Sacred"),
+                                       ("X% chance for Non-Bloom hits to trigger Abyssal Bloom", "spec_conv", 50, "Abyssal"),
+                                       ("Omni Curse X%", "all_elemental_curse", 300, None)], (0, None), [6, 7, 8]],
+    "Crown of Skulls": [["Avaricious Ruin", "Banquet of Bones"], (0, None), [5]]}
 
-ring_resonance_dict = {}
-ring_element_dict = {}
-
+ring_resonance_dict, ring_element_dict = {}, {}
 for ring_name, attributes in ring_values_dict.items():
     for attribute_set in attributes[0]:
         resonance_index = attribute_set[3] if "[RESONANCE]" in attribute_set else 0

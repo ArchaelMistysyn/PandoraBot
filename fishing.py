@@ -12,18 +12,31 @@ import sharedmethods as sm
 import player
 import inventory
 
+# Trade imports
+from market import get_daily_fish_items as daily_fish
+
 # Gear/item imports
 import loot
+
+fish_icon, water_icon = "🐠", "🟦"
+mine_icon, boom_icon, boom_water = "💣", "💥", "🟥"
+worm_icon, chest_icon = "🪱", "💎"
+star_icon, star_water = "<:S1:1201563573202206910>", "🟩"
+color_emojis = ["🟥", "🟧", "🟨", "🟩", "🟦", "🟪"]
+
+# Default Datasets
+directions = [(-1, 0), (1, 0), (0, -1), (0, 1), (-1, -1), (-1, 1), (1, -1), (1, 1)]
+opposite_directions = {(1, 0): (-1, 0), (-1, 0): (1, 0), (0, 1): (0, -1), (0, -1): (0, 1),
+                       (1, 1): (-1, -1), (-1, -1): (1, 1), (1, -1): (-1, 1), (-1, 1): (1, -1)}
+grid_x, grid_y, num_worms, num_chests, num_mines, num_random_stars = 10, 10, 12, 2, 2, 0
 
 
 async def go_fishing(ctx, player_obj):
     colour, title = discord.Colour.blue(), f"{player_obj.player_username} Goes Fishing!"
     difference, _ = await player_obj.check_cooldown("fishing")
-    num_minutes = 5
-
     # Handle existing cooldown.
     if difference:
-        wait_time = timedelta(minutes=num_minutes)
+        wait_time = timedelta(minutes=5)
         cooldown = wait_time - difference
         if difference <= wait_time:
             cooldown_timer = int(cooldown.total_seconds() / 60)
@@ -37,14 +50,6 @@ async def go_fishing(ctx, player_obj):
         return
     await player_obj.set_cooldown("fishing", "")
     # Initialize the fishing grid
-    fish_icon, water_icon = "🐠", "🟦"
-    mine_icon, boom_icon, boom_water = "💣", "💥", "🟥"
-    worm_icon, chest_icon = "🪱", "💎"
-    star_icon, star_water = "<:S1:1201563573202206910>", "🟩"
-    directions = [(-1, 0), (1, 0), (0, -1), (0, 1), (-1, -1), (-1, 1), (1, -1), (1, 1)]
-    opposite_directions = {(1, 0): (-1, 0), (-1, 0): (1, 0), (0, 1): (0, -1), (0, -1): (0, 1),
-                           (1, 1): (-1, -1), (-1, -1): (1, 1), (1, -1): (-1, 1), (-1, 1): (1, -1)}
-    grid_x, grid_y, num_worms, num_chests, num_mines, num_random_stars = 10, 10, 12, 2, 2, 0
     grid = [[water_icon for _ in range(grid_x)] for _ in range(grid_y)]
     fish_pos = [grid_x // 2, grid_y // 2]
     star_positions = [(0, 0), (0, grid_y - 1), (grid_x - 1, 0), (grid_x - 1, grid_y - 1)]
@@ -57,7 +62,6 @@ async def go_fishing(ctx, player_obj):
     remaining_positions = [pos for pos in remaining_positions if pos not in mine_positions]
     chest_positions = random.sample(remaining_positions, num_chests)
     remaining_positions = [pos for pos in remaining_positions if pos not in chest_positions]
-
     for x, y in worm_positions:
         grid[y][x] = worm_icon
     for x, y in chest_positions:
@@ -68,27 +72,7 @@ async def go_fishing(ctx, player_obj):
         grid[y][x] = star_icon
     grid[fish_pos[1]][fish_pos[0]] = fish_icon
 
-    def display_grid():
-        return "\n".join("".join(row) for row in grid)
-
-    def star_process_cell(cell):
-        if cell in [worm_icon, chest_icon]:
-            item_qty = 1
-            if cell == chest_icon:
-                reward_data = loot.generate_random_item(1)
-                item_id, item_qty = reward_data[0]
-                reward_object = inventory.BasicItem(item_id)
-                tier = reward_object.item_tier
-            elif random.randint(1, 1000) <= 1:
-                item_id, tier = f"Lotus{random.randint(1, 10)}", 8
-            else:
-                tier = inventory.generate_random_tier(max_tier=8)
-                item_id = f"Fish{random.randint((tier - 1) * 4 + 1, tier * 4)}" if tier != 8 else "Nadir"
-            caught_fish[item_id] = caught_fish.get(item_id, 0) + item_qty
-            return gli.augment_icons[tier - 1]
-        return star_water if cell == water_icon else cell
-
-    fish_embed = discord.Embed(colour=colour, title=title, description=display_grid())
+    fish_embed = discord.Embed(colour=colour, title=title, description=display_grid(grid))
     sent_msg = await ctx.send(embed=fish_embed)
     # Run the fishing animation
     moves, move_limit, worm_count, caught_fish = 0, 50, 0, {}
@@ -112,21 +96,26 @@ async def go_fishing(ctx, player_obj):
         if grid[fish_pos[1]][fish_pos[0]] == mine_icon:
             colour, title = discord.Colour.brand_red(), f"{player_obj.player_username} Hit a Mine!"
             grid = [[boom_icon if cell in {mine_icon, worm_icon, star_icon} else boom_water
-                    if cell == water_icon else cell for cell in row] for row in grid]
+            if cell == water_icon else cell for cell in row] for row in grid]
             break
         elif grid[fish_pos[1]][fish_pos[0]] in [worm_icon, chest_icon]:
             worm_count += 1
             qty = 1
-            if grid[fish_pos[1]][fish_pos[0]] == chest_icon:
+            if random.randint(1, 1000) <= 1:
+                fish_id, fish_tier = f"Lotus{random.randint(1, 10)}", 8
+            elif grid[fish_pos[1]][fish_pos[0]] == chest_icon:
                 reward_list = loot.generate_random_item(1)
                 fish_id, qty = reward_list[0]
                 reward_obj = inventory.BasicItem(fish_id)
                 fish_tier = reward_obj.item_tier
-            elif random.randint(1, 1000) <= 1:
-                fish_id, fish_tier = f"Lotus{random.randint(1, 10)}", 8
             else:
                 fish_tier = inventory.generate_random_tier(max_tier=8)
-                fish_id = f"Fish{random.randint((fish_tier - 1) * 4 + 1, fish_tier * 4)}" if fish_tier != 8 else "Nadir"
+                fish_id = "Nadir"
+                if fish_tier == 8:
+                    boosted_rate_fish = await daily_fish(fish_only=True)
+                    fish_id = f"Fish{random.randint((fish_tier - 1) * 4 + 1, fish_tier * 4)}"
+                    if random.randint(1, 100) <= 25:
+                        fish_id, fish_tier = boosted_rate_fish.item_id, boosted_rate_fish.item_tier
             caught_fish[fish_id] = caught_fish.get(fish_id, 0) + qty
             grid[fish_pos[1]][fish_pos[0]] = gli.augment_icons[fish_tier - 1]
         elif grid[fish_pos[1]][fish_pos[0]] == water_icon:
@@ -137,15 +126,15 @@ async def go_fishing(ctx, player_obj):
                 fish_embed.description = "\n".join("".join(row) for row in random_grid)
                 await sent_msg.edit(embed=fish_embed)
                 await asyncio.sleep(1)
-            grid = [[star_process_cell(cell) for cell in row] for row in grid]
+            grid = [[await star_process_cell(cell) for cell in row] for row in grid]
             colour = discord.Colour.green()
             title = f"{player_obj.player_username} Caught All {num_worms:,} Fish!"
             break
-        fish_embed.description = display_grid()
+        fish_embed.description = display_grid(grid)
         await sent_msg.edit(embed=fish_embed)
 
     # Finalize the embed
-    description = display_grid()
+    description = display_grid(grid)
     embed_msg = discord.Embed(colour=colour, title=title, description=description)
     if not caught_fish:
         await sent_msg.edit(embed=embed_msg)
@@ -162,6 +151,32 @@ async def go_fishing(ctx, player_obj):
     await sent_msg.edit(embed=embed_msg)
 
 
+async def star_process_cell(cell):
+    if cell in [worm_icon, chest_icon]:
+        item_qty = 1
+        if random.randint(1, 1000) <= 1:
+            item_id, tier = f"Lotus{random.randint(1, 10)}", 8
+        elif cell == chest_icon:
+            reward_data = loot.generate_random_item(1)
+            item_id, item_qty = reward_data[0]
+            reward_object = inventory.BasicItem(item_id)
+            tier = reward_object.item_tier
+        else:
+            fish_tier = inventory.generate_random_tier(max_tier=8)
+            item_id = "Nadir"
+            if fish_tier == 8:
+                boosted_rate_fish = await daily_fish(fish_only=True)
+                item_id = f"Fish{random.randint((tier - 1) * 4 + 1, tier * 4)}"
+                if random.randint(1, 100) <= 25:
+                    item_id, tier = boosted_rate_fish.item_id, boosted_rate_fish.item_tier
+        caught_fish[item_id] = caught_fish.get(item_id, 0) + item_qty
+        return gli.augment_icons[tier - 1]
+    return star_water if cell == water_icon else cell
+
+
+def display_grid(grid):
+    return "\n".join("".join(row) for row in grid)
+
+
 def generate_random_colored_grid(grid_x, grid_y):
-    color_emojis = ["🟥", "🟧", "🟨", "🟩", "🟦", "🟪"]
     return [[random.choice(color_emojis) for _ in range(grid_x)] for _ in range(grid_y)]

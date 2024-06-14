@@ -230,7 +230,7 @@ def run_discord_bot():
             loot_bonus = loot.incarnate_attempts_dict[active_boss.boss_level]
             await leaderboards.update_leaderboard(combat_tracker, player_obj, ctx_object)
         loot_embed = await loot.create_loot_embed(embed, active_boss, player_list, ctx=ctx_object,
-                                                  loot_mult=loot_bonus, gauntlet=gauntlet, magnitude=magnitude)
+                                                  loot_mult=loot_bonus, gauntlet=gauntlet, magni=magnitude)
         await bosses.clear_boss_info(channel_id, player_obj.player_id)
         if combat_tracker.total_cycles <= 5:
             await sent_message.edit(embed=loot_embed)

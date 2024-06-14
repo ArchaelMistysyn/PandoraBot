@@ -23,11 +23,11 @@ quests_data = {
 
     3: [2, "Plunder The Keep",
         "I'm delighted to see you're still here in one piece. "
-        "You may have to venture back into those ruins to procure a weapon. "
+        "You may have to venture back into those ruins to procure a weapon."
         "I sense a fortress nearby. I'd like you to pilfer something notable and come back. "
         "That will do nicely to prove both your loyalty and ability.",
         1, None, 'Stone1',
-        "Retrieve a Fortress Stone using /solo",
+        "Use /map to acquire a weapon and /display [Item ID] to equip it. Then retrieve a Fortress Stone using /solo",
         'Chest', 5, None],
 
     4: [1, "Initiate the Ascent",

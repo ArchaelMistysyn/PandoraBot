@@ -144,9 +144,9 @@ def build_help_embed(category_dict, category_name):
 
 
 class TownView(discord.ui.View):
-    def __init__(self, player_obj):
+    def __init__(self, ctx_obj, player_obj):
         super().__init__(timeout=None)
-        self.player_obj = player_obj
+        self.ctx_obj, self.player_obj = ctx_obj, player_obj
 
     @discord.ui.button(label="Refinery", style=discord.ButtonStyle.blurple, row=0)
     async def refinery_callback(self, interaction: discord.Interaction, button: discord.Button):
@@ -164,7 +164,7 @@ class TownView(discord.ui.View):
         title, description = "Cloaked Alchemist, Sangam", "I can make anything, if you bring the right stuff."
         embed_msg = discord.Embed(colour=discord.Colour.magenta(), title=title, description=description)
         embed_msg.set_image(url=gli.infuse_img)
-        await interaction.response.edit_message(embed=embed_msg, view=infuse.InfuseView(self.player_obj))
+        await interaction.response.edit_message(embed=embed_msg, view=infuse.InfuseView(self.ctx_obj, self.player_obj))
 
     @discord.ui.button(label="Market", style=discord.ButtonStyle.blurple, row=0)
     async def market_callback(self, interaction: discord.Interaction, button: discord.Button):
@@ -173,7 +173,9 @@ class TownView(discord.ui.View):
         title, description = "Black Market", "Everything has a price."
         embed_msg = discord.Embed(colour=discord.Colour.dark_orange(), title=title, description=description)
         embed_msg.set_image(url=gli.market_img)
-        await interaction.response.edit_message(embed=embed_msg, view=market.TierSelectView(self.player_obj))
+        fish_obj, trade_obj = await market.get_daily_fish_items()
+        new_view = market.TierSelectView(self.player_obj, fish_obj, trade_obj)
+        await interaction.response.edit_message(embed=embed_msg, view=new_view)
 
     @discord.ui.button(label="Bazaar", style=discord.ButtonStyle.blurple, row=0)
     async def bazaar_callback(self, interaction: discord.Interaction, button: discord.Button):

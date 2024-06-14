@@ -394,8 +394,15 @@ class TarotCard:
         if player_obj.player_equipped[4] == 0:
             return 1
         e_ring = await inventory.read_custom_item(player_obj.player_equipped[4])
+        if e_ring.item_tier <= 4:
+            return 1
         index = e_ring.roll_values[0] if e_ring.item_base_type != "Crown of Skulls" else e_ring.roll_values[2]
         numeral_key = get_key_by_index(int(index))
+        # Universal Advent / Entwined Universe
+        if player_obj.player_equipped[0] != 0:
+            e_weapon = await inventory.read_custom_item(player_obj.player_equipped[0])
+            if e_weapon.item_base_type == "Pandora's Universe Hammer":
+                return 2
         return 2 if numeral_key == self.card_numeral else 1
 
     async def synthesize_tarot(self):

@@ -156,10 +156,11 @@ class CInventoryView(discord.ui.View):
 
 
 class CustomItem:
-    def __init__(self, player_owner, item_type, item_tier, base_type=""):
+    def __init__(self, player_owner, item_type, item_tier, base_type="", is_sacred=False):
         # initialize input data.
         self.player_owner = player_owner
         self.item_type, self.item_tier = item_type, item_tier
+        self.is_sacred = is_sacred
         # Initialize single default values
         self.item_id, self.item_name = 0, ""
         self.item_enhancement, self.item_quality_tier = 0, 1
@@ -168,7 +169,7 @@ class CustomItem:
         self.item_num_rolls, self.roll_values = 0, []
         self.item_base_stat, self.item_bonus_stat = 0.0, ""
         self.item_damage_min, self.item_damage_max = 0, 0
-        self.item_num_sockets, self.item_inlaid_gem_id = 0, 0
+        self.item_num_sockets, self.item_inlaid_gem_id = (1 if self.is_sacred else 0), 0
         # Generate an item type and base.
         self.item_damage_type, self.item_base_type = random.choice(list(gli.class_names)), base_type
         self.generate_base()
@@ -278,21 +279,22 @@ class CustomItem:
 
     def set_item_name(self):
         # Handle naming exceptions.
-        if self.item_type != "R" and self.item_base_type in gli.sovereign_item_list:
+        if self.item_base_type in gli.sovereign_item_list:
+            self.item_name = f"{self.item_base_type}"
+            if self.is_sacred:
+                self.item_name += f" [Sacred]"
             return
-        if "D" in self.item_type:
+        elif self.item_type == "R":
+            return
+        elif "D" in self.item_type:
             self.set_gem_name()
             return
         target_list = tier_keywords
         if (self.item_damage_type == "Summoner" or self.item_damage_type == "Rider") and self.item_type == "W":
             target_list = summon_tier_keywords
         tier_keyword = target_list[self.item_tier]
-        if self.item_type == "R":
-            item_name = f"{self.item_base_type}"
-        else:
-            quality_name = gli.quality_damage_map[max(4, self.item_tier), self.item_quality_tier]
-            item_name = f"+{self.item_enhancement} {tier_keyword} {self.item_base_type} [{quality_name}]"
-        self.item_name = item_name
+        quality_name = gli.quality_damage_map[max(4, self.item_tier), self.item_quality_tier]
+        self.item_name = f"+{self.item_enhancement} {tier_keyword} {self.item_base_type} [{quality_name}]"
 
     def generate_base(self):
         if self.item_base_type != "":
@@ -396,17 +398,15 @@ class CustomItem:
         damage_min, damage_max = str(gem_min + self.item_damage_min), str(gem_max + self.item_damage_max)
         damage_bonus = f'Base Damage: {int(damage_min):,} - {int(damage_max):,}'
         embed_msg = discord.Embed(colour=tier_colour, title=item_title, description=display_stars)
-        if self.item_base_type == "Bathyal, Chasm Bauble":
-            name_data = self.item_name.split()
-            method = name_data[-1].strip('[]')
-            damage_bonus = sm.hide_text(damage_bonus, method=method)
-            stat_msg = sm.hide_text(stat_msg, method=method)
-            rolls_msg = sm.hide_text(rolls_msg, method=method) if rolls_msg != "" else rolls_msg
+        if self.item_base_type == "Bathyal, Enigmatic Chasm Bauble":
+            damage_bonus, stat_msg = sm.hide_text(damage_bonus), sm.hide_text(stat_msg)
+            rolls_msg = sm.hide_text(rolls_msg) if rolls_msg != "" else rolls_msg
         embed_msg.add_field(name=item_types, value=damage_bonus, inline=False)
         embed_msg.add_field(name="Item Rolls", value=stat_msg, inline=False)
         if rolls_msg != "":
             embed_msg.add_field(name="", value=rolls_msg, inline=False)
-        embed_msg.add_field(name=f'Item ID: {self.item_id}', value="", inline=False)
+        if self.item_id != 0:
+            embed_msg.add_field(name=f'Item ID: {self.item_id}', value="", inline=False)
         thumbnail_url = sm.get_gear_thumbnail(self)
         if thumbnail_url is not None:
             # timestamp = int(time.time())
@@ -514,6 +514,8 @@ async def read_custom_item(item_id=None, reloading=None, fetch_equipped=None):
         item = await assign_item_values(df.to_dict('records')[0])
         if reloading is not None:  # Reloading is only supported for single item input at this time.
             reloading.__dict__.update(item.__dict__)
+        if "[Sacred]" in item.item_name:
+            item.is_sacred = True
         return item
 
     # Handle multiple items

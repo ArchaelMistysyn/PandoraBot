@@ -10,6 +10,9 @@ import tarot
 
 
 async def assign_ring_values(player_obj, ring_equipment):
+    # Sacred Core
+    if ring_equipment.is_sacred:
+        player_obj.defence_pen += 0.5
     bonuses, (points, path_index), _ = rvd[ring_equipment.item_base_type]
     if points > 0:
         player_obj.gear_points[path_index] += points
@@ -76,5 +79,7 @@ async def display_ring_values(ring_equipment):
             if player_obj.equipped_tarot == tarot.get_key_by_index(resonance_index):
                 resonance = f"**{resonance}**"
         output += resonance
+    if ring_equipment.is_sacred:
+        output += f"{augment} Sacred Core\n"
     return output
 

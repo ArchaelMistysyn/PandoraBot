@@ -113,7 +113,8 @@ availability_list_nongear = ["Fae"]
 availability_list = ["Sword", "Saber", "Bow", "Threads", "Armour", "Wings", "Amulet", "Crest", "Greaves", "Gem", "Pact"]
 
 sovereign_item_list = ["Crown of Skulls", "Sacred Ring of Divergent Stars", "Hadal's Raindrop", "Heavenly Calamity",
-                       "Stygian Calamity", "Pandora's Universe Hammer", "Solar Flare Blaster", "Bathyal, Chasm Bauble"]
+                       "Stygian Calamity", "Pandora's Universe Hammer", "Solar Flare Blaster",
+                       "Bathyal, Enigmatic Chasm Bauble"]
 sovereign_batch_data = ', '.join([str(base_type) for base_type in sovereign_item_list])
 
 # WEAPON LISTS

@@ -120,8 +120,7 @@ defensive_rolls = {
     "defensive-20": ["Hybrid Resistance (Chaos)", 5, 5, [["elemental_res", 0], ["elemental_res", 2],
                                                          ["elemental_res", 3], ["elemental_res", 6]]],
     "defensive-21": ["Hybrid Resistance (Holy)", 5, 5, [["elemental_res", 1], ["elemental_res", 4],
-                                                        ["elemental_res", 5], ["elemental_res", 7]]]
-}
+                                                        ["elemental_res", 5], ["elemental_res", 7]]]}
 
 shared_unique_rolls = {
     "unique-0-s": ["Attack Speed", 5, 50, [["attack_speed", -1]]],
@@ -129,8 +128,7 @@ shared_unique_rolls = {
     "unique-2-s": ["Critical Strike Multiplier", 25, 100, [["critical_mult", -1]]],
     "unique-3-s": ["NEED TO CHANGE", 0, 50, [["all_elemental_mult", -1]]],
     "unique-4-s": ["Class Mastery Bonus", 3, 50, [["class_multiplier", -1]]],
-    "unique-5-s": ["Human Bane", 20, 200, [["banes", 5]]]
-}
+    "unique-5-s": ["Human Bane", 20, 200, [["banes", 5]]]}
 
 weapon_unique_rolls = {
     "unique-0-w": ["X% Chance to trigger Bloom on hit", 5, 1, [["trigger_rate", "Bloom"]]],
@@ -148,16 +146,14 @@ weapon_unique_rolls = {
     "unique-12-w": ["X% Less Non-Frostfire, X% More Frostfire Damage", 10, 5, [["elemental_conversion", (0, 5)]]],
     "unique-13-w": ["X% Less Non-Storm, X% More Storm Damage", 10, 5, [["elemental_conversion", (1, 2)]]],
     "unique-14-w": ["X% Less Non-Chaos, X% More Chaos Damage", 8, 5, [["elemental_conversion", (0, 2, 3, 6)]]],
-    "unique-15-w": ["X% Less Non-Holy, X% More Holy Damage", 8, 5, [["elemental_conversion", (1, 4, 5, 7)]]]
-}
+    "unique-15-w": ["X% Less Non-Holy, X% More Holy Damage", 8, 5, [["elemental_conversion", (1, 4, 5, 7)]]]}
 
 armour_unique_rolls = {
     "unique-0-a": ["Gain X% Elemental Damage per Matching Resistance", 1, 5, [["unique_conversion", 0]]],
     "unique-1-a": ["Convert X% Max HP to 1% Final Damage per 100 HP", 1, 5, [["unique_conversion", 1]]],
     "unique-2-a": ["Block Rate", 4, 10, [["block", -1]]],
     "unique-3-a": ["Dodge Rate", 2, 10, [["dodge", -1]]],
-    "unique-4-a": ["Gain X% Final Damage per 1% damage mitigation", 1, 5, [["unique_conversion", 3]]]
-}
+    "unique-4-a": ["Gain X% Final Damage per 1% damage mitigation", 1, 5, [["unique_conversion", 3]]]}
 
 accessory_unique_rolls = {
     "unique-0-y": ["Hyperbleed Rate", 2, 15, [["trigger_rate", "Hyperbleed"]]],
@@ -170,10 +166,8 @@ accessory_unique_rolls = {
     "unique-7-y": ["Paragon Bane", 25, 10, [["banes", 3]]],
     "unique-8-y": ["Arbiter Bane", 25, 10, [["banes", 4]]],
     "unique-9-y": ["Class Mastery Bonus X%. Class Mastery is inverted", 5, 5, [["unique_conversion", 2]]],
-    "unique-10-y": ["X% Singularity Damage, Penetration, and Curse", 5, 5, [["singularity_mult", -1],
-                                                                            ["singularity_pen", -1],
-                                                                            ["singularity_curse", -1]]]
-}
+    "unique-10-y": ["X% Singularity Damage, Penetration, and Curse", 5, 5,
+                    [["singularity_mult", -1], ["singularity_pen", -1], ["singularity_curse", -1]]]}
 
 unique_skill_rolls = {}
 for roll_num, (class_name, skills) in enumerate(gli.skill_names_dict.items()):

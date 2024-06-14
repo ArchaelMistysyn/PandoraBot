@@ -6,6 +6,7 @@ import random
 
 # Data imports
 import globalitems as gli
+import sharedmethods as sm
 import tarot
 
 # Core imports
@@ -32,17 +33,21 @@ recipe_dict = {
         "Bleeding Hearts": [("Gemstone9", 5), ("Heart1", 50), ("Heart2", 50), ("Gemstone10", 3), 100, "7"],
         "Gambler's Masterpiece": [("Gemstone9", 1), ("Gemstone10", 1), 1, "7"]},
     "Sovereign Ring Infusion": {
-        "Stygian Calamity": [("Shard", 25), ("Gemstone11", 1), ("Crystal3", 10), ("Gemstone10", 5), ("Crystal4", 1), 100, "8"],
-        "Heavenly Calamity": [("Shard", 25), ("Gemstone11", 1), ("Ore5", 10), ("Gemstone10", 5), ("Crystal4", 1), 100, "8"],
-        "Hadal's Raindrop": [("Shard", 25), ("Nadir", 1), ("EssenceXIV", 10), ("Gemstone10", 5), ("Crystal4", 1), 100, "8"],
-        "Sacred Ring of Divergent Stars": [("TwinRings", 1), ("Gemstone10", 5), ("Crystal4", 1), 100, "8"],
+        "Stygian Calamity": [("Shard", 25), ("Gemstone11", 1), ("Crystal3", 10), ("Gemstone10", 5), ("Crystal4", 1),
+                             100, "8"],
+        "Heavenly Calamity": [("Shard", 25), ("Gemstone11", 1), ("Ore5", 10), ("Gemstone10", 5), ("Crystal4", 1), 100,
+                              "8"],
+        "Hadal's Raindrop": [("Shard", 25), ("Nadir", 1), ("EssenceXIV", 10), ("Gemstone10", 5), ("Crystal4", 1), 100,
+                             "8"],
+        "Twin Rings of Divergent Stars": [("TwinRings", 1), ("Gemstone10", 5), ("Crystal4", 1), 100, "8"],
         "Crown of Skulls": [("Shard", 50), ("Skull4", 1), ("Lotus1", 1), ("Gemstone10", 5), ("Crystal4", 1), 100, "8"]},
     "Sovereign Weapon Infusion": {
         "Pandora's Universe Hammer": [("Shard", 50), ("Lotus10", 1), ("Crystal4", 1), 100, "KEY"],
         "Fallen Lotus of Nephilim": [("Shard", 50), ("Nephilim", 1), ("Lotus10", 1), ("Crystal4", 1), 100, "KEY"],
-        "Solar Flare Blaster": [("Shard", 25), ("Gemstone0", 10), ("Gemstone4", 10), ("Gemstone7", 10), ("Gemstone9", 10),
+        "Solar Flare Blaster": [("Shard", 25), ("Gemstone0", 10), ("Gemstone4", 10), ("Gemstone7", 10),
+                                ("Gemstone9", 10),
                                 ("EssenceXIX", 10), ("Crystal4", 1), 100, "KEY"],
-        "Bathyal, Chasm Bauble": [("Shard", 25), ("Nadir", 1), ("Crystal4", 1), 100, "KEY"]}}
+        "Bathyal, Enigmatic Chasm Bauble": [("Shard", 25), ("Nadir", 1), ("Crystal4", 1), 100, "KEY"]}}
 
 
 def add_recipe(category, name, data_list):
@@ -167,9 +172,9 @@ class RecipeObject:
 
 
 class InfuseView(discord.ui.View):
-    def __init__(self, player_obj):
+    def __init__(self, ctx_obj, player_obj):
         super().__init__(timeout=None)
-        self.player_obj = player_obj
+        self.ctx_obj, self.player_obj = ctx_obj, player_obj
         self.selected_item, self.value = None, None
 
         # Build the option menu dynamically based on recipe categories.
@@ -187,15 +192,14 @@ class InfuseView(discord.ui.View):
         selected_category = interaction.data['values'][0]
         embed_msg = discord.Embed(colour=discord.Colour.magenta(),
                                   title=NPC_name, description="Alright, what do you need?")
-        new_view = SelectRecipeView(self.player_obj, selected_category)
+        new_view = SelectRecipeView(self.ctx_obj, self.player_obj, selected_category)
         await interaction.response.edit_message(embed=embed_msg, view=new_view)
 
 
 class SelectRecipeView(discord.ui.View):
-    def __init__(self, player_obj, category):
+    def __init__(self, ctx_obj, player_obj, category):
         super().__init__(timeout=None)
-        self.player_obj = player_obj
-        self.category = category
+        self.ctx_obj, self.player_obj, self.category = ctx_obj, player_obj, category
         self.embed, self.new_view = None, None
 
         # Build the option menu dynamically based on the category's recipes.
@@ -214,10 +218,8 @@ class SelectRecipeView(discord.ui.View):
             discord.SelectOption(
                 emoji=result_emoji, label=recipe_name, description=f"Success Rate {success_rate}%", value=recipe_name
             ) for recipe_name, success_rate, result_emoji in options_data_list]
-        self.select_menu = discord.ui.Select(
-            placeholder=f"Select the {self.category.lower()} recipe.",
-            min_values=1, max_values=1, options=select_options
-        )
+        self.select_menu = discord.ui.Select(placeholder=f"Select the {self.category.lower()} recipe.",
+                                             min_values=1, max_values=1, options=select_options)
         self.select_menu.callback = self.recipe_callback
         self.add_item(self.select_menu)
 
@@ -231,14 +233,14 @@ class SelectRecipeView(discord.ui.View):
         selected_option = interaction.data['values'][0]
         recipe_object = RecipeObject(self.category, selected_option)
         self.embed = await recipe_object.create_cost_embed(self.player_obj)
-        self.new_view = CraftView(self.player_obj, recipe_object)
+        self.new_view = CraftView(self.ctx_obj, self.player_obj, recipe_object)
         await interaction.response.edit_message(embed=self.embed, view=self.new_view)
 
 
 class CraftView(discord.ui.View):
-    def __init__(self, player_user, recipe_object):
+    def __init__(self, ctx_obj, player_obj, recipe_object):
         super().__init__(timeout=None)
-        self.player_user, self.recipe_object = player_user, recipe_object
+        self.ctx_obj, self.player_obj, self.recipe_object = ctx_obj, player_obj, recipe_object
         self.embed_msg, self.new_view = None, None
         if "Ring" in self.recipe_object.category or "Signet" in self.recipe_object.category:
             self.infuse_1.label = "Infuse Ring"
@@ -254,30 +256,32 @@ class CraftView(discord.ui.View):
             self.remove_item(self.children[1])
 
     async def run_button(self, interaction, selected_qty):
-        if interaction.user.id != self.player_user.discord_id:
+        if interaction.user.id != self.player_obj.discord_id:
             return
-        await self.player_user.reload_player()
+        await self.player_obj.reload_player()
         if self.embed_msg is not None:
             await interaction.response.edit_message(embed=self.embed_msg, view=self.new_view)
             return
-        self.new_view = CraftView(self.player_user, self.recipe_object)
+        self.new_view = CraftView(self.ctx_obj, self.player_obj, self.recipe_object)
         # Handle cannot afford response
-        if not await self.recipe_object.can_afford(self.player_user, selected_qty):
-            self.embed_msg = await self.recipe_object.create_cost_embed(self.player_user)
+        if not await self.recipe_object.can_afford(self.player_obj, selected_qty):
+            self.embed_msg = await self.recipe_object.create_cost_embed(self.player_obj)
             self.embed_msg.add_field(name="Not Enough Materials!",
                                      value="Please come back when you have more materials.", inline=False)
-            new_view = InfuseView(self.player_user)
+            new_view = InfuseView(self.ctx_obj, self.player_obj)
             await interaction.response.edit_message(embed=self.embed_msg, view=new_view)
             return
         is_ring = "Ring" in self.recipe_object.category or "Signet" in self.recipe_object.category
         is_sw = "Sovereign Weapon Infusion" == self.recipe_object.category
-        result = await self.recipe_object.perform_infusion(self.player_user, selected_qty, ring=is_ring, is_sw=is_sw)
-        self.embed_msg = await self.recipe_object.create_cost_embed(self.player_user)
+        result = await self.recipe_object.perform_infusion(self.player_obj, selected_qty, ring=is_ring, is_sw=is_sw)
+        self.embed_msg = await self.recipe_object.create_cost_embed(self.player_obj)
+        is_sacred = random.randint(1, 100) <= 5
+        class_type = "Sacred" if is_sacred else "Sovereign"
         # Handle infusion
         if is_ring and result == 1:
             # Handle ring
-            new_ring = inventory.CustomItem(self.player_user.player_id, "R", int(self.recipe_object.outcome_item),
-                                            base_type=self.recipe_object.recipe_name)
+            new_ring = inventory.CustomItem(self.player_obj.player_id, "R", int(self.recipe_object.outcome_item),
+                                            base_type=self.recipe_object.recipe_name, is_sacred=is_sacred)
             new_ring.set_item_name()
             new_ring.roll_values[0] = random.randint(0, 30) if new_ring.item_tier == 8 else rrd[new_ring.item_base_type]
             # Handle ring exceptions.
@@ -287,20 +291,22 @@ class CraftView(discord.ui.View):
             await inventory.add_custom_item(new_ring)
             self.embed_msg = await new_ring.create_citem_embed()
             await interaction.response.edit_message(embed=self.embed_msg, view=self.new_view)
+            await sm.send_notification(self.ctx_obj, self.player_obj, class_type, new_ring.item_base_type)
             return
         elif is_sw and result == 1:
             # Sovereign Weapon
-            new_weapon = inventory.CustomItem(self.player_user.player_id, "W", 8,
-                                              base_type=self.recipe_object.recipe_name)
+            new_weapon = inventory.CustomItem(self.player_obj.player_id, "W", 8,
+                                              base_type=self.recipe_object.recipe_name, is_sacred=is_sacred)
             await inventory.add_custom_item(new_weapon)
             self.embed_msg = await new_weapon.create_citem_embed()
             await interaction.response.edit_message(embed=self.embed_msg, view=self.new_view)
+            await sm.send_notification(self.ctx_obj, self.player_obj, class_type, new_weapon.item_base_type)
             return
         # Handle non-ring failure
         if result == 0:
             header, description = "Infusion Failed!", "I guess it's just not your day today. How about another try?"
             self.embed_msg.add_field(name=header, value=description, inline=False)
-            self.new_view = CraftView(self.player_user, self.recipe_object)
+            self.new_view = CraftView(self.ctx_obj, self.player_obj, self.recipe_object)
             await interaction.response.edit_message(embed=self.embed_msg, view=self.new_view)
             return
         # Handle non-ring success
@@ -324,9 +330,9 @@ class CraftView(discord.ui.View):
 
     @discord.ui.button(label="Reselect", style=discord.ButtonStyle.blurple, emoji="↩️")
     async def reselect_callback(self, interaction: discord.Interaction, button: discord.Button):
-        if interaction.user.id != self.player_user.discord_id:
+        if interaction.user.id != self.player_obj.discord_id:
             return
         embed_msg = discord.Embed(colour=discord.Colour.dark_orange(),
                                   title="Black Market", description="Everything has a price.")
-        new_view = InfuseView(self.player_user)
+        new_view = InfuseView(self.ctx_obj, self.player_obj)
         await interaction.response.edit_message(embed=embed_msg, view=new_view)

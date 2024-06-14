@@ -276,7 +276,7 @@ async def upload_file_to_ftp(ftp, local_path, remote_directory, remote_filename)
 async def build_notification(player_obj, message, notification_type, title_msg, item=None, rarity=None):
     # Initializations.
     width, height = 800, 200
-    if rarity == "Uber Rare":
+    if rarity == "Uber Rare" or notification_type == "Sacred":
         banner_url = f"{web_url}/botimages/banners/achievement_banner.png"  # Red version to be added
     else:
         banner_url = f"{web_url}/botimages/banners/achievement_banner.png"

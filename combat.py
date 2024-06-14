@@ -54,19 +54,20 @@ boss_attack_dict = {
 }
 boss_attack_exceptions = list(boss_attack_dict.keys())
 skill_multiplier_list = [1, 2, 3, 5, 7, 10, 15, 20]
-skill_multiplier_list_high = [5, 7, 10, 15, 25, 50, 99]
+skill_multiplier_list_high = [4, 6, 8, 10, 15, 25, 50, 99]
 
 
 class CombatTracker:
     def __init__(self, player_obj):
         self.player_obj = player_obj
         self.player_cHP = player_obj.player_mHP
-        self.current_mana, self.mana_limit = self.player_obj.mana_limit, self.player_obj.mana_limit
+        self.current_mana, self.mana_limit = self.player_obj.start_mana, self.player_obj.mana_limit
         self.charges, self.remaining_hits = 0, 0
         self.total_dps, self.highest_damage = 0, 0.0
         self.recovery, self.hp_regen = player_obj.recovery, int(player_obj.hp_regen * player_obj.player_mHP)
         self.total_cycles = 0
         self.stun_cycles, self.stun_status = 0, ""
+        self.solar_stacks = 0
         self.time_lock, self.time_damage = 0, 0
         self.bleed_tracker = 0.0
 
@@ -163,6 +164,8 @@ async def handle_player_actions(hit_list, tracker_obj, boss_obj, player_obj):
     # Handle all hits
     for x in range(hits_per_cycle):
         hit_list.append(await hit_boss(tracker_obj, boss_obj, player_obj, combo_count))
+        if tracker_obj.solar_stacks >= 35:
+            hit_list.append(await trigger_flare(tracker_obj, player_obj, boss_obj=boss_obj))
         combo_count += 1
         tracker_obj.charges += player_obj.appli["Ultimate"]
         # Handle Ultimate
@@ -170,6 +173,8 @@ async def handle_player_actions(hit_list, tracker_obj, boss_obj, player_obj):
             hit_list.append(await hit_boss(tracker_obj, boss_obj, player_obj, combo_count, hit_type="Ultimate"))
             if player_obj.appli["Bleed"] > 0:
                 hit_list.append(await trigger_bleed(tracker_obj, player_obj, hit_type="Ultimate", boss_obj=boss_obj))
+        if tracker_obj.solar_stacks >= 35:
+            hit_list.append(await trigger_flare(tracker_obj, player_obj, boss_obj=boss_obj))
         # Stop iterating if boss dies
         if not boss_obj.calculate_hp():
             return hit_list
@@ -238,8 +243,23 @@ async def trigger_bleed(tracker_obj, player_obj, hit_type="Normal", boss_obj=Non
         boss_obj.boss_cHP -= damage
     else:
         damage, extension = pvp_scale_damage(*pvp_data), ""
+        # apply damage to other player need to add <<<<<<<<<<<<<<<<<<<<<
     bleed_msg = f"{keyword} Rupture [{count}]: {sm.number_conversion(damage)}{extension} *{bleed_type}*"
     return [damage, bleed_msg]
+
+
+async def trigger_flare(tracker_obj, player_obj, boss_obj=None, pvp_data=None):
+    tracker_obj.solar_stacks = 0
+    flare_value = 0.10 if player_obj.flare_type == "Solar" else 0.25
+    # Determine boss or pvp specific damage adjustments.
+    if boss_obj is not None:
+        damage = int(boss_obj.boss_cHP * flare_value)
+        boss_obj.boss_cHP -= damage
+    else:
+        damage = int(pvp_data.player_cHP * flare_value)
+        pvp_data.player_cHP -= damage
+    flare_msg = f"{player_obj.flare_type} Flare: {sm.number_conversion(damage)}{extension}"
+    return [damage, flare_msg]
 
 
 def check_hyper_bleed(player_obj, bleed_damage):
@@ -395,6 +415,7 @@ def skill_adjuster(player_obj, combat_tracker, hit_damage, combo_count, is_ultim
     if player_obj.unique_glyph_ability[3]:
         damage = int(hit_damage * ultimate_mult)
     combat_tracker.charges += 1 + player_obj.charge_generation
+    combat_tracker.solar_stacks += 1 if player_obj.flare_type != "" else 0
     return damage, skill_list[index]
 
 

@@ -210,7 +210,13 @@ class PvPCog(commands.Cog):
         attack_counter[attacker] += player_interval[attacker]
         trackers[defender].player_cHP -= scaled_dmg
         combat.update_bleed(trackers[attacker], combatants[attacker])
+        if trackers[attacker].solar_stacks >= 35:
+            flare_data = await combat.trigger_flare(trackers[attacker], combatants[attacker], pvp_data=trackers[defender])
+            hit_list.append(flare_data)
         await self.handle_pvp_ultimate(role_order, combatants, trackers, combo_count, hit_list)
+        if trackers[attacker].solar_stacks >= 35:
+            flare_data = await combat.trigger_flare(trackers[attacker], combatants[attacker], pvp_data=trackers[defender])
+            hit_list.append(flare_data)
 
     async def handle_pvp_ultimate(self, role_order, combatant, tracker, combo_count, hit_list):
         attacker, defender = role_order[0], role_order[1]

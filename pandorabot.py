@@ -563,7 +563,7 @@ def run_discord_bot():
             return
         if player_obj.player_quest == 11:
             await quest.assign_unique_tokens(player_obj, "Town")
-        location_view = menus.TownView(player_obj)
+        location_view = menus.TownView(ctx, player_obj)
         title, description = "Nearby Town", "A bustling town thriving with opportunity."
         embed_msg = discord.Embed(colour=discord.Colour.dark_orange(), title=title, description=description)
         embed_msg.set_image(url="")
@@ -910,7 +910,8 @@ def run_discord_bot():
         title, description = "Black Market", "Everything has a price."
         embed_msg = discord.Embed(colour=discord.Colour.dark_orange(), title=title, description=description)
         embed_msg.set_image(url=gli.market_img)
-        await ctx.send(embed=embed_msg, view=market.TierSelectView(player_obj))
+        fish_obj, trade_obj = await market.get_daily_fish_items()
+        await ctx.send(embed=embed_msg, view=market.TierSelectView(player_obj, fish_obj, trade_obj))
 
     @set_command_category('trade', 6)
     @pandora_bot.hybrid_command(name='give', help="Transfer ownership of a gear item.")
@@ -1007,7 +1008,7 @@ def run_discord_bot():
         title, description = "Cloaked Alchemist, Sangam", "I can make anything, if you bring the right stuff."
         embed_msg = discord.Embed(colour=discord.Colour.magenta(), title=title, description=description)
         embed_msg.set_image(url=gli.infuse_img)
-        infuse_view = infuse.InfuseView(player_obj)
+        infuse_view = infuse.InfuseView(ctx, player_obj)
         await ctx.send(embed=embed_msg, view=infuse_view)
 
         # Crafting Commands

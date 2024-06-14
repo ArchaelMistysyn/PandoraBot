@@ -58,7 +58,7 @@ class PlayerProfile:
         # Initialize specialization stats.
         self.unique_glyph_ability = [False] * 9
         self.elemental_capacity = 3
-        self.mana_mult, self.mana_limit, self.mana_shatter = 1.0, 250, False
+        self.mana_mult, self.start_mana, self.mana_limit, self.mana_shatter = 1.0, 250, 250, False
         self.bleed_mult, self.bleed_pen = 0.0, 0.0
         self.combo_mult, self.combo_pen = 0.05, 0.0
         self.ultimate_mult, self.ultimate_pen, = 0.0, 0.0
@@ -74,13 +74,15 @@ class PlayerProfile:
         self.resonance = [0] * 31
         self.banes = [0.0] * 7
         self.skill_damage_bonus = [0] * 4
-        self.unique_conversion = [0.0] * 4
-        self.spec_conv = {"Sacred": 0.0, "Abyssal": 0.0, "Calamity": 0.0, "Chain Flare": False}
+        self.unique_conversion = [0.0] * 5
+        self.spec_conv = {"Sacred": 0.0, "Abyssal": 0.0, "Calamity": 0.0}
         # Initialize misc stats.
         self.charge_generation = 1
         self.attack_speed = 0.0
-        self.class_multiplier, self.final_damage, self.defence_pen, self.rng_bonus = 0.0, 0.0, 0.0, 0.0
+        self.class_multiplier, self.final_damage, self.rng_bonus = 0.0, 0.0, 0.0
+        self.defence_pen, self.resist_pen = 0.0, 0.0
         self.aqua_mode, self.aqua_points = 0, 0
+        self.flare_type = ""
         # Initialize defensive stats.
         self.hp_bonus, self.hp_regen, self.hp_multiplier = 0.0, 0.0, 0.0
         self.recovery = 3
@@ -440,6 +442,8 @@ class PlayerProfile:
         # Capacity Hard Limits
         self.elemental_capacity = min(9, self.elemental_capacity)
         self.mana_limit = max(10, self.mana_limit)
+        # Match start mana to limit unless start has been defaulted to 0
+        self.start_mana = self.mana_limit if self.start_mana != 0 else 0
         # Solitude/Frostfire and Aqua exceptions
         self.elemental_capacity = 1 if total_points[6] >= 100 or self.aqua_mode != 0 else 3 \
             if total_points[1] >= 80 else self.elemental_capacity
@@ -485,12 +489,24 @@ class PlayerProfile:
             self.banes[y] += self.banes[6]
 
         # Calculate unique conversions
-        hp_reduction = self.player_mHP * self.unique_conversion[1]
+        # Reduce Max HP convert to Final Damage (Unique Conversion 1)
+        hp_reduction = int(self.player_mHP * self.unique_conversion[1])
         self.player_mHP = int(self.player_mHP - hp_reduction)
-        self.final_damage += int(round(hp_reduction / 100)) / 100
-        self.final_damage += self.unique_conversion[3]
+        self.final_damage += hp_reduction // 100
+        # Mitigation convert to Final Damage (Unique Conversion 3)
+        self.final_damage += self.damage_mitigation * self.unique_conversion[3]
+        # Blood Blossom (Unique Conversion 4)
+        if self.unique_conversion[4] >= 1:
+            hp_blossom_bonus = self.player_mHP // 100
+            self.bloom_mult, self.bleed_mult = self.bloom_mult + hp_blossom_bonus, self.bleed_mult + hp_blossom_bonus
+            self.bleed_mult += hp_blossom_bonus
+        # Divine Blossom (Unique Conversion 4)
+        if self.unique_conversion[4] == 2:
+            self.final_damage += hp_blossom_bonus
+        # Aqua Mode critical bonus
         if self.aqua_mode != 0 and self.equipped_tarot != "" and e_tarot.card_numeral == "XIV":
             self.critical_mult += self.elemental_mult[1]
+
         # Flat Damage Bonuses
         self.player_damage_min += self.appli["Life"] * self.player_mHP * 5
         self.player_damage_max += self.appli["Life"] * self.player_mHP * 5
@@ -522,12 +538,12 @@ class PlayerProfile:
         # Boss type multipliers
         damage = player_damage * (1 + self.banes[boss_obj.boss_type_num - 1])
         # Type Defences
-        damage *= combat.boss_defences("", self, boss_obj, -1, e_weapon) + self.defence_pen
+        damage *= (combat.boss_defences("", self, boss_obj, -1, e_weapon) + self.defence_pen)
         # Elemental Defences
         highest = 0
         for idx, x in enumerate(combat.limit_elements(self, e_weapon)):
             if x == 1:
-                resist_multi = combat.boss_defences("Element", self, boss_obj, idx, e_weapon)
+                resist_multi = combat.boss_defences("Element", self, boss_obj, idx, e_weapon) + self.resist_pen
                 self.elemental_damage[idx] = damage * (1 + self.elemental_mult[idx])
                 pen_mult, curse_mult = 1 + self.elemental_pen[idx], 1 + boss_obj.curse_debuffs[idx]
                 self.elemental_damage[idx] *= resist_multi * pen_mult * curse_mult * self.elemental_conversion[idx]

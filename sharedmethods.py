@@ -46,16 +46,17 @@ async def send_notification(ctx_object, player_obj, notification_type, value):
     uber_id_list = ["Skull4", "DarkStar", "LightStar", "Gemstone11", "Nadir", "Lotus10"]
     rarity = "Uber Rare" if value in uber_id_list else "Ultra Rare"
     item = inventory.BasicItem(value) if notification_type == "Item" and value is not None else None
-    notification_dict = {"Level": [(f"Congratulations {player_obj.player_username}",
-                                   f"Reached Level: {player_obj.player_level}"), 1],
-                         "Achievement": [(f"{player_obj.player_username} Unlocked", f"Achievement: {value}"), 10],
-                         "Item": [(f"{player_obj.player_username} Obtained {rarity}",
-                                  f"{item.item_name}" if item is not None else ""), 5]}
+    notification_dict = {
+        "Level": [(f"Congratulations {player_obj.player_username}", f"Reached Level: {player_obj.player_level}"), 1],
+        "Achievement": [(f"{player_obj.player_username} Unlocked", f"Achievement: {value}"), 20],
+        "Item": [(f"{player_obj.player_username} Obtained {rarity}", f"{item.item_name}" if item is not None else ""), 5],
+        "Sovereign": [(f"{player_obj.player_username} Obtained Sovereign Item", value), 10],
+        "Sacred": [(f"{player_obj.player_username} Obtained Sacred Item", value), 50]}
     if notification_type not in notification_dict.keys():
         return
     await inventory.update_stock(player_obj, "RoyalCoin", notification_dict[notification_type][1])
     title, message = notification_dict[notification_type][0]
-    filepath = await pilengine.build_notification(player_obj, message, notification_type, title, item=item, rarity=rarity)
+    filepath = await pilengine.build_notification(player_obj, message, notification_type, title, item, rarity)
     channels = ctx_object.guild.channels
     channel_object = discord.utils.get(channels, id=gli.channel_list[0])
     await ctx_object.send(file=discord.File(filepath))
