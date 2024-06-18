@@ -67,7 +67,7 @@ class BInventoryView(discord.ui.View):
             discord.SelectOption(
                 emoji="<a:eenergy:1145534127349706772>", label="Crafting", description="Crafting Items"),
             discord.SelectOption(
-                emoji="<a:eenergy:1145534127349706772>", label="Cores", description="Core Items"),
+                emoji="<a:eenergy:1145534127349706772>", label="Fae Cores", description="Fae Core Items"),
             discord.SelectOption(
                 emoji="<a:eenergy:1145534127349706772>", label="Materials", description="Material Items"),
             discord.SelectOption(
@@ -222,7 +222,7 @@ class CustomItem:
         self.item_base_stat = round(random.uniform(1 + ((self.item_tier - 1) * 5), (self.item_tier * 5)), 2)
 
     def assign_bonus_stat(self):
-        if self.item_type in "W" or "D" in self.item_type:
+        if self.item_type in ["W"] or "D" in self.item_type:
             return
         if self.item_tier < 5:
             if self.item_type in ["A", "V"]:
@@ -297,12 +297,12 @@ class CustomItem:
         self.item_name = f"+{self.item_enhancement} {tier_keyword} {self.item_base_type} [{quality_name}]"
 
     def generate_base(self):
-        if self.item_base_type != "":
-            return
-        if "R" in self.item_type:
+        if self.item_type == "R":
             self.assign_bonus_stat()
             # Default unique values for rings.
-            self.roll_values = [-1] * 6
+            self.roll_values = [None] * 6
+            return
+        if self.item_base_type != "":
             return
         if "D" in self.item_type:
             itemrolls.add_roll(self, 6)
@@ -373,10 +373,9 @@ class CustomItem:
             stat_msg = f'{base_type}{display_base_stat}{aux_suffix}\n'
         # Set the bonus stat text.
         tier_specifier = {5: "Void", 6: "Wish", 7: "Abyss", 8: "Divine"}
-        bonus_stat = self.item_bonus_stat
         if self.item_tier >= 5 and self.item_type != "W":
-            bonus_stat = f"{tier_specifier[self.item_tier]} Application ({self.item_bonus_stat})"
-        stat_msg += bonus_stat if "D" not in self.item_type else f"{self.get_gem_stat_message()}"
+            self.item_bonus_stat = f"{tier_specifier[self.item_tier]} Application ({self.item_bonus_stat})"
+        stat_msg += self.item_bonus_stat if "D" not in self.item_type else f"{self.get_gem_stat_message()}"
         if self.item_type == "R":
             rolls_msg = await ring.display_ring_values(self)
         elif self.item_base_type not in gli.sovereign_item_list:
@@ -398,7 +397,7 @@ class CustomItem:
         damage_min, damage_max = str(gem_min + self.item_damage_min), str(gem_max + self.item_damage_max)
         damage_bonus = f'Base Damage: {int(damage_min):,} - {int(damage_max):,}'
         embed_msg = discord.Embed(colour=tier_colour, title=item_title, description=display_stars)
-        if self.item_base_type == "Bathyal, Enigmatic Chasm Bauble":
+        if self.item_name == "Bathyal, Enigmatic Chasm Bauble":
             damage_bonus, stat_msg = sm.hide_text(damage_bonus), sm.hide_text(stat_msg)
             rolls_msg = sm.hide_text(rolls_msg) if rolls_msg != "" else rolls_msg
         embed_msg.add_field(name=item_types, value=damage_bonus, inline=False)
@@ -424,7 +423,7 @@ class CustomItem:
             self.item_damage_min, self.item_damage_max = self.base_damage_min, self.base_damage_max
             return
         # Handle unique base damage exceptions
-        if self.item_base_type == "Crown of Skulls":
+        if self.item_base_type == "Crown of Skulls" and self.roll_values[0] is not None:
             flat_bonus, mult_bonus = (int(self.roll_values[0]) * 100000), (1 + (int(self.roll_values[1]) * 0.001))
         # calculate item's damage per hit
         enh_multiplier = 1 + self.item_enhancement * (0.01 * self.item_tier)
@@ -579,11 +578,7 @@ async def add_custom_item(item):
     roll_values = roll_values[:-1]
 
     # Insert the item if applicable.
-
-    raw_query = "SELECT * FROM CustomInventory WHERE player_id = :player_check AND item_type = :item_check"
-    params = {'player_check': item.player_owner, 'item_check': item.item_type}
-    check_df = await rqy(raw_query, return_value=True, params=params)
-    if len(check_df) > 40:
+    if await check_capacity(item.player_owner, item.item_type):
         return 0
     insert_query = ("INSERT INTO CustomInventory "
                     "(player_id, item_type, item_name, item_damage_type, item_elements, item_enhancement,"
@@ -631,16 +626,16 @@ async def display_cinventory(player_obj, item_type) -> str:
 
 async def display_binventory(player_obj, method, view_type, include_id=False):
     regex_dict = {
-        "Crafting": "^(Matrix|Hammer|Pearl)",
-        "Cores": "^(Fae|Core|Crystal)",
-        "Materials": "^(Scrap|Ore|Shard|Heart|Fragment)",
+        "Crafting": "^(Matrix|Hammer|Pearl|Fragment|Crystal)",
+        "Fae Cores": "^(Fae)",
+        "Materials": "^(Scrap|Ore|Shard|Heart)",
         "Unprocessed": "^(Unrefined|Gem|Jewel|Void)",
         "Essences": "^(Essence)",
         "Summoning": "^(Compass|Summon)",
         "Gemstone": "^(Catalyst|Gemstone([0-9]|1[0]))$",
         "Fish": "^(Fish)",
         "Misc": "^(Potion|Trove|Chest|Stone|Token|Skull[0-3])",
-        "Ultra Rare": "^(Lotus|LightStar|DarkStar|Gemstone12|Skull4|Nadir|RoyalCoin)"}
+        "Ultra Rare": "^(Lotus|LightStar|DarkStar|Gemstone12|Skull4|Nephilim|Nadir|RoyalCoin)"}
     content, title = "", f'__**{player_obj.player_username}\'s {method} Inventory:\n**__'
     raw_query = ("SELECT item_id, item_qty FROM BasicInventory "
                  "WHERE player_id = :id_check AND item_qty <> 0 ORDER BY item_id ASC")
@@ -948,3 +943,12 @@ async def claim_gifts(player_obj):
         params = [{"gift_id": id_to_remove} for id_to_remove in expired_listing]
         await rqy("DELETE * FROM GiftBox WHERE gift_id = :gift_id", params=params, batch=True)
     return item_list if len(item_list) != 0 else None
+
+
+async def check_capacity(player_id, item_type):
+    raw_query = "SELECT * FROM CustomInventory WHERE player_id = :player_check AND item_type = :item_check"
+    params = {'player_check': player_id, 'item_check': item_type}
+    check_df = await rqy(raw_query, return_value=True, params=params)
+    if len(check_df) > 40:
+        return True
+    return False

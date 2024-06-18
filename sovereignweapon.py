@@ -29,8 +29,8 @@ sov_weapon = {
          ("Blazing Apex [VALUE]%", "Divine Winds")],
     "Bathyal, Enigmatic Chasm Bauble":
         [(1234567, 7654321), (1, 4),
-         ("Mana of the Boundless Ocean", "Disruption Boundary"),
-         ("Mana of the Divine Sea", "Forbidden Boundary")]}
+         ("Mana of the Boundless Ocean", "Disruption Boundary (TYPE)"),
+         ("Mana of the Divine Sea", "Forbidden Boundary (TYPE)")]}
 
 random_values_dict = {"Solar Flare Blaster": (100, 500)}
 type_dict = {"Bathyal, Enigmatic Chasm Bauble": ["Critical", "Fractal", "Temporal", "Hyperbleed", "Bloom"],

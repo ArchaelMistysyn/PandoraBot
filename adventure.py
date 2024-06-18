@@ -346,9 +346,8 @@ class AdventureRoomView(discord.ui.View):
                 matching_rewards = adventuredata.blessing_rewards.get((boss_type, deity_tier), None)
                 if matching_rewards is None:
                     matching_rewards = adventuredata.blessing_rewards.get((boss_type, 0), None)
-                print(f"Matching reward: {matching_rewards} - Boss type: {boss_type}")
                 reward_item = inventory.BasicItem(matching_rewards[1])
-                if random.randint(1, 100) <= 10:
+                if random.randint(1, 100) <= 20:
                     reward_item = inventory.BasicItem(f"Essence{deity}")
                 blessing_msg = f"{matching_rewards[0]} Blessing\nLuck +{matching_rewards[2]}"
                 if matching_rewards[0] in ["PARAGON", "ARBITER"]:
@@ -689,11 +688,11 @@ class AdventureRoomView(discord.ui.View):
         reward_id = "Scrap"
         prefix = ""
         if self.expedition.tier > 5:
-            prefix = "Fragment" if random.randint(1, 1000) > self.expedition.luck else "Core"
+            prefix = "Fragment" if random.randint(1, 1000) > self.expedition.luck else "Crystal"
             reward_id = f"{prefix}{min(4, self.expedition.tier - 4)}"
         reward = inventory.BasicItem(reward_id)
         luck_qty = ((self.expedition.tier // 4) + 1) * (variant + 1)
-        item_qty = luck_qty if prefix != "Core" else 1
+        item_qty = luck_qty if prefix != "Crystal" else 1
         # Handle failure
         if random.randint(1, 100) > self.success_rates[variant]:
             title_msg, output_msg = f"Nothing Found!", f"You leave empty handed.\n**Luck -{luck_qty}**"
@@ -773,9 +772,9 @@ class AdventureRoomView(discord.ui.View):
                 return
         # Handle regular trap outcome
         damage = self.expedition.take_damage(100, 300, active_room.room_element)
-        if await self.check_death(interaction_obj):
-            return
         dmg_msg = f'The mimic bites you dealing {damage:,} damage.'
+        if await self.check_death(interaction_obj, result_msg=dmg_msg):
+            return
         hp_msg = f'{self.expedition.player_obj.player_cHP} / {self.expedition.player_obj.player_mHP} HP'
         self.embed.add_field(name="", value=f"{dmg_msg}\n{hp_msg}", inline=False)
         await interaction_obj.response.edit_message(embed=self.embed, view=self.new_view)

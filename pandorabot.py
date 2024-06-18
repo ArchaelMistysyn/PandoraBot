@@ -481,25 +481,43 @@ def run_discord_bot():
         embed_msg = discord.Embed(colour=discord.Colour.dark_teal(), title=title_msg,  description="Feeling lucky?")
         message = await ctx.send(embed=embed_msg)
         # Handle the opening.
-        reward_coins = 0
+        num_lotus, reward_coins = 0, 0
         for trove_index, (trove_id, trove_qty) in enumerate(trove_details):
             if trove_qty != 0:
                 _, tier_icon = sm.get_gear_tier_colours(trove_index + 1)
-                loot_msg = tier_icon
                 trove_object = inventory.BasicItem(trove_id)
-                trove_coins, trove_msg = loot.generate_trove_reward(trove_object, abs(trove_qty))
+                lotus_count, trove_coins, trove_msg = loot.generate_trove_reward(trove_object, abs(trove_qty))
                 reward_coins += trove_coins
                 coin_msg = await player_obj.adjust_coins(trove_coins)
-                loot_msg += f" {trove_msg}{gli.coin_icon} {coin_msg} lotus coins!\n"
-                embed_msg.add_field(name="", value=loot_msg, inline=False)
+                lotus_msg = " **LOTUS FOUND**" if lotus_count > 0 else ""
+                num_lotus += lotus_count
+                embed_msg.add_field(name="", value=f"{tier_icon} {trove_msg}", inline=False)
                 await message.edit(embed=embed_msg)
                 await asyncio.sleep(2)
-        # Finalize the output.
+                embed_msg.add_field(name="", value=f"{gli.coin_icon} {coin_msg} lotus coins!{lotus_msg}", inline=False)
+                await message.edit(embed=embed_msg)
+                await asyncio.sleep(2)
+        # Handle lotus items and finalize the output.
         title_msg = f"{player_obj.player_username}: {total_stock:,} {extension} Opened!"
-        loot_msg = f"TOTAL: {gli.coin_icon} {reward_coins:,}x lotus coins!\n"
-        embed_msg.title = title_msg
+        loot_msg, lotus_msg = f"TOTAL: {gli.coin_icon} {reward_coins:,}x lotus coins!\n", ""
         embed_msg.add_field(name="", value=loot_msg, inline=False)
+        lotus_items = {}
+        for _ in range(num_lotus):
+            lotus_id = f"Lotus{random.randint(1, 10)}"
+            lotus_items[lotus_id] = (lotus_items[lotus_id] + 1) if lotus_id in lotus_items else 1
+        for lotus_id in sorted(lotus_items.keys(), key=lambda x: int(x[5:])):
+            lotus_item = inventory.BasicItem(lotus_id)
+            lotus_msg += f"{sm.reward_message(lotus_item, lotus_items[lotus_id])}\n"
+        batch_df = sm.list_to_batch(player_obj, [(lotus_id, lotus_qty) for lotus_id, lotus_qty in lotus_items.items()])
+        await inventory.update_stock(None, None, None, batch=batch_df)
+        embed_msg.title = title_msg
+        if num_lotus > 0:
+            embed_msg.add_field(name="", value=lotus_msg, inline=False)
+        await asyncio.sleep(2)
         await message.edit(embed=embed_msg)
+        for lotus_id in sorted(lotus_items.keys(), key=lambda x: int(x[5:])):
+            for _ in range(lotus_items[lotus_id]):
+                await sm.send_notification(ctx, player_obj, "Item", lotus_id)
 
     @set_command_category('game', 7)
     @pandora_bot.hybrid_command(name='sanctuary', help="Speak with Fleur in the lotus sanctuary of the divine plane.")
@@ -577,7 +595,7 @@ def run_discord_bot():
         player_obj = await sm.check_registration(ctx)
         if player_obj is None:
             return
-        num_visits = await int(player_obj.check_misc_data("thana_visits"))
+        num_visits = int(await player_obj.check_misc_data("thana_visits"))
         location_view = menus.CelestialView(player_obj, num_visits)
         title, description = "Celestial Realm", "Pandora's domain and home to her celestial forge."
         embed_msg = discord.Embed(colour=discord.Colour.dark_purple(), title=title, description=description)

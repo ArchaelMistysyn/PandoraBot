@@ -158,7 +158,7 @@ def list_to_batch(player_obj, item_list):
     return batch_df
 
 
-def hide_text(msg, method="Enigma"):
+def hide_text(msg, method="Shrouded"):
     if method == "Clear":
         return
 

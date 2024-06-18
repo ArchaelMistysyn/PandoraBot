@@ -237,7 +237,7 @@ class CelestialView(discord.ui.View):
                      f"If tell anyone I was here, I will *KILL* you.\n"
                      f"If you hurt my little sister, I will *KILL* you.\n")
         else:
-            player_deaths = await int(self.player_obj.check_misc_data('deaths'))
+            player_deaths = int(await self.player_obj.check_misc_data('deaths'))
             description = (f"I will continue to revive your mortal body so long as you continue to aid me. "
                            f"Though, should you ever want to remain dead you are more than welcome to stay by my side. "
                            f"You've died {player_deaths} times you know. It'd save me quite the hassle. "
@@ -449,6 +449,7 @@ class SkullsView(discord.ui.View):
         elif self.method == "Purchase":
             if self.player_obj.player_coins <= item.item_cost:
                 self.new_embed.description = "You'll need more coins than that to convince me to part with these."
+                self.new_embed = await add_skull_fields(self.player_obj, self.new_embed, method=self.method)
                 await interaction_obj.response.edit_message(embed=self.new_embed, view=self.new_view)
                 return
             _ = await self.player_obj.adjust_coins(item.item_cost, reduction=True)
@@ -460,8 +461,8 @@ class SkullsView(discord.ui.View):
         # Sell skulls
         elif self.method == "Return":
             if skull_stock <= 0:
-                self.new_embed.description = ("Stop messing around, you might give me the wrong idea. "
-                                              "Or is there actually another reason you called for me?\n")
+                self.new_embed.description = ("Stop messing around, I might get the wrong idea. "
+                                              "Or... is there actually another reason that you called for me?\n")
                 self.new_embed.description += sm.get_stock_msg(item, skull_stock)
                 self.new_embed = await add_skull_fields(self.player_obj, self.new_embed, method=self.method)
                 await interaction_obj.response.edit_message(embed=self.new_embed, view=self.new_view)
@@ -493,7 +494,7 @@ class SkullsView(discord.ui.View):
     async def return_callback(self, interaction: discord.Interaction, button: discord.Button):
         if interaction.user.id != self.player_obj.discord_id:
             return
-        player_deaths = await int(self.player_obj.check_misc_data('deaths'))
+        player_deaths = int(await self.player_obj.check_misc_data('deaths'))
         description = (f"I will continue to revive your mortal body so long as you continue to aid me. "
                        f"Though, should you ever want to remain dead you are more than welcome to stay by my side. "
                        f"You've died {player_deaths} times you know. It'd save me quite the hassle. "

@@ -205,7 +205,20 @@ def run_discord_bot():
             await sent_message.edit(embed=embed)
             await bosses.clear_boss_info(channel_id, player_obj.player_id)
             return False, active_boss
+        hp_percent = active_boss.boss_cHP / active_boss.boss_mHP
         if boss_alive:
+            if not (gauntlet or combat_tracker.total_cycles < 30 or hp_percent <= 0.95):
+                fail_msg = f"{combat_tracker.total_cycles:,} cycles elapsed. Encounter ended as HP threshhold not met."
+                embed.add_field(name="Encounter Failed!", value=fail_msg, inline=False)
+                await sent_message.edit(embed=embed)
+                await bosses.clear_boss_info(channel_id, player_obj.player_id)
+                return False, active_boss
+            elif gauntlet and combat_tracker.total_cycles >= 999:
+                fail_msg = f"999 cycles elapsed. Encounter ended as maximum cycle limit exceeded."
+                embed.add_field(name="Encounter Failed!", value=fail_msg, inline=False)
+                await sent_message.edit(embed=embed)
+                await bosses.clear_boss_info(channel_id, player_obj.player_id)
+                return False, active_boss
             await sent_message.edit(embed=embed)
             return True, active_boss
         if active_boss.boss_tier >= 4:
@@ -289,7 +302,7 @@ def run_discord_bot():
         player_obj = await sm.check_registration(ctx)
         if player_obj is None:
             return
-        if magnitude not in range(10):
+        if magnitude not in range(11):
             await ctx.send("Selected magnitude must be between 0-10. Default 0.")
             return
         if player_obj.player_equipped[0] == 0:
@@ -437,7 +450,7 @@ def run_discord_bot():
         player_obj = await sm.check_registration(ctx)
         if player_obj is None:
             return
-        if magnitude not in range(10):
+        if magnitude not in range(11):
             await ctx.send("Selected magnitude must be between 0-10. Default 0.")
             return
         if player_obj.player_equipped[0] == 0:
@@ -477,7 +490,7 @@ def run_discord_bot():
         player_obj = await sm.check_registration(ctx)
         if player_obj is None:
             return
-        if magnitude not in range(10):
+        if magnitude not in range(11):
             await ctx.send("Selected magnitude must be between 0-10. Default 0.")
             return
         if token_version not in range(1, 4):

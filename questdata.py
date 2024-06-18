@@ -176,7 +176,7 @@ quests_data = {
          "\nWhat could possibly go wrong?",
          1, 9, None,
          "Forge a pact at the demonic altar in /map",
-         'Core1', 6, None],
+         'Crystal1', 2, None],
 
     22: [0, "Arms of Steel",
          "The 'black flames' that shroud demons are actually comprised of metallic dust or shrapnel. "
@@ -239,7 +239,7 @@ quests_data = {
          "\nIf you pursue this path you must take great effort not to lose yourself in the process.",
          60, None, None,
          "Breakthrough to level 60",
-         'Core2', 6, None],
+         'Crystal2', 2, None],
 
     30: [2, "Messenger Of Celestia",
          "We must continue to seal as many of the True Paragons as we can. "
@@ -310,7 +310,7 @@ quests_data = {
          "\nPerhaps in those depths we may find the power we seek.",
          1, 18, None,
          "Visit the Gateway of the True Abyss using /abyss",
-         'Core3', 6, None],
+         'Crystal3', 2, None],
 
     39: [1, "Cultivate Divinity (Part 5)",
          "Oblivia is right. We're approaching the limits of what I can forge for you. "
@@ -372,7 +372,7 @@ quests_data = {
          "\nThe arbiters won't overlook this, but this time, I know you'll be strong enough to face them.",
          95, None, None,
          "Breakthrough to level 95",
-         'Core4', 3, None],
+         'Crystal4', 2, None],
 
     47: [3, "A Flower Foregone",
          "This reality belongs to no one. We will usurp those who seek to control and manipulate it."
@@ -410,7 +410,7 @@ quests_data = {
          "\nAscend, and face the finale! (/palace)",
          1, 23, None,
          "Defeat XXX - Nephilim, Incarnate of the Divine Lotus [Challenger]",
-         'Core4', 3, 'Echelon 10 (MAX)'],
+         'Chest', 50, 'Echelon 10 (MAX)'],
 
     51: [10, "Pandora's Box",
          "The one left standing ascends to take their place as the new high arbiter of the divine plane. "
@@ -418,7 +418,7 @@ quests_data = {
          "\nPerhaps in this little box, you can finally find peace.",
          31, 24, None,
          "Complete the Tarot Collection",
-         'Chest', 10, None],
+         'Chest', 50, None],
 
     52: [3, "Dance With Divinity",
          "Do you see now why the arbiters foresaw your failure and the futility of your actions? "
@@ -427,7 +427,7 @@ quests_data = {
          "\nAscend, and face the trial of the usurper!",
          1, 25, None,
          "Defeat XXX - Nephilim, Incarnate of the Divine Lotus [Usurper]",
-         'Chest', 20, None],
+         'Chest', 50, None],
 
     53: [3, "A Heartfelt Wish",
          "I was wrong. I had resigned to my fate believing that gods could not be slain. "
@@ -436,7 +436,7 @@ quests_data = {
          "\nPlease, save us all.",
          1, 26, None,
          "Defeat XXX - Nephilim, Incarnate of the Divine Lotus [Samsara]",
-         'Chest', 30, None],
+         'Chest', 50, None],
 
     54: [2, "A Moment Forever",
          "Just how far have you come just to see me again? Alas, you of all people should know I cannot stay. "

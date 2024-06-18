@@ -86,10 +86,10 @@ class SoloCog(commands.Cog):
                 await bosses.clear_boss_info(self.channel_id, self.player_obj.player_id)
                 self.cog_unload()
                 return
-            is_alive, self.active_boss = await self.bot.solo_boss(
+            continue_encounter, self.active_boss = await self.bot.solo_boss(
                 self.combat_tracker, self.player_obj, self.active_boss, self.channel_id, self.sent_message,
                 self.channel_object, gauntlet=self.gauntlet, mode=self.mode, magnitude=self.magnitude)
-            if is_alive:
+            if continue_encounter:
                 return
             self.cog_unload()
 

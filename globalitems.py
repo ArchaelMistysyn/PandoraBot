@@ -112,9 +112,9 @@ crafting_gem = ["Blazing Ruby", "Drowned Sapphire", "Silent Topaz", "Ancient Aga
 availability_list_nongear = ["Fae"]
 availability_list = ["Sword", "Saber", "Bow", "Threads", "Armour", "Wings", "Amulet", "Crest", "Greaves", "Gem", "Pact"]
 
-sovereign_item_list = ["Crown of Skulls", "Sacred Ring of Divergent Stars", "Hadal's Raindrop", "Heavenly Calamity",
+sovereign_item_list = ["Crown of Skulls", "Twin Rings of Divergent Stars", "Hadal's Raindrop", "Heavenly Calamity",
                        "Stygian Calamity", "Pandora's Universe Hammer", "Solar Flare Blaster",
-                       "Bathyal, Enigmatic Chasm Bauble"]
+                       "Bathyal, Enigmatic Chasm Bauble", "Fallen Lotus of Nephilim"]
 sovereign_batch_data = ', '.join([str(base_type) for base_type in sovereign_item_list])
 
 # WEAPON LISTS

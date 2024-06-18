@@ -70,22 +70,22 @@ for index, row in enumerate(stamina_data):
 itemdata_dict = build_item_dict(itemdata_dict, stamina_data, category="Potion")
 
 # Trove Data
-trove_rewards = {
-    1: [1000, 5000], 2: [5000, 10000], 3: [10000, 20000], 4: [20000, 35000],
-    5: [35000, 50000], 6: [50000, 75000], 7: [75000, 100000], 8: [100000, 1000000]
-}
-trove_data = [[None, 'Lesser Golden Trove', 100, 1, '<a:elootitem:1144477550379274322>', None, 0],
-              [None, 'Standard Golden Trove', 100, 2, '<a:elootitem:1144477550379274322>', None, 0],
-              [None, 'Greater Golden Trove', 100, 3, '<a:elootitem:1144477550379274322>', None, 0],
-              [None, 'Ultimate Golden Trove', 100, 4, '<a:elootitem:1144477550379274322>', None, 0],
-              [None, 'Voidworn Golden Trove', 100, 5, '<a:elootitem:1144477550379274322>', None, 0],
-              [None, 'Miraculous Golden Trove', 100, 6, '<a:elootitem:1144477550379274322>', None, 0],
-              [None, 'Abyssal Golden Trove', 100, 7, '<a:elootitem:1144477550379274322>', None, 0],
-              [None, 'Divine Golden Trove', 100, 8, '<a:elootitem:1144477550379274322>', None, 0]]
+trove_rewards = {1: [1000, 5000, 1], 2: [5000, 10000, 10], 3: [10000, 20000, 50], 4: [20000, 35000, 100],
+                 5: [35000, 50000, 500], 6: [50000, 75000, 1000], 7: [75000, 100000, 2000],
+                 8: [100000, 1000000, 3000]}
+trove_data = [[None, 'Lesser Lotus Trove', 100, 1, '<a:elootitem:1144477550379274322>', None, 0],
+              [None, 'Standard Lotus Trove', 100, 2, '<a:elootitem:1144477550379274322>', None, 0],
+              [None, 'Greater Lotus Trove', 100, 3, '<a:elootitem:1144477550379274322>', None, 0],
+              [None, 'Ultimate Lotus Trove', 100, 4, '<a:elootitem:1144477550379274322>', None, 0],
+              [None, 'Voidworn Lotus Trove', 100, 5, '<a:elootitem:1144477550379274322>', None, 0],
+              [None, 'Miraculous Lotus Trove', 100, 6, '<a:elootitem:1144477550379274322>', None, 0],
+              [None, 'Abyssal Lotus Trove', 100, 7, '<a:elootitem:1144477550379274322>', None, 0],
+              [None, 'Divine Lotus Trove', 100, 8, '<a:elootitem:1144477550379274322>', None, 0]]
 for row in trove_data:
     tier = row[3]
     bounds = trove_rewards[tier]
-    row[5] = f'Open to receive {bounds[0]:,} - {bounds[1]:,} lotus coins.'
+    lotus_rate = f"{bounds[2] / 1000:.4f}".rstrip('0').rstrip('.')
+    row[5] = f'Open to receive {bounds[0]:,} - {bounds[1]:,} lotus coins. Lotus chance: {lotus_rate}%'
 itemdata_dict = build_item_dict(itemdata_dict, trove_data, category="Trove")
 
 # Ore and Soul List Data in the new structure
@@ -107,32 +107,25 @@ itemdata_dict = build_item_dict(itemdata_dict, flame_data, category="Flame")
 
 # Fragment Item Data
 fragment_data = [[None, 'Fragmentized Void', 100, 5, '<a:elootitem:1144477550379274322>',
-                  'Used for void infusion and crafting.', 0],
+                  'A fragment containing the essence of the void. Used for forging, infusion and crafting.', 0],
                  [None, 'Fragmentized Wish', 100, 6, '<a:elootitem:1144477550379274322>',
-                  'Used for wish infusion and crafting.', 0],
+                  'A fragment containing the essence of a wish. Used for forging, infusion and crafting.', 0],
                  [None, 'Fragmentized Abyss', 100, 7, '<a:elootitem:1144477550379274322>',
-                  'Used for abyss infusion and crafting.', 0],
+                  'A fragment containing the essence of the abyss. Used for forging, infusion and crafting.', 0],
                  [None, 'Fragmentized Divinity', 100, 8, '<a:elootitem:1144477550379274322>',
-                  'Used for divine infusion and crafting.', 0]]
+                  'A fragment containing the essence of divinity. Used for forging, infusion and crafting.', 0]]
 itemdata_dict = build_item_dict(itemdata_dict, fragment_data, category="Fragment")
-
-# Core/Traces List Data
-core_data = [[None, 'Void Core', 50, 5, '<a:evoid:1145520260573827134>',
-              'A core used for void infusion and purification.', 0],
-             [None, 'Wish Core', 90, 6, '<a:evoid:1145520260573827134>',
-              'A core used for wish infusion and purification.', 0],
-             [None, 'Abyss Core', 90, 7, '<a:evoid:1145520260573827134>',
-              'A core used for abyss infusion and purification.', 0],
-             [None, 'Divine Core', 90, 8, '<a:evoid:1145520260573827134>',
-              'A core used for divine infusion and purification.', 0]]
-itemdata_dict = build_item_dict(itemdata_dict, core_data, category="Core")
 
 # Crystallized List Data
 crystallized_data = [
-    [None, 'Crystallized Void', 100, 5, '<a:evoid:1145520260573827134>', 'Used to craft tier 5 weapons.', 0],
-    [None, 'Crystallized Wish', 100, 6, '<a:evoid:1145520260573827134>', 'Used to upgrade weapons to tier 6.', 0],
-    [None, 'Crystallized Abyss', 100, 7, '<a:evoid:1145520260573827134>', 'Used to upgrade weapons to tier 7.', 0],
-    [None, 'Crystallized Divinity', 100, 8, '<a:evoid:1145520260573827134>', 'Used to upgrade weapons to tier 8.', 0]]
+    [None, 'Crystallized Void', 100, 5, '<a:evoid:1145520260573827134>',
+     'A crystal containing the essence of the void. Used for forging, infusion and crafting.', 0],
+    [None, 'Crystallized Wish', 100, 6, '<a:evoid:1145520260573827134>',
+     'A crystal containing the essence of a wish. Used for forging, infusion and crafting.', 0],
+    [None, 'Crystallized Abyss', 100, 7, '<a:evoid:1145520260573827134>',
+     'A crystal containing the essence of the abyss. Used for forging, infusion and crafting.', 0],
+    [None, 'Crystallized Divinity', 100, 8, '<a:evoid:1145520260573827134>',
+     'A crystal containing the essence of divinity. Used for forging, infusion and crafting.', 0]]
 itemdata_dict = build_item_dict(itemdata_dict, crystallized_data, category="Crystal")
 
 # Skull List Data

@@ -18,12 +18,12 @@ import inventory
 from ringdata import ring_resonance_dict as rrd
 
 recipe_dict = {
-    "Heavenly Infusion": {}, "Elemental Infusion": {}, "Core Infusion": {},
+    "Heavenly Infusion": {}, "Elemental Infusion": {}, "Crystal Infusion": {},
     "Void Infusion": {}, "Jewel Infusion": {}, "Skull Infusion": {},
     "Special Infusion": {
         "Radiant Heart": [("Stone5", 1), ("Fragment2", 1), 20, "Heart1"],
         "Chaos Heart": [("Stone5", 1), ("Fragment3", 1), 20, "Heart2"],
-        "Abyss Flame": [("Core3", 1), ("Flame1", 10), 80, "Flame2"],
+        "Abyss Flame": [("Crystal3", 1), ("Flame1", 10), 80, "Flame2"],
         "Lotus of Serenity": [("Heart1", 99), ("Fragment2", 99), 99, "Lotus2"],
         "Twin Rings of Divergent Stars": [("DarkStar", 1), ("LightStar", 1), 100, "TwinRings"]},
     "Elemental Ring Infusion": {}, "Primordial Signet Infusion": {}, "Path Ring Infusion": {},
@@ -33,7 +33,7 @@ recipe_dict = {
         "Bleeding Hearts": [("Gemstone9", 5), ("Heart1", 50), ("Heart2", 50), ("Gemstone10", 3), 100, "7"],
         "Gambler's Masterpiece": [("Gemstone9", 1), ("Gemstone10", 1), 1, "7"]},
     "Sovereign Ring Infusion": {
-        "Stygian Calamity": [("Shard", 25), ("Gemstone11", 1), ("Crystal3", 10), ("Gemstone10", 5), ("Crystal4", 1),
+        "Stygian Calamity": [("Shard", 25), ("Gemstone11", 1), ("Gemstone10", 5),  ("Crystal3", 10), ("Crystal4", 1),
                              100, "8"],
         "Heavenly Calamity": [("Shard", 25), ("Gemstone11", 1), ("Ore5", 10), ("Gemstone10", 5), ("Crystal4", 1), 100,
                               "8"],
@@ -84,14 +84,16 @@ skull_types = ["Cursed Golden Skull", "Haunted Golden Skull", "Radiant Golden Sk
 for idx, skull_type in enumerate(skull_types[1:], start=1):
     add_recipe("Skull Infusion", skull_type,
                [(f"Skull{idx}", 1), 100, f"Skull{idx + 1}"])
-# Core Infusions
-core_types = ["Void", "Wish", "Abyss", "Divinity"]
-for idx in range(1, len(core_types) + 1):
-    components = [(f"Crystal{idx - 1}", 1)] if idx != 1 else []
-    add_recipe("Core Infusion", f"{core_types[idx - 1]} Core",
-               components + [(f"Fragment{idx}", 10), 90, f"Core{idx}"])
-    add_recipe("Core Infusion", f"Crystallized {core_types[idx - 1]}",
-               [(f"Core{idx}", 3), 100, f"Crystal{idx}"])
+# Crystal Infusions
+fragment_types = ["Void", "Wish", "Abyss", "Divinity"]
+for idx in range(1, len(fragment_types) + 1):
+    add_recipe("Crystal Infusion", f"Crystallized {fragment_types[idx - 1]} (Fragment)",
+               [(f"Fragment{idx}", 20), 100, f"Crystal{idx}"])
+    if idx == 1:
+        continue
+    add_recipe("Crystal Infusion", f"Crystallized {fragment_types[idx - 1]} (Upgrade)",
+               [(f"Crystal{idx - 1}", 3), 90, f"Crystal{idx}"])
+
 # Void Infusions
 for idx, (item_type, secondary_cost) in enumerate(void_cost):
     add_recipe("Void Infusion", f"Unrefined Void Item ({item_type})",
@@ -268,21 +270,32 @@ class CraftView(discord.ui.View):
             self.embed_msg = await self.recipe_object.create_cost_embed(self.player_obj)
             self.embed_msg.add_field(name="Not Enough Materials!",
                                      value="Please come back when you have more materials.", inline=False)
-            new_view = InfuseView(self.ctx_obj, self.player_obj)
-            await interaction.response.edit_message(embed=self.embed_msg, view=new_view)
+            await interaction.response.edit_message(embed=self.embed_msg, view=self.new_view)
             return
         is_ring = "Ring" in self.recipe_object.category or "Signet" in self.recipe_object.category
         is_sw = "Sovereign Weapon Infusion" == self.recipe_object.category
+        item_tier = 8 if is_sw else int(self.recipe_object.outcome_item)
+        full_inv, infuse_item_type = False, None
+        if is_ring:
+            full_inv, infuse_item_type = await inventory.check_capacity(self.player_obj.player_id, "R"), "R"
+        elif is_sw:
+            full_inv, infuse_item_type = await inventory.check_capacity(self.player_obj.player_id, "W"), "W"
+        if full_inv:
+            type_name = inventory.custom_item_dict[infuse_item_type]
+            header, description = "Full Inventory!", f"Please make space in your {type_name.lower()} inventory."
+            self.embed_msg.add_field(name=header, value=description, inline=False)
+            self.new_view = CraftView(self.ctx_obj, self.player_obj, self.recipe_object)
+            await interaction.response.edit_message(embed=self.embed_msg, view=self.new_view)
+            return
         result = await self.recipe_object.perform_infusion(self.player_obj, selected_qty, ring=is_ring, is_sw=is_sw)
         self.embed_msg = await self.recipe_object.create_cost_embed(self.player_obj)
-        is_sacred = random.randint(1, 100) <= 5
+        is_sacred = random.randint(1, 100) <= 5 if is_sw or (is_ring and item_tier == 8) else False
         class_type = "Sacred" if is_sacred else "Sovereign"
         # Handle infusion
         if is_ring and result == 1:
             # Handle ring
-            new_ring = inventory.CustomItem(self.player_obj.player_id, "R", int(self.recipe_object.outcome_item),
+            new_ring = inventory.CustomItem(self.player_obj.player_id, "R", item_tier,
                                             base_type=self.recipe_object.recipe_name, is_sacred=is_sacred)
-            new_ring.set_item_name()
             new_ring.roll_values[0] = random.randint(0, 30) if new_ring.item_tier == 8 else rrd[new_ring.item_base_type]
             # Handle ring exceptions.
             if new_ring.item_base_type == "Crown of Skulls":
@@ -295,7 +308,7 @@ class CraftView(discord.ui.View):
             return
         elif is_sw and result == 1:
             # Sovereign Weapon
-            new_weapon = inventory.CustomItem(self.player_obj.player_id, "W", 8,
+            new_weapon = inventory.CustomItem(self.player_obj.player_id, "W", item_tier,
                                               base_type=self.recipe_object.recipe_name, is_sacred=is_sacred)
             await inventory.add_custom_item(new_weapon)
             self.embed_msg = await new_weapon.create_citem_embed()

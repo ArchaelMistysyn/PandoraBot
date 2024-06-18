@@ -265,7 +265,7 @@ treasure_details = {"treasure": [50, 80, "Lesser"], "greater_treasure": [33, 67,
 reward_probabilities = {45: 1, 30: 2, 20: 3, 5: 5}
 
 # Reward data lists
-blessing_rewards = {("Incarnate", 8): ["Divine", "Core4", 15],
+blessing_rewards = {("Incarnate", 8): ["Divine", "Crystal4", 15],
                     ("Arbiter", 7): ["Prismatic", "Summon3", 10],
                     ("Arbiter", 0): ["ARBITER", "Stone6", 7],
                     ("Paragon", 6): ["Miraculous", "Summon2", 5],
@@ -283,9 +283,9 @@ selection_pools = [
     ["Hammer", "Pearl", "Ore1", "Trove1", "Potion1", "Scrap", "ESS"],
     ["Hammer", "Pearl", "Ore2", "Token1", "Trove2", "Flame1", "Matrix", "Trove2", "Summon1", "Potion2", "ESS"],
     ["Hammer", "Pearl", "Ore3", "Token2", "Trove3", "Stone4", "Gem1", "Gem2", "Gem3", "Potion3", "ESS"],
-    ["Hammer", "Pearl", "Ore4", "Token3", "Token4", "Trove4", "Summon1", "Core1", "Jewel1", "Jewel2", "Potion4", "ESS"],
-    ["Skull1", "Hammer", "Pearl", "Ore5", "Token5", "Trove5", "Summon2", "Crystal2", "Core2", "Flame2", "Jewel3", "ESS"],
+    ["Hammer", "Pearl", "Ore4", "Token3", "Token4", "Trove4", "Summon1", "Crystal1", "Jewel1", "Jewel2", "Potion4", "ESS"],
+    ["Skull1", "Hammer", "Pearl", "Ore5", "Token5", "Trove5", "Summon2", "Crystal2", "Flame2", "Jewel3", "ESS"],
     ["Skull2", "Hammer", "Pearl", "Ore5", "Token7", "Token6", "Trove7", "Trove6", "Summon3", "Crystal3",
-     "Core3", "Jewel4", "Compass", "ESS"],
+     "Jewel4", "Compass", "ESS"],
     ["Skull3", "Lotus1", "Lotus2", "Lotus3", "Lotus4", "Lotus5", "Lotus6", "Lotus7", "Lotus8", "Lotus9",
-     "Lotus10", "DarkStar", "LightStar", "Core4", "Trove8", "Crystal4", "Jewel5", "ESS"]]
+     "Lotus10", "DarkStar", "LightStar", "Trove8", "Crystal4", "Jewel5", "ESS"]]

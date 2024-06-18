@@ -245,7 +245,7 @@ class UpgradeView(discord.ui.View):
             "Implant Element": [1, [f"Implant ({gli.element_names[self.element]})"], ["Implant"],
                                 [f"Gemstone{self.element}"]]}
         self.menu_details = method_dict[self.menu_type]
-        self.method, self.material_id  = self.menu_details[2], self.menu_details[3]
+        self.method, self.material_id = self.menu_details[2], self.menu_details[3]
         # Construct the buttons.
         for button_count in range(self.menu_details[0]):
             button_num, material_id = self.hammer_type, self.material_id[0]
@@ -539,7 +539,7 @@ async def implant_item(player_obj, selected_item, cost_list, success_rate, succe
     if sum(selected_item.item_elements) == 9:
         return 2
     # Determine the element to add.
-    check_element = int(cost_list[0].item_id[8]) - 1
+    check_element = int(cost_list[0].item_id[8])
     selected_element = int(check_element)
     # Confirm if the element already exists.
     if selected_item.item_elements[selected_element] == 1:
@@ -715,9 +715,7 @@ class MeldView(discord.ui.View):
     def __init__(self, player_obj, gem_1, gem_2, cost):
         super().__init__(timeout=None)
         self.player_obj = player_obj
-        self.gem_1 = gem_1
-        self.gem_2 = gem_2
-        self.cost = cost
+        self.gem_1, self.gem_2, self.cost = gem_1, gem_2, cost
         self.embed, self.new_view = None, None
 
         # Calculate affinity and update the meld button.

@@ -15,13 +15,12 @@ import inventory
 
 
 boss_loot_dict = {
-    "All": [[0, "Chest", 25], [0, "Matrix", 15], [0, "Core1", 1], [0, "Catalyst", 1],
+    "All": [[0, "Chest", 25], [0, "Matrix", 15], [0, "Crystal1", 1], [0, "Catalyst", 1],
             [0, "Skull4", 0.005], [0, "Skull3", 0.05], [0, "Skull2", 0.5], [0, "Skull1", 5],
             [0, "Hammer", 25], [0, "Pearl", 15], [0, "Heart1", 2], [0, "Heart2", 1],
             [1, "Ore1", 25], [2, "Ore2", 25], [3, "Ore3", 25], [4, "Ore4", 25],
             [1, "Potion1", 5], [2, "Potion2", 5], [3, "Potion3", 5], [4, "Potion4", 5],
             [5, "Potion4", 10], [6, "Potion4", 15], [7, "Potion4", 25], [8, "Potion4", 25],
-            [5, "Core1", 3], [6, "Core2", 3], [7, "Core3", 3], [8, "Core4", 3],
             [5, "Crystal1", 1], [6, "Crystal2", 1], [7, "Crystal3", 1], [8, "Crystal4", 1],
             [5, "Fragment1", 75], [6, "Fragment2", 75], [7, "Fragment3", 99], [8, "Fragment4", 99]],
     "Fortress": [[0, "Scrap", 100], [0, "Stone1", 60],
@@ -38,10 +37,10 @@ boss_loot_dict = {
                 [5, "Token5", 5], [6, "Token6", 5], [7, "Token7", 5],
                 [1, "Jewel4", 10], [2, "Jewel4", 20], [3, "Jewel4", 30], [4, "Jewel4", 40],
                 [5, "Jewel4", 50], [6, "Jewel4", 60], [7, "Jewel4", 70]],
-    "Incarnate": [[8, "Core3", 50], [8, "Core4", 25], [8, "Jewel5", 80],
+    "Incarnate": [[8, "Crystal3", 10], [8, "Crystal4", 5], [8, "Jewel5", 80], [8, "Trove8", 99],
                   [8, "Lotus1", 5], [8, "Lotus2", 5], [8, "Lotus3", 5], [8, "Lotus4", 5], [8, "Lotus5", 5],
                   [8, "Lotus6", 5], [8, "Lotus7", 5], [8, "Lotus8", 5], [8, "Lotus9", 5],
-                  [8, "Lotus10", 1], [8, "DarkStar", 1], [8, "Nephilim", 1], [8, "EssenceXXX", 99]]}
+                  [8, "Lotus10", 1], [8, "DarkStar", 2], [8, "Nephilim", 1], [8, "EssenceXXX", 99]]}
 incarnate_attempts_dict = {300: 1, 600: 2, 999: 5}
 
 
@@ -144,10 +143,10 @@ def generate_random_item(quantity=1):
     quantity_table = [1, 1, 1, 1, 1, 1, 2, 2, 2, 3]
     probability_rewards = [
         [10, None, "Lotus"], [1, "DarkStar", None], [1, "LightStar", None], [1, None, "Skull"], [22, None, "Gemstone"],
-        [99, None, "Essence"], [200, None, "Trove"], [100, "Catalyst", None], [100, None, "Core"], [50, None, "Crystal"],
+        [99, None, "Essence"], [200, None, "Trove"], [100, "Catalyst", None], [50, None, "Crystal"],
         [5, None, "Skull3"], [30, None, "Skull2"], [67, None, "Skull1"],
         [200, None, "Token"], [100, None, "Jewel"], [200, None, "Summon"], [50, "Compass", None],
-        [1000, "Pearl", None], [2000, "Hammer", None], [250, None, "Gem"], [2500, None, "Ore"],
+        [1000, "Pearl", None], [2000, "Hammer", None], [250, None, "Gem"], [2600, None, "Ore"],
         [750, None, "Fragment"], [500, "Flame1", None], [500, "Matrix", None], [400, None, "Potion"],
         [864, None, "Fae"]]
     max_reward = 10000  # sum(item[0] for item in probability_rewards)
@@ -175,9 +174,11 @@ def generate_random_item(quantity=1):
 
 
 def generate_trove_reward(trove_object, trove_stock):
-    num_coins, trove_msg = 0, ""
+    lotus_rate_dict = {}
+    num_coins, num_lotus = 0, 0
     bounds = itemdata.trove_rewards[trove_object.item_tier]
     for _ in range(trove_stock):
         num_coins += random.randint(bounds[0], bounds[1])
-    trove_msg += f"{trove_object.item_emoji} {trove_stock}x {trove_object.item_name} opened: "
-    return num_coins, trove_msg
+        if random.randint(1, 100000) <= bounds[2]:
+            num_lotus += 1
+    return num_lotus, num_coins, f"{trove_object.item_emoji} {trove_stock:,}x {trove_object.item_name} opened: "
