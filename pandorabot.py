@@ -267,8 +267,8 @@ def run_discord_bot():
             print(f"Pandora Bot Synced! {len(synced)} command(s)")
             await ctx.send('Pandora Bot commands synced!')
         elif keyword == "Startup":
-            await encounters.startup_clear_automaps()
-            await bosses.clear_boss_info(ctx.channel.id, "All")
+            await encounters.clear_automapper(None, startup=True)
+            await encounters.clear_boss_encounter_info(ctx.channel.id, None)
             await ctx.send('Pandora Bot startup tasks completed!')
         elif keyword == "Test":
             title = ""
@@ -479,6 +479,7 @@ def run_discord_bot():
         extension = f"Trove{'s' if total_stock > 1 else ''}"
         title_msg = f"{player_obj.player_username}: Opening {total_stock:,} {extension}!"
         embed_msg = discord.Embed(colour=discord.Colour.dark_teal(), title=title_msg,  description="Feeling lucky?")
+        # embed_msg.set_thumbnail(url="") add highest tier trove thumbnail once able
         message = await ctx.send(embed=embed_msg)
         # Handle the opening.
         num_lotus, reward_coins = 0, 0
@@ -494,7 +495,8 @@ def run_discord_bot():
                 embed_msg.add_field(name="", value=f"{tier_icon} {trove_msg}", inline=False)
                 await message.edit(embed=embed_msg)
                 await asyncio.sleep(2)
-                embed_msg.add_field(name="", value=f"{gli.coin_icon} {coin_msg} lotus coins!{lotus_msg}", inline=False)
+                loot_msg = f"Received {gli.coin_icon} {coin_msg} lotus coins!{lotus_msg}"
+                embed_msg.add_field(name="", value=loot_msg, inline=False)
                 await message.edit(embed=embed_msg)
                 await asyncio.sleep(2)
         # Handle lotus items and finalize the output.
@@ -1223,7 +1225,10 @@ def run_discord_bot():
     @app_commands.guilds(discord.Object(id=guild_id))
     async def play(ctx, username: str):
         await ctx.defer()
-        if not any(ctx.channel.id in sl for sl in gli.global_server_channels):
+        if ctx.guild.id not in gli.servers.keys():
+            await ctx.send("Server not active")
+            return
+        if ctx.channel.id not in gli.servers[int(ctx.guild.id)][0]:
             await ctx.send("You may not run this command in this channel.")
             return
         check_player = await player.get_player_by_discord(ctx.author.id)
@@ -1259,12 +1264,14 @@ def run_discord_bot():
     @app_commands.guilds(discord.Object(id=guild_id))
     async def guide(ctx):
         await ctx.defer()
-        if not any(ctx.channel.id in sl for sl in gli.global_server_channels):
+        if ctx.guild.id not in gli.servers.keys():
+            await ctx.send("Server not active")
+            return
+        if ctx.channel.id not in gli.servers[int(ctx.guild.id)][0]:
             await ctx.send("You may not run this command in this channel.")
             return
         embed_msg = discord.Embed(colour=discord.Colour.dark_teal(),
                                   title=menus.guide_dict[0][0], description=menus.guide_dict[0][1])
-        current_guide = "Beginner"
         guide_view = menus.GuideMenu()
         await ctx.send(embed=embed_msg, view=guide_view)
 

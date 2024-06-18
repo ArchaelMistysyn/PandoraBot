@@ -12,9 +12,12 @@ import inventory
 from pandoradb import run_query as rqy
 
 
-combat_command_list = [("solo", "Challenge a solo boss. Stamina Cost: 200", 0),
-                       ("arena", "Enter pvp combat with another player.", 1),
-                       ("abandon", "Abandon an active solo encounter.", 2)]
+combat_command_list = [("solo", "Type Options: [Random/Fortress/Dragon/Demon/Paragon/Arbiter]. Stamina Cost: 200", 0),
+                       ("summon", "Consume a summoning item to summon a high tier boss. Options [1-3]", 1),
+                       ("gauntlet", "Challenge the gauntlet in the Spire of Illusions.", 2),
+                       ("palace", "Enter the Divine Palace. [WARNING: HARD]", 3),
+                       ("arena", "Enter pvp combat with another player. Daily", 4),
+                       ("abandon", "Abandon an active solo boss encounter. 1 Minute delay.", 5)]
 
 boss_attack_dict = {
     "Dragon": ["[ELEMENT] Claw Slash", "[ELEMENT] Wing Blast", "Amplified [ELEMENT] Breath"],
@@ -213,11 +216,11 @@ async def hit_boss(tracker_obj, boss_obj, player_obj, combo_count, hit_type="Reg
     damage, mana_msg = check_mana(player_obj, tracker_obj, damage)
     damage, status_msg = check_lock(player_obj, tracker_obj, damage)
     damage, second_msg = check_bloom(player_obj, damage)
-    damage, extension = (boss_obj.damage_cap, " *LIMIT*") if damage >= boss_obj.damage_cap != -1 else (damage, "")
     if player_obj.unique_glyph_ability[2]:
         damage *= (1 + player_obj.bleed_mult)
     if status_msg == " *TIME SHATTER*" or critical_type != "":
         damage *= random.randint(1, max(1, player_obj.rng_bonus))
+    damage, extension = (boss_obj.damage_cap, " *LIMIT*") if damage >= boss_obj.damage_cap != -1 else (damage, "")
     hit_msg = f"{combo_count}x Combo: {skill_name} {sm.number_conversion(damage)}{extension}"
     if hit_type == "Ultimate":
         hit_msg = f"Ultimate: {skill_name} {sm.number_conversion(damage)}{extension}"
@@ -464,22 +467,17 @@ async def get_random_opponent(player_echelon):
     return opponent_object
 
 
-async def check_flag(player_obj):
-    raw_query = "SELECT * FROM AbandonEncounter WHERE player_id = :player_check"
-    df = await rqy(raw_query, return_value=True, params={'player_check': int(player_obj.player_id)})
-    return True if df is not None and len(df) != 0 else False
-
-
-async def toggle_flag(player_obj):
-    player_id = int(player_obj.player_id)
-    # Check if a flag exists
-    check_query = "SELECT * FROM AbandonEncounter WHERE player_id = :player_check"
-    df = await rqy(check_query, return_value=True, params={'player_check': player_id})
-    if len(df) != 0:
-        toggle_query = "DELETE FROM AbandonEncounter WHERE player_id = :player_check"
-    else:
-        toggle_query = "INSERT INTO AbandonEncounter (player_id) VALUES (:player_check)"
-    await rqy(toggle_query, params={'player_check': player_id})
+async def abandon_flag(player_obj, toggle=False):
+    params = {'player_check': player_obj.player_id}
+    check_query = "SELECT abandon, encounter FROM EncounterList WHERE player_id = :player_check"
+    df = await rqy(check_query, return_value=True, params=params)
+    if df is None or len(df) == 0:
+        return None
+    elif int(df['abandon'].values[0]) == 1 and str(df['encounter'].values[0]) in ["solo", "gauntlet"]:
+        return 1
+    if toggle:
+        await rqy("UPDATE EncounterList SET abandon = 1 WHERE player_id = :player_check", params=params)
+    return 0
 
 
 def limit_elements(player_obj, e_weapon):

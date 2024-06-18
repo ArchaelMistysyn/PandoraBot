@@ -16,7 +16,10 @@ import pilengine
 
 
 async def check_registration(ctx):
-    if not any(ctx.channel.id in sl for sl in gli.global_server_channels):
+    if ctx.guild.id not in gli.servers.keys():
+        await ctx.send("Server not active")
+        return
+    if ctx.channel.id not in gli.servers[int(ctx.guild.id)][0]:
         await ctx.send("This command may not be used in this channel.")
         return None
     command_user = await player.get_player_by_discord(ctx.author.id)
@@ -58,7 +61,7 @@ async def send_notification(ctx_object, player_obj, notification_type, value):
     title, message = notification_dict[notification_type][0]
     filepath = await pilengine.build_notification(player_obj, message, notification_type, title, item, rarity)
     channels = ctx_object.guild.channels
-    channel_object = discord.utils.get(channels, id=gli.channel_list[0])
+    channel_object = discord.utils.get(channels, id=gli.servers[int(ctx_object.guild.id)][1])
     await ctx_object.send(file=discord.File(filepath))
 
 

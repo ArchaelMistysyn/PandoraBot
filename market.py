@@ -41,7 +41,7 @@ async def get_daily_fish_items(fish_only=False):
     if fish_only:
         return fish_obj
     item_list = [itemdata.itemdata_dict[key] for key in itemdata.itemdata_dict.keys()
-                 if fish_obj.item_tier == itemdata.itemdata_dict[key]['tier'] and "Fish" not in key]
+                 if fish_obj.item_tier == itemdata.itemdata_dict[key]['tier'] and "Fish" not in key and "Fae" not in key]
     trade_obj = inventory.BasicItem(fish_random.choice(item_list)['item_id'])
     return fish_obj, trade_obj
 

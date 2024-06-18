@@ -30,10 +30,10 @@ import tarot
 
 
 class RaidCog(commands.Cog):
-    def __init__(self, bot, active_boss, channel_id, channel_num, sent_message, channel_object):
+    def __init__(self, bot, active_boss, channel_object, channel_id, sent_message):
         self.bot = bot
         self.active_boss = active_boss
-        self.channel_object, self.channel_id, self.channel_num = channel_num, channel_object, channel_id
+        self.channel_object, self.channel_id = channel_object, channel_id
         self.sent_message = sent_message
         self.tracker_list = []
         self.lock = asyncio.Lock()
@@ -45,18 +45,17 @@ class RaidCog(commands.Cog):
     @tasks.loop(seconds=60)
     async def raid_manager(self):
         async with self.lock:
-            is_alive = await self.bot.raid_boss(self.tracker_list, self.active_boss, self.channel_id,
-                                                self.channel_num, self.sent_message, self.channel_object)
+            is_alive = await self.bot.raid_boss(self.tracker_list, self.active_boss,
+                                                self.channel_object, self.channel_id, self.sent_message)
             if is_alive:
                 return
-            await bosses.clear_boss_info(self.channel_id, 0)
+            await encounters.clear_boss_encounter_info(self.channel_id)
             level, boss_type, boss_tier = encounters.get_raid_boss_details(self.channel_num)
-            active_boss = await bosses.spawn_boss(self.channel_id, 0, boss_tier, boss_type, level, self.channel_num)
+            active_boss = await bosses.spawn_boss(self.channel_id, None, boss_tier, boss_type, level)
             self.active_boss = active_boss
             self.tracker_list = []
-            embed_msg = active_boss.create_boss_embed()
-            raid_button = battleengine.RaidView(self.channel_num)
-            sent_message = await self.channel_object.send(embed=embed_msg, view=raid_button)
+            embed_msg, raid_view = active_boss.create_boss_embed(), battleengine.RaidView()
+            sent_message = await self.channel_object.send(embed=embed_msg, view=raid_view)
             self.sent_message = sent_message
 
 
@@ -80,10 +79,9 @@ class SoloCog(commands.Cog):
     @tasks.loop(seconds=60)
     async def solo_manager(self):
         async with self.lock:
-            # Handle abandon
-            if await combat.check_flag(self.player_obj):
-                await combat.toggle_flag(self.player_obj)
-                await bosses.clear_boss_info(self.channel_id, self.player_obj.player_id)
+            if await combat.abandon_flag(self.player_obj) == 1:
+                await encounters.clear_boss_encounter_info(self.channel_id, self.player_obj.player_id)
+                await self.ctx.send(f"{self.player_obj.player_username} Abandon successful.")
                 self.cog_unload()
                 return
             continue_encounter, self.active_boss = await self.bot.solo_boss(

@@ -15,8 +15,9 @@ tier_colors = {0: 0x2C2F33, 1: 0x43B581, 2: 0x3498DB, 3: 0x9B59B6, 4: 0xF1C40F,
 # BOT DATA
 # Discord Lists
 bot_admin_ids = [185530717638230016]
-channel_list = [1157937444931514408, 1157934010090131458, 1157935203394785291, 1157935449462013972, 1157935876853211186]
-global_server_channels = [channel_list]
+# Server ID: ([command channels], raid channel, notification channel, announcement channel)
+servers = {1011375205999968427: ([1157937444931514408],
+                                 1252681803916116211, 1157937444931514408, 1157937444931514408)}
 GM_id_dict = {185530717638230016: "Archael", 141837266866667520: "Zweii", 353090154044325906: "Viper",
               1177738094666059877: "Eleuia"}
 web_url = "https://kyleportfolio.ca/botimages/"
@@ -103,8 +104,7 @@ skill_names_dict = {
     "Mage": ["Magical Bolt", "Aether Blast", "Mystic Maelstrom", "Astral Convergence"],
     "Weaver": ["Power Stitch", "Infused Slice", "Multithreading", "Reality Fabricator"],
     "Rider": ["Valiant Charge", "Surge Dash", "Mounted Onslaught", "Chaos Rampage"],
-    "Summoner": ["Savage Blows", "Moonlit Hunt", "Berserk Frenzy", "Synchronized Wrath"]
-}
+    "Summoner": ["Savage Blows", "Moonlit Hunt", "Berserk Frenzy", "Synchronized Wrath"]}
 
 # ITEM LISTS
 crafting_gem = ["Blazing Ruby", "Drowned Sapphire", "Silent Topaz", "Ancient Agate", "Whispering Emerald",
@@ -133,8 +133,7 @@ quality_damage_map = {
     (5, 1): "Prelude", (5, 2): "Abject", (5, 3): "Hollow", (5, 4): "Abyssal", (5, 5): "Emptiness",
     (6, 1): "Prelude", (6, 2): "Opalescent", (6, 3): "Prismatic", (6, 4): "Resplendent", (6, 5): "Iridescent",
     (7, 1): "Prelude", (7, 2): "Tainted", (7, 3): "Cursed", (7, 4): "Corrupt", (7, 5): "Fallen",
-    (8, 1): "Prelude", (8, 2): "Majestic", (8, 3): "Sanctified", (8, 4): "Radiant", (8, 5): "Transcendent",
-}
+    (8, 1): "Prelude", (8, 2): "Majestic", (8, 3): "Sanctified", (8, 4): "Radiant", (8, 5): "Transcendent"}
 
 # Max Enhancement by Tier
 max_enhancement = [10, 20, 30, 40, 50, 100, 150, 200]
