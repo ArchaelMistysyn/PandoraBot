@@ -22,20 +22,17 @@ fortress_types = ['Nirvana', 'Paradise', 'Arcadia', 'Eden', 'Dream',
 fortress_variants = [['Devouring', 0], ['Vengeful', 0], ['Blighted', 1], ['Plagued', 1],
                      ['Writhing', 2], ['Agony', 2], ['Overgrown', 3], ['Man-Eating', 3],
                      ['Shrieking', 4], ['Howling', 4]]
-
 dragon_list_t1 = ["Zelphyros, Wind", "Sahjvadiir, Earth", "Cyries'vael, Ice"]
 dragon_list_t2 = ["Arkadrya, Lightning", "Phyyratha, Fire", "Elyssrya, Water"]
 dragon_list_t3 = ["Y'thana, Light", "Rahk'vath, Shadow"]
 dragon_list_t4 = ["VII - Astratha, The Dimensional"]
 dragon_names = [dragon_list_t1, dragon_list_t2, dragon_list_t3, dragon_list_t4]
-
 demon_list_t1 = ["Beelzebub", "Azazel", "Astaroth", "Belial"]
 demon_list_t2 = ["Abbadon", "Asura", "Baphomet", "Charybdis"]
 demon_list_t3 = ["Iblis", "Lilith", "Ifrit", "Scylla"]
 demon_list_t4 = ["VIII - Tyra, The Behemoth"]
 demon_names = [demon_list_t1, demon_list_t2, demon_list_t3, demon_list_t4]
 demon_colours = ["Crimson", "Azure", "Violet", "Bronze", "Jade", "Ivory", "Stygian", "Gold", "Rose"]
-
 paragon_names, arbiter_names, incarnate_names = [[] for _ in range(6)], [[] for _ in range(7)], [[] for _ in range(8)]
 for numeral, (name, tier) in card_dict.items():
     card_type = card_type_dict.get(numeral)
@@ -45,9 +42,10 @@ for numeral, (name, tier) in card_dict.items():
         arbiter_names[tier - 1].append(f"{numeral} - {name}")
     elif card_type == "Incarnate":
         incarnate_names[tier - 1].append(f"{numeral} - {name}")
-
 all_names_dict = {"Fortress": fortress_names, "Dragon": dragon_names, "Demon": demon_names,
                   "Paragon": paragon_names, "Arbiter": arbiter_names, "Incarnate": incarnate_names}
+raid_bosses = {1: "Veritas, Sacred Ruler of Prophecy", 3: "Tiamat, Sacred Ruler of Fury",
+               5: "Geb, Sacred Ruler of Sin", 7: "Alaric, Sacred Ruler of Totality"}
 
 
 # Boss class

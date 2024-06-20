@@ -812,37 +812,48 @@ def create_error_embed(error_msg):
     return embed_msg
 
 
+class TermsOfServiceView(discord.ui.View):
+    def __init__(self, discord_id, username):
+        super().__init__(timeout=None)
+        self.username, self.discord_id = username, discord_id
+
+    @discord.ui.button(label="Accept", style=discord.ButtonStyle.blurple)
+    async def accept_tos(self, interaction: discord.Interaction, button: discord.Button):
+        if interaction.user.id != self.player_user.discord_id:
+            return
+        title = "Register - Select Class"
+        register_msg = ('In an ancient ruin, you come across an empty room in which sits a peculiar box. '
+                        'Hesitating at first you consider the possibility of a trap or mimic. '
+                        'Without a trap in sight, you reach forward and open the box.\n'
+                        'A flurry of souls flood the room and spill out into the corridor. '
+                        'One pauses and speaks softly into your mind. '
+                        '"Everything begins and ends with a wish. What do you wish to be?" '
+                        'You think it for only a second and the voice responds with a playful laugh, '
+                        '"Let it be so." Then the voice disappears without a trace. '
+                        'Silence falls and then all that remains is an '
+                        'otherworldly girl staring at you in confusion.')
+        embed_msg = discord.Embed(colour=discord.Colour.dark_teal(), title=title, description=register_msg)
+        await interaction.response.edit_message(embed=embed_msg, view=ClassSelect(self.discord_id, self.username))
+
+
 class ClassSelect(discord.ui.View):
     def __init__(self, discord_id, username):
         super().__init__(timeout=None)
-        self.username = username
-        self.discord_id = discord_id
+        self.username, self.discord_id = username, discord_id
+        descriptor = ["Valiant", "Precise", "Arcane", "Stealthy", "Mysterious", "Mounted", "Trusted"]
+        opt = [discord.SelectOption(
+            emoji=gli.class_icon_list[idx], label=class_name, description=f"The {descriptor[idx]} {class_name}"
+        ) for idx, class_name in enumerate(gli.class_names)]
+        self.select_menu = discord.ui.Select(placeholder="Select a class!", min_values=1, max_values=1, options=opt)
+        self.select_menu.callback = self.class_callback
+        self.add_item(self.select_menu)
 
-    @discord.ui.select(
-        placeholder="Select a class!", min_values=1, max_values=1,
-        options=[
-            discord.SelectOption(
-                emoji=gli.class_icon_list[0], label="Knight", description="The Valiant Knight"),
-            discord.SelectOption(
-                emoji=gli.class_icon_list[1], label="Ranger", description="The Precise Ranger"),
-            discord.SelectOption(
-                emoji=gli.class_icon_list[2], label="Mage", description="The Arcane Mage"),
-            discord.SelectOption(
-                emoji=gli.class_icon_list[3], label="Assassin", description="The Stealthy Assassin"),
-            discord.SelectOption(
-                emoji=gli.class_icon_list[4], label="Weaver", description="The Mysterious Weaver"),
-            discord.SelectOption(
-                emoji=gli.class_icon_list[5], label="Rider", description="The Mounted Rider"),
-            discord.SelectOption(
-                emoji=gli.class_icon_list[6], label="Summoner", description="The Trusted Summoner")
-        ]
-    )
-    async def class_callback(self, interaction: discord.Interaction, class_select: discord.ui.Select):
+    async def class_callback(self, interaction: discord.Interaction):
         if interaction.user.id != self.discord_id:
             return
         new_player = player.PlayerProfile()
         new_player.player_username = self.username
-        chosen_class = class_select.values[0]
+        chosen_class = interaction.data['values'][0]
         msg = await new_player.add_new_player(chosen_class, interaction.user.id)
         chosen_class_role = f"Class Role - {chosen_class}"
         add_role = discord.utils.get(interaction.guild.roles, name=chosen_class_role)

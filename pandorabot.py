@@ -88,6 +88,7 @@ def run_discord_bot():
         def decorator(func):
             func.category_type, func.position = category, command_position
             return func
+
         return decorator
 
     async def on_shutdown():
@@ -478,7 +479,7 @@ def run_discord_bot():
         # Build the message.
         extension = f"Trove{'s' if total_stock > 1 else ''}"
         title_msg = f"{player_obj.player_username}: Opening {total_stock:,} {extension}!"
-        embed_msg = discord.Embed(colour=discord.Colour.dark_teal(), title=title_msg,  description="Feeling lucky?")
+        embed_msg = discord.Embed(colour=discord.Colour.dark_teal(), title=title_msg, description="Feeling lucky?")
         # embed_msg.set_thumbnail(url="") add highest tier trove thumbnail once able
         message = await ctx.send(embed=embed_msg)
         # Handle the opening.
@@ -620,7 +621,7 @@ def run_discord_bot():
             description = "You are unable to enter the divine plane in your current state."
             location_view = None
             embed_msg.set_image(url="")
-        embed_msg.description=description
+        embed_msg.description = description
         await ctx.send(embed=embed_msg, view=location_view)
 
     # Gear commands
@@ -889,7 +890,8 @@ def run_discord_bot():
         if target is None:
             await ctx.send(f"{receiving_player.display_name} is not registered.")
             return
-        trade_obj, err_msg = await trading.create_trade(player_obj, target, offer_item, offer_qty, receive_item, receive_qty)
+        trade_obj, err_msg = await trading.create_trade(player_obj, target, offer_item, offer_qty, receive_item,
+                                                        receive_qty)
         trade_view = trading.TradeView(trade_obj)
         if err_msg != "":
             await ctx.send(err_msg)
@@ -973,7 +975,7 @@ def run_discord_bot():
 
     @set_command_category('trade', 7)
     @pandora_bot.hybrid_command(name='purge', help="Sells all gear in or below a tier. "
-                                "Types: [Weapon, Armour, Greaves, Amulet, Wings, Crest, Gems]")
+                                                   "Types: [Weapon, Armour, Greaves, Amulet, Wings, Crest, Gems]")
     @app_commands.guilds(discord.Object(id=guild_id))
     async def purge(ctx, tier: int, item_type=""):
         await ctx.defer()
@@ -1032,6 +1034,7 @@ def run_discord_bot():
         await ctx.send(embed=embed_msg, view=infuse_view)
 
         # Crafting Commands
+
     @set_command_category('craft', 3)
     @pandora_bot.hybrid_command(name='abyss', help="Go to the ???")
     @app_commands.guilds(discord.Object(id=guild_id))
@@ -1244,20 +1247,22 @@ def run_discord_bot():
         if len(username) > 10:
             await ctx.send("Please enter a username 10 or less characters.")
             return
-        register_msg = ('In an ancient ruin, you come across an empty room in which sits a peculiar box. '
-                        'Hesitating at first you consider the possibility of a trap or mimic. '
-                        'Without a trap in sight, you reach forward and open the box.\n'
-                        'A flurry of souls flood the room and spill out into the corridor. '
-                        'One pauses and speaks softly into your mind. '
-                        '"Everything begins and ends with a wish. What do you wish to be?" '
-                        'You think it for only a second and the voice responds with a playful laugh, '
-                        '"Let it be so." Then the voice disappears without a trace. '
-                        'Silence falls and then all that remains is an '
-                        'otherworldly girl staring at you in confusion.')
-        embed_msg = discord.Embed(colour=discord.Colour.dark_teal(), title="Register - Select Class",
-                                  description=register_msg)
-        class_view = menus.ClassSelect(ctx.author.id, username)
-        await ctx.send(embed=embed_msg, view=class_view)
+        terms_msg = ("By accepting you agree to the following terms:"
+                     "**1** - I will act in good faith while using the bot and use it responsibly.\n"
+                     "**2** - I will not attempt to cheat, bot, or exploit and will play fairly.\n"
+                     "**3** - I will not attempt to hack or manipulate the bot or it's data.\n"
+                     "**4** - I will not intentionally spam or attack the bot with malicious intent.\n"
+                     "**5** - I will report any major issues or bugs via the pinned ticket system.\n"
+                     "**6** - I will handle myself appropriately and be respectful of all members.\n"
+                     "**7** - I understand that I am responsible for my own actions.\n"
+                     "**8** - I understand that the services are offered at no cost and no services are guaranteed.\n"
+                     "**9** - I understand that the bot is not responsible for any choices of the user.\n"
+                     "**10** - I accept any resolution and decision issued by the game developer and moderators.\n"
+                     "**11** - I understand that all contents of this bot are fictional and I do not own anything\n"
+                     "Additionally by using the bot I consent to allowing it to use any data provided by me.\n"
+                     "The bot does not take responsibility for any RMT actions of it's users.")
+        embed_msg = discord.Embed(colour=discord.Colour.dark_teal(), title="Terms of Service", description=terms_msg)
+        await ctx.send(embed=embed_msg, view=menus.TermsOfServiceView(ctx.author.id, username))
 
     @set_command_category('info', 2)
     @pandora_bot.hybrid_command(name='guide', help="Display basic starter guide.")
@@ -1374,28 +1379,20 @@ def run_discord_bot():
     async def credits_list(ctx):
         await ctx.defer()
         title = "Game created by: Kyle Mistysyn (Archael)"
-        artist_data = [
-            ("Daerun", "Character Illustrator (Upwork)"),
-            ("Nong Dit @Nong Dit", "Frame Artist (Fiverr)"),
-            ("Aztra.studio @Artherrera", "Emoji/Icon Artist (Fiverr)"),
-            ("Labs @labcornerr", "Emoji/Icon Artist (Fiverr)"),
-            ("Daimiuk @daimiuk", "Scene/Icon Artist (Fiverr)"),
-            ("Faris @bigbullmonk", "Icon Artist (Fiverr)"),
-            ("Claudia", "Scene Artist (Volunteer)"),
-            ("Volff", "Photoshop Editing (Volunteer)")
-        ]
-        programming_data = [
-            ("Archael", "Programmer")
-        ]
-        tester_data = [
-            ("Zweii", "Alpha Tester"),
-            ("SoulViper", "Alpha Tester"),
-            ("Kaelen", "Alpha Tester"),
-            ("Volff", "Alpha Tester")
-        ]
-        misc_data = [
-            ("Bahamutt", "Programming Support"),
-            ("Pota", "Programming Support")]
+        artist_data = [("Daerun", "Character Illustrator (Upwork)"),
+                       ("Tuul Huur @tuulhuur", "Item Icon Artist (Fiverr)"),
+                       ("Nong Dit @Nong Dit", "Frame Artist (Fiverr)"),
+                       ("Aztra.studio @Artherrera", "Emoji/Icon Artist (Fiverr)"),
+                       ("Labs @labcornerr", "Emoji/Icon Artist (Fiverr)"),
+                       ("Daimiuk @daimiuk", "Scene/Icon Artist (Fiverr)"),
+                       ("Emikohana @emikohana", "Fishing Emoji Artist (Fiverr)"),
+                       ("Faris @bigbullmonk", "Icon Artist (Fiverr)"),
+                       ("Claudia", "Scene Artist (Volunteer)"),
+                       ("Volff", "Photoshop Editing (Volunteer)")]
+        programming_data = [("Archael", "Programmer")]
+        tester_data = [("Zweii", "Alpha Tester"), ("SoulViper", "Alpha Tester"),
+                       ("Kaelen", "Alpha Tester"), ("Volff", "Alpha Tester")]
+        misc_data = [("Bahamutt", "Programming Support"), ("Pota", "Programming Support")]
         artist_list = "\n".join(f"**{name}** - {role}" for name, role in artist_data)
         programmer_list = "\n".join(f"**{name}** - {role}" for name, role in programming_data)
         tester_list = "\n".join(f"**{name}** - {role}" for name, role in tester_data)

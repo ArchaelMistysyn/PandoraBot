@@ -326,9 +326,12 @@ uncategorized_data = [
      "Their pitch-black scales conceal precious and unique gems that grow inside their small bodies. ", 0],
     ['RoyalCoin', 'Royal Lotus Coin', 100, 8, '<:Royal_Lotus_Coin:1236080235313893417>',
      "A sacred coin blessed by gods. It is said to be indestructible.", 0],
-    ['Nephilim', "Nephilim's Heart", 100, 8, '<a:elootitem:1144477550379274322>',
+    ['Nephilim', "Nephilim's Wicked Heart", 100, 8, '<a:elootitem:1144477550379274322>',
      "The heart of the lotus incarnate. It's divine luster has long since withered away "
      "leaving a lingering resentment in it's place.", 0],
+    ['Pandora', "Pandora's Twinkling Heart", 100, 8, '<a:elootitem:1144477550379274322>',
+     "The spiritual heart of the celestial paragon. "
+     "At the dawn of creation Pandora bore her celestial heart as a power source for her hammer.", 0],
     ['Metamorphite', 'Metamorphite Ore', 100, 7, '<a:elootitem:1144477550379274322>',
      "A mysterious ore that can drastically change an item.", 0]]
 itemdata_dict = build_item_dict(itemdata_dict, uncategorized_data, unique_index=True)

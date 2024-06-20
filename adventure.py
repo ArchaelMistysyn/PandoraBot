@@ -570,17 +570,24 @@ class AdventureRoomView(discord.ui.View):
         await callbacks[variant]()
 
     async def heart_callback(self, interaction_obj, variant, active_room):
-        target_item = inventory.BasicItem(f"Heart{variant + 1}")
-        luck_value = -1
-        title, description = "Magical Overload!", f"The creature's heart was destroyed.\nLuck {luck_value}"
-        if random.randint(1, 100) <= self.success_rates[variant]:
+        if random.randint(1, 100000) <= self.expedition.luck:
+            luck_value, title = 10, "Ultimate Heart Acquired!"
+            heart_id = "Pandora" if variant == 0 else "Nephilim"
+        elif random.randint(1, 100) <= self.success_rates[variant]:
             await inventory.update_stock(self.expedition.player_obj, target_item.item_id, 1)
-            luck_value = 1
-            title = "Heart Preserved!"
+            luck_value, heart_id, title = 1, f"Heart{variant + 1}", "Heart Preserved!"
+        else:
+            luck_value, heart_id = -1, None
+            title, description = "Magical Overload!", f"The creature's heart was destroyed.\nLuck {luck_value}"
+        target_item = inventory.BasicItem(heart_id) if heart_id is not None else None
+        if target_item:
             description = f"{sm.reward_message(target_item)} acquired!\n Luck +{luck_value}"
         self.expedition.luck = max(1, self.expedition.luck + luck_value)
         self.embed = discord.Embed(colour=self.expedition.colour, title=title, description=description)
         await interaction_obj.response.edit_message(embed=self.embed, view=self.new_view)
+        if sm.check_rare_item(target_item.item_id):
+            await sm.send_notification(self.expedition.ctx_object, self.expedition.player_obj,
+                                       "Item", target_item.item_id)
 
     async def selection_callback(self, interaction_obj, variant, active_room):
         async def option_callback():
@@ -591,7 +598,7 @@ class AdventureRoomView(discord.ui.View):
             await interaction_obj.response.edit_message(embed=self.embed, view=self.new_view)
             if sm.check_rare_item(target_item.item_id):
                 await sm.send_notification(self.expedition.ctx_object, self.expedition.player_obj,
-                                                      "Item", target_item.item_id)
+                                           "Item", target_item.item_id)
 
         async def speed_callback():
             # Handle trap

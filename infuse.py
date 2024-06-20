@@ -191,10 +191,9 @@ class InfuseView(discord.ui.View):
     async def select_callback(self, interaction: discord.Interaction):
         if interaction.user.id != self.player_obj.discord_id:
             return
-        selected_category = interaction.data['values'][0]
         embed_msg = discord.Embed(colour=discord.Colour.magenta(),
                                   title=NPC_name, description="Alright, what do you need?")
-        new_view = SelectRecipeView(self.ctx_obj, self.player_obj, selected_category)
+        new_view = SelectRecipeView(self.ctx_obj, self.player_obj, interaction.data['values'][0])
         await interaction.response.edit_message(embed=embed_msg, view=new_view)
 
 

@@ -14,6 +14,12 @@ import player
 import inventory
 import pilengine
 
+ultra_id_list = ["Skull3", "EssenceXXX"]
+ultra_id_list += [f"Lotus{x}" for x in range(1, 10)]
+uber_id_list = ["Gemstone11", "DarkStar", "LightStar", "Gemstone11", "Nadir", "Lotus10"]
+ultimate_id_list = ["Skull4", "Nephilim", "Sacred", "Ruler", "Pandora"]
+u_rarity_id_list = ultra_id_list + uber_id_list + ultimate_id_list
+
 
 async def check_registration(ctx):
     if ctx.guild.id not in gli.servers.keys():
@@ -41,25 +47,24 @@ async def check_click(interaction, player_obj, new_embed, new_view):
 
 
 def check_rare_item(item_id):
-    id_list = ["DarkStar", "LightStar", "Gemstone11", "Skull3", "Skull4", "Nadir", "EssenceXXX"]
-    return True if "Lotus" in item_id or item_id in id_list else False
+    return True if item_id in u_rarity_id_list else False
 
 
-async def send_notification(ctx_object, player_obj, notification_type, value):
-    uber_id_list = ["Skull4", "DarkStar", "LightStar", "Gemstone11", "Nadir", "Lotus10"]
-    rarity = "Uber Rare" if value in uber_id_list else "Ultra Rare"
-    item = inventory.BasicItem(value) if notification_type == "Item" and value is not None else None
+async def send_notification(ctx_object, player_obj, notice_type, value):
+    rarity = "Ultimate Rare" if value in ultimate_id_list else "Uber Rare" if value in uber_id_list else "Ultra Rare"
+    item = inventory.BasicItem(value) if notice_type == "Item" and value is not None else None
     notification_dict = {
         "Level": [(f"Congratulations {player_obj.player_username}", f"Reached Level: {player_obj.player_level}"), 1],
         "Achievement": [(f"{player_obj.player_username} Unlocked", f"Achievement: {value}"), 20],
         "Item": [(f"{player_obj.player_username} Obtained {rarity}", f"{item.item_name}" if item is not None else ""), 5],
         "Sovereign": [(f"{player_obj.player_username} Obtained Sovereign Item", value), 10],
-        "Sacred": [(f"{player_obj.player_username} Obtained Sacred Item", value), 50]}
-    if notification_type not in notification_dict.keys():
+        "Sacred": [(f"{player_obj.player_username} Obtained Sacred Item", value), 100]}
+    if notice_type not in notification_dict.keys():
         return
-    await inventory.update_stock(player_obj, "RoyalCoin", notification_dict[notification_type][1])
-    title, message = notification_dict[notification_type][0]
-    filepath = await pilengine.build_notification(player_obj, message, notification_type, title, item, rarity)
+    num_coins = 50 if rarity == "Ultimate Rare" else 25 if rarity == "Uber Rare" else notification_dict[notice_type][1]
+    await inventory.update_stock(player_obj, "RoyalCoin", num_coins)
+    title, message = notification_dict[notice_type][0]
+    filepath = await pilengine.build_notification(player_obj, message, notice_type, title, item, rarity)
     channels = ctx_object.guild.channels
     channel_object = discord.utils.get(channels, id=gli.servers[int(ctx_object.guild.id)][1])
     await ctx_object.send(file=discord.File(filepath))
