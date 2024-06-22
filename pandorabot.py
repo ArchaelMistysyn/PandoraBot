@@ -243,13 +243,19 @@ def run_discord_bot():
             count = 0
             for class_name, (low_base, both_tiers, high_tiers) in gli.weapon_type_dict.items():
                 for item_type in low_base:
-                    count += await pilengine.generate_and_combine_gear(item_type, start_tier=1, end_tier=4)
+                    count += await pilengine.generate_and_combine_gear(item_type, 1, 4)
+                    await asyncio.sleep(1)
                 for item_type in both_tiers:
-                    count += await pilengine.generate_and_combine_gear(item_type, start_tier=1, end_tier=8)
+                    count += await pilengine.generate_and_combine_gear(item_type, 1, 8)
+                    await asyncio.sleep(1)
                 for item_type in high_tiers:
-                    count += await pilengine.generate_and_combine_gear(item_type, start_tier=5, end_tier=8)
+                    count += await pilengine.generate_and_combine_gear(item_type, 5, 8)
+                    await asyncio.sleep(1)
+                for ele_idx in range(9):
+                    count += await pilengine.generate_and_combine_gear("Ring", 4, 5, ele_idx)
+                    await asyncio.sleep(1)
             for item_type in gli.sovereign_item_list:
-                count += await pilengine.generate_and_combine_gear(item_type, start_tier=8, end_tier=8)
+                count += await pilengine.generate_and_combine_gear(item_type, 8, 8)
             non_weapon_list = ["Armour", "Greaves", "Amulet", "Wings", "Crest", "Gem", "Pact"]
             for gear_type in non_weapon_list:
                 count += await pilengine.generate_and_combine_gear(gear_type)
@@ -634,7 +640,7 @@ def run_discord_bot():
         if player_obj is None:
             return
         target_user = await player.get_player_by_discord(user.id) if user else player_obj
-        if target_user.player_class == "":
+        if target_user is None:
             await ctx.send("Target user is not registered.")
             return
         if target_user.player_equipped[0] == 0:
@@ -1255,12 +1261,12 @@ def run_discord_bot():
                      "**5** - I will report any major issues or bugs via the pinned ticket system.\n"
                      "**6** - I will handle myself appropriately and be respectful of all members.\n"
                      "**7** - I understand that I am responsible for my own actions.\n"
-                     "**8** - I understand that the services are offered at no cost and no services are guaranteed.\n"
+                     "**8** - I understand that the services may be changed/terminated at any time.\n"
                      "**9** - I understand that the bot is not responsible for any choices of the user.\n"
-                     "**10** - I accept any resolution and decision issued by the game developer and moderators.\n"
-                     "**11** - I understand that all contents of this bot are fictional and I do not own anything\n"
-                     "Additionally by using the bot I consent to allowing it to use any data provided by me.\n"
-                     "The bot does not take responsibility for any RMT actions of it's users.")
+                     "**10** - I accept any resolution or decision issued by the developer and moderators.\n"
+                     "**11** - I understand that all contents are fictional and I do not own anything\n"
+                     "**12** - By using the bot I consent to allowing it to use any data provided by me.\n"
+                     "**13** - The bot does not take responsibility for any RMT actions of it's users.")
         embed_msg = discord.Embed(colour=discord.Colour.dark_teal(), title="Terms of Service", description=terms_msg)
         await ctx.send(embed=embed_msg, view=menus.TermsOfServiceView(ctx.author.id, username))
 
@@ -1289,7 +1295,7 @@ def run_discord_bot():
         if player_obj is None:
             return
         target_user = player_obj if user is None else await player.get_player_by_discord(user.id)
-        if target_user.player_class == "":
+        if target_user is None:
             await ctx.send("Selected user is not registered.")
             return
         embed_msg = await target_user.get_player_stats(1)
@@ -1309,7 +1315,7 @@ def run_discord_bot():
             target_id = user.id
         achv_list = [role.name for role in user_object.roles if "Holder" in role.name or "Herrscher" in role.name]
         target_user = await player.get_player_by_discord(target_id)
-        if target_user.player_class == "":
+        if target_user is None:
             await ctx.send(f"Target user {user_object.name} is not registered.")
             return
         filepath = await pilengine.get_player_profile(target_user, achv_list)
@@ -1406,8 +1412,7 @@ def run_discord_bot():
         embed_msg.add_field(name="__Misc__", value=misc_list.rstrip(), inline=False)
         embed_msg.set_footer(text=f"Copyright: {copy_msg}")
         embed_msg.set_thumbnail(url=gli.archdragon_logo)
-        file_path = await pilengine.build_title_box("Pandora Bot Credits")
-        await ctx.send(file=discord.File(file_path))
+        await ctx.send(file=discord.File(await pilengine.build_title_box("Pandora Bot Credits")))
         await ctx.send(embed=embed_msg)
 
     def build_category_dict():

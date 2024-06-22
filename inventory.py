@@ -6,6 +6,7 @@ import re
 import string
 from discord.ui import Button, View
 from datetime import datetime as dt, timedelta
+from zoneinfo import ZoneInfo
 # import time
 
 # Data imports
@@ -280,11 +281,12 @@ class CustomItem:
     def set_item_name(self):
         # Handle naming exceptions.
         if self.item_base_type in gli.sovereign_item_list:
-            self.item_name = f"{self.item_base_type}"
+            self.item_name = self.item_base_type
             if self.is_sacred:
                 self.item_name += f" [Sacred]"
             return
         elif self.item_type == "R":
+            self.item_name = self.item_base_type
             return
         elif "D" in self.item_type:
             self.set_gem_name()
@@ -897,7 +899,7 @@ async def generate_item(ctx, target_player, tier, elements, item_type, base_type
 async def set_gift(player_obj, item, qty):
     raw_query = ("INSERT INTO GiftBox (issued_by_id, valid_until, claimed_by, gift_item_id, item_qty) "
                  "VALUES (:input_1, :input_2, :input_3, :input_4, :input_5)")
-    v_date = dt.now() + timedelta(days=7)
+    v_date = dt.now(ZoneInfo('America/Toronto')) + timedelta(days=7)
     v_date = v_date.strftime(gli.date_formatting)
     param = {"input_1": player_obj.player_id, "input_2": v_date, "input_3": "", "input_4": item.item_id, "input_5": qty}
     await rqy(raw_query, params=param)
@@ -909,7 +911,7 @@ async def claim_gifts(player_obj):
     if df is None or len(df.index) == 0:
         return None
     gift_data, expired_listing, item_dict = [], [], {}
-    current_date = dt.now()
+    current_date = dt.now(ZoneInfo('America/Toronto'))
     for _, row in df.iterrows():
         v_date = dt.strptime(str(row['valid_until']), gli.date_formatting)
         gift_id = int(row['gift_id'])

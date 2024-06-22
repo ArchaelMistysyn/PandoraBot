@@ -6,6 +6,7 @@ import random
 
 # Data imports
 import globalitems as gli
+import itemdata
 import sharedmethods as sm
 import tarot
 
@@ -15,7 +16,7 @@ import player
 import inventory
 
 # Gear/item imports
-from ringdata import ring_resonance_dict as rrd
+from ringdata import ring_resonance_dict as rrd, ring_icons as ricon
 
 recipe_dict = {
     "Heavenly Infusion": {}, "Elemental Infusion": {}, "Crystal Infusion": {},
@@ -26,7 +27,7 @@ recipe_dict = {
         "Abyss Flame": [("Crystal3", 1), ("Flame1", 10), 80, "Flame2"],
         "Lotus of Serenity": [("Heart1", 99), ("Fragment2", 99), 99, "Lotus2"],
         "Twin Rings of Divergent Stars": [("DarkStar", 1), ("LightStar", 1), 100, "TwinRings"]},
-    "Elemental Ring Infusion": {}, "Primordial Signet Infusion": {}, "Path Ring Infusion": {},
+    "Elemental Signet Infusion": {}, "Primordial Ring Infusion": {}, "Path Ring Infusion": {},
     "Legendary Ring Infusion": {
         "Dragon's Eye Diamond": [("Gemstone9", 15), ("Gemstone10", 3), 100, "7"],
         "Chromatic Tears": [("Gemstone9", 5), ("Gemstone10", 10), 100, "7"],
@@ -71,11 +72,11 @@ for idx, (element, (gemstone, ring_name)) in enumerate(zip(gli.element_names, pr
     temp_item = inventory.BasicItem(gemstone_id)
     add_recipe("Elemental Infusion", temp_item.item_name,
                [("Catalyst", 1), (f"Fae{idx}", 300), 80, gemstone_id])
-    # Elemental Rings
-    add_recipe("Elemental Ring Infusion", f"Elemental Ring of {element}",
+    # Elemental Signets
+    add_recipe("Elemental Signet Infusion", f"Elemental Signet of {element}",
                [(gemstone_id, 2), ("Scrap", 100), 100, "4"])
     # Primordial Rings
-    add_recipe("Primordial Signet Infusion", f"{gemstone} Signet of {ring_name}",
+    add_recipe("Primordial Ring Infusion", f"{gemstone} Ring of {ring_name}",
                [(gemstone_id, 5), ("Gemstone10", 1), 100, "5"])
 void_cost = [('Weapon', ("Scrap", 200)), ('Armour', ("Scrap", 100)), ('Greaves', ("Unrefined2", 10)),
              ('Amulet', ("Scrap", 100)), ('Wing', ("Unrefined1", 10)), ('Crest', ("Unrefined3", 10))]
@@ -143,6 +144,14 @@ class RecipeObject:
             cost_info += f"{item.item_emoji} {item.item_name}: {stock} / {qty}\n"
         cost_info += f"Success Rate: {self.success_rate}%"
         cost_embed = discord.Embed(colour=discord.Colour.dark_orange(), title=cost_title, description=cost_info)
+        if isinstance(self.outcome_item, inventory.BasicItem):
+            cost_embed.set_thumbnail(url=self.outcome_item.item_image)
+        elif self.recipe_name in gli.sovereign_item_list:
+            pass
+        else:
+            temp_ring = inventory.CustomItem(player_obj.player_id, "R", self.outcome_item, self.recipe_name)
+            ring_image = sm.get_gear_thumbnail(temp_ring)
+            cost_embed.set_thumbnail(url=ring_image)
         return cost_embed
 
     async def can_afford(self, player_obj, num_crafts):
@@ -193,6 +202,7 @@ class InfuseView(discord.ui.View):
             return
         embed_msg = discord.Embed(colour=discord.Colour.magenta(),
                                   title=NPC_name, description="Alright, what do you need?")
+        embed_msg.set_image(url=gli.infuse_img)
         new_view = SelectRecipeView(self.ctx_obj, self.player_obj, interaction.data['values'][0])
         await interaction.response.edit_message(embed=embed_msg, view=new_view)
 
@@ -206,9 +216,11 @@ class SelectRecipeView(discord.ui.View):
         # Build the option menu dynamically based on the category's recipes.
         category_recipes = recipe_dict.get(self.category, {})
         options_data_list = []
-        for recipe_name, recipe in category_recipes.items():
+        for recipe_idx, (recipe_name, recipe) in enumerate(category_recipes.items()):
             if "Ring" in self.category or "Signet" in self.category:
-                option_emoji = "💍"  # Need specific item icons
+                option_emoji = "💍"
+                if self.category in ricon:
+                    option_emoji = ricon[self.category][recipe_idx]
             elif self.category == "Sovereign Weapon Infusion":
                 option_emoji = "<:Sword5:1246945708939022367>"  # Need specific item icons
             else:
@@ -303,7 +315,8 @@ class CraftView(discord.ui.View):
             await inventory.add_custom_item(new_ring)
             self.embed_msg = await new_ring.create_citem_embed()
             await interaction.response.edit_message(embed=self.embed_msg, view=self.new_view)
-            await sm.send_notification(self.ctx_obj, self.player_obj, class_type, new_ring.item_base_type)
+            if new_ring.item_base_type in gli.sovereign_item_list:
+                await sm.send_notification(self.ctx_obj, self.player_obj, class_type, new_ring.item_base_type)
             return
         elif is_sw and result == 1:
             # Sovereign Weapon
@@ -344,7 +357,8 @@ class CraftView(discord.ui.View):
     async def reselect_callback(self, interaction: discord.Interaction, button: discord.Button):
         if interaction.user.id != self.player_obj.discord_id:
             return
-        embed_msg = discord.Embed(colour=discord.Colour.dark_orange(),
-                                  title="Black Market", description="Everything has a price.")
+        title, description = "Black Market", "Everything has a price."
+        embed_msg = discord.Embed(colour=discord.Colour.dark_orange(), title=title, description=description)
         new_view = InfuseView(self.ctx_obj, self.player_obj)
+        embed_msg.set_image(url=gli.infuse_img)
         await interaction.response.edit_message(embed=embed_msg, view=new_view)

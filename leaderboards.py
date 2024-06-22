@@ -1,5 +1,6 @@
 # General imports
 from datetime import datetime as dt, timedelta
+from zoneinfo import ZoneInfo
 import discord
 from discord.ui import Button, View
 import pandas as pd
@@ -41,7 +42,7 @@ async def update_leaderboard(combat_tracker, player_obj, ctx_object):
     df = await rqy(raw_query, return_value=True, params={'player_check': player_obj.player_id})
     true_dps = int(combat_tracker.total_dps / combat_tracker.total_cycles)
     high_dmg = combat_tracker.highest_damage
-    now = dt.now()
+    now = dt.now(ZoneInfo('America/Toronto'))
     if not df.empty:
         # Update DPS ranking.
         if true_dps > int(df['player_dps'].values[0]):

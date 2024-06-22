@@ -1,5 +1,6 @@
 # General imports
 import random
+import math
 
 # Data imports
 import globalitems as gli
@@ -81,7 +82,7 @@ async def run_cycle(tracker_obj, boss_obj, player_obj, method):
     # Step 1: Check and handle status effects
     status_effects_result = handle_status(tracker_obj, player_obj)
     if status_effects_result is not None:
-        return hit_list, status_effects_result, player_alive, boss_obj.calculate_hp(), total_damage
+        return hit_list, status_effects_result, player_alive, boss_obj.boss_cHP > 0, total_damage
     # Step 2: Boss takes action
     player_alive, boss_action_msg = handle_boss_actions(boss_obj, tracker_obj, player_obj)
     if not player_alive:
@@ -100,8 +101,7 @@ async def run_cycle(tracker_obj, boss_obj, player_obj, method):
     battle_msg = f"{player_obj.player_username} - [HP: {sm.display_hp(tracker_obj.player_cHP, player_obj.player_mHP)}]"
     battle_msg += f" - [Recovery: {tracker_obj.recovery}]"
     battle_msg = f"{boss_action_msg}{battle_msg}" if method == "Solo" else battle_msg
-    # Check again if boss is dead.
-    return hit_list, battle_msg, player_alive, boss_obj.calculate_hp(), total_damage
+    return hit_list, battle_msg, player_alive, boss_obj.boss_cHP > 0, total_damage
 
 
 def handle_status(tracker_obj, player_obj):
@@ -179,7 +179,7 @@ async def handle_player_actions(hit_list, tracker_obj, boss_obj, player_obj):
         if tracker_obj.solar_stacks >= 35:
             hit_list.append(await trigger_flare(tracker_obj, player_obj, boss_obj=boss_obj))
         # Stop iterating if boss dies
-        if not boss_obj.calculate_hp():
+        if not boss_obj.boss_cHP > 0:
             return hit_list
     return hit_list
 
@@ -225,6 +225,7 @@ async def hit_boss(tracker_obj, boss_obj, player_obj, combo_count, hit_type="Reg
     if hit_type == "Ultimate":
         hit_msg = f"Ultimate: {skill_name} {sm.number_conversion(damage)}{extension}"
     hit_msg += f"{mana_msg}{status_msg}{second_msg}{critical_type}"
+    damage = scale_raid_damage(damage)
     boss_obj.boss_cHP -= damage
     return [damage, hit_msg]
 
@@ -243,6 +244,7 @@ async def trigger_bleed(tracker_obj, player_obj, hit_type="Normal", boss_obj=Non
     # Determine boss or pvp specific damage adjustments.
     if boss_obj is not None:
         damage, extension = (boss_obj.damage_cap, " *LIMIT*") if damage >= boss_obj.damage_cap != -1 else (damage, "")
+        damage = scale_raid_damage(damage)
         boss_obj.boss_cHP -= damage
     else:
         damage, extension = pvp_scale_damage(*pvp_data), ""
@@ -257,6 +259,7 @@ async def trigger_flare(tracker_obj, player_obj, boss_obj=None, pvp_data=None):
     # Determine boss or pvp specific damage adjustments.
     if boss_obj is not None:
         damage = int(boss_obj.boss_cHP * flare_value)
+        damage = scale_raid_damage(damage)
         boss_obj.boss_cHP -= damage
     else:
         damage = int(pvp_data.player_cHP * flare_value)
@@ -278,6 +281,11 @@ def update_bleed(tracker_obj, player_obj):
         return
     tracker_obj.bleed_tracker += 0.05 * player_obj.appli["Bleed"]
     tracker_obj.bleed_tracker = min(1, tracker_obj.bleed_tracker)
+
+
+def scale_raid_damage(damage):
+    base = 10000000000
+    return damage if damage <= base else min(base * (1 + math.log10(damage / base) / 3), base * 10)
 
 
 async def run_solo_cycle(tracker_obj, boss_obj, player_obj):
@@ -312,10 +320,10 @@ def check_bloom(player_obj, input_damage):
     damage, status_msg = input_damage, ""
     if random.randint(1, 100) <= int(round(player_obj.trigger_rate["Bloom"] * 100)):
         damage, status_msg = int(damage * player_obj.bloom_mult), " *BLOOM*"
-        if random.randint(1, 100) <= int(round(player_obj.spec_conv["Sacred"] * 10)):
-            damage, status_msg = damage * 10, " *SACRED BLOOM*"
-    elif random.randint(1, 100) <= int(round(player_obj.spec_conv["Abyssal"] * 100)):
-        damage, status_msg = int(damage * player_obj.bloom_mult * 3), " *ABYSSAL BLOOM*"
+        if random.randint(1, 100) <= int(round(player_obj.spec_conv["Heavenly"] * 10)):
+            damage, status_msg = damage * 10, " *HEAVENLY BLOOM*"
+    elif random.randint(1, 100) <= int(round(player_obj.spec_conv["Stygian"] * 100)):
+        damage, status_msg = int(damage * player_obj.bloom_mult * 3), " *STYGIAN BLOOM*"
     elif random.randint(1, 100) <= int(round(player_obj.spec_conv["Calamity"] * 100)):
         damage, status_msg = int(damage * 9.99), " *CALAMITY*"
     return damage, status_msg

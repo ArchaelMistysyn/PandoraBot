@@ -817,9 +817,9 @@ class TermsOfServiceView(discord.ui.View):
         super().__init__(timeout=None)
         self.username, self.discord_id = username, discord_id
 
-    @discord.ui.button(label="Accept", style=discord.ButtonStyle.blurple)
+    @discord.ui.button(label="Accept", style=discord.ButtonStyle.success)
     async def accept_tos(self, interaction: discord.Interaction, button: discord.Button):
-        if interaction.user.id != self.player_user.discord_id:
+        if interaction.user.id != self.discord_id:
             return
         title = "Register - Select Class"
         register_msg = ('In an ancient ruin, you come across an empty room in which sits a peculiar box. '
@@ -834,6 +834,12 @@ class TermsOfServiceView(discord.ui.View):
                         'otherworldly girl staring at you in confusion.')
         embed_msg = discord.Embed(colour=discord.Colour.dark_teal(), title=title, description=register_msg)
         await interaction.response.edit_message(embed=embed_msg, view=ClassSelect(self.discord_id, self.username))
+
+    @discord.ui.button(label="Deny", style=discord.ButtonStyle.red)
+    async def deny_tos(self, interaction: discord.Interaction, button: discord.Button):
+        if interaction.user.id != self.discord_id:
+            return
+        await interaction.response.edit_message(view=None)
 
 
 class ClassSelect(discord.ui.View):

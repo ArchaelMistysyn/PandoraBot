@@ -56,7 +56,8 @@ async def send_notification(ctx_object, player_obj, notice_type, value):
     notification_dict = {
         "Level": [(f"Congratulations {player_obj.player_username}", f"Reached Level: {player_obj.player_level}"), 1],
         "Achievement": [(f"{player_obj.player_username} Unlocked", f"Achievement: {value}"), 20],
-        "Item": [(f"{player_obj.player_username} Obtained {rarity}", f"{item.item_name}" if item is not None else ""), 5],
+        "Item": [(f"{player_obj.player_username} Obtained {rarity}", f"{item.item_name}" if item is not None else ""),
+                 5],
         "Sovereign": [(f"{player_obj.player_username} Obtained Sovereign Item", value), 10],
         "Sacred": [(f"{player_obj.player_username} Obtained Sacred Item", value), 100]}
     if notice_type not in notification_dict.keys():
@@ -78,15 +79,22 @@ def get_thumbnail_by_class(class_name):
 def get_gear_thumbnail(item):
     tag_dict = {"A": "Armour", "V": "Greaves", "Y": "Amulet", "R": "Ring", "G": "Wings", "C": "Crest"}
     folder = item_tag = item.item_base_type
+    sub_folder, element = "", ""
     if item.item_type == "W" and item.item_base_type in gli.sovereign_item_list:
         folder = "Sovereign"
-    elif item.item_type != "W":
+    elif item.item_type not in ["W", "R"]:
         item_tag = "Gem" if "D" in item.item_type else tag_dict[item.item_type]
         folder = item_tag
+    elif item.item_type == "R":
+        folder, sub_folder = "Ring", f"{gli.ring_item_type[item.item_tier - 1]}/"
+        if item.item_tier in [4, 5]:
+            item_tag, element = gli.ring_item_type[item.item_tier - 1], item.item_elements.index(1)
+        else:
+            return None
     # Ensure image is currently available.
-    if item_tag not in gli.availability_list:
+    if item_tag not in gli.availability_list and item_tag not in gli.ring_item_type:
         return None
-    return f"https://kyleportfolio.ca/botimages/GearIcon/{folder}/Frame_{item_tag}_{item.item_tier}.png"
+    return f"{gli.web_url}GearIcon/{folder}/{sub_folder}Frame_{item_tag}{element}_{item.item_tier}.png"
 
 
 def get_gear_tier_colours(base_tier):
@@ -112,8 +120,10 @@ def display_hp(current_hp, max_hp):
 
 def display_stars(num_stars):
     stars_msg = ""
-    for x in range(num_stars):
-        stars_msg += gli.star_icon[min(8, num_stars)]
+    if num_stars >= 9:
+        return ''.join(gli.star_icon)
+    for x in range(max(8, num_stars)):
+        stars_msg += gli.star_icon[num_stars]
     for y in range(max(0, (8 - num_stars))):
         stars_msg += gli.star_icon[0]
     return stars_msg
@@ -177,9 +187,24 @@ def hide_text(msg, method="Shrouded"):
         elif method == "Shrouded":
             return '?' if char.isalnum() and random.random() > 0.5 else char
         return char
+
     parts = re.split(r'(<[^>]+>)', msg)
     adjusted = [part if part.startswith('<') and part.endswith('>') else re.sub(r'\w', enigma_transform, part)
                 for part in parts]
     return ''.join(adjusted)
 
 
+def EasyEmbed(colour, title, description):
+    embed_colour_dict = {
+        "red": discord.Colour(0xFF0000), "blue": discord.Colour(0x0000FF), "green": discord.Colour(0x00FF00),
+        "purple": discord.Colour(0x800080), "orange": discord.Colour(0xFFA500), "gold": discord.Colour(0xFFD700),
+        "magenta": discord.Colour(0xFF00FF), "teal": discord.Colour(0x008080), "yellow": discord.Colour(0xFFFF00),
+        "cyan": discord.Colour(0x00FFFF), "pink": discord.Colour(0xFFC0CB), "brown": discord.Colour(0xA52A2A),
+        "lime": discord.Colour(0x00FF00), "navy": discord.Colour(0x000080), "maroon": discord.Colour(0x800000),
+        "sky_blue": discord.Colour(0x87CEEB), "indigo": discord.Colour(0x4B0082), "violet": discord.Colour(0xEE82EE),
+        "turquoise": discord.Colour(0x40E0D0),
+        "silver": discord.Colour(0xC0C0C0), "black": discord.Colour(0x000000), "white": discord.Colour(0xFFFFFF),
+        1: 0x43B581, 2: 0x3498DB, 3: 0x9B59B6, 4: 0xF1C40F, 5: 0xCC0000,
+        6: 0xE91E63, 7: 0xFFFFFF, 8: 0x000000, 9: 0x000000}
+    colour = embed_colour_dict[colour] if colour in embed_colour_dict else discord.Colour.red()
+    return discord.Embed(colour=colour, title=title, description=description)

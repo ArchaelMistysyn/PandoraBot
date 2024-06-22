@@ -54,7 +54,8 @@ frame_icon_list = [f"{web_url}iconframes/Icon_Border_[EXT]/Icon_border_Bronze_[E
                    f"{web_url}iconframes/Icon_Border_[EXT]/Icon_border_Goldred_[EXT].png",
                    f"{web_url}iconframes/Icon_Border_[EXT]/Icon_border_Pink_[EXT].png",
                    f"{web_url}iconframes/Icon_Border_[EXT]/Icon_border_Black_[EXT].png",
-                   f"{web_url}iconframes/Icon_Border_[EXT]/Icon_border_white_[EXT].png"]
+                   f"{web_url}iconframes/Icon_Border_[EXT]/Icon_border_white_[EXT].png",
+                   f"{web_url}iconframes/Icon_Border_[EXT]/Icon_border_white_[EXT].png"]  # change later to t9/sacred
 frame_extension = ["106px", "1484px"]
 # Star Icons
 star_icon = ["<:SB:1201563579330076682>", "<:S1:1201563573202206910>", "<:S2:1201563575433576488>",
@@ -110,11 +111,13 @@ skill_names_dict = {
 crafting_gem = ["Blazing Ruby", "Drowned Sapphire", "Silent Topaz", "Ancient Agate", "Whispering Emerald",
                 "Arctic Zircon", "Haunted Obsidian", "Prismatic Opal", "Spatial Lapis", "Soul Diamond"]
 availability_list_nongear = ["Fae"]
-availability_list = ["Sword", "Saber", "Bow", "Threads", "Armour", "Wings", "Amulet", "Crest", "Greaves", "Gem", "Pact"]
+availability_list = ["Sword", "Saber", "Bow", "Threads", "Armour", "Wings", "Amulet", "Crest", "Greaves",
+                     "Ring", "Gem", "Pact"]
 
 sovereign_item_list = ["Crown of Skulls", "Twin Rings of Divergent Stars", "Hadal's Raindrop", "Heavenly Calamity",
                        "Stygian Calamity", "Pandora's Universe Hammer", "Solar Flare Blaster",
                        "Bathyal, Enigmatic Chasm Bauble", "Fallen Lotus of Nephilim"]
+ring_item_type = [None, None, None, "Signet", "Element_Ring", "Path_Ring", "Fabled_Ring", "Sovereign_Ring"]
 sovereign_batch_data = ', '.join([str(base_type) for base_type in sovereign_item_list])
 
 # WEAPON LISTS

@@ -3,6 +3,8 @@ from PIL import Image, ImageFont, ImageDraw, ImageOps, ImageFilter
 import requests
 import os
 from ftplib import FTP
+import aiohttp
+from io import BytesIO
 
 # Data imports
 import globalitems as gli
@@ -116,48 +118,39 @@ async def get_player_profile(player_obj, achievement_list):
     result.paste(cardBG, (0, 0), cardBG)
     result.paste(metal, (0, 0), metal)
     result.paste(wing, (0, 0), wing)
-
-    # Username
     title_font = ImageFont.truetype(name_font_file, 54)
     level_font = ImageFont.truetype(level_font_file, 40)
-
+    # Username
     title_text = player_obj.player_username
     title_text = title_text.center(10)
     image_editable = ImageDraw.Draw(result)
     fill_colour = rank_card.fill_colour
     image_editable.text((200, 215), title_text, fill=fill_colour, font=title_font)
-
     # Class Icon
     new_size = (68, 68)
     class_icon = class_icon.resize(new_size)
     result.paste(class_icon, (130, 214), mask=class_icon)
-
     # Class Icon Frame
     new_size = (68, 68)
     class_icon_frame = class_icon_frame.resize(new_size)
     result.paste(class_icon_frame, (131, 214), mask=class_icon_frame)
-
     # Rank Icon
     new_size = (120, 120)
     rank_icon = rank_icon.resize(new_size)
     result.paste(rank_icon, (629, 215), mask=rank_icon)
-
     # Rank Icon Frame
     new_size = (125, 125)
     rank_icon_frame = rank_icon_frame.resize(new_size)
     result.paste(rank_icon_frame, (627, 215), mask=rank_icon_frame)
-
     # Exp Bar
     exp_bar_start = 197
     exp_bar_end = 750
     exp_bar_result = await generate_exp_bar(exp_bar_image, exp_bar_start, exp_bar_end, rank_card.fill_percent)
     result.paste(exp_bar_result, (exp_bar_start, 0), mask=exp_bar_result)
-
     # Level and Exp Text
     level_text = f"{player_obj.player_level}"
     level_text_position = (90, 230)
     image_editable.text(level_text_position, level_text, fill=fill_colour, font=level_font)
-
     # Save File
     file_path = f"{temp_path}ProfileCard{player_obj.player_id}.png"
     result.save(file_path)
@@ -173,41 +166,48 @@ async def generate_exp_bar(exp_bar_image, exp_bar_start, exp_bar_end, fill_perce
     return exp_bar_result
 
 
-async def generate_and_combine_gear(item_type, start_tier=1, end_tier=8):
+async def generate_and_combine_gear(item_type, start_tier=1, end_tier=8, element=""):
     # Ensure image is currently available.
     if item_type not in gli.availability_list:
         return 0
     ftp = await create_ftp_connection(web_data[0], web_data[1], web_data[2])
-    for item_tier in range(start_tier, end_tier + 1):
-        # Handle the urls and paths.
-        frame_url = gli.frame_icon_list[item_tier - 1]
-        frame_url = frame_url.replace("[EXT]", gli.frame_extension[0])
-        icon_url = f"{web_url}/botimages/GearIcon/{item_type}/{item_type}{item_tier}.png"
-        output_dir, file_name = f'{image_path}GearIcon\\{item_type}\\', f"Frame_{item_type}_{item_tier}.png"
-        file_path = f"{output_dir}{file_name}"
-        frame = Image.open(requests.get(frame_url, stream=True).raw)
-        icon = Image.open(requests.get(icon_url, stream=True).raw)
-        # Handle Pact Variants
-        if item_type == "Pact":
-            for variant in ["Wrath", "Sloth", "Greed", "Envy", "Pride", "Lust", "Gluttony"]:
-                variant_url = f"{web_url}/botimages/GearIcon/Pact_Variants/{variant}.png"
-                variant_img = Image.open(requests.get(variant_url, stream=True).raw)
-                output_dir = f'{image_path}GearIcon\\{item_type}\\'
-                file_name = f"Frame_{item_type}_{item_tier}_{variant}.png"
-                remote_dir = f"/public_html/botimages/GearIcon/{item_type}/"
-                result = Image.new("RGBA", (106, 106))
-                result.paste(frame, (0, 0), frame)
-                result.paste(icon, (17, 16), icon)
-                result.paste(variant_img, (17, 16), variant_img)
-                result.save(file_path, format="PNG")
-                await upload_file_to_ftp(ftp, file_path, remote_dir, file_name)
-        # Construct the new image
-        result = Image.new("RGBA", (106, 106))
-        result.paste(frame, (0, 0), frame)
-        result.paste(icon, (17, 16), icon)
-        result.save(file_path, format="PNG")
-        # Upload the file.
-        await upload_file_to_ftp(ftp, file_path, f"/public_html/botimages/GearIcon/{item_type}/", file_name)
+    folder, sub_folder, sub_dir = item_type, "", ""
+    async with aiohttp.ClientSession() as session:
+        for item_tier in range(start_tier, end_tier + 1):
+            # Handle the urls and paths.
+            frame_url = gli.frame_icon_list[item_tier - 1]
+            frame_url = frame_url.replace("[EXT]", gli.frame_extension[0])
+            icon_url = f"{web_url}/botimages/GearIcon/{folder}/{sub_folder}{item_type}{item_tier}.png"
+            if item_type == "Ring" or item_type in gli.ring_item_type:
+                item_type = gli.ring_item_type[item_tier - 1]
+                sub_folder, sub_dir = f"{item_type}/", f"{item_type}\\"
+                icon_url = f"{web_url}/botimages/GearIcon/{folder}/{sub_folder}{item_type}{element}.png"
+            output_dir = f'{image_path}GearIcon\\{folder}\\{sub_dir}'
+            file_name = f"Frame_{item_type}{element}_{item_tier}.png"
+            file_path = f"{output_dir}{file_name}"
+            frame, icon = await fetch_image(session, frame_url), await fetch_image(session, icon_url)
+            # Handle Pact Variants
+            if item_type == "Pact":
+                for variant in ["Wrath", "Sloth", "Greed", "Envy", "Pride", "Lust", "Gluttony"]:
+                    variant_url = f"{web_url}/botimages/GearIcon/Pact_Variants/{variant}.png"
+                    variant_img = Image.open(requests.get(variant_url, stream=True).raw)
+                    output_dir = f'{image_path}GearIcon\\{item_type}\\'
+                    file_name = f"Frame_{item_type}_{item_tier}_{variant}.png"
+                    remote_dir = f"/public_html/botimages/GearIcon/{item_type}/"
+                    result = Image.new("RGBA", (106, 106))
+                    result.paste(frame, (0, 0), frame)
+                    result.paste(icon, (17, 16), icon)
+                    result.paste(variant_img, (17, 16), variant_img)
+                    result.save(file_path, format="PNG")
+                    await upload_file_to_ftp(ftp, file_path, remote_dir, file_name)
+            # Construct the new image
+            result = Image.new("RGBA", (106, 106))
+            result.paste(frame, (0, 0), frame)
+            result.paste(icon, (17, 16), icon)
+            result.save(file_path, format="PNG")
+            # Upload the file.
+            remote_dir = f"/public_html/botimages/GearIcon/{folder}/{sub_folder}"
+            await upload_file_to_ftp(ftp, file_path, remote_dir, file_name)
     ftp.quit()
     return end_tier + 1 - start_tier
 
@@ -215,30 +215,31 @@ async def generate_and_combine_gear(item_type, start_tier=1, end_tier=8):
 async def generate_and_combine_images():
     count = 0
     ftp = await create_ftp_connection(web_data[0], web_data[1], web_data[2])
-    for item_id in itemdata.itemdata_dict.keys():
-        # Ensure image is currently available.
-        temp_item = inventory.BasicItem(item_id)
-        if temp_item.item_category not in gli.availability_list_nongear:
-            continue
-        count += 1
-        # Handle the urls and paths.
-        frame_url = gli.frame_icon_list[temp_item.item_tier - 1]
-        frame_url = frame_url.replace("[EXT]", gli.frame_extension[0])
-        icon_url = f"{web_url}/botimages/NonGearIcon/{temp_item.item_category}/{item_id}.png"
-        output_dir, file_name = f'{image_path}NonGearIcon\\{temp_item.item_category}\\', f"Frame_{item_id}.png"
-        file_path = f"{output_dir}{file_name}"
-        frame = Image.open(requests.get(frame_url, stream=True).raw).convert("RGBA")
-        icon = Image.open(requests.get(icon_url, stream=True).raw).convert("RGBA")
-        # Construct the new image
-        if temp_item.item_category in ["Skull"]:
-            result = pixel_blend(frame, icon)
-        else:
-            result = Image.new("RGBA", (106, 106))
-            result.paste(frame, (0, 0), frame)
-            result.paste(icon, (17, 16), icon)
-            result.save(file_path, format="PNG")
-        # Upload the file.
-        await upload_file_to_ftp(ftp, file_path, f"/public_html/botimages/NonGearIcon/{temp_item.item_category}/", file_name)
+    async with aiohttp.ClientSession() as session:
+        for item_id in itemdata.itemdata_dict.keys():
+            # Ensure image is currently available.
+            temp_item = inventory.BasicItem(item_id)
+            if temp_item.item_category not in gli.availability_list_nongear:
+                continue
+            count += 1
+            # Handle the urls and paths.
+            frame_url = gli.frame_icon_list[temp_item.item_tier - 1]
+            frame_url = frame_url.replace("[EXT]", gli.frame_extension[0])
+            icon_url = f"{web_url}/botimages/NonGearIcon/{temp_item.item_category}/{item_id}.png"
+            output_dir, file_name = f'{image_path}NonGearIcon\\{temp_item.item_category}\\', f"Frame_{item_id}.png"
+            file_path = f"{output_dir}{file_name}"
+            frame, icon = await fetch_image(session, frame_url), await fetch_image(session, icon_url)
+            # Construct the new image
+            if temp_item.item_category in ["Skull"]:
+                result = pixel_blend(frame, icon)
+            else:
+                result = Image.new("RGBA", (106, 106))
+                result.paste(frame, (0, 0), frame)
+                result.paste(icon, (17, 16), icon)
+                result.save(file_path, format="PNG")
+            # Upload the file.
+            remote_dir = f"/public_html/botimages/NonGearIcon/{temp_item.item_category}/"
+            await upload_file_to_ftp(ftp, file_path, remote_dir, file_name)
     ftp.quit()
     return count
 
@@ -252,6 +253,13 @@ def pixel_blend(image_1, image_2):
             if image_pixel[3] > 0:  # If the pixel is not fully transparent
                 result_img.putpixel((17 + x, 16 + y), image_pixel)
     return result_img
+
+
+async def fetch_image(session, url):
+    async with session.get(url) as response:
+        response.raise_for_status()
+        data = await response.read()
+        return Image.open(BytesIO(data))
 
 
 async def create_ftp_connection(hostname, username, password):

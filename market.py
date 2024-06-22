@@ -1,6 +1,7 @@
 # General imports
 import discord
-import datetime
+from datetime import datetime as dt
+from zoneinfo import ZoneInfo
 import random
 import pandas as pd
 
@@ -33,7 +34,7 @@ description_list = [
 
 
 async def get_daily_fish_items(fish_only=False):
-    current_date = datetime.datetime.now().date()
+    current_date = dt.now(ZoneInfo('America/Toronto')).date()
     date_seed = int(current_date.strftime('%Y%m%d'))
     fish_random = random.Random(date_seed)
     daily_fish = fish_random.choice(fish_list)

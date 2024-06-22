@@ -38,25 +38,6 @@ with open("engine_bot_token.txt", 'r') as token_file:
 TOKEN = token_info
 
 
-class RaidView(discord.ui.View):
-    def __init__(self):
-        super().__init__(timeout=None)
-
-    @discord.ui.button(label="Join the raid!", style=discord.ButtonStyle.success, emoji="⚔️")
-    async def raid_callback(self, interaction: discord.Interaction, raid_select: discord.ui.Select):
-        clicked_by = await player.get_player_by_discord(interaction.user.id)
-        if clicked_by.player_echelon <= 1:
-            outcome = f"{clicked_by.player_username}: Echelon 1 required to join a raid."
-            await interaction.response.send_message(outcome)
-            return
-        if clicked_by.player_equipped[0] == 0:
-            outcome = f"{clicked_by.player_username}: Weapon required to join a raid."
-            await interaction.response.send_message(outcome)
-            return
-        outcome = await encounters.add_participating_player(interaction.channel.id, clicked_by)
-        await interaction.response.send_message(outcome)
-
-
 class EngineBot(commands.Bot):
     def __init__(self):
         super().__init__(command_prefix="!", intents=discord.Intents.all())
@@ -88,141 +69,36 @@ def run_discord_bot():
     # Admin Commands
     @engine_bot.command(name='sync', help="Archael Only")
     async def sync(ctx):
-        if ctx.message.author.id == 185530717638230016:
-            try:
-                synced = await engine_bot.tree.sync(guild=discord.Object(id=1011375205999968427))
-                print(f"Combat Engine Synced! {len(synced)} command(s)")
-                await ctx.send('commands synced!')
-            except Exception as e:
-                print(e)
-        else:
+        if ctx.message.author.id != 185530717638230016:
             await ctx.send('You must be the owner to use this command!')
+        try:
+            synced = await engine_bot.tree.sync(guild=discord.Object(id=1011375205999968427))
+            print(f"Combat Engine Synced! {len(synced)} command(s)")
+            await ctx.send('commands synced!')
+        except Exception as e:
+            print(e)
 
     @engine_bot.command(name='reset_sync', help="Archael Only")
     async def reset_sync(ctx):
-        if ctx.message.author.id == 185530717638230016:
-            try:
-                global_sync = await engine_bot.tree.sync(guild=None)
-                print(f"Combat Engine Synced! {len(global_sync)} global command(s)")
-                synced = await engine_bot.tree.sync(guild=discord.Object(id=1011375205999968427))
-                print(f"Combat Engine Synced! {len(synced)} command(s)")
-                await ctx.send('commands synced!')
-            except Exception as e:
-                print(e)
-        else:
+        if ctx.message.author.id != 185530717638230016:
             await ctx.send('You must be the owner to use this command!')
+        try:
+            global_sync = await engine_bot.tree.sync(guild=None)
+            print(f"Combat Engine Synced! {len(global_sync)} global command(s)")
+            synced = await engine_bot.tree.sync(guild=discord.Object(id=1011375205999968427))
+            print(f"Combat Engine Synced! {len(synced)} command(s)")
+            await ctx.send('commands synced!')
+        except Exception as e:
+            print(e)
 
     @engine_bot.command(name='start_raid', help="Archael Only")
     async def initialize_raid(ctx):
         if ctx.message.author.id != 185530717638230016:
             await ctx.send('You must be the owner to use this command!')
             return
-
-        async def run_raid_task(pass_raid_channel, pass_raid_channel_id):
-            await raid_task(pass_raid_channel, pass_raid_channel_id)
-
         for server_id, (_, raid_channel_id, _, _) in gli.servers.items():
             await encounters.clear_boss_encounter_info(raid_channel_id, None)
-            raid_channel = engine_bot.get_channel(raid_channel_id)
-            asyncio.create_task(run_raid_task(raid_channel, raid_channel_id))
-        print("Initialized Raids")
-
-    @engine_bot.event
-    async def raid_task(channel_object, channel_id):
-        player_id, level, boss_type, boss_tier = None, 99, "raid", 9
-        boss_obj = await bosses.spawn_boss(channel_id, player_id, boss_tier, boss_type, level)
-        embed_msg = boss_obj.create_boss_embed()
-        raid_button = RaidView()
-        sent_message = await channel_object.send(embed=embed_msg, view=raid_button)
-        enginecogs.RaidCog(engine_bot, boss_obj, channel_object, channel_id, sent_message)
-
-    @engine_bot.event
-    async def raid_boss(tracker_list, boss_obj, channel_id, channel_num, sent_message, channel_object, magni):
-        player_list, damage_list = await bosses.get_damage_list(channel_id)
-        boss_obj.reset_modifiers()
-        temp_user = []
-        dps = 0
-        for idy, y in enumerate(player_list):
-            temp_user.append(await player.get_player_by_id(int(y)))
-            await temp_user[idy].get_player_multipliers()
-            curse_lists = [boss_obj.curse_debuffs, temp_user[idy].elemental_curse]
-            boss_obj.curse_debuffs = [sum(z) for z in zip(*curse_lists)]
-            if idy >= len(tracker_list):
-                tracker_list.append(combat.CombatTracker(temp_user[idy]))
-        player_msg_list = []
-        for idx, x in enumerate(temp_user):
-            player_msg, player_damage = await combat.run_raid_cycle(tracker_list[idx], boss_obj, x)
-            new_player_damage = int(damage_list[idx]) + player_damage
-            dps += int(tracker_list[idx].total_dps / tracker_list[idx].total_cycles)
-            await encounters.update_player_raid_damage(channel_id, x.player_id, new_player_damage)
-            player_msg_list.append(player_msg)
-        await bosses.update_boss_cHP(channel_id, None, boss_obj)
-        if boss_obj.calculate_hp():
-            embed_msg = boss_obj.create_boss_embed(dps=dps)
-            for m in player_msg_list:
-                embed_msg.add_field(name="", value=m, inline=False)
-            await sent_message.edit(embed=embed_msg)
-            return True
-        else:
-            embed_msg = await bosses.create_dead_boss_embed(channel_id, boss_obj, dps)
-            for m in player_msg_list:
-                embed_msg.add_field(name="", value=m, inline=False)
-            await sent_message.edit(embed=embed_msg)
-            loot_embed = await loot.create_loot_embed(embed_msg, boss_obj, player_list, loot_mult=5)
-            await channel_object.send(embed=loot_embed)
-            return False
-
-    @engine_bot.event
-    async def solo_boss_task(player_obj, boss_obj, channel_id, ctx_object):
-        embed_msg = boss_obj.create_boss_embed()
-        sent_message = await ctx_object.channel.send(embed=embed_msg)
-        solo_cog = enginecogs.SoloCog(engine_bot, player_obj, boss_obj, channel_id, sent_message, ctx_object)
-        await solo_cog.run()
-
-    @engine_bot.event
-    async def solo_boss(combat_tracker, player_obj, boss_obj, channel_id, sent_message, ctx_object,
-                        gauntlet=False, mode=0, magnitude=0):
-        boss_obj.curse_debuffs = player_obj.elemental_curse
-        embed, player_alive, boss_alive = await combat.run_solo_cycle(combat_tracker, boss_obj, player_obj)
-        await bosses.update_boss_cHP(channel_id, boss_obj.player_id, boss_obj)
-        if not player_alive:
-            await sent_message.edit(embed=embed)
-            await encounters.clear_boss_encounter_info(channel_id, player_obj.player_id)
-            return False, boss_obj
-        if boss_alive:
-            embed, status = await bosses.handle_boss_cycle_limit(boss_obj, combat_tracker, player_obj, embed, gauntlet)
-            await sent_message.edit(embed=embed)
-            return status, boss_obj
-        if boss_obj.boss_tier >= 4:
-            await quest.assign_unique_tokens(player_obj, boss_obj.boss_name, mode=mode)
-        extension = " [Gauntlet]" if gauntlet else ""
-        if gauntlet and boss_obj.boss_tier != 6:
-            await encounters.clear_boss_encounter_info(channel_id, player_obj.player_id)
-            boss_type = random.choice(["Paragon", "Arbiter"])
-            if boss_obj.boss_tier < 4:
-                boss_type = random.choice(["Fortress", "Dragon", "Demon", "Paragon"])
-            boss_obj = await bosses.spawn_boss(channel_id, player_obj.player_id, boss_obj.boss_tier + 1,
-                                               boss_type, player_obj.player_level, gauntlet=gauntlet)
-            boss_obj.player_id = player_obj.player_id
-            current_dps = int(combat_tracker.total_dps / combat_tracker.total_cycles)
-            embed = boss_obj.create_boss_embed(dps=current_dps, extension=extension)
-            await sent_message.edit(embed=embed)
-            return True, boss_obj
-        # Handle dead boss
-        player_list = [player_obj.player_id]
-        loot_bonus = 5 if gauntlet else 1
-        if "XXX" in boss_obj.boss_name:
-            loot_bonus = loot.incarnate_attempts_dict[boss_obj.boss_level]
-            await leaderboards.update_leaderboard(combat_tracker, player_obj, ctx_object)
-        loot_embed = await loot.create_loot_embed(embed, boss_obj, player_list, ctx=ctx_object,
-                                                  loot_mult=loot_bonus, gauntlet=gauntlet, magni=magnitude)
-        await encounters.clear_boss_encounter_info(channel_id, player_obj.player_id)
-        if combat_tracker.total_cycles <= 5:
-            await sent_message.edit(embed=loot_embed)
-            return False, boss_obj
-        await sent_message.edit(embed=embed)
-        await ctx_object.send(embed=loot_embed)
-        return False, boss_obj
+            enginecogs.RaidSchedularCog(engine_bot, raid_channel, engine_bot.get_channel(raid_channel_id))
 
     @engine_bot.hybrid_command(name='abandon', help="Abandon an active solo encounter.")
     @app_commands.guilds(discord.Object(id=1011375205999968427))
@@ -344,8 +220,8 @@ def run_discord_bot():
             await ctx.send("The divine palace is not a place mortals may tread.")
             return
         await ctx.send(f"{player_obj.player_username} enters the divine palace.")
-        lotus_object = inventory.BasicItem("Lotus10")
-        lotus_stock = await inventory.check_stock(player_obj, lotus_object.item_id)
+        lotus_obj = inventory.BasicItem("Lotus10")
+        lotus_stock = await inventory.check_stock(player_obj, lotus_obj.item_id)
         embed_msg = discord.Embed(colour=discord.Colour.gold(), title="Divine Palace of God", description="")
         embed_msg.description = "The palace interior remains still, the torches unlit and the halls silent."
         if lotus_stock >= 1:
@@ -353,20 +229,18 @@ def run_discord_bot():
                                      f"ignite with divine fire. Approaching the throne of god "
                                      f"Yubelle's echo manifests by drawing on the energy of the Divine Lotus. "
                                      f"Shifting into a new being, 'it' challenges you before the eyes of god."
-                                     f"\n**EXTREME DIFFICUILTY WARNING: {lotus_object.item_emoji} 1x Divine Lotus "
+                                     f"\n**EXTREME DIFFICUILTY WARNING: {lotus_obj.item_emoji} 1x Divine Lotus "
                                      f"will be consumed.**")
         sent_message = await ctx.channel.send(embed=embed_msg)
-        palace_view = PalaceView(player_obj, lotus_object, lotus_stock, sent_message, ctx)
+        palace_view = PalaceView(player_obj, lotus_obj, lotus_stock, sent_message, ctx)
         sent_message = await sent_message.edit(embed=embed_msg, view=palace_view)
 
     class PalaceView(discord.ui.View):
-        def __init__(self, player_obj, lotus_object, lotus_stock, sent_message, ctx):
+        def __init__(self, player_obj, lotus_obj, lotus_stock, sent_message, ctx):
             super().__init__(timeout=None)
-            self.player_obj = player_obj
-            self.lotus_object = lotus_object
+            self.player_obj, self.lotus_obj, self.lotus_stock = player_obj, lotus_obj, lotus_stock
             self.ctx, self.sent_message = ctx, sent_message
             self.embed_msg = False
-            self.lotus_stock = lotus_stock
             if self.lotus_stock <= 0:
                 for button in self.children:
                     button.disabled, button.style = True, gli.button_colour_list[3]
@@ -395,14 +269,14 @@ def run_discord_bot():
             await self.begin_encounter(interaction, 3)
 
         async def begin_encounter(self, interaction_obj, difficulty):
-            lotus_stock = await inventory.check_stock(self.player_obj, self.lotus_object.item_id)
+            lotus_stock = await inventory.check_stock(self.player_obj, self.lotus_obj.item_id)
             embed_msg = discord.Embed(colour=discord.Colour.dark_orange(), title="Divine Palace of God", description="")
             if lotus_stock < 1:
                 embed_msg.description = "The echo falls silent and fades away alongside the light of the torches."
                 await interaction.response.edit_message(embed=embed_msg, view=None)
                 return
             boss_level = 300 if difficulty == 1 else 600 if difficulty == 2 else 999
-            await inventory.update_stock(self.player_obj, self.lotus_object.item_id, -1)
+            await inventory.update_stock(self.player_obj, self.lotus_obj.item_id, -1)
             boss_obj = await bosses.spawn_boss(self.ctx.channel.id, self.player_obj.player_id, 8,
                                                "Incarnate", boss_level)
             label_list = {1: " [Challenger]", 2: " [Usurper]", 3: " [Samsara]"}

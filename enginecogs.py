@@ -4,6 +4,9 @@ from discord.ext.commands import Bot
 from discord.ext import commands, tasks
 import asyncio
 import random
+from apscheduler.schedulers.asyncio import AsyncIOScheduler
+from apscheduler.triggers.cron import CronTrigger
+from zoneinfo import ZoneInfo
 
 # Bot imports
 import battleengine
@@ -29,44 +32,123 @@ import loot
 import tarot
 
 
-class RaidCog(commands.Cog):
-    def __init__(self, bot, active_boss, channel_object, channel_id, sent_message):
-        self.bot = bot
-        self.active_boss = active_boss
-        self.channel_object, self.channel_id = channel_object, channel_id
-        self.sent_message = sent_message
-        self.tracker_list = []
-        self.lock = asyncio.Lock()
-        self.raid_manager.start()
+class RaidSchedularCog(commands.Cog):
+    def __init__(self, bot, channel_obj, channel_id):
+        self.bot, self.scheduler = bot, AsyncIOScheduler(timezone=ZoneInfo('America/Toronto'))
+        self.channel_obj, self.channel_id = channel_obj, channel_id
+        self.current_raid, self.boss_obj, self.active_message = None, None, None
 
     def cog_unload(self):
-        self.raid_manager.cancel()
+        self.scheduler.shutdown()
+
+    def raid_manager(self):
+        self.scheduler.add_job(self.trigger_raid, CronTrigger(hour=0, minute=0))
+        self.scheduler.start()
+
+    async def trigger_raid(self):
+        if self.current_raid:
+            await self.end_current_raid()
+        player_id, level, boss_type, boss_tier = None, 99, "raid", 9
+        self.boss_obj = await bosses.spawn_boss(self.channel_id, player_id, boss_tier, boss_type, level)
+        embed_msg = self.boss_obj.create_boss_embed()
+        self.active_message = await self.channel_obj.send(embed=embed_msg, view=RaidView())
+        self.current_raid = RaidCog(self.bot, self.boss_obj, self.channel_obj, self.channel_id, self.active_message)
+        await self.channel_obj.send('Boss encounter has started!')
+
+    async def end_current_raid(self):
+        if self.current_raid:
+            if self.boss_obj.boss_cHP > 0:
+                embed_msg = self.boss_obj.create_boss_embed()
+                embed_msg.add_field(name="Time's Up", value="The raid encounter has failed", inline=False)
+                await self.active_message.edit(embed=embed_msg)
+            self.current_raid.end_cog()
+            self.current_raid.remove_cog()
+
+
+class RaidCog(commands.Cog):
+    def __init__(self, bot, boss_obj, channel_obj, channel_id, sent_message):
+        self.boss_obj = boss_obj
+        self.channel_obj, self.channel_id, self.sent_message = channel_obj, channel_id, sent_message
+        self.tracker_list = []
+        self.lock = asyncio.Lock()
+        self.raid_boss_manager.start()
+
+    def end_cog(self):
+        self.raid_boss_manager.cancel()
 
     @tasks.loop(seconds=60)
-    async def raid_manager(self):
+    async def raid_boss_manager(self):
         async with self.lock:
-            is_alive = await self.bot.raid_boss(self.tracker_list, self.active_boss,
-                                                self.channel_object, self.channel_id, self.sent_message)
+            time_now = dt.now(ZoneInfo('America/Toronto'))
+            if time_now.hour == 23 and now.minute >= 58:
+                return
+            is_alive = await self.raid_boss()
             if is_alive:
                 return
             await encounters.clear_boss_encounter_info(self.channel_id)
-            level, boss_type, boss_tier = encounters.get_raid_boss_details(self.channel_num)
-            active_boss = await bosses.spawn_boss(self.channel_id, None, boss_tier, boss_type, level)
-            self.active_boss = active_boss
-            self.tracker_list = []
-            embed_msg, raid_view = active_boss.create_boss_embed(), battleengine.RaidView()
-            sent_message = await self.channel_object.send(embed=embed_msg, view=raid_view)
-            self.sent_message = sent_message
+            self.end_cog()
+            
+    async def raid_boss(self):
+        player_list, damage_list = await bosses.get_damage_list(self.channel_id)
+        boss_obj.curse_debuffs = [0.0] * 9
+        temp_user, dps = [], 0
+        for idy, player_id in enumerate(player_list):
+            temp_user.append(await player.get_player_by_id(player_id))
+            await temp_user[idy].get_player_multipliers()
+            curse_lists = [self.boss_obj.curse_debuffs, temp_user[idy].elemental_curse]
+            self.boss_obj.curse_debuffs = [sum(z) for z in zip(*curse_lists)]
+            if idy >= len(self.tracker_list):
+                self.tracker_list.append(combat.CombatTracker(temp_user[idy]))
+        player_msg_list = []
+        for idx, temp_player in enumerate(temp_user):
+            player_msg, player_damage = await combat.run_raid_cycle(self.tracker_list[idx], self.boss_obj, temp_player)
+            new_player_damage = int(damage_list[idx]) + player_damage
+            dps += int(self.tracker_list[idx].total_dps / self.tracker_list[idx].total_cycles)
+            await encounters.update_player_raid_damage(self.channel_id, temp_player.player_id, new_player_damage)
+            player_msg_list.append(player_msg)
+        await bosses.update_boss_cHP(self.channel_id, None, self.boss_obj)
+        if self.boss_obj.boss_cHP > 0:
+            embed_msg, is_alive = self.boss_obj.create_boss_embed(dps=dps), True
+        else:
+            embed_msg, is_alive = bosses.create_dead_boss_embed(self.channel_id, self.boss_obj, dps), False
+            loot_embed = await loot.create_loot_embed(embed_msg, self.boss_obj, player_list, loot_mult=5)
+        for player_msg in player_msg_list:
+            embed_msg.add_field(name="", value=player_msg, inline=False)
+        await self.sent_message.edit(embed=embed_msg)
+        if not is_alive:
+            message = f"{self.boss_obj.boss_name} Slain"
+            await self.channel_obj.send(file=discord.File(await pilengine.build_title_box(message)))
+            await self.channel_obj.send(embed=loot_embed)
+        return is_alive
+        
+            
+class RaidView(discord.ui.View):
+    def __init__(self):
+        super().__init__(timeout=None)
+
+    @discord.ui.button(label="Join the raid!", style=discord.ButtonStyle.success, emoji="⚔️")
+    async def raid_callback(self, interaction: discord.Interaction, raid_select: discord.ui.Select):
+        clicked_by = await player.get_player_by_discord(interaction.user.id)
+        if clicked_by.player_echelon <= 1:
+            outcome = f"{clicked_by.player_username}: Echelon 1 required to join a raid."
+            await interaction.response.send_message(outcome)
+            return
+        if clicked_by.player_equipped[0] == 0:
+            outcome = f"{clicked_by.player_username}: Weapon required to join a raid."
+            await interaction.response.send_message(outcome)
+            return
+        outcome = await encounters.add_participating_player(interaction.channel.id, clicked_by)
+        await interaction.response.send_message(outcome)
 
 
 class SoloCog(commands.Cog):
-    def __init__(self, bot, player_obj, active_boss, channel_id, sent_message, ctx_object,
+    def __init__(self, bot, player_obj, boss_obj, channel_id, sent_message, ctx_object,
                  gauntlet=False, mode=0, magnitude=0):
         self.bot = bot
-        self.player_obj, self.active_boss = player_obj, active_boss
-        self.sent_message = sent_message
-        self.ctx_object, self.channel_object, self.channel_id = ctx_object, ctx_object.channel, channel_id
-        self.combat_tracker = combat.CombatTracker(player_obj)
+        self.player_obj, self.boss_obj = player_obj, boss_obj
+        self.sent_message, self.embed = sent_message, None
+        self.ctx_object, self.channel_obj, self.channel_id = ctx_object, ctx_object.channel, channel_id
+        self.tracker_obj = combat.CombatTracker(player_obj)
         self.gauntlet, self.mode, self.magnitude = gauntlet, mode, magnitude
         self.lock = asyncio.Lock()
 
@@ -84,18 +166,70 @@ class SoloCog(commands.Cog):
                 await self.ctx.send(f"{self.player_obj.player_username} Abandon successful.")
                 self.cog_unload()
                 return
-            continue_encounter, self.active_boss = await self.bot.solo_boss(
-                self.combat_tracker, self.player_obj, self.active_boss, self.channel_id, self.sent_message,
-                self.channel_object, gauntlet=self.gauntlet, mode=self.mode, magnitude=self.magnitude)
+            continue_encounter = await self.bot.solo_boss()
             if continue_encounter:
                 return
             self.cog_unload()
+    
+    async def solo_boss(self):
+        self.boss_obj.curse_debuffs = self.player_obj.elemental_curse
+        self.embed, p_alive, boss_alive = await combat.run_solo_cycle(self.tracker_obj, self.boss_obj, self.player_obj)
+        await bosses.update_boss_cHP(self.channel_id, self.player_obj.player_id, self.boss_obj)
+        if not p_alive:
+            await self.sent_message.edit(embed=self.embed)
+            await encounters.clear_boss_encounter_info(self.channel_id, self.player_obj.player_id)
+            return False
+        if boss_alive:
+            status = await self.handle_cycle_limit()
+            await sent_message.edit(embed=self.embed)
+            return status
+        if self.boss_obj.boss_tier >= 4:
+            await quest.assign_unique_tokens(self.player_obj, self.boss_obj.boss_name, mode=self.mode)
+        extension = " [Gauntlet]" if self.gauntlet else ""
+        if self.gauntlet and self.boss_obj.boss_tier != 6:
+            await encounters.clear_boss_encounter_info(self.channel_id, self.player_obj.player_id)
+            boss_type, new_tier = random.choice(["Paragon", "Arbiter"]), self.boss_obj.boss_tier + 1
+            if self.boss_obj.boss_tier < 4:
+                boss_type = random.choice(["Fortress", "Dragon", "Demon", "Paragon"])
+            self.boss_obj = await bosses.spawn_boss(self.channel_id, self.player_obj.player_id, new_tier,
+                                                    boss_type, self.player_obj.player_level, gauntlet=self.gauntlet)
+            current_dps = int(self.tracker_obj.total_dps / self.tracker_obj.total_cycles)
+            self.embed = boss_obj.create_boss_embed(dps=current_dps, extension=extension)
+            await sent_message.edit(embed=self.embed)
+            return True
+        # Handle dead boss
+        player_list = [player_obj.player_id]
+        loot_bonus = 5 if self.gauntlet else 1
+        if "XXX" in self.boss_obj.boss_name:
+            loot_bonus = loot.incarnate_attempts_dict[self.boss_obj.boss_level]
+            await leaderboards.update_leaderboard(self.tracker_obj, self.player_obj, self.ctx_object)
+        loot_embed = await loot.create_loot_embed(self.embed, self.boss_obj, player_list, ctx=self.ctx_object,
+                                                  loot_mult=loot_bonus, gauntlet=self.gauntlet, magni=self.magnitude)
+        await encounters.clear_boss_encounter_info(self.channel_id, self.player_obj.player_id)
+        if self.tracker_obj.total_cycles <= 5:
+            await sent_message.edit(embed=loot_embed)
+            return False
+        await sent_message.edit(embed=self.embed)
+        await ctx_object.send(embed=loot_embed)
+        return False
+
+    async def handle_cycle_limit(self):
+        hp_percent = self.boss_obj.boss_cHP / self.boss_obj.boss_mHP
+        if not (self.gauntlet or self.tracker_obj.total_cycles < 30 or hp_percent <= 0.95):
+            fail_msg = f"{self.tracker_obj.total_cycles:,} cycles elapsed. Encounter ended as HP threshhold not met."
+        elif self.gauntlet and self.tracker_obj.total_cycles >= 999:
+            fail_msg = f"999 cycles elapsed. Encounter ended as maximum cycle limit exceeded."
+        else:
+            return True
+        self.embed.add_field(name="Encounter Failed!", value=fail_msg, inline=False)
+        await encounters.clear_boss_encounter_info(self.channel_id, self.player_obj.player_id)
+        return False
 
 
 class PvPCog(commands.Cog):
-    def __init__(self, bot, ctx_obj, player1, player2, sent_message, channel_object):
+    def __init__(self, bot, ctx_obj, player1, player2, sent_message, channel_obj):
         self.bot, self.ctx_obj = bot, ctx_obj
-        self.channel_object = channel_object
+        self.channel_obj = channel_obj
         self.player1, self.player2 = player1, player2
         self.sent_message = sent_message
         self.combat_tracker1, self.combat_tracker2 = combat.CombatTracker(self.player1), combat.CombatTracker(self.player2)

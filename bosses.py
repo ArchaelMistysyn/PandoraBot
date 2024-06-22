@@ -1,6 +1,8 @@
 # General imports
 import discord
 import random
+from datetime import datetime as dt
+from zoneinfo import ZoneInfo
 
 # Data imports
 import globalitems as gli
@@ -44,8 +46,9 @@ for numeral, (name, tier) in card_dict.items():
         incarnate_names[tier - 1].append(f"{numeral} - {name}")
 all_names_dict = {"Fortress": fortress_names, "Dragon": dragon_names, "Demon": demon_names,
                   "Paragon": paragon_names, "Arbiter": arbiter_names, "Incarnate": incarnate_names}
-raid_bosses = {1: "Veritas, Sacred Ruler of Prophecy", 3: "Tiamat, Sacred Ruler of Fury",
-               5: "Geb, Sacred Ruler of Sin", 7: "Alaric, Sacred Ruler of Totality"}
+raid_bosses = {0: "Geb, Sacred Ruler of Sin", 1: "Tiamat, Sacred Ruler of Fury", 2: "Veritas, Sacred Ruler of Prophecy",
+               3: "Geb, Sacred Ruler of Sin", 4: "Tiamat, Sacred Ruler of Fury", 5: "Veritas, Sacred Ruler of Prophecy",
+               6: "Alaric, Sacred Ruler of Totality"}
 
 
 # Boss class
@@ -56,34 +59,25 @@ class CurrentBoss:
         self.boss_tier, self.boss_level = 0, 0
         self.boss_name, self.boss_image = "", ""
         self.boss_cHP, self.boss_mHP = 0, 0
-        self.boss_typeweak, self.boss_eleweak, self.curse_debuffs = [0] * 7,  [0] * 9, [0.0] * 9
+        self.boss_typeweak, self.boss_eleweak, self.curse_debuffs = [0] * 7, [0] * 9, [0.0] * 9
         self.boss_element, self.damage_cap = 0, -1
         self.stun_cycles, self.stun_status = 0, ""
-
-    def reset_modifiers(self):
-        self.curse_debuffs = [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
-
-    def calculate_hp(self):
-        return self.boss_cHP > 0
 
     def create_boss_embed(self, dps=0, extension=""):
         img_link = "https://i.ibb.co/0ngNM7h/castle.png"
         if "Demon" in self.boss_image or "Dragon" in self.boss_image:
             img_link = self.boss_image
-        tier_colour_dict = {1: [0x43B581, "<:Gem1:1242206599481659442>"], 2: [0x3498DB, "<:Gem2:1242206600555532421>"],
-                            3: [0x9B59B6, "<:Gem3:1242206601385873498>"], 4: [0xF1C40F, "<:Gem4:1242206602405347459>"],
-                            5: [0xCC0000, "<:Gem5:1242206603441078363>"], 6: [0xE91E63, "<:Gem6:1242206603953049721>"],
-                            7: [0xFFFFFF, "<:Gem7:1248490896379478129>"], 8: [0x000000, "<:Gem8:1242206660513108029>"]}
-        tier_colour, life_emoji = tier_colour_dict[self.boss_tier]
+        tier_hearts = ["<:Gem1:1242206599481659442>", "<:Gem2:1242206600555532421>", "<:Gem3:1242206601385873498>",
+                       "<:Gem4:1242206602405347459>", "<:Gem5:1242206603441078363>", "<:Gem6:1242206603953049721>",
+                       "<:Gem7:1248490896379478129>", "<:Gem8:1242206660513108029>", "<:Gem8:1242206660513108029>"]
         # Set boss details
         dps_msg = f"{sm.number_conversion(dps)} / min"
         boss_title = f'{self.boss_name}{extension}'
         boss_field = f'Tier {self.boss_tier} {self.boss_type} - Level {self.boss_level}'
         # Set boss hp
-        if not self.calculate_hp():
-            self.boss_cHP = 0
+        self.boss_cHP = max(0, self.boss_cHP)
         hp_bar_icons = gli.hp_bar_dict[min(8, self.boss_tier)]
-        boss_hp = f'{life_emoji} ({sm.display_hp(int(self.boss_cHP), int(self.boss_mHP))})'
+        boss_hp = f'{tier_heart_dict[self.boss_tier -1]} ({sm.display_hp(int(self.boss_cHP), int(self.boss_mHP))})'
         bar_length = 0
         if int(self.boss_cHP) >= 1:
             bar_percentage = (int(self.boss_cHP) / int(self.boss_mHP)) * 100
@@ -95,7 +89,7 @@ class CurrentBoss:
         type_weak = ''.join(gli.class_icon_list[idx] for idx, x in enumerate(self.boss_typeweak) if x == 1)
         ele_weak = ''.join(gli.ele_icon[idx] for idx, x in enumerate(self.boss_eleweak) if x == 1)
         boss_weakness = f'Weakness: {type_weak}{ele_weak}'
-        embed_msg = discord.Embed(colour=tier_colour, title=boss_title, description="")
+        embed_msg = sm.EasyEmbed(self.boss_tier, boss_title, "")
         embed_msg.set_image(url=img_link)
         embed_msg.add_field(name=boss_field, value=boss_hp, inline=False)
         embed_msg.add_field(name=boss_weakness, value="", inline=False)
@@ -103,6 +97,9 @@ class CurrentBoss:
         return embed_msg
 
     def generate_boss_name_image(self, boss_type, boss_tier):
+        if boss_type == "raid":
+            self.boss_name = raid_bosses[dt.now(ZoneInfo('America/Toronto')).weekday()]
+            return
         target_list = all_names_dict[boss_type][(boss_tier - 1)]
         if boss_type in ["Paragon", "Arbiter", "Incarnate"]:
             self.boss_name = random.choice(target_list)
@@ -172,6 +169,7 @@ async def spawn_boss(channel_id, player_id, boss_tier, boss_type, boss_level, ga
     elif boss_type == "Arbiter":
         boss_level += 10
     boss_obj = CurrentBoss()
+    boss_obj.player_id = player_id
     boss_obj.boss_type, boss_obj.boss_type_num = boss_type, gli.boss_list.index(boss_type)
     boss_obj.boss_level, boss_obj.boss_tier = boss_level, boss_tier
     boss_obj.generate_boss_name_image(boss_obj.boss_type, boss_obj.boss_tier)
@@ -203,7 +201,8 @@ async def spawn_boss(channel_id, player_id, boss_tier, boss_type, boss_level, ga
     raw_query = ("INSERT INTO EncounterList "
                  "(channel_id, player_id, encounter, boss_info, boss_data, boss_weakness, abandon) "
                  "VALUES (:channel_id, :player_id, :encounter, :boss_info, :boss_data, :boss_weakness, :abandon)")
-    params = {'channel_id': str(channel_id), 'player_id': player_id, 'encounter': encounter_type, 'boss_info': boss_info,
+    params = {'channel_id': str(channel_id), 'player_id': player_id, 'encounter': encounter_type,
+              'boss_info': boss_info,
               'boss_data': boss_data, 'boss_weakness': boss_weakness, 'abandon': 0}
     await rqy(raw_query, params=params)
     return boss_obj
@@ -229,7 +228,7 @@ async def update_boss_cHP(channel_id, player_id, boss_obj):
 async def get_damage_list(channel_id):
     raid_id = await encounters.get_encounter_id(channel_id, None)
     if raid_id is None:
-        return
+        return None
     raw_query = "SELECT player_id, player_dps FROM RaidPlayers WHERE raid_id = :id_check"
     df = await rqy(raw_query, True, params={'id_check': raid_id})
     return ([], []) if df is None else (df["player_id"].values.tolist(), df["player_dps"].values.tolist())
@@ -245,19 +244,3 @@ async def create_dead_boss_embed(channel_id, active_boss, dps, extension=""):
         output_list += f'{str(player_obj.player_username)}: {sm.number_conversion(int(damage_list[idx]))}\n'
     dead_embed.add_field(name="SLAIN", value=output_list, inline=False)
     return dead_embed
-
-
-async def handle_boss_cycle_limit(boss_obj, combat_tracker, player_obj, embed, gauntlet):
-    hp_percent = boss_obj.boss_cHP / boss_obj.boss_mHP
-    if not (gauntlet or combat_tracker.total_cycles < 30 or hp_percent <= 0.95):
-        fail_msg = f"{combat_tracker.total_cycles:,} cycles elapsed. Encounter ended as HP threshhold not met."
-        embed.add_field(name="Encounter Failed!", value=fail_msg, inline=False)
-        await encounters.clear_boss_encounter_info(channel_id, player_obj.player_id)
-        return embed, False
-    elif gauntlet and combat_tracker.total_cycles >= 999:
-        fail_msg = f"999 cycles elapsed. Encounter ended as maximum cycle limit exceeded."
-        embed.add_field(name="Encounter Failed!", value=fail_msg, inline=False)
-        await encounters.clear_boss_encounter_info(channel_id, player_obj.player_id)
-        return embed, False
-    else:
-        return embed, True

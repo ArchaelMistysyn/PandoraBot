@@ -3,6 +3,7 @@ import pandas as pd
 import discord
 import random
 from datetime import datetime as dt, timedelta
+from zoneinfo import ZoneInfo
 
 import math
 
@@ -37,11 +38,9 @@ class PlayerProfile:
         self.player_class = ""
         self.player_quest, self.quest_tokens = 0, [0 for x in range(30)]
         self.quest_tokens[1] = 1
-        self.player_coins, self.player_stamina, self.vouch_points = 0, 0, 0
-        self.luck_bonus = 0
+        self.player_coins, self.player_stamina, self.vouch_points, self.luck_bonus = 0, 0, 0, 0
         # Initialize player gear/stats info.
-        self.player_stats, self.gear_points = [0] * 9, [0] * 9
-        self.player_equipped = [0] * 7
+        self.player_stats, self.gear_points, self.player_equipped = [0] * 9, [0] * 9, [0] * 7
         self.pact, self.insignia, self.equipped_tarot = "", "", ""
 
         # Initialize player health stats.
@@ -68,14 +67,14 @@ class PlayerProfile:
         self.trigger_rate = {"Fractal": 0.0, "Hyperbleed": 0.0, "Critical": 0.0, "Omega": 0.0,
                              "Temporal": 0.0, "Bloom": 0.0, "Status": 1.0}
         self.perfect_rate = {"Fractal": 0, "Hyperbleed": 0, "Critical": 0, "Temporal": 0, "Bloom": 0}
-        self.appli = {"Critical": 0, "Bleed": 0, "Ultimate": 0, "Life": 0, "Mana": 0, "Temporal": 0, "Elemental": 0,
-                      "Combo": 0, "Aqua": 0}
+        self.appli = {"Critical": 0, "Bleed": 0, "Ultimate": 0, "Life": 0, "Mana": 0,
+                      "Temporal": 0, "Elemental": 0, "Combo": 0, "Aqua": 0}
         # Initialize misc Datasets.
         self.resonance = [0] * 31
         self.banes = [0.0] * 7
         self.skill_damage_bonus = [0] * 4
         self.unique_conversion = [0.0] * 5
-        self.spec_conv = {"Sacred": 0.0, "Abyssal": 0.0, "Calamity": 0.0}
+        self.spec_conv = {"Heavenly": 0.0, "Stygian": 0.0, "Calamity": 0.0}
         # Initialize misc stats.
         self.charge_generation = 1
         self.attack_speed = 0.0
@@ -84,12 +83,10 @@ class PlayerProfile:
         self.aqua_mode, self.aqua_points = 0, 0
         self.flare_type = ""
         # Initialize defensive stats.
-        self.hp_bonus, self.hp_regen, self.hp_multiplier = 0.0, 0.0, 0.0
-        self.recovery = 3
+        self.hp_bonus, self.hp_regen, self.hp_multiplier, self.recovery = 0.0, 0.0, 0.0, 3
         self.block, self.dodge = 0, 0
         self.damage_mitigation, self.mitigation_bonus = 0.0, 0.0
-        self.elemental_res = [0.0] * 9
-        self.all_elemental_res = 0.1
+        self.elemental_res, self.all_elemental_res = [0.0] * 9, 0.1
 
     async def get_player_stats(self, method):
         await self.reload_player()
@@ -651,7 +648,7 @@ class PlayerProfile:
         if len(df) != 0:
             date_string = str(df["time_used"].values[0])
             previous = dt.strptime(date_string, gli.date_formatting)
-            now = dt.now()
+            now = dt.now(ZoneInfo('America/Toronto'))
             difference = now - previous
             method = str(df["method"].values[0])
         return difference, method
@@ -666,7 +663,7 @@ class PlayerProfile:
         if len(df) != 0:
             raw_query = ("UPDATE CommandCooldowns SET command_name = :cmd_check, time_used =:time_check "
                          "WHERE player_id = :player_check AND method = :method")
-        timestamp = dt.now() - timedelta(days=rewind_days)
+        timestamp = dt.now(ZoneInfo('America/Toronto')) - timedelta(days=rewind_days)
         current_time = timestamp.strftime(gli.date_formatting)
         params = {'player_check': self.player_id, 'cmd_check': command_name,
                   'method': method, 'time_check': current_time}
