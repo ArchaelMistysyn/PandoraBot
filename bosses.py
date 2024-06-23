@@ -49,6 +49,9 @@ all_names_dict = {"Fortress": fortress_names, "Dragon": dragon_names, "Demon": d
 raid_bosses = {0: "Geb, Sacred Ruler of Sin", 1: "Tiamat, Sacred Ruler of Fury", 2: "Veritas, Sacred Ruler of Prophecy",
                3: "Geb, Sacred Ruler of Sin", 4: "Tiamat, Sacred Ruler of Fury", 5: "Veritas, Sacred Ruler of Prophecy",
                6: "Alaric, Sacred Ruler of Totality"}
+raid_element_dict = {
+    "Geb, Sacred Ruler of Sin": [3, 6, 7], "Tiamat, Sacred Ruler of Fury": [0, 2, 5],
+    "Veritas, Sacred Ruler of Prophecy": [1, 4, 8], "Alaric, Sacred Ruler of Totality": [x for x in range(9)]}
 
 
 # Boss class
@@ -77,7 +80,7 @@ class CurrentBoss:
         # Set boss hp
         self.boss_cHP = max(0, self.boss_cHP)
         hp_bar_icons = gli.hp_bar_dict[min(8, self.boss_tier)]
-        boss_hp = f'{tier_heart_dict[self.boss_tier -1]} ({sm.display_hp(int(self.boss_cHP), int(self.boss_mHP))})'
+        boss_hp = f'{tier_hearts[self.boss_tier - 1]} ({sm.display_hp(int(self.boss_cHP), int(self.boss_mHP))})'
         bar_length = 0
         if int(self.boss_cHP) >= 1:
             bar_percentage = (int(self.boss_cHP) / int(self.boss_mHP)) * 100
@@ -97,8 +100,9 @@ class CurrentBoss:
         return embed_msg
 
     def generate_boss_name_image(self, boss_type, boss_tier):
-        if boss_type == "raid":
+        if boss_type == "Ruler":
             self.boss_name = raid_bosses[dt.now(ZoneInfo('America/Toronto')).weekday()]
+            self.boss_element = random.choice(raid_element_dict[self.boss_name])
             return
         target_list = all_names_dict[boss_type][(boss_tier - 1)]
         if boss_type in ["Paragon", "Arbiter", "Incarnate"]:
@@ -143,13 +147,13 @@ async def spawn_boss(channel_id, player_id, boss_tier, boss_type, boss_level, ga
     df = await encounters.get_encounter_id(channel_id, player_id, id_only=False)
     # Load existing boss.
     if df is not None:
-        raid_id, encounter = int(df["raid_id"].values[0]), str(df["encounter"].values[0])
+        raid_id, encounter = int(df["encounter_id"].values[0]), str(df["encounter"].values[0])
         player_id, channel_id = int(df["player_id"].values[0]), int(df["channel_id"].values[0])
         boss_info, boss_data = str(df["boss_info"].values[0]), str(df["boss_data"].values[0])
         boss_weakness = str(df["boss_weakness"].values[0])
         boss_obj = CurrentBoss()
         boss_obj.boss_name, boss_obj.boss_image, boss_type_num = boss_info.split(";")
-        boss_obj.boss_type_num, boss_obj.boss_type = int(boss_type_num), gli.boss_list[int(boss_type_num)]
+        boss_obj.boss_type, boss_obj.boss_type_num = gli.boss_list[int(boss_type_num)], int(boss_type_num)
         boss_obj.boss_level, boss_obj.boss_tier, boss_obj.boss_cHP, boss_obj.boss_mHP = map(int, boss_data.split(";"))
         temp_t, temp_e = boss_weakness.split('/')
         type_list, ele_list = temp_t.split(';'), temp_e.split(';')
@@ -160,7 +164,7 @@ async def spawn_boss(channel_id, player_id, boss_tier, boss_type, boss_level, ga
             boss_obj.damage_cap = (10 ** int(boss_level / 10 + 4) - 1)
         return boss_obj
     # Create the boss object if it doesn't exist.
-    if boss_type == "raid":
+    if boss_type == "Ruler":
         pass
     elif boss_tier == 7:
         boss_level += 150
@@ -169,7 +173,7 @@ async def spawn_boss(channel_id, player_id, boss_tier, boss_type, boss_level, ga
     elif boss_type == "Arbiter":
         boss_level += 10
     boss_obj = CurrentBoss()
-    boss_obj.player_id = player_id
+    boss_obj.player_id = player_id if player_id is not None else 0
     boss_obj.boss_type, boss_obj.boss_type_num = boss_type, gli.boss_list.index(boss_type)
     boss_obj.boss_level, boss_obj.boss_tier = boss_level, boss_tier
     boss_obj.generate_boss_name_image(boss_obj.boss_type, boss_obj.boss_tier)
@@ -189,8 +193,8 @@ async def spawn_boss(channel_id, player_id, boss_tier, boss_type, boss_level, ga
         total_hp *= (10 ** multiplier_count)
     encounter_type = "solo" if not gauntlet else "gauntlet"
     boss_obj.damage_cap = total_hp // 10 - 1
-    if boss_type == "raid":
-        encounter_type, boss_obj.damage_cap = "raid", (total_hp // 1000 - 1)
+    if boss_type == "Ruler":
+        encounter_type, boss_obj.damage_cap = "Raid", (total_hp // 1000 - 1)
     elif boss_obj.boss_type == "Incarnate":
         boss_obj.damage_cap = -1
     boss_obj.boss_cHP = boss_obj.boss_mHP = total_hp
@@ -201,19 +205,16 @@ async def spawn_boss(channel_id, player_id, boss_tier, boss_type, boss_level, ga
     raw_query = ("INSERT INTO EncounterList "
                  "(channel_id, player_id, encounter, boss_info, boss_data, boss_weakness, abandon) "
                  "VALUES (:channel_id, :player_id, :encounter, :boss_info, :boss_data, :boss_weakness, :abandon)")
-    params = {'channel_id': str(channel_id), 'player_id': player_id, 'encounter': encounter_type,
+    params = {'channel_id': str(channel_id), 'player_id': boss_obj.player_id, 'encounter': encounter_type,
               'boss_info': boss_info,
               'boss_data': boss_data, 'boss_weakness': boss_weakness, 'abandon': 0}
     await rqy(raw_query, params=params)
     return boss_obj
 
 
-def get_random_bosstier(boss_type):
-    tier_list, weight_list = [1, 2, 3, 4, 5, 6], [35, 25, 20, 10, 7, 3]
-    if boss_type != "Arbiter":
-        tier_list, weight_list = [1, 2, 3, 4], [35, 30, 25, 10]
-    boss_tier = random.choices(tier_list, weights=weight_list, k=1)[0]
-    return boss_tier
+def get_random_bosstier(b_type):
+    dataset = ([1, 2, 3, 4, 5, 6], [35, 25, 20, 10, 7, 3]) if b_type == "Arbiter" else ([1, 2, 3, 4], [35, 30, 25, 10])
+    return random.choices(dataset[0], weights=dataset[1], k=1)[0]
 
 
 async def update_boss_cHP(channel_id, player_id, boss_obj):

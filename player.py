@@ -532,8 +532,9 @@ class PlayerProfile:
         return critical_type
 
     def boss_adjustments(self, player_damage, boss_obj, e_weapon):
-        # Boss type multipliers
-        damage = player_damage * (1 + self.banes[boss_obj.boss_type_num - 1])
+        damage = player_damage
+        if boss_obj.boss_type != "Ruler":
+            damage *= 1 + self.banes[boss_obj.boss_type_num - 1]
         # Type Defences
         damage *= (combat.boss_defences("", self, boss_obj, -1, e_weapon) + self.defence_pen)
         # Elemental Defences

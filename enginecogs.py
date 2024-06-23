@@ -6,6 +6,7 @@ import asyncio
 import random
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from apscheduler.triggers.cron import CronTrigger
+from datetime import datetime as dt
 from zoneinfo import ZoneInfo
 
 # Bot imports
@@ -13,7 +14,6 @@ import battleengine
 
 # Data Imports
 import globalitems as gli
-import pilengine
 import sharedmethods as sm
 import adventuredata
 
@@ -37,23 +37,24 @@ class RaidSchedularCog(commands.Cog):
         self.bot, self.scheduler = bot, AsyncIOScheduler(timezone=ZoneInfo('America/Toronto'))
         self.channel_obj, self.channel_id = channel_obj, channel_id
         self.current_raid, self.boss_obj, self.active_message = None, None, None
-
-    def cog_unload(self):
-        self.scheduler.shutdown()
+        self.raid_manager()
+        self.bot.loop.create_task(self.trigger_raid())
+        print("Raid Cog Active")
 
     def raid_manager(self):
         self.scheduler.add_job(self.trigger_raid, CronTrigger(hour=0, minute=0))
         self.scheduler.start()
 
     async def trigger_raid(self):
+        print("Triggered: New Raid")
         if self.current_raid:
             await self.end_current_raid()
-        player_id, level, boss_type, boss_tier = None, 99, "raid", 9
+        player_id, level, boss_type, boss_tier = None, 99, "Ruler", 9
         self.boss_obj = await bosses.spawn_boss(self.channel_id, player_id, boss_tier, boss_type, level)
         embed_msg = self.boss_obj.create_boss_embed()
-        self.active_message = await self.channel_obj.send(embed=embed_msg, view=RaidView())
+        file_obj = discord.File(await sm.title_box(f'Raid Boss: {self.boss_obj.boss_name.split()[0].rstrip(",")}'))
+        self.active_message = await self.channel_obj.send(file=file_obj, embed=embed_msg, view=RaidView())
         self.current_raid = RaidCog(self.bot, self.boss_obj, self.channel_obj, self.channel_id, self.active_message)
-        await self.channel_obj.send('Boss encounter has started!')
 
     async def end_current_raid(self):
         if self.current_raid:
@@ -62,7 +63,8 @@ class RaidSchedularCog(commands.Cog):
                 embed_msg.add_field(name="Time's Up", value="The raid encounter has failed", inline=False)
                 await self.active_message.edit(embed=embed_msg)
             self.current_raid.end_cog()
-            self.current_raid.remove_cog()
+            self.bot.remove_cog('RaidCog')
+            self.current_raid = None
 
 
 class RaidCog(commands.Cog):
@@ -80,7 +82,7 @@ class RaidCog(commands.Cog):
     async def raid_boss_manager(self):
         async with self.lock:
             time_now = dt.now(ZoneInfo('America/Toronto'))
-            if time_now.hour == 23 and now.minute >= 58:
+            if time_now.hour == 23 and time_now.minute >= 58:
                 return
             is_alive = await self.raid_boss()
             if is_alive:
@@ -90,7 +92,7 @@ class RaidCog(commands.Cog):
             
     async def raid_boss(self):
         player_list, damage_list = await bosses.get_damage_list(self.channel_id)
-        boss_obj.curse_debuffs = [0.0] * 9
+        self.boss_obj.curse_debuffs = [0.0] * 9
         temp_user, dps = [], 0
         for idy, player_id in enumerate(player_list):
             temp_user.append(await player.get_player_by_id(player_id))
@@ -99,25 +101,33 @@ class RaidCog(commands.Cog):
             self.boss_obj.curse_debuffs = [sum(z) for z in zip(*curse_lists)]
             if idy >= len(self.tracker_list):
                 self.tracker_list.append(combat.CombatTracker(temp_user[idy]))
+        # Determine raid boss attack for the cycle
+        skill_list = combat.boss_attack_dict[self.boss_obj.boss_name]
+        skill_index = random.randint(0, len(skill_list) - 1)
+        raid_atk = (skill_list[skill_index], skill_index)
+        # Run a cycle for every player
         player_msg_list = []
         for idx, temp_player in enumerate(temp_user):
-            player_msg, player_damage = await combat.run_raid_cycle(self.tracker_list[idx], self.boss_obj, temp_player)
-            new_player_damage = int(damage_list[idx]) + player_damage
+            p_msg, damage = await combat.run_raid_cycle(self.tracker_list[idx], self.boss_obj, temp_player, raid_atk)
+            new_player_damage = int(damage_list[idx]) + damage
             dps += int(self.tracker_list[idx].total_dps / self.tracker_list[idx].total_cycles)
             await encounters.update_player_raid_damage(self.channel_id, temp_player.player_id, new_player_damage)
-            player_msg_list.append(player_msg)
+            player_msg_list.append(p_msg)
         await bosses.update_boss_cHP(self.channel_id, None, self.boss_obj)
         if self.boss_obj.boss_cHP > 0:
             embed_msg, is_alive = self.boss_obj.create_boss_embed(dps=dps), True
         else:
             embed_msg, is_alive = bosses.create_dead_boss_embed(self.channel_id, self.boss_obj, dps), False
             loot_embed = await loot.create_loot_embed(embed_msg, self.boss_obj, player_list, loot_mult=5)
+        skill_msg = f"{self.boss_obj.boss_name} uses {skill_list[skill_index]} on all players\n"
+        skill_msg += f"{self.boss_obj.boss_name} regenerates 1% HP"
+        embed_msg.add_field(name="", value=skill_msg, inline=False)
         for player_msg in player_msg_list:
             embed_msg.add_field(name="", value=player_msg, inline=False)
         await self.sent_message.edit(embed=embed_msg)
         if not is_alive:
             message = f"{self.boss_obj.boss_name} Slain"
-            await self.channel_obj.send(file=discord.File(await pilengine.build_title_box(message)))
+            await self.channel_obj.send(file=discord.File(await sm.title_box(message)))
             await self.channel_obj.send(embed=loot_embed)
         return is_alive
         
@@ -126,11 +136,11 @@ class RaidView(discord.ui.View):
     def __init__(self):
         super().__init__(timeout=None)
 
-    @discord.ui.button(label="Join the raid!", style=discord.ButtonStyle.success, emoji="⚔️")
+    @discord.ui.button(label="Join the raid!", style=discord.ButtonStyle.success, emoji="<:Sword5:1246945708939022367>")
     async def raid_callback(self, interaction: discord.Interaction, raid_select: discord.ui.Select):
         clicked_by = await player.get_player_by_discord(interaction.user.id)
-        if clicked_by.player_echelon <= 1:
-            outcome = f"{clicked_by.player_username}: Echelon 1 required to join a raid."
+        if clicked_by.player_echelon < 5:
+            outcome = f"{clicked_by.player_username}: Echelon 5 required to join a raid."
             await interaction.response.send_message(outcome)
             return
         if clicked_by.player_equipped[0] == 0:

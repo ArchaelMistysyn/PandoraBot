@@ -92,13 +92,19 @@ def run_discord_bot():
             print(e)
 
     @engine_bot.command(name='start_raid', help="Archael Only")
-    async def initialize_raid(ctx):
+    async def start_raid(ctx, server_select="single"):
         if ctx.message.author.id != 185530717638230016:
             await ctx.send('You must be the owner to use this command!')
             return
-        for server_id, (_, raid_channel_id, _, _) in gli.servers.items():
-            await encounters.clear_boss_encounter_info(raid_channel_id, None)
-            enginecogs.RaidSchedularCog(engine_bot, raid_channel, engine_bot.get_channel(raid_channel_id))
+        if server_select == "single":
+            raid_channel_id = gli.servers[ctx.guild.id][1]
+            await encounters.clear_all_encounter_info(ctx.guild.id)
+            enginecogs.RaidSchedularCog(engine_bot, engine_bot.get_channel(raid_channel_id), raid_channel_id)
+            return
+        elif server_select == "all":
+            for server_id, (_, raid_channel_id, _, _) in gli.servers.items():
+                await encounters.clear_all_encounter_info(server_id)
+                enginecogs.RaidSchedularCog(engine_bot, engine_bot.get_channel(raid_channel_id), raid_channel_id)
 
     @engine_bot.hybrid_command(name='abandon', help="Abandon an active solo encounter.")
     @app_commands.guilds(discord.Object(id=1011375205999968427))
@@ -173,7 +179,7 @@ def run_discord_bot():
             spawned_boss = random.randint(0, max_spawn)
             boss_type = gli.boss_list[spawned_boss]
         else:
-            if boss_type not in gli.boss_list:
+            if boss_type not in gli.boss_list[:-2]:
                 await ctx.send("Boss type not recognized. Please select [Random/Fortress/Dragon/Demon/Paragon/Arbiter].")
                 return
             spawned_boss = gli.boss_list.index(boss_type)

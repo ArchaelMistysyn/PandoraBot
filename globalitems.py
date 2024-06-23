@@ -55,7 +55,7 @@ frame_icon_list = [f"{web_url}iconframes/Icon_Border_[EXT]/Icon_border_Bronze_[E
                    f"{web_url}iconframes/Icon_Border_[EXT]/Icon_border_Pink_[EXT].png",
                    f"{web_url}iconframes/Icon_Border_[EXT]/Icon_border_Black_[EXT].png",
                    f"{web_url}iconframes/Icon_Border_[EXT]/Icon_border_white_[EXT].png",
-                   f"{web_url}iconframes/Icon_Border_[EXT]/Icon_border_white_[EXT].png"]  # change later to t9/sacred
+                   f"{web_url}iconframes/Icon_Border_[EXT]/Icon_border_Ruby_[EXT].png"]
 frame_extension = ["106px", "1484px"]
 # Star Icons
 star_icon = ["<:SB:1201563579330076682>", "<:S1:1201563573202206910>", "<:S2:1201563575433576488>",
@@ -88,7 +88,7 @@ element_special_names = ["Volcanic", "Aquatic", "Voltaic", "Seismic", "Sonic", "
 element_status_list = [None, None, "paralyzed", "petrified", None, "frozen", None, "blinded", "disoriented"]
 
 # Boss Types
-boss_list = ["Fortress", "Dragon", "Demon", "Paragon", "Arbiter", "Incarnate"]
+boss_list = ["Fortress", "Dragon", "Demon", "Paragon", "Arbiter", "Incarnate", "Ruler"]
 
 # DATA STRUCTURES
 # Unique Ability Data

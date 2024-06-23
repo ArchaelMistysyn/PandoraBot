@@ -12,7 +12,6 @@ import quest
 import inventory
 from pandoradb import run_query as rqy
 
-
 combat_command_list = [("solo", "Type Options: [Random/Fortress/Dragon/Demon/Paragon/Arbiter]. Stamina Cost: 200", 0),
                        ("summon", "Consume a summoning item to summon a high tier boss. Options [1-3]", 1),
                        ("gauntlet", "Challenge the gauntlet in the Spire of Illusions.", 2),
@@ -54,11 +53,18 @@ boss_attack_dict = {
          "**Weight Of Sin**", "**Scales Of Judgement**", "**__White Abyss__**"],
     "Nephilim, Incarnate of the Divine Lotus":
         ["Lotus Slash", "Propagate Ruin", "Divine Purgation", "Chaos Bloom", "**Sacred Revelation**",
-         "**Eye Of The Annihilator**", "**Nightmare Saber**", "**__Fabricate Apotheosis__**"]
-}
+         "**Eye Of The Annihilator**", "**Nightmare Saber**", "**__Fabricate Apotheosis__**"],
+    "Geb, Sacred Ruler of Sin": ["Skill1", "Skil2", "Skill3", "Skill4", "**Skill5**",
+                                 "**Skill6**", "**Skill7**", "**Skill8**", "**__Skill9__**"],
+    "Tiamat, Sacred Ruler of Fury": ["Skill1", "Skil2", "Skill3", "Skill4", "**Skill5**",
+                                     "**Skill6**", "**Skill7**", "**Skill8**", "**__Skill9__**"],
+    "Veritas, Sacred Ruler of Prophecy": ["Skill1", "Skil2", "Skill3", "Skill4", "**Skill5**",
+                                          "**Skill6**", "**Skill7**", "**Skill8**", "**__Skill9__**"],
+    "Alaric, Sacred Ruler of Totality": ["Skill1", "Skil2", "Skill3", "Skill4", "**Skill5**",
+                                         "**Skill6**", "**Skill7**", "**Skill8**", "**__Skill9__**"]}
 boss_attack_exceptions = list(boss_attack_dict.keys())
-skill_multiplier_list = [1, 2, 3, 5, 7, 10, 15, 20]
-skill_multiplier_list_high = [4, 6, 8, 10, 15, 25, 50, 99]
+skill_multiplier_list = [1, 2, 3, 5, 7, 10, 15, 20, 50]
+skill_multiplier_list_high = [4, 6, 8, 10, 15, 25, 50, 99, 999]
 
 
 class CombatTracker:
@@ -76,7 +82,31 @@ class CombatTracker:
         self.bleed_tracker = 0.0
 
 
-async def run_cycle(tracker_obj, boss_obj, player_obj, method):
+async def run_solo_cycle(tracker_obj, boss_obj, player_obj):
+    hit_list, msg, p_alive, b_alive, total_damage = await run_cycle(tracker_obj, boss_obj, player_obj)
+    total_dps = int(tracker_obj.total_dps / tracker_obj.total_cycles)
+    embed_msg = boss_obj.create_boss_embed(total_dps)
+    embed_msg.add_field(name="", value=msg, inline=False)
+    if not b_alive:
+        embed_msg = boss_obj.create_boss_embed(total_dps)
+    hit_field = ""
+    for hit in hit_list:
+        hit_field += f"{hit[1]}\n"
+        if hit[0] > tracker_obj.highest_damage:
+            tracker_obj.highest_damage = hit[0]
+    embed_msg.add_field(name="", value=hit_field, inline=False)
+    return embed_msg, p_alive, b_alive
+
+
+async def run_raid_cycle(tracker_obj, boss_obj, player_obj, raid_atk):
+    hit_list, player_msg, p_alive, b_alive, total_damage = await run_cycle(tracker_obj, boss_obj, player_obj, raid_atk)
+    if total_damage != 0 and p_alive:
+        player_msg = f"{player_msg} - dealt {sm.number_conversion(total_damage)} damage!"
+    return player_msg, total_damage
+
+
+async def run_cycle(tracker_obj, boss_obj, player_obj, raid_attack=None):
+    tracker_obj.total_cycles += 1
     hit_list, total_damage = [], 0
     player_alive, boss_alive = True, True
     # Step 1: Check and handle status effects
@@ -84,7 +114,7 @@ async def run_cycle(tracker_obj, boss_obj, player_obj, method):
     if status_effects_result is not None:
         return hit_list, status_effects_result, player_alive, boss_obj.boss_cHP > 0, total_damage
     # Step 2: Boss takes action
-    player_alive, boss_action_msg = handle_boss_actions(boss_obj, tracker_obj, player_obj)
+    player_alive, boss_action_msg = handle_boss_actions(boss_obj, tracker_obj, player_obj, raid_attack)
     if not player_alive:
         tracker_obj.hp_regen = 0
         battle_msg = f"{player_obj.player_username} has been felled!"
@@ -100,7 +130,11 @@ async def run_cycle(tracker_obj, boss_obj, player_obj, method):
     tracker_obj.total_dps += total_damage
     battle_msg = f"{player_obj.player_username} - [HP: {sm.display_hp(tracker_obj.player_cHP, player_obj.player_mHP)}]"
     battle_msg += f" - [Recovery: {tracker_obj.recovery}]"
-    battle_msg = f"{boss_action_msg}{battle_msg}" if method == "Solo" else battle_msg
+    if raid_attack is None:
+        battle_msg = f"{player_obj.player_username} - [HP: {sm.number_conversion(tracker_obj.player_cHP)} "
+        battle_msg += f" - R: {tracker_obj.recovery}]"
+    else:
+        battle_msg = f"{boss_action_msg}{battle_msg}"
     return hit_list, battle_msg, player_alive, boss_obj.boss_cHP > 0, total_damage
 
 
@@ -116,24 +150,26 @@ def handle_status(tracker_obj, player_obj):
     return battle_msg
 
 
-def handle_boss_actions(boss_obj, tracker_obj, player_obj):
+def handle_boss_actions(boss_obj, tracker_obj, player_obj, raid_atk=None):
     is_alive, boss_msg = True, ""
     # Handle Boss Status
-    if boss_obj.stun_cycles > 0:
+    if boss_obj.stun_cycles > 0 and boss_obj.boss_type != "Ruler":
         tracker_obj.stun_cycles -= 1
         boss_msg = f"{boss_obj.boss_name} is {boss_obj.stun_status}! Duration: {boss_obj.stun_cycles} cycles.\n"
         if boss_obj.stun_cycles == 0:
             boss_msg = f"{boss_obj.boss_name} has recovered from being {boss_obj.stun_status}!"
         return is_alive, boss_msg
-
     if boss_obj.boss_type_num == 0:
         return is_alive, boss_msg
-        # Handle boss attacks.
+    # Handle boss attacks.
     boss_element = boss_obj.boss_element if boss_obj.boss_element != 9 else random.randint(0, 8)
-    specific_key = [key for key in boss_attack_exceptions if key in boss_obj.boss_name]
-    skill_list = boss_attack_dict[specific_key[0]] if specific_key else boss_attack_dict[boss_obj.boss_type]
-    idx = random.randint(0, len(skill_list) - 1)
-    skill = skill_list[idx]
+    if raid_atk is None:
+        specific_key = [key for key in boss_attack_exceptions if key in boss_obj.boss_name]
+        skill_list = boss_attack_dict[specific_key[0]] if specific_key else boss_attack_dict[boss_obj.boss_type]
+        idx = random.randint(0, len(skill_list) - 1)
+        skill = skill_list[idx]
+    else:
+        skill, idx = raid_atk
     if "[ELEMENT]" in skill:
         skill = skill.replace("[ELEMENT]", gli.element_special_names[boss_element])
     base_set = [100, 100] if "_" in skill else [25, 50]
@@ -150,8 +186,9 @@ def handle_boss_actions(boss_obj, tracker_obj, player_obj):
     # Handle boss regen.
     if boss_obj.boss_type_num < 3:
         return is_alive, boss_msg
-    boss_obj.boss_cHP += int(0.001 * boss_obj.boss_tier * boss_obj.boss_mHP)
-    boss_obj.boss_cHP = boss_obj.boss_mHP if boss_obj.boss_cHP >= boss_obj.boss_mHP else boss_obj.boss_cHP
+    regen_value = 0.001 * boss_obj.boss_tier if raid_atk is None else 0.01
+    boss_obj.boss_cHP += int(regen_value * boss_obj.boss_mHP)
+    boss_obj.boss_cHP = min(boss_obj.boss_cHP, boss_obj.boss_mHP)
     boss_msg += f"{boss_obj.boss_name} regenerated 0.{boss_obj.boss_tier}% HP!\n"
     return is_alive, boss_msg
 
@@ -212,7 +249,8 @@ def take_combat_damage(player_obj, tracker_obj, damage_set, dmg_element, bypass_
 async def hit_boss(tracker_obj, boss_obj, player_obj, combo_count, hit_type="Regular"):
     update_bleed(tracker_obj, player_obj)
     critical_type = await player_obj.get_player_boss_damage(boss_obj)
-    damage, skill_name = skill_adjuster(player_obj, tracker_obj, player_obj.total_damage, combo_count, (hit_type == "Ultimate"))
+    damage, skill_name = skill_adjuster(player_obj, tracker_obj, player_obj.total_damage, combo_count,
+                                        (hit_type == "Ultimate"))
     damage, mana_msg = check_mana(player_obj, tracker_obj, damage)
     damage, status_msg = check_lock(player_obj, tracker_obj, damage)
     damage, second_msg = check_bloom(player_obj, damage)
@@ -284,36 +322,8 @@ def update_bleed(tracker_obj, player_obj):
 
 
 def scale_raid_damage(damage):
-    base = 10000000000
-    return damage if damage <= base else min(base * (1 + math.log10(damage / base) / 3), base * 10)
-
-
-async def run_solo_cycle(tracker_obj, boss_obj, player_obj):
-    hit_list, battle_msg, player_alive, boss_alive, total_damage = await run_cycle(tracker_obj, boss_obj, player_obj, "Solo")
-    tracker_obj.total_cycles += 1
-    total_dps = int(tracker_obj.total_dps / tracker_obj.total_cycles)
-    embed_msg = boss_obj.create_boss_embed(total_dps)
-    embed_msg.add_field(name="", value=battle_msg, inline=False)
-    if not boss_alive:
-        embed_msg = boss_obj.create_boss_embed(total_dps)
-    hit_field = ""
-    for hit in hit_list:
-        hit_field += f"{hit[1]}\n"
-        if hit[0] > tracker_obj.highest_damage:
-            tracker_obj.highest_damage = hit[0]
-    embed_msg.add_field(name="", value=hit_field, inline=False)
-    return embed_msg, player_alive, boss_alive
-
-
-async def run_raid_cycle(tracker_obj, boss_obj, player_obj):
-    hit_list, battle_msg, player_alive, boss_alive, total_damage = await run_cycle(tracker_obj, boss_obj, player_obj, "Raid")
-    tracker_obj.total_cycles += 1
-    if not boss_alive and boss_obj.boss_tier >= 4:
-        await quest.assign_unique_tokens(player_obj, boss_obj.boss_name)
-    player_msg = battle_msg
-    if total_damage != 0 and player_alive:
-        player_msg = f"{battle_msg} - dealt {sm.number_conversion(total_damage)} damage!"
-    return player_msg, total_damage
+    s_damage, base = damage // 10, 10000000000
+    return s_damage if s_damage <= base else int(min(base * (1 + math.log10(s_damage / base) / 3), base * 10))
 
 
 def check_bloom(player_obj, input_damage):
@@ -445,7 +455,8 @@ def pvp_defences(attacker, defender, player_damage, e_weapon):
             if attacker.elemental_damage[idx] > attacker.elemental_damage[highest]:
                 highest = idx
     stun_status = gli.element_status_list[highest]
-    stun_status = stun_status if (stun_status is not None and random.randint(1, 100) <= attacker.trigger_rate["Status"]) else None
+    stun_status = stun_status if (
+                stun_status is not None and random.randint(1, 100) <= attacker.trigger_rate["Status"]) else None
     return stun_status, int(sum(attacker.elemental_damage) * (1 + attacker.banes[5]))
 
 

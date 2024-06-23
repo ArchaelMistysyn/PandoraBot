@@ -162,7 +162,7 @@ class Room:
                     description += f"\nCurrent Stamina: {gli.stamina_icon} {temp_player.player_stamina:,}"
             case "boss_shrine":
                 self.variant = "Greater " if random_check <= (5 * expedition.luck) else ""
-                target_list = gli.boss_list[1:-2] if self.variant == "" else gli.boss_list[1:-1]
+                target_list = gli.boss_list[1:-3] if self.variant == "" else gli.boss_list[1:-2]
                 self.room_deity = random.choice(target_list)
                 title = f"{self.variant}{element_descriptor} {self.room_deity} Shrine"
             case _:

@@ -48,15 +48,15 @@ summon_data = [[None, 'Summoning Relic', 100, 5, '<a:elootitem:11444775503792743
 itemdata_dict = build_item_dict(itemdata_dict, summon_data, category="Summon")
 
 # Stone List Data
-stone_type = ["Fortress", "Dragon", "Demon", "Paragon", "Raid", "Arbiter"]
+stone_type = ["Fortress", "Dragon", "Demon", "Paragon", "Ruler", "Arbiter"]
 stone_data = [[None, 'Fortress Stone', 100, 1, '<a:elootitem:1144477550379274322>', None, 0],
               [None, 'Dragon Stone', 100, 2, '<a:elootitem:1144477550379274322>', None, 0],
               [None, 'Demon Stone', 100, 3, '<a:elootitem:1144477550379274322>', None, 0],
               [None, 'Paragon Stone', 100, 4, '<a:elootitem:1144477550379274322>', None, 0],
-              [None, 'Raid Stone', 100, 5, '<a:elootitem:1144477550379274322>', None, 0],
+              [None, "Ruler's Stone", 100, 5, '<a:elootitem:1144477550379274322>', None, 0],
               [None, 'Arbiter Stone', 100, 6, '<a:elootitem:1144477550379274322>', None, 0]]
 for index, row in enumerate(stone_data):
-    row[5] = f'Obtained from {stone_type[index].lower()}. It\'s a stone.'
+    row[5] = f'Obtained from {stone_type[index].lower()} bosses. It\'s a stone.'
 itemdata_dict = build_item_dict(itemdata_dict, stone_data, category="Stone")
 
 # Stamina Potion Data
@@ -152,11 +152,11 @@ for index in range(6):
 itemdata_dict = build_item_dict(itemdata_dict, unrefined_void_data, category="Void")
 
 # Unrefined Misc Items List Data
-unrefined_misc_data = [[None, 'Unrefined Dragon Wings', 75, 4, '<a:elootitem:1144477550379274322>',
+unrefined_misc_data = [[None, 'Unrefined Dragon Wings', 75, 4, '<:Wings4:1254505671542444094>',
                         'Refine for 75% chance to receive tier 2-4 dragon wings.', 0],
-                       [None, 'Unrefined Demon Greaves', 75, 4, '<a:elootitem:1144477550379274322>',
+                       [None, 'Unrefined Demon Greaves', 75, 4, '<:Greaves4:1254505711791112324>',
                         'Refine for 75% chance to receive a tier 2-4 demon Greaves.', 0],
-                       [None, 'Unrefined Paragon Crest', 75, 4, '<a:elootitem:1144477550379274322>',
+                       [None, 'Unrefined Paragon Crest', 75, 4, '<:Crest4:1254505737259057202>',
                         'Refine for 75% chance to receive a tier 2-4 paragon crest.', 0]]
 itemdata_dict = build_item_dict(itemdata_dict, unrefined_misc_data, category="Unrefined")
 
@@ -332,6 +332,11 @@ uncategorized_data = [
     ['Pandora', "Pandora's Twinkling Heart", 100, 8, '<a:elootitem:1144477550379274322>',
      "The spiritual heart of the celestial paragon. "
      "At the dawn of creation Pandora bore her celestial heart as a power source for her hammer.", 0],
+    ['Ruler', "Ruler's Crown Jewel", 100, 9, '<a:elootitem:1144477550379274322>',
+     "A jewel of unmatched quality, unparalleled value, and unfathomable beauty. A truly unique treasure.", 0],
+    ['Blood', "Sacred Blood", 100, 9, '<a:elootitem:1144477550379274322>',
+     "Rare drop from raid bosses. Can be optionally consumed as an additional cost to guarantee a 'Sacred' "
+     "outcome during infusion. It can also be used to upgrade tier 8 gear to tier 9.", 0],
     ['Metamorphite', 'Metamorphite Ore', 100, 7, '<a:elootitem:1144477550379274322>',
      "A mysterious ore that can drastically change an item.", 0]]
 itemdata_dict = build_item_dict(itemdata_dict, uncategorized_data, unique_index=True)

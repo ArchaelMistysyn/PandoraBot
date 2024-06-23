@@ -199,7 +199,7 @@ def run_discord_bot():
                 return
             await inventory.set_gift(player_obj, target_item, value)
             message, header = f"{player_obj.player_username} issued a gift to all players. /claim", "Event Gift"
-            await ctx.send(file=discord.File(await pilengine.build_message_box(player_obj, message, header)))
+            await ctx.send(file=discord.File(await sm.message_box(player_obj, message, header)))
             return
         await ctx.send('Admin task completed.')
 
@@ -275,7 +275,7 @@ def run_discord_bot():
             await ctx.send('Pandora Bot commands synced!')
         elif keyword == "Startup":
             await encounters.clear_automapper(None, startup=True)
-            await encounters.clear_boss_encounter_info(ctx.channel.id, None)
+            await encounters.clear_all_encounter_info(ctx.guild.id)
             await ctx.send('Pandora Bot startup tasks completed!')
         elif keyword == "Test":
             title = ""
@@ -293,7 +293,7 @@ def run_discord_bot():
         if trigger_return:
             return
         message, header = f"Turned off by Admin: {player_obj.player_username}", "Pandora Bot Shutdown"
-        await ctx.send(file=discord.File(await pilengine.build_message_box(player_obj, message, header=header)))
+        await ctx.send(file=discord.File(await sm.message_box(player_obj, message, header=header)))
         await on_shutdown()
 
     # Game Commands
@@ -977,7 +977,7 @@ def run_discord_bot():
         # Transfer and display item.
         await selected_item.give_item(target_player.player_id)
         header, message = "Transfer Complete!", f"{target_player.player_username} has received Item ID: {item_id}!"
-        await ctx.send(file=discord.File(await pilengine.build_message_box(player_obj, message, header=header)))
+        await ctx.send(file=discord.File(await sm.message_box(player_obj, message, header=header)))
 
     @set_command_category('trade', 7)
     @pandora_bot.hybrid_command(name='purge', help="Sells all gear in or below a tier. "
@@ -1412,7 +1412,7 @@ def run_discord_bot():
         embed_msg.add_field(name="__Misc__", value=misc_list.rstrip(), inline=False)
         embed_msg.set_footer(text=f"Copyright: {copy_msg}")
         embed_msg.set_thumbnail(url=gli.archdragon_logo)
-        await ctx.send(file=discord.File(await pilengine.build_title_box("Pandora Bot Credits")))
+        await ctx.send(file=discord.File(await sm.title_box("Pandora Bot Credits")))
         await ctx.send(embed=embed_msg)
 
     def build_category_dict():

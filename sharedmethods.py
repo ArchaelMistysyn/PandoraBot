@@ -194,6 +194,14 @@ def hide_text(msg, method="Shrouded"):
     return ''.join(adjusted)
 
 
+async def title_box(title_msg):
+    return await pilengine.build_title_box(title_msg)
+
+
+async def message_box(player_obj, message, header=""):
+    return await pilengine.build_message_box(player_obj, message, header)
+
+
 def EasyEmbed(colour, title, description):
     embed_colour_dict = {
         "red": discord.Colour(0xFF0000), "blue": discord.Colour(0x0000FF), "green": discord.Colour(0x00FF00),
