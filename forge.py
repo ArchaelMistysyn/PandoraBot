@@ -83,10 +83,11 @@ class PurifyView(discord.ui.View):
         purification_data = {5: ["Crystal2", "Wish Purification", " [Miracle"],
                              6: ["Crystal3", "Abyss Purification", " [Stygian"],
                              7: ["Crystal4", "Divine Purification", " [Transcend"],
-                             8: [None, "Divine Purification", " [MAX]"]}
+                             8: ["Sacred", "Blood Purification", " [Sacred]"],
+                             9: [None, "Sacred Item", " [MAX]"]}
         selected_dataset = purification_data[self.selected_item.item_tier]
         self.purify.label = selected_dataset[1] + selected_dataset[2]
-        if self.selected_item.item_tier != 8:
+        if self.selected_item.item_tier != 9:
             self.material = inventory.BasicItem(selected_dataset[0])
             self.purify.emoji, self.purify_check = self.material.item_emoji, self.material.item_base_rate
             self.purify.label += f": {self.purify_check}%]"
@@ -696,14 +697,13 @@ async def refine_item(player_user, selected_type, selected_tier, required_materi
     item_stock = await inventory.check_stock(player_user, required_material)
     if item_stock == 0:
         stock_message = sm.get_stock_msg(loot_item, item_stock)
-        return discord.Embed(colour=discord.Colour.red(), title="Cannot Refine!", description=stock_message)
+        return sm.easy_embed("red", "Cannot Refine!", stock_message)
     # Pay the cost and attempt to refine.
     await inventory.update_stock(player_user, required_material, (cost * -1))
     new_item, is_success = inventory.try_refine(player_user.player_id, selected_type, selected_tier)
     if not is_success:
         stock_message = sm.get_stock_msg(loot_item, (item_stock - cost))
-        return discord.Embed(colour=discord.Colour.red(), title="Refinement Failed! The item is destroyed",
-                             description=stock_message)
+        return sm.easy_embed("red", "Refinement Failed! The item is destroyed", stock_message)
     result_id = await inventory.add_custom_item(new_item)
     # Check if inventory is full.
     if result_id == 0:

@@ -649,6 +649,7 @@ class PlayerProfile:
         if len(df) != 0:
             date_string = str(df["time_used"].values[0])
             previous = dt.strptime(date_string, gli.date_formatting)
+            previous = previous.replace(tzinfo=ZoneInfo('America/Toronto'))
             now = dt.now(ZoneInfo('America/Toronto'))
             difference = now - previous
             method = str(df["method"].values[0])

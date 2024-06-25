@@ -140,7 +140,7 @@ skull_data = [[None, 'Cursed Golden Skull', 1, 4, '<:Skull1:1243422766775009420>
 itemdata_dict = build_item_dict(itemdata_dict, skull_data, category="Skull")
 
 # Unrefined Void Items List Data
-unrefined_item_types = ['Weapon', 'Armour', 'Amulet', 'Wing', 'Crest', 'Gem']
+unrefined_item_types = ['Weapon', 'Armour', 'Greaves', 'Amulet', 'Wings', 'Crest']
 unrefined_emoji = ['<:Sword5:1246945708939022367>', '<:Armour5:1246945463630823438>', '<:Greaves5:1246945410707095565>',
                    '<:Amulet5:1246945347637346315>', '<:Wings5:1246945596821082197>', '<:Crest5:1246945508048637972>']
 unrefined_void_data = []
@@ -334,7 +334,7 @@ uncategorized_data = [
      "At the dawn of creation Pandora bore her celestial heart as a power source for her hammer.", 0],
     ['Ruler', "Ruler's Crown Jewel", 100, 9, '<a:elootitem:1144477550379274322>',
      "A jewel of unmatched quality, unparalleled value, and unfathomable beauty. A truly unique treasure.", 0],
-    ['Blood', "Sacred Blood", 100, 9, '<a:elootitem:1144477550379274322>',
+    ['Sacred', "Sacred Blood", 100, 9, '<a:elootitem:1144477550379274322>',
      "Rare drop from raid bosses. Can be optionally consumed as an additional cost to guarantee a 'Sacred' "
      "outcome during infusion. It can also be used to upgrade tier 8 gear to tier 9.", 0],
     ['Metamorphite', 'Metamorphite Ore', 100, 7, '<a:elootitem:1144477550379274322>',

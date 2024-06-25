@@ -72,7 +72,7 @@ def run_discord_bot():
         else:
             await ctx.send('You must be the owner to use this command!')
 
-    @vouch_bot.hybrid_command(name='vouch', help="Grants one vouch to a user.")
+    @vouch_bot.hybrid_command(name='vouch', help="Grants vouches to a user.")
     @app_commands.guilds(discord.Object(id=1011375205999968427))
     async def vouch(ctx, user: discord.User):
         if user.id == ctx.author.id:

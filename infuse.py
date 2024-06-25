@@ -301,13 +301,13 @@ class CraftView(discord.ui.View):
         result = await self.recipe_object.perform_infusion(self.player_obj, selected_qty, ring=is_ring, is_sw=is_sw)
         self.embed_msg = await self.recipe_object.create_cost_embed(self.player_obj)
         is_sacred = random.randint(1, 100) <= 5 if is_sw or (is_ring and item_tier == 8) else False
-        class_type = "Sacred" if is_sacred else "Sovereign"
+        class_type, item_tier = ("Sacred", 9) if is_sacred else ("Sovereign", 8)
         # Handle infusion
         if is_ring and result == 1:
             # Handle ring
             new_ring = inventory.CustomItem(self.player_obj.player_id, "R", item_tier,
-                                            base_type=self.recipe_object.recipe_name, is_sacred=is_sacred)
-            new_ring.roll_values[0] = random.randint(0, 30) if new_ring.item_tier == 8 else rrd[new_ring.item_base_type]
+                                            self.recipe_object.recipe_name, is_sacred)
+            new_ring.roll_values[0] = random.randint(0, 30) if new_ring.item_tier in [8, 9] else rrd[new_ring.item_base_type]
             # Handle ring exceptions.
             if new_ring.item_base_type == "Crown of Skulls":
                 new_ring.roll_values[2] = new_ring.roll_values[0]

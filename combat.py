@@ -18,7 +18,7 @@ combat_command_list = [("solo", "Type Options: [Random/Fortress/Dragon/Demon/Par
                        ("palace", "Enter the Divine Palace. [WARNING: HARD]", 3),
                        ("arena", "Enter pvp combat with another player. Daily", 4),
                        ("abandon", "Abandon an active solo boss encounter. 1 Minute delay.", 5)]
-
+shared_ruler_skills = ["King's Strike", "Sealing Chains", "Forbidden Command", "Heaven's Rule"]
 boss_attack_dict = {
     "Dragon": ["[ELEMENT] Claw Slash", "[ELEMENT] Wing Blast", "Amplified [ELEMENT] Breath"],
     "Demon": ["Dark Flame", "Abyss Bolt", "Blood Deluge"],
@@ -54,14 +54,14 @@ boss_attack_dict = {
     "Nephilim, Incarnate of the Divine Lotus":
         ["Lotus Slash", "Propagate Ruin", "Divine Purgation", "Chaos Bloom", "**Sacred Revelation**",
          "**Eye Of The Annihilator**", "**Nightmare Saber**", "**__Fabricate Apotheosis__**"],
-    "Geb, Sacred Ruler of Sin": ["Skill1", "Skil2", "Skill3", "Skill4", "**Skill5**",
-                                 "**Skill6**", "**Skill7**", "**Skill8**", "**__Skill9__**"],
-    "Tiamat, Sacred Ruler of Fury": ["Skill1", "Skil2", "Skill3", "Skill4", "**Skill5**",
-                                     "**Skill6**", "**Skill7**", "**Skill8**", "**__Skill9__**"],
-    "Veritas, Sacred Ruler of Prophecy": ["Skill1", "Skil2", "Skill3", "Skill4", "**Skill5**",
-                                          "**Skill6**", "**Skill7**", "**Skill8**", "**__Skill9__**"],
-    "Alaric, Sacred Ruler of Totality": ["Skill1", "Skil2", "Skill3", "Skill4", "**Skill5**",
-                                         "**Skill6**", "**Skill7**", "**Skill8**", "**__Skill9__**"]}
+    "Geb, Sacred Ruler of Sin": shared_ruler_skills + ["**Guilt Gorger**", "**Coil Crush**",
+                                                       "**Sin Swallower**", "**__Final Confession__**"],
+    "Tiamat, Sacred Ruler of Fury": shared_ruler_skills + ["**Discord Howl**", "**Chaos Ravager**",
+                                                           "**Pandemonium Fury**", "**__True Nemesis__**"],
+    "Veritas, Sacred Ruler of Prophecy": shared_ruler_skills + ["**Reverse Reclamation**", "**Destiny's Dream**",
+                                                                "**Eye of Revelation**", "**__Beyond Fate__**"],
+    "Alaric, Sacred Ruler of Totality": shared_ruler_skills + ["**Unmaking**", "**Transcendence**",
+                                                               "**Total Collapse**", "**__All To Nothing__**"]}
 boss_attack_exceptions = list(boss_attack_dict.keys())
 skill_multiplier_list = [1, 2, 3, 5, 7, 10, 15, 20, 50]
 skill_multiplier_list_high = [4, 6, 8, 10, 15, 25, 50, 99, 999]
@@ -131,10 +131,10 @@ async def run_cycle(tracker_obj, boss_obj, player_obj, raid_attack=None):
     battle_msg = f"{player_obj.player_username} - [HP: {sm.display_hp(tracker_obj.player_cHP, player_obj.player_mHP)}]"
     battle_msg += f" - [Recovery: {tracker_obj.recovery}]"
     if raid_attack is None:
+        battle_msg = f"{boss_action_msg}{battle_msg}"
+    else:
         battle_msg = f"{player_obj.player_username} - [HP: {sm.number_conversion(tracker_obj.player_cHP)} "
         battle_msg += f" - R: {tracker_obj.recovery}]"
-    else:
-        battle_msg = f"{boss_action_msg}{battle_msg}"
     return hit_list, battle_msg, player_alive, boss_obj.boss_cHP > 0, total_damage
 
 

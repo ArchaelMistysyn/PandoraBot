@@ -92,7 +92,7 @@ class CurrentBoss:
         type_weak = ''.join(gli.class_icon_list[idx] for idx, x in enumerate(self.boss_typeweak) if x == 1)
         ele_weak = ''.join(gli.ele_icon[idx] for idx, x in enumerate(self.boss_eleweak) if x == 1)
         boss_weakness = f'Weakness: {type_weak}{ele_weak}'
-        embed_msg = sm.EasyEmbed(self.boss_tier, boss_title, "")
+        embed_msg = sm.easy_embed(self.boss_tier, boss_title, "")
         embed_msg.set_image(url=img_link)
         embed_msg.add_field(name=boss_field, value=boss_hp, inline=False)
         embed_msg.add_field(name=boss_weakness, value="", inline=False)

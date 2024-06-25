@@ -570,14 +570,23 @@ def run_discord_bot():
         await ctx.send(embed=embed_msg, view=tarot.SearchTierView(player_obj, cathedral=True))
 
     @set_command_category('fish', 9)
-    @pandora_bot.hybrid_command(name='fishing', help="Catch a fish! Consumes 250 stamina.")
+    @pandora_bot.hybrid_command(name='fishing', help="Catch fish! Consumes 250 stamina.")
     @app_commands.guilds(discord.Object(id=guild_id))
-    async def catch_fish(ctx):
+    async def catch_fish(ctx, method="default"):
         await ctx.defer()
         player_obj = await sm.check_registration(ctx)
         if player_obj is None:
             return
-        await fishing.go_fishing(ctx, player_obj)
+        if method not in ["default", "turbo"]:
+            await ctx.send("Methods: [default and turbo]")
+            return
+        await ctx.send(f"{player_obj.player_username} Goes Fishing!")
+        await fishing.go_fishing(ctx, player_obj, method=method)
+
+    @pandora_bot.hybrid_command(name='turbofishing', help="Catch HELLA fish! Consumes 1000 stamina.")
+    @app_commands.guilds(discord.Object(id=guild_id))
+    async def turbo_fish(ctx):
+        await catch_fish(ctx, method="turbo")
 
     # Location Commands
     @set_command_category('location', 0)

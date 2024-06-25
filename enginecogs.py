@@ -63,7 +63,7 @@ class RaidSchedularCog(commands.Cog):
                 embed_msg.add_field(name="Time's Up", value="The raid encounter has failed", inline=False)
                 await self.active_message.edit(embed=embed_msg)
             self.current_raid.end_cog()
-            self.bot.remove_cog('RaidCog')
+            await self.bot.remove_cog('RaidCog')
             self.current_raid = None
 
 

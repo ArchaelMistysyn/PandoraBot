@@ -120,9 +120,7 @@ def display_hp(current_hp, max_hp):
 
 def display_stars(num_stars):
     stars_msg = ""
-    if num_stars >= 9:
-        return ''.join(gli.star_icon)
-    for x in range(max(8, num_stars)):
+    for x in range(min(9, num_stars)):
         stars_msg += gli.star_icon[num_stars]
     for y in range(max(0, (8 - num_stars))):
         stars_msg += gli.star_icon[0]
@@ -202,7 +200,7 @@ async def message_box(player_obj, message, header=""):
     return await pilengine.build_message_box(player_obj, message, header)
 
 
-def EasyEmbed(colour, title, description):
+def easy_embed(colour, title, description):
     embed_colour_dict = {
         "red": discord.Colour(0xFF0000), "blue": discord.Colour(0x0000FF), "green": discord.Colour(0x00FF00),
         "purple": discord.Colour(0x800080), "orange": discord.Colour(0xFFA500), "gold": discord.Colour(0xFFD700),

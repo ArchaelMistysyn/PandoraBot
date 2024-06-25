@@ -274,8 +274,7 @@ class CustomItem:
             'input_9': str(self.item_base_type), 'input_10': str(roll_values),
             'input_11': str(self.item_base_stat), 'input_12': str(self.item_bonus_stat),
             'input_13': int(self.base_damage_min), 'input_14': int(self.base_damage_max),
-            'input_15': int(self.item_num_sockets), 'input_16': int(self.item_inlaid_gem_id)
-        }
+            'input_15': int(self.item_num_sockets), 'input_16': int(self.item_inlaid_gem_id)}
         await rqy(raw_query, params=params)
 
     def set_item_name(self):
@@ -313,11 +312,9 @@ class CustomItem:
             return
         if self.item_base_type in gli.sovereign_item_list:
             return
-
         # Add a roll and element to non-gem items.
         itemrolls.add_roll(self, 1)
         self.add_item_element(9)
-
         # Handle weapon items.
         if self.item_type == "W":
             self.set_base_attack_speed()
@@ -325,7 +322,6 @@ class CustomItem:
             combined_list = item_data[1] + item_data[2] if self.item_tier >= 5 else item_data[0] + item_data[1]
             self.item_base_type = random.choice(combined_list)
             return
-
         # Handle non-weapon, non-gem items.
         self.assign_bonus_stat()
         match self.item_type:
@@ -375,7 +371,7 @@ class CustomItem:
             stat_msg = f'{base_type}{display_base_stat}{aux_suffix}\n'
         # Set the bonus stat text.
         tier_specifier = {5: "Void", 6: "Wish", 7: "Abyss", 8: "Divine"}
-        if self.item_tier >= 5 and self.item_type != "W":
+        if self.item_tier >= 5 and self.item_type != "W" and "D" not in self.item_type:
             self.item_bonus_stat = f"{tier_specifier[self.item_tier]} Application ({self.item_bonus_stat})"
         stat_msg += self.item_bonus_stat if "D" not in self.item_type else f"{self.get_gem_stat_message()}"
         if self.item_type == "R":
@@ -463,8 +459,12 @@ class BasicItem:
                 return
             elif "Void" in self.item_id:
                 name_data = self.item_name.split()
-                item_type = name_data[-1].strip('()')
-                self.item_image = f"{gli.web_url}/GearIcon/Frame_{item_type}_5.png"
+                item_type = name_data[-1].strip('()') if "Weapon" not in self.item_name else "Saber"
+                self.item_image = f"{gli.web_url}/GearIcon/{item_type}/Frame_{item_type}_5.png"
+                return
+            elif "Unrefined" in self.item_id:
+                item_type = self.item_name.split()[-1]
+                self.item_image = f"{gli.web_url}/GearIcon/{item_type}/Frame_{item_type}_4.png"
                 return
             elif "Gem" in self.item_id and "Gemstone" not in self.item_id:
                 self.item_image = f"{gli.web_url}/GearIcon/Frame_{self.item_id.replace('Gem', 'Gem_')}.png"
@@ -914,6 +914,7 @@ async def claim_gifts(player_obj):
     current_date = dt.now(ZoneInfo('America/Toronto'))
     for _, row in df.iterrows():
         v_date = dt.strptime(str(row['valid_until']), gli.date_formatting)
+        v_date = v_date.replace(tzinfo=ZoneInfo('America/Toronto'))
         gift_id = int(row['gift_id'])
         if current_date > v_date:
             expired_listing.append(gift_id)
