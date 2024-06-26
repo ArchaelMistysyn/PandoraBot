@@ -39,19 +39,19 @@ reverse_item_loc_dict = {v: k for k, v in item_loc_dict.items()}
 
 # Name Keyword Dictionaries.
 tier_keywords = {0: "Error", 1: "Lesser", 2: "Greater", 3: "Superior", 4: "Crystal",
-                 5: "Void", 6: "Destiny", 7: "Stygian", 8: "Divine"}
+                 5: "Void", 6: "Destiny", 7: "Stygian", 8: "Divine", 9: "Sacred"}
 summon_tier_keywords = {0: "Error", 1: "Illusion", 2: "Spirit", 3: "Phantasmal", 4: "Crystalline",
-                        5: "Phantasmal", 6: "Fantastical", 7: "Abyssal", 8: "Divine"}
+                        5: "Phantasmal", 6: "Fantastical", 7: "Abyssal", 8: "Divine", 9: "Sacred"}
 gem_tier_keywords = {0: "Error", 1: "Emerald", 2: "Sapphire", 3: "Amethyst", 4: "Diamond",
-                     5: "Emptiness", 6: "Destiny", 7: "Abyss", 8: "Transcendence"}
+                     5: "Emptiness", 6: "Destiny", 7: "Abyss", 8: "Transcendence", 9: "MAX"}
 armour_base_dict = {1: "Armour", 2: "Shell", 3: "Mail", 4: "Plate", 5: "Lorica"}
 wing_base_dict = {1: "Webbed Wings", 2: "Feathered Wings", 3: "Mystical Wings", 4: "Dimensional Wings",
-                  5: "Rift Wings", 6: "Wonderous Wings", 7: "Bone Wings", 8: "Ethereal Wings"}
+                  5: "Rift Wings", 6: "Wonderous Wings", 7: "Bone Wings", 8: "Ethereal Wings", 9: "Sanctified Wings"}
 crest_base_list = ["Halo", "Horns", "Crown", "Tiara"]
 
 # Misc Data.
-gem_point_dict = {1: 1, 2: 2, 3: 3, 4: 4, 5: 6, 6: 8, 7: 10, 8: 15}
-sell_value_by_tier = {0: 0, 1: 500, 2: 1000, 3: 2500, 4: 5000, 5: 10000, 6: 25000, 7: 50000, 8: 100000}
+gem_point_dict = {1: 1, 2: 2, 3: 3, 4: 4, 5: 6, 6: 8, 7: 10, 8: 15, 9: 20}
+sell_value_by_tier = {0: 0, 1: 500, 2: 1000, 3: 2500, 4: 5000, 5: 10000, 6: 25000, 7: 50000, 8: 100000, 9: 500000}
 
 
 class BInventoryView(discord.ui.View):
@@ -169,12 +169,12 @@ class CustomItem:
         # Initialize associated default values.
         self.item_num_rolls, self.roll_values = 0, []
         self.item_base_stat, self.item_bonus_stat = 0.0, ""
-        self.item_damage_min, self.item_damage_max = 0, 0
+        self.base_damage_min, self.base_damage_max, self.item_damage_min, self.item_damage_max = 0, 0, 0, 0
         self.item_num_sockets, self.item_inlaid_gem_id = (1 if self.is_sacred else 0), 0
         # Generate an item type and base.
         self.item_damage_type, self.item_base_type = random.choice(list(gli.class_names)), base_type
         self.generate_base()
-        self.base_damage_min, self.base_damage_max = get_tier_damage(self.item_tier, self.item_type)
+        self.get_tier_damage()
         # Exceptions
         if self.item_type == "R":
             self.item_quality_tier = 0
@@ -198,7 +198,7 @@ class CustomItem:
         self.item_damage_type = specific_class if specific_class != "" else random.choice(gli.class_names)
 
     def reforge_stats(self, unlock=False):
-        self.base_damage_min, self.base_damage_max = get_tier_damage(self.item_tier, self.item_type)
+        self.get_tier_damage()
         if "D" in self.item_type:
             return
         if self.item_type == "W":
@@ -351,6 +351,18 @@ class CustomItem:
         new_element = random.randint(0, 8) if add_element == 9 else add_element
         self.item_elements[new_element] = 1
 
+    def get_tier_damage(self):
+        damage_values = gli.damage_tier_list[self.item_tier - 1]
+        if self.item_base_type == "Crown of Skulls":
+            return
+        # Gem max tier exception.
+        if "D" in self.item_type and self.item_tier == 8:
+            damage_values = (150000, 150000)
+        # Weapon has twice the value.
+        damage_adjust = 2 if self.item_type == "W" else 1
+        temp_damage = [random.randint(damage_values[0], damage_values[1]) * damage_adjust for _ in range(2)]
+        self.item_damage_min, self.item_damage_max = min(temp_damage), max(temp_damage)
+
     async def create_citem_embed(self, roll_change_list=None):
         tier_colour, _ = sm.get_gear_tier_colours(self.item_tier)
         gem_min, gem_max = 0, 0
@@ -370,7 +382,7 @@ class CustomItem:
                 display_base_stat = f"{self.item_base_stat:.2f}".rstrip('0').rstrip('.')
             stat_msg = f'{base_type}{display_base_stat}{aux_suffix}\n'
         # Set the bonus stat text.
-        tier_specifier = {5: "Void", 6: "Wish", 7: "Abyss", 8: "Divine"}
+        tier_specifier = {5: "Void", 6: "Wish", 7: "Abyss", 8: "Divine", 9: "Sacred"}
         if self.item_tier >= 5 and self.item_type != "W" and "D" not in self.item_type:
             self.item_bonus_stat = f"{tier_specifier[self.item_tier]} Application ({self.item_bonus_stat})"
         stat_msg += self.item_bonus_stat if "D" not in self.item_type else f"{self.get_gem_stat_message()}"
@@ -552,17 +564,6 @@ async def assign_item_values(row):
     item.item_num_sockets, item.item_inlaid_gem_id = int(row['item_num_sockets']), int(row['item_inlaid_gem_id'])
     item.update_damage()
     return item
-
-
-def get_tier_damage(item_tier, item_type):
-    damage_values = gli.damage_tier_list[item_tier - 1]
-    # Gem max tier exception.
-    if "D" in item_type and item_tier == 8:
-        damage_values = (150000, 150000)
-    # Weapon has twice the value.
-    damage_adjust = 2 if item_type == "W" else 1
-    temp_damage = [random.randint(damage_values[0], damage_values[1]) * damage_adjust for _ in range(2)]
-    return min(temp_damage), max(temp_damage)
 
 
 async def add_custom_item(item):
@@ -776,7 +777,7 @@ async def purge(player_obj, item_type, tier):
     exclusion_list += inlaid_gem_list
     params = {'id_check': player_obj.player_id, 'tier_check': tier}
     exclusion_ids = ', '.join([str(item_id) for item_id in exclusion_list])
-    type_checker = "" if item_type == "" else ' AND item_type = "{item_loc_dict[reverse_item_dict[item_type]]}"'
+    type_checker = "" if item_type == "" else f' AND item_type = "{reverse_item_loc_dict[reverse_item_dict[item_type]]}"'
     raw_query = (f"SELECT item_tier FROM CustomInventory "
                  f"WHERE player_id = :id_check AND item_tier <= :tier_check "
                  f"AND item_id NOT IN ({exclusion_ids}){type_checker}")
@@ -800,9 +801,8 @@ def full_inventory_embed(lost_item, embed_colour):
 
 async def generate_item(ctx, target_player, tier, elements, item_type, base_type, class_name, enhancement,
                         quality, base_stat, bonus_stat, base_dmg, num_sockets, roll_list):
-    valid_damage_range = (gli.damage_tier_list[tier - 1][0], gli.damage_tier_list[tier - 1][1] + 1)
+    valid_damage_range = gli.damage_tier_list[tier - 1]
     pattern = r"^\d(;[0-9]+){8}$"
-
     # Create the new item.
     if tier not in range(9):
         await ctx.send('Tier input not valid.')
@@ -873,7 +873,6 @@ async def generate_item(ctx, target_player, tier, elements, item_type, base_type
             await ctx.send('Base damage input not valid.')
             return
         new_item.item_bonus_stat = gli.path_names.index(bonus_stat)
-
     # Apply the item rolls.
     count, new_roll_values = 0, []
     for roll in roll_list:

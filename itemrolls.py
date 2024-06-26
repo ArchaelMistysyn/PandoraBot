@@ -25,7 +25,6 @@ roll_structure_dict = {"W": ["damage", "damage", "penetration", "penetration", "
                        "D3": ["damage", "damage", "damage", "penetration", "curse", "defensive"],
                        "D4": ["damage", "damage", "penetration", "penetration", "curse", "defensive"],
                        "D5": ["damage", "damage", "penetration", "penetration", "curse", "curse"]}
-
 damage_rolls = {
     "damage-0": ["Fire Damage", 25, 10, [["elemental_mult", 0]]],
     "damage-1": ["Water Damage", 25, 10, [["elemental_mult", 1]]],
@@ -47,9 +46,7 @@ damage_rolls = {
     "damage-17": ["Hybrid Damage (Chaos)", 18, 5, [["elemental_mult", 0], ["elemental_mult", 2],
                                                    ["elemental_mult", 3], ["elemental_mult", 6]]],
     "damage-18": ["Hybrid Damage (Holy)", 18, 5, [["elemental_mult", 1], ["elemental_mult", 4],
-                                                  ["elemental_mult", 5], ["elemental_mult", 7]]]
-}
-
+                                                  ["elemental_mult", 5], ["elemental_mult", 7]]]}
 penetration_rolls = {
     "penetration-0": ["Fire Penetration", 15, 10, [["elemental_pen", 0]]],
     "penetration-1": ["Water Penetration", 15, 10, [["elemental_pen", 1]]],
@@ -72,9 +69,7 @@ penetration_rolls = {
     "penetration-18": ["Hybrid Penetration (Chaos)", 9, 8, [["elemental_pen", 0], ["elemental_pen", 2],
                                                             ["elemental_pen", 3], ["elemental_pen", 6]]],
     "penetration-19": ["Hybrid Penetration (Holy)", 9, 8, [["elemental_pen", 1], ["elemental_pen", 4],
-                                                           ["elemental_pen", 5], ["elemental_pen", 7]]]
-}
-
+                                                           ["elemental_pen", 5], ["elemental_pen", 7]]]}
 curse_rolls = {
     "curse-0": ["Fire Curse", 15, 10, [["elemental_curse", 0]]],
     "curse-1": ["Water Curse", 15, 10, [["elemental_curse", 1]]],
@@ -93,9 +88,7 @@ curse_rolls = {
     "curse-14": ["Hybrid Curse (Chaos)", 9, 5, [["elemental_curse", 0], ["elemental_curse", 2],
                                                 ["elemental_curse", 3], ["elemental_curse", 6]]],
     "curse-15": ["Hybrid Curse (Holy)", 9, 5, [["elemental_curse", 1], ["elemental_curse", 4],
-                                               ["elemental_curse", 5], ["elemental_curse", 7]]]
-}
-
+                                               ["elemental_curse", 5], ["elemental_curse", 7]]]}
 defensive_rolls = {
     "defensive-0": ["Health Regen", 0.5, 3, [["hp_regen", -1]]],
     "defensive-1": ["Health Multiplier", 15, 10, [["hp_multiplier", -1]]],
@@ -121,7 +114,6 @@ defensive_rolls = {
                                                          ["elemental_res", 3], ["elemental_res", 6]]],
     "defensive-21": ["Hybrid Resistance (Holy)", 5, 5, [["elemental_res", 1], ["elemental_res", 4],
                                                         ["elemental_res", 5], ["elemental_res", 7]]]}
-
 shared_unique_rolls = {
     "unique-0-s": ["Attack Speed", 5, 50, [["attack_speed", -1]]],
     "unique-1-s": ["Critical Strike Chance", 20, 100, [["trigger_rate", "Critical"]]],
@@ -129,7 +121,6 @@ shared_unique_rolls = {
     "unique-3-s": ["NEED TO CHANGE", 0, 50, [["all_elemental_mult", -1]]],
     "unique-4-s": ["Class Mastery Bonus", 3, 50, [["class_multiplier", -1]]],
     "unique-5-s": ["Human Bane", 20, 200, [["banes", 5]]]}
-
 weapon_unique_rolls = {
     "unique-0-w": ["X% Chance to trigger Bloom on hit", 5, 1, [["trigger_rate", "Bloom"]]],
     "unique-1-w": ["X% Less Non-Fire, X% More Fire Damage", 12, 10, [["elemental_conversion", 0]]],
@@ -147,14 +138,12 @@ weapon_unique_rolls = {
     "unique-13-w": ["X% Less Non-Storm, X% More Storm Damage", 10, 5, [["elemental_conversion", (1, 2)]]],
     "unique-14-w": ["X% Less Non-Chaos, X% More Chaos Damage", 8, 5, [["elemental_conversion", (0, 2, 3, 6)]]],
     "unique-15-w": ["X% Less Non-Holy, X% More Holy Damage", 8, 5, [["elemental_conversion", (1, 4, 5, 7)]]]}
-
 armour_unique_rolls = {
     "unique-0-a": ["Gain X% Elemental Damage per Matching Resistance", 1, 5, [["unique_conversion", 0]]],
     "unique-1-a": ["Convert X% Max HP to 1% Final Damage per 100 HP", 1, 5, [["unique_conversion", 1]]],
     "unique-2-a": ["Block Rate", 4, 10, [["block", -1]]],
     "unique-3-a": ["Dodge Rate", 2, 10, [["dodge", -1]]],
     "unique-4-a": ["Gain X% Final Damage per 1% damage mitigation", 1, 5, [["unique_conversion", 3]]]}
-
 accessory_unique_rolls = {
     "unique-0-y": ["Hyperbleed Rate", 2, 15, [["trigger_rate", "Hyperbleed"]]],
     "unique-1-y": ["Omega Critical Rate", 2, 15, [["trigger_rate", "Omega"]]],
@@ -168,33 +157,26 @@ accessory_unique_rolls = {
     "unique-9-y": ["Class Mastery Bonus X%. Class Mastery is inverted", 5, 5, [["unique_conversion", 2]]],
     "unique-10-y": ["X% Singularity Damage, Penetration, and Curse", 5, 5,
                     [["singularity_mult", -1], ["singularity_pen", -1], ["singularity_curse", -1]]]}
-
 unique_skill_rolls = {}
-for roll_num, (class_name, skills) in enumerate(gli.skill_names_dict.items()):
-    for index, skill_name in enumerate(skills):
-        key = f"unique-{roll_num}-{class_name}"
-        unique_skill_rolls[key] = [f"{skill_name} Damage", 10, 1, [["skill_damage_bonus", index]]]
-
+for roll_idx, (class_name, skills) in enumerate(gli.skill_names_dict.items()):
+    for skill_idx, skill_name in enumerate(skills):
+        key = f"unique-{skill_idx}-{class_name}"
+        unique_skill_rolls[key] = [f"{skill_name} Damage", 10, 1, [["skill_damage_bonus", skill_idx]]]
 unique_rolls = {
     "s": [shared_unique_rolls, sum(weighting for _, _, weighting, _ in shared_unique_rolls.values())],
     "w": [weapon_unique_rolls, sum(weighting for _, _, weighting, _ in weapon_unique_rolls.values())],
     "a": [armour_unique_rolls, sum(weighting for _, _, weighting, _ in armour_unique_rolls.values())],
     "y": [accessory_unique_rolls, sum(weighting for _, _, weighting, _ in accessory_unique_rolls.values())],
-    "SKILL": [unique_skill_rolls, sum(weighting for _, _, weighting, _ in unique_skill_rolls.values())]
-}
-
+    "SKILL": [unique_skill_rolls, sum(weighting for _, _, weighting, _ in unique_skill_rolls.values())]}
 item_roll_master_dict = {
     "damage": [damage_rolls, sum(weighting for _, _, weighting, _ in damage_rolls.values())],
     "penetration": [penetration_rolls, sum(weighting for _, _, weighting, _ in penetration_rolls.values())],
     "curse": [curse_rolls, sum(weighting for _, _, weighting, _ in curse_rolls.values())],
     "defensive": [defensive_rolls, sum(weighting for _, _, weighting, _ in defensive_rolls.values())],
-    "unique": unique_rolls
-}
-
-valid_rolls = [key for dict_obj in [damage_rolls, penetration_rolls, curse_rolls, defensive_rolls,
-                                    weapon_unique_rolls, armour_unique_rolls, accessory_unique_rolls,
-                                    shared_unique_rolls]
-               for key in dict_obj.keys()]
+    "unique": unique_rolls}
+valid_rolls = [key for dict_obj in [
+    damage_rolls, penetration_rolls, curse_rolls, defensive_rolls, weapon_unique_rolls,
+    armour_unique_rolls, accessory_unique_rolls, shared_unique_rolls] for key in dict_obj.keys()]
 
 cost_list = [2, 3, 6, 10, 15, 25]
 NPC_name = "Vexia, Scribe of the True Laws"
@@ -205,29 +187,25 @@ class SelectRollsView(discord.ui.View):
         super().__init__()
         self.player_obj = player_obj
         self.selected_item = selected_item
-        self.embed = None
-        self.new_view = None
+        self.embed, self.new_view = None, None
         self.count_view = discord.ui.Select(
             placeholder="Select Number of Rolls", min_values=1, max_values=1,
-            options=[
-                discord.SelectOption(label=f"{str(i)} Rolls",
-                                     description=f"Token Cost: {cost_list[i - 1]:,}", value=str(i))
-                for i in range(1, 7)])
+            options=[discord.SelectOption(label=f"{str(i)} Rolls", description=f"Token Cost: {cost_list[i - 1]:,}",
+                                          value=str(i)) for i in range(1, 7)])
         self.count_view.callback = self.count_callback
         self.add_item(self.count_view)
 
     async def count_callback(self, interaction: discord.Interaction):
-        try:
-            if interaction.user.id == self.player_obj.discord_id:
-                if not self.embed:
-                    roll_count = int(interaction.data['values'][0])
-                    self.embed = discord.Embed(title=NPC_name, description="Select a damage skill. (1st Selection)",
-                                               color=discord.Color.blue())
-                    self.new_view = SkillSelectView(self.player_obj, self.selected_item,
-                                                    roll_count, 1, [])
-                await interaction.response.edit_message(embed=self.embed, view=self.new_view)
-        except Exception as e:
-            print(e)
+        if interaction.user.id != self.player_obj.discord_id:
+            return
+        if self.embed is not None:
+            await interaction.response.edit_message(embed=self.embed, view=self.new_view)
+            return
+        roll_count = int(interaction.data['values'][0])
+        self.embed = discord.Embed(title=NPC_name, description="Select a damage skill. (1st Selection)",
+                                   color=discord.Color.blue())
+        self.new_view = SkillSelectView(self.player_obj, self.selected_item, roll_count, 1, [])
+        await interaction.response.edit_message(embed=self.embed, view=self.new_view)
 
 
 class SkillSelectView(discord.ui.View):
@@ -237,67 +215,61 @@ class SkillSelectView(discord.ui.View):
         self.total_rolls, self.roll_num = total_rolls, roll_num
         self.selected_skills = selected_skills
         self.embed, self.new_view = None, None
-
         roll_structure = roll_structure_dict[self.selected_item.item_type]
         roll_type = roll_structure[self.roll_num - 1]
-        roll_list = item_roll_master_dict[roll_type][0]
         if roll_type == "unique":
-            roll_list, _ = handle_unique(self.selected_item)
-            roll_list = {code: value for code, value in roll_list.items() if code.endswith(player_obj.player_class)}
+            roll_list, _ = handle_unique(self.selected_item, player_obj.player_class)
+        else:
+            roll_list = item_roll_master_dict[roll_type][0]
         options = [discord.SelectOption(label=roll[1][0], description=f"Weighting: {roll[1][2]}", value=roll[0])
                    for roll in roll_list.items() if roll[0] not in self.selected_skills]
-
         self.skill_view = discord.ui.Select(placeholder=f"Select Skill for Roll {self.roll_num}",
                                             min_values=1, max_values=1, options=options)
         self.skill_view.callback = self.skill_callback
         self.add_item(self.skill_view)
 
     async def skill_callback(self, interaction: discord.Interaction):
-        try:
-            if interaction.user.id != self.player_obj.discord_id:
-                return
-            if not self.embed:
-                selected_skill = str(interaction.data['values'][0])
-                self.selected_skills.append(selected_skill)
-                if (self.roll_num + 1) <= self.total_rolls:
-                    # Load the next view for the next roll
-                    npc_comment = f"I really haven't got all day you know. (Selection: {self.roll_num + 1})\n"
-                    for roll_id in self.selected_skills:
-                        temp_id = f"1-{roll_id}"
-                        current_roll = ItemRoll(temp_id)
-                        npc_comment += f"{current_roll.roll_name}\n"
-                    self.embed = discord.Embed(title=NPC_name, description=npc_comment, color=discord.Color.blue())
-                    self.new_view = SkillSelectView(self.player_obj, self.selected_item,
-                                                    self.total_rolls, self.roll_num + 1, self.selected_skills)
-                else:
-                    # This is the last roll, display the summary
-                    npc_comment = "Is this really all you wanted?\n"
-                    skill_display = ""
-                    for roll_id in self.selected_skills:
-                        temp_id = f"1-{roll_id}"
-                        current_roll = ItemRoll(temp_id)
-                        skill_display += f"{current_roll.roll_name}\n"
-                        if current_roll.roll_code == "unique-0-y":
-                            npc_comment = "Oooh, you have impeccable taste.\n"
-                    summary_msg = npc_comment + skill_display
-                    token_obj = inventory.BasicItem("Token4")
-                    summary_msg += f"\n{token_obj.item_emoji} {token_obj.item_name} Offering: {cost_list[self.total_rolls - 1]:,}"
-                    self.embed = discord.Embed(title=NPC_name, description=summary_msg, color=discord.Color.green())
-                    self.new_view = SkillPurchaseView(self.player_obj, self.selected_item,
-                                                      self.total_rolls, self.selected_skills)
+        if interaction.user.id != self.player_obj.discord_id:
+            return
+        if self.embed is not None:
             await interaction.response.edit_message(embed=self.embed, view=self.new_view)
-        except Exception as e:
-            print(e)
+            return
+        selected_skill = str(interaction.data['values'][0])
+        self.selected_skills.append(selected_skill)
+        if (self.roll_num + 1) <= self.total_rolls:
+            # Load the next view for the next roll
+            npc_comment = f"I really haven't got all day you know. (Selection: {self.roll_num + 1})\n"
+            for roll_id in self.selected_skills:
+                current_roll = ItemRoll(f"1-{roll_id}")
+                npc_comment += f"{current_roll.roll_name}\n"
+            self.embed = discord.Embed(title=NPC_name, description=npc_comment, color=discord.Color.blue())
+            self.new_view = SkillSelectView(self.player_obj, self.selected_item,
+                                            self.total_rolls, self.roll_num + 1, self.selected_skills)
+        else:
+            # This is the last roll, display the summary
+            npc_comment = "Is this really all you wanted?\n"
+            skill_display = ""
+            for roll_id in self.selected_skills:
+                temp_id = f"1-{roll_id}"
+                current_roll = ItemRoll(temp_id)
+                skill_display += f"{current_roll.roll_name}\n"
+                if current_roll.roll_code == "unique-0-y":
+                    npc_comment = "Oho, you have impeccable taste.\n"
+            summary_msg = npc_comment + skill_display
+            token_obj = inventory.BasicItem("Token4")
+            summary_msg += f"\n{token_obj.item_emoji} {token_obj.item_name} Offering: {cost_list[self.total_rolls - 1]:,}"
+            self.embed = discord.Embed(title=NPC_name, description=summary_msg, color=discord.Color.green())
+            self.new_view = SkillPurchaseView(self.player_obj, self.selected_item, self.total_rolls,
+                                              self.selected_skills)
+        await interaction.response.edit_message(embed=self.embed, view=self.new_view)
 
 
 class SkillPurchaseView(discord.ui.View):
     def __init__(self, player_obj, selected_item, total_rolls, selected_skills):
         super().__init__()
-        self.player_obj = player_obj
-        self.selected_item = selected_item
-        self.total_rolls = total_rolls
-        self.selected_skills = selected_skills
-        self.embed = None, None
+        self.player_obj, self.selected_item = player_obj, selected_item
+        self.total_rolls, self.selected_skills = total_rolls, selected_skills
+        self.embed = None
 
     @discord.ui.button(label="Inscribe", style=discord.ButtonStyle.green)
     async def inscribe_callback(self, interaction: discord.Interaction, button: discord.ui.Button):
@@ -318,15 +290,13 @@ class SkillPurchaseView(discord.ui.View):
         # Pay the cost. Reload the item data.
         await inventory.update_stock(self.player_obj, "Token4", (custom_cost * -1))
         reload_item = await inventory.read_custom_item(self.selected_item.item_id)
-        new_roll_list = []
-        roll_tier_list = []
+        new_roll_list, roll_tier_list = [], []
         # Proxy the number of rolls. This is required.
         temp_num_rolls = reload_item.item_num_rolls
         for roll_index in range(max(temp_num_rolls, self.total_rolls)):
             # Log the tiers from the original rolls.
-            if (roll_index + 1) > temp_num_rolls:
-                temp_tier = 1
-            else:
+            temp_tier = 1
+            if (roll_index + 1) <= temp_num_rolls:
                 current_roll = ItemRoll(reload_item.roll_values[roll_index])
                 temp_tier = current_roll.roll_tier
             roll_tier_list.append(temp_tier)
@@ -435,21 +405,18 @@ def reroll_roll(selected_item, method_type):
         selected_item.item_num_rolls, selected_item.roll_values = 0, []
         add_roll(selected_item, 6)
         selected_item.roll_values = [f"{tier_list[i]}-{ItemRoll(roll_id).roll_code}"
-                                          for i, roll_id in enumerate(selected_item.roll_values)]
+                                     for i, roll_id in enumerate(selected_item.roll_values)]
         return
-
     # Handle single reroll
     method = random.choice(roll_structure_dict[selected_item.item_type]) if method_type == "any" else method_type
     exclusions_list, exclusions_weighting = [], []
     max_count = roll_structure_dict[selected_item.item_type].count(method)
     target_count = random.randint(1, max_count)
-
     # Determine the roll list and total weighting based on method
     if method == "unique":
         roll_list, total_weighting = handle_unique(selected_item)
     else:
         roll_list, total_weighting = item_roll_master_dict[method][0], item_roll_master_dict[method][1]
-
     # Build the list of exclusions and identify the roll to be replaced
     for roll_index, roll_id in enumerate(selected_item.roll_values):
         current_roll = ItemRoll(roll_id)
@@ -467,7 +434,7 @@ def reroll_roll(selected_item, method_type):
     selected_item.roll_values[original_roll_location] = new_roll_id
 
 
-def handle_unique(selected_item):
+def handle_unique(selected_item, specific_class=None):
     # Determine the unique rolls to use.
     shared_roll_dict = {"W": "w", "A": "a", "V": "a", "Y": "y", "G": "y", "C": "y"}
     specific_type = shared_roll_dict[selected_item.item_type]
@@ -478,8 +445,11 @@ def handle_unique(selected_item):
     combined_dict.update(unique_rolls[selected_unique_type[1]][0])
     combined_weighting = unique_rolls[selected_unique_type[0]][1] + unique_rolls[selected_unique_type[1]][1]
     if specific_type == "y":
-        combined_dict.update(unique_rolls["SKILL"][0])
-        combined_weighting += unique_rolls["SKILL"][1]
+        temp_list = unique_rolls["SKILL"][0]
+        if specific_class is not None:
+            temp_list = {code: value for code, value in temp_list.items() if code.endswith(specific_class)}
+        combined_dict.update(temp_list)
+        combined_weighting += sum(weighting for _, _, weighting, _ in temp_list.values())
     return combined_dict, combined_weighting
 
 
@@ -506,11 +476,15 @@ def check_augment(selected_item):
     return aug_total
 
 
-def add_augment(selected_item):
+def add_augment(selected_item, method="default"):
     rolls_copy = selected_item.roll_values.copy()
+    if method == "all":
+        for idx, roll in enumerate(rolls_copy):
+            current_roll = ItemRoll(roll)
+            selected_item.roll_values[idx] = str(current_roll.roll_tier + 1) + selected_item.roll_values[idx][1:]
+        return
     random.shuffle(rolls_copy)
-    selected_id = ""
-    selected_tier = 0
+    selected_id, selected_tier = "", 0
     # Check each roll for eligibility in a random order.
     for roll in rolls_copy:
         current_roll = ItemRoll(roll)
@@ -521,7 +495,7 @@ def add_augment(selected_item):
     # If a roll was selected then upgrade the tier.
     if selected_id != "":
         roll_location = selected_item.roll_values.index(selected_id)
-        selected_item.roll_values[roll_location] = str(selected_tier + 1) + selected_id[1:]
+        selected_item.roll_values[roll_location] = str(selected_tier + 1) + selected_item.roll_values[roll_location][1:]
 
 
 async def assign_gem_values(player_obj, e_item):
@@ -574,8 +548,7 @@ def assign_item_element_stats(player_obj, equipped_item):
         "A": [player_obj.elemental_res, 0.1], "V": [player_obj.elemental_res, 0.1],
         "Y": [player_obj.elemental_damage, 0.25],
         "G": [player_obj.elemental_pen, 0.15],
-        "C": [player_obj.elemental_curse, 0.1],
-    }
+        "C": [player_obj.elemental_curse, 0.1]}
     # Assign stats from elements on the item.
     for idz, z in enumerate(equipped_item.item_elements):
         if z == 1 and equipped_item.item_type in associated_stats:

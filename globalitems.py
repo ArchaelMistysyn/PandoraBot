@@ -117,7 +117,7 @@ availability_list = ["Sword", "Saber", "Bow", "Threads", "Armour", "Wings", "Amu
 sovereign_item_list = ["Crown of Skulls", "Twin Rings of Divergent Stars", "Hadal's Raindrop", "Heavenly Calamity",
                        "Stygian Calamity", "Pandora's Universe Hammer", "Solar Flare Blaster",
                        "Bathyal, Enigmatic Chasm Bauble", "Fallen Lotus of Nephilim"]
-ring_item_type = [None, None, None, "Signet", "Element_Ring", "Path_Ring", "Fabled_Ring", "Sovereign_Ring"]
+ring_item_type = [None, None, None, "Signet", "Element_Ring", "Path_Ring", "Fabled_Ring", "Sovereign_Ring", "Sacred_Ring"]
 sovereign_batch_data = ', '.join([str(base_type) for base_type in sovereign_item_list])
 
 # WEAPON LISTS
@@ -136,16 +136,17 @@ quality_damage_map = {
     (5, 1): "Prelude", (5, 2): "Abject", (5, 3): "Hollow", (5, 4): "Abyssal", (5, 5): "Emptiness",
     (6, 1): "Prelude", (6, 2): "Opalescent", (6, 3): "Prismatic", (6, 4): "Resplendent", (6, 5): "Iridescent",
     (7, 1): "Prelude", (7, 2): "Tainted", (7, 3): "Cursed", (7, 4): "Corrupt", (7, 5): "Fallen",
-    (8, 1): "Prelude", (8, 2): "Majestic", (8, 3): "Sanctified", (8, 4): "Radiant", (8, 5): "Transcendent"}
+    (8, 1): "Prelude", (8, 2): "Majestic", (8, 3): "Sanctified", (8, 4): "Radiant", (8, 5): "Transcendent",
+    (9, 1): "MAX", (9, 2): "MAX", (9, 3): "MAX", (9, 4): "MAX", (9, 5): "MAX"}
 
 # Max Enhancement by Tier
-max_enhancement = [10, 20, 30, 40, 50, 100, 150, 200]
+max_enhancement = [10, 20, 30, 40, 50, 100, 150, 200, 200]
 # Attack Speed Ranges by Tier
 speed_range_list = [(1.00, 1.10), (1.10, 1.20), (1.20, 1.30), (1.30, 1.50),
-                    (1.50, 2.00), (2.00, 2.50), (2.50, 3.00), (3.00, 4.00)]
+                    (1.50, 2.00), (2.00, 2.50), (2.50, 3.00), (3.00, 3.50), (3.50, 4.00)]
 # Damage tier list
-damage_tier_list = [[500, 4999], [5000, 7499], [7500, 9999], [10000, 14999],
-                    [15000, 24999], [25000, 49999], [50000, 99999], [100000, 199999]]
+damage_tier_list = [[500, 5000], [5000, 7500], [7500, 10000], [10000, 15000],
+                    [15000, 25000], [25000, 50000], [50000, 100000], [100000, 200000], [250000, 250000]]
 
 # HP Bars
 t1_hpbar_full = ['<:t1f_01:1248467244422402101>', '<:t1f_02:1248467245294944257>', '<:t1f_03:1248467246368423966>',

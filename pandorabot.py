@@ -246,10 +246,10 @@ def run_discord_bot():
                     count += await pilengine.generate_and_combine_gear(item_type, 1, 4)
                     await asyncio.sleep(1)
                 for item_type in both_tiers:
-                    count += await pilengine.generate_and_combine_gear(item_type, 1, 8)
+                    count += await pilengine.generate_and_combine_gear(item_type, 1, 9)
                     await asyncio.sleep(1)
                 for item_type in high_tiers:
-                    count += await pilengine.generate_and_combine_gear(item_type, 5, 8)
+                    count += await pilengine.generate_and_combine_gear(item_type, 5, 9)
                     await asyncio.sleep(1)
                 for ele_idx in range(9):
                     count += await pilengine.generate_and_combine_gear("Ring", 4, 5, ele_idx)
@@ -258,7 +258,7 @@ def run_discord_bot():
                 count += await pilengine.generate_and_combine_gear(item_type, 8, 8)
             non_weapon_list = ["Armour", "Greaves", "Amulet", "Wings", "Crest", "Gem", "Pact"]
             for gear_type in non_weapon_list:
-                count += await pilengine.generate_and_combine_gear(gear_type)
+                count += await pilengine.generate_and_combine_gear(gear_type, end_tier=9)
             await ctx.send(f"Admin item task completed. Task Count: {count}")
         elif keyword == "MergeNongear":
             count = await pilengine.generate_and_combine_images()
@@ -990,7 +990,7 @@ def run_discord_bot():
 
     @set_command_category('trade', 7)
     @pandora_bot.hybrid_command(name='purge', help="Sells all gear in or below a tier. "
-                                                   "Types: [Weapon, Armour, Greaves, Amulet, Wings, Crest, Gems]")
+                                                   "Types: [Weapon, Armour, Greaves, Ring, Amulet, Wings, Crest, Gems]")
     @app_commands.guilds(discord.Object(id=guild_id))
     async def purge(ctx, tier: int, item_type=""):
         await ctx.defer()
@@ -1000,8 +1000,8 @@ def run_discord_bot():
         if tier not in range(1, 9):
             await ctx.send("The tier must be between 1 and 8.")
             return
-        if item_type not in ["Weapon", "Armour", "Greaves", "Amulet", "Wings", "Crest", "Gems", ""]:
-            await ctx.send("Valid Types: [Weapon, Armour, Greaves, Amulet, Wings, Crest, Gems]")
+        if item_type not in ["Weapon", "Armour", "Greaves", "Amulet", "Wings", "Crest", "Gems", "Ring", ""]:
+            await ctx.send("Valid Types: [Weapon, Armour, Greaves, Ring, Amulet, Wings, Crest, Gems]")
             return
         result_msg = await inventory.purge(player_obj, item_type, tier)
         await ctx.send(result_msg)

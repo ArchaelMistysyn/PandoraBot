@@ -178,6 +178,8 @@ async def generate_and_combine_gear(item_type, start_tier=1, end_tier=8, element
             frame_url = gli.frame_icon_list[item_tier - 1]
             frame_url = frame_url.replace("[EXT]", gli.frame_extension[0])
             icon_url = f"{web_url}/botimages/GearIcon/{folder}/{sub_folder}{item_type}{item_tier}.png"
+            if item_tier == 9:
+                icon_url = f"{web_url}/botimages/GearIcon/{folder}/{sub_folder}{item_type}8.png"
             if item_type == "Ring" or item_type in gli.ring_item_type:
                 item_type = gli.ring_item_type[item_tier - 1]
                 sub_folder, sub_dir = f"{item_type}/", f"{item_type}\\"
@@ -187,6 +189,9 @@ async def generate_and_combine_gear(item_type, start_tier=1, end_tier=8, element
             file_path = f"{output_dir}{file_name}"
             frame, icon = await fetch_image(session, frame_url), await fetch_image(session, icon_url)
             # Handle Pact Variants
+            if item_type == "Pact":
+                # Skip pacts for now doesnt need to be redone, reduce load.
+                return 0
             if item_type == "Pact":
                 for variant in ["Wrath", "Sloth", "Greed", "Envy", "Pride", "Lust", "Gluttony"]:
                     variant_url = f"{web_url}/botimages/GearIcon/Pact_Variants/{variant}.png"

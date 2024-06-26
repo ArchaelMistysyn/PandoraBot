@@ -59,6 +59,11 @@ class SelectView(discord.ui.View):
             return
         # Handle the Forge view.
         if self.method == "celestial":
+            if self.selected_item.item_tier == 9:
+                title, description = "Cannot Upgrade", "Sacred items can no longer be modified."
+                embed_msg.add_field(name=title, value=description, inline=False)
+                await interaction.response.edit_message(embed=embed_msg, view=None)
+                return
             new_view = ForgeView(self.player_obj, self.selected_item)
         # Handle the Purify view.
         elif self.method == "purify":
@@ -229,10 +234,10 @@ class UpgradeView(discord.ui.View):
         self.menu_type = menu_type
         self.hammer_type, self.element = hammer_type, element
         self.change_method.emoji = self.change_base.emoji = "↩️"
-
         # Method: num_buttons, button_names, material_ids, crafting_method
         method_dict = {
-            "Enhance": [1, ["Enhance"], ["Enhance"], [f"Fae{self.element}"]],
+            "Enhance": [2, ["Enhance", "Gemstone"], ["Enhance", "EnhanceAll"],
+                        [f"Fae{self.element}", f"Gemstone{self.element}"]],
             "Upgrade": [1, ["Reinforce"], ["Reinforce"], ["Ore5"]],
             "Open Socket": [1, ["Create Socket"], ["Open"], ["Matrix"]],
             "Reforge": [3, ["Hellfire", "Abyssfire", "Mutate"], ["ReforgeA", "ReforgeV", "ReforgeM"],
@@ -251,7 +256,7 @@ class UpgradeView(discord.ui.View):
         for button_count in range(self.menu_details[0]):
             button_num, material_id = self.hammer_type, self.material_id[0]
             if self.hammer_type == -1:
-                button_num, material_id = button_count, self.material_id[button_num]
+                button_num, material_id = button_count, self.material_id[button_count]
             is_maxed, success_rate = check_maxed(self.selected_item, self.method[button_num], material_id, self.element)
             temp_material = inventory.BasicItem(material_id)
             button_label, button_emoji = self.menu_details[1][button_num], temp_material.item_emoji
@@ -320,7 +325,8 @@ async def run_button(player_obj, selected_item, material_id, method):
     result, cost = await craft_item(player_obj, selected_item, cost_item, method)
     result_dict = {0: "Failed!", 1: "Success!", 2: "Cannot upgrade further.", 3: "Item not eligible",
                    4: "This element cannot be used",
-                   5: f"Success! The item evolved to tier {selected_item.item_tier}!"}
+                   5: f"Success! The item evolved to tier {selected_item.item_tier}!",
+                   6: "Sacred items can no longer be modified."}
     if result in result_dict:
         outcome = result_dict[result]
     else:
@@ -336,8 +342,8 @@ def check_maxed(target_item, method, material_id, element):
     material_item = inventory.BasicItem(material_id)
     success_rate = material_item.item_base_rate
     match method:
-        case "Enhance":
-            success_rate = max(5, (100 - (target_item.item_enhancement // 10) * 5))
+        case "Enhance" | "EnhanceAll":
+            success_rate = max(5, (100 - (target_item.item_enhancement // 10) * 5)) if method == "Enhance" else 100
             if target_item.item_enhancement >= gli.max_enhancement[(target_item.item_tier - 1)]:
                 return True, 0
             return False, success_rate
@@ -358,6 +364,8 @@ def check_maxed(target_item, method, material_id, element):
 
 
 async def craft_item(player_obj, item_obj, material_item, method_type):
+    if item_obj.item_tier == 9:
+        return 6
     success_rate, success_check = material_item.item_base_rate, random.randint(1, 100)
     # Handle the first cost.
     cost_list = []
@@ -368,11 +376,11 @@ async def craft_item(player_obj, item_obj, material_item, method_type):
     cost_list.append(material_item)
     # Handle secondary costs if applicable.
     secondary_item = None
-    if method_type == "Enhance":
+    if method_type in ["Enhance", "EnhanceAll"]:
         if item_obj.item_tier >= 5:
             secondary_item = inventory.BasicItem(f"Fragment{item_obj.item_tier - 4}")
     elif method_type == "Purify":
-        if item_obj.item_tier == 7:
+        if item_obj.item_tier in [7, 8]:
             secondary_item = inventory.BasicItem(item_type_lotus_dict[item_obj.item_type])
     elif "fusion" in method_type:
         cost_dict = {"defensive": "Heart1", "all": "Heart2", "damage": "Fragment1", "penetration": "Fragment2",
@@ -380,17 +388,15 @@ async def craft_item(player_obj, item_obj, material_item, method_type):
         method = method_type.split()
         if method[0] in cost_dict:
             secondary_item = inventory.BasicItem(cost_dict[method[0]])
-
     if secondary_item is not None:
         secondary_stock = await inventory.check_stock(player_obj, secondary_item.item_id)
         if secondary_stock < 1:
             return secondary_item.item_id, 1
         cost_list.append(secondary_item)
-
     # Attempt the craft.
     match method_type:
-        case "Enhance":
-            outcome = await enhance_item(player_obj, item_obj, cost_list, success_check)
+        case "Enhance" | "EnhanceAll":
+            outcome = await enhance_item(player_obj, item_obj, cost_list, success_check, cost_qty=cost_1)
         case "Reinforce":
             outcome = await reinforce_item(player_obj, item_obj, cost_list, success_check)
         case "ReforgeA":
@@ -425,17 +431,17 @@ async def handle_craft_costs(player_obj, cost_list, cost_1=1, cost_2=1):
         await inventory.update_stock(player_obj, cost_list[1].item_id, -1 * cost_2)
 
 
-async def enhance_item(player_obj, selected_item, cost_list, success_check):
-    success_rate = max(5, (100 - (selected_item.item_enhancement // 10) * 5))
+async def enhance_item(player_obj, selected_item, cost_list, success_check, cost_qty):
+    success_rate = max(5, (100 - (selected_item.item_enhancement // 10) * 5)) if cost_qty == 10 else 100
     # Check if enhancement is already maxed.
     if selected_item.item_enhancement >= gli.max_enhancement[(selected_item.item_tier - 1)]:
         return 4
     # Check if the material being used is eligible.
-    element_location = int(cost_list[0].item_id[3])
+    element_location = int(cost_list[0].item_id[-1])
     if selected_item.item_elements[element_location] != 1:
         return 3
     # Material is consumed. Attempts to enhance the item.
-    await handle_craft_costs(player_obj, cost_list, cost_1=10)
+    await handle_craft_costs(player_obj, cost_list, cost_1=cost_qty)
     if success_check <= success_rate:
         selected_item.item_enhancement += 1
         await update_crafted_item(selected_item)
@@ -556,8 +562,7 @@ async def implant_item(player_obj, selected_item, cost_list, success_rate, succe
 
 async def purify_item(player_obj, selected_item, cost_list, success_rate, success_check):
     # Check if item is eligible
-    outcome = 0
-    check_aug = itemrolls.check_augment(selected_item)
+    outcome, check_aug = 0, itemrolls.check_augment(selected_item)
     if check_aug != selected_item.item_tier * 6:
         return 3
     if selected_item.item_enhancement < gli.max_enhancement[(selected_item.item_tier - 1)]:
@@ -567,8 +572,11 @@ async def purify_item(player_obj, selected_item, cost_list, success_rate, succes
     # Material is consumed. Attempts to enhance the item.
     await handle_craft_costs(player_obj, cost_list)
     if success_check <= success_rate:
-        selected_item.item_quality_tier = 1
         selected_item.item_tier += 1
+        if selected_item.item_tier < 9:
+            selected_item.item_quality_tier = 1
+        else:
+            itemrolls.add_augment(selected_item, "all")
         selected_item.reforge_stats()
         await update_crafted_item(selected_item)
         return 5
@@ -627,8 +635,7 @@ class RefineItemView(discord.ui.View):
                     [4, 4, 4], ["Gem1", "Gem2", "Gem3"]],
             "Jewel": [5, ["Dragon (50%)", "Demon (50%)", "Paragon (50%)", "Arbiter (50%)", "Incarnate (50%)"],
                       ["✅", "✅", "✅", "✅", "✅"],
-                      [5, 5, 5, 6, 7], ["Jewel1", "Jewel2", "Jewel3", "Jewel4", "Jewel5"]]
-        }
+                      [5, 5, 5, 6, 7], ["Jewel1", "Jewel2", "Jewel3", "Jewel4", "Jewel5"]]}
         self.selected_type = selected_type
         self.player_user = player_user
         self.embed, self.new_view = None, None
@@ -771,7 +778,7 @@ async def meld_gems(player_obj, gem_1, gem_2):
     await inventory.delete_item(player_obj, gem_2)
     if gem_1.item_tier <= gem_2.item_tier and gem_1.item_tier < 8:
         gem_1.item_tier += 1
-        gem_1.base_damage_min, gem_1.base_damage_max = inventory.get_tier_damage(gem_1.item_tier, gem_1.item_type)
+        gem_1.get_tier_damage()
         gem_1.set_gem_name()
     roll_change_list = []
     for roll_index, secondary_roll in enumerate(gem_2.roll_values):
