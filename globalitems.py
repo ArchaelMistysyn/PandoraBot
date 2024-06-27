@@ -93,7 +93,7 @@ element_status_list = [None, None, "paralyzed", "petrified", None, "frozen", Non
 
 # Boss Types
 boss_list = ["Fortress", "Dragon", "Demon", "Paragon", "Arbiter", "Incarnate", "Ruler"]
-
+raid_bosstype_list = ["Ruler"]
 # DATA STRUCTURES
 # Unique Ability Data
 rare_ability_dict = {"Overflow": ["Elemental", 2], "Mastery": ["class_multiplier", 0.1],

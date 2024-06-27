@@ -21,6 +21,8 @@ import adventuredata
 import player
 import inventory
 import menus
+import quest
+import leaderboards
 
 # Combat imports
 import combat
@@ -96,7 +98,6 @@ class RaidCog(commands.Cog):
         temp_user, dps = [], 0
         for idy, player_id in enumerate(player_list):
             temp_user.append(await player.get_player_by_id(player_id))
-            await temp_user[idy].get_player_multipliers()
             curse_lists = [self.boss_obj.curse_debuffs, temp_user[idy].elemental_curse]
             self.boss_obj.curse_debuffs = [sum(z) for z in zip(*curse_lists)]
             if idy >= len(self.tracker_list):
@@ -176,7 +177,7 @@ class SoloCog(commands.Cog):
                 await self.ctx.send(f"{self.player_obj.player_username} Abandon successful.")
                 self.cog_unload()
                 return
-            continue_encounter = await self.bot.solo_boss()
+            continue_encounter = await self.solo_boss()
             if continue_encounter:
                 return
             self.cog_unload()
@@ -191,7 +192,7 @@ class SoloCog(commands.Cog):
             return False
         if boss_alive:
             status = await self.handle_cycle_limit()
-            await sent_message.edit(embed=self.embed)
+            await self.sent_message.edit(embed=self.embed)
             return status
         if self.boss_obj.boss_tier >= 4:
             await quest.assign_unique_tokens(self.player_obj, self.boss_obj.boss_name, mode=self.mode)
@@ -204,11 +205,11 @@ class SoloCog(commands.Cog):
             self.boss_obj = await bosses.spawn_boss(self.channel_id, self.player_obj.player_id, new_tier,
                                                     boss_type, self.player_obj.player_level, gauntlet=self.gauntlet)
             current_dps = int(self.tracker_obj.total_dps / self.tracker_obj.total_cycles)
-            self.embed = boss_obj.create_boss_embed(dps=current_dps, extension=extension)
+            self.embed = self.boss_obj.create_boss_embed(dps=current_dps, extension=extension)
             await sent_message.edit(embed=self.embed)
             return True
         # Handle dead boss
-        player_list = [player_obj.player_id]
+        player_list = [self.player_obj.player_id]
         loot_bonus = 5 if self.gauntlet else 1
         if "XXX" in self.boss_obj.boss_name:
             loot_bonus = loot.incarnate_attempts_dict[self.boss_obj.boss_level]
@@ -217,10 +218,10 @@ class SoloCog(commands.Cog):
                                                   loot_mult=loot_bonus, gauntlet=self.gauntlet, magni=self.magnitude)
         await encounters.clear_boss_encounter_info(self.channel_id, self.player_obj.player_id)
         if self.tracker_obj.total_cycles <= 5:
-            await sent_message.edit(embed=loot_embed)
+            await self.sent_message.edit(embed=loot_embed)
             return False
-        await sent_message.edit(embed=self.embed)
-        await ctx_object.send(embed=loot_embed)
+        await self.sent_message.edit(embed=self.embed)
+        await self.ctx_object.send(embed=loot_embed)
         return False
 
     async def handle_cycle_limit(self):

@@ -138,18 +138,6 @@ def display_stars(num_stars):
     return stars_msg
 
 
-def generate_ramping_reward(success_rate, decay_rate, total_steps):
-    current_step, decay_point = 0, 14
-    while current_step < (total_steps - 1):
-        if random.randint(1, 100) <= success_rate:
-            current_step += 1
-            if current_step >= decay_point:
-                success_rate -= (decay_rate * ((current_step + 1) - decay_rate))
-        else:
-            return current_step
-    return current_step
-
-
 def reward_message(item_obj, qty=1):
     return f"{item_obj.item_emoji} {qty:,}x {item_obj.item_name}"
 

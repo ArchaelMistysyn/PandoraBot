@@ -366,9 +366,7 @@ def run_discord_bot():
         if player_obj is None:
             return
         difference, method_info = await player_obj.check_cooldown("manifest")
-        colour, _ = sm.get_gear_tier_colours(player_obj.player_echelon)
         num_hours = 14 + player_obj.player_echelon
-
         # Handle existing cooldown.
         if difference:
             wait_time = timedelta(hours=num_hours)
@@ -376,25 +374,28 @@ def run_discord_bot():
             if difference <= wait_time:
                 cooldown_timer = int(cooldown.total_seconds() / 60 / 60)
                 time_msg = f"Your manifestation will return in {cooldown_timer} hours."
-                embed_msg = discord.Embed(colour=colour, title="Echo Manifestation", description=time_msg)
-                new_view = adventure.SkipView(ctx, player_obj, method_info)
+                embed_msg = sm.easy_embed(player_obj.player_echelon, "Echo Manifestation", time_msg)
+                sent_message = await ctx.send(embed=embed_msg)
             else:
                 await player_obj.clear_cooldown("manifest")
-                embed_msg = await adventure.build_manifest_return_embed(ctx, player_obj, method_info, colour)
-                new_view = adventure.RepeatView(ctx, player_obj, method_info)
-            await ctx.send(embed=embed_msg, view=new_view)
+                sent_message, embed_msg = await adventure.run_manifest(ctx, player_obj, method_info)
+            if difference <= wait_time:
+                new_view = adventure.SkipView(ctx, player_obj, method_info, sent_message)
+            else:
+                new_view = adventure.RepeatView(ctx, player_obj, method_info, embed_msg, sent_message)
+            await sent_message.edit(view=new_view)
             return
-
         # Load card or handle proxy. Build the embed.
-        embed_msg = discord.Embed(colour=colour)
+        embed_msg = sm.easy_embed(player_obj.player_echelon, "", "")
         e_tarot = tarot.TarotCard(player_obj.player_id, "II", 0, 0, 0)
         if player_obj.equipped_tarot == "":
             embed_msg.title = "Pandora, The Celestial"
             embed_msg.description = ("You don't seem to have any tarot cards set to perform echo manifestation. "
                                      "Let's divide and conquer. I'll handle the task for you. What would you "
                                      "like me to help with?")
-            new_view = adventure.ManifestView(ctx, player_obj, embed_msg, e_tarot, colour, num_hours)
-            await ctx.send(embed=embed_msg, view=new_view)
+            sent_message = await ctx.send(embed=embed_msg)
+            new_view = adventure.ManifestView(ctx, player_obj, embed_msg, e_tarot, num_hours, sent_message)
+            await sent_message.edit(view=new_view)
             return
         e_tarot = await tarot.check_tarot(player_obj.player_id, tarot.card_dict[player_obj.equipped_tarot][0])
         embed_msg.set_image(url=e_tarot.card_image_link)
@@ -402,8 +403,9 @@ def run_discord_bot():
         embed_msg.description = "What do you need me to help you with?"
         display_stars = sm.display_stars(e_tarot.num_stars)
         embed_msg.description += f"\nSelected Tarot Rating: {display_stars}"
-        new_view = adventure.ManifestView(ctx, player_obj, embed_msg, e_tarot, colour, num_hours)
-        await ctx.send(embed=embed_msg, view=new_view)
+        sent_message = await ctx.send(embed=embed_msg)
+        new_view = adventure.ManifestView(ctx, player_obj, embed_msg, e_tarot, num_hours, sent_message)
+        await sent_message.edit(view=new_view)
 
     @set_command_category('game', 5)
     @pandora_bot.hybrid_command(name='chest', help="Open Chests.")
@@ -435,20 +437,19 @@ def run_discord_bot():
         title_msg = f"{player_obj.player_username}: Opening {quantity} {extension}!"
         embed_msg = discord.Embed(colour=discord.Colour.dark_teal(), title=title_msg, description="Feeling lucky?")
         reward_list = loot.generate_random_item(quantity=quantity)
-        description, highest_tier, notifications = "", 1, []
+        description_list, highest_tier, notifications = [], 1, []
         for (reward_id, item_qty) in reward_list:
             reward_object = inventory.BasicItem(reward_id)
             highest_tier = max(highest_tier, reward_object.item_tier)
-            description += f"{reward_object.item_emoji} {item_qty}x {reward_object.item_name}\n"
+            description_list.append(f"{reward_object.item_emoji} {item_qty}x {reward_object.item_name}\n")
             if sm.check_rare_item(reward_object.item_id):
                 notifications.append((reward_object.item_id, player_obj))
         # Update the data and messages.
         batch_df = sm.list_to_batch(player_obj, reward_list)
         await inventory.update_stock(None, None, None, batch=batch_df)
-
         # Open the chests.
         sent_msg = await ctx.send(embed=embed_msg)
-        opening_chest = ""
+        opening_chest, output_msg = "", ""
         for t in range(1, highest_tier + 1):
             embed_msg.clear_fields()
             tier_colour, tier_icon = sm.get_gear_tier_colours(t)
@@ -457,8 +458,14 @@ def run_discord_bot():
             await sent_msg.edit(embed=embed_msg)
             await asyncio.sleep(1)
         title = f"{player_obj.player_username}: {quantity} {extension} Opened!"
-        embed_msg = discord.Embed(colour=discord.Colour.gold(), title=title, description=description)
-        await sent_msg.edit(embed=embed_msg)
+        for _ in description_list:
+            output_msg += "---\n"
+        await sent_msg.edit(embed=sm.easy_embed("gold", title, output_msg))
+        for msg in description_list:
+            await asyncio.sleep(1)
+            output_msg = output_msg.replace("---\n", msg, 1)
+            embed_msg = sm.easy_embed("gold", title, output_msg)
+            await sent_msg.edit(embed=sm.easy_embed("gold", title, output_msg))
         for item_id, player_obj in notifications:
             await sm.send_notification(ctx, player_obj, "Item", item_id)
 

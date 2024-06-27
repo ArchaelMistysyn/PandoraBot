@@ -259,11 +259,11 @@ async def hit_boss(tracker_obj, boss_obj, player_obj, combo_count, hit_type="Reg
     if status_msg == " *TIME SHATTER*" or critical_type != "":
         damage *= random.randint(1, max(1, player_obj.rng_bonus))
     damage, extension = (boss_obj.damage_cap, " *LIMIT*") if damage >= boss_obj.damage_cap != -1 else (damage, "")
+    damage = scale_raid_damage(boss_obj, damage)
     hit_msg = f"{combo_count}x Combo: {skill_name} {sm.number_conversion(damage)}{extension}"
     if hit_type == "Ultimate":
         hit_msg = f"Ultimate: {skill_name} {sm.number_conversion(damage)}{extension}"
     hit_msg += f"{mana_msg}{status_msg}{second_msg}{critical_type}"
-    damage = scale_raid_damage(damage)
     boss_obj.boss_cHP -= damage
     return [damage, hit_msg]
 
@@ -281,12 +281,12 @@ async def trigger_bleed(tracker_obj, player_obj, hit_type="Normal", boss_obj=Non
     damage *= (1 + player_obj.appli["Bleed"])
     # Determine boss or pvp specific damage adjustments.
     if boss_obj is not None:
+        damage = scale_raid_damage(boss_obj, damage)
         damage, extension = (boss_obj.damage_cap, " *LIMIT*") if damage >= boss_obj.damage_cap != -1 else (damage, "")
-        damage = scale_raid_damage(damage)
         boss_obj.boss_cHP -= damage
     else:
         damage, extension = pvp_scale_damage(*pvp_data), ""
-        # apply damage to other player need to add <<<<<<<<<<<<<<<<<<<<<
+        pvp_data[1][pvp_data[0][1]].player_cHP -= damage
     bleed_msg = f"{keyword} Rupture [{count}]: {sm.number_conversion(damage)}{extension} *{bleed_type}*"
     return [damage, bleed_msg]
 
@@ -297,7 +297,8 @@ async def trigger_flare(tracker_obj, player_obj, boss_obj=None, pvp_data=None):
     # Determine boss or pvp specific damage adjustments.
     if boss_obj is not None:
         damage = int(boss_obj.boss_cHP * flare_value)
-        damage = scale_raid_damage(damage)
+        damage = scale_raid_damage(boss_obj, damage)
+        damage, extension = (boss_obj.damage_cap, " *LIMIT*") if damage >= boss_obj.damage_cap != -1 else (damage, "")
         boss_obj.boss_cHP -= damage
     else:
         damage = int(pvp_data.player_cHP * flare_value)
@@ -321,7 +322,9 @@ def update_bleed(tracker_obj, player_obj):
     tracker_obj.bleed_tracker = min(1, tracker_obj.bleed_tracker)
 
 
-def scale_raid_damage(damage):
+def scale_raid_damage(boss_obj, damage):
+    if boss_obj.boss_type not in gli.raid_bosstype_list:
+        return damage
     s_damage, base = damage // 10, 10000000000
     return s_damage if s_damage <= base else int(min(base * (1 + math.log10(s_damage / base) / 3), base * 10))
 

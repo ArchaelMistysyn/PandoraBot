@@ -239,7 +239,7 @@ def run_discord_bot():
                                      f"will be consumed.**")
         sent_message = await ctx.channel.send(embed=embed_msg)
         palace_view = PalaceView(player_obj, lotus_obj, lotus_stock, sent_message, ctx)
-        sent_message = await sent_message.edit(embed=embed_msg, view=palace_view)
+        await sent_message.edit(embed=embed_msg, view=palace_view)
 
     class PalaceView(discord.ui.View):
         def __init__(self, player_obj, lotus_obj, lotus_stock, sent_message, ctx):

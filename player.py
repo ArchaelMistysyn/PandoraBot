@@ -382,12 +382,10 @@ class PlayerProfile:
     async def get_player_multipliers(self):
         base_critical_chance, base_attack_speed, base_mitigation = 10.0, 1.0, 0.0
         base_player_hp = 1000 + 50 * self.player_level
-
         # Class Multipliers
         class_bonus = {"Ranger": ["Critical", 1], "Weaver": ["Elemental", 2], "Assassin": ["Bleed", 1],
                        "Mage": ["Mana", 1], "Summoner": ["Combo", 1], "Knight": ["Ultimate", 1], "Rider": ["Life", 1]}
         self.appli[class_bonus[self.player_class][0]] += class_bonus[self.player_class][1]
-
         # Item Multipliers
         e_item = []
         for idx, x in enumerate(self.player_equipped):
@@ -419,10 +417,8 @@ class PlayerProfile:
         if self.equipped_tarot != "":
             e_tarot = await tarot.check_tarot(self.player_id, tarot.card_dict[self.equipped_tarot][0])
             await e_tarot.assign_tarot_values(self)
-
         # Assign Path Multipliers
         total_points = skillpaths.assign_path_multipliers(self)
-
         # Application Bonuses
         base_critical_chance += self.appli["Critical"]
         self.critical_mult += self.appli["Critical"]
@@ -432,10 +428,8 @@ class PlayerProfile:
         self.hp_multiplier += 0.1 * self.appli["Life"]
         # Elemental Capacity
         self.elemental_capacity += max(0, self.appli["Elemental"])
-
         # Pact Bonus Multipliers (Occurs after stat adjustments, but before stat hard limits)
         pact.assign_pact_values(self)
-
         # Capacity Hard Limits
         self.elemental_capacity = min(9, self.elemental_capacity)
         self.mana_limit = max(10, self.mana_limit)
@@ -444,13 +438,11 @@ class PlayerProfile:
         # Solitude/Frostfire and Aqua exceptions
         self.elemental_capacity = 1 if total_points[6] >= 100 or self.aqua_mode != 0 else 3 \
             if total_points[1] >= 80 else self.elemental_capacity
-
         # General Calculations
         self.trigger_rate["Critical"] = int((1 + self.trigger_rate["Critical"]) * base_critical_chance)
         self.attack_speed = (1 + self.attack_speed) * base_attack_speed
         self.damage_mitigation = min((1 + (self.mitigation_bonus + self.damage_mitigation)) * base_mitigation, 90)
         self.player_cHP = self.player_mHP = int((base_player_hp + self.hp_bonus) * (1 + self.hp_multiplier))
-        
         # Trigger Rates
         self.trigger_rate["Omega"] = min(100, int(self.trigger_rate["Omega"] + round(self.appli["Critical"])) * 3)
         self.trigger_rate["Hyperbleed"] = min(100, int(round(self.trigger_rate["Hyperbleed"] + self.appli["Bleed"])) * 4)
@@ -460,19 +452,16 @@ class PlayerProfile:
         self.perfect_rate["Critical"] = 1 if self.aqua_points >= 80 else self.perfect_rate["Critical"]
         for mechanic in self.perfect_rate.keys():  
             self.trigger_rate[mechanic] = 100 if self.perfect_rate[mechanic] > 0 >= 80 else self.trigger_rate[mechanic]
-
         match_count = sum(1 for item in e_item if item is not None and item.item_damage_type == self.player_class)
         if self.unique_conversion[2] >= 1:
             unique_damage_types = {item.item_damage_type for item in e_item}
             match_count = len(unique_damage_types)
         self.class_multiplier += 0.05 + self.unique_conversion[2]
         self.class_multiplier *= match_count
-
         # Singularity multipliers
         apply_singularity(self.elemental_mult, self.singularity_mult)
         apply_singularity(self.elemental_pen, self.singularity_pen)
         apply_singularity(self.elemental_curse, self.singularity_curse)
-
         # Apply omni multipliers.
         for x in range(9):
             self.elemental_mult[x] += self.all_elemental_mult
@@ -484,7 +473,6 @@ class PlayerProfile:
             self.elemental_mult[x] += self.elemental_res[x] * self.unique_conversion[0]
         for y in range(6):
             self.banes[y] += self.banes[6]
-
         # Calculate unique conversions
         # Reduce Max HP convert to Final Damage (Unique Conversion 1)
         hp_reduction = int(self.player_mHP * self.unique_conversion[1])
@@ -503,7 +491,6 @@ class PlayerProfile:
         # Aqua Mode critical bonus
         if self.aqua_mode != 0 and self.equipped_tarot != "" and e_tarot.card_numeral == "XIV":
             self.critical_mult += self.elemental_mult[1]
-
         # Flat Damage Bonuses
         self.player_damage_min += self.appli["Life"] * self.player_mHP * 5
         self.player_damage_max += self.appli["Life"] * self.player_mHP * 5
