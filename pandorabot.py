@@ -134,7 +134,9 @@ def run_discord_bot():
         return False, player_obj, target_player
 
     async def validate_admin_inputs(ctx_obj, item_id, value, id_check="nocheck", value_check="nocheck"):
-        if (id_check == "NonGear" and item_id == "") or (id_check == "gear" and item_id == 0):
+        if ((id_check == "NonGear" and item_id == "")
+                or (id_check == "NonGear" and item_id not in itemdata.itemdata_dict)
+                or (id_check == "gear" and item_id == 0)):
             await ctx_obj.send(f"Item ID not recognized.")
             return True
         if (value_check == "numeric" and not value.isnumeric()) or (value_check == "alpha" and not value.isalnum()):
@@ -174,7 +176,7 @@ def run_discord_bot():
             await ctx.send(f'Admin task completed. Created item id: {new_item.item_id}')
 
     @set_command_category('admin', 2)
-    @pandora_bot.hybrid_command(name='itemmanager', help="Admin item commands [SetQTY, Delete]")
+    @pandora_bot.hybrid_command(name='itemmanager', help="Admin item commands [SetQTY, Delete, Gift]")
     @app_commands.guilds(discord.Object(id=1011375205999968427))
     async def ItemManager(ctx, method="", target_user: discord.User = None, item_id="", value="0"):
         await ctx.defer()
@@ -182,9 +184,9 @@ def run_discord_bot():
         if trigger_return:
             return
         if method == "SetQTY":
-            target_item = inventory.BasicItem(item_id)
-            if await validate_admin_inputs(ctx, target_item.item_id, value, id_check="NonGear", value_check="numeric"):
+            if await validate_admin_inputs(ctx, item_id, value, id_check="NonGear", value_check="numeric"):
                 return
+            target_item = inventory.BasicItem(item_id)
             stock = await inventory.check_stock(target_player, target_item.item_id)
             await inventory.update_stock(target_player, target_item.item_id, (int(value) - stock))
         if method == "Delete":
@@ -194,9 +196,9 @@ def run_discord_bot():
             await target_player.unequip(target_item)
             await inventory.delete_item(target_player, target_item)
         if method == "Gift":
-            target_item = inventory.BasicItem(item_id)
-            if await validate_admin_inputs(ctx, target_item.item_id, value, id_check="NonGear", value_check="Numeric"):
+            if await validate_admin_inputs(ctx, item_id, value, id_check="NonGear", value_check="numeric"):
                 return
+            target_item = inventory.BasicItem(item_id)
             await inventory.set_gift(player_obj, target_item, value)
             message, header = f"{player_obj.player_username} issued a gift to all players. /claim", "Event Gift"
             await ctx.send(file=discord.File(await sm.message_box(player_obj, message, header)))
@@ -990,7 +992,7 @@ def run_discord_bot():
 
     @set_command_category('trade', 7)
     @pandora_bot.hybrid_command(name='purge', help="Sells all gear in or below a tier. "
-                                                   "Types: [Weapon, Armour, Greaves, Ring, Amulet, Wings, Crest, Gems]")
+                                                   "[Weapon, Armour, Greaves, Ring, Amulet, Wings, Crest, Gems")
     @app_commands.guilds(discord.Object(id=guild_id))
     async def purge(ctx, tier: int, item_type=""):
         await ctx.defer()
@@ -1262,7 +1264,7 @@ def run_discord_bot():
         if len(username) > 10:
             await ctx.send("Please enter a username 10 or less characters.")
             return
-        terms_msg = ("By accepting you agree to the following terms:"
+        terms_msg = ("By accepting you agree to the following terms:\n"
                      "**1** - I will act in good faith while using the bot and use it responsibly.\n"
                      "**2** - I will not attempt to cheat, bot, or exploit and will play fairly.\n"
                      "**3** - I will not attempt to hack or manipulate the bot or it's data.\n"

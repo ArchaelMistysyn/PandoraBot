@@ -190,7 +190,7 @@ async def generate_and_combine_gear(item_type, start_tier=1, end_tier=8, element
             frame, icon = await fetch_image(session, frame_url), await fetch_image(session, icon_url)
             # Handle Pact Variants
             if item_type == "Pact":
-                # Skip pacts for now doesnt need to be redone, reduce load.
+                # Skip pacts for now doesn't need to be redone, reduce load.
                 return 0
             if item_type == "Pact":
                 for variant in ["Wrath", "Sloth", "Greed", "Envy", "Pride", "Lust", "Gluttony"]:

@@ -512,42 +512,23 @@ class SkullsView(discord.ui.View):
         await interaction.response.edit_message(embed=embed_msg, view=SkullSelectView(self.player_obj, skull_ring))
 
 
-# Gem inlay menus
 class InlaySelectView(discord.ui.View):
     def __init__(self, player_user, gem_id):
         super().__init__(timeout=None)
-        self.player_user = player_user
-        self.gem_id = gem_id
+        self.player_user, self.gem_id = player_user, gem_id
+        gear_types = [geartype for geartype in gli.gear_types if geartype != "Gem"]
+        gear_icons = [icon for icon in gli.gear_icons if "Gem" not in icon]
+        options = [discord.SelectOption(
+            emoji=icon[idx], label=label[idx], value=f"{idx}", description=f"Inlay gem in your {label[idx].lower()}")
+            for idx, label, icon in enumerate(zip(gear_types, gear_icons))]
+        self.select_menu = discord.ui.Select(placeholder="Select an item!", min_values=1, max_values=1, options=options)
+        self.select_menu.callback = self.inlay_select_callback
+        self.add_item(self.select_menu)
 
-    @discord.ui.select(
-        placeholder="Select crafting method!",
-        min_values=1,
-        max_values=1,
-        options=[
-            discord.SelectOption(
-                emoji="<a:eenergy:1145534127349706772>", label="Weapon",
-                description="Inlay gem in your weapon", value="0"),
-            discord.SelectOption(
-                emoji="<a:eenergy:1145534127349706772>", label="Armour",
-                description="Inlay gem in your armour", value="1"),
-            discord.SelectOption(
-                emoji="<a:eenergy:1145534127349706772>", label="Greaves",
-                description="Inlay gem in your Greaves", value="2"),
-            discord.SelectOption(
-                emoji="<a:eenergy:1145534127349706772>", label="Amulet",
-                description="Inlay gem in your amulet", value="3"),
-            discord.SelectOption(
-                emoji="<a:eenergy:1145534127349706772>", label="Wings",
-                description="Inlay gem in your wing", value="5"),
-            discord.SelectOption(
-                emoji="<a:eenergy:1145534127349706772>", label="Crest",
-                description="Inlay gem in your crest", value="6")
-        ]
-    )
-    async def inlay_select_callback(self, interaction: discord.Interaction, inlay_select: discord.ui.Select):
+    async def inlay_select_callback(self, interaction: discord.Interaction):
         if interaction.user.id != self.player_user.discord_id:
             return
-        selected_type = int(inlay_select.values[0])
+        selected_type = int(interaction.data['values'][0])
         # Set default embed.
         embed_msg = discord.Embed(colour=discord.Colour.dark_orange(),
                                   title="Inlay Failed.", description="No item equipped in this slot")
@@ -558,8 +539,7 @@ class InlaySelectView(discord.ui.View):
             return
         e_item, gem_item = await asyncio.gather(
             inventory.read_custom_item(self.player_user.player_equipped[selected_type]),
-            inventory.read_custom_item(self.gem_id)
-        )
+            inventory.read_custom_item(self.gem_id))
         if e_item is None or gem_item is None:
             embed_msg.description = "Cannot load items."
             await interaction.response.edit_message(embed=embed_msg)
@@ -583,39 +563,33 @@ class InlaySelectView(discord.ui.View):
 class ConfirmInlayView(discord.ui.View):
     def __init__(self, player_user, e_item, gem_id):
         super().__init__(timeout=None)
-        self.e_item = e_item
-        self.player_user = player_user
-        self.gem_id = gem_id
+        self.e_item, self.player_user, self.gem_id = e_item, player_user,  gem_id
 
     @discord.ui.button(label="Inlay Gem", style=discord.ButtonStyle.success, emoji="✅")
     async def tier_one_callback(self, interaction: discord.Interaction, button: discord.Button):
-        try:
-            if interaction.user.id == self.player_user.discord_id:
-                if not await inventory.if_custom_exists(self.e_item.item_id):
-                    embed_msg = await self.e_item.create_citem_embed()
-                    embed_msg.add_field(name="Inlay Failed!", value=f"Item with id {self.e_item.item_id}", inline=False)
-                    await interaction.response.edit_message(embed=embed_msg, view=None)
-                    return
-                if not await inventory.if_custom_exists(self.gem_id):
-                    embed_msg = await self.e_item.create_citem_embed()
-                    embed_msg.add_field(name="Inlay Failed!", value=f"Item with id {self.gem_id}", inline=False)
-                    await interaction.response.edit_message(embed=embed_msg, view=None)
-                    return
-                # Update the inlaid gem and re-display the item.
-                self.e_item.item_inlaid_gem_id = self.gem_id
-                await self.e_item.update_stored_item()
-                embed_msg = await self.e_item.create_citem_embed()
-                await interaction.response.edit_message(embed=embed_msg, view=None)
-        except Exception as e:
-            print(e)
+        if interaction.user.id != self.player_user.discord_id:
+            return
+        if not await inventory.if_custom_exists(self.e_item.item_id):
+            embed_msg = await self.e_item.create_citem_embed()
+            embed_msg.add_field(name="Inlay Failed!", value=f"Item with id {self.e_item.item_id}", inline=False)
+            await interaction.response.edit_message(embed=embed_msg, view=None)
+            return
+        if not await inventory.if_custom_exists(self.gem_id):
+            embed_msg = await self.e_item.create_citem_embed()
+            embed_msg.add_field(name="Inlay Failed!", value=f"Item with id {self.gem_id}", inline=False)
+            await interaction.response.edit_message(embed=embed_msg, view=None)
+            return
+        # Update the inlaid gem and re-display the item.
+        self.e_item.item_inlaid_gem_id = self.gem_id
+        await self.e_item.update_stored_item()
+        embed_msg = await self.e_item.create_citem_embed()
+        await interaction.response.edit_message(embed=embed_msg, view=None)
 
     @discord.ui.button(label="Cancel", style=discord.ButtonStyle.red, emoji="✖️")
     async def cancel_callback(self, interaction: discord.Interaction, button: discord.Button):
-        try:
-            if interaction.user.id == self.player_user.discord_id:
-                await interaction.response.edit_message(view=None)
-        except Exception as e:
-            print(e)
+        if interaction.user.id != self.player_user.discord_id:
+            return
+        await interaction.response.edit_message(view=None)
 
 
 class StaminaView(discord.ui.View):
@@ -667,11 +641,9 @@ class GearView(discord.ui.View):
     def __init__(self, player_user, target_user, current_position, view_type):
         super().__init__(timeout=None)
         self.player_user, self.target_user = player_user, target_user
-        self.new_embed, self.new_view = None, None
-        self.view_type = view_type
+        self.new_embed, self.new_view, self.view_type = None, None, view_type
         self.current_position = current_position
-        self.previous_button.label = self.get_positional_label(-1)
-        self.next_button.label = self.get_positional_label(1)
+        self.previous_button.label, self.next_button.label = self.get_positional_label(-1), self.get_positional_label(1)
 
         if self.current_position <= 6:
             toggle_type = "Gem" if self.view_type == "Gear" else "Gear"
@@ -689,13 +661,12 @@ class GearView(discord.ui.View):
         await self.target_user.reload_player()
         max_position = 9 if self.view_type == "Gear" else 6
         self.current_position = (self.current_position + direction) % (max_position + 1)
-
         # Build no item return message
         item_type = gear_button_list[self.current_position]
         no_item = item_type.lower()
         gem_msg = "" if self.view_type == "Gear" else " Gem"
-        no_item_msg = discord.Embed(colour=discord.Colour.dark_gray(), title=f"Equipped {item_type}{gem_msg}",
-                                    description=f"No {no_item}{gem_msg.lower()} is equipped")
+        title, description = f"Equipped {item_type}{gem_msg}", f"No {no_item}{gem_msg.lower()} is equipped"
+        no_item_msg = sm.easy_embed("gray", title, description)
         # Handle gear positions.
         if self.current_position <= 6:
             item_type = inventory.item_type_dict[self.current_position]
@@ -710,15 +681,13 @@ class GearView(discord.ui.View):
                 equipped_gem = await inventory.read_custom_item(equipped_item.item_inlaid_gem_id)
                 return await equipped_gem.create_citem_embed()
             return await equipped_item.create_citem_embed()
-
         # Handle tarot position.
         elif self.current_position == 9:
             tarot_item = self.target_user.equipped_tarot
             if tarot_item == "":
                 return no_item_msg
-            tarot_card = await tarot.check_tarot(self.target_user.player_id,
-                                                 tarot.card_dict[self.target_user.equipped_tarot][0])
-            return await tarot_card.create_tarot_embed()
+            card_obj = await tarot.check_tarot(self.target_user.player_id, tarot.card_dict[self.target_user.equipped_tarot][0])
+            return await card_obj.create_tarot_embed()
         # Handle insignia position.
         if self.current_position == 8:
             insignia_item = self.target_user.insignia
@@ -734,7 +703,7 @@ class GearView(discord.ui.View):
 
     @discord.ui.button(style=discord.ButtonStyle.blurple, emoji="⬅️")
     async def previous_button(self, interaction: discord.Interaction, button: discord.Button):
-        if interaction.user.id != self.player_user.discord_id:
+        if interaction.user.id != self.player_user.discord_id and interaction.user.id != self.target_user.discord_id:
             return
         if self.new_embed is not None:
             await interaction.response.edit_message(embed=self.new_embed, view=self.new_view)
@@ -745,7 +714,7 @@ class GearView(discord.ui.View):
 
     @discord.ui.button(style=discord.ButtonStyle.success)
     async def toggle_view_button(self, interaction: discord.Interaction, button: discord.Button):
-        if interaction.user.id != self.player_user.discord_id:
+        if interaction.user.id != self.player_user.discord_id and interaction.user.id != self.target_user.discord_id:
             return
         if self.new_embed is not None:
             await interaction.response.edit_message(embed=self.new_embed, view=self.new_view)
@@ -757,7 +726,7 @@ class GearView(discord.ui.View):
 
     @discord.ui.button(style=discord.ButtonStyle.blurple, emoji="➡️")
     async def next_button(self, interaction: discord.Interaction, button: discord.Button):
-        if interaction.user.id != self.player_user.discord_id:
+        if interaction.user.id != self.player_user.discord_id and interaction.user.id != self.target_user.discord_id:
             return
         if self.new_embed is not None:
             await interaction.response.edit_message(embed=self.new_embed, view=self.new_view)
@@ -770,11 +739,9 @@ class GearView(discord.ui.View):
 class ManageCustomItemView(discord.ui.View):
     def __init__(self, player_user, selected_item):
         super().__init__(timeout=None)
-        self.player_user = player_user
-        self.selected_item = selected_item
+        self.player_user, self.selected_item = player_user, selected_item
         if "D" in self.selected_item.item_type:
-            self.equip_item.label = "Inlay"
-            self.equip_item.emoji = "🔱"
+            self.equip_item.label, self.equip_item.emoji = "Inlay", "🔱"
         self.stored_embed = None
 
     @discord.ui.button(label="Equip", style=discord.ButtonStyle.blurple, emoji="⚔️")

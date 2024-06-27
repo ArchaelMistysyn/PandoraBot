@@ -140,14 +140,13 @@ skull_data = [[None, 'Cursed Golden Skull', 1, 4, '<:Skull1:1243422766775009420>
 itemdata_dict = build_item_dict(itemdata_dict, skull_data, category="Skull")
 
 # Unrefined Void Items List Data
-unrefined_item_types = ['Weapon', 'Armour', 'Greaves', 'Amulet', 'Wings', 'Crest']
-unrefined_emoji = ['<:Sword5:1246945708939022367>', '<:Armour5:1246945463630823438>', '<:Greaves5:1246945410707095565>',
-                   '<:Amulet5:1246945347637346315>', '<:Wings5:1246945596821082197>', '<:Crest5:1246945508048637972>']
+gear_types = [geartype for geartype in gli.gear_types if geartype not in ["Ring", "Gem"]]
+gear_icons = [icon for icon in gli.gear_icons if "Ring" not in icon and "Gem" not in icon]
 unrefined_void_data = []
 for index in range(6):
     success_rate = 80 if index != 0 else 100
-    temp_list = [None, f"Unrefined Void Item ({unrefined_item_types[index]})", success_rate, 5, unrefined_emoji[index],
-                 f'Refine for 50% chance to receive a tier 5 {unrefined_item_types[index].lower()}.', 0]
+    temp_list = [None, f"Unrefined Void Item ({gear_types[index]})", success_rate, 5, gear_icons[index],
+                 f'Refine for 50% chance to receive a tier 5 {gli.gear_types[:6][index].lower()}.', 0]
     unrefined_void_data.append(temp_list)
 itemdata_dict = build_item_dict(itemdata_dict, unrefined_void_data, category="Void")
 

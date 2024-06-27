@@ -19,6 +19,17 @@ ultra_id_list += [f"Lotus{x}" for x in range(1, 10)]
 uber_id_list = ["Gemstone11", "DarkStar", "LightStar", "Gemstone11", "Nadir", "Lotus10"]
 ultimate_id_list = ["Skull4", "Nephilim", "Sacred", "Ruler", "Pandora"]
 u_rarity_id_list = ultra_id_list + uber_id_list + ultimate_id_list
+embed_colour_dict = {
+    "red": discord.Colour(0xFF0000), "blue": discord.Colour(0x0000FF), "green": discord.Colour(0x00FF00),
+    "purple": discord.Colour(0x800080), "orange": discord.Colour(0xFFA500), "gold": discord.Colour(0xFFD700),
+    "magenta": discord.Colour(0xFF00FF), "teal": discord.Colour(0x008080), "yellow": discord.Colour(0xFFFF00),
+    "cyan": discord.Colour(0x00FFFF), "pink": discord.Colour(0xFFC0CB), "brown": discord.Colour(0xA52A2A),
+    "lime": discord.Colour(0x00FF00), "navy": discord.Colour(0x000080), "maroon": discord.Colour(0x800000),
+    "sky_blue": discord.Colour(0x87CEEB), "indigo": discord.Colour(0x4B0082), "violet": discord.Colour(0xEE82EE),
+    "turquoise": discord.Colour(0x40E0D0), "gray": discord.Colour(0x808080),
+    "silver": discord.Colour(0xC0C0C0), "black": discord.Colour(0x000000), "white": discord.Colour(0xFFFFFF),
+    1: 0x43B581, 2: 0x3498DB, 3: 0x9B59B6, 4: 0xF1C40F, 5: 0xCC0000,
+    6: 0xE91E63, 7: 0xFFFFFF, 8: 0x000000, 9: 0x000000}
 
 
 async def check_registration(ctx):
@@ -201,16 +212,19 @@ async def message_box(player_obj, message, header=""):
 
 
 def easy_embed(colour, title, description):
-    embed_colour_dict = {
-        "red": discord.Colour(0xFF0000), "blue": discord.Colour(0x0000FF), "green": discord.Colour(0x00FF00),
-        "purple": discord.Colour(0x800080), "orange": discord.Colour(0xFFA500), "gold": discord.Colour(0xFFD700),
-        "magenta": discord.Colour(0xFF00FF), "teal": discord.Colour(0x008080), "yellow": discord.Colour(0xFFFF00),
-        "cyan": discord.Colour(0x00FFFF), "pink": discord.Colour(0xFFC0CB), "brown": discord.Colour(0xA52A2A),
-        "lime": discord.Colour(0x00FF00), "navy": discord.Colour(0x000080), "maroon": discord.Colour(0x800000),
-        "sky_blue": discord.Colour(0x87CEEB), "indigo": discord.Colour(0x4B0082), "violet": discord.Colour(0xEE82EE),
-        "turquoise": discord.Colour(0x40E0D0),
-        "silver": discord.Colour(0xC0C0C0), "black": discord.Colour(0x000000), "white": discord.Colour(0xFFFFFF),
-        1: 0x43B581, 2: 0x3498DB, 3: 0x9B59B6, 4: 0xF1C40F, 5: 0xCC0000,
-        6: 0xE91E63, 7: 0xFFFFFF, 8: 0x000000, 9: 0x000000}
     colour = embed_colour_dict[colour] if colour in embed_colour_dict else discord.Colour.red()
     return discord.Embed(colour=colour, title=title, description=description)
+
+
+async def cost_embed(player_obj, cost_items, cost_qty):
+    cost_msg = ""
+    if not isinstance(cost_items, list):
+        item_stock = await inventory.check_stock(player_obj, cost_items)
+        cost_msg = f"{cost_items.item_emoji} {cost_items.item_name}: {item_stock:,} / {cost_qty:,}\n"
+        return cost_msg, item_stock >= cost_qty
+    can_afford = True
+    for item, qty in zip(cost_items, cost_qty):
+        item_stock = await inventory.check_stock(player_obj, item.item_id)
+        cost_msg += f"{item.item_emoji} {item.item_name}: {item_stock:,} / {qty:,}\n"
+        can_afford = item_stock >= qty and can_afford
+    return cost_msg, can_afford

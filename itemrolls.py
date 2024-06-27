@@ -5,6 +5,7 @@ import random
 
 # Data imports
 import globalitems as gli
+import sharedmethods as sm
 
 # Core imports
 import player
@@ -213,7 +214,7 @@ class SkillSelectView(discord.ui.View):
         super().__init__()
         self.player_obj, self.selected_item = player_obj, selected_item
         self.total_rolls, self.roll_num = total_rolls, roll_num
-        self.selected_skills = selected_skills
+        self.skills = selected_skills
         self.embed, self.new_view = None, None
         roll_structure = roll_structure_dict[self.selected_item.item_type]
         roll_type = roll_structure[self.roll_num - 1]
@@ -222,7 +223,7 @@ class SkillSelectView(discord.ui.View):
         else:
             roll_list = item_roll_master_dict[roll_type][0]
         options = [discord.SelectOption(label=roll[1][0], description=f"Weighting: {roll[1][2]}", value=roll[0])
-                   for roll in roll_list.items() if roll[0] not in self.selected_skills]
+                   for roll in roll_list.items() if roll[0] not in self.skills]
         self.skill_view = discord.ui.Select(placeholder=f"Select Skill for Roll {self.roll_num}",
                                             min_values=1, max_values=1, options=options)
         self.skill_view.callback = self.skill_callback
@@ -235,40 +236,37 @@ class SkillSelectView(discord.ui.View):
             await interaction.response.edit_message(embed=self.embed, view=self.new_view)
             return
         selected_skill = str(interaction.data['values'][0])
-        self.selected_skills.append(selected_skill)
+        self.skills.append(selected_skill)
         if (self.roll_num + 1) <= self.total_rolls:
             # Load the next view for the next roll
             npc_comment = f"I really haven't got all day you know. (Selection: {self.roll_num + 1})\n"
-            for roll_id in self.selected_skills:
+            for roll_id in self.skills:
                 current_roll = ItemRoll(f"1-{roll_id}")
                 npc_comment += f"{current_roll.roll_name}\n"
-            self.embed = discord.Embed(title=NPC_name, description=npc_comment, color=discord.Color.blue())
+            self.embed = sm.easy_embed("blue", NPC_name, npc_comment)
             self.new_view = SkillSelectView(self.player_obj, self.selected_item,
-                                            self.total_rolls, self.roll_num + 1, self.selected_skills)
+                                            self.total_rolls, self.roll_num + 1, self.skills)
         else:
             # This is the last roll, display the summary
-            npc_comment = "Is this really all you wanted?\n"
-            skill_display = ""
-            for roll_id in self.selected_skills:
+            npc_comment, skill_display = "Is this really all you wanted?\n", ""
+            for roll_id in self.skills:
                 temp_id = f"1-{roll_id}"
                 current_roll = ItemRoll(temp_id)
                 skill_display += f"{current_roll.roll_name}\n"
                 if current_roll.roll_code == "unique-0-y":
                     npc_comment = "Oho, you have impeccable taste.\n"
-            summary_msg = npc_comment + skill_display
             token_obj = inventory.BasicItem("Token4")
-            summary_msg += f"\n{token_obj.item_emoji} {token_obj.item_name} Offering: {cost_list[self.total_rolls - 1]:,}"
-            self.embed = discord.Embed(title=NPC_name, description=summary_msg, color=discord.Color.green())
-            self.new_view = SkillPurchaseView(self.player_obj, self.selected_item, self.total_rolls,
-                                              self.selected_skills)
+            cost_msg = await sm.cost_embed(self.player_obj, token_obj, cost_list[self.total_rolls - 1])
+            self.embed = sm.easy_embed("green", NPC_name, f"{npc_comment}{skill_display}\n{cost_msg}")
+            self.new_view = SkillPurchaseView(self.player_obj, self.selected_item, self.total_rolls, self.skills, skill_display)
         await interaction.response.edit_message(embed=self.embed, view=self.new_view)
 
 
 class SkillPurchaseView(discord.ui.View):
-    def __init__(self, player_obj, selected_item, total_rolls, selected_skills):
+    def __init__(self, player_obj, selected_item, total_rolls, selected_skills, skill_display):
         super().__init__()
         self.player_obj, self.selected_item = player_obj, selected_item
-        self.total_rolls, self.selected_skills = total_rolls, selected_skills
+        self.total_rolls, self.selected_skills, self.skill_display = total_rolls, selected_skills, skill_display
         self.embed = None
 
     @discord.ui.button(label="Inscribe", style=discord.ButtonStyle.green)
@@ -278,17 +276,19 @@ class SkillPurchaseView(discord.ui.View):
         if self.embed is not None:
             await interaction.response.edit_message(embed=self.embed, view=None)
             return
-        await self.player_obj.reload_player()
-        custom_cost = cost_list[self.total_rolls - 1]
-        current_stock = await inventory.check_stock(self.player_obj, "Token4")
+        token_obj, custom_cost = inventory.BasicItem("Token4"), cost_list[self.total_rolls - 1]
         # Display the cost failed message. Reload the same view.
-        if current_stock < custom_cost:
-            cost_msg = "If you really want me you'd better provide a sufficient offering."
-            embed_msg = discord.Embed(colour=discord.Colour.dark_orange(), title=NPC_name, description=cost_msg)
+        cost_msg, can_afford = await sm.cost_embed(self.player_obj, token_obj, cost_list[self.total_rolls - 1])
+        if not can_afford:
+            npc_comment = "If you really want this then you'd better provide a sufficient offering."
+            embed_msg = sm.easy_embed("green", NPC_name, f"{npc_comment}{self.skill_display}\n{cost_msg}")
+            current_stock = await inventory.check_stock(self.player_obj, token_obj.item_id)
+            stock_msg = sm.get_stock_msg(token_obj, current_stock, custom_cost)
+            embed_msg.add_field(name="", value=stock_msg, inline=False)
             await interaction.response.edit_message(embed=embed_msg, view=self)
             return
         # Pay the cost. Reload the item data.
-        await inventory.update_stock(self.player_obj, "Token4", (custom_cost * -1))
+        await inventory.update_stock(self.player_obj, token_obj.item_id, (custom_cost * -1))
         reload_item = await inventory.read_custom_item(self.selected_item.item_id)
         new_roll_list, roll_tier_list = [], []
         # Proxy the number of rolls. This is required.
@@ -320,10 +320,10 @@ class SkillPurchaseView(discord.ui.View):
 
     @discord.ui.button(label="Cancel", style=discord.ButtonStyle.red)
     async def cancel_callback(self, interaction: discord.Interaction, button: discord.ui.Button):
-        if interaction.user.id == self.player_obj.discord_id:
-            cancellation_embed = discord.Embed(title=NPC_name, description="Come back when you've made up your mind.",
-                                               color=discord.Color.red())
-            await interaction.response.edit_message(embed=cancellation_embed, view=None)
+        if interaction.user.id != self.player_obj.discord_id:
+            return
+        cancel_embed = sm.easy_embed("red", NPC_name, "Come back when you've made up your mind.")
+        await interaction.response.edit_message(embed=cancellation_embed, view=None)
 
 
 class ItemRoll:
@@ -333,8 +333,7 @@ class ItemRoll:
         roll_details = roll_id.split("-")
         self.roll_tier = int(roll_details[0])
         self.roll_icon = f"{gli.augment_icons[self.roll_tier - 1]}"
-        self.roll_category = roll_details[1]
-        self.roll_code = f"{roll_details[1]}-{roll_details[2]}"
+        self.roll_category, self.roll_code = roll_details[1], f"{roll_details[1]}-{roll_details[2]}"
         self.roll_value, self.roll_msg = 0, ""
         # Adjust specific values
         roll_adjust = 0.01 * self.roll_tier
@@ -343,8 +342,7 @@ class ItemRoll:
             current = category_dict[0]
             current_roll = current[self.roll_code]
             self.roll_value = current_roll[1] * roll_adjust
-            self.roll_msg = f"{current_roll[0]} {int(round(self.roll_value * 100))}%"
-            self.roll_name = current_roll[0]
+            self.roll_msg, self.roll_name = f"{current_roll[0]} {int(round(self.roll_value * 100))}%", current_roll[0]
             return
         # Handle unique roll
         self.roll_code += f"-{roll_details[3]}"
@@ -360,11 +358,11 @@ class ItemRoll:
 
 def display_rolls(selected_item, roll_change_list=None):
     item_rolls_msg = ""
-    for roll_idx, roll_information in enumerate(selected_item.roll_values):
+    for roll_index, roll_information in enumerate(selected_item.roll_values):
         current_roll = ItemRoll(roll_information)
         item_rolls_msg += f'\n{current_roll.roll_icon} {current_roll.roll_msg}'
         if roll_change_list is not None:
-            if roll_change_list[roll_idx]:
+            if roll_change_list[roll_index]:
                 item_rolls_msg += " [Transferred]"
     return item_rolls_msg
 
@@ -478,10 +476,11 @@ def check_augment(selected_item):
 
 def add_augment(selected_item, method="default"):
     rolls_copy = selected_item.roll_values.copy()
-    if method == "all":
+    if method in ["All", "ReduceAll"]:
+        change = 1 if method == "All" else -1
         for idx, roll in enumerate(rolls_copy):
             current_roll = ItemRoll(roll)
-            selected_item.roll_values[idx] = str(current_roll.roll_tier + 1) + selected_item.roll_values[idx][1:]
+            selected_item.roll_values[idx] = str(current_roll.roll_tier + change) + selected_item.roll_values[idx][1:]
         return
     random.shuffle(rolls_copy)
     selected_id, selected_tier = "", 0

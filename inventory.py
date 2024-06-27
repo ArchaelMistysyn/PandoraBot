@@ -220,7 +220,9 @@ class CustomItem:
         self.item_base_stat = round(random.uniform(selected_range[0], selected_range[1]), 2)
 
     def set_base_damage_mitigation(self):
-        self.item_base_stat = round(random.uniform(1 + ((self.item_tier - 1) * 5), (self.item_tier * 5)), 2)
+        self.item_base_stat = 30.00
+        if self.item_tier < 9:
+            self.item_base_stat = round(random.uniform(10, 14), 2) + self.item_tier * 2
 
     def assign_bonus_stat(self):
         if self.item_type in ["W"] or "D" in self.item_type:
@@ -361,7 +363,7 @@ class CustomItem:
         # Weapon has twice the value.
         damage_adjust = 2 if self.item_type == "W" else 1
         temp_damage = [random.randint(damage_values[0], damage_values[1]) * damage_adjust for _ in range(2)]
-        self.item_damage_min, self.item_damage_max = min(temp_damage), max(temp_damage)
+        self.base_damage_min, self.base_damage_max = min(temp_damage), max(temp_damage)
 
     async def create_citem_embed(self, roll_change_list=None):
         tier_colour, _ = sm.get_gear_tier_colours(self.item_tier)
@@ -795,8 +797,7 @@ async def purge(player_obj, item_type, tier):
 
 def full_inventory_embed(lost_item, embed_colour):
     item_type = custom_item_dict[lost_item.item_type]
-    return discord.Embed(colour=embed_colour, title="Inventory Full!",
-                         description=f"Please make space in your {item_type} inventory.")
+    return sm.easy_embed("red", "Inventory Full", f"Please make space in your {item_type} inventory.")
 
 
 async def generate_item(ctx, target_player, tier, elements, item_type, base_type, class_name, enhancement,
@@ -943,7 +944,7 @@ async def claim_gifts(player_obj):
     # Clear expired listings
     if expired_listing:
         params = [{"gift_id": id_to_remove} for id_to_remove in expired_listing]
-        await rqy("DELETE * FROM GiftBox WHERE gift_id = :gift_id", params=params, batch=True)
+        await rqy("DELETE FROM GiftBox WHERE gift_id = :gift_id", params=params, batch=True)
     return item_list if len(item_list) != 0 else None
 
 

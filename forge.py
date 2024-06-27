@@ -83,36 +83,41 @@ class PurifyView(discord.ui.View):
     def __init__(self, player_obj, selected_item):
         super().__init__(timeout=None)
         self.player_obj, self.selected_item = player_obj, selected_item
-        self.material = None
-        self.embed, self.new_view = None, None
+        self.embed, self.new_view, self.material = None, None, None
         purification_data = {5: ["Crystal2", "Wish Purification", " [Miracle"],
                              6: ["Crystal3", "Abyss Purification", " [Stygian"],
                              7: ["Crystal4", "Divine Purification", " [Transcend"],
                              8: ["Sacred", "Blood Purification", " [Sacred]"],
-                             9: [None, "Sacred Item", " [MAX]"]}
+                             9: ["Sacred", "Sacred Item", " [MAX]"]}
         selected_dataset = purification_data[self.selected_item.item_tier]
         self.purify.label = selected_dataset[1] + selected_dataset[2]
         if self.selected_item.item_tier != 9:
             self.material = inventory.BasicItem(selected_dataset[0])
             self.purify.emoji, self.purify_check = self.material.item_emoji, self.material.item_base_rate
             self.purify.label += f": {self.purify_check}%]"
+            self.remove_item(self.children[1])
         else:
+            self.material = inventory.BasicItem(selected_dataset[0])
             self.purify.disabled, self.purify.style = True, gli.button_colour_list[3]
 
     @discord.ui.button(style=discord.ButtonStyle.success)
     async def purify(self, interaction: discord.Interaction, button: discord.Button):
-        await self.purify_callback(interaction, button)
+        await self.purify_callback(interaction, button, "Purify")
+
+    @discord.ui.button(label="Extraction", style=discord.ButtonStyle.red)
+    async def extraction(self, interaction: discord.Interaction, button: discord.Button):
+        await self.purify_callback(interaction, button, "Extract")
 
     @discord.ui.button(label="Reselect", style=discord.ButtonStyle.blurple)
     async def reselect(self, interaction: discord.Interaction, button: discord.Button):
         await self.reselect_callback(interaction, button)
 
-    async def purify_callback(self, interaction: discord.Interaction, button: discord.Button):
+    async def purify_callback(self, interaction: discord.Interaction, button: discord.Button, method):
         if interaction.user.id != self.player_obj.discord_id:
             return
         if self.embed is None:
             self.embed, self.selected_item = await run_button(self.player_obj, self.selected_item,
-                                                              self.material.item_id, "Purify")
+                                                              self.material.item_id, method)
             self.new_view = PurifyView(self.player_obj, self.selected_item)
         await interaction.response.edit_message(embed=self.embed, view=self.new_view)
 
@@ -364,7 +369,7 @@ def check_maxed(target_item, method, material_id, element):
 
 
 async def craft_item(player_obj, item_obj, material_item, method_type):
-    if item_obj.item_tier == 9:
+    if item_obj.item_tier == 9 and method_type != "Extract":
         return 6
     success_rate, success_check = material_item.item_base_rate, random.randint(1, 100)
     # Handle the first cost.
@@ -413,6 +418,8 @@ async def craft_item(player_obj, item_obj, material_item, method_type):
             outcome = await implant_item(player_obj, item_obj, cost_list, success_rate, success_check)
         case "Purify":
             outcome = await purify_item(player_obj, item_obj, cost_list, success_rate, success_check)
+        case "Extract":
+            outcome = await extract_item(player_obj, item_obj, cost_list, success_rate, success_check)
         case _:
             if "fusion" in method_type:
                 outcome = await modify_rolls(player_obj, item_obj, cost_list, success_rate, success_check, method[0])
@@ -576,8 +583,24 @@ async def purify_item(player_obj, selected_item, cost_list, success_rate, succes
         if selected_item.item_tier < 9:
             selected_item.item_quality_tier = 1
         else:
-            itemrolls.add_augment(selected_item, "all")
+            itemrolls.add_augment(selected_item, "All")
         selected_item.reforge_stats()
+        await update_crafted_item(selected_item)
+        return 5
+    return 0
+
+
+async def extract_item(player_obj, selected_item, cost_list, success_rate, success_check):
+    # Check if item is eligible
+    if selected_item.item_tier != 9:
+        return 3
+    # Material is consumed. Attempts to extract the item. (cost is recouped in this case)
+    if success_check <= success_rate:
+        selected_item.item_tier -= 1
+        selected_item.item_quality_tier = 5
+        itemrolls.add_augment(selected_item, "ReduceAll")
+        selected_item.reforge_stats()
+        await inventory.update_stock(player_obj, cost_list[0].item_id, 1)
         await update_crafted_item(selected_item)
         return 5
     return 0
