@@ -8,6 +8,7 @@ import asyncio
 import pandas as pd
 import re
 import sys
+import textwrap
 import random
 from datetime import datetime as dt, timedelta
 
@@ -118,7 +119,7 @@ def run_discord_bot():
 
     # Admin Commands
     async def admin_verification(ctx_object, return_target: discord.User = None, auth="GameAdmin"):
-        auth_dict = {"GameAdmin": gli.GM_id_dict.keys(), "Archael": gli.bot_admin_ids}
+        auth_dict = {"GameAdmin": gli.GM_id_dict.keys(), "Archael": gli.reverse_GM_id_dict["Archael"]}
         if ctx_object.author.id not in auth_dict[auth]:
             await ctx.send("Only game admins can use this command.")
             return True, None, None
@@ -266,7 +267,7 @@ def run_discord_bot():
             count = await pilengine.generate_and_combine_images()
             await ctx.send(f"Admin item task completed. Task Count: {count}")
         elif keyword == "TestNotification":
-            test_dict = {"Level": 1, "Achievement": "Echelon 9", "Item": "LightStar"}
+            test_dict = {"Level": 1, "Achievement": "Echelon 9", "Item": "Gemstone10"}
             if value not in test_dict:
                 await ctx.send("Invalid notification type")
                 return
@@ -285,6 +286,32 @@ def run_discord_bot():
             print(description)
             test_embed = discord.Embed(colour=discord.Colour.red(), title=title, description=description)
             await ctx.send(embed=test_embed)
+
+    @set_command_category('admin', 4)
+    @pandora_bot.hybrid_command(name='modspeak', help="Mod Verified Message.")
+    @app_commands.guilds(discord.Object(id=1011375205999968427))
+    async def modspeak(ctx, header="Verified Message", message=""):
+        await ctx.defer()
+        ad_admin_role, ad_mod_role = "ArchDragon Administrator", "ArchDragon Moderator"
+        if ctx.guild.id != 1011375205999968427:
+            return
+        msg_lines = textwrap.wrap(message, width=40)
+        if len(header) >= 25 or len(msg_lines) > 2:
+            await ctx.send("Header or message is too long.")
+            return
+        elif sum(1 for single_char in message if single_char.isupper()) >= 5:
+            message = message.lower()
+        roles = [role.name for role in ctx.author.roles if ad_admin_role in role.name or ad_mod_role in role.name]
+        if ctx.author.id == gli.reverse_GM_id_dict["Archael"]:
+            boxtype, verification = "arch", "Owner"
+        elif ad_admin_role in roles:
+            boxtype, verification = "admin", "Administrator"
+        elif ad_mod_role in roles:
+            boxtype, verification = "mod", "Moderator"
+        else:
+            return
+        verified = f"{gli.archdragon_emoji} Verified Message [Server {verification}]:"
+        await ctx.send(content=verified, file=discord.File(await sm.message_box(None, msg_lines, header, boxtype)))
 
     @set_command_category('admin', 5)
     @pandora_bot.hybrid_command(name='shutdown', help="Admin shutdown command. Admin Only.")
@@ -307,11 +334,9 @@ def run_discord_bot():
         player_obj = await sm.check_registration(ctx)
         if player_obj is None:
             return
-        title, description = "Map Exploration", "Please select an expedition."
-        embed_msg = discord.Embed(colour=discord.Colour.dark_orange(), title=title, description=description)
-        embed_msg.set_image(url="")
-        map_select_view = adventure.MapSelectView(ctx, player_obj, embed_msg)
-        await ctx.send(embed=embed_msg, view=map_select_view)
+        embed_msg = sm.easy_embed("orange", "Map Exploration", "Please select an expedition.")
+        embed_msg.set_image(url=gli.map_img)
+        await ctx.send(embed=embed_msg, view=adventure.MapSelectView(ctx, player_obj))
 
     @set_command_category('game', 1)
     @pandora_bot.hybrid_command(name='quest', help="Check and hand-in quests.")

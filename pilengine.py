@@ -71,7 +71,8 @@ def hex_to_rgba(hex_value, alpha=255):
     return red, green, blue
 
 
-GoldColour = hex_to_rgba(0xE5BF00)
+GoldColour = hex_to_rgba(0xD4931A)
+CyanColour = hex_to_rgba(0x00FFFF)
 
 # Web Data for FTP Login
 web_data = None
@@ -289,10 +290,15 @@ async def upload_file_to_ftp(ftp, local_path, remote_directory, remote_filename)
 async def build_notification(player_obj, message, notification_type, title_msg, item=None, rarity=None):
     # Initializations.
     width, height = 800, 200
-    if rarity == "Uber Rare" or notification_type == "Sacred":
-        banner_url = f"{web_url}/botimages/banners/achievement_banner.png"  # Red version to be added
-    else:
-        banner_url = f"{web_url}/botimages/banners/achievement_banner.png"
+    banner = "blank_banner_2" if rarity == "Uber Rare" or notification_type == "Sacred" else "blank_banner_1"
+    title_colour, banner = CyanColour, "blank_banner_1"
+    if rarity == "Uber Rare":
+        title_colour, banner = CyanColour, "blank_banner_2"
+    if rarity == "Ultimate Rare":
+        title_colour, banner = CyanColour, "blank_banner_2"
+    elif notification_type == "Sacred":
+        title_colour, banner = CyanColour, "blank_banner_2"
+    banner_url = f"{web_url}/botimages/banners/{banner}.png"
     cardBG = Image.open(requests.get(banner_url, stream=True).raw)
     result = Image.new("RGBA", (width, height))
     result.paste(cardBG, (0, 0), cardBG)
@@ -300,41 +306,62 @@ async def build_notification(player_obj, message, notification_type, title_msg, 
     level_font_file = requests.get((font_url + level_font_url), stream=True).raw
     image_editable = ImageDraw.Draw(result)
     # Apply Title and Message Text.
-    title_font_object = ImageFont.truetype(level_font_file, 52)
-    font_object = ImageFont.truetype(name_font_file, 38)
-    title_colour, message_colour = GoldColour, "White"
-    image_editable.text((195, 38), title_msg, fill=title_colour, font=title_font_object)
-    image_editable.text((195, 100), message, fill=message_colour, font=font_object)
+    title_font_object = ImageFont.truetype(level_font_file, 38)
+    font_object = ImageFont.truetype(name_font_file, 42)
+    message_colour = "White"
+    image_editable.text((55, 40), title_msg, fill=title_colour, font=title_font_object)
+    image_editable.text((138, 95), message, fill=message_colour, font=font_object)
     # Achievement Icon Loading.
     if notification_type == "Achievement":
-        icon_size = (144, 144)
+        icon_size = (72, 72)
         icon_url = rank_url_list[player_obj.player_echelon // 2]
         role_icon = Image.open(requests.get(icon_url, stream=True).raw)
         role_icon = role_icon.resize(icon_size)
-        result.paste(role_icon, (600, 25), mask=role_icon)
+        result.paste(role_icon, (60, 85), mask=role_icon)
+    elif notification_type == "Item":
+        if item.item_image != "":
+            image_url = item.item_image.replace("Frame_", "")
+            role_icon = Image.open(requests.get(image_url, stream=True).raw)
+            result.paste(role_icon, (60, 85), mask=role_icon)
+    elif notification_type == "Sacred":
+        pass
     # Save and return image.
     file_path = f'{image_path}notification\\Notification{player_obj.player_id}.png'
     result.save(file_path)
     return file_path
 
 
-async def build_message_box(player_obj, message, header=""):
+async def build_message_box(player_obj, message, header="", boxtype="default"):
     width, height = 800, 200
-    cardBG = Image.open(requests.get(f"{web_url}/botimages/banners/game_banner.png", stream=True).raw)
+    default_size_title, default_size_msg, modspeak_size_title, modspeak_size_msg = 54, 38, 38, 38
+    title_size, msg_size = (54, 38) if boxtype == "default" else (44, 36)
+    type_dict = {"default": "game_banner", "mod": "blank_banner_1", "admin": "blank_banner_1", "arch": "blank_banner_2"}
+    # Load background image and fonts
+    cardBG = Image.open(requests.get(f"{web_url}/botimages/banners/{type_dict[boxtype]}.png", stream=True).raw)
     result = Image.new("RGBA", (width, height))
     result.paste(cardBG, (0, 0), cardBG)
     image_editable = ImageDraw.Draw(result)
     name_font_file = requests.get((font_url + name_font), stream=True).raw
-    font_object = ImageFont.truetype(name_font_file, 42)
-    text_x = image_editable.textlength(message, font=font_object)
-    image_editable.text(((width - text_x) / 2, 100), message, fill="White", font=font_object)
+    font_object = ImageFont.truetype(name_font_file, msg_size)
+    # Calculate positions for the message lines
+    message_lines = [message] if not isinstance(message, list) else message
+    position_x, position_y = (width - text_x) / 2 if boxtype == "default" else 40, [95, 130]
+    # Draw message text
+    for idx, line_text in enumerate(message_lines):
+        image_editable.text((position_x, position_y[idx]), line_text, fill="White", font=font_object)
+    # Build the header
     if header != "":
-        level_font_file = requests.get((font_url + level_font_url), stream=True).raw
-        title_font_object = ImageFont.truetype(level_font_file, 54)
+        if boxtype != "default":
+            role_icon = Image.open(requests.get(gli.archdragon_logo, stream=True).raw)
+            role_icon = role_icon.resize((64, 64))
+            level_font_file = requests.get((font_url + level_font_url), stream=True).raw
+            title_font_object = ImageFont.truetype(level_font_file, title_size)
+            result.paste(role_icon, (40, 32), mask=role_icon)
         text_x = image_editable.textlength(header, font=title_font_object)
-        image_editable.text(((width - text_x) / 2, 35), header, fill=GoldColour, font=title_font_object)
+        header_position = ((width - text_x) / 2, 35) if boxtype == "default" else (115, 45)
+        image_editable.text(header_position, header, fill=CyanColour, font=title_font_object)
     # Save and return image.
-    file_path = f'{image_path}notification\\Notification{player_obj.player_id}.png'
+    file_path = f'{image_path}notification\\Notification{"TEMP" if player_obj is None else player_obj.player_id}.png'
     result.save(file_path)
     return file_path
 

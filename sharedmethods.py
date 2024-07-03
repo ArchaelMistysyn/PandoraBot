@@ -195,8 +195,8 @@ async def title_box(title_msg):
     return await pilengine.build_title_box(title_msg)
 
 
-async def message_box(player_obj, message, header=""):
-    return await pilengine.build_message_box(player_obj, message, header)
+async def message_box(player_obj, message, header="", boxtype="default"):
+    return await pilengine.build_message_box(player_obj, message, header, boxtype)
 
 
 def easy_embed(colour, title, description):

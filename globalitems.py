@@ -14,12 +14,12 @@ tier_colors = {0: 0x2C2F33, 1: 0x43B581, 2: 0x3498DB, 3: 0x9B59B6, 4: 0xF1C40F,
 
 # BOT DATA
 # Discord Lists
-bot_admin_ids = [185530717638230016]
 # Server ID: ([command channels], raid channel, notification channel, announcement channel)
 servers = {1011375205999968427: ([1157937444931514408],
                                  1252681803916116211, 1157937444931514408, 1157937444931514408)}
 GM_id_dict = {185530717638230016: "Archael", 141837266866667520: "Zweii", 353090154044325906: "Viper",
               1177738094666059877: "Eleuia"}
+reverse_GM_id_dict = {value: key for key, value in GM_id_dict.items()}
 web_url = "https://kyleportfolio.ca/botimages/"
 
 # IMAGE DATA
@@ -29,10 +29,13 @@ planetarium_img = f"{web_url}scenes/Tarot_Planetarium.png"
 market_img, bazaar_img = "", ""
 infuse_img = f"{web_url}scenes/Infuse.png"
 sanctuary_img, cathedral_img = "", ""
+palace_night_img, palace_day_img = f"{web_url}scenes/Palace1.png", f"{web_url}scenes/Palace2.png"
+map_img = f"{web_url}scenes/Map.png"
 archdragon_logo = f"{web_url}ArchDragon.png"
 
 # ICON DATA
 # General Icons
+archdragon_emoji = "<:ArchDragon:1179728775433441290>"
 stamina_icon = "<:estamina:1145534039684562994>"
 exp_icon, coin_icon = "<:eexp:1148088187516891156>", "<:Lotus_Coin:1201568446136193125>"
 # Class Data

@@ -45,8 +45,9 @@ class Expedition:
         if new_room_num >= self.length:
             title, description = "Expedition Completed!", "Would you like to embark on another expedition?"
             embed_msg = discord.Embed(colour=self.colour, title=title, description=description)
+            embed_msg.set_image(url=gli.map_img)
             await self.player_obj.reload_player()
-            new_view = MapSelectView(self.ctx_object, self.player_obj, embed_msg)
+            new_view = MapSelectView(self.ctx_object, self.player_obj)
             return embed_msg, new_view
         # Generate random room.
         new_room_type = self.random_room() if new_room_num != (self.length - 1) else "greater_treasure"
@@ -205,17 +206,14 @@ async def handle_map_interaction(view_obj, interaction):
 
 
 class MapSelectView(discord.ui.View):
-    def __init__(self, ctx_object, player_user, current_embed):
+    def __init__(self, ctx_object, player_user):
         super().__init__(timeout=None)
         self.ctx_object = ctx_object
         self.player_user = player_user
-        self.current_embed = current_embed
         self.new_embed, self.new_view = None, None
-        select_options = [
-            discord.SelectOption(
+        select_options = [discord.SelectOption(
                 emoji="<a:eenergy:1145534127349706772>", label=map_name, description=f"Tier {index} Expedition"
-            ) for index, map_name in enumerate(adventuredata.map_tier_dict.keys(), start=1)
-        ]
+            ) for index, map_name in enumerate(adventuredata.map_tier_dict.keys(), start=1)]
         self.select_menu = discord.ui.Select(
             placeholder="Select an expedition!", min_values=1, max_values=1, options=select_options)
         self.select_menu.callback = self.map_select_callback
@@ -231,18 +229,18 @@ class MapSelectView(discord.ui.View):
         if self.new_embed is not None:
             await interaction.response.edit_message(embed=self.new_embed, view=self.new_view)
             return
+        temp_embed = sm.easy_embed("orange", "Map Exploration", "Please select an expedition.")
+        temp_embed.set_image(url=gli.map_img)
         # Confirm eligibility
         if self.player_user.player_echelon < (selected_tier - 1):
-            self.current_embed.clear_fields()
             not_ready_msg = "You are only qualified for expeditions one tier above your echelon."
-            self.current_embed.add_field(name="Too Perilous!", value=not_ready_msg, inline=False)
-            await interaction.response.edit_message(embed=self.current_embed, view=self)
+            temp_embed.add_field(name="Too Perilous!", value=not_ready_msg, inline=False)
+            await interaction.response.edit_message(embed=temp_embed, view=self)
             return
         # Handle stamina cost
         if not await self.player_user.spend_stamina((200 + selected_tier * 50)):
-            self.current_embed.clear_fields()
-            self.current_embed.add_field(name="Not Enough Stamina!", value="Please check your /stamina!", inline=False)
-            await interaction.response.edit_message(embed=self.current_embed, view=self)
+            temp_embed.add_field(name="Not Enough Stamina!", value="Please check your /stamina!", inline=False)
+            await interaction.response.edit_message(embed=temp_embed, view=self)
             return
         # Assign quest token
         if self.player_user.player_quest == 2:

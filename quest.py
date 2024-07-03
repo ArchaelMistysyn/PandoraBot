@@ -41,7 +41,8 @@ class Quest:
             return embed_msg, is_completed
         # Handle incomplete quest hand-in.
         embed_msg = discord.Embed(colour=self.colour, title=self.quest_title, description=self.story_message)
-        progress_msg = f"{self.quest_message}: {progress_count} / {self.cost}"
+        quest_message = self.quest_message.replace('[USER]', player_obj.player_username)
+        progress_msg = f"{quest_message}: {progress_count} / {self.cost}"
         embed_msg.add_field(name="Quest Incomplete", value=progress_msg, inline=False)
         return embed_msg, is_completed
 
@@ -100,7 +101,8 @@ class Quest:
 
     async def get_quest_embed(self, player_obj):
         is_completed, progress_count = await self.calculate_progress(player_obj)
-        quest_details = f"{self.quest_message}: {progress_count} / {self.cost}"
+        quest_message = self.quest_message.replace('[USER]', player_obj.player_username)
+        quest_details = f"{quest_message}: {progress_count} / {self.cost}"
         quest_embed = discord.Embed(colour=self.colour, title=self.quest_title, description="")
         quest_giver = "Pandora, The Celestial"
         if player_obj.player_quest in range(50, 54):

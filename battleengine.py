@@ -168,7 +168,6 @@ def run_discord_bot():
         if not await player_obj.spend_stamina(200):
             await ctx.send("Not enough stamina.")
             return
-
         # Determine the restrictions
         spawn_dict = {0: 0, 1: 1, 3: 2, 5: 3, 9: 4}
         highest_key = max(key for key in spawn_dict if key <= player_obj.player_echelon)
@@ -180,7 +179,8 @@ def run_discord_bot():
             boss_type = gli.boss_list[spawned_boss]
         else:
             if boss_type not in gli.boss_list[:-2]:
-                await ctx.send("Boss type not recognized. Please select [Random/Fortress/Dragon/Demon/Paragon/Arbiter].")
+                await ctx.send(
+                    "Boss type not recognized. Please select [Random/Fortress/Dragon/Demon/Paragon/Arbiter].")
                 return
             spawned_boss = gli.boss_list.index(boss_type)
             if spawned_boss > max_spawn:
@@ -193,7 +193,6 @@ def run_discord_bot():
                 await ctx.send(sm.get_stock_msg(stone_obj, stone_stock))
                 return
             await inventory.update_stock(player_obj, stone_obj.item_id, -1)
-
         # Spawn the boss
         new_boss_tier = bosses.get_random_bosstier(boss_type)
         boss_obj = await bosses.spawn_boss(ctx.channel.id, player_obj.player_id, new_boss_tier, boss_type,
@@ -228,15 +227,19 @@ def run_discord_bot():
         await ctx.send(f"{player_obj.player_username} enters the divine palace.")
         lotus_obj = inventory.BasicItem("Lotus10")
         lotus_stock = await inventory.check_stock(player_obj, lotus_obj.item_id)
-        embed_msg = discord.Embed(colour=discord.Colour.gold(), title="Divine Palace of God", description="")
-        embed_msg.description = "The palace interior remains still, the torches unlit and the halls silent."
+
         if lotus_stock >= 1:
-            embed_msg.description = (f"As you set foot in the palace rows of torches lining the ivory halls "
-                                     f"ignite with divine fire. Approaching the throne of god "
-                                     f"Yubelle's echo manifests by drawing on the energy of the Divine Lotus. "
-                                     f"Shifting into a new being, 'it' challenges you before the eyes of god."
-                                     f"\n**EXTREME DIFFICUILTY WARNING: {lotus_obj.item_emoji} 1x Divine Lotus "
-                                     f"will be consumed.**")
+            description = (f"Rows of torches lining the ivory halls ignite with divine fire. "
+                           f"Yubelle's echo manifests drawing energy from the Divine Lotus. "
+                           f"Shifting into a new being, 'it' challenges you before the eyes of god."
+                           f"\n**EXTREME DIFFICUILTY WARNING:\n{lotus_obj.item_emoji} 1x Divine Lotus "
+                           f"will be consumed.**")
+            img_url, colour = gli.palace_day_img, "white"
+        else:
+            description = "The palace interior remains still, the torches unlit and the halls silent."
+            img_url, colour = gli.palace_night_img, "purple"
+        embed_msg = sm.easy_embed(colour, "Divine Palace of God", description)
+        embed_msg.set_image(url=img_url)
         sent_message = await ctx.channel.send(embed=embed_msg)
         palace_view = PalaceView(player_obj, lotus_obj, lotus_stock, sent_message, ctx)
         await sent_message.edit(embed=embed_msg, view=palace_view)
@@ -276,9 +279,10 @@ def run_discord_bot():
 
         async def begin_encounter(self, interaction_obj, difficulty):
             lotus_stock = await inventory.check_stock(self.player_obj, self.lotus_obj.item_id)
-            embed_msg = discord.Embed(colour=discord.Colour.dark_orange(), title="Divine Palace of God", description="")
+            embed_msg = sm.easy_embed("purple", "Divine Palace of God", "")
             if lotus_stock < 1:
                 embed_msg.description = "The echo falls silent and fades away alongside the light of the torches."
+                embed_msg.set_image(url=gli.palace_night_img)
                 await interaction.response.edit_message(embed=embed_msg, view=None)
                 return
             boss_level = 300 if difficulty == 1 else 600 if difficulty == 2 else 999
@@ -409,7 +413,8 @@ def run_discord_bot():
             if difference <= one_day:
                 cooldown_timer = int(cooldown.total_seconds() / 60 / 60)
                 time_msg = f"Your next arena match is in {cooldown_timer} hours."
-                embed_msg = discord.Embed(colour=discord.Colour.dark_teal(), title="Arena Closed!", description=time_msg)
+                embed_msg = discord.Embed(colour=discord.Colour.dark_teal(), title="Arena Closed!",
+                                          description=time_msg)
                 await ctx.send(embed=embed_msg)
                 return
         await player_obj.set_cooldown("arena", "")

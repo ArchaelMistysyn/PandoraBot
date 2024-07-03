@@ -483,6 +483,8 @@ class BasicItem:
             elif "Gem" in self.item_id and "Gemstone" not in self.item_id:
                 self.item_image = f"{gli.web_url}/GearIcon/Frame_{self.item_id.replace('Gem', 'Gem_')}.png"
                 return
+            elif self.item_id in ["Gemstone10", "Gemstone11"]:
+                self.item_image = f"{gli.web_url}/NonGearIcon/Gemstone/Frame_{self.item_id}.png"
             elif "Jewel" in self.item_id:
                 icon = {"Jewel1": "Gem_1", "Jewel2": "Gem_1", "Jewel3": "Gem_5", "Jewel4": "Gem_7", "Jewel5": "Gem_8"}
                 self.item_image = f"{gli.web_url}/GearIcon/Frame_{icon[self.item_id]}.png"

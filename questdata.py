@@ -1,56 +1,56 @@
+reg_msg = ('In an ancient ruin, you come across an empty room in which sits a peculiar sealed box. '
+           'Hesitating briefly at the possibility of a trap or mimic, you cautiously reach forward and open the box.\n'
+           'A flurry of souls floods the room spilling out into the corridor. '
+           'One pauses and speaks softly into your mind, "All begins and ends with a wish. What do you wish to be?" '
+           'You think it for only a second and the voice responds with a playful laugh, "Let it be so." '
+           'Then the voice disappears without a trace amidst the fleeing spirits. '
+           'Silence falls and all that remains is an otherworldly girl staring at you in confusion.')
+
 # Key (Quest Num): Quest Type Num, Quest Title,
 # Story Message,
 # Cost Num, Token Num, Item Hand-in,
-# Quest Message
+# Quest Message,
 # Award Item, Award QTY, Award Role
-
 quests_data = {
     1: [0, "Who Are You?",
-        "You're a naughty one going around opening chests and boxes that aren't yours. How about a deal? "
-        "Assist me in sealing the contents back inside, and in return, I'll bestow upon you the power of the stars."
+        "You're a naughty one going around taking what isn't yours. I suppose it cannot be helped now. "
+        "Assist me in sealing the *contents* back inside, and in return I'll bestow upon you the power of the stars."
         "\nBut first, could you tell me your name little one?",
         1, 1, None,
         "Use the /register command",
         'Potion4', 1, None],
-
     2: [0, "Definitely Not Lost",
-        "Pleasure doing business with you. I do hope you have a map of this labyrinth. "
+        "Pleasure to make your acquaintance, [USER]. For starters, do you have a map with you? "
         "It really would be a shame if we got lost in here and met an unfortunate end. "
-        "Perhaps we will even find some treasure.",
+        "\nPerhaps we might find some treasures along the way.",
         1, 2, None,
         "Use the /map command",
         'Potion4', 1, None],
-
     3: [2, "Plunder The Keep",
-        "I'm delighted to see you're still here in one piece. "
-        "You may have to venture back into those ruins to procure a weapon."
-        "I sense a fortress nearby. I'd like you to pilfer something notable and come back. "
-        "That will do nicely to prove both your loyalty and ability.",
+        "I'm delighted to see you're still in one piece. Although, we may have to explore further to procure a weapon. "
+        "I can sense a monster's stronghold nearby. I'd like for you to pilfer something notable and return. "
+        "\nThat should suffice to prove both your loyalty and ability.",
         1, None, 'Stone1',
         "Use /map to acquire a weapon and /display [Item ID] to equip it. Then retrieve a Fortress Stone using /solo",
         'Chest', 5, None],
-
     4: [1, "Initiate the Ascent",
-        "I'm impressed with your findings. This stone contains remnants of my celestial energy. "
-        "For now, how about we venture back into the ruins and see if we can get some proper equipment. "
-        "The challenges that lie ahead are not something we can run into bare-handed."
-        "\n What are you waiting for let's go!",
+        "You've exceeded my expectations with your findings. This stone contains remnants of my paragon energy. "
+        "However I'm disappointed with your current ability. Perhaps you should train a bit more in the ruins. "
+        "\nThe challenges that lie ahead will not be quite so simple.",
         5, None, None,
         "Breakthrough to level 5",
         'Chest', 5, None],
-
     5: [1, "Pursuit Of Power",
-        "You're not anywhere near strong enough yet. I can help you improve your equipment, "
+        "You're still not anywhere near strong enough. I can help you improve your equipment, "
         "but first you need to show me that you are qualified to wield it."
-        "\nNote: You can use /manifest to help you hunt monsters.",
+        "\nNote: /manifest can be used to have Pandora hunt monsters for you and acquire EXP.",
         10, None, None,
         "Breakthrough to level 10",
         'Chest', 10, 'Echelon 1'],
-
     6: [2, "Out Of Reach",
-        "Glad to see you can hold your own in combat, but can you also battle through the skies? "
-        "Astratha will bring the dragons upon your world. "
-        "You'll need to acquire a pair of wings if you intend to contend.",
+        "I'm glad to see you can now hold your own in combat, but can you say the same in the skies? "
+        "The False Paragon, Astratha, has brought a scourge of dragons upon your world. "
+        "\nYou'll need to acquire a pair of wings as soon as possible.",
         1, None, 'Stone2',
         "Retrieve a Dragon Stone",
         'Chest', 5, None],

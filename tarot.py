@@ -12,7 +12,6 @@ import itemdata
 # Core imports
 import player
 import inventory
-import pilengine
 from pandoradb import run_query as rqy
 
 # Item/crafting imports

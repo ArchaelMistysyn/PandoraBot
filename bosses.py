@@ -14,26 +14,13 @@ import player
 import encounters
 from pandoradb import run_query as rqy
 
-fortress_list_t1 = [("Ominous Keep", ""), ("Twisted Stronghold", "")]
-fortress_list_t2 = [("Malignant Fortress", ""), ("Malevolant Castle", "")]
-fortress_list_t3 = [("Sinful Spire", ""), ("Malefic Citadel", "")]
-fortress_list_t4 = [("XVI - Aurora, The Fortress", "")]
-fortress_names = [fortress_list_t1, fortress_list_t2, fortress_list_t3, fortress_list_t4]
-fortress_types = ['Nirvana', 'Paradise', 'Arcadia', 'Eden', 'Dream',
-                  'Elysium', 'Sanctuary', 'Domain', 'Oblivion', 'Cradle']
-fortress_variants = [['Devouring', 0], ['Vengeful', 0], ['Blighted', 1], ['Plagued', 1],
-                     ['Writhing', 2], ['Agony', 2], ['Overgrown', 3], ['Man-Eating', 3],
-                     ['Shrieking', 4], ['Howling', 4]]
-dragon_list_t1 = ["Zelphyros, Wind", "Sahjvadiir, Earth", "Cyries'vael, Ice"]
-dragon_list_t2 = ["Arkadrya, Lightning", "Phyyratha, Fire", "Elyssrya, Water"]
-dragon_list_t3 = ["Y'thana, Light", "Rahk'vath, Shadow"]
-dragon_list_t4 = ["VII - Astratha, The Dimensional"]
-dragon_names = [dragon_list_t1, dragon_list_t2, dragon_list_t3, dragon_list_t4]
-demon_list_t1 = ["Beelzebub", "Azazel", "Astaroth", "Belial"]
-demon_list_t2 = ["Abbadon", "Asura", "Baphomet", "Charybdis"]
-demon_list_t3 = ["Iblis", "Lilith", "Ifrit", "Scylla"]
-demon_list_t4 = ["VIII - Tyra, The Behemoth"]
-demon_names = [demon_list_t1, demon_list_t2, demon_list_t3, demon_list_t4]
+fortress_elements = ["Pyre", "Rain", "Clouds", "Sands", "Plague", "Blizzard", "Oblivion", "Nirvana", "Dreams"]
+fortress_names = [["Twisted Stronghold"], ["Malevolant Castle"], ["Elysian Spire"], ["XVI - Aurora, The Fortress"]]
+dragon_names = [["Zelphyros, Wind", "Sahjvadiir, Earth", "Cyries'vael, Ice"],
+                ["Arkadrya, Lightning", "Phyyratha, Fire", "Elyssrya, Water"],
+                ["Y'thana, Light", "Rahk'vath, Shadow"], ["VII - Astratha, The Dimensional"]]
+demon_names = [["Beelzebub", "Azazel", "Astaroth", "Belial"], ["Abbadon", "Asura", "Baphomet", "Charybdis"],
+               ["Iblis", "Lilith", "Ifrit", "Scylla"], ["VIII - Tyra, The Behemoth"]]
 demon_colours = ["Crimson", "Azure", "Violet", "Bronze", "Jade", "Ivory", "Stygian", "Gold", "Rose"]
 paragon_names, arbiter_names, incarnate_names = [[] for _ in range(6)], [[] for _ in range(7)], [[] for _ in range(8)]
 for numeral, (name, tier) in card_dict.items():
@@ -105,32 +92,16 @@ class CurrentBoss:
             self.boss_element = random.choice(raid_element_dict[self.boss_name])
             return
         target_list = all_names_dict[boss_type][(boss_tier - 1)]
-        if boss_type in ["Paragon", "Arbiter", "Incarnate"]:
-            self.boss_name = random.choice(target_list)
-            boss_numeral = self.boss_name.split()[0]
-            self.boss_image = f'{gli.web_url}tarot/{boss_numeral}/{boss_numeral}_8.png'
-        elif boss_type not in ["Demon", "Dragon"]:
-            self.boss_name, self.boss_image = random.choice(target_list)
-            self.boss_image = f'{gli.web_url}bosses/{boss_type}/{boss_tier}.png' if self.boss_image == "" else f'{gli.web_url}{boss_type}/{self.boss_image}.png'
-        else:
-            self.boss_name = random.choice(target_list)
-        self.boss_element = 9
-
-        # Handle boss type exceptions.
+        self.boss_name, self.boss_element = random.choice(target_list), 9
         match boss_type:
             case "Fortress":
                 if boss_tier != 4:
-                    boss_prefix, self.boss_element = random.choice(fortress_variants)
-                    boss_prefix += f" {random.choice(fortress_types)}, "
-                    self.boss_name = boss_prefix + "the " + self.boss_name
-            case "Dragon":
-                temp_name_split = self.boss_name.split()
-                boss_element = temp_name_split[1]
-                self.boss_element = 8
-                if boss_tier != 4:
-                    self.boss_element = gli.element_names.index(boss_element)
-                    self.boss_name += " Dragon"
-                self.boss_image = f'{gli.web_url}bosses/{boss_type}/{gli.element_names[self.boss_element]}_Dragon.png'
+                    self.boss_element = random.randint(0, 8)
+                    extension = "" if self.boss_element >= 6 else "the "
+                    self.boss_name = f"{self.boss_name} of {extension}{fortress_elements[self.boss_element]}"
+            case "Paragon" | "Arbiter" | "Incarnate":
+                boss_numeral = self.boss_name.split()[0]
+                self.boss_image = f'{gli.web_url}tarot/{boss_numeral}/{boss_numeral}_8.png'
             case "Demon":
                 if boss_tier != 4:
                     self.boss_element = random.randint(0, 8)
@@ -139,6 +110,14 @@ class CurrentBoss:
                         self.boss_image = ""
                     self.boss_image = f'{gli.web_url}bosses/Demon/{boss_colour}/{self.boss_name}_{boss_colour}.png'
                     self.boss_name = f'{boss_colour} {self.boss_name}'
+            case "Dragon":
+                temp_name_split = self.boss_name.split()
+                boss_element = temp_name_split[1]
+                self.boss_element = 8
+                if boss_tier != 4:
+                    self.boss_element = gli.element_names.index(boss_element)
+                    self.boss_name += " Dragon"
+                self.boss_image = f'{gli.web_url}bosses/{boss_type}/{gli.element_names[self.boss_element]}_Dragon.png'
             case _:
                 pass
 

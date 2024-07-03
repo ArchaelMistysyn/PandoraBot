@@ -6,7 +6,7 @@ import random
 
 # Data imports
 import globalitems as gli
-import itemdata
+from questdata import reg_msg
 
 # Core imports
 import player
@@ -789,17 +789,7 @@ class TermsOfServiceView(discord.ui.View):
         if interaction.user.id != self.discord_id:
             return
         title = "Register - Select Class"
-        register_msg = ('In an ancient ruin, you come across an empty room in which sits a peculiar box. '
-                        'Hesitating at first you consider the possibility of a trap or mimic. '
-                        'Without a trap in sight, you reach forward and open the box.\n'
-                        'A flurry of souls flood the room and spill out into the corridor. '
-                        'One pauses and speaks softly into your mind. '
-                        '"Everything begins and ends with a wish. What do you wish to be?" '
-                        'You think it for only a second and the voice responds with a playful laugh, '
-                        '"Let it be so." Then the voice disappears without a trace. '
-                        'Silence falls and then all that remains is an '
-                        'otherworldly girl staring at you in confusion.')
-        embed_msg = discord.Embed(colour=discord.Colour.dark_teal(), title=title, description=register_msg)
+        embed_msg = discord.Embed(colour=discord.Colour.dark_teal(), title=title, description=quests.reg_msg)
         await interaction.response.edit_message(embed=embed_msg, view=ClassSelect(self.discord_id, self.username))
 
     @discord.ui.button(label="Deny", style=discord.ButtonStyle.red)
