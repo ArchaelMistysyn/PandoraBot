@@ -320,9 +320,10 @@ class PlayerProfile:
             'input_14': str(self.insignia), 'input_15': str(self.pact), 'input_16': int(self.vouch_points)}
         await rqy(raw_query, params=params)
         registered_player = await get_player_by_discord(self.discord_id)
-        raw_query = ("INSERT INTO MiscPlayerData (player_id, thana_visits, deaths, toggle_inv) "
-                     "VALUES (:input_1, :input_2, :input_3, :input_4)")
-        params = {"input_1": registered_player.player_id, "input_2": 0, "input_3": 0, "input_4": 0}
+        raw_query = ("INSERT INTO MiscPlayerData (player_id, thana_visits, deaths, toggle_inv, quest_choice, oath_data)"
+                     " VALUES (:input_1, :input_2, :input_3, :input_4, :input_5, :input_6)")
+        params = {"input_1": registered_player.player_id, "input_2": 0, "input_3": 0,
+                  "input_4": 0, "input_5": 0, "input_6": "1;0;0"}
         await rqy(raw_query, params=params)
         return f"Welcome {self.player_username}!\nUse /quest to begin."
 

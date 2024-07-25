@@ -32,16 +32,16 @@ boss_loot_dict = {
     "Paragon": [[0, "Summon1", 5], [0, "Summon2", 1], [0, "Unrefined3", 25], [0, "Stone4", 45],
                 [1, "Gem3", 10], [2, "Gem3", 20], [3, "Gem3", 30],
                 [4, "Jewel3", 40], [5, "Jewel3", 50], [6, "Jewel3", 60], [6, "Gemstone10", 5]],
-    "Arbiter": [[0, "Summon3", 5], [0, "Stone6", 40], [7, "Lotus4", 5],
+    "Arbiter": [[0, "Summon3", 5], [0, "Stone6", 40], [7, "Lotus5", 5],
                 [1, "Token1", 5], [2, "Token2", 5], [3, "Token3", 5], [4, "Token4", 5],
                 [5, "Token5", 5], [6, "Token6", 5], [7, "Token7", 5],
                 [1, "Jewel4", 10], [2, "Jewel4", 20], [3, "Jewel4", 30], [4, "Jewel4", 40],
                 [5, "Jewel4", 50], [6, "Jewel4", 60], [7, "Jewel4", 70]],
     "Incarnate": [[8, "Crystal3", 10], [8, "Crystal4", 5], [8, "Jewel5", 80], [8, "Trove8", 99],
-                  [8, "Lotus1", 5], [8, "Lotus2", 5], [8, "Lotus3", 5], [8, "Lotus4", 5], [8, "Lotus5", 5],
-                  [8, "Lotus6", 5], [8, "Lotus7", 5], [8, "Lotus8", 5], [8, "Lotus9", 5],
+                  [8, "Lotus2", 5], [8, "Lotus3", 5], [8, "Lotus4", 5], [8, "Lotus5", 5], [8, "Lotus6", 5],
+                  [8, "Lotus7", 5], [8, "Lotus8", 5], [8, "Lotus9", 5], [8, "Lotus1", 5],
                   [8, "Lotus10", 1], [8, "DarkStar", 2], [8, "Nephilim", 1], [8, "EssenceXXX", 99]],
-    "Ruler": [[9, "Stone5", 33], [9, "Crystal4", 1], [9, "Lotus3", 0.1, [9, "Ruler", 0.05], [9, "Sacred", 0.01]]]}
+    "Ruler": [[9, "Stone5", 33], [9, "Crystal4", 1], [9, "Lotus4", 0.1, [9, "Ruler", 0.05], [9, "Sacred", 0.01]]]}
 incarnate_attempts_dict = {300: 1, 600: 2, 999: 5}
 
 
@@ -111,11 +111,11 @@ async def award_loot(boss_object, player_list, exp_amount, coin_amount, loot_mul
         if gauntlet:
             min_shards, max_shards = min_shards + 1, max_shards + 5
             if "XXVIII" in boss_object.boss_name and is_dropped(5):
+                msg, batch_df = update_loot_and_df(temp_player, f"Lotus1", 1, msg, counter, batch_df)
+                await sm.send_notification(ctx, temp_player, "Item", "Lotus1")
+            elif "XXV" in boss_object.boss_name and is_dropped(5):
                 msg, batch_df = update_loot_and_df(temp_player, f"Lotus9", 1, msg, counter, batch_df)
                 await sm.send_notification(ctx, temp_player, "Item", "Lotus9")
-            elif "XXV" in boss_object.boss_name and is_dropped(5):
-                msg, batch_df = update_loot_and_df(temp_player, f"Lotus8", 1, msg, counter, batch_df)
-                await sm.send_notification(ctx, temp_player, "Item", "Lotus8")
         if min_shards > 0:
             num_shards = random.randint(min_shards, max_shards)
             msg, batch_df = update_loot_and_df(temp_player, f"Shard", num_shards, msg, counter, batch_df)

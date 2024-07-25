@@ -169,24 +169,27 @@ async def generate_exp_bar(exp_bar_image, exp_bar_start, exp_bar_end, fill_perce
 
 async def generate_and_combine_gear(item_type, start_tier=1, end_tier=8, element=""):
     # Ensure image is currently available.
-    if item_type not in gli.availability_list:
+    if item_type not in gli.availability_list and item_type not in gli.sovereign_item_list:
         return 0
     ftp = await create_ftp_connection(web_data[0], web_data[1], web_data[2])
     folder, sub_folder, sub_dir = item_type, "", ""
+    if item_type in gli.sovereign_item_list:
+        folder = "Sovereign"
     async with aiohttp.ClientSession() as session:
         for item_tier in range(start_tier, end_tier + 1):
             # Handle the urls and paths.
             frame_url = gli.frame_icon_list[item_tier - 1]
             frame_url = frame_url.replace("[EXT]", gli.frame_extension[0])
-            icon_url = f"{web_url}/botimages/GearIcon/{folder}/{sub_folder}{item_type}{item_tier}.png"
-            if item_tier == 9:
-                icon_url = f"{web_url}/botimages/GearIcon/{folder}/{sub_folder}{item_type}8.png"
+            icon_url = f"{web_url}/botimages/Gear_Icon/{folder}/{sub_folder}{item_type.replace(' ', '_')}"
+            icon_url = f"{icon_url}{item_tier}.png" if item_type not in gli.sovereign_item_list else f"{icon_url}.png"
+            if item_tier == 9 and item_type not in gli.sovereign_item_list:
+                icon_url = f"{web_url}/botimages/Gear_Icon/{folder}/{sub_folder}{item_type}8.png"
             if item_type == "Ring" or item_type in gli.ring_item_type:
                 item_type = gli.ring_item_type[item_tier - 1]
-                sub_folder, sub_dir = f"{item_type}/", f"{item_type}\\"
-                icon_url = f"{web_url}/botimages/GearIcon/{folder}/{sub_folder}{item_type}{element}.png"
-            output_dir = f'{image_path}GearIcon\\{folder}\\{sub_dir}'
-            file_name = f"Frame_{item_type}{element}_{item_tier}.png"
+                sub_folder, sub_dir = f"{item_type.replace(' ', '_')}/", f"{item_type}\\"
+                icon_url = f"{web_url}/botimages/Gear_Icon/{folder}/{sub_folder}{item_type}{element}.png"
+            output_dir = f'{image_path}Gear_Icon\\{folder}\\{sub_dir}'
+            file_name = f"Frame_{item_type.replace(' ', '_')}{element}_{item_tier}.png"
             file_path = f"{output_dir}{file_name}"
             frame, icon = await fetch_image(session, frame_url), await fetch_image(session, icon_url)
             # Handle Pact Variants
@@ -195,11 +198,11 @@ async def generate_and_combine_gear(item_type, start_tier=1, end_tier=8, element
                 return 0
             if item_type == "Pact":
                 for variant in ["Wrath", "Sloth", "Greed", "Envy", "Pride", "Lust", "Gluttony"]:
-                    variant_url = f"{web_url}/botimages/GearIcon/Pact_Variants/{variant}.png"
+                    variant_url = f"{web_url}/botimages/Gear_Icon/Pact_Variants/{variant}.png"
                     variant_img = Image.open(requests.get(variant_url, stream=True).raw)
-                    output_dir = f'{image_path}GearIcon\\{item_type}\\'
+                    output_dir = f'{image_path}Gear_Icon\\{item_type}\\'
                     file_name = f"Frame_{item_type}_{item_tier}_{variant}.png"
-                    remote_dir = f"/public_html/botimages/GearIcon/{item_type}/"
+                    remote_dir = f"/public_html/botimages/Gear_Icon/{item_type}/"
                     result = Image.new("RGBA", (106, 106))
                     result.paste(frame, (0, 0), frame)
                     result.paste(icon, (17, 16), icon)
@@ -212,7 +215,7 @@ async def generate_and_combine_gear(item_type, start_tier=1, end_tier=8, element
             result.paste(icon, (17, 16), icon)
             result.save(file_path, format="PNG")
             # Upload the file.
-            remote_dir = f"/public_html/botimages/GearIcon/{folder}/{sub_folder}"
+            remote_dir = f"/public_html/botimages/Gear_Icon/{folder}/{sub_folder}"
             await upload_file_to_ftp(ftp, file_path, remote_dir, file_name)
     ftp.quit()
     return end_tier + 1 - start_tier
@@ -227,12 +230,14 @@ async def generate_and_combine_images():
             temp_item = inventory.BasicItem(item_id)
             if temp_item.item_category not in gli.availability_list_nongear:
                 continue
+            if temp_item.item_id != "Ruler":
+                continue
             count += 1
             # Handle the urls and paths.
             frame_url = gli.frame_icon_list[temp_item.item_tier - 1]
             frame_url = frame_url.replace("[EXT]", gli.frame_extension[0])
-            icon_url = f"{web_url}/botimages/NonGearIcon/{temp_item.item_category}/{item_id}.png"
-            output_dir, file_name = f'{image_path}NonGearIcon\\{temp_item.item_category}\\', f"Frame_{item_id}.png"
+            icon_url = f"{web_url}/botimages/NonGear_Icon/{temp_item.item_category}/{item_id}.png"
+            output_dir, file_name = f'{image_path}NonGear_Icon\\{temp_item.item_category}\\', f"Frame_{item_id}.png"
             file_path = f"{output_dir}{file_name}"
             frame, icon = await fetch_image(session, frame_url), await fetch_image(session, icon_url)
             # Construct the new image
@@ -244,7 +249,7 @@ async def generate_and_combine_images():
                 result.paste(icon, (17, 16), icon)
                 result.save(file_path, format="PNG")
             # Upload the file.
-            remote_dir = f"/public_html/botimages/NonGearIcon/{temp_item.item_category}/"
+            remote_dir = f"/public_html/botimages/NonGear_Icon/{temp_item.item_category}/"
             await upload_file_to_ftp(ftp, file_path, remote_dir, file_name)
     ftp.quit()
     return count
@@ -345,7 +350,7 @@ async def build_message_box(player_obj, message, header="", boxtype="default"):
     font_object = ImageFont.truetype(name_font_file, msg_size)
     # Calculate positions for the message lines
     message_lines = [message] if not isinstance(message, list) else message
-    position_x, position_y = (width - text_x) / 2 if boxtype == "default" else 40, [95, 130]
+    position_x, position_y = (width - text_x) / 2 if boxtype == "default" else 60, [95, 130]
     # Draw message text
     for idx, line_text in enumerate(message_lines):
         image_editable.text((position_x, position_y[idx]), line_text, fill="White", font=font_object)
@@ -356,9 +361,9 @@ async def build_message_box(player_obj, message, header="", boxtype="default"):
             role_icon = role_icon.resize((64, 64))
             level_font_file = requests.get((font_url + level_font_url), stream=True).raw
             title_font_object = ImageFont.truetype(level_font_file, title_size)
-            result.paste(role_icon, (40, 32), mask=role_icon)
+            result.paste(role_icon, (50, 32), mask=role_icon)
         text_x = image_editable.textlength(header, font=title_font_object)
-        header_position = ((width - text_x) / 2, 35) if boxtype == "default" else (115, 45)
+        header_position = ((width - text_x) / 2, 35) if boxtype == "default" else (130, 45)
         image_editable.text(header_position, header, fill=CyanColour, font=title_font_object)
     # Save and return image.
     file_path = f'{image_path}notification\\Notification{"TEMP" if player_obj is None else player_obj.player_id}.png'

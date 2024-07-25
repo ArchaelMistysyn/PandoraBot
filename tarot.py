@@ -301,7 +301,7 @@ class TarotView(discord.ui.View):
                 return
             # Handle tier 7 exception.
             if active_card.num_stars == 7:
-                lotus_item = inventory.BasicItem("Lotus8")
+                lotus_item = inventory.BasicItem("Lotus9")
                 player_stock = await inventory.check_stock(self.player_user, lotus_item.item_id)
                 if player_stock < 1:
                     description = f"Divine Synthesis requires: {lotus_item.item_emoji} 1x {lotus_item.item_name}"

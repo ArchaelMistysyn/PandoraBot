@@ -203,7 +203,7 @@ def run_discord_bot():
         msg = f"{player_obj.player_username} has spawned a tier {boss_obj.boss_tier} boss!{magnitude_msg}"
         await ctx.send(msg)
         sent_message = await ctx.channel.send(embed=embed_msg)
-        solo_cog = await run_solo_cog(player_obj, boss_obj, ctx.channel.id, sent_message, ctx, magnitude)
+        solo_cog = await run_solo_cog(player_obj, boss_obj, ctx.channel.id, sent_message, ctx, magnitude=magnitude)
         task = asyncio.create_task(solo_cog.run())
         await task
 
@@ -333,7 +333,7 @@ def run_discord_bot():
         embed_msg = boss_obj.create_boss_embed(extension=" [Gauntlet]")
         sent_message = await ctx.channel.send(embed=embed_msg)
         gauntlet_cog = await run_solo_cog(player_obj, boss_obj, ctx.channel.id, sent_message, ctx,
-                                          gauntlet=True, magnitude=magniutde)
+                                          gauntlet=True, magnitude=magnitude)
         task = asyncio.create_task(gauntlet_cog.run())
         await task
 

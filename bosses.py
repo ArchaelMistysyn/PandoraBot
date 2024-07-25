@@ -15,7 +15,7 @@ import encounters
 from pandoradb import run_query as rqy
 
 fortress_elements = ["Pyre", "Rain", "Clouds", "Sands", "Plague", "Blizzard", "Oblivion", "Nirvana", "Dreams"]
-fortress_names = [["Twisted Stronghold"], ["Malevolant Castle"], ["Elysian Spire"], ["XVI - Aurora, The Fortress"]]
+fortress_names = [["Keep"], ["Stronghold"], ["Castle"], ["XVI - Aurora, The Fortress"]]
 dragon_names = [["Zelphyros, Wind", "Sahjvadiir, Earth", "Cyries'vael, Ice"],
                 ["Arkadrya, Lightning", "Phyyratha, Fire", "Elyssrya, Water"],
                 ["Y'thana, Light", "Rahk'vath, Shadow"], ["VII - Astratha, The Dimensional"]]
@@ -55,7 +55,7 @@ class CurrentBoss:
 
     def create_boss_embed(self, dps=0, extension=""):
         img_link = "https://i.ibb.co/0ngNM7h/castle.png"
-        if "Demon" in self.boss_image or "Dragon" in self.boss_image:
+        if "Demon" in self.boss_image or "Dragon" in self.boss_image or "Fortress" in self.boss_image:
             img_link = self.boss_image
         tier_hearts = ["<:Gem1:1242206599481659442>", "<:Gem2:1242206600555532421>", "<:Gem3:1242206601385873498>",
                        "<:Gem4:1242206602405347459>", "<:Gem5:1242206603441078363>", "<:Gem6:1242206603953049721>",
@@ -98,7 +98,9 @@ class CurrentBoss:
                 if boss_tier != 4:
                     self.boss_element = random.randint(0, 8)
                     extension = "" if self.boss_element >= 6 else "the "
-                    self.boss_name = f"{self.boss_name} of {extension}{fortress_elements[self.boss_element]}"
+                    suffix = gli.element_special_names[self.boss_element]
+                    self.boss_name = f"{suffix} {self.boss_name} of {extension}{fortress_elements[self.boss_element]}"
+                    self.boss_image = f'{gli.web_url}bosses/{boss_type}/{gli.element_names[self.boss_element]}_{boss_type}.png'
             case "Paragon" | "Arbiter" | "Incarnate":
                 boss_numeral = self.boss_name.split()[0]
                 self.boss_image = f'{gli.web_url}tarot/{boss_numeral}/{boss_numeral}_8.png'

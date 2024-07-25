@@ -21,6 +21,7 @@ GM_id_dict = {185530717638230016: "Archael", 141837266866667520: "Zweii", 353090
               1177738094666059877: "Eleuia"}
 reverse_GM_id_dict = {value: key for key, value in GM_id_dict.items()}
 web_url = "https://kyleportfolio.ca/botimages/"
+store_link = "https://ArchDragonStore.ca"
 
 # IMAGE DATA
 forge_img, refinery_img = f"{web_url}scenes/Forge.png", f"{web_url}scenes/Refinery.png"
@@ -91,7 +92,7 @@ path_names = ["Storms", "Frostfire", "Horizon", "Eclipse", "Stars",
               "Solar Flux", "Lunar Tides", "Terrestria", "Confluence"]
 # Element Names
 element_names = ["Fire", "Water", "Lightning", "Earth", "Wind", "Ice", "Shadow", "Light", "Celestial"]
-element_special_names = ["Volcanic", "Aquatic", "Voltaic", "Seismic", "Sonic", "Arctic", "Lunar", "Solar", "Cosmic"]
+element_special_names = ["Volcanic", "Aquatic", "Voltaic", "Seismic", "Cyclonic", "Arctic", "Lunar", "Solar", "Cosmic"]
 element_status_list = [None, None, "paralyzed", "petrified", None, "frozen", None, "blinded", "disoriented"]
 
 # Boss Types
@@ -117,13 +118,15 @@ skill_names_dict = {
 # ITEM LISTS
 crafting_gem = ["Blazing Ruby", "Drowned Sapphire", "Silent Topaz", "Ancient Agate", "Whispering Emerald",
                 "Arctic Zircon", "Haunted Obsidian", "Prismatic Opal", "Spatial Lapis", "Soul Diamond"]
-availability_list_nongear = ["Fae"]
+availability_list_nongear = ["Misc"]
 availability_list = ["Sword", "Saber", "Bow", "Threads", "Armour", "Wings", "Amulet", "Crest", "Greaves",
                      "Ring", "Gem", "Pact"]
 
 sovereign_item_list = ["Crown of Skulls", "Twin Rings of Divergent Stars", "Hadal's Raindrop", "Heavenly Calamity",
-                       "Stygian Calamity", "Pandora's Universe Hammer", "Solar Flare Blaster",
+                       "Stygian Calamity", "Pandora's Universe Hammer", "Solar Flare Blaster", "Ruler's Crest",
                        "Bathyal, Enigmatic Chasm Bauble", "Fallen Lotus of Nephilim"]
+available_sovereign = ["Crown of Skulls", "Twin Rings of Divergent Stars", "Hadal's Raindrop", "Heavenly Calamity",
+                       "Stygian Calamity", "Pandora's Universe Hammer", "Ruler's Crest", "Fallen Lotus of Nephilim"]
 ring_item_type = [None, None, None, "Signet", "Element_Ring", "Path_Ring", "Fabled_Ring", "Sovereign_Ring", "Sacred_Ring"]
 sovereign_batch_data = ', '.join([str(base_type) for base_type in sovereign_item_list])
 
@@ -232,5 +235,5 @@ hp_bar_dict = {1: [t1_hpbar_full, t1_hpbar_empty], 2: [t2_hpbar_full, t2_hpbar_e
                7: [t7_hpbar_full, t57_hpbar_empty], 8: [t8_hpbar_full, t68_hpbar_empty]}
 
 # MESSAGES
-abyss_msg = ("Within this cavern resides the true abyss. The taint of the void can only be purified "
+abyss_msg = ("Within this cavern resides the Deep Void. The taint of the void can only be purified "
              "through a more powerful darkness. Take great caution, there is nothing which can save you down there.")

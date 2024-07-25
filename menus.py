@@ -288,16 +288,12 @@ class DivineView(discord.ui.View):
         if interaction.user.id != self.player_obj.discord_id:
             return
         embed_msg = await skillpaths.create_path_embed(self.player_obj)
-        if self.player_obj.player_quest == 17:
-            await quest.assign_unique_tokens(self.player_obj, "Arbiter")
         await interaction.response.edit_message(embed=embed_msg, view=PointsView(self.player_obj))
 
     @discord.ui.button(label="Isolde", style=discord.ButtonStyle.blurple, row=0)
     async def engrave_callback(self, interaction: discord.Interaction, button: discord.Button):
         if interaction.user.id != self.player_obj.discord_id:
             return
-        if self.player_obj.player_quest == 17:
-            await quest.assign_unique_tokens(self.player_obj, "Arbiter")
         title = "Isolde, Soulweaver of the True Laws"
         description = "You've come a long way from home child. Tell me, what kind of power do you seek?"
         embed_msg = discord.Embed(colour=discord.Colour.dark_orange(), title=title, description=description)
@@ -885,12 +881,12 @@ class StatView(discord.ui.View):
         self.player_user = player_user
         self.target_user = target_user
 
-    @discord.ui.button(label="Offense", style=discord.ButtonStyle.blurple, row=1)
+    @discord.ui.button(label="Offence", style=discord.ButtonStyle.blurple, row=1)
     async def offensive_stats(self, interaction: discord.Interaction, button: discord.Button):
         new_msg = await self.target_user.get_player_stats(1)
         await interaction.response.edit_message(embed=new_msg)
 
-    @discord.ui.button(label="Defense", style=discord.ButtonStyle.blurple, row=1)
+    @discord.ui.button(label="Defence", style=discord.ButtonStyle.blurple, row=1)
     async def defensive_stats(self, interaction: discord.Interaction, button: discord.Button):
         new_msg = await self.target_user.get_player_stats(3)
         await interaction.response.edit_message(embed=new_msg)

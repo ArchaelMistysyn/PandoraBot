@@ -95,6 +95,6 @@ def display_pact(player_obj):
     pact_embed = discord.Embed(colour=pact_object.pact_colour, title=pact_object.pact_name, description=pact_stars)
     pact_embed.add_field(name="Pact Bonuses", value=pact_object.pact_bonuses, inline=False)
     file_name = f"Frame_Pact_{pact_object.pact_tier}_{pact_object.pact_variant}.png"
-    pact_embed.set_thumbnail(url=f"{gli.web_url}GearIcon/Pact/{file_name}")
+    pact_embed.set_thumbnail(url=f"{gli.web_url}Gear_Icon/Pact/{file_name}")
     return pact_embed
 

@@ -1012,7 +1012,7 @@ monster_dict = {
 
 gem_list = [("Useless Rock", 1), ("Ore1", 500), ("Ore2", 1000), ("Ore3", 5000), ("Ore4", 10000), ("Ore5", 25000),
             ("Gemstone", 50000), ("Gemstone", 75000), ("Gemstone", 100000), ("Gemstone9", 150000),
-            ("Gemstone10", 250000), ("Gemstone10", 500000), ("Lotus5", 750000), ("Skull3", 1000000),
+            ("Gemstone10", 250000), ("Gemstone10", 500000), ("Lotus6", 750000), ("Skull3", 1000000),
             ("Gemstone11", 2500000), ("Sacred", 5000000), ("Skull4", 10000000)]
 
 

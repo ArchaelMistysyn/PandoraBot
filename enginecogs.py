@@ -174,7 +174,7 @@ class SoloCog(commands.Cog):
         async with self.lock:
             if await combat.abandon_flag(self.player_obj) == 1:
                 await encounters.clear_boss_encounter_info(self.channel_id, self.player_obj.player_id)
-                await self.ctx.send(f"{self.player_obj.player_username} Abandon successful.")
+                await self.ctx_object.send(f"{self.player_obj.player_username} Abandon successful.")
                 self.cog_unload()
                 return
             continue_encounter = await self.solo_boss()
@@ -206,7 +206,7 @@ class SoloCog(commands.Cog):
                                                     boss_type, self.player_obj.player_level, gauntlet=self.gauntlet)
             current_dps = int(self.tracker_obj.total_dps / self.tracker_obj.total_cycles)
             self.embed = self.boss_obj.create_boss_embed(dps=current_dps, extension=extension)
-            await sent_message.edit(embed=self.embed)
+            await self.sent_message.edit(embed=self.embed)
             return True
         # Handle dead boss
         player_list = [self.player_obj.player_id]
@@ -430,7 +430,7 @@ class MapCog(commands.Cog):
                 end_embed = self.build_base_embed()
                 end_embed.description = "Expedition Completed!"
                 if random.randint(1, 2000) <= self.map_tier:
-                    reward_object = inventory.BasicItem("Lotus7")
+                    reward_object = inventory.BasicItem("Lotus8")
                     current_qty = self.items_accumulated.get(reward_object.item_id, (reward_object, 0))[1]
                     self.items_accumulated[reward_object.item_id] = (reward_object, current_qty + 1)
                     await inventory.update_stock(self.player_obj, reward_object.item_id, 1)

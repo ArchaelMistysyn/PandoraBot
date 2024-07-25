@@ -91,7 +91,7 @@ def get_gear_thumbnail(item):
     tag_dict = {"A": "Armour", "V": "Greaves", "Y": "Amulet", "R": "Ring", "G": "Wings", "C": "Crest"}
     folder = item_tag = item.item_base_type
     sub_folder, element = "", ""
-    if item.item_type == "W" and item.item_base_type in gli.sovereign_item_list:
+    if item.item_type in ["W", "R"] and item.item_base_type in gli.sovereign_item_list:
         folder = "Sovereign"
     elif item.item_type not in ["W", "R"]:
         item_tag = "Gem" if "D" in item.item_type else tag_dict[item.item_type]
@@ -103,9 +103,10 @@ def get_gear_thumbnail(item):
         else:
             return None
     # Ensure image is currently available.
-    if item_tag not in gli.availability_list and item_tag not in gli.ring_item_type:
+    if item_tag not in gli.availability_list and item_tag not in gli.ring_item_type and item_tag not in gli.available_sovereign:
         return None
-    return f"{gli.web_url}GearIcon/{folder}/{sub_folder}Frame_{item_tag}{element}_{item.item_tier}.png"
+    new_tag = item_tag.replace(' ', '_')
+    return f"{gli.web_url}Gear_Icon/{folder}/{sub_folder}Frame_{new_tag}{element}_{item.item_tier}.png"
 
 
 def get_gear_tier_colours(base_tier):

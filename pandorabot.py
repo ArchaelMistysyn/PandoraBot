@@ -14,6 +14,7 @@ from datetime import datetime as dt, timedelta
 
 # Data imports
 import globalitems as gli
+import questdata
 import sharedmethods as sm
 import itemdata
 from pandoradb import run_query as rqy
@@ -119,7 +120,7 @@ def run_discord_bot():
 
     # Admin Commands
     async def admin_verification(ctx_object, return_target: discord.User = None, auth="GameAdmin"):
-        auth_dict = {"GameAdmin": gli.GM_id_dict.keys(), "Archael": gli.reverse_GM_id_dict["Archael"]}
+        auth_dict = {"GameAdmin": gli.GM_id_dict.keys(), "Archael": [gli.reverse_GM_id_dict["Archael"]]}
         if ctx_object.author.id not in auth_dict[auth]:
             await ctx.send("Only game admins can use this command.")
             return True, None, None
@@ -254,11 +255,12 @@ def run_discord_bot():
                 for item_type in high_tiers:
                     count += await pilengine.generate_and_combine_gear(item_type, 5, 9)
                     await asyncio.sleep(1)
-                for ele_idx in range(9):
-                    count += await pilengine.generate_and_combine_gear("Ring", 4, 5, ele_idx)
-                    await asyncio.sleep(1)
-            for item_type in gli.sovereign_item_list:
-                count += await pilengine.generate_and_combine_gear(item_type, 8, 8)
+            for ele_idx in range(9):
+                count += await pilengine.generate_and_combine_gear("Ring", 4, 5, ele_idx)
+                await asyncio.sleep(1)
+            for item_base in gli.available_sovereign:
+                count += await pilengine.generate_and_combine_gear(item_base, 8, 9)
+                await asyncio.sleep(1)
             non_weapon_list = ["Armour", "Greaves", "Amulet", "Wings", "Crest", "Gem", "Pact"]
             for gear_type in non_weapon_list:
                 count += await pilengine.generate_and_combine_gear(gear_type, end_tier=9)
@@ -346,15 +348,22 @@ def run_discord_bot():
         player_obj = await sm.check_registration(ctx)
         if player_obj is None:
             return
-        current_quest = player_obj.player_quest
-        if current_quest <= 55:
-            quest_object = quest.quest_list[player_obj.player_quest]
-            quest_message = await quest_object.get_quest_embed(player_obj)
-            quest_view = quest.QuestView(ctx, player_obj, quest_object)
-            await ctx.send(embed=quest_message, view=quest_view)
-            return
-        embed_msg = discord.Embed(colour=discord.Colour.dark_teal(), title="Quests", description="All Clear!")
-        await ctx.send(embed=embed_msg)
+        player_choice, reward, choice_message = None, None, None
+        c_quest, quest_object = player_obj.player_quest, quest.quest_list[player_obj.player_quest]
+        if c_quest in questdata.quest_options:
+            choice_data = questdata.quest_options[c_quest]
+            oath_data = await quest.get_oath_data(player_obj)
+            player_choice = await player_obj.check_misc_data("quest_choice")
+            if player_choice == 0:
+                quest_view = quest.ChoiceView(ctx, player_obj, quest_object, oath_data, choice_data)
+                quest_message = await quest_object.get_quest_embed(player_obj, choice_message)
+                await ctx.send(embed=quest_message, view=quest_view)
+                return
+            else:
+                reward, choice_message = choice_data[1], choice_data[2]
+        quest_message = await quest_object.get_quest_embed(player_obj)
+        quest_view = quest.QuestView(ctx, player_obj, quest_object, player_choice, reward) if c_quest >= 55 else None
+        await ctx.send(embed=quest_message, view=quest_view)
 
     @set_command_category('game', 2)
     @pandora_bot.hybrid_command(name='stamina', help="Display your stamina and use potions.")
@@ -429,6 +438,7 @@ def run_discord_bot():
         display_stars = sm.display_stars(e_tarot.num_stars)
         embed_msg.description += f"\nSelected Tarot Rating: {display_stars}"
         sent_message = await ctx.send(embed=embed_msg)
+        await asyncio.sleep(1)
         new_view = adventure.ManifestView(ctx, player_obj, embed_msg, e_tarot, num_hours, sent_message)
         await sent_message.edit(view=new_view)
 
@@ -647,6 +657,8 @@ def run_discord_bot():
         player_obj = await sm.check_registration(ctx)
         if player_obj is None:
             return
+        if player_obj.player_quest == 11:
+            await quest.assign_unique_tokens(player_obj, "Town")
         num_visits = int(await player_obj.check_misc_data("thana_visits"))
         location_view = menus.CelestialView(player_obj, num_visits)
         title, description = "Celestial Realm", "Pandora's domain and home to her celestial forge."
@@ -662,6 +674,8 @@ def run_discord_bot():
         player_obj = await sm.check_registration(ctx)
         if player_obj is None:
             return
+        if player_obj.player_quest == 17:
+            await quest.assign_unique_tokens(player_obj, "Divine")
         location_view = menus.DivineView(player_obj)
         title, description = "Divine Plane", "You are permitted to visit the higher plane by the grace of the arbiters."
         embed_msg = discord.Embed(colour=discord.Colour.gold(), title=title, description="")
@@ -795,8 +809,6 @@ def run_discord_bot():
         player_obj = await sm.check_registration(ctx)
         if player_obj is None:
             return
-        if player_obj.player_quest == 17:
-            await quest.assign_unique_tokens(player_obj, "Arbiter")
         title = "Isolde, Soulweaver of the True Laws"
         if player_obj.player_quest < 20:
             description = "You can't yet handle my threads. This is no place for the weak."
@@ -1448,7 +1460,7 @@ def run_discord_bot():
         misc_list = "\n".join(f"**{name}** - {role}" for name, role in misc_data)
         # Unauthorized use of this bot, it's associated contents, code, and assets are strictly prohibited.
         copy_msg = f"© 2024 Kyle Mistysyn. All rights reserved."
-        embed_msg = discord.Embed(colour=discord.Colour.light_gray(), title=title, description="")
+        embed_msg = sm.easy_embed("Purple", title, "")
         embed_msg.add_field(name="__Artists__", value=artist_list.rstrip(), inline=False)
         embed_msg.add_field(name="__Programmers__", value=programmer_list.rstrip(), inline=False)
         embed_msg.add_field(name="__Testers__", value=tester_list.rstrip(), inline=False)
@@ -1456,6 +1468,16 @@ def run_discord_bot():
         embed_msg.set_footer(text=f"Copyright: {copy_msg}")
         embed_msg.set_thumbnail(url=gli.archdragon_logo)
         await ctx.send(file=discord.File(await sm.title_box("Pandora Bot Credits")))
+        await ctx.send(embed=embed_msg)
+
+    @set_command_category('info', 9)
+    @pandora_bot.hybrid_command(name='support', help="Display the ArchDragonStore info.")
+    @app_commands.guilds(discord.Object(id=guild_id))
+    async def credits_list(ctx):
+        await ctx.defer()
+        description = f"Check out our merch store and support us at {gli.store_link}."
+        embed_msg = sm.easy_embed("Purple", "", description)
+        await ctx.send(file=discord.File(await sm.title_box("Support Us")))
         await ctx.send(embed=embed_msg)
 
     def build_category_dict():

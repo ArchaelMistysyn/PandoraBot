@@ -33,7 +33,7 @@ boss_attack_dict = {
     "Astratha, The Dimensional":
         ["Rift Claws", "Quantum Wing Blast", "Amplified Dimension Breath", "**__Starlight Beam__**"],
     "Tyra, The Behemoth":
-        ["Power Slam", "Horn Thrust", "Tectonic Rumble", "**__Tyrant's Roar__**"],
+        ["Power Slam", "Horn Thrust", "Tectonic Rumble", "**__Tyrant's Thunderbolt__**"],
     "Diabla, The Primordial":
         ["Elemental Divergence", "Magma Blizzard", "Pyroclasmic Rain", "**__Glacial Meltdown__**"],
     "Aurora, The Fortress":

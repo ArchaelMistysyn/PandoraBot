@@ -18,7 +18,7 @@ import menus
 import itemrolls
 import loot
 
-item_type_lotus_dict = {"W": "Lotus9", "A": "Lotus5", "V": "Lotus2", "Y": "Lotus1", "G": "Lotus3", "C": "Lotus6"}
+item_type_lotus_dict = {"W": "Lotus1", "A": "Lotus6", "V": "Lotus3", "Y": "Lotus2", "G": "Lotus4", "C": "Lotus7"}
 itme_type_icon_dict = {"W": "<:Sword5:1246945708939022367>", "A": "<:Armour5:1246945463630823438>",
                        "V": "<:Greaves5:1246945410707095565>", "Y": "<:Amulet5:1246945347637346315>",
                        "G": "<:Wings5:1246945596821082197>", "C": "<:Crest5:1246945508048637972>"}
@@ -69,7 +69,7 @@ class SelectView(discord.ui.View):
         elif self.method == "purify":
             if self.selected_item.item_tier < 5:
                 msg = ("This item does not meet the qualifications for void purification. "
-                       "Soaking it in the true abyss would only erase it.")
+                       "Soaking it in the Deep Void would only erase it.")
                 embed_msg = discord.Embed(colour=discord.Colour.magenta(), title="Oblivia, The Void", description=msg)
                 new_view = None
             new_view = PurifyView(self.player_obj, self.selected_item)

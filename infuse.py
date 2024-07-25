@@ -25,7 +25,7 @@ recipe_dict = {
         "Radiant Heart": [("Stone5", 1), ("Fragment2", 1), 20, "Heart1"],
         "Chaos Heart": [("Stone5", 1), ("Fragment3", 1), 20, "Heart2"],
         "Abyss Flame": [("Crystal3", 1), ("Flame1", 10), 80, "Flame2"],
-        "Lotus of Serenity": [("Heart1", 99), ("Fragment2", 99), 99, "Lotus2"],
+        "Lotus of Serenity": [("Heart1", 99), ("Fragment2", 99), 99, "Lotus3"],
         "Twin Rings of Divergent Stars": [("DarkStar", 1), ("LightStar", 1), 100, "TwinRings"]},
     "Elemental Signet Infusion": {}, "Primordial Ring Infusion": {}, "Path Ring Infusion": {},
     "Legendary Ring Infusion": {
@@ -41,7 +41,7 @@ recipe_dict = {
         "Hadal's Raindrop": [("Shard", 25), ("Nadir", 1), ("EssenceXIV", 10), ("Gemstone10", 5), ("Crystal4", 1), 100,
                              "8"],
         "Twin Rings of Divergent Stars": [("TwinRings", 1), ("Gemstone10", 5), ("Crystal4", 1), 100, "8"],
-        "Crown of Skulls": [("Shard", 50), ("Skull4", 1), ("Lotus1", 1), ("Gemstone10", 5), ("Crystal4", 1), 100, "8"]},
+        "Crown of Skulls": [("Shard", 50), ("Skull4", 1), ("Lotus2", 1), ("Gemstone10", 5), ("Crystal4", 1), 100, "8"]},
     "Sovereign Weapon Infusion": {
         "Pandora's Universe Hammer": [("Shard", 50), ("Lotus10", 1), ("Crystal4", 1), 100, "KEY"],
         "Fallen Lotus of Nephilim": [("Shard", 50), ("Nephilim", 1), ("Lotus10", 1), ("Crystal4", 1), 100, "KEY"],
