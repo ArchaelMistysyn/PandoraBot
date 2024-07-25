@@ -383,10 +383,19 @@ class PlayerProfile:
     async def get_player_multipliers(self):
         base_critical_chance, base_attack_speed, base_mitigation = 10.0, 1.0, 0.0
         base_player_hp = 1000 + 50 * self.player_level
-        # Class Multipliers
+        # Class Bonuses
         class_bonus = {"Ranger": ["Critical", 1], "Weaver": ["Elemental", 2], "Assassin": ["Bleed", 1],
                        "Mage": ["Mana", 1], "Summoner": ["Combo", 1], "Knight": ["Ultimate", 1], "Rider": ["Life", 1]}
         self.appli[class_bonus[self.player_class][0]] += class_bonus[self.player_class][1]
+        # Oath Bonuses
+        oath_bonus = {0: ["Critical", "Ultimate"], 1: ["Immortal", "Life", "Mana"], 2: ["Elemental", "Elemental"]}
+        oath_data = await quest.get_oath_data(self)
+        if 3 in oath_data:
+            for bonus in oath_bonus[oath_data.index(3)]:
+                if bonus == "Immortal":
+                    self.immortal = True
+                else:
+                    self.appli[bonus] += 1
         # Item Multipliers
         e_item = []
         for idx, x in enumerate(self.player_equipped):

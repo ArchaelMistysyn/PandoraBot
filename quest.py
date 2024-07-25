@@ -41,7 +41,7 @@ class Quest:
             return embed_msg, is_completed
         # Handle incomplete quest hand-in.
         embed_msg = discord.Embed(colour=self.colour, title=self.quest_title, description=self.story_message)
-        quest_message = self.quest_message.replace('[USER]', player_obj.player_objname)
+        quest_message = self.quest_message.replace('[USER]', player_obj.player_username)
         progress_msg = f"{quest_message}: {progress_count} / {self.cost}"
         embed_msg.add_field(name="Quest Incomplete", value=progress_msg, inline=False)
         return embed_msg, is_completed
@@ -112,7 +112,7 @@ class Quest:
     async def get_quest_embed(self, player_obj, choice_message=None):
         is_completed, progress_count = await self.calculate_progress(player_obj)
         quest_message = self.quest_message if choice_message is None else choice_message
-        quest_message = quest_message.replace('[USER]', player_obj.player_objname)
+        quest_message = quest_message.replace('[USER]', player_obj.player_username)
         oath_char = ""
         if '[OATH]' in self.quest_giver:
             data_list = await get_oath_data(player_obj)
@@ -156,20 +156,21 @@ def initialize_quest_list():
         quest_obj_list.append(current_quest)
     return quest_obj_list
 
+
 async def get_oath_data(player_obj):
     oath_data = await player_obj.check_misc_data("oath_data")
     return list(map(int, oath_data.split(';')))
 
 
 class ChoiceView(discord.ui.View):
-    def __init__(self, ctx_object, player_obj, quest_obj, oath_data, choices):
+    def __init__(self, ctx_object, player_obj, quest_obj, oath_data, choices, e_ring):
         super().__init__(timeout=None)
         self.ctx_object, self.player_obj, self.quest_obj = ctx_object, player_obj, quest_obj
         self.choices = choices
         for idx, button in enumerate(self.children):
             if idx <= len(choices):
                 button.label = choices[idx][0]
-                if quest_obj.quest_num == 54 and oath_data[idx] != 2:
+                if quest_obj.quest_num == 54 and oath_data[idx] != 2 and e_ring != questdata.ring_required[idx]:
                     button.disabled = True
             else:
                 self.remove_item(button)
@@ -239,10 +240,7 @@ class RewardView(discord.ui.View):
     async def next_quest(self, interaction: discord.Interaction, button: discord.Button):
         if interaction.user.id != self.player_obj.discord_id:
             return
-        if self.player_obj.player_quest > 55:
-            embed_msg = discord.Embed(colour=discord.Colour.gold(), title="All Clear!", description="")
-            await interaction.response.edit_message(embed=embed_msg, view=None)
-            return
+        self.player_obj.reload_player()
         player_choice, reward, choice_message = None, None, None
         c_quest, quest_obj = self.player_obj.player_quest, quest_list[self.player_obj.player_quest]
         if c_quest in questdata.quest_options:
@@ -250,14 +248,16 @@ class RewardView(discord.ui.View):
             oath_data = await get_oath_data(self.player_obj)
             player_choice = await self.player_obj.check_misc_data("quest_choice")
             if player_choice == 0:
-                new_view = ChoiceView(self.ctx_object, self.player_obj, quest_obj, oath_data, choice_data)
+                ring_id = self.player_obj.player_equipped[4]
+                e_ring = None if c_quest != 54 else await inventory.read_custom_item(ring_id)
+                new_view = ChoiceView(self.ctx_object, self.player_obj, quest_obj, oath_data, choice_data, e_ring)
                 quest_message = await quest_obj.get_quest_embed(self.player_obj, choice_message)
                 # output
                 return
             else:
                 reward, choice_message = choice_data[1], choice_data[2]
         embed_msg = await quest_obj.get_quest_embed(self.player_obj)
-        new_view = QuestView(self.ctx_object, self.player_obj, quest_obj, player_choice, reward) if c_quest >= 55 else None
+        new_view = QuestView(self.ctx_object, self.player_obj, quest_obj, player_choice, reward) if c_quest < 55 else None
         await interaction.response.edit_message(embed=embed_msg, view=new_view)
 
 

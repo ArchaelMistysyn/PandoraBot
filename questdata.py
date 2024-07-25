@@ -398,7 +398,7 @@ quests_data = {
          "\nBut maybe... we can enjoy this moment a little longer."
          "\n**WARNING: IRREVERSIBLE DECISION**",
          1, None, 'Rings',
-         "Choose a special gift.",
+         "Choose a special gift",
          'Chest', 100, None],
     55: [1, "A New Life", "[OATH]",
          "In the times to come... for better and for worse."
@@ -456,3 +456,4 @@ quest_options = {
 # Quest Number, Oath Position, Choice Adjustment
 eligibility_dict = {45: [2, {0: 1, 1: 0}], 50: [1, {0: 0, 1: 0, 2: 1}]}
 oath_dict = ["Pandora, the Celestial", "Thana, the Death", "Eleuia, the Wish"]
+ring_required = ["Twin Rings of Divergent Stars", "Crown of Skulls", ""]

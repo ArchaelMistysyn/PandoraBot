@@ -355,14 +355,16 @@ def run_discord_bot():
             oath_data = await quest.get_oath_data(player_obj)
             player_choice = await player_obj.check_misc_data("quest_choice")
             if player_choice == 0:
-                quest_view = quest.ChoiceView(ctx, player_obj, quest_object, oath_data, choice_data)
+                ring_id = player_obj.player_equipped[4]
+                e_ring = None if c_quest != 54 else await inventory.read_custom_item(ring_id)
+                quest_view = quest.ChoiceView(ctx, player_obj, quest_object, oath_data, choice_data, e_ring)
                 quest_message = await quest_object.get_quest_embed(player_obj, choice_message)
                 await ctx.send(embed=quest_message, view=quest_view)
                 return
             else:
                 reward, choice_message = choice_data[1], choice_data[2]
         quest_message = await quest_object.get_quest_embed(player_obj)
-        quest_view = quest.QuestView(ctx, player_obj, quest_object, player_choice, reward) if c_quest >= 55 else None
+        quest_view = quest.QuestView(ctx, player_obj, quest_object, player_choice, reward) if c_quest < 55 else None
         await ctx.send(embed=quest_message, view=quest_view)
 
     @set_command_category('game', 2)
