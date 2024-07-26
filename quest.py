@@ -20,7 +20,7 @@ import tarot
 class Quest:
     def __init__(self, quest_num, quest_type, quest_title, quest_giver, story_message,
                  cost, token_num, item_handin, quest_message,
-                 award_item, award_qty, award_role):
+                 award_items, award_role):
         self.quest_num, self.quest_type = quest_num, quest_type
         self.colour = gli.tier_colors[(min(8, quest_num // 5))]
         self.quest_giver, self.story_message = quest_giver, story_message
@@ -28,7 +28,7 @@ class Quest:
         self.quest_message = quest_message
         quest_section = (self.quest_num // 5) + 1
         self.award_exp, self.award_coins = quest_section * 1000, quest_section * 5000
-        self.award_item, self.award_qty, self.award_role = award_item, award_qty, award_role
+        self.award_items, self.award_role = award_items, award_role
         self.quest_title = f"#{self.quest_num}: {quest_title}"
 
     async def hand_in(self, ctx_object, player_obj, choice_num, choice_reward):
@@ -61,6 +61,11 @@ class Quest:
         elif player_obj.player_quest == 51:
             collection_count = await tarot.collection_check(player_obj)
             return (True, collection_count) if collection_count == 31 else (False, collection_count)
+        elif player_obj.player_quest == 54:
+            ring_check = await inventory.scan_specific_item(player_obj, questdata.ring_check)
+            return True, int(any(ring_check))
+        elif player_obj.player_quest == 55:
+            return False, 0
 
         # Token, Feature Token, or Boss Token Quests.
         if self.quest_type == 0 or self.quest_type == 3:
@@ -86,12 +91,15 @@ class Quest:
         if lvl_change != 0:
             await sm.send_notification(ctx_object, player_obj, "Level", lvl_change)
         # Handle Item/Role Awards.
-        reward_id = self.award_item if choice_reward is None else choice_reward
-        await inventory.update_stock(player_obj, reward_item, self.award_qty)
-        item_obj = inventory.BasicItem(reward_id)
-        rewards += f"{item_obj.item_emoji} {self.award_qty}x {item_obj.item_name}\n"
-        if sm.check_rare_item(item_obj.item_id):
-            await sm.send_notification(ctx_object, player_obj, "Item", item_obj.item_id)
+        reward_list = self.award_items if choice_reward is None else self.award_items + choice_reward
+        description_list = []
+        for (reward_id, item_qty) in reward_list:
+            reward_object = inventory.BasicItem(reward_id)
+            rewards += f"{reward_object.item_emoji} {item_qty}x {reward_object.item_name}\n"
+            if sm.check_rare_item(reward_object.item_id):
+                await sm.send_notification(ctx_object, player_obj, "Item", reward_object.item_id)
+        batch_df = sm.list_to_batch(player_obj, reward_list)
+        await inventory.update_stock(None, None, None, batch=batch_df)
         if self.award_role:
             rewards += f"New Role Achieved: {self.award_role}!"
             player_obj.player_echelon += 1
@@ -100,28 +108,29 @@ class Quest:
         # Update oath data.
         await player_obj.update_misc_data("quest_choice", 0, overwrite_value=True)
         if self.quest_num in questdata.eligibility_dict or self.quest_num == 54:
-            oath_char, update_points = choice_num, 1
+            oath_char, update_points = choice_num - 1, 1
             if self.quest_num != 54:
                 oath_char = questdata.eligibility_dict[self.quest_num][0]
-                update_points = questdata.eligibility_dict[self.quest_num][1][choice_num]
+                update_points = questdata.eligibility_dict[self.quest_num][1][choice_num - 1]
             data_list = await get_oath_data(player_obj)
             data_list[oath_char] += update_points
             await player_obj.update_misc_data("oath_data", ';'.join(map(str, data_list)), overwrite_value=True)
         return discord.Embed(colour=self.colour, title="QUEST COMPLETED!", description=rewards)
 
     async def get_quest_embed(self, player_obj, choice_message=None):
-        is_completed, progress_count = await self.calculate_progress(player_obj)
-        quest_message = self.quest_message if choice_message is None else choice_message
-        quest_message = quest_message.replace('[USER]', player_obj.player_username)
+        _, progress_count = await self.calculate_progress(player_obj)
+        story_message = self.story_message if choice_message is None else choice_message
+        story_message = story_message.replace('[USER]', player_obj.player_username)
         oath_char = ""
         if '[OATH]' in self.quest_giver:
             data_list = await get_oath_data(player_obj)
-            if 2 in data_list:
-                oath_char = questdata.oath_dict[data_list.index(2)]
+            if 3 in data_list:
+                oath_char = questdata.oath_dict[data_list.index(3)]
         quest_giver = self.quest_giver.replace('[OATH]', oath_char)
-        quest_details = f"{quest_message}: {progress_count} / {self.cost}"
+        extension = f": {progress_count} / {self.cost}" if self.quest_num != 55 else ""
+        quest_details = f"{self.quest_message}{extension}"
         quest_embed = discord.Embed(colour=self.colour, title=self.quest_title, description="")
-        quest_embed.add_field(name=quest_giver, value=self.story_message, inline=False)
+        quest_embed.add_field(name=quest_giver, value=story_message, inline=False)
         quest_embed.add_field(name=f"Quest Details", value=quest_details, inline=False)
         return quest_embed
 
@@ -163,36 +172,36 @@ async def get_oath_data(player_obj):
 
 
 class ChoiceView(discord.ui.View):
-    def __init__(self, ctx_object, player_obj, quest_obj, oath_data, choices, e_ring):
+    def __init__(self, ctx_object, player_obj, quest_obj, oath_data, choices, ring_check):
         super().__init__(timeout=None)
         self.ctx_object, self.player_obj, self.quest_obj = ctx_object, player_obj, quest_obj
         self.choices = choices
         for idx, button in enumerate(self.children):
             if idx <= len(choices):
                 button.label = choices[idx][0]
-                if quest_obj.quest_num == 54 and oath_data[idx] != 2 and e_ring != questdata.ring_required[idx]:
+                if quest_obj.quest_num == 54 and (oath_data[idx] != 2 or ring_check[idx]):
                     button.disabled = True
             else:
                 self.remove_item(button)
 
     @discord.ui.button(label="Choice1", style=discord.ButtonStyle.success)
     async def choice1_callback(self, interaction: discord.Interaction, button: discord.Button):
-        await self.handle_choice(interaction, choice=0)
+        await self.handle_choice(interaction, choice=1)
 
     @discord.ui.button(label="Choice2", style=discord.ButtonStyle.red)
     async def choice2_callback(self, interaction: discord.Interaction, button: discord.Button):
-        await self.handle_choice(interaction, choice=1)
+        await self.handle_choice(interaction, choice=2)
 
     @discord.ui.button(label="Choice3", style=discord.ButtonStyle.blurple)
     async def choice3_callback(self, interaction: discord.Interaction, button: discord.Button):
-        await self.handle_choice(interaction, 2)
+        await self.handle_choice(interaction, 3)
 
     async def handle_choice(self, interaction, choice):
         if interaction.user.id != self.player_obj.discord_id:
             return
         await self.player_obj.update_misc_data("quest_choice", choice, overwrite_value=True)
-        quest_view = QuestView(self.ctx_object, self.player_obj, self.quest_obj, choice, self.choices[choice][1])
-        embed = await self.quest_obj.get_quest_embed(player_obj, self.choices[choice][2])
+        quest_view = QuestView(self.ctx_object, self.player_obj, self.quest_obj, choice, self.choices[choice - 1][1])
+        embed = await self.quest_obj.get_quest_embed(self.player_obj, self.choices[choice - 1][2])
         await interaction.response.edit_message(embed=embed, view=quest_view)
 
 
@@ -240,7 +249,7 @@ class RewardView(discord.ui.View):
     async def next_quest(self, interaction: discord.Interaction, button: discord.Button):
         if interaction.user.id != self.player_obj.discord_id:
             return
-        self.player_obj.reload_player()
+        await self.player_obj.reload_player()
         player_choice, reward, choice_message = None, None, None
         c_quest, quest_obj = self.player_obj.player_quest, quest_list[self.player_obj.player_quest]
         if c_quest in questdata.quest_options:
@@ -248,14 +257,13 @@ class RewardView(discord.ui.View):
             oath_data = await get_oath_data(self.player_obj)
             player_choice = await self.player_obj.check_misc_data("quest_choice")
             if player_choice == 0:
-                ring_id = self.player_obj.player_equipped[4]
-                e_ring = None if c_quest != 54 else await inventory.read_custom_item(ring_id)
-                new_view = ChoiceView(self.ctx_object, self.player_obj, quest_obj, oath_data, choice_data, e_ring)
+                ring_check = await inventory.scan_specific_item(self.player_obj, questdata.ring_check)
+                new_view = ChoiceView(self.ctx_object, self.player_obj, quest_obj, oath_data, choice_data, ring_check)
                 quest_message = await quest_obj.get_quest_embed(self.player_obj, choice_message)
                 # output
                 return
             else:
-                reward, choice_message = choice_data[1], choice_data[2]
+                reward, choice_message = choice_data[player_choice - 1][1], choice_data[player_choice - 1][2]
         embed_msg = await quest_obj.get_quest_embed(self.player_obj)
         new_view = QuestView(self.ctx_object, self.player_obj, quest_obj, player_choice, reward) if c_quest < 55 else None
         await interaction.response.edit_message(embed=embed_msg, view=new_view)

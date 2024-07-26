@@ -317,9 +317,6 @@ uncategorized_data = [
     ['LightStar', 'Glittering Star of Fractured Hearts', 100, 8, '<a:elootitem:1144477550379274322>',
      "Legend tells of a star often spotted by lovers as it dazzles and sparkles amidst the black night. "
      "The old records indicate that the star was so beautiful it would steal the hearts of those who saw it.", 0],
-    ['TwinRings', 'Twin Rings of Divergent Stars', 100, 8, '<a:elootitem:1144477550379274322>',
-     "A pair of rings with unique gemstones that twinkle like stars in the night sky and "
-     "shine brightly like the brilliant sun.", 0],
     ['Nadir', 'Phantasm of Nadir', 100, 8, '<a:elootitem:1144477550379274322>',
      "Amidst the vastest oceans, this tiny fish is exceedingly elusive. They dwell in the deepest trenches. "
      "Their pitch-black scales conceal precious and unique gems that grow inside their small bodies. ", 0],

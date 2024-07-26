@@ -40,14 +40,21 @@ class Database:
 
     async def run_session_query(self, raw_query, return_value=False, batch=False, params=None):
         retries, max_retries, backoff_factor = 0, 3, 0.5
-
+        results = []
         while retries < max_retries:
             try:
                 query = text(raw_query)
-                # Handle query with a return value
+                # Handle query or batch with a return value
                 if return_value:
-                    result = self.session.execute(query, params)
-                    return pd.DataFrame(result.fetchall(), columns=result.keys())
+                    if batch and params is not None:
+                        for param_set in params:
+                            result = self.session.execute(query, param_set)
+                            df = pd.DataFrame(result.fetchall(), columns=result.keys())
+                            results.append(df)
+                        return results
+                    else:
+                        result = self.session.execute(query, params)
+                        return pd.DataFrame(result.fetchall(), columns=result.keys())
                 # Handle query with no return value
                 if batch and params is not None:
                     with self.session.begin_nested():

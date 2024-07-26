@@ -355,14 +355,13 @@ def run_discord_bot():
             oath_data = await quest.get_oath_data(player_obj)
             player_choice = await player_obj.check_misc_data("quest_choice")
             if player_choice == 0:
-                ring_id = player_obj.player_equipped[4]
-                e_ring = None if c_quest != 54 else await inventory.read_custom_item(ring_id)
-                quest_view = quest.ChoiceView(ctx, player_obj, quest_object, oath_data, choice_data, e_ring)
+                ring_check = await inventory.scan_specific_item(player_obj, questdata.ring_check)
+                quest_view = quest.ChoiceView(ctx, player_obj, quest_object, oath_data, choice_data, ring_check)
                 quest_message = await quest_object.get_quest_embed(player_obj, choice_message)
                 await ctx.send(embed=quest_message, view=quest_view)
                 return
             else:
-                reward, choice_message = choice_data[1], choice_data[2]
+                reward, choice_message = choice_data[player_choice - 1][1], choice_data[player_choice - 1][2]
         quest_message = await quest_object.get_quest_embed(player_obj)
         quest_view = quest.QuestView(ctx, player_obj, quest_object, player_choice, reward) if c_quest < 55 else None
         await ctx.send(embed=quest_message, view=quest_view)
@@ -480,7 +479,7 @@ def run_discord_bot():
             highest_tier = max(highest_tier, reward_object.item_tier)
             description_list.append(f"{reward_object.item_emoji} {item_qty}x {reward_object.item_name}\n")
             if sm.check_rare_item(reward_object.item_id):
-                notifications.append((reward_object.item_id, player_obj))
+                notifications.append((reward_object.item_id, "Item", player_obj))
         # Update the data and messages.
         batch_df = sm.list_to_batch(player_obj, reward_list)
         await inventory.update_stock(None, None, None, batch=batch_df)

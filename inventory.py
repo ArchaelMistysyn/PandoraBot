@@ -553,6 +553,18 @@ async def read_custom_item(item_id=None, reloading=None, fetch_equipped=None):
     return item_list
 
 
+async def scan_specific_item(player_obj, base_types):
+    raw_query = (f"SELECT * FROM CustomInventory "
+                 f"WHERE player_id = :player_check AND item_base_type LIKE :base_type")
+    batch_params = [{"player_check": player_obj.player_id, "base_type": base_type} for base_type in base_types]
+    df_list = await rqy(raw_query, params=batch_params, batch=True, return_value=True)
+    results = [False] * len(base_types)
+    for idx, df in enumerate(df_list):
+        if df is None or len(df.index) == 0:
+            results[idx] = True
+    return results
+
+
 async def assign_item_values(row):
     base_type, item_tier = str(row['item_base_type']), int(row['item_tier'])
     item = CustomItem(int(row['player_id']), str(row['item_type']), item_tier, base_type=base_type)

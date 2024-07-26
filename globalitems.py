@@ -19,6 +19,7 @@ servers = {1011375205999968427: ([1157937444931514408],
                                  1252681803916116211, 1157937444931514408, 1157937444931514408)}
 GM_id_dict = {185530717638230016: "Archael", 141837266866667520: "Zweii", 353090154044325906: "Viper",
               1177738094666059877: "Eleuia"}
+bot_logging_channel = 1266478401846247454
 reverse_GM_id_dict = {value: key for key, value in GM_id_dict.items()}
 web_url = "https://kyleportfolio.ca/botimages/"
 store_link = "https://ArchDragonStore.ca"

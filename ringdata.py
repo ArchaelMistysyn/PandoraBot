@@ -12,7 +12,9 @@ ring_icons = {0: None, 1: None, 2: None, 3: None,
               6: [],
               7: [],
               8: [],
-              9: []}
+              "Sovereign Ring Infusion": ["<:sc_ring:1266169348465365072>", "<:hc_ring:1266169384024670381>",
+                                          "<:hadal_ring:1266169382971641867>", "<:twin_rings:1266169349366874204>",
+                                          "<:skull_ring:1266169381663015146>"]}
 
 ring_values_dict = {
     # Legendary Rings
