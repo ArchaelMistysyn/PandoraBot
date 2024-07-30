@@ -275,7 +275,7 @@ class DivineView(discord.ui.View):
     async def changeling_callback(self, interaction: discord.Interaction, button: discord.Button):
         if interaction.user.id != self.player_obj.discord_id:
             return
-        title = "Mysmir, Changeling of the True Laws"
+        title = "Mysmir, The Changeling"
         token_obj, ore_obj = inventory.BasicItem("Token1"), inventory.BasicItem("Metamorphite")
         token_stock = await inventory.check_stock(self.player_obj, token_obj.item_id)
         embed_msg = await market.changeling_cost_msg(token_obj, token_stock, ore_obj)
@@ -294,7 +294,7 @@ class DivineView(discord.ui.View):
     async def engrave_callback(self, interaction: discord.Interaction, button: discord.Button):
         if interaction.user.id != self.player_obj.discord_id:
             return
-        title = "Isolde, Soulweaver of the True Laws"
+        title = "Isolde, The Soulweaver"
         description = "You've come a long way from home child. Tell me, what kind of power do you seek?"
         embed_msg = discord.Embed(colour=discord.Colour.dark_orange(), title=title, description=description)
         await interaction.response.edit_message(embed=embed_msg, view=insignia.InsigniaView(self.player_obj))
@@ -304,7 +304,7 @@ class DivineView(discord.ui.View):
         if interaction.user.id != self.player_obj.discord_id:
             return
         e_weapon = await inventory.read_custom_item(self.player_obj.player_equipped[0])
-        title = "Vexia, Scribe of the True Laws"
+        title = "Vexia, The Scribe"
         entry_msg = ("You are the only recorded mortal to have entered the divine plane. "
                      "We are not your allies, but we will not treat you unfairly."
                      "\nThe oracle has already foretold your failure. Now it need only be written into truth.")
@@ -316,7 +316,7 @@ class DivineView(discord.ui.View):
     async def sanctuary_callback(self, interaction: discord.Interaction, button: discord.Button):
         if interaction.user.id != self.player_obj.discord_id:
             return
-        title = "Fleur, Oracle of the True Laws"
+        title = "Fleur, The Oracle"
         entry_msg = ("Have you come to desecrate my holy gardens once more? Well, I suppose it no longer matters, "
                      "I know you will inevitably find what you desire even without my guidance. "
                      "If you intend to sever the divine lotus, then I suppose the rest are nothing but pretty flowers.")
@@ -328,7 +328,7 @@ class DivineView(discord.ui.View):
     async def cathedral_callback(self, interaction: discord.Interaction, button: discord.Button):
         if interaction.user.id != self.player_obj.discord_id:
             return
-        title = "Yubelle, Adjudicator the True Laws"
+        title = "Yubelle, The Adjudicator"
         entry_msg = ("You would still follow Pandora's path in her place? Very well, I am no longer in a position "
                      "to object. I suppose such things do indeed fall within my purview.")
         embed_msg = discord.Embed(colour=discord.Colour.blurple(), title=title, description=entry_msg)
@@ -974,7 +974,7 @@ class PointsView(discord.ui.View):
                 response = (f"The farther you are, the harder it is to go back to the start.\nReset Cost:\n "
                             f"{token_obj.item_emoji} {token_obj.item_name}: {token_stock} / {token_cost}")
                 embed_msg = discord.Embed(colour=discord.Colour.dark_orange(),
-                                          title="Avalon, Pathwalker of the True Laws",
+                                          title="Avalon, The Pathwalker",
                                           description=response)
                 new_view = ResetView(self.player_obj)
             else:

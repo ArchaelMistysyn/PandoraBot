@@ -4,29 +4,37 @@ ring_icons = {0: None, 1: None, 2: None, 3: None,
               "Elemental Signet Infusion":
                   ["<:Signet0:1253839691736678440>", "<:Signet1:1253839692865077319>", "<:Signet2:1253839693477318718>",
                    "<:Signet3:1253839694488408144>", "<:Signet4:1253839730177736736>", "<:Signet5:1253839731133911118>",
-                   "<:Signet6:1253839732434141275>", "<:Signet7:1253839733210218527>", "<:Signet8:1253839734073987072>"],
+                   "<:Signet6:1253839732434141275>", "<:Signet7:1253839733210218527>",
+                   "<:Signet8:1253839734073987072>"],
               "Primordial Ring Infusion":
                   ["<:E_Ring0:1253839617799487568>", "<:E_Ring1:1253839618315522119>", "<:E_Ring2:1253839619804369028>",
                    "<:E_Ring3:1253839620710596669>", "<:E_Ring4:1253839646098587690>", "<:E_Ring5:1253839646824333364>",
-                   "<:E_Ring6:1253839647637770332>", "<:E_Ring7:1253839648535347230>", "<:E_Ring8:1253839649835716680>"],
+                   "<:E_Ring6:1253839647637770332>", "<:E_Ring7:1253839648535347230>",
+                   "<:E_Ring8:1253839649835716680>"],
               6: [],
               7: [],
               8: [],
               "Sovereign Ring Infusion": ["<:sc_ring:1266169348465365072>", "<:hc_ring:1266169384024670381>",
                                           "<:hadal_ring:1266169382971641867>", "<:twin_rings:1266169349366874204>",
-                                          "<:skull_ring:1266169381663015146>"]}
+                                          "<:skull_ring:1266169381663015146>", "<:skull_ring:1266169381663015146>"]}
 
 ring_values_dict = {
     # Legendary Rings
     "Dragon's Eye Diamond": [[("Critical Rate Becomes X%", "perfect_rate", 100, ["Critical"]),
                               ("Critical Damage X%", "critical_mult", 500, None),
                               ("[RESONANCE]", "resonance", 100, 4)], (0, None), [0]],
-    "Chromatic Tears": [[("Omni Curse X%", "all_elemental_curse", 500, None),
-                         ("[RESONANCE]", "resonance", 100, 25)], (0, None), ["all"]],
     "Bleeding Hearts": [[("Bleed Application +X", "appli", 5, None),
                          ("[RESONANCE]", "resonance", 100, 5)], (0, None), [3, 4]],
     "Gambler's Masterpiece": [[("All-In!", "rng_bonus", 777, None),
                                ("[RESONANCE]", "resonance", 100, 0)], (0, None), ["all"]],
+    "Lonely Ring of the Dark Star": [[
+        ("Dark Dream", "spec_conv", 300, "DarkDream"),
+        ("X% chance Non-Bloom hits trigger Stygian Bloom", "spec_conv", 25, "Stygian"),
+        ("[RESONANCE]", "resonance", 100, 2)], (0, None), ["all"]],
+    "Lonely Ring of the Light Star": [[
+        ("Light Dream", "spec_conv", 300, "LightDream"),
+        ("X% chance Bloom hits trigger Heavenly Bloom", "spec_conv", 25, "Heavenly"),
+        ("[RESONANCE]", "resonance", 100, 2)], (0, None), ["all"]],
     # Sovereign Rings
     "Stygian Calamity": [[("X% chance for Non-Bloom hits to trigger Calamity", "spec_conv", 99, "Calamity"),
                           ("X% Hybrid Curse (Chaos)", "elemental_curse", 999, (0, 2, 3, 6))], (0, None), [0, 2, 3, 6]],
@@ -38,7 +46,8 @@ ring_values_dict = {
         [[("X% chance for Bloom hits to trigger Heavenly Bloom", "spec_conv", 50, "Heavenly"),
           ("X% chance for Non-Bloom hits to trigger Stygian Bloom", "spec_conv", 50, "Stygian"),
           ("Omni Curse X%", "all_elemental_curse", 300, None)], (0, None), [6, 7, 8]],
-    "Crown of Skulls": [["Avaricious Ruin", "Banquet of Bones"], (0, None), [5]]}
+    "Crown of Skulls": [["Avaricious Ruin", "Banquet of Bones"], (0, None), [5]],
+    "Chromatic Tears": [["Rainbow's End", "Cursed Wish", "Resonance [The Wish]"], (0, None), ["all"]]}
 
 # Elemental Signets
 for i, element in enumerate(gli.element_names):

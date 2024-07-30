@@ -41,14 +41,14 @@ boss_attack_dict = {
     "Eleuia, The Wish":
         ["Twisted Dream", "Desire's Echo", "Fervent Wish",
          "**Heartfelt Tears**", "**Shape Miracle**", "**__Shatter All Hope__**"],
-    "Kazyth, Lifeblood of the True Laws":
+    "Kazyth, The Lifeblood":
         ["Natural Order", "Life Absorption", "Spirit Reclamation", "**__Form Distortion__**"],
-    "Vexia, Scribe of the True Laws":
+    "Vexia, The Scribe":
         ["Vengeful Inscription", "Create Rule", "Words To Life", "**Alter Chronicle**", "**__Record Erasure__**"],
-    "Fleur, Oracle of the True Laws":
+    "Fleur, The Oracle":
         ["Vine Lash", "Falling Petals", "Thorn's Embrace",
          "**Severed Fate**", "**Withering Future**", "**__Blossoming Death__**"],
-    "Yubelle, Adjudicator of the True Laws":
+    "Yubelle, The Adjudicator":
         ["Tainted Smite", "Distorted Gavel", "Alter Verdict", "Counterfeit Retribution",
          "**Weight Of Sin**", "**Scales Of Judgement**", "**__White Abyss__**"],
     "Nephilim, Incarnate of the Divine Lotus":

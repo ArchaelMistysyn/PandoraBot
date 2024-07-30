@@ -119,13 +119,13 @@ skill_names_dict = {
 # ITEM LISTS
 crafting_gem = ["Blazing Ruby", "Drowned Sapphire", "Silent Topaz", "Ancient Agate", "Whispering Emerald",
                 "Arctic Zircon", "Haunted Obsidian", "Prismatic Opal", "Spatial Lapis", "Soul Diamond"]
-availability_list_nongear = ["Misc"]
+availability_list_nongear = ["Lotus"]
 availability_list = ["Sword", "Saber", "Bow", "Threads", "Armour", "Wings", "Amulet", "Crest", "Greaves",
                      "Ring", "Gem", "Pact"]
 
 sovereign_item_list = ["Crown of Skulls", "Twin Rings of Divergent Stars", "Hadal's Raindrop", "Heavenly Calamity",
                        "Stygian Calamity", "Pandora's Universe Hammer", "Solar Flare Blaster", "Ruler's Crest",
-                       "Bathyal, Enigmatic Chasm Bauble", "Fallen Lotus of Nephilim"]
+                       "Bathyal, Enigmatic Chasm Bauble", "Fallen Lotus of Nephilim", "Chromatic Tears"]
 available_sovereign = ["Crown of Skulls", "Twin Rings of Divergent Stars", "Hadal's Raindrop", "Heavenly Calamity",
                        "Stygian Calamity", "Pandora's Universe Hammer", "Ruler's Crest", "Fallen Lotus of Nephilim"]
 ring_item_type = [None, None, None, "Signet", "Element_Ring", "Path_Ring", "Fabled_Ring", "Sovereign_Ring", "Sacred_Ring"]
@@ -136,7 +136,7 @@ sovereign_batch_data = ', '.join([str(base_type) for base_type in sovereign_item
 weapon_type_dict = {"Knight": [["Sword"], [], ["Saber", "Scythe"]],
                     "Ranger": [[], ["Bow"], ["Blaster"]],
                     "Assassin": [[], ["Dagger"], ["Claws"]],
-                    "Mage": [[], ["Rod"], ["Codex"]],
+                    "Mage": [["Rod"], [], ["Codex", "Caduceus Rod"]],
                     "Weaver": [[], ["Threads"], []],
                     "Rider": [["Hatchling", "Mare"], [], ["Dragon", "Pegasus"]],
                     "Summoner": [["Serpent"], [], ["Basilisk", "Cerberus"]]}

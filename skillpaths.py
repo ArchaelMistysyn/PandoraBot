@@ -110,7 +110,7 @@ async def allocate_points(player_obj, selected_path, num_change):
 async def create_path_embed(player_obj):
     colour, _ = sm.get_gear_tier_colours((player_obj.player_echelon + 1) // 2)
     points_msg = "Your shiny toys are useless if you don't know how to use them."
-    embed = discord.Embed(color=colour, title="Avalon, Pathwalker of the True Laws", description=points_msg)
+    embed = discord.Embed(color=colour, title="Avalon, The Pathwalker", description=points_msg)
     embed.add_field(name=f"{player_obj.player_username}'s Skill Points", value="", inline=False)
     for path_label, points, gear_points in zip(gli.path_names, player_obj.player_stats, player_obj.gear_points):
         value_msg = f"Points: {points}"

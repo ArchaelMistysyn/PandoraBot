@@ -3,8 +3,10 @@ import discord
 from discord.ext.commands import Bot
 from discord.ext import commands, tasks
 import asyncio
+import traceback
 
 # Core imports
+import globalitems as gli
 from pandoradb import run_query as rqy
 import player
 
@@ -35,3 +37,9 @@ class StaminaCog(commands.Cog):
                 if update_params:
                     raw_query = "UPDATE PlayerList SET player_stamina = :input_1 WHERE player_id = :player_check"
                     await rqy(raw_query, batch=True, params=update_params)
+
+    @stamina_manager.error
+    async def stamina_manager_error(self, e):
+        error_channel = self.bot.get_channel(gli.bot_logging_channel)
+        tb_str = ''.join(traceback.format_exception(type(e), e, e.__traceback__))
+        await error_channel.send(f'An error occurred:\n{e}\n```{tb_str}```')

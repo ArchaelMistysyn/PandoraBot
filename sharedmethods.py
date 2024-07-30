@@ -17,7 +17,7 @@ import pilengine
 ultra_id_list = ["Skull3", "EssenceXXX"]
 ultra_id_list += [f"Lotus{x}" for x in range(1, 10)]
 uber_id_list = ["Gemstone11", "DarkStar", "LightStar", "Gemstone11", "Nadir", "Lotus10"]
-ultimate_id_list = ["Skull4", "Nephilim", "Sacred", "Ruler", "Pandora"]
+ultimate_id_list = ["Skull4", "Nephilim", "Sacred", "Ruler", "Pandora", "Lotus11"]
 u_rarity_id_list = ultra_id_list + uber_id_list + ultimate_id_list
 embed_colour_dict = {
     "red": discord.Colour(0xFF0000), "blue": discord.Colour(0x0000FF), "green": discord.Colour(0x00FF00),
@@ -91,7 +91,7 @@ def get_gear_thumbnail(item):
     tag_dict = {"A": "Armour", "V": "Greaves", "Y": "Amulet", "R": "Ring", "G": "Wings", "C": "Crest"}
     folder = item_tag = item.item_base_type
     sub_folder, element = "", ""
-    if item.item_type in ["W", "R"] and item.item_base_type in gli.sovereign_item_list:
+    if item.item_base_type in gli.sovereign_item_list:
         folder = "Sovereign"
     elif item.item_type not in ["W", "R"]:
         item_tag = "Gem" if "D" in item.item_type else tag_dict[item.item_type]

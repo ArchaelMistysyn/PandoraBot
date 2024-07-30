@@ -141,7 +141,7 @@ async def assign_unique_tokens(player_obj, token_string, mode=0):
         "XVI - Aurora, The Fortress": 4, "VII - Astratha, The Dimensional": 6, "VIII - Tyra, The Behemoth": 11,
         "II - Pandora, The Celestial": 14, "III - Oblivia, The Void": 16, "IV - Akasha, The Infinite": 17,
         "XXV - Eleuia, The Wish": 19,
-        "XXVIII - Fleur, Oracle of the True Laws": 21, "XXIX - Yubelle, Adjudicator of the True Laws": 22,
+        "XXVIII - Fleur, The Oracle": 21, "XXIX - Yubelle, The Adjudicator": 22,
         1: 23, 2: 25, 3: 26,
         # Feature Tokens
         "Register": 1, "Map": 2, "Town": 5, "Divine": 7, "Insignia": 8, "Contract": 9, "Greaves": 10,

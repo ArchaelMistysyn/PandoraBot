@@ -8,19 +8,25 @@ import player
 import inventory
 import tarot
 
+scaling_rings = ["Crown of Skulls", "Chromatic Tears"]
 
-async def assign_ring_values(player_obj, ring_equipment):
+
+async def assign_ring_values(player_obj, e_ring):
     # Sacred Core
-    if ring_equipment.is_sacred:
+    if e_ring.is_sacred:
         player_obj.defence_pen += 0.5
-    bonuses, (points, path_index), _ = rvd[ring_equipment.item_base_type]
+    bonuses, (points, path_index), _ = rvd[e_ring.item_base_type]
     if points > 0:
         player_obj.gear_points[path_index] += points
-    player_obj.final_damage += ring_equipment.item_tier * 0.1
-    player_obj.hp_bonus += ring_equipment.item_tier * 500
-    player_obj.attack_speed += ring_equipment.item_tier * 0.05
+    player_obj.final_damage += e_ring.item_tier * 0.1
+    player_obj.hp_bonus += e_ring.item_tier * 500
+    player_obj.attack_speed += e_ring.item_tier * 0.05
     # Exit on ring exceptions.
-    if ring_equipment.item_base_type == "Crown of Skulls":
+    if e_ring.item_base_type in scaling_rings:
+        if e_ring.item_base_type == "Chromatic Tears":
+            player_obj.all_elemental_mult += e_ring.roll_values[1] // 100
+            player_obj.all_elemental_pen += e_ring.roll_values[1] // 100
+            player_obj.all_elemental_curse += (e_ring.roll_values[0] // 100) + (e_ring.roll_values[1] // 100)
         return
     # Handle everything else
     for (attr_name, attr, value, index) in bonuses:
@@ -39,21 +45,21 @@ async def assign_ring_values(player_obj, ring_equipment):
                 target_list[index] += value * percent_adjust
 
 
-async def display_ring_values(ring_equipment):
-    player_obj = await player.get_player_by_id(ring_equipment.player_owner) if ring_equipment.player_owner > 0 else None
+async def display_ring_values(e_ring):
+    player_obj = await player.get_player_by_id(e_ring.player_owner) if e_ring.player_owner > 0 else None
     output = ""
-    bonuses, (points, path_index), _ = rvd[ring_equipment.item_base_type]
-    _, augment = sm.get_gear_tier_colours(ring_equipment.item_tier)
+    bonuses, (points, path_index), _ = rvd[e_ring.item_base_type]
+    _, augment = sm.get_gear_tier_colours(e_ring.item_tier)
     if points > 0:
         output += f"Path of {gli.path_names[path_index]} +{points}\n"
-    output += f"{augment} HP Bonus +{ring_equipment.item_tier * 500:,}\n"
-    output += f"{augment} Final Damage {ring_equipment.item_tier * 10:,}%\n"
-    output += f"{augment} Attack Speed {ring_equipment.item_tier * 5:,}%\n"
+    output += f"{augment} HP Bonus +{e_ring.item_tier * 500:,}\n"
+    output += f"{augment} Final Damage {e_ring.item_tier * 10:,}%\n"
+    output += f"{augment} Attack Speed {e_ring.item_tier * 5:,}%\n"
     # Handle rings with unique scaling.
-    if ring_equipment.item_base_type in ["Crown of Skulls"]:
-        output += f"{augment} {bonuses[0]} [{int(ring_equipment.roll_values[0]):,}]\n"
-        output += f"{augment} {bonuses[1]} [{int(ring_equipment.roll_values[1]):,}]\n"
-        resonance_index = int(ring_equipment.roll_values[2])
+    if e_ring.item_base_type in scaling_rings:
+        output += f"{augment} {bonuses[0]} [{int(e_ring.roll_values[0]):,}]\n"
+        output += f"{augment} {bonuses[1]} [{int(e_ring.roll_values[1]):,}]\n"
+        resonance_index = int(e_ring.roll_values[2])
         resonance = f"{augment} Resonance [{await tarot.get_resonance(resonance_index)}]"
         if player_obj is not None and player_obj.equipped_tarot != "":
             if player_obj.equipped_tarot == tarot.get_key_by_index(resonance_index):
@@ -72,14 +78,14 @@ async def display_ring_values(ring_equipment):
             continue
         output += f"{augment} {attr_name.replace('X', f'{value:,}')}\n"
     # Handle sovereign rings.
-    if ring_equipment.item_tier == 8 and ring_equipment.item_base_type not in ["Hadal's Teardrop"]:
-        resonance_index = int(ring_equipment.roll_values[0])
+    if e_ring.item_tier == 8 and e_ring.item_base_type not in ["Hadal's Teardrop"]:
+        resonance_index = int(e_ring.roll_values[0])
         resonance = f"{augment} Resonance [{await tarot.get_resonance(resonance_index)}]\n"
         if player_obj is not None and player_obj.equipped_tarot != "":
             if player_obj.equipped_tarot == tarot.get_key_by_index(resonance_index):
                 resonance = f"**{resonance}**"
         output += resonance
-    if ring_equipment.is_sacred:
+    if e_ring.is_sacred:
         output += f"{augment} Sacred Core\n"
     return output
 

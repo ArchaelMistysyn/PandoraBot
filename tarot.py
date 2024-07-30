@@ -25,11 +25,11 @@ card_dict = {
     "XII": ["Rua, The Abyss", 3], "XIII": ["Thana, The Death", 3], "XIV": ["Arcelia, The Clarity", 2],
     "XV": ["Diabla, The Primordial", 4], "XVI": ["Aurora, The Fortress", 4], "XVII": ["Nova, The Star", 2],
     "XVIII": ["Luna, The Moon", 2], "XIX": ["Luma, The Sun", 2], "XX": ["Aria, The Requiem", 2],
-    "XXI": ["Ultima, The Creation", 3], "XXII": ["Mysmir, Changeling of the True Laws", 1],
-    "XXIII": ["Avalon, Pathwalker of the True Laws", 2], "XXIV": ["Isolde, Soulweaver of the True Laws", 3],
-    "XXV": ["Eleuia, The Wish", 6], "XXVI": ["Kazyth, Lifeblood of the True Laws", 4],
-    "XXVII": ["Vexia, Scribe of the True Laws", 5], "XXVIII": ["Fleur, Oracle of the True Laws", 6],
-    "XXIX": ["Yubelle, Adjudicator of the True Laws", 7], "XXX": ["Nephilim, Incarnate of the Divine Lotus", 8]}
+    "XXI": ["Ultima, The Creation", 3], "XXII": ["Mysmir, The Changeling", 1],
+    "XXIII": ["Avalon, The Pathwalker", 2], "XXIV": ["Isolde, The Soulweaver", 3],
+    "XXV": ["Eleuia, The Wish", 6], "XXVI": ["Kazyth, The Lifeblood", 4],
+    "XXVII": ["Vexia, The Scribe", 5], "XXVIII": ["Fleur, The Oracle", 6],
+    "XXIX": ["Yubelle, The Adjudicator", 7], "XXX": ["Nephilim, Incarnate of the Divine Lotus", 8]}
 card_type_dict = {
     "0": "Paragon", "I": "Paragon", "II": "Paragon", "III": "Paragon", "IV": "Paragon", "V": "Paragon",
     "VI": "Paragon", "VII": "Paragon", "VIII": "Paragon", "IX": "Paragon", "X": "Paragon",

@@ -10,6 +10,7 @@ import re
 import sys
 import textwrap
 import random
+import traceback
 from datetime import datetime as dt, timedelta
 
 # Data imports
@@ -64,7 +65,7 @@ with open("pandora_bot_token.txt", 'r') as token_file:
         token_info = line
 TOKEN = token_info
 
-Mysmir_title = "Mysmir, Changeling of the True Laws"
+Mysmir_title = "Mysmir, The Changeling"
 
 
 class PandoraBot(commands.Bot):
@@ -90,9 +91,9 @@ def run_discord_bot():
         def decorator(func):
             func.category_type, func.position = category, command_position
             return func
-
         return decorator
 
+    @pandora_bot.event
     async def on_shutdown():
         print("Pandora Bot Off")
         try:
@@ -100,6 +101,12 @@ def run_discord_bot():
             await pandora_bot.close()
         except Exception as e:
             print(f"Shutdown Error: {e}")
+
+    @pandora_bot.event
+    async def on_command_error():
+        error_channel = pandora_bot.get_channel(gli.bot_logging_channel)
+        tb_str = ''.join(traceback.format_exception(type(e), e, e.__traceback__))
+        await error_channel.send(f'An error occurred:\n{e}\n```{tb_str}```')
 
     class CustomHelpCommand(commands.DefaultHelpCommand):
         def __init__(self):
@@ -581,7 +588,7 @@ def run_discord_bot():
         player_obj = await sm.check_registration(ctx)
         if player_obj is None:
             return
-        title = "Fleur, Oracle of the True Laws"
+        title = "Fleur, The Oracle"
         if player_obj.player_quest < 48:
             denial_msg = "The sanctuary radiates with divinity. Entry is impossible."
             embed_msg = discord.Embed(colour=discord.Colour.blurple(), title="???", description=denial_msg)
@@ -602,7 +609,7 @@ def run_discord_bot():
         player_obj = await sm.check_registration(ctx)
         if player_obj is None:
             return
-        title = "Yubelle, Adjudicator the True Laws"
+        title = "Yubelle, The Adjudicator"
         if player_obj.player_quest < 51:
             denial_msg = "The cathedral radiates with divinity. Entry is impossible."
             embed_msg = discord.Embed(colour=discord.Colour.blurple(), title="???", description=denial_msg)
@@ -810,7 +817,7 @@ def run_discord_bot():
         player_obj = await sm.check_registration(ctx)
         if player_obj is None:
             return
-        title = "Isolde, Soulweaver of the True Laws"
+        title = "Isolde, The Soulweaver"
         if player_obj.player_quest < 20:
             description = "You can't yet handle my threads. This is no place for the weak."
             embed_msg = discord.Embed(colour=discord.Colour.dark_orange(), title=title, description=description)
@@ -830,7 +837,7 @@ def run_discord_bot():
         if player_obj is None:
             return
         # Initialize default embed
-        embed_msg = discord.Embed(colour=discord.Colour.blurple(), title="Kazyth, Lifeblood of the True Laws",
+        embed_msg = discord.Embed(colour=discord.Colour.blurple(), title="Kazyth, The Lifeblood",
                                   description="")
         if player_obj.player_quest < 42:
             denial_msg = "Tread carefully adventurer. Drawing too much attention to yourself can prove fatal."
@@ -1127,7 +1134,7 @@ def run_discord_bot():
         if player_obj is None:
             return
         e_weapon = await inventory.read_custom_item(player_obj.player_equipped[0])
-        title = "Vexia, Scribe of the True Laws"
+        title = "Vexia, The Scribe"
         if player_obj.player_quest < 46:
             denial_msg = "I have permitted your passage, but you are not yet qualified to speak with me. Begone."
             embed_msg = discord.Embed(colour=discord.Colour.blurple(), title=title, description=denial_msg)

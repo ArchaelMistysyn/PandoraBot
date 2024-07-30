@@ -26,7 +26,7 @@ import itemrolls
 import tarot
 import insignia
 import pact
-import sovereignweapon as sw
+import sovereigngear as sg
 
 
 class PlayerProfile:
@@ -53,6 +53,10 @@ class PlayerProfile:
         self.elemental_mult, self.elemental_pen, self.elemental_curse = [0.0] * 9, [0.0] * 9, [0.0] * 9
         self.elemental_conversion = [1.0] * 9
         self.all_elemental_mult, self.all_elemental_pen, self.all_elemental_curse = 0.0, 0.0, 0.0
+        self.special_res = {"Storms": 0.0, "Eclipse": 0.0, "Horizon": 0.0, "Frostfire": 0.0, "Holy": 0.0, "Chaos": 0.0}
+        self.special_mult = {"Storms": 0.0, "Eclipse": 0.0, "Horizon": 0.0, "Frostfire": 0.0, "Holy": 0.0, "Chaos": 0.0}
+        self.special_pen = {"Storms": 0.0, "Eclipse": 0.0, "Horizon": 0.0, "Frostfire": 0.0, "Holy": 0.0, "Chaos": 0.0}
+        self.special_curse = {"Storms": 0.0, "Eclipse": 0.0, "Horizon": 0.0, "Frostfire": 0.0, "Holy": 0.0, "Chaos": 0.0}
         self.singularity_mult, self.singularity_pen, self.singularity_curse = 0.0, 0.0, 0.0
         # Initialize specialization stats.
         self.unique_glyph_ability = [False] * 9
@@ -74,7 +78,7 @@ class PlayerProfile:
         self.banes = [0.0] * 7
         self.skill_damage_bonus = [0] * 4
         self.unique_conversion = [0.0] * 5
-        self.spec_conv = {"Heavenly": 0.0, "Stygian": 0.0, "Calamity": 0.0}
+        self.spec_conv = {"Heavenly": 0.0, "Stygian": 0.0, "Calamity": 0.0, "DarkDream": 0.0, "LightDream": 0.0}
         # Initialize misc stats.
         self.charge_generation = 1
         self.attack_speed = 0.0
@@ -174,7 +178,6 @@ class PlayerProfile:
                     extension = "%" if tag not in ["Elemental Capacity"] else ""
                     section_string += f"{tag}: {value:,}{extension}\n"
                 return f"{section_string}"
-
             stats += set_appli(appli="Elemental",
                                data=[("Elemental Capacity", self.elemental_capacity),
                                      ("Fractal Rate", self.trigger_rate["Fractal"])])
@@ -405,7 +408,7 @@ class PlayerProfile:
                 self.player_damage_min += e_item[idx].item_damage_min
                 self.player_damage_max += e_item[idx].item_damage_max
                 if e_item[idx].item_base_type in gli.sovereign_item_list:
-                    await sw.assign_sovereign_values(self, e_item[idx])
+                    await sg.assign_sovereign_values(self, e_item[idx])
                 else:
                     await itemrolls.assign_roll_values(self, e_item[idx])
                 itemrolls.assign_item_element_stats(self, e_item[idx])
@@ -463,16 +466,35 @@ class PlayerProfile:
         for mechanic in self.perfect_rate.keys():  
             self.trigger_rate[mechanic] = 100 if self.perfect_rate[mechanic] > 0 >= 80 else self.trigger_rate[mechanic]
         match_count = sum(1 for item in e_item if item is not None and item.item_damage_type == self.player_class)
+        # Class Mastery
         if self.unique_conversion[2] >= 1:
             unique_damage_types = {item.item_damage_type for item in e_item}
             match_count = len(unique_damage_types)
         self.class_multiplier += 0.05 + self.unique_conversion[2]
         self.class_multiplier *= match_count
+        # Unique Bonus
+        self.special_mult["Holy"] += self.spec_conv["LightDream"]
+        self.special_pen["Holy"] += self.spec_conv["LightDream"]
+        self.special_curse["Holy"] += self.spec_conv["LightDream"]
+        self.special_mult["Chaos"] += self.spec_conv["DarkDream"]
+        self.special_pen["Chaos"] += self.spec_conv["DarkDream"]
+        self.special_curse["Chaos"] += self.spec_conv["DarkDream"]
+        # Hybrid multipliers
+        for bonus_type in self.special_mult.keys():
+            index_list = gli.element_dict[bonus_type]
+            if ((bonus_type == "Holy" and self.spec_conv["LightDream"] != 0.0)
+                    or (bonus_type == "Chaos" and self.spec_conv["DarkDream"] != 0.0)):
+                index_list += [8]
+            for ele_num in index_list:
+                self.elemental_mult[ele_num] += self.special_mult[bonus_type]
+                self.elemental_pen[ele_num] += self.special_pen[bonus_type]
+                self.elemental_curse[ele_num] += self.special_curse[bonus_type]
+                self.elemental_res[ele_num] += self.special_res[bonus_type]
         # Singularity multipliers
         apply_singularity(self.elemental_mult, self.singularity_mult)
         apply_singularity(self.elemental_pen, self.singularity_pen)
         apply_singularity(self.elemental_curse, self.singularity_curse)
-        # Apply omni multipliers.
+        # Omni multipliers.
         for x in range(9):
             self.elemental_mult[x] += self.all_elemental_mult
             self.elemental_pen[x] += self.all_elemental_pen

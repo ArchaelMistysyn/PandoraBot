@@ -230,8 +230,6 @@ async def generate_and_combine_images():
             temp_item = inventory.BasicItem(item_id)
             if temp_item.item_category not in gli.availability_list_nongear:
                 continue
-            if temp_item.item_id != "Ruler":
-                continue
             count += 1
             # Handle the urls and paths.
             frame_url = gli.frame_icon_list[temp_item.item_tier - 1]

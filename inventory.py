@@ -24,7 +24,7 @@ import loot
 import itemrolls
 import ring
 from ringdata import ring_element_dict as red
-import sovereignweapon as sw
+import sovereigngear as sg
 import tarot
 
 # Inventory Dictionaries.
@@ -186,7 +186,7 @@ class CustomItem:
                     self.item_elements[element_index] = 1
         elif self.item_base_type != "" and self.item_base_type in gli.sovereign_item_list:
             self.item_quality_tier = 0
-            sw.build_sovereign_item(self)
+            sg.build_sovereign_item(self)
         # Finalize item
         self.update_damage()
         self.set_item_name()
@@ -300,8 +300,9 @@ class CustomItem:
         self.item_name = f"+{self.item_enhancement} {tier_keyword} {self.item_base_type} [{quality_name}]"
 
     def generate_base(self):
-        if self.item_type == "R":
+        if self.item_type not in ["W"] and "D" not in self.item_type:
             self.assign_bonus_stat()
+        if self.item_type == "R":
             # Default unique values for rings.
             self.roll_values = [None] * 6
             return
@@ -325,7 +326,6 @@ class CustomItem:
             self.item_base_type = random.choice(combined_list)
             return
         # Handle non-weapon, non-gem items.
-        self.assign_bonus_stat()
         match self.item_type:
             case "A":
                 self.set_base_damage_mitigation()
@@ -338,8 +338,6 @@ class CustomItem:
                 self.item_base_type = wing_base_dict[self.item_tier]
             case "C":
                 self.item_base_type = "Diadem" if self.item_tier >= 5 else random.choice(crest_base_list)
-            case "R":
-                pass  # This is handled when the ring is crafted.
             case _:
                 self.item_base_type = "base_type_error"
 
@@ -393,7 +391,7 @@ class CustomItem:
         elif self.item_base_type not in gli.sovereign_item_list:
             rolls_msg = itemrolls.display_rolls(self, roll_change_list)
         else:
-            rolls_msg = sw.display_sovereign_rolls(self)
+            rolls_msg = sg.display_sovereign_rolls(self)
         display_stars = sm.display_stars(self.item_tier)
         if "D" not in self.item_type:
             elements = [gli.ele_icon[idz] for idz, z in enumerate(self.item_elements) if z == 1]
@@ -469,28 +467,25 @@ class BasicItem:
             self.item_emoji = item['emoji']
             self.item_image = ""
             if "Fish" in self.item_id:
-                self.item_image = f"{gli.web_url}/Fish/{self.item_id}.png"
-                return
+                self.item_image = f"{gli.web_url}NonGear_Icon/Fish/{self.item_id}.png"
             elif "Void" in self.item_id:
                 name_data = self.item_name.split()
                 item_type = name_data[-1].strip('()') if "Weapon" not in self.item_name else "Saber"
-                self.item_image = f"{gli.web_url}/Gear_Icon/{item_type}/Frame_{item_type}_5.png"
-                return
+                self.item_image = f"{gli.web_url}Gear_Icon/{item_type}/Frame_{item_type}_5.png"
             elif "Unrefined" in self.item_id:
                 item_type = self.item_name.split()[-1]
-                self.item_image = f"{gli.web_url}/Gear_Icon/{item_type}/Frame_{item_type}_4.png"
-                return
+                self.item_image = f"{gli.web_url}Gear_Icon/{item_type}/Frame_{item_type}_4.png"
             elif "Gem" in self.item_id and "Gemstone" not in self.item_id:
                 self.item_image = f"{gli.web_url}/Gear_Icon/Frame_{self.item_id.replace('Gem', 'Gem_')}.png"
-                return
             elif self.item_id in ["Gemstone10", "Gemstone11"]:
-                self.item_image = f"{gli.web_url}/NonGear_Icon/Gemstone/Frame_{self.item_id}.png"
+                self.item_image = f"{gli.web_url}NonGear_Icon/Gemstone/Frame_{self.item_id}.png"
             elif "Jewel" in self.item_id:
                 icon = {"Jewel1": "Gem_1", "Jewel2": "Gem_1", "Jewel3": "Gem_5", "Jewel4": "Gem_7", "Jewel5": "Gem_8"}
-                self.item_image = f"{gli.web_url}/Gear_Icon/Frame_{icon[self.item_id]}.png"
-                return
+                self.item_image = f"{gli.web_url}Gear_Icon/Frame_{icon[self.item_id]}.png"
+            elif "Lotus" in self.item_id:
+                self.item_image = f"{gli.web_url}NonGear_Icon/Lotus/Frame_{self.item_id}.png"
             elif self.item_category in gli.availability_list_nongear:
-                self.item_image = f"{gli.web_url}/NonGear_Icon/{self.item_category}/Frame_{self.item_id}.png"
+                self.item_image = f"{gli.web_url}NonGear_Icon/{self.item_category}/Frame_{self.item_id}.png"
         else:
             print(f"Item with ID '{item_id}' not found in itemdata_dict.")
 

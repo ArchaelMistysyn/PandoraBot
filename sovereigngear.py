@@ -14,7 +14,7 @@ from pandoradb import run_query as rqy
 # weapon name: [(base_dmg_min, base_dmg_max), (attack_speed_min, attack_speed_max),
 #               (skill1, skill2, skill3),
 #               (Sacred Skills)]
-sov_weapon = {
+sov_item = {
     "Pandora's Universe Hammer":
         [(9999999, 9999999), (2, 3),
          ("Genesis Dream (TYPE)", "Universal Advent"),
@@ -30,7 +30,11 @@ sov_weapon = {
     "Bathyal, Enigmatic Chasm Bauble":
         [(1234567, 7654321), (1, 4),
          ("Mana of the Boundless Ocean", "Disruption Boundary (TYPE)"),
-         ("Mana of the Divine Sea", "Forbidden Boundary (TYPE)")]}
+         ("Mana of the Divine Sea", "Forbidden Boundary (TYPE)")],
+    "Ruler's Crest":
+        [(9999999, 9999999), None,
+         ("Ruler's Glare", "Ruler's Tenacity"),
+         ("Stasis Zone", "Divine Aegis")]}
 
 random_values_dict = {"Solar Flare Blaster": (100, 500)}
 type_dict = {"Bathyal, Enigmatic Chasm Bauble": ["Critical", "Fractal", "Temporal", "Hyperbleed", "Bloom"],
@@ -38,9 +42,10 @@ type_dict = {"Bathyal, Enigmatic Chasm Bauble": ["Critical", "Fractal", "Tempora
 
 
 def build_sovereign_item(new_item):
-    sov_data = sov_weapon[new_item.item_base_type]
+    sov_data = sov_item[new_item.item_base_type]
     new_item.base_damage_min, new_item.base_damage_max = sov_data[0]
-    new_item.item_base_stat = round(random.uniform(sov_data[1][0], sov_data[1][1]), 2)
+    if new_item.item_type == "W":
+        new_item.item_base_stat = round(random.uniform(sov_data[1][0], sov_data[1][1]), 2)
     # Assign elements
     num_elements = random.choices([num for num in range(9)], weights=[1, 1, 2, 3, 4, 3, 2, 1, 1], k=1)[0]
     element_index_list = random.sample(range(9), num_elements)
@@ -61,7 +66,8 @@ def build_sovereign_item(new_item):
             new_type = random.choice(type_dict[new_item.item_base_type])
             skill_text = skill.replace("TYPE", new_type)
         new_item.roll_values.append(skill_text)
-    new_item.roll_values.append("Sovereign's Omniscience")
+    if new_item.item_type == "W":
+        new_item.roll_values.append("Sovereign's Omniscience")
     if new_item.is_sacred:
         new_item.roll_values.append("Sacred Core")
 
@@ -121,5 +127,12 @@ async def assign_sovereign_values(player_obj, item_obj):
                 player_obj.appli["Life"] += 5
                 player_obj.appli["Mana"] += 5
                 player_obj.start_mana = 0
+        case "Ruler's Crest":
+            player_obj.hp_multiplier += 10
+            if item_obj.is_sacred:
+                player_obj.hp_multiplier += 10
+            # Ruler's Glare goes here
+            if item_obj.is_sacred:
+                pass
         case _:
             return

@@ -4,6 +4,7 @@ from discord.ext.commands import Bot
 from discord.ext import commands, tasks
 import asyncio
 import random
+import traceback
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from apscheduler.triggers.cron import CronTrigger
 from datetime import datetime as dt
@@ -42,6 +43,11 @@ class RaidSchedularCog(commands.Cog):
         self.raid_manager()
         self.bot.loop.create_task(self.trigger_raid())
         print("Raid Cog Active")
+
+    async def cog_command_error(self, ctx, e):
+        error_channel = self.bot.get_channel(gli.bot_logging_channel)
+        tb_str = ''.join(traceback.format_exception(type(e), e, e.__traceback__))
+        await error_channel.send(f'An error occurred:\n{e}\n```{tb_str}```')
 
     def raid_manager(self):
         self.scheduler.add_job(self.trigger_raid, CronTrigger(hour=0, minute=0))
@@ -91,6 +97,12 @@ class RaidCog(commands.Cog):
                 return
             await encounters.clear_boss_encounter_info(self.channel_id)
             self.end_cog()
+
+    @raid_boss_manager.error
+    async def raid_boss_manager_error(self, e):
+        error_channel = self.bot.get_channel(gli.bot_logging_channel)
+        tb_str = ''.join(traceback.format_exception(type(e), e, e.__traceback__))
+        await error_channel.send(f'An error occurred:\n{e}\n```{tb_str}```')
             
     async def raid_boss(self):
         player_list, damage_list = await bosses.get_damage_list(self.channel_id)
@@ -181,6 +193,12 @@ class SoloCog(commands.Cog):
             if continue_encounter:
                 return
             self.cog_unload()
+
+    @solo_manager.error
+    async def solo_manager_error(self, e):
+        error_channel = self.bot.get_channel(gli.bot_logging_channel)
+        tb_str = ''.join(traceback.format_exception(type(e), e, e.__traceback__))
+        await error_channel.send(f'An error occurred:\n{e}\n```{tb_str}```')
     
     async def solo_boss(self):
         self.boss_obj.curse_debuffs = self.player_obj.elemental_curse
@@ -259,6 +277,12 @@ class PvPCog(commands.Cog):
     async def pvp_manager(self):
         async with self.lock:
             await self.run_pvp_cycle()
+
+    @pvp_manager.error
+    async def pvp_manager_error(self, e):
+        error_channel = self.bot.get_channel(gli.bot_logging_channel)
+        tb_str = ''.join(traceback.format_exception(type(e), e, e.__traceback__))
+        await error_channel.send(f'An error occurred:\n{e}\n```{tb_str}```')
 
     async def run_pvp_cycle(self):
         stun_list, hit_list, is_alive_player1, is_alive_player2 = await self.calculate_pvp_cycle()
@@ -441,6 +465,12 @@ class MapCog(commands.Cog):
                 await encounters.clear_automapper(self.player_obj.player_id)
                 self.cog_unload()
             self.room_num += 1
+
+    @map_manager.error
+    async def map_manager_error(self, e):
+        error_channel = self.bot.get_channel(gli.bot_logging_channel)
+        tb_str = ''.join(traceback.format_exception(type(e), e, e.__traceback__))
+        await error_channel.send(f'An error occurred:\n{e}\n```{tb_str}```')
 
     async def accumulated_output(self, embed_obj):
         accumulated_msg = ""

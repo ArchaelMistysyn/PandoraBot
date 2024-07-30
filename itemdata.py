@@ -237,7 +237,9 @@ lotus_data = [[None, 'Lotus of Nightmares', 100, 8, '<:Lotus1:126604509890740237
               [None, 'Lotus of Revelations', 100, 8, '<:Lotus9:1266045156323364865>',
                'Used for Divine Synthesis (Tarot).  Increases the tier to 8.', 0],
               [None, 'Divine Lotus', 100, 8, '<:Lotus10:1266045157418074236>',
-               '???', 0, ""]]
+               "The key to divinity and the object of the Arbiter's worship.", 0],
+              [None, 'Rainbow Lotus', 100, 8, '<:Lotus11:1266045151718150226>',
+               'A mythical lotus dyed by the colours of fate.', 0]]
 itemdata_dict = build_item_dict(itemdata_dict, lotus_data, category="Lotus")
 
 # Gemstone Item Data
@@ -328,7 +330,7 @@ uncategorized_data = [
     ['Pandora', "Pandora's Twinkling Heart", 100, 8, '<a:elootitem:1144477550379274322>',
      "The spiritual heart of the celestial paragon. "
      "At the dawn of creation Pandora bore her celestial heart as a power source for her hammer.", 0],
-    ['Ruler', "Ruler's Crown Jewel", 100, 9, '<a:elootitem:1144477550379274322>',
+    ['Ruler', "Ruler's Crown Jewel", 100, 9, '<:Ruler:1267603361763426405>',
      "A jewel of unmatched quality, unparalleled value, and unfathomable beauty. A truly unique treasure.", 0],
     ['Sacred', "Sacred Blood", 100, 9, '<a:elootitem:1144477550379274322>',
      "Rare drop from raid bosses. Can be optionally consumed as an additional cost to guarantee a 'Sacred' "

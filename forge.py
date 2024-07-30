@@ -769,7 +769,7 @@ class MeldView(discord.ui.View):
         self.gem_2 = await inventory.read_custom_item(self.gem_2.item_id)
         stock = await inventory.check_stock(self.player_obj, "Token4")
         self.embed = discord.Embed(colour=discord.Colour.blurple(),
-                                   title="Kazyth, Lifeblood of the True Laws", description="")
+                                   title="Kazyth, The Lifeblood", description="")
         # Check the cost
         if stock < self.cost:
             self.embed.description = "Begone fool. Those without tokens have no right to stand before me."

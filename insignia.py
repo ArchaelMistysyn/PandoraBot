@@ -25,7 +25,7 @@ mutation_upgrade_data = {0: [5, 50], 1: [10, 25], 2: [20, 99], 3: [30, 100]}
 insignia_prefix = ["Dormant", "Awakened", "Evolved", "Infused", "Symbiotic", "Resonating",
                    "Mutation: Wish", "Mutation: Abyss", "Mutation: Divine", "Mutation: Sacred"]
 mutation_cost_list = ["Crystal2", "Crystal3", "Lotus8", "Sacred"]
-NPC_name = "Isolde, Soulweaver of the True Laws"
+NPC_name = "Isolde, The Soulweaver"
 
 
 class Insignia:

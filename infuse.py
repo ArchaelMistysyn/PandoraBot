@@ -22,32 +22,34 @@ recipe_dict = {
     "Heavenly Infusion": {}, "Elemental Infusion": {}, "Crystal Infusion": {},
     "Void Infusion": {}, "Jewel Infusion": {}, "Skull Infusion": {},
     "Special Infusion": {
-        "Radiant Heart": [("Stone5", 1), ("Fragment2", 1), 20, "Heart1"],
-        "Chaos Heart": [("Stone5", 1), ("Fragment3", 1), 20, "Heart2"],
-        "Abyss Flame": [("Crystal3", 1), ("Flame1", 10), 80, "Flame2"],
+        "Radiant Heart": [("Stone5", 1), ("Fragment2", 1), 20, "Heart1", None],
+        "Chaos Heart": [("Stone5", 1), ("Fragment3", 1), 20, "Heart2", None],
+        "Abyss Flame": [("Crystal3", 1), ("Flame1", 10), 80, "Flame2", None],
         "Lotus of Serenity": [("Heart1", 99), ("Fragment2", 99), 99, "Lotus3"]},
     "Elemental Signet Infusion": {}, "Primordial Ring Infusion": {}, "Path Ring Infusion": {},
     "Legendary Ring Infusion": {
-        "Dragon's Eye Diamond": [("Gemstone9", 15), ("Gemstone10", 3), 100, "7"],
-        "Chromatic Tears": [("Gemstone9", 5), ("Gemstone10", 10), 100, "7"],
-        "Bleeding Hearts": [("Gemstone9", 5), ("Heart1", 50), ("Heart2", 50), ("Gemstone10", 3), 100, "7"],
-        "Gambler's Masterpiece": [("Gemstone9", 1), ("Gemstone10", 1), 1, "7"]},
+        "Dragon's Eye Diamond": [("Gemstone9", 15), ("Gemstone10", 3), 100, "7", "R"],
+        "Bleeding Hearts": [("Gemstone9", 5), ("Heart1", 50), ("Heart2", 50), ("Gemstone10", 3), 100, "7", "R"],
+        "Gambler's Masterpiece": [("Gemstone9", 1), ("Gemstone10", 1), 1, "7", "R"],
+        "Lonely Ring of the Dark Star": [("DarkStar", 1), ("Gemstone9", 5),("Gemstone10", 3), 100, "7", "R"],
+        "Lonely Ring of the Light Star": [("LightStar", 1), ("Gemstone9", 5),("Gemstone10", 3), 100, "7", "R"]},
     "Sovereign Ring Infusion": {
-        "Stygian Calamity": [("Shard", 25), ("Gemstone11", 1), ("Gemstone10", 5), ("Crystal3", 10), ("Crystal4", 1),
-                             100, "8"],
-        "Heavenly Calamity": [("Shard", 25), ("Gemstone11", 1), ("Ore5", 10), ("Gemstone10", 5), ("Crystal4", 1), 100,
-                              "8"],
-        "Hadal's Raindrop": [("Shard", 25), ("Nadir", 1), ("EssenceXIV", 10), ("Gemstone10", 5), ("Crystal4", 1), 100,
-                             "8"],
-        "Twin Rings of Divergent Stars": [("LightStar", 1), ("DarkStar", 1), ("Gemstone10", 5), ("Crystal4", 1), 100,
-                                          "8"],
-        "Crown of Skulls": [("Shard", 50), ("Skull4", 1), ("Lotus2", 1), ("Gemstone10", 5), ("Crystal4", 1), 100, "8"]},
+        "Stygian Calamity": [("Shard", 25), ("Gemstone11", 1), ("Gemstone10", 5), ("Crystal3", 10), ("Crystal4", 1), 100, "8", "R"],
+        "Heavenly Calamity": [("Shard", 25), ("Gemstone11", 1), ("Ore5", 10), ("Gemstone10", 5), ("Crystal4", 1), 100, "8", "R"],
+        "Hadal's Raindrop": [("Shard", 25), ("Nadir", 1), ("EssenceXIV", 10), ("Gemstone10", 5), ("Crystal4", 1), 100, "8", "R"],
+        "Twin Rings of Divergent Stars": [("LightStar", 1), ("DarkStar", 1), ("Gemstone10", 5), ("Crystal4", 1), 100, "8", "R"],
+        "Crown of Skulls": [("Shard", 50), ("Skull4", 1), ("Lotus2", 1), ("Gemstone10", 5), ("Crystal4", 1), 100, "8", "R"],
+        "Chromatic Tears": [("Shard", 50), ("Lotus11", 1), ("Gemstone10", 10), ("Crystal4", 1), 100, "8", "R"]},
     "Sovereign Weapon Infusion": {
-        "Pandora's Universe Hammer": [("Shard", 50), ("Lotus10", 1), ("Crystal4", 1), 100, "KEY"],
-        "Fallen Lotus of Nephilim": [("Shard", 50), ("Nephilim", 1), ("Lotus10", 1), ("Crystal4", 1), 100, "KEY"],
+        "Pandora's Universe Hammer": [("Shard", 50), ("Lotus10", 1), ("Crystal4", 1), 100, "8", "W"],
+        "Fallen Lotus of Nephilim": [("Shard", 50), ("Nephilim", 1), ("Lotus10", 1), ("Crystal4", 1), 100, "8", "W"],
         "Solar Flare Blaster": [("Shard", 25), ("Gemstone0", 10), ("Gemstone4", 10), ("Gemstone7", 10),
-                                ("Gemstone9", 10), ("EssenceXIX", 10), ("Crystal4", 1), 100, "KEY"],
-        "Bathyal, Enigmatic Chasm Bauble": [("Shard", 25), ("Nadir", 1), ("Crystal4", 1), 100, "KEY"]}}
+                                ("Gemstone9", 10), ("EssenceXIX", 10), ("Crystal4", 1), 100, "8", "W"],
+        "Bathyal, Enigmatic Chasm Bauble": [("Shard", 25), ("Nadir", 1), ("Crystal4", 1), 100, "8", "W"]},
+    "Sovereign Special Infusion": {
+        "Ruler's Crest": [("Shard", 1000), ("Ruler", 1), ("Gemstone0", 100), ("Gemstone1", 100), ("Gemstone2", 100),
+                          ("Gemstone3", 100), ("Gemstone4", 100), ("Gemstone5", 100), ("Gemstone6", 100),
+                          ("Gemstone7", 100), ("Gemstone8", 100), ("Gemstone9", 100), ("Crystal4", 10), 100, "8", "C"]}}
 
 
 def add_recipe(category, name, data_list):
@@ -59,7 +61,7 @@ def add_recipe(category, name, data_list):
 # Heavenly Infusion
 for idx, (ore, count) in enumerate(zip(['Crude', 'Cosmite', 'Celestite', 'Crystallite'], [50, 20, 10, 2]), start=1):
     add_recipe("Heavenly Infusion", f"Heavenly Ore ({ore})",
-               [(f"Ore{idx}", count), (f"Stone{idx}", 5), 75, "Ore5"])
+               [(f"Ore{idx}", count), (f"Stone{idx}", 5), 75, "Ore5", None])
 
 primordial_rings = [("Ruby", "Incineration"), ("Sapphire", "Atlantis"), ("Topaz", "Dancing Thunder"),
                     ("Agate", "Seismic Tremors"), ("Emerald", "Wailing Winds"), ("Zircon", "Frozen Castle"),
@@ -70,38 +72,38 @@ for idx, (element, (gemstone, ring_name)) in enumerate(zip(gli.element_names, pr
     gemstone_id = f"Gemstone{idx}"
     temp_item = inventory.BasicItem(gemstone_id)
     add_recipe("Elemental Infusion", temp_item.item_name,
-               [("Catalyst", 1), (f"Fae{idx}", 300), 80, gemstone_id])
+               [("Catalyst", 1), (f"Fae{idx}", 300), 80, gemstone_id, None])
     # Elemental Signets
     add_recipe("Elemental Signet Infusion", f"Elemental Signet of {element}",
-               [(gemstone_id, 2), ("Scrap", 100), 100, "4"])
+               [(gemstone_id, 2), ("Scrap", 100), 100, "4", "R"])
     # Primordial Rings
     add_recipe("Primordial Ring Infusion", f"{gemstone} Ring of {ring_name}",
-               [(gemstone_id, 5), ("Gemstone10", 1), 100, "5"])
+               [(gemstone_id, 5), ("Gemstone10", 1), 100, "5", "R"])
 void_cost = [('Weapon', ("Scrap", 200)), ('Armour', ("Scrap", 100)), ('Greaves', ("Unrefined2", 10)),
              ('Amulet', ("Scrap", 100)), ('Wing', ("Unrefined1", 10)), ('Crest', ("Unrefined3", 10))]
 # Skull Infusions
 skull_types = ["Cursed Golden Skull", "Haunted Golden Skull", "Radiant Golden Skull", "Prismatic Golden Skull"]
 for idx, skull_type in enumerate(skull_types[1:], start=1):
     add_recipe("Skull Infusion", skull_type,
-               [(f"Skull{idx}", 1), 100, f"Skull{idx + 1}"])
+               [(f"Skull{idx}", 1), 100, f"Skull{idx + 1}", None])
 # Crystal Infusions
 fragment_types = ["Void", "Wish", "Abyss", "Divinity"]
 for idx in range(1, len(fragment_types) + 1):
     add_recipe("Crystal Infusion", f"Crystallized {fragment_types[idx - 1]} (Fragment)",
-               [(f"Fragment{idx}", 20), 100, f"Crystal{idx}"])
+               [(f"Fragment{idx}", 20), 100, f"Crystal{idx}", None])
     if idx == 1:
         continue
     add_recipe("Crystal Infusion", f"Crystallized {fragment_types[idx - 1]} (Upgrade)",
-               [(f"Crystal{idx - 1}", 3), 90, f"Crystal{idx}"])
+               [(f"Crystal{idx - 1}", 3), 90, f"Crystal{idx}", None])
 
 # Void Infusions
 for idx, (item_type, secondary_cost) in enumerate(void_cost):
     add_recipe("Void Infusion", f"Unrefined Void Item ({item_type})",
-               [("Crystal1", 1), secondary_cost, 99, f"Void{idx + 1}"])
+               [("Crystal1", 1), secondary_cost, 99, f"Void{idx + 1}", None])
 # Jewel Infusion
 for idx, jewel_type in enumerate(['Dragon', 'Demon', 'Paragon'], start=1):
     add_recipe("Jewel Infusion", f"Unrefined {jewel_type} Jewel",
-               [(f"Gem{idx}", 10), 75, f"Jewel{idx}"])
+               [(f"Gem{idx}", 10), 75, f"Jewel{idx}", None])
 # Path Ring Infusions
 path_rings = [
     ("Invoking Ring of Storms", [(1, 5), (2, 5), (10, 2)]),
@@ -112,13 +114,14 @@ path_rings = [
     ("Rainbow Ring of Confluence", [(0, 2), (1, 2), (2, 2), (3, 2), (4, 2), (5, 2), (6, 2), (7, 2), (8, 2), (10, 2)]),
     ("Lonely Ring of Solitude", [(9, 10), (10, 2)])]
 for ring_name, gemstones in path_rings:
-    add_recipe("Path Ring Infusion", ring_name, [(f"Gemstone{idx}", qty) for idx, qty in gemstones] + [100, "6"])
+    add_recipe("Path Ring Infusion", ring_name, [(f"Gemstone{idx}", qty) for idx, qty in gemstones] + [100, "6", "R"])
 
 recipe_index_dict = {}
 for i_category, recipes in recipe_dict.items():
     recipe_index_dict[i_category] = {recipe: index for index, recipe in enumerate(recipes.keys())}
 sov_icon = ["<:p_hammer:1266169346338853015>", "<:lotus_sword:1266169382053220457>",
             "<:lotus_sword:1266169382053220457>", "<:lotus_sword:1266169382053220457>"]
+spec_icon = ["<:r_crown:1266169347198423090>"]
 cat_icon = {
     "Heavenly Infusion": "<:Fae0:1249158371337306112>",
     "Elemental Infusion": "<:Fae0:1249158371337306112>",
@@ -132,7 +135,8 @@ cat_icon = {
     "Path Ring Infusion": "<:Signet0:1253839691736678440>",
     "Legendary Ring Infusion": "<:Signet0:1253839691736678440>",
     "Sovereign Ring Infusion": "<:twin_rings:1266169349366874204>",
-    "Sovereign Weapon Infusion": "<:p_hammer:1266169346338853015>"}
+    "Sovereign Weapon Infusion": "<:p_hammer:1266169346338853015>",
+    "Sovereign Special Infusion": "<:r_crown:1266169347198423090>"}
 NPC_name, NPC_description = "Cloaked Alchemist, Sangam", "Alright, what do you need?"
 
 
@@ -143,14 +147,13 @@ class RecipeObject:
 
         # Initialize cost items dynamically
         self.cost_items = []
-        self.success_rate = self.recipe_info[-2]
-        if "Sovereign Weapon Infusion" == self.category:
-            self.outcome_item = None
-        elif "Ring" not in self.category and "Signet" not in self.category:
-            self.outcome_item = inventory.BasicItem(self.recipe_info[-1])
+        self.item_type = self.recipe_info[-1]
+        self.success_rate = self.recipe_info[-3]
+        if self.item_type is None:
+            self.outcome_item = inventory.BasicItem(self.recipe_info[-2])
         else:
-            self.outcome_item = int(self.recipe_info[-1])
-        for item_info in self.recipe_info[:-2]:
+            self.outcome_item = int(self.recipe_info[-2])
+        for item_info in self.recipe_info[:-3]:
             item_id, qty = item_info
             self.cost_items.append((inventory.BasicItem(item_id), qty))
 
@@ -162,14 +165,11 @@ class RecipeObject:
             cost_info += f"{item.item_emoji} {item.item_name}: {stock} / {qty}\n"
         cost_info += f"Success Rate: {self.success_rate}%"
         cost_embed = sm.easy_embed("Magenta", cost_title, cost_info)
-        if isinstance(self.outcome_item, inventory.BasicItem):
+        if self.item_type is None:
             cost_embed.set_thumbnail(url=self.outcome_item.item_image)
-        elif "Ring" in self.category or "Signet" in self.category:
-            temp_ring = inventory.CustomItem(player_obj.player_id, "R", int(self.outcome_item), self.recipe_name)
-            cost_embed.set_thumbnail(url=sm.get_gear_thumbnail(temp_ring))
-        elif self.recipe_name in gli.available_sovereign:
-            temp_w = inventory.CustomItem(player_obj.player_id, "W", 8, self.recipe_name)
-            cost_embed.set_thumbnail(url=sm.get_gear_thumbnail(temp_w))
+        else:
+            t_obj = inventory.CustomItem(player_obj.player_id, self.item_type, int(self.outcome_item), self.recipe_name)
+            cost_embed.set_thumbnail(url=sm.get_gear_thumbnail(t_obj))
         return cost_embed
 
     async def can_afford(self, player_obj, num_crafts):
@@ -179,7 +179,7 @@ class RecipeObject:
                 return False
         return True
 
-    async def perform_infusion(self, player_obj, num_crafts, ring=False, is_sw=False):
+    async def perform_infusion(self, player_obj, num_crafts):
         result = 0
         labels = ['player_id', 'item_id', 'item_qty']
         batch_df = pd.DataFrame(columns=labels)
@@ -188,9 +188,8 @@ class RecipeObject:
             total_cost = 0 - (num_crafts * qty)
             batch_df.loc[len(batch_df)] = [player_obj.player_id, item.item_id, total_cost]
         await inventory.update_stock(None, None, None, batch=batch_df)
-        if ring or is_sw:
-            outcome = random.randint(1, 100)
-            return 1 if ("Gambler's Masterpiece" not in self.recipe_name or outcome == 1) else 0
+        if self.item_type is not None:
+            return 1 if ("Gambler's Masterpiece" not in self.recipe_name or random.randint(1, 100) == 1) else 0
         # Perform the infusion attempts
         for _ in range(num_crafts):
             if random.randint(1, 100) <= self.success_rate:
@@ -234,16 +233,18 @@ class SelectRecipeView(discord.ui.View):
         category_recipes = recipe_dict.get(self.category, {})
         options_data_list = []
         for recipe_idx, (recipe_name, recipe) in enumerate(category_recipes.items()):
-            if "Ring" in self.category or "Signet" in self.category:
+            if recipe[-1] == "R":
                 option_emoji = "💍"
                 if self.category in ricon:
                     option_emoji = ricon[self.category][recipe_idx]
-            elif self.category == "Sovereign Weapon Infusion":
+            elif recipe[-1] == "W":
                 option_emoji = sov_icon[recipe_idx]
+            elif self.category == "Sovereign Special Infusion":
+                option_emoji = spec_icon[recipe_idx]
             else:
-                result_item = inventory.BasicItem(recipe[-1])
+                result_item = inventory.BasicItem(recipe[-2])
                 option_emoji = result_item.item_emoji
-            options_data_list.append([recipe_name, recipe[-2], option_emoji])
+            options_data_list.append([recipe_name, recipe[-3], option_emoji])
         select_options = [
             discord.SelectOption(
                 emoji=result_emoji, label=recipe_name, description=f"Success Rate {success_rate}%", value=recipe_name
@@ -273,20 +274,27 @@ class CraftView(discord.ui.View):
         self.ctx_obj, self.player_obj, self.recipe_object = ctx_obj, player_obj, recipe_object
         self.embed_msg, self.new_view = None, None
         r_cat, r_name = recipe_object.category, recipe_object.recipe_name
+        if ("Ring" in r_cat or "Signet" in r_cat) or r_cat in ["Sovereign Weapon Infusion", "Sovereign Special Infusion"]:
+            self.remove_item(self.children[2])
+            blood_obj = inventory.BasicItem("Sacred")
+            self.infuse_5.label = "Sacred Blood"
+            self.infuse_5.emoji = blood_obj.item_emoji
+            self.infuse_5.style = gli.button_colour_list[0]
         if "Ring" in r_cat or "Signet" in r_cat:
+            if r_cat != "Sovereign Ring Infusion":
+                self.remove_item(self.children[1])
             self.infuse_1.label = "Infuse Ring"
             if "Gambler's Masterpiece" in r_name:
                 self.infuse_1.label += f" (1%)"
             self.infuse_1.emoji = "💍"
             if r_cat in ricon:
                 self.infuse_1.emoji = ricon[r_cat][recipe_index_dict[r_cat][r_name]]
-            self.remove_item(self.children[2])
-            self.remove_item(self.children[1])
         elif r_cat == "Sovereign Weapon Infusion":
             self.infuse_1.label = "Infuse Weapon"
             self.infuse_1.emoji = sov_icon[recipe_index_dict[r_cat][r_name]]
-            self.remove_item(self.children[2])
-            self.remove_item(self.children[1])
+        elif r_cat == "Sovereign Special Infusion":
+            self.infuse_1.label = "Special Infusion"
+            self.infuse_1.emoji = spec_icon[recipe_index_dict[r_cat][r_name]]
 
     async def run_button(self, interaction, selected_qty):
         if interaction.user.id != self.player_obj.discord_id:
@@ -296,70 +304,61 @@ class CraftView(discord.ui.View):
             await interaction.response.edit_message(embed=self.embed_msg, view=self.new_view)
             return
         self.new_view = CraftView(self.ctx_obj, self.player_obj, self.recipe_object)
+        item_tier, full_inv = 0 if self.recipe_object.item_type is None else int(self.recipe_object.outcome_item), False
+        target_qty = 0 if self.recipe_object.item_type is None else 1
         # Handle cannot afford response
-        if not await self.recipe_object.can_afford(self.player_obj, selected_qty):
+        if not await self.recipe_object.can_afford(self.player_obj, target_qty):
             self.embed_msg = await self.recipe_object.create_cost_embed(self.player_obj)
             self.embed_msg.add_field(name="Not Enough Materials!",
                                      value="Please come back when you have more materials.", inline=False)
             await interaction.response.edit_message(embed=self.embed_msg, view=self.new_view)
             return
-        is_ring = "Ring" in self.recipe_object.category or "Signet" in self.recipe_object.category
-        is_sw = "Sovereign Weapon Infusion" == self.recipe_object.category
-        item_tier = 8 if is_sw else int(self.recipe_object.outcome_item) if is_ring else 0
-        full_inv, infuse_item_type = False, None
-        if is_ring:
-            full_inv, infuse_item_type = await inventory.check_capacity(self.player_obj.player_id, "R"), "R"
-        elif is_sw:
-            full_inv, infuse_item_type = await inventory.check_capacity(self.player_obj.player_id, "W"), "W"
-        if full_inv:
-            type_name = inventory.custom_item_dict[infuse_item_type]
-            header, description = "Full Inventory!", f"Please make space in your {type_name.lower()} inventory."
-            self.embed_msg.add_field(name=header, value=description, inline=False)
-            self.new_view = CraftView(self.ctx_obj, self.player_obj, self.recipe_object)
-            await interaction.response.edit_message(embed=self.embed_msg, view=self.new_view)
-            return
-        result = await self.recipe_object.perform_infusion(self.player_obj, selected_qty, ring=is_ring, is_sw=is_sw)
-        self.embed_msg = await self.recipe_object.create_cost_embed(self.player_obj)
-        is_sacred = random.randint(1, 100) <= 5 if is_sw or (is_ring and item_tier == 8) else False
-        class_type, item_tier = ("Sacred", 9) if is_sacred else ("Sovereign", 8)
+        if self.recipe_object.item_type is not None:
+            is_sacred = False if item_tier != 8 else True if selected_qty == 5 or random.randint(1, 100) <= 5 else False
+            # Confirm inventory space
+            full_inv = await inventory.check_capacity(self.player_obj.player_id, self.recipe_object.item_type)
+            if full_inv:
+                type_name = inventory.custom_item_dict[self.recipe_object.item_type]
+                header, description = "Full Inventory!", f"Please make space in your {type_name.lower()} inventory."
+                self.embed_msg.add_field(name=header, value=description, inline=False)
+                self.new_view = CraftView(self.ctx_obj, self.player_obj, self.recipe_object)
+                await interaction.response.edit_message(embed=self.embed_msg, view=self.new_view)
+                return
         # Handle infusion
-        if is_ring and result == 1:
-            # Handle ring
-            new_ring = inventory.CustomItem(self.player_obj.player_id, "R", item_tier,
-                                            self.recipe_object.recipe_name, is_sacred)
-            new_ring.roll_values[0] = random.randint(0, 30) if new_ring.item_tier in [8, 9] else rrd[
-                new_ring.item_base_type]
-            # Handle ring exceptions.
-            if new_ring.item_base_type == "Crown of Skulls":
-                new_ring.roll_values[2] = new_ring.roll_values[0]
-                new_ring.roll_values[0], new_ring.roll_values[1] = 1000, 0
-            await inventory.add_custom_item(new_ring)
-            self.embed_msg = await new_ring.create_citem_embed()
-            await interaction.response.edit_message(embed=self.embed_msg, view=self.new_view)
-            if new_ring.item_base_type in gli.sovereign_item_list:
-                await sm.send_notification(self.ctx_obj, self.player_obj, class_type, new_ring.item_base_type)
-            return
-        elif is_sw and result == 1:
-            # Sovereign Weapon
-            new_weapon = inventory.CustomItem(self.player_obj.player_id, "W", item_tier,
-                                              base_type=self.recipe_object.recipe_name, is_sacred=is_sacred)
-            await inventory.add_custom_item(new_weapon)
-            self.embed_msg = await new_weapon.create_citem_embed()
-            await interaction.response.edit_message(embed=self.embed_msg, view=self.new_view)
-            await sm.send_notification(self.ctx_obj, self.player_obj, class_type, new_weapon.item_base_type)
-            return
-        # Handle non-ring failure
+        result = await self.recipe_object.perform_infusion(self.player_obj, target_qty)
+        self.embed_msg = await self.recipe_object.create_cost_embed(self.player_obj)
         if result == 0:
+            # Handle Failure
             header, description = "Infusion Failed!", "I guess it's just not your day today. How about another try?"
             self.embed_msg.add_field(name=header, value=description, inline=False)
             self.new_view = CraftView(self.ctx_obj, self.player_obj, self.recipe_object)
             await interaction.response.edit_message(embed=self.embed_msg, view=self.new_view)
             return
-        # Handle non-ring success
-        outcome_item = self.recipe_object.outcome_item
-        header, description = "Infusion Successful!", f"\n{outcome_item.item_emoji} {result:,}x {outcome_item.item_name}"
-        self.embed_msg.add_field(name=header, value=description, inline=False)
+        elif self.recipe_object.item_type is None:
+            # Non-Gear Success
+            outcome_item = self.recipe_object.outcome_item
+            header, description = "Infusion Successful!", f"\n{outcome_item.item_emoji} {result:,}x {outcome_item.item_name}"
+            self.embed_msg.add_field(name=header, value=description, inline=False)
+            await interaction.response.edit_message(embed=self.embed_msg, view=self.new_view)
+            return
+        # Handle Gear Success
+        classification, item_tier = ("Sacred", 9) if is_sacred else ("Sovereign", 8)
+        new_item = inventory.CustomItem(self.player_obj.player_id, self.recipe_object.item_type, item_tier,
+                                        base_type=self.recipe_object.recipe_name, is_sacred=is_sacred)
+        # Handle Ring Exceptions
+        if self.recipe_object.item_type == "R":
+            new_item.roll_values[0] = random.randint(0, 30) if new_item.item_tier in [8, 9] \
+                else rrd[new_item.item_base_type]
+            if new_item.item_base_type == "Crown of Skulls":
+                new_item.roll_values[2] = new_item.roll_values[0]  # Store resonance in slot 3
+                new_item.roll_values[0], new_item.roll_values[1] = 1000, 0
+            elif new_item.item_base_type == "Chromatic Tears":
+                new_item.roll_values[2] = 25  # Store static resonance in slot 3
+                new_item.roll_values[0], new_item.roll_values[1] = 10, 500
+        await inventory.add_custom_item(new_item)
+        self.embed_msg = await new_item.create_citem_embed()
         await interaction.response.edit_message(embed=self.embed_msg, view=self.new_view)
+        await sm.send_notification(self.ctx_obj, self.player_obj, classification, new_item.item_base_type)
         return
 
     @discord.ui.button(label="Infuse 1", style=discord.ButtonStyle.success, emoji="1️⃣")

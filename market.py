@@ -21,8 +21,8 @@ import itemdata
 
 lotus_list = [itemdata.itemdata_dict[key] for key in itemdata.itemdata_dict.keys() if "Lotus" in key]
 fish_list = [itemdata.itemdata_dict[key] for key in itemdata.itemdata_dict.keys() if "Fish" in key]
-Fleur_Name = "Fleur, Oracle of the True Laws"
-Yubelle = "Yubelle, Adjudicator the True Laws"
+Fleur_Name = "Fleur, The Oracle"
+Yubelle = "Yubelle, The Adjudicator"
 description_list = [
             "These are our best sellers.",
             "Browse our common wares.",
@@ -334,7 +334,7 @@ class LotusPurchaseView(discord.ui.View):
             await interaction.response.edit_message(embed=self.embed_msg, view=None)
             return
         # Handle regular lotus.
-        if self.lotus_object.item_id != "Lotus10":
+        if self.lotus_object.item_id not in ["Lotus10", "Lotus11"]:
             if token_stock < self.token_cost:
                 temp_embed.description = "You'll have to come back with something a little more convincing."
                 await interaction.response.edit_message(embed=temp_embed, view=new_view)
@@ -419,7 +419,7 @@ async def cathedral_cost_msg(token_obj, token_stock, essence_obj):
 
 
 async def changeling_cost_msg(token_obj, token_stock, ore_obj):
-    Mysmir = "Mysmir, Changeling of the True Laws"
+    Mysmir = "Mysmir, The Changeling"
     temp_embed = discord.Embed(colour=discord.Colour.blurple(), title=Mysmir, description="")
     msg = (f"All things are malleable. One simply requires the right materials. "
            f"Shall I give you the {ore_obj.item_emoji} {ore_obj.item_name} that you seek?")
