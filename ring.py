@@ -78,7 +78,7 @@ async def display_ring_values(e_ring):
             continue
         output += f"{augment} {attr_name.replace('X', f'{value:,}')}\n"
     # Handle sovereign rings.
-    if e_ring.item_tier == 8 and e_ring.item_base_type not in ["Hadal's Teardrop"]:
+    if e_ring.item_tier == 8 and e_ring.item_base_type not in ["Hadal's Raindrop"]:
         resonance_index = int(e_ring.roll_values[0])
         resonance = f"{augment} Resonance [{await tarot.get_resonance(resonance_index)}]\n"
         if player_obj is not None and player_obj.equipped_tarot != "":

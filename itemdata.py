@@ -13,9 +13,9 @@ def build_item_dict(input_dict, input_data, starting_index=1, category="Misc", u
 
 
 # Fae Data List
-fae_emoji_list = ["<:Fae0:1249158371337306112>", "<:Fae1:1249158373925060759>", "<:Fae2:1249158374680166544>",
-                  "<:Fae3:1249158375543930911>", "<:Fae4:1249158376416346184>", "<:Fae5:1249158402706378813>",
-                  "<:Fae6:1249230107537838101>", "<:Fae7:1249158403486519297>", "<:Fae8:1249158403952214087>"]
+fae_emoji_list = ["<:Fae0:1274786282010316913>", "<:Fae1:1274786289782358097>", "<:Fae2:1274786296560091189>",
+                  "<:Fae3:1274786324196364298>", "<:Fae4:1274786339065168078>", "<:Fae5:1274786346740879411>",
+                  "<:Fae6:1274786355104186378>", "<:Fae7:1274786363052654777>", "<:Fae8:1274786370497417330>"]
 fae_data = [[None, f'Fae Core ({element})', 100, 1, emoji,
              f'The core harvested from a {element.lower()} fae spirit. Brimming with elemental energies.', 500]
             for i, element, emoji in zip(range(9), gli.element_names, fae_emoji_list)]
@@ -106,37 +106,37 @@ flame_data = [[None, 'Purgatorial Flame', 50, 3, '<a:eshadow2:114165346896525721
 itemdata_dict = build_item_dict(itemdata_dict, flame_data, category="Flame")
 
 # Fragment Item Data
-fragment_data = [[None, 'Fragmentized Void', 100, 5, '<a:elootitem:1144477550379274322>',
+fragment_data = [[None, 'Fragmentized Void', 100, 5, '<:Frag1:1274785172658847816>',
                   'A fragment containing the essence of the void. Used for forging, infusion and crafting.', 0],
-                 [None, 'Fragmentized Wish', 100, 6, '<a:elootitem:1144477550379274322>',
+                 [None, 'Fragmentized Wish', 100, 6, '<:Frag2:1274785184692306092>',
                   'A fragment containing the essence of a wish. Used for forging, infusion and crafting.', 0],
-                 [None, 'Fragmentized Abyss', 100, 7, '<a:elootitem:1144477550379274322>',
+                 [None, 'Fragmentized Abyss', 100, 7, '<:Frag3:1274785194192408631>',
                   'A fragment containing the essence of the abyss. Used for forging, infusion and crafting.', 0],
-                 [None, 'Fragmentized Divinity', 100, 8, '<a:elootitem:1144477550379274322>',
+                 [None, 'Fragmentized Divinity', 100, 8, '<:Frag4:1274785216380272690>',
                   'A fragment containing the essence of divinity. Used for forging, infusion and crafting.', 0]]
 itemdata_dict = build_item_dict(itemdata_dict, fragment_data, category="Fragment")
 
 # Crystallized List Data
 crystallized_data = [
-    [None, 'Crystallized Void', 100, 5, '<a:evoid:1145520260573827134>',
+    [None, 'Crystallized Void', 100, 5, '<:Cry1:1274785116572614856>',
      'A crystal containing the essence of the void. Used for forging, infusion and crafting.', 0],
-    [None, 'Crystallized Wish', 100, 6, '<a:evoid:1145520260573827134>',
+    [None, 'Crystallized Wish', 100, 6, '<:Cry2:1274785124491460738>',
      'A crystal containing the essence of a wish. Used for forging, infusion and crafting.', 0],
-    [None, 'Crystallized Abyss', 100, 7, '<a:evoid:1145520260573827134>',
+    [None, 'Crystallized Abyss', 100, 7, '<:Cry3:1274785135081820170>',
      'A crystal containing the essence of the abyss. Used for forging, infusion and crafting.', 0],
-    [None, 'Crystallized Divinity', 100, 8, '<a:evoid:1145520260573827134>',
+    [None, 'Crystallized Divinity', 100, 8, '<:Cry4:1274785143218769981>',
      'A crystal containing the essence of divinity. Used for forging, infusion and crafting.', 0]]
 itemdata_dict = build_item_dict(itemdata_dict, crystallized_data, category="Crystal")
 
 # Skull List Data
-skull_data = [[None, 'Cursed Golden Skull', 1, 5, '<:Skull1:1243422766775009420>',
+skull_data = [[None, 'Cursed Golden Skull', 1, 5, '<:Skull1:1274786865211244575>',
                'A skull of pure gold that whispers to you softly.', 100000],
-              [None, 'Haunted Golden Skull', 10, 6, '<:Skull2:1243422767567736852>',
+              [None, 'Haunted Golden Skull', 10, 6, '<:Skull2:1274786874355093514>',
                "A golden skull that exudes darkness. Placing it against your ear is clearly a bad idea.", 1000000],
-              [None, 'Radiant Golden Skull', 100, 7, '<:Skull3:1243422764971462686>',
+              [None, 'Radiant Golden Skull', 100, 7, '<:Skull3:1274786883771301941>',
                "A golden skull with a serene aura. Yet screaming can occasionally be heard from within."
                " [Ultra Rare]", 10000000],
-              [None, 'Prismatic Golden Skull', 1000, 8, '<:Skull4:1243422765885952000>',
+              [None, 'Prismatic Golden Skull', 1000, 8, '<:Skull4:1274786891677302784>',
                "A golden skull that sparkles extraordinarily. Beware the lustful voices calling your name."
                " [Ultimate Rare]", 100000000]]
 itemdata_dict = build_item_dict(itemdata_dict, skull_data, category="Skull")
@@ -153,33 +153,33 @@ for index in range(6):
 itemdata_dict = build_item_dict(itemdata_dict, unrefined_void_data, category="Void")
 
 # Unrefined Misc Items List Data
-unrefined_misc_data = [[None, 'Unrefined Dragon Wings', 75, 4, '<:Wings4:1254505671542444094>',
+unrefined_misc_data = [[None, 'Unrefined Dragon Wings', 75, 4, '<:Wings4:1275576140202770536>',
                         'Refine for 75% chance to receive tier 2-4 dragon wings.', 0],
-                       [None, 'Unrefined Demon Greaves', 75, 4, '<:Greaves4:1254505711791112324>',
+                       [None, 'Unrefined Demon Greaves', 75, 4, '<:Greaves4:1275575740036812830>',
                         'Refine for 75% chance to receive a tier 2-4 demon Greaves.', 0],
-                       [None, 'Unrefined Paragon Crest', 75, 4, '<:Crest4:1254505737259057202>',
+                       [None, 'Unrefined Paragon Crest', 75, 4, '<:Crest4:1275576371053203526>',
                         'Refine for 75% chance to receive a tier 2-4 paragon crest.', 0]]
 itemdata_dict = build_item_dict(itemdata_dict, unrefined_misc_data, category="Unrefined")
 
 # Unrefined Gems List Data
-unrefined_gem_data = [[None, 'Unrefined Dragon Gem', 75, 2, '<:Gem2:1242206600555532421>',
+unrefined_gem_data = [[None, 'Unrefined Dragon Gem', 75, 2, '<:Gem_2:1275569715078627359>',
                        'Refine for 75% chance to receive tier 2-4 dragon gem.', 0],
-                      [None, 'Unrefined Demon Gem', 75, 3, '<:Gem3:1242206601385873498>',
+                      [None, 'Unrefined Demon Gem', 75, 3, '<:Gem_3:1275569723568029786>',
                        'Refine for 75% chance to receive a tier 2-4 demon gem.', 0],
-                      [None, 'Unrefined Paragon Gem', 75, 4, '<:Gem4:1242206602405347459>',
+                      [None, 'Unrefined Paragon Gem', 75, 4, '<:Gem_4:1275569729737719879>',
                        'Refine for 75% chance to receive a tier 2-4 paragon gem.', 0]]
 itemdata_dict = build_item_dict(itemdata_dict, unrefined_gem_data, category="Gem")
 
 # Unrefined Jewel List Data
-unrefined_jewel_data = [[None, 'Unrefined Dragon Jewel', 75, 5, '<:Gem5:1242206603441078363>',
+unrefined_jewel_data = [[None, 'Unrefined Dragon Jewel', 75, 5, '<:Gem_5:1275569736205340773>',
                          'Refine for 50% chance to receive tier 5-8 dragon jewel.', 0],
-                        [None, 'Unrefined Demon Jewel', 75, 5, '<:Gem5:1242206603441078363>',
+                        [None, 'Unrefined Demon Jewel', 75, 5, '<:Gem_5:1275569736205340773>',
                          'Refine for 50% chance to receive a tier 5-8 demon jewel.', 0],
-                        [None, 'Unrefined Paragon Jewel', 75, 5, '<:Gem5:1242206603441078363>',
+                        [None, 'Unrefined Paragon Jewel', 75, 5, '<:Gem_5:1275569736205340773>',
                          'Refine for 50% chance to receive a tier 5-8 paragon jewel.', 0],
-                        [None, 'Unrefined Arbiter Jewel', 75, 7, '<:Gem7:1248490896379478129>',
+                        [None, 'Unrefined Arbiter Jewel', 75, 7, '<:Gem_7:1275569749173993503>',
                          'Refine for 50% chance to receive a tier 6-8 arbiter jewel.', 0],
-                        [None, 'Unrefined Incarnate Jewel', 75, 8, '<:Gem8:1242206660513108029>',
+                        [None, 'Unrefined Incarnate Jewel', 75, 8, '<:Gem_8:1275569754932777072>',
                          'Refine for 50% chance to receive a tier 7-8 incarnate jewel.', 0]]
 itemdata_dict = build_item_dict(itemdata_dict, unrefined_jewel_data, category="Jewel")
 
@@ -222,55 +222,55 @@ for index, row in enumerate(essence_data):
 itemdata_dict = build_item_dict(itemdata_dict, essence_data, category="Essence", unique_index=True)
 
 # Lotus List Data
-lotus_data = [[None, 'Lotus of Nightmares', 100, 8, '<:Lotus1:1266045098907402370>',
+lotus_data = [[None, 'Lotus of Nightmares', 100, 8, '<:Lotus1:1274786435869704275>',
                'Used for Divine Synthesis (Weapon).  Increases the tier to 8. [Ultra Rare]', 0],
-              [None, 'Lotus of Prosperity', 100, 8, '<:Lotus2:1266045100262162532>',
+              [None, 'Lotus of Prosperity', 100, 8, '<:Lotus2:1274786443558129745>',
                'Used for Divine Purification (Amulet). Increases the tier to 8. [Ultra Rare]', 9999999],
-              [None, 'Lotus of Serenity', 100, 8, '<:Lotus3:1266045101403275354>',
+              [None, 'Lotus of Serenity', 100, 8, '<:Lotus3:1274786460486336605>',
                'Used for Divine Purification (Greaves).  Increases the tier to 8. [Ultra Rare]', 0],
-              [None, 'Lotus of Freedom', 100, 8, '<:Lotus4:1266045102015516673>',
+              [None, 'Lotus of Freedom', 100, 8, '<:Lotus4:1274786468577021982>',
                'Used for Divine Purification (Wings). Increases the tier to 8. [Ultra Rare]', 0],
-              [None, 'Lotus of Eternity', 100, 8, '<:Lotus5:1266045097489989693>',
+              [None, 'Lotus of Eternity', 100, 8, '<:Lotus5:1274786474994176051>',
                'Used for Divine Melding (Jewels). Increases the tier to 8. [Ultra Rare]', 0],
-              [None, 'Lotus of Abundance', 100, 8, '<:Lotus6:1266045152833703937>',
+              [None, 'Lotus of Abundance', 100, 8, '<:Lotus6:1274786482141270036>',
                'Used for Divine Purification (Armour). Increases the tier to 8. [Ultra Rare]', 0],
-              [None, 'Lotus of Domination', 100, 8, '<:Lotus7:1266045154171687026>',
+              [None, 'Lotus of Domination', 100, 8, '<:Lotus7:1274786490790187192>',
                'Used for Divine Purification (Crest).  Increases the tier to 8. [Ultra Rare]', 0],
-              [None, 'Lotus of Divergence', 100, 8, '<:Lotus8:1266045155039772775>',
+              [None, 'Lotus of Divergence', 100, 8, '<:Lotus8:1274786498218299546>',
                'Used for Divine Mutation (Insignia).  Increases the tier to 8. [Ultra Rare]', 0],
-              [None, 'Lotus of Revelations', 100, 8, '<:Lotus9:1266045156323364865>',
+              [None, 'Lotus of Revelations', 100, 8, '<:Lotus9:1274786511023378482>',
                'Used for Divine Synthesis (Tarot).  Increases the tier to 8. [Ultra Rare]', 0],
-              [None, 'Divine Lotus', 100, 8, '<:Lotus10:1266045157418074236>',
+              [None, 'Divine Lotus', 100, 8, '<:Lotus10:1274786518111748177>',
                "The key to divinity and the object of the Arbiter's worship. [Uber Rare]", 0],
-              [None, 'Rainbow Lotus', 100, 8, '<:Lotus11:1266045151718150226>',
+              [None, 'Rainbow Lotus', 100, 8, '<:Lotus11:1274786525560701132>',
                'A mythical lotus dyed by the colours of fate. [Ultimate Rare]', 0]]
 itemdata_dict = build_item_dict(itemdata_dict, lotus_data, category="Lotus")
 
 # Gemstone Item Data
 gemstone_data = [
-    [None, 'Blazing Ruby', 100, 6, '<:Gem_0:1274769761280065587>',
+    [None, 'Blazing Ruby', 100, 6, '<:Gem0:1274785255819317299>',
      "Pulsing with volcanic force, this gem radiates with an intense heat.", 0],
-    [None, 'Drowned Sapphire', 100, 6, '<:Gem_1:1274769816623779862>',
+    [None, 'Drowned Sapphire', 100, 6, '<:Gem1:1274785264396402798>',
      "Formed from colliding waves and tides, this gem holds the depths of the ocean within.", 0],
-    [None, 'Silent Topaz', 100, 6, '<:Gem_2:1274769817945247765>',
+    [None, 'Silent Topaz', 100, 6, '<:Gem2:1274785278053060771>',
      "Crackling with electricity, this gem is often used as an energy source.", 0],
-    [None, 'Ancient Agate', 100, 6, '<:Gem_3:1274769818939293760>',
+    [None, 'Ancient Agate', 100, 6, '<:Gem3:1274785287939166313>',
      "Hardened by the earth, this gem has a high density and is exceptionally sturdy.", 0],
-    [None, 'Whispering Emerald', 100, 6, '<:Gem_4:1274769756708143195>',
+    [None, 'Whispering Emerald', 100, 6, '<:Gem4:1274785308189393048>',
      "A destructive gale condensed into a single stone, air leaks out from this gem creating a gentle breeze.", 0],
-    [None, 'Arctic Zircon', 100, 6, '<:Gem_5:1274769757694070824>',
+    [None, 'Arctic Zircon', 100, 6, '<:Gem5:1274785316858757307>',
      "Despite the chilling aura, this gem's pure surface mirrors it's surroundings.", 0],
-    [None, 'Haunted Obsidian', 100, 6, '<:Gem_6:1274769758625202227>',
+    [None, 'Haunted Obsidian', 100, 6, '<:Gem6:1274785324819812413>',
      "Dark and ominous, this small gem casts a foreboding shadow.", 0],
-    [None, 'Prismatic Opal', 100, 6, '<:Gem_7:1274769759552012288>',
+    [None, 'Prismatic Opal', 100, 6, '<:Gem7:1274785332465762375>',
      "Gleaming with radiance, it shines with all kinds of vibrant colours.", 0],
-    [None, 'Spatial Lapis', 100, 6, '<:Gem_8:1274769819803189269>',
+    [None, 'Spatial Lapis', 100, 6, '<:Gem8:1274785341081124915>',
      "Shimmering endlessly, the inside of this gem is boundless like the starry night.", 0],
-    [None, 'Soul Diamond', 100, 6, '<:Gem_9:1274769815898296393>',
+    [None, 'Soul Diamond', 100, 6, '<:Gem9:1274785353299136542>',
      "A gem of crystallized soul, a priceless treasure.", 0],
-    [None, 'Aurora Tear', 100, 7, '<:Gemstone10:1247725283990175756>',
+    [None, 'Aurora Tear', 100, 7, '<:Gem10:1274786217375830027>',
      "If you gaze within you can make out the remnants of the dream from which it was formed.", 2000000],
-    [None, 'Stone of the True Void', 100, 8, '<:Gemstone11:1243800661385023529>',
+    [None, 'Stone of the True Void', 100, 8, '<:Gem11:1274786225978609764>',
      "An impossible gem, it embodies the infinite nothingness within the depths of the void. [Uber Rare]", 0]]
 itemdata_dict = build_item_dict(itemdata_dict, gemstone_data, starting_index=0, category="Gemstone")
 
@@ -296,50 +296,50 @@ for (fish_name, fish_tier) in fish_list:
 itemdata_dict = build_item_dict(itemdata_dict, fish_data, starting_index=1, category="Fish")
 
 # Heart Item Data
-heart_data = [[None, 'Radiant Heart', 100, 6, '<a:elootitem:1144477550379274322>', 'Used for various infusions.', 0],
-              [None, 'Chaos Heart', 100, 7, '<a:elootitem:1144477550379274322>', 'Used for various infusions.', 0]]
+heart_data = [[None, 'Radiant Heart', 100, 6, '<Heart1:1274786406182420615>', 'Used for various infusions.', 0],
+              [None, 'Chaos Heart', 100, 7, '<Heart2:1274786413434507266>', 'Used for various infusions.', 0]]
 itemdata_dict = build_item_dict(itemdata_dict, heart_data, category="Heart")
 
 # Uncategorized Item Data
 uncategorized_data = [
-    ['Catalyst', 'Gemstone Catalyst', 100, 5, '<:Cata:1274770808128143372>',
+    ['Catalyst', 'Gemstone Catalyst', 100, 5, '<:Cata:1274786559996198944>',
      "A hollow transparent gemstone. It's true nature can be revealed through elemental infusion.", 500000],
-    ["Hammer", 'Astral Hammer', 80, 2, '<:Hammer:1243800065013714955>',
+    ["Hammer", 'Astral Hammer', 80, 2, '<:Hammer:1274787429383147551>',
      'Used to reroll specific item rolls. Works on tier 4 and lower gear items.', 50000],
-    ["Pearl", 'Stellar Pearl', 75, 4, '<:Pearl:1243800038195331122>',
+    ["Pearl", 'Stellar Pearl', 75, 4, '<:Pearl:1274787439692615680>',
      'Augments an item roll. Increases the tier by 1.', 50000],
     ["Matrix", 'Socket Matrix', 5, 3, '<a:elootitem:1144477550379274322>',
      '5% Chance to add a socket to a gear item.', 5000],
     ['Chest', 'Chest', 100, 1, '<a:elootitem:1144477550379274322>', 'Contains a random item.', 50000],
     ['Shard', "Sovereign Shard", 100, 7, '<a:elootitem:1144477550379274322>',
      "A fragment of an ancient weapon. Perhaps it can be reforged.", 0],
-    ['Scrap', 'Equipment Scrap', 100, 1, '<:Scrap:1243800038866686053>',
+    ['Scrap', 'Equipment Scrap', 100, 1, '<:Scrap:1274787448681005158>',
      "One of many countless pieces of Pandora's Legendary Hammer.", 0],
-    ['Compass', 'Illusory Compass', 100, 6, '<:Compass:1243800035007922248>',
+    ['Compass', 'Illusory Compass', 100, 6, '<:Compass:1274787464363380766>',
      'An enigmatic compass said to be capable of locating the Spire of Illusions.', 500000],
-    ['DarkStar', 'Dark Star of Shattered Dreams', 100, 8, '<:DarkStar:1274772576605962292>',
+    ['DarkStar', 'Dark Star of Shattered Dreams', 100, 8, '<:DarkStar:1274786619446267954>',
      "Legend tells of a star engulfed in black flames that heralds great disasters. "
      "The old records describe visions of the dark star blocking out the sun leaving chaos in it's wake."
      " [Uber Rare]", 0],
-    ['LightStar', 'Glittering Star of Fractured Hearts', 100, 8, '<:LightStar:1274772578069909534>',
+    ['LightStar', 'Glittering Star of Fractured Hearts', 100, 8, '<:LightStar:1274786610411475105>',
      "Legend tells of a star often spotted by lovers as it dazzles and sparkles amidst the black night. "
      "The old records indicate that the star was so beautiful it would steal the hearts of those who saw it."
      " [Uber Rare]", 0],
     ['Nadir', 'Phantasm of Nadir', 100, 8, '<a:elootitem:1144477550379274322>',
      "Amidst the vastest oceans, this tiny fish is exceedingly elusive. They dwell in the deepest trenches. "
      "Their pitch-black scales conceal precious and unique gems that grow inside their small bodies. [Ultimate Rare]", 0],
-    ['RoyalCoin', 'Royal Lotus Coin', 100, 8, '<:Royal_Lotus_Coin:1236080235313893417>',
+    ['RoyalCoin', 'Royal Lotus Coin', 100, 8, '<:rCoin:1274786667277848657>',
      "A sacred coin blessed by gods. It is said to be indestructible.", 0],
-    ['Nephilim', "Nephilim's Wicked Heart", 100, 8, '<:Nephilim:1274772579126738944>',
+    ['Nephilim', "Nephilim's Wicked Heart", 100, 8, '<:Nephilim:1274786631903084646>',
      "The heart of the lotus incarnate. It's divine luster has long since withered away "
      "leaving a lingering resentment in it's place. [Ultimate Rare]", 0],
-    ['Pandora', "Pandora's Twinkling Heart", 100, 8, '<:Pandora:1274772575150411837>',
+    ['Pandora', "Pandora's Twinkling Heart", 100, 8, '<:Pandora:1274786639754952746>',
      "The spiritual heart of the celestial paragon. "
      "At the dawn of creation Pandora bore her celestial heart as a power source for her hammer. [Ultimate Rare]", 0],
-    ['Ruler', "Ruler's Crown Jewel", 100, 9, '<:Ruler:1267603361763426405>',
+    ['Ruler', "Ruler's Crown Jewel", 100, 9, '<:r_jewel:1274786590216159422>',
      "A jewel of unmatched quality, unparalleled value, and unfathomable beauty. A truly unique treasure."
      " [Ultimate Rare]", 0],
-    ['Sacred', "Sacred Blood", 100, 9, '<:Sacred:1274772575981011127>',
+    ['Sacred', "Sacred Blood", 100, 9, '<:Sacred:1274786598336331807>',
      "Rare drop from raid bosses. Can be optionally consumed as an additional cost to guarantee a 'Sacred' "
      "outcome during infusion. It can also be used to upgrade tier 8 gear to tier 9."
      " [Ultimate Rare]", 0],

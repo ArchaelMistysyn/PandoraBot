@@ -10,9 +10,6 @@ from apscheduler.triggers.cron import CronTrigger
 from datetime import datetime as dt
 from zoneinfo import ZoneInfo
 
-# Bot imports
-import battleengine
-
 # Data Imports
 import globalitems as gli
 import sharedmethods as sm

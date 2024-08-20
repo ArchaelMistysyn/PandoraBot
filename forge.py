@@ -620,21 +620,21 @@ class RefSelectView(discord.ui.View):
         max_values=1,
         options=[
             discord.SelectOption(
-                emoji="<a:eenergy:1145534127349706772>", label="Weapon", description="Refine weapons."),
+                emoji="<:Saber5:1275575137537888269>", label="Weapon", description="Refine weapons."),
             discord.SelectOption(
-                emoji="<a:eenergy:1145534127349706772>", label="Armour", description="Refine armours."),
+                emoji="<:Armour5:1275570612089389179>", label="Armour", description="Refine armours."),
             discord.SelectOption(
-                emoji="<a:eenergy:1145534127349706772>", label="Greaves", description="Refine Greaves."),
+                emoji="<:Greaves5:1275575746890301632>", label="Greaves", description="Refine Greaves."),
             discord.SelectOption(
-                emoji="<a:eenergy:1145534127349706772>", label="Amulet", description="Refine amulets."),
+                emoji="<:Amulet5:1275570527423172609>", label="Amulet", description="Refine amulets."),
             discord.SelectOption(
-                emoji="<:eore:1145534835507593236>", label="Dragon Wing", description="Refine wings."),
+                emoji="<:Wings5:1275576146615992452>", label="Dragon Wing", description="Refine wings."),
             discord.SelectOption(
-                emoji="<:esoul:1145520258241806466>", label="Paragon Crest", description="Refine crests."),
+                emoji="<:Crest5:1275576378502156369>", label="Paragon Crest", description="Refine crests."),
             discord.SelectOption(
-                emoji="<a:eenergy:1145534127349706772>", label="Gem", description="Refine gems."),
+                emoji="<:Gem_4:1275569729737719879>", label="Gem", description="Refine gems."),
             discord.SelectOption(
-                emoji="<a:eenergy:1145534127349706772>", label="Jewel", description="Refine jewels.")
+                emoji="<:Gem_8:1275569754932777072>", label="Jewel", description="Refine jewels.")
         ]
     )
     async def ref_select_callback(self, interaction: discord.Interaction, ref_select: discord.ui.Select):
@@ -648,16 +648,30 @@ class RefineItemView(discord.ui.View):
     def __init__(self, player_user, selected_type):
         super().__init__(timeout=None)
         menu_dict = {
-            "W": [1, ["Void (100%)"], ["✅"], [5], ["Void1"]],
-            "A": [1, ["Void (80%)"], ["✅"], [5], ["Void2"]],
-            "V": [2, ["Greaves (75%)", "Void (80%)"], ["✅", "✅"], [4, 5], ["Unrefined2", "Void3"]],
-            "Y": [1, ["Void (80%)"], ["✅"], [5], ["Void4"]],
-            "G": [2, ["Wing (75%)", "Void (80%)"], ["✅", "✅"], [4, 5], ["Unrefined1", "Void5"]],
-            "C": [2, ["Crest (75%)", "Void (80%)"], ["✅", "✅"], [4, 5], ["Unrefined3", "Void6"]],
-            "Gem": [3, ["Dragon (75%)", "Demon (75%)", "Paragon (75%)"], ["✅", "✅", "✅"],
+            "W": [1, ["Void (100%)"],
+                  ["<:Saber5:1275575137537888269>"],
+                  [5], ["Void1"]],
+            "A": [1, ["Void (80%)"],
+                  ["<:Armour5:1275570612089389179>"],
+                  [5], ["Void2"]],
+            "V": [2, ["Greaves (75%)", "Void (80%)"],
+                  ['<:Greaves4:1275575740036812830>', "<Greaves5:1275575746890301632>"],
+                  [4, 5], ["Unrefined2", "Void3"]],
+            "Y": [1, ["Void (80%)"],
+                  ["<Amulet5:1275570527423172609>"],
+                  [5], ["Void4"]],
+            "G": [2, ["Wing (75%)", "Void (80%)"],
+                  ["<:Wings4:1275576140202770536>", "<:Wings5:1275576146615992452>"],
+                  [4, 5], ["Unrefined1", "Void5"]],
+            "C": [2, ["Crest (75%)", "Void (80%)"],
+                  ["<:Crest4:1275576371053203526>", "<:Crest5:1275576378502156369>"],
+                  [4, 5], ["Unrefined3", "Void6"]],
+            "Gem": [3, ["Dragon (75%)", "Demon (75%)", "Paragon (75%)"],
+                    ["<:Gem_2:1275569715078627359>", "<:Gem_3:1275569723568029786>", "<:Gem_4:1275569729737719879>"],
                     [4, 4, 4], ["Gem1", "Gem2", "Gem3"]],
             "Jewel": [5, ["Dragon (50%)", "Demon (50%)", "Paragon (50%)", "Arbiter (50%)", "Incarnate (50%)"],
-                      ["✅", "✅", "✅", "✅", "✅"],
+                      ["<:Gem_5:1275569736205340773>", "<:Gem_5:1275569736205340773>", "<:Gem_5:1275569736205340773>",
+                       "<:Gem_7:1275569749173993503>", "<:Gem_8:1275569754932777072>"],
                       [5, 5, 5, 6, 7], ["Jewel1", "Jewel2", "Jewel3", "Jewel4", "Jewel5"]]}
         self.selected_type = selected_type
         self.player_user = player_user

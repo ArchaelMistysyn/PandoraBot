@@ -123,20 +123,20 @@ sov_icon = ["<:p_hammer:1266169346338853015>", "<:lotus_sword:126616938205322045
             "<:lotus_sword:1266169382053220457>", "<:lotus_sword:1266169382053220457>"]
 spec_icon = ["<:r_crown:1266169347198423090>"]
 cat_icon = {
-    "Heavenly Infusion": "<:Fae0:1249158371337306112>",
-    "Elemental Infusion": "<:Fae0:1249158371337306112>",
-    "Crystal Infusion": "<:Fae0:1249158371337306112>",
+    "Heavenly Infusion": "<:Fae0:1274786282010316913>",
+    "Elemental Infusion": "<:Cata:1274786559996198944>",
+    "Crystal Infusion": "<:Cry1:1274785116572614856>",
     "Void Infusion": "<:Sword5:1246945708939022367>",
-    "Jewel Infusion": "<:Gem5:1242206603441078363>",
-    "Skull Infusion": "<:Skull4:1243422765885952000>",
-    "Special Infusion": "<:Lotus3:1266045101403275354>",
-    "Elemental Signet Infusion": "<:Signet0:1253839691736678440>",
-    "Primordial Ring Infusion": "<:E_Ring0:1253839617799487568>",
-    "Path Ring Infusion": "<:Signet0:1253839691736678440>",
-    "Fabled Ring Infusion": "<:Signet0:1253839691736678440>",
-    "Sovereign Ring Infusion": "<:twin_rings:1266169349366874204>",
-    "Sovereign Weapon Infusion": "<:p_hammer:1266169346338853015>",
-    "Sovereign Special Infusion": "<:r_crown:1266169347198423090>"}
+    "Jewel Infusion": "<Gem_5:1275569736205340773>",
+    "Skull Infusion": "<:Skull4:1274786891677302784>",
+    "Special Infusion": "<:Lotus3:1274786460486336605>",
+    "Elemental Signet Infusion": "<:Signet0:1275564530088415242>",
+    "Primordial Ring Infusion": "<:E_Ring0:1275563709519106190>",
+    "Path Ring Infusion": "<:Signet0:1275564530088415242>",
+    "Fabled Ring Infusion": "<:lone_ring1:1275566085101326569>",
+    "Sovereign Ring Infusion": "<:twin_rings:1275566143238836295>",
+    "Sovereign Weapon Infusion": "<:p_hammer:1275566048619528252>",
+    "Sovereign Special Infusion": "<:ruler:1275566119343755384>"}
 NPC_name, NPC_description = "Cloaked Alchemist, Sangam", "Alright, what do you need?"
 
 
