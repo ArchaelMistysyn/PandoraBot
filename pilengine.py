@@ -183,7 +183,7 @@ async def generate_and_combine_gear(item_type, start_tier=1, end_tier=8, element
             icon_url = f"{web_url}/botimages/Gear_Icon/{folder}/{sub_folder}{item_type.replace(' ', '_')}"
             icon_url = f"{icon_url}{item_tier}.png" if item_type not in gli.sovereign_item_list else f"{icon_url}.png"
             if item_tier == 9 and item_type not in gli.sovereign_item_list:
-                icon_url = f"{web_url}/botimages/Gear_Icon/{folder}/{sub_folder}{item_type}8.png"
+                icon_url = f"{web_url}/botimages/Gear_Icon/{folder}/{sub_folder}{item_type.replace(' ', '_')}8.png"
             if item_type == "Ring" or item_type in gli.ring_item_type:
                 item_type = gli.ring_item_type[item_tier - 1]
                 sub_folder, sub_dir = f"{item_type.replace(' ', '_')}/", f"{item_type}\\"
@@ -224,11 +224,14 @@ async def generate_and_combine_gear(item_type, start_tier=1, end_tier=8, element
 async def generate_and_combine_images():
     count = 0
     ftp = await create_ftp_connection(web_data[0], web_data[1], web_data[2])
-    async with aiohttp.ClientSession() as session:
+    async with (aiohttp.ClientSession() as session):
         for item_id in itemdata.itemdata_dict.keys():
             # Ensure image is currently available.
             temp_item = inventory.BasicItem(item_id)
             if temp_item.item_category not in gli.availability_list_nongear:
+                continue
+            set_items = ["Sacred", "LightStar", "DarkStar", "Catalyst", "Nephilim", "Pandora"]
+            if temp_item.item_category == "Misc" and item_id not in set_items:
                 continue
             count += 1
             # Handle the urls and paths.
@@ -239,13 +242,11 @@ async def generate_and_combine_images():
             file_path = f"{output_dir}{file_name}"
             frame, icon = await fetch_image(session, frame_url), await fetch_image(session, icon_url)
             # Construct the new image
-            if temp_item.item_category in ["Skull"]:
-                result = pixel_blend(frame, icon)
-            else:
-                result = Image.new("RGBA", (106, 106))
-                result.paste(frame, (0, 0), frame)
-                result.paste(icon, (17, 16), icon)
-                result.save(file_path, format="PNG")
+            # result = pixel_blend(frame, icon)
+            result = Image.new("RGBA", (106, 106))
+            result.paste(frame, (0, 0), frame)
+            result.paste(icon, (17, 16), icon)
+            result.save(file_path, format="PNG")
             # Upload the file.
             remote_dir = f"/public_html/botimages/NonGear_Icon/{temp_item.item_category}/"
             await upload_file_to_ftp(ftp, file_path, remote_dir, file_name)
@@ -293,14 +294,11 @@ async def upload_file_to_ftp(ftp, local_path, remote_directory, remote_filename)
 async def build_notification(player_obj, message, notification_type, title_msg, item=None, rarity=None):
     # Initializations.
     width, height = 800, 200
-    banner = "blank_banner_2" if rarity == "Uber Rare" or notification_type == "Sacred" else "blank_banner_1"
     title_colour, banner = CyanColour, "blank_banner_1"
-    if rarity == "Uber Rare":
+    if rarity == "Uber Rare" or notification_type == "Sovereign":
         title_colour, banner = CyanColour, "blank_banner_2"
-    if rarity == "Ultimate Rare":
-        title_colour, banner = CyanColour, "blank_banner_2"
-    elif notification_type == "Sacred":
-        title_colour, banner = CyanColour, "blank_banner_2"
+    elif rarity == "Ultimate Rare" or notification_type == "Sacred":
+        title_colour, banner = CyanColour, "blank_banner_3"
     banner_url = f"{web_url}/botimages/banners/{banner}.png"
     cardBG = Image.open(requests.get(banner_url, stream=True).raw)
     result = Image.new("RGBA", (width, height))
@@ -338,7 +336,7 @@ async def build_message_box(player_obj, message, header="", boxtype="default"):
     width, height = 800, 200
     default_size_title, default_size_msg, modspeak_size_title, modspeak_size_msg = 54, 38, 38, 38
     title_size, msg_size = (54, 38) if boxtype == "default" else (44, 36)
-    type_dict = {"default": "game_banner", "mod": "blank_banner_1", "admin": "blank_banner_1", "arch": "blank_banner_2"}
+    type_dict = {"default": "game_banner", "mod": "blank_banner_1", "admin": "blank_banner_2", "arch": "blank_banner_3"}
     # Load background image and fonts
     cardBG = Image.open(requests.get(f"{web_url}/botimages/banners/{type_dict[boxtype]}.png", stream=True).raw)
     result = Image.new("RGBA", (width, height))
@@ -348,17 +346,18 @@ async def build_message_box(player_obj, message, header="", boxtype="default"):
     font_object = ImageFont.truetype(name_font_file, msg_size)
     # Calculate positions for the message lines
     message_lines = [message] if not isinstance(message, list) else message
+    text_x = image_editable.textlength(message, font=font_object)
     position_x, position_y = (width - text_x) / 2 if boxtype == "default" else 60, [95, 130]
     # Draw message text
     for idx, line_text in enumerate(message_lines):
         image_editable.text((position_x, position_y[idx]), line_text, fill="White", font=font_object)
     # Build the header
     if header != "":
+        level_font_file = requests.get((font_url + level_font_url), stream=True).raw
+        title_font_object = ImageFont.truetype(level_font_file, title_size)
         if boxtype != "default":
             role_icon = Image.open(requests.get(gli.archdragon_logo, stream=True).raw)
             role_icon = role_icon.resize((64, 64))
-            level_font_file = requests.get((font_url + level_font_url), stream=True).raw
-            title_font_object = ImageFont.truetype(level_font_file, title_size)
             result.paste(role_icon, (50, 32), mask=role_icon)
         text_x = image_editable.textlength(header, font=title_font_object)
         header_position = ((width - text_x) / 2, 35) if boxtype == "default" else (130, 45)

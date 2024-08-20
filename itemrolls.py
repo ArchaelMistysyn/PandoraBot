@@ -66,7 +66,7 @@ penetration_rolls = {
     "penetration-16": ["Combo Penetration", 20, 5, [["combo_pen", -1]]],
     "penetration-17": ["Ultimate Penetration", 20, 5, [["ultimate_pen", -1]]],
     "penetration-18": ["Hybrid Penetration (Chaos)", 9, 8, [["special_pen", "Chaos"]]],
-    "penetration-19": ["Hybrid Penetration (Holy)", 9, 8, [["special_mult", "Holy"]]]}
+    "penetration-19": ["Hybrid Penetration (Holy)", 9, 8, [["special_pen", "Holy"]]]}
 curse_rolls = {
     "curse-0": ["Fire Curse", 15, 10, [["elemental_curse", 0]]],
     "curse-1": ["Water Curse", 15, 10, [["elemental_curse", 1]]],

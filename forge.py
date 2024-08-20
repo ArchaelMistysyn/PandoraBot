@@ -717,7 +717,7 @@ class RefineItemView(discord.ui.View):
         new_view = RefSelectView(self.player_user)
         new_embed = discord.Embed(colour=discord.Colour.dark_orange(),
                                   title='Refinery', description="Please select the item to refine")
-        new_embed.set_image(url=gli.forge_img)
+        new_embed.set_image(url=gli.refinery_img)
         await interaction.response.edit_message(embed=new_embed, view=new_view)
 
 

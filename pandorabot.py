@@ -18,6 +18,7 @@ import globalitems as gli
 import questdata
 import sharedmethods as sm
 import itemdata
+import leaderboards
 from pandoradb import run_query as rqy
 
 # Core imports
@@ -28,10 +29,10 @@ import menus
 
 # Combat imports
 import encounters
+import combat
 import bosses
 
 # Misc imports
-import leaderboards
 import skillpaths
 import pilengine
 import adventure
@@ -52,6 +53,7 @@ import infuse
 
 # Cog imports
 import pandoracogs
+import enginecogs
 
 # Database imports
 from pandoradb import close_database_session
@@ -91,6 +93,7 @@ def run_discord_bot():
         def decorator(func):
             func.category_type, func.position = category, command_position
             return func
+
         return decorator
 
     @pandora_bot.event
@@ -103,10 +106,14 @@ def run_discord_bot():
             print(f"Shutdown Error: {e}")
 
     @pandora_bot.event
-    async def on_command_error():
+    async def on_command_error(ctx, error):
         error_channel = pandora_bot.get_channel(gli.bot_logging_channel)
-        tb_str = ''.join(traceback.format_exception(type(e), e, e.__traceback__))
-        await error_channel.send(f'An error occurred:\n{e}\n```{tb_str}```')
+        tb_str = ''.join(traceback.format_exception(type(error), error, error.__traceback__))
+        max_length = 1000 - len('```') * 2 - len('An error occurred:\n')
+        parts = [tb_str[i:i + max_length] for i in range(0, len(tb_str), max_length)]
+        await error_channel.send(f'An error occurred:\n{error}\n```{parts[0]}```')
+        for part in parts[1:]:
+            await error_channel.send(f'```{part}```')
 
     class CustomHelpCommand(commands.DefaultHelpCommand):
         def __init__(self):
@@ -120,10 +127,14 @@ def run_discord_bot():
 
         async def send_command_help(self, command):
             # Customize the help message when !help <command> is used
-            embed = discord.Embed(title=f"Help for (/{command.name}) Command")
+            embed = sm.easy_embed("Green", f"Help for (/{command.name}) Command", "")
             embed.add_field(name="Usage", value=f"```{self.get_command_signature(command)}```", inline=False)
             embed.add_field(name="Description", value=command.help, inline=False)
             await self.get_destination().send(embed=embed)
+
+    async def run_solo_cog(player_obj, boss_obj, channel_id, sent_message, ctx, gauntlet=False, mode=0, magnitude=0):
+        return enginecogs.SoloCog(pandora_bot, player_obj, boss_obj, channel_id, sent_message, ctx,
+                                  gauntlet=gauntlet, mode=mode, magnitude=magnitude)
 
     # Admin Commands
     async def admin_verification(ctx_object, return_target: discord.User = None, auth="GameAdmin"):
@@ -293,7 +304,7 @@ def run_discord_bot():
             title = ""
             description = gli.t57_hpbar_empty[0]
             print(description)
-            test_embed = discord.Embed(colour=discord.Colour.red(), title=title, description=description)
+            test_embed = sm.easy_embed("Red", title, description)
             await ctx.send(embed=test_embed)
 
     @set_command_category('admin', 4)
@@ -336,7 +347,7 @@ def run_discord_bot():
 
     # Game Commands
     @set_command_category('game', 0)
-    @pandora_bot.hybrid_command(name='map', help="Explore! Stamina Cost: 200 + 50/map tier")
+    @pandora_bot.hybrid_command(name='map', help="Explore! Stamina Cost: 200 + 50 * map tier")
     @app_commands.guilds(discord.Object(id=guild_id))
     async def expedition(ctx):
         await ctx.defer()
@@ -478,7 +489,7 @@ def run_discord_bot():
         await inventory.update_stock(player_obj, Chest_id, (-1 * quantity))
         extension = f"Chest{'s' if quantity > 1 else ''}"
         title_msg = f"{player_obj.player_username}: Opening {quantity} {extension}!"
-        embed_msg = discord.Embed(colour=discord.Colour.dark_teal(), title=title_msg, description="Feeling lucky?")
+        embed_msg = sm.easy_embed("Brown", title_msg, "Feeling Lucky?")
         reward_list = loot.generate_random_item(quantity=quantity)
         description_list, highest_tier, notifications = [], 1, []
         for (reward_id, item_qty) in reward_list:
@@ -537,7 +548,7 @@ def run_discord_bot():
         # Build the message.
         extension = f"Trove{'s' if total_stock > 1 else ''}"
         title_msg = f"{player_obj.player_username}: Opening {total_stock:,} {extension}!"
-        embed_msg = discord.Embed(colour=discord.Colour.dark_teal(), title=title_msg, description="Feeling lucky?")
+        embed_msg = sm.easy_embed("Brown", title_msg, "Feeling Lucky?")
         # embed_msg.set_thumbnail(url="") add highest tier trove thumbnail once able
         message = await ctx.send(embed=embed_msg)
         # Handle the opening.
@@ -591,13 +602,13 @@ def run_discord_bot():
         title = "Fleur, The Oracle"
         if player_obj.player_quest < 48:
             denial_msg = "The sanctuary radiates with divinity. Entry is impossible."
-            embed_msg = discord.Embed(colour=discord.Colour.blurple(), title="???", description=denial_msg)
+            embed_msg = sm.easy_embed("Purple", "???", denial_msg)
             await ctx.send(embed=embed_msg)
             return
-        entry_msg = ("Have you come to desecrate my holy gardens once more? Well, I suppose it no longer matters, "
+        entry_msg = ("Have you come to desecrate my holy garden once more? Well, I suppose it no longer matters. "
                      "I know you will inevitably find what you desire even without my guidance. "
-                     "If you intend to sever the divine lotus, then I suppose the rest are nothing but pretty flowers.")
-        embed_msg = discord.Embed(colour=discord.Colour.blurple(), title=title, description=entry_msg)
+                     "If you intend to sever the divinity, then I suppose what's left is nothing but pretty flowers.")
+        embed_msg = sm.easy_embed("Purple", title, entry_msg)
         embed_msg.set_image(url=gli.sanctuary_img)
         await ctx.send(embed=embed_msg, view=market.LotusSelectView(player_obj))
 
@@ -609,15 +620,14 @@ def run_discord_bot():
         player_obj = await sm.check_registration(ctx)
         if player_obj is None:
             return
-        title = "Yubelle, The Adjudicator"
+        denial_msg = "The cathedral radiates with divinity. Entry is impossible."
+        embed_msg = sm.easy_embed("White", "Yubelle, The Adjudicator", denial_msg)
         if player_obj.player_quest < 51:
-            denial_msg = "The cathedral radiates with divinity. Entry is impossible."
-            embed_msg = discord.Embed(colour=discord.Colour.blurple(), title="???", description=denial_msg)
             await ctx.send(embed=embed_msg)
             return
         entry_msg = ("You would still follow Pandora's path in her place? Very well, I am no longer in a position "
                      "to object. I suppose such things do indeed fall within my purview.")
-        embed_msg = discord.Embed(colour=discord.Colour.blurple(), title=title, description=entry_msg)
+        embed_msg.description = entry_msg
         embed_msg.set_image(url=gli.cathedral_img)
         await ctx.send(embed=embed_msg, view=tarot.SearchTierView(player_obj, cathedral=True))
 
@@ -652,8 +662,8 @@ def run_discord_bot():
         if player_obj.player_quest == 11:
             await quest.assign_unique_tokens(player_obj, "Town")
         location_view = menus.TownView(ctx, player_obj)
-        title, description = "Nearby Town", "A bustling town thriving with opportunity."
-        embed_msg = discord.Embed(colour=discord.Colour.dark_orange(), title=title, description=description)
+        description = "A bustling town thriving with opportunity."
+        embed_msg = sm.easy_embed("Orange", "Nearby Town", description)
         embed_msg.set_image(url="")
         await ctx.send(embed=embed_msg, view=location_view)
 
@@ -669,8 +679,8 @@ def run_discord_bot():
             await quest.assign_unique_tokens(player_obj, "Town")
         num_visits = int(await player_obj.check_misc_data("thana_visits"))
         location_view = menus.CelestialView(player_obj, num_visits)
-        title, description = "Celestial Realm", "Pandora's domain and home to her celestial forge."
-        embed_msg = discord.Embed(colour=discord.Colour.dark_purple(), title=title, description=description)
+        description = "Pandora's domain and home to her celestial forge."
+        embed_msg = sm.easy_embed("Purple", "Celestial Realm", description)
         embed_msg.set_image(url="")
         await ctx.send(embed=embed_msg, view=location_view)
 
@@ -684,16 +694,14 @@ def run_discord_bot():
             return
         if player_obj.player_quest == 17:
             await quest.assign_unique_tokens(player_obj, "Divine")
-        location_view = menus.DivineView(player_obj)
-        title, description = "Divine Plane", "You are permitted to visit the higher plane by the grace of the arbiters."
-        embed_msg = discord.Embed(colour=discord.Colour.gold(), title=title, description="")
+        new_view = menus.DivineView(player_obj)
+        description = "You are permitted to visit the higher plane by the grace of the arbiters."
+        embed_msg = sm.easy_embed("Gold", "Divine Plane", description)
         embed_msg.set_image(url="")
         if player_obj.player_quest < 10:
-            description = "You are unable to enter the divine plane in your current state."
-            location_view = None
+            new_view, embed_msg.description = None, "You are unable to enter the divine plane in your current state."
             embed_msg.set_image(url="")
-        embed_msg.description = description
-        await ctx.send(embed=embed_msg, view=location_view)
+        await ctx.send(embed=embed_msg, view=new_view)
 
     # Gear commands
     @set_command_category('gear', 0)
@@ -709,8 +717,7 @@ def run_discord_bot():
             await ctx.send("Target user is not registered.")
             return
         if target_user.player_equipped[0] == 0:
-            embed_msg = discord.Embed(colour=discord.Colour.dark_gray(),
-                                      title="Equipped weapon", description="No weapon is equipped")
+            embed_msg = sm.easy_embed("Gray", "Equipped Weapon", "No weapon is equipped.")
             await ctx.send(embed=embed_msg)
             return
         equipped_item = await inventory.read_custom_item(target_user.player_equipped[0])
@@ -740,7 +747,7 @@ def run_discord_bot():
         if player_obj is None:
             return
         title, description = "An item with this ID does not exist.", f"Inputted ID: {item_id}"
-        embed_msg = discord.Embed(colour=discord.Colour.dark_orange(), title=title, description=description)
+        embed_msg = sm.easy_embed("Red", title, description)
         if item_id.isnumeric():
             gear_id = int(item_id)
             # Check the item exists
@@ -800,8 +807,8 @@ def run_discord_bot():
             tarot_view = tarot.TarotView(player_obj, card_num, tarot_card)
             await ctx.send(embed=embed_msg, view=tarot_view)
             return
-        title, description = "Pandora, The Celestial", "Welcome to the planetarium. Sealed tarots are stored here."
-        embed_msg = discord.Embed(colour=discord.Colour.magenta(), title=title, description=description)
+        description = "Welcome to the planetarium. Sealed tarots are stored here."
+        embed_msg = sm.easy_embed("Purple", "Pandora, The Celestial", description)
         completion_count = await tarot.collection_check(player_obj)
         name, value = f"{player_obj.player_username}'s Tarot Collection", f"Completion Total: {completion_count} / 31"
         embed_msg.add_field(name=name, value=value, inline=False)
@@ -817,31 +824,25 @@ def run_discord_bot():
         player_obj = await sm.check_registration(ctx)
         if player_obj is None:
             return
-        title = "Isolde, The Soulweaver"
-        if player_obj.player_quest < 20:
-            description = "You can't yet handle my threads. This is no place for the weak."
-            embed_msg = discord.Embed(colour=discord.Colour.dark_orange(), title=title, description=description)
-            await ctx.send(embed=embed_msg)
-            return
+        new_view = insignia.InsigniaView(player_obj)
         description = "You've come a long way from home child. Tell me, what kind of power do you seek?"
-        embed_msg = discord.Embed(colour=discord.Colour.dark_orange(), title=title, description=description)
-        insignia_view = insignia.InsigniaView(player_obj)
-        await ctx.send(embed=embed_msg, view=insignia_view)
+        if player_obj.player_quest < 20:
+            new_view, description = None, "You can't yet handle my threads. This is no place for the weak."
+        sm.easy_embed("Orange", "Isolde, The Soulweaver", description)
+        await ctx.send(embed=embed_msg, view=new_view)
 
     @set_command_category('gear', 5)
-    @pandora_bot.hybrid_command(name='meld', help="Meld tier 5+ heart jewels.")
+    @pandora_bot.hybrid_command(name='meld', help="Talk to Kazyth in the divine plane. Meld jewels.")
     @app_commands.guilds(discord.Object(id=guild_id))
     async def meld_item(ctx, base_gem_id: int, secondary_gem_id: int):
         await ctx.defer()
         player_obj = await sm.check_registration(ctx)
         if player_obj is None:
             return
-        # Initialize default embed
-        embed_msg = discord.Embed(colour=discord.Colour.blurple(), title="Kazyth, The Lifeblood",
-                                  description="")
+        denial_msg = "Tread carefully wanderer. Drawing the wrong attention can prove fatal..."
+        embed_msg = sm.easy_embed("Green", "Kazyth, The Lifeblood", denial_msg)
+        # Handle quest checks.
         if player_obj.player_quest < 42:
-            denial_msg = "Tread carefully adventurer. Drawing too much attention to yourself can prove fatal."
-            embed_msg = discord.Embed(colour=discord.Colour.blurple(), title="???", description=denial_msg)
             await ctx.send(embed=embed_msg)
             return
         if player_obj.player_quest == 42:
@@ -868,15 +869,15 @@ def run_discord_bot():
                 return False, None, description
             return True, gem_object, None
 
-        # Handle eligibility.
-        is_eligible, gem_1, embed_message = await can_meld(base_gem_id, player_obj)
+        # Handle eligibility for both gems.
+        is_eligible, gem_1, embed_description = await can_meld(base_gem_id, player_obj)
         if not is_eligible:
-            embed_msg.description = embed_message
+            embed_msg.description = embed_description
             await ctx.send(embed=embed_msg)
             return
-        is_eligible, gem_2, embed_message = await can_meld(secondary_gem_id, player_obj)
+        is_eligible, gem_2, embed_description = await can_meld(secondary_gem_id, player_obj)
         if not is_eligible:
-            embed_msg.description = embed_message
+            embed_msg.description = embed_description
             await ctx.send(embed=embed_msg)
             return
         # Build the meld details display.
@@ -998,8 +999,7 @@ def run_discord_bot():
         player_obj = await sm.check_registration(ctx)
         if player_obj is None:
             return
-        title, description = "Black Market", "Everything has a price."
-        embed_msg = discord.Embed(colour=discord.Colour.dark_orange(), title=title, description=description)
+        embed_msg = sm.easy_embed("Black", "Black Market", "Everything has a price.")
         embed_msg.set_image(url=gli.market_img)
         fish_obj, trade_obj = await market.get_daily_fish_items()
         await ctx.send(embed=embed_msg, view=market.TierSelectView(player_obj, fish_obj, trade_obj))
@@ -1069,7 +1069,7 @@ def run_discord_bot():
         player_obj = await sm.check_registration(ctx)
         if player_obj is None:
             return
-        embed_msg = discord.Embed(colour=discord.Colour.blurple(), title="Pandora's Celestial Forge", description="")
+        embed_msg = sm.easy_embed("Purple", "Pandora's Celestial Forge", "")
         name, value = "Pandora, The Celestial", "Let me know what you'd like me to upgrade!"
         embed_msg.add_field(name=name, value=value, inline=False)
         embed_msg.set_image(url=gli.forge_img)
@@ -1083,8 +1083,7 @@ def run_discord_bot():
         player_obj = await sm.check_registration(ctx)
         if player_obj is None:
             return
-        title, description = "Refinery", "Please select the item to refine"
-        embed_msg = discord.Embed(colour=discord.Colour.dark_orange(), title=title, description=description)
+        embed_msg = sm.easy_embed("Orange", "Refinery", "Please select the item to refine")
         embed_msg.set_image(url=gli.refinery_img)
         await ctx.send(embed=embed_msg, view=forge.RefSelectView(player_obj))
 
@@ -1096,13 +1095,11 @@ def run_discord_bot():
         player_obj = await sm.check_registration(ctx)
         if player_obj is None:
             return
-        title, description = "Cloaked Alchemist, Sangam", "I can make anything, if you bring the right stuff."
-        embed_msg = discord.Embed(colour=discord.Colour.magenta(), title=title, description=description)
+        description = "I can make anything, if you bring the right stuff."
+        embed_msg = sm.easy_embed("Magenta", "Cloaked Alchemist, Sangam", description)
         embed_msg.set_image(url=gli.infuse_img)
         infuse_view = infuse.InfuseView(ctx, player_obj)
         await ctx.send(embed=embed_msg, view=infuse_view)
-
-        # Crafting Commands
 
     @set_command_category('craft', 3)
     @pandora_bot.hybrid_command(name='abyss', help="Go to the ???")
@@ -1114,13 +1111,13 @@ def run_discord_bot():
             return
         e_weapon = await inventory.read_custom_item(player_obj.player_equipped[0])
         if player_obj.player_quest < 38:
-            embed_msg = discord.Embed(colour=discord.Colour.blurple(), title="???",
-                                      description="A great darkness clouds your path. Entry is impossible.")
+            description = "A great darkness clouds your path. Entry is impossible."
+            embed_msg = sm.easy_embed("Black", "???", description)
             await ctx.send(embed=embed_msg)
             return
         if player_obj.player_quest == 38:
             await quest.assign_unique_tokens(player_obj, "Abyss")
-        embed_msg = discord.Embed(colour=discord.Colour.blurple(), title="Echo of Oblivia", description=gli.abyss_msg)
+        embed_msg = sm.easy_embed("Black", "Echo of Oblivia, The Void", gli.abyss_msg)
         embed_msg.set_image(url=gli.abyss_img)
         new_view = forge.SelectView(player_obj, "purify")
         await ctx.send(embed=embed_msg, view=new_view)
@@ -1134,16 +1131,14 @@ def run_discord_bot():
         if player_obj is None:
             return
         e_weapon = await inventory.read_custom_item(player_obj.player_equipped[0])
-        title = "Vexia, The Scribe"
+        denial_msg = "I have permitted your passage, but you are not yet qualified to speak with me. Begone."
+        embed_msg = sm.easy_embed("Silver", "Vexia, The Scribe", denial_msg)
         if player_obj.player_quest < 46:
-            denial_msg = "I have permitted your passage, but you are not yet qualified to speak with me. Begone."
-            embed_msg = discord.Embed(colour=discord.Colour.blurple(), title=title, description=denial_msg)
             await ctx.send(embed=embed_msg)
             return
-        entry_msg = ("You are the only recorded mortal to have entered the divine plane. "
-                     "We are not your allies, but we will not treat you unfairly."
-                     "\nThe oracle has already foretold your failure. Now it need only be written into truth.")
-        embed_msg = discord.Embed(colour=discord.Colour.blurple(), title=title, description=entry_msg)
+        embed_msg.description = ("You are the only recorded mortal to have entered the divine plane. "
+                                 "We are not your allies, but we will not treat you unfairly. "
+                                 "\nThe oracle has already foretold your failure. It need only be written into truth.")
         embed_msg.set_image(url=gli.forge_img)
         await ctx.send(embed=embed_msg, view=forge.SelectView(player_obj, "custom"))
 
@@ -1160,11 +1155,11 @@ def run_discord_bot():
         if gifts is None:
             await ctx.send("No gifts available to claim. Check again later!")
             return
-        colour, output = discord.Colour.gold(), ""
+        output = ""
         for item_id, qty in gifts:
             temp_item = inventory.BasicItem(item_id)
             output += f"{sm.reward_message(temp_item, qty)}\n"
-        embed = discord.Embed(colour=colour, title=f"{player_obj.player_username}: Gifts Claimed", description=output)
+        embed = sm.easy_embed("Gold", f"{player_obj.player_username}: Gifts Claimed", output)
         await ctx.send(embed=embed)
 
     @set_command_category('misc', 1)
@@ -1242,7 +1237,7 @@ def run_discord_bot():
         if not user:
             await ctx.send("User not found in the server.")
             return
-        quote_embed = discord.Embed(title=user.display_name, description=user_quote, color=discord.Color.blue())
+        quote_embed = sm.easy_embed("Blue", user.display_name, user_quote)
         quote_embed.add_field(name="", value=f"Quoted from {quote_date} [ID: {message_id}]", inline=True)
         quote_embed.set_thumbnail(url=user.avatar)
         await ctx.send(embed=quote_embed)
@@ -1271,7 +1266,7 @@ def run_discord_bot():
         for i in range(0, total_quotes, max_fields_per_embed):
             chunk = quote_list[i:i + max_fields_per_embed]
             title, description = user.display_name, f"Quotes {i + 1}-{i + len(chunk)} of {total_quotes}"
-            quote_embed = discord.Embed(title=title, description=description, color=discord.Color.blue())
+            quote_embed = sm.easy_embed("Blue", title, description)
             for selected_quote in chunk:
                 user_quote, message_id = selected_quote['user_quote'], selected_quote['message_id']
                 quote_date = selected_quote['quote_date']
@@ -1281,13 +1276,408 @@ def run_discord_bot():
         for embed in embed_list:
             await ctx.send(embed=embed)
 
+    # Combat commands
+    @pandora_bot.command(name='start_raid', help="Archael Only")
+    async def start_raid(ctx, server_select="single"):
+        if ctx.message.author.id != 185530717638230016:
+            await ctx.send('You must be the owner to use this command!')
+            return
+        if server_select == "single":
+            raid_channel_id = gli.servers[ctx.guild.id][1]
+            await encounters.clear_all_encounter_info(ctx.guild.id)
+            enginecogs.RaidSchedularCog(pandora_bot, pandora_bot.get_channel(raid_channel_id), raid_channel_id)
+            return
+        elif server_select == "all":
+            for server_id, (_, raid_channel_id, _, _) in gli.servers.items():
+                await encounters.clear_all_encounter_info(server_id)
+                enginecogs.RaidSchedularCog(pandora_bot, pandora_bot.get_channel(raid_channel_id), raid_channel_id)
+
+    @pandora_bot.hybrid_command(name='abandon', help="Abandon an active solo encounter.")
+    @app_commands.guilds(discord.Object(id=1011375205999968427))
+    @set_command_category('combat', 0)
+    async def abandon(ctx):
+        await ctx.defer()
+        player_obj = await sm.check_registration(ctx)
+        if player_obj is None:
+            return
+        flag_response = await combat.abandon_flag(player_obj, toggle=True)
+        if flag_response is None:
+            await ctx.send("You are not in any solo encounter.")
+            return
+        elif flag_response == 1:
+            await ctx.send("You are already flagged to abandon the encounter.")
+            return
+        await ctx.send("You have flagged to abandon the encounter.")
+
+    @pandora_bot.hybrid_command(name='fortress', help="Challenge a fortress boss. Cost: 1 Fortress Stone + 200 Stamina")
+    @app_commands.guilds(discord.Object(id=1011375205999968427))
+    @set_command_category('combat', 1)
+    async def fortress(ctx, magnitude=0):
+        await solo(ctx, boss_type="Fortress", magnitude=magnitude)
+
+    @pandora_bot.hybrid_command(name='dragon', help="Challenge a dragon boss. Cost: 1 Dragon Stone + 200 Stamina")
+    @app_commands.guilds(discord.Object(id=1011375205999968427))
+    @set_command_category('combat', 2)
+    async def dragon(ctx, magnitude=0):
+        await solo(ctx, boss_type="Dragon", magnitude=magnitude)
+
+    @pandora_bot.hybrid_command(name='demon', help="Challenge a demon boss. Cost: 1 Demon Stone + 200 Stamina")
+    @app_commands.guilds(discord.Object(id=1011375205999968427))
+    @set_command_category('combat', 3)
+    async def demon(ctx, magnitude=0):
+        await solo(ctx, boss_type="Demon", magnitude=magnitude)
+
+    @pandora_bot.hybrid_command(name='paragon', help="Challenge a paragon boss. Cost: 1 Paragon Stone + 200 Stamina")
+    @app_commands.guilds(discord.Object(id=1011375205999968427))
+    @set_command_category('combat', 4)
+    async def paragon(ctx, magnitude=0):
+        await solo(ctx, boss_type="Paragon", magnitude=magnitude)
+
+    @pandora_bot.hybrid_command(name='arbiter', help="Challenge a paragon boss. Cost: 1 Arbiter Stone + 200 Stamina")
+    @app_commands.guilds(discord.Object(id=1011375205999968427))
+    @set_command_category('combat', 5)
+    async def arbiter(ctx, magnitude=0):
+        await solo(ctx, boss_type="Arbiter", magnitude=magnitude)
+
+    @pandora_bot.hybrid_command(name='solo',
+                                help="Type Options: [Random/Fortress/Dragon/Demon/Paragon/Arbiter]. Stamina Cost: 200")
+    @app_commands.guilds(discord.Object(id=1011375205999968427))
+    @set_command_category('combat', 6)
+    async def solo(ctx, boss_type="random", magnitude=0):
+        await ctx.defer()
+        player_obj = await sm.check_registration(ctx)
+        if player_obj is None:
+            return
+        if magnitude not in range(11):
+            await ctx.send("Selected magnitude must be between 0-10. Default 0.")
+            return
+        if player_obj.player_equipped[0] == 0:
+            await ctx.send("You must have a weapon equipped.")
+            return
+        existing_id = await encounters.get_encounter_id(ctx.channel.id, player_obj.player_id)
+        if existing_id is not None:
+            await ctx.send("You already have a solo boss or map encounter running.")
+            return
+        if not await player_obj.spend_stamina(200):
+            await ctx.send("Not enough stamina.")
+            return
+        # Determine the restrictions
+        spawn_dict = {0: 0, 1: 1, 3: 2, 5: 3, 9: 4}
+        highest_key = max(key for key in spawn_dict if key <= player_obj.player_echelon)
+        max_spawn = spawn_dict[highest_key]
+        # Handle boss type selection
+        boss_type = boss_type.capitalize()
+        if boss_type == "Random":
+            spawned_boss = random.randint(0, max_spawn)
+            boss_type = gli.boss_list[spawned_boss]
+        else:
+            if boss_type not in gli.boss_list[:-2]:
+                await ctx.send(
+                    "Boss type not recognized. Please select [Random/Fortress/Dragon/Demon/Paragon/Arbiter].")
+                return
+            spawned_boss = gli.boss_list.index(boss_type)
+            if spawned_boss > max_spawn:
+                await ctx.send("Your echelon is not high enough to challenge this boss type.")
+                return
+            stone_id = f"Stone{spawned_boss + 1}" if spawned_boss <= 4 else "Stone6"
+            stone_obj = inventory.BasicItem(stone_id)
+            stone_stock = await inventory.check_stock(player_obj, stone_obj.item_id)
+            if stone_stock < 1:
+                await ctx.send(sm.get_stock_msg(stone_obj, stone_stock))
+                return
+            await inventory.update_stock(player_obj, stone_obj.item_id, -1)
+        # Spawn the boss
+        new_boss_tier = bosses.get_random_bosstier(boss_type)
+        boss_obj = await bosses.spawn_boss(ctx.channel.id, player_obj.player_id, new_boss_tier, boss_type,
+                                           player_obj.player_level, magnitude=magnitude)
+        boss_obj.player_id = player_obj.player_id
+        embed_msg = boss_obj.create_boss_embed()
+        magnitude_msg = f" [Magnitude: {magnitude}]" if magnitude > 0 else ""
+        msg = f"{player_obj.player_username} has spawned a tier {boss_obj.boss_tier} boss!{magnitude_msg}"
+        await ctx.send(msg)
+        sent_message = await ctx.channel.send(embed=embed_msg)
+        solo_cog = await run_solo_cog(player_obj, boss_obj, ctx.channel.id, sent_message, ctx, magnitude=magnitude)
+        task = asyncio.create_task(solo_cog.run())
+        await task
+
+    @pandora_bot.hybrid_command(name='palace', help="Enter the Divine Palace. [WARNING: HARD]")
+    @app_commands.guilds(discord.Object(id=1011375205999968427))
+    @set_command_category('combat', 7)
+    async def palace(ctx):
+        await ctx.defer()
+        player_obj = await sm.check_registration(ctx)
+        if player_obj is None:
+            return
+        if player_obj.player_equipped[0] == 0:
+            await ctx.send("You must have a weapon equipped.")
+            return
+        existing_id = await encounters.get_encounter_id(ctx.channel.id, player_obj.player_id)
+        if existing_id is not None:
+            await ctx.send("You already have a solo boss or map encounter running.")
+            return
+        if player_obj.player_quest < 50:
+            await ctx.send("The divine palace is not a place mortals may tread.")
+            return
+        await ctx.send(f"{player_obj.player_username} enters the divine palace.")
+        lotus_obj = inventory.BasicItem("Lotus10")
+        lotus_stock = await inventory.check_stock(player_obj, lotus_obj.item_id)
+        if lotus_stock >= 1:
+            description = (f"Rows of torches lining the ivory halls ignite with divine fire. "
+                           f"Yubelle's echo manifests drawing energy from the Divine Lotus. "
+                           f"Shifting into a new being, 'it' challenges you before the eyes of god. "
+                           f"\n**EXTREME DIFFICUILTY WARNING:\n{lotus_obj.item_emoji} 1x Divine Lotus "
+                           f"will be consumed.**")
+            img_url, colour = gli.palace_day_img, "white"
+        else:
+            description = "The palace interior remains still, the torches unlit and the halls silent."
+            img_url, colour = gli.palace_night_img, "purple"
+        embed_msg = sm.easy_embed(colour, "Divine Palace of God", description)
+        embed_msg.set_image(url=img_url)
+        sent_message = await ctx.channel.send(embed=embed_msg)
+        palace_view = PalaceView(player_obj, lotus_obj, lotus_stock, sent_message, ctx)
+        await sent_message.edit(embed=embed_msg, view=palace_view)
+
+    class PalaceView(discord.ui.View):
+        def __init__(self, player_obj, lotus_obj, lotus_stock, sent_message, ctx):
+            super().__init__(timeout=None)
+            self.player_obj, self.lotus_obj, self.lotus_stock = player_obj, lotus_obj, lotus_stock
+            self.ctx, self.sent_message = ctx, sent_message
+            self.embed_msg = None
+            if self.lotus_stock <= 0:
+                for button in self.children:
+                    button.disabled, button.style = True, gli.button_colour_list[3]
+            elif self.player_obj.player_quest == 50:
+                self.usurper.disabled, self.usurper.style = True, gli.button_colour_list[3]
+                self.samsara.disabled, self.samsara.style = True, gli.button_colour_list[3]
+            elif self.player_obj.player_level < 200:
+                self.samsara.disabled, self.samsara.style = True, gli.button_colour_list[3]
+
+        @discord.ui.button(label="Challenger", style=discord.ButtonStyle.success)
+        async def challenger(self, interaction: discord.Interaction, button: discord.Button):
+            if interaction.user.id != self.player_obj.discord_id:
+                return
+            await self.begin_encounter(interaction, 1)
+
+        @discord.ui.button(label="Usurper", style=discord.ButtonStyle.blurple)
+        async def usurper(self, interaction: discord.Interaction, button: discord.Button):
+            if interaction.user.id != self.player_obj.discord_id:
+                return
+            await self.begin_encounter(interaction, 2)
+
+        @discord.ui.button(label="Samsara", style=discord.ButtonStyle.red)
+        async def samsara(self, interaction: discord.Interaction, button: discord.Button):
+            if interaction.user.id != self.player_obj.discord_id:
+                return
+            await self.begin_encounter(interaction, 3)
+
+        async def begin_encounter(self, interaction_obj, difficulty):
+            lotus_stock = await inventory.check_stock(self.player_obj, self.lotus_obj.item_id)
+            embed_msg = sm.easy_embed("purple", "Divine Palace of God", "")
+            if lotus_stock < 1:
+                embed_msg.description = "The echo falls silent and fades away alongside the light of the torches."
+                embed_msg.set_image(url=gli.palace_night_img)
+                await interaction.response.edit_message(embed=embed_msg, view=None)
+                return
+            boss_level = 300 if difficulty == 1 else 600 if difficulty == 2 else 999
+            await inventory.update_stock(self.player_obj, self.lotus_obj.item_id, -1)
+            boss_obj = await bosses.spawn_boss(self.ctx.channel.id, self.player_obj.player_id, 8,
+                                               "Incarnate", boss_level)
+            label_list = {1: " [Challenger]", 2: " [Usurper]", 3: " [Samsara]"}
+            embed_msg = boss_obj.create_boss_embed(extension=label_list[difficulty])
+            await interaction_obj.response.edit_message(embed=embed_msg, view=None)
+            await asyncio.sleep(1)
+            solo_cog = await run_solo_cog(self.player_obj, boss_obj, self.ctx.channel.id, self.sent_message, self.ctx,
+                                          mode=difficulty)
+            task = asyncio.create_task(solo_cog.run())
+            await task
+
+    @pandora_bot.hybrid_command(name='gauntlet', help="Challenge the gauntlet in the Spire of Illusions.")
+    @app_commands.guilds(discord.Object(id=1011375205999968427))
+    @set_command_category('combat', 8)
+    async def run_gauntlet(ctx, magnitude=0):
+        await ctx.defer()
+        player_obj = await sm.check_registration(ctx)
+        if player_obj is None:
+            return
+        if magnitude not in range(11):
+            await ctx.send("Selected magnitude must be between 0-10. Default 0.")
+            return
+        if player_obj.player_equipped[0] == 0:
+            await ctx.send("You must have a weapon equipped.")
+            return
+        if player_obj.player_quest < 36:
+            await ctx.send("You must complete quest 36 to challenge the Spire of Illusions.")
+            return
+        existing_id = await encounters.get_encounter_id(ctx.channel.id, player_obj.player_id)
+        if existing_id is not None:
+            await ctx.send("You already have a solo boss or map encounter running.")
+            return
+        token_item = inventory.BasicItem("Compass")
+        player_stock = await inventory.check_stock(player_obj, "Compass")
+        if player_stock <= 0:
+            await ctx.send(f"Out of Stock: {token_item.item_emoji} {token_item.item_name}.")
+            return
+        await inventory.update_stock(player_obj, "Compass", -1)
+        await quest.assign_unique_tokens(player_obj, "Gauntlet")
+        boss_obj = await bosses.spawn_boss(
+            ctx.channel.id, player_obj.player_id, 1, "Fortress",
+            player_obj.player_level, gauntlet=True, magnitude=magnitude)
+        boss_obj.player_id = player_obj.player_id
+        magnitude_msg = f" [Magnitude: {magnitude}]" if magnitude > 0 else ""
+        await ctx.send(f"{player_obj.player_username} has entered the Spire of Illusions!{magnitude_msg}")
+        embed_msg = boss_obj.create_boss_embed(extension=" [Gauntlet]")
+        sent_message = await ctx.channel.send(embed=embed_msg)
+        gauntlet_cog = await run_solo_cog(player_obj, boss_obj, ctx.channel.id, sent_message, ctx,
+                                          gauntlet=True, magnitude=magnitude)
+        task = asyncio.create_task(gauntlet_cog.run())
+        await task
+
+    @pandora_bot.hybrid_command(name='summon',
+                                help="Consume a summoning item to summon a high tier boss. Options [1-3]")
+    @app_commands.guilds(discord.Object(id=1011375205999968427))
+    @set_command_category('combat', 9)
+    async def summon(ctx, token_version: int, magnitude=0):
+        await ctx.defer()
+        player_obj = await sm.check_registration(ctx)
+        if player_obj is None:
+            return
+        if magnitude not in range(11):
+            await ctx.send("Selected magnitude must be between 0-10. Default 0.")
+            return
+        if token_version not in range(1, 4):
+            await ctx.send("Selected token not between 1 and 3.")
+            return
+        if player_obj.player_equipped[0] == 0:
+            await ctx.send("You must have a weapon equipped.")
+            return
+        if (player_obj.player_echelon < 9 or player_obj.player_quest < 48) and token_version == 3:
+            await ctx.send("You must be player echelon 9 and complete quest 47 to challenge the high arbiter.")
+            return
+        if player_obj.player_echelon < 8 and token_version == 2:
+            await ctx.send("You must be player echelon 8 to challenge the paragon sovereign.")
+            return
+        elif player_obj.player_echelon < 7 and token_version == 1:
+            await ctx.send("You must be player echelon 7 to challenge a superior paragon.")
+            return
+        existing_id = await encounters.get_encounter_id(ctx.channel.id, player_obj.player_id)
+        if existing_id is not None:
+            await ctx.send("You already have a solo boss or map encounter running.")
+            return
+        token_id = f"Summon{token_version}"
+        token_item = inventory.BasicItem(token_id)
+        player_stock = await inventory.check_stock(player_obj, token_id)
+        if player_stock <= 0:
+            await ctx.send(sm.get_stock_msg(token_item, player_stock))
+            return
+        await inventory.update_stock(player_obj, token_id, -1)
+        # Set the boss tier and type
+        boss_type = "Paragon" if token_version < 3 else "Arbiter"
+        new_boss_tier = 4 + token_version
+        boss_obj = await bosses.spawn_boss(ctx.channel.id, player_obj.player_id, new_boss_tier,
+                                           boss_type, player_obj.player_level, magnitude=magnitude)
+        boss_obj.player_id = player_obj.player_id
+        magnitude_msg = f" [Magnitude: {magnitude}]" if magnitude > 0 else ""
+        msg = f"{player_obj.player_username} has summoned a tier {boss_obj.boss_tier} boss!{magnitude_msg}"
+        await ctx.send(msg)
+        embed_msg = boss_obj.create_boss_embed()
+        sent_message = await ctx.channel.send(embed=embed_msg)
+        solo_cog = await run_solo_cog(player_obj, boss_obj, ctx.channel.id, sent_message, ctx, magnitude=magnitude)
+        task = asyncio.create_task(solo_cog.run())
+        await task
+
+    @pandora_bot.hybrid_command(name='arena', help="Enter pvp combat with another player.")
+    @app_commands.guilds(discord.Object(id=1011375205999968427))
+    @set_command_category('combat', 10)
+    async def arena(ctx):
+        await ctx.defer()
+        player_obj = await sm.check_registration(ctx)
+        if player_obj is None:
+            return
+        if player_obj.player_echelon < 1:
+            await ctx.send("You must be Echelon 1 or higher to participate in the arena.")
+            return
+        opponent_player = await combat.get_random_opponent(player_obj.player_echelon)
+        if opponent_player is None:
+            await ctx.send("No available opponent found.")
+            return
+        if opponent_player.player_equipped[0] == 0:
+            await ctx.send("No available opponent found.")
+            return
+        difference, method = await player_obj.check_cooldown("arena")
+        if difference:
+            one_day = timedelta(days=1)
+            cooldown = one_day - difference
+            if difference <= one_day:
+                cooldown_timer = int(cooldown.total_seconds() / 60 / 60)
+                time_msg = f"Your next arena match is in {cooldown_timer} hours."
+                await ctx.send(embed=sm.easy_embed("Red", "Arena Closed", time_msg))
+                return
+        await player_obj.set_cooldown("arena", "")
+        if player_obj.player_username == opponent_player.player_username:
+            opponent_player.player_username = f"Shadow {opponent_player.player_username}"
+        pvp_msg = f"{player_obj.player_username} vs {opponent_player.player_username}!"
+        pvp_embed = sm.easy_embed(player_obj.player_echelon, "Arena PvP", "")
+        # pvp_embed.set_thumbnail(url="")
+        pvp_embed.add_field(name="Challenger", value=player_obj.player_username, inline=True)
+        pvp_embed.add_field(name="Opponent", value=opponent_player.player_username, inline=True)
+        # combat.run_initial_pvp_message(player_obj, opponent_player)
+        await ctx.send(pvp_msg)
+        channel_obj = ctx.channel
+        message = await channel_obj.send(embed=pvp_embed)
+
+        async def run_pvp_cog():
+            return enginecogs.PvPCog(pandora_bot, ctx, player_obj, opponent_player, message, channel_obj)
+
+        pvp_cog = await run_pvp_cog()
+        task = asyncio.create_task(pvp_cog.run())
+        await task
+
+    @pandora_bot.hybrid_command(name='automapper', help="Run a map automatically. "
+                                                        "Default tier: Highest. Cost: 500 + (50 x Tier)")
+    @app_commands.guilds(discord.Object(id=1011375205999968427))
+    @set_command_category('combat', 11)
+    async def automapper(ctx, tier=0):
+        await ctx.defer()
+        player_obj = await sm.check_registration(ctx)
+        if player_obj is None:
+            return
+        if player_obj.player_echelon < 4:
+            await ctx.send("Player must be echelon 4 or higher.")
+            return
+        if player_obj.player_echelon + 1 < tier:
+            await ctx.send("Too Perilous! You are only qualified for expeditions one tier above your echelon.")
+            return
+        if tier not in range(0, 11):
+            await ctx.send("Tier must be between 1 and 10.")
+            return
+        tier = min(10, player_obj.player_echelon + 1) if tier == 0 else tier
+        existing_id = await encounters.get_encounter_id(ctx.channel.id, player_obj.player_id)
+        if existing_id is not None:
+            await ctx.send("You already have a solo boss or map encounter running.")
+            return
+        if not await player_obj.spend_stamina(500 + 50 * tier):
+            await ctx.send("Insufficient stamina to embark.")
+            return
+        await encounters.add_automapper(ctx.channel.id, player_obj.player_id)
+        colour, _ = sm.get_gear_tier_colours(tier)
+        title = f"{player_obj.player_username} - {adventuredata.reverse_map_tier_dict[tier]} [AUTO]"
+        map_embed = sm.easy_embed(tier, title, "")
+        await ctx.send(f"{player_obj.player_username} embarks on a tier {tier} expedition.")
+        message = await ctx.channel.send(embed=map_embed)
+
+        async def run_map_cog():
+            return enginecogs.MapCog(pandora_bot, ctx, player_obj, tier, message, colour)
+
+        map_cog = await run_map_cog()
+        task = asyncio.create_task(map_cog.run())
+        await task
+
     # Info commands
     @set_command_category('info', 0)
     @pandora_bot.hybrid_command(name='info', help="Display the help menu.")
     @app_commands.guilds(discord.Object(id=guild_id))
     async def help_menu(ctx):
         await ctx.defer()
-        embed = discord.Embed(title="Help Command Menu")
         embed_msg = menus.build_help_embed(category_dict, 'info')
         help_view = menus.HelpView(category_dict)
         await ctx.send(embed=embed_msg, view=help_view)
@@ -1330,7 +1720,7 @@ def run_discord_bot():
                      "**11** - I understand that all contents are fictional and I do not own anything\n"
                      "**12** - By using the bot I consent to allowing it to use any data provided by me.\n"
                      "**13** - The bot does not take responsibility for any RMT actions of it's users.")
-        embed_msg = discord.Embed(colour=discord.Colour.dark_teal(), title="Terms of Service", description=terms_msg)
+        embed_msg = sm.easy_embed("Blue", "Terms of Service", terms_msg)
         await ctx.send(embed=embed_msg, view=menus.TermsOfServiceView(ctx.author.id, username))
 
     @set_command_category('info', 2)
@@ -1344,8 +1734,7 @@ def run_discord_bot():
         if ctx.channel.id not in gli.servers[int(ctx.guild.id)][0]:
             await ctx.send("You may not run this command in this channel.")
             return
-        embed_msg = discord.Embed(colour=discord.Colour.dark_teal(),
-                                  title=menus.guide_dict[0][0], description=menus.guide_dict[0][1])
+        embed_msg = sm.easy_embed("Green", menus.guide_dict[0][0], menus.guide_dict[0][1])
         guide_view = menus.GuideMenu()
         await ctx.send(embed=embed_msg, view=guide_view)
 
@@ -1405,7 +1794,7 @@ def run_discord_bot():
             return
         stock = await inventory.check_stock(player_obj, "Token1")
         description = f"Bring me enough tokens and even you can be rewritten.\n{stock} / 50"
-        embed_msg = discord.Embed(colour=discord.Colour.green(), title=Mysmir_title, description=description)
+        embed_msg = sm.easy_embed("Green", Mysmir_title, description)
         new_view = menus.ClassChangeView(player_obj)
         await ctx.send(embed=embed_msg, view=new_view)
 
@@ -1417,7 +1806,7 @@ def run_discord_bot():
         player_obj = await sm.check_registration(ctx)
         if player_obj is None:
             return
-        embed_msg = discord.Embed(colour=discord.Colour.green(), title=Mysmir_title, description="")
+        embed_msg = sm.easy_embed("Green", Mysmir_title, "")
         if not new_username.isalpha():
             embed_msg.description = "This name is unacceptable. I refuse."
             await ctx.send(embed=embed_msg)

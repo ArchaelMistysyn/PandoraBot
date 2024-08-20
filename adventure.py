@@ -152,7 +152,7 @@ class Room:
                 demon_type, pact_type = pact.demon_variants[demon_tier], random.choice(list(pact.pact_variants.keys()))
                 self.variant = f"{demon_tier};{pact_type}"
                 title = f"{title} [{pact_type}]"
-                pact_url = f"Frame_Pact_{demon_tier}_{pact_type}.png"
+                pact_url = f"https://www.kyleportfolio.ca/botimages/Gear_Icon/Pact/Frame_Pact_{demon_tier}_{pact_type}.png"
             case "trial_room":
                 self.variant = random.choice(list(adventuredata.trial_variants_dict.keys()))
                 trial_type = adventuredata.trial_variants_dict[self.variant]
@@ -541,6 +541,8 @@ class AdventureRoomView(discord.ui.View):
             base_coins, jackpot_chance, trove_rate = random.randint(1000, 2000), 5 * self.expedition.luck, 1
             if self.expedition.room.room_type == "jackpot_room":
                 base_coins, jackpot_chance, trove_rate = 10000, (50 * self.expedition.luck), 5
+            if self.expedition.tier > 4:
+                base_coins *= 2
             reward_coins, bonus_coins = (base_coins * self.expedition.luck), 0
             # Handle jackpots.
             if random.randint(1, 1000) <= jackpot_chance:
@@ -576,13 +578,13 @@ class AdventureRoomView(discord.ui.View):
             luck_value, title = 10, "Ultimate Heart Acquired!"
             heart_id = "Pandora" if variant == 0 else "Nephilim"
         elif random.randint(1, 100) <= self.success_rates[variant]:
-            await inventory.update_stock(self.expedition.player_obj, target_item.item_id, 1)
             luck_value, heart_id, title = 1, f"Heart{variant + 1}", "Heart Preserved!"
         else:
             luck_value, heart_id = -1, None
             title, description = "Magical Overload!", f"The creature's heart was destroyed.\nLuck {luck_value}"
         target_item = inventory.BasicItem(heart_id) if heart_id is not None else None
-        if target_item:
+        if target_item is not None:
+            await inventory.update_stock(self.expedition.player_obj, target_item.item_id, 1)
             description = f"{sm.reward_message(target_item)} acquired!\n Luck +{luck_value}"
         self.expedition.luck = max(1, self.expedition.luck + luck_value)
         self.embed = discord.Embed(colour=self.expedition.colour, title=title, description=description)
@@ -731,7 +733,7 @@ class AdventureRoomView(discord.ui.View):
         demon_type = pact.demon_variants[int(pact_details[0])]
 
         async def forge_pact():
-            blood_cost = int(self.expedition.player_obj.player_mHP * (self.success_rates[variant] * 0.01))
+            blood_cost = int(self.expedition.player_obj.player_mHP * int(pact_details[0]) * 0.1)
             # Handle insufficient hp.
             if self.expedition.player_obj.player_cHP <= blood_cost:
                 output = f"Unable to provide sufficient blood to forge the pact, the {demon_type} consumes you."
@@ -747,7 +749,8 @@ class AdventureRoomView(discord.ui.View):
             await interaction_obj.response.edit_message(embed=self.embed, view=self.new_view)
 
         async def refuse_pact():
-            trigger_return, description = await self.handle_combat(interaction_obj, 200, 600, self.expedition.luck)
+            min_dmg, max_dmg = 100 * int(pact_details[0]), 300 * int(pact_details[0])
+            trigger_return, description = await self.handle_combat(interaction_obj, min_dmg, max_dmg, 10 + self.expedition.luck)
             if trigger_return:
                 return
             hp_msg = sm.display_hp(self.expedition.player_obj.player_cHP, self.expedition.player_obj.player_mHP)
@@ -841,7 +844,6 @@ class AdventureRoomView(discord.ui.View):
         return True
 
     async def treasure_found(self, interaction, treasure_type):
-        bonus = 0
         # Handle fragment rewards.
         if self.expedition.tier > 4:
             qty = get_random_quantity(luck=self.expedition.luck, is_lucky=self.expedition.room.variant == "Greater")
@@ -852,7 +854,7 @@ class AdventureRoomView(discord.ui.View):
             await interaction.response.edit_message(embed=self.embed, view=self.new_view)
             return
         # Handle gear item rewards.
-        reward_tier = inventory.generate_random_tier(max_tier=4, luck_bonus=(self.expedition.luck + bonus))
+        reward_tier = inventory.generate_random_tier(max_tier=4, luck_bonus=self.expedition.luck)
         reward_item = inventory.CustomItem(self.expedition.player_obj.player_id, treasure_type, reward_tier)
         self.embed, self.new_view = await reward_item.create_citem_embed(), ItemView(self.expedition, reward_item)
         await interaction.response.edit_message(embed=self.embed, view=self.new_view)

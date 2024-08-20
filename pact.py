@@ -53,6 +53,8 @@ def assign_pact_values(player_obj):
     if player_obj.pact == "":
         return
     pact_object = Pact(player_obj.pact)
+    player_obj.all_elemental_mult += pact_object.pact_tier * 0.15
+    player_obj.class_multiplier += pact_object.pact_tier * 0.03
     match pact_object.pact_variant:
         case "Wrath":
             player_obj.attack_speed *= 2

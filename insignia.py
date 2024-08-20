@@ -20,7 +20,8 @@ insignia_name_list = [None, "Monolith", "Dyadic", "Trinity", "Tetradic", "Pentag
 insignia_description_list = [None, "One element: ", "Two elements: ", "Three elements: ",
                              "Four elements: ", "Five elements: ", None, None, None, "All elements: "]
 insignia_multipliers = [[0, 0], [150, 25], [75, 25], [50, 25], [75, 10], [50, 10], [0, 0], [0, 0], [0, 0], [25, 10]]
-insignia_hp_list = [0, 500, 1000, 1500, 2000, 2500, 5000, 10000, 20000, 50000]
+insignia_hp_list = [0, 750, 1500, 2500, 5000, 7500, 10000, 15000, 25000, 50000]
+insignia_damage = [0, 5000, 10000, 25000, 50000, 100000, 250000, 500000, 750000, 1000000]
 mutation_upgrade_data = {0: [5, 50], 1: [10, 25], 2: [20, 99], 3: [30, 100]}
 insignia_prefix = ["Dormant", "Awakened", "Evolved", "Infused", "Symbiotic", "Resonating",
                    "Mutation: Wish", "Mutation: Abyss", "Mutation: Divine", "Mutation: Sacred"]
@@ -44,6 +45,7 @@ class Insignia:
         # Stats
         hp_bonus, luck_bonus = insignia_hp_list[self.stars], self.stars
         final_damage, attack_speed = self.player_obj.player_level * mutation_adjust, self.stars * 5
+        self.insignia_damage = insignia_damage[self.stars]
         self.bonus_stats = {'hp_bonus': hp_bonus, 'luck_bonus': luck_bonus,
                             'final_damage': final_damage * 0.01, 'attack_speed': attack_speed * 0.01}
         # Build output.
@@ -52,15 +54,19 @@ class Insignia:
         self.name = f"{insignia_name_list[self.num_elements]} Insignia [{insignia_prefix[self.stars]}]"
         self.pen = insignia_multipliers[self.num_elements][0]
         self.pen += insignia_multipliers[self.num_elements][1] * self.stars * mutation_adjust
+        element_icons = ""
         if self.num_elements == 9:
             icon_list = gli.omni_icon
             item_rolls += f"\n{pearl} Omni Penetration {self.pen:,}%"
         else:
             selected_elements_list = [ind for ind, x in enumerate(self.element_list) if x == 1]
             for y in selected_elements_list:
+                element_icons += gli.ele_icon[y]
                 item_rolls += f"\n{pearl} {gli.element_names[y]} Penetration {self.pen:,}%"
+        damage_details = f"Base Damage: {self.insignia_damage:,} - {self.insignia_damage:,}"
         self.insignia_output = sm.easy_embed(self.stars, self.name, sm.display_stars(self.stars))
-        self.insignia_output.add_field(name="", value=item_rolls, inline=False)
+        self.insignia_output.add_field(name=element_icons, value=damage_details, inline=False)
+        self.insignia_output.add_field(name="Insignia Bonus", value=item_rolls, inline=False)
         self.insignia_output.set_thumbnail(url=f"{gli.frame_icon_list[self.stars - 1].replace('[EXT]', gli.frame_extension[0])}")
 
 
@@ -309,6 +315,8 @@ def assign_insignia_values(player_obj):
         return
     insignia_obj = Insignia(player_obj)
     # Apply bonus stats.
+    player_obj.player_damage_min += insignia_obj.insignia_damage
+    player_obj.player_damage_max += insignia_obj.insignia_damage
     player_obj.final_damage += insignia_obj.bonus_stats["final_damage"]
     player_obj.attack_speed += insignia_obj.bonus_stats["attack_speed"]
     player_obj.luck_bonus += insignia_obj.bonus_stats["luck_bonus"]

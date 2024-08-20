@@ -515,8 +515,8 @@ class InlaySelectView(discord.ui.View):
         gear_types = [geartype for geartype in gli.gear_types if geartype != "Gem"]
         gear_icons = [icon for icon in gli.gear_icons if "Gem" not in icon]
         options = [discord.SelectOption(
-            emoji=icon[idx], label=label[idx], value=f"{idx}", description=f"Inlay gem in your {label[idx].lower()}")
-            for idx, label, icon in enumerate(zip(gear_types, gear_icons))]
+            emoji=icon, label=label, value=f"{idx}", description=f"Inlay gem in your {label.lower()}")
+            for idx, (label, icon) in enumerate(zip(gear_types, gear_icons))]
         self.select_menu = discord.ui.Select(placeholder="Select an item!", min_values=1, max_values=1, options=options)
         self.select_menu.callback = self.inlay_select_callback
         self.add_item(self.select_menu)

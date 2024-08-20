@@ -30,7 +30,7 @@ abyss_img = f"{web_url}scenes/Abyss.png"
 planetarium_img = f"{web_url}scenes/Tarot_Planetarium.png"
 market_img, bazaar_img = "", ""
 infuse_img = f"{web_url}scenes/Infuse.png"
-sanctuary_img, cathedral_img = "", ""
+sanctuary_img, cathedral_img = f"{web_url}scenes/Sanctuary.png", f"{web_url}scenes/Cathedral.png"
 palace_night_img, palace_day_img = f"{web_url}scenes/Palace1.png", f"{web_url}scenes/Palace2.png"
 map_img = f"{web_url}scenes/Map.png"
 archdragon_logo = f"{web_url}ArchDragon.png"
@@ -66,11 +66,11 @@ frame_extension = ["106px", "1484px"]
 star_icon = ["<:SB:1201563579330076682>", "<:S1:1201563573202206910>", "<:S2:1201563575433576488>",
              "<:S3:1201563576494731285>", "<:S4:1201563578327633981>", "<:S5:1201815874978189362>",
              "<:S6:1201563580382859375>", "<:S7:1201563581615968296>", "<:S8:1201721242064011284>",
-             "<:S9:1201563571788709908>"]
+             "<:S9:1274572488054935612>"]
 # Augment Icons
 augment_icons = ["<:P1:1201567117414244372>", "<:P2:1201567119368798239>", "<:P3:1201567120669036554>",
                  "<:P4:1201567121411407944>", "<:P5:1201567122569048154>", "<:P6:1201567123999313930>",
-                 "<:P7:1201567125035286628>", "<:P8:1201567463859556503>", "<:PX:1201567126088056862>"]
+                 "<:P7:1201567125035286628>", "<:P8:1274572453401726986>", "<:P9:1274572440953163837>"]
 # Element Icons
 ele_icon = ["<:e1:1179726491311947829>", "<:e2:1179726472995405854>", "<:e3:1179726450056761364>",
             "<:e4:1179726402296221787>", "<:e5:1179726383224733706>", "<:e6:1179726426509946900>",
@@ -82,9 +82,9 @@ element_dict = {
     'Storms': [1, 2], 'Frostfire': [0, 5], 'Eclipse': [7, 6], 'Horizon': [3, 4], 'Stars': [8],
     'Solar': [0, 7, 4], 'Lunar': [1, 5, 6], 'Terrestria': [2, 3, 8], 'Chaos': [0, 6, 2, 3], 'Holy': [1, 7, 4, 5],
     'Confluence': [0, 1, 2, 3, 4, 5, 6, 7, 8]}
-gear_types = ['Weapon', 'Armour', 'Greaves', 'Ring', 'Amulet', 'Wings', 'Crest', 'Gem']
+gear_types = ['Weapon', 'Armour', 'Greaves', 'Amulet', 'Ring', 'Wings', 'Crest', 'Gem']
 gear_icons = ['<:Sword5:1246945708939022367>', '<:Armour5:1246945463630823438>', '<:Greaves5:1246945410707095565>',
-              '<:E_Ring0:1253839617799487568>', '<:Amulet5:1246945347637346315>', '<:Wings5:1246945596821082197>',
+              '<:Amulet5:1246945347637346315>', '<:E_Ring0:1253839617799487568>', '<:Wings5:1246945596821082197>',
               '<:Crest5:1246945508048637972>', '<:Gem5:1242206603441078363>']
 
 # NAME LISTS
@@ -119,9 +119,9 @@ skill_names_dict = {
 # ITEM LISTS
 crafting_gem = ["Blazing Ruby", "Drowned Sapphire", "Silent Topaz", "Ancient Agate", "Whispering Emerald",
                 "Arctic Zircon", "Haunted Obsidian", "Prismatic Opal", "Spatial Lapis", "Soul Diamond"]
-availability_list_nongear = ["Lotus"]
+availability_list_nongear = ["Gemstone", "Fragment", "Crystal", "Heart", "Skull", "Misc"]
 availability_list = ["Sword", "Saber", "Bow", "Threads", "Armour", "Wings", "Amulet", "Crest", "Greaves",
-                     "Ring", "Gem", "Pact"]
+                     "Ring", "Gem", "Pact", "Dagger", "Mirrorblades", "Wand", "Caduceus Rod", "Mare", "Unicorn"]
 
 sovereign_item_list = ["Crown of Skulls", "Twin Rings of Divergent Stars", "Hadal's Raindrop", "Heavenly Calamity",
                        "Stygian Calamity", "Pandora's Universe Hammer", "Solar Flare Blaster", "Ruler's Crest",
@@ -135,10 +135,10 @@ sovereign_batch_data = ', '.join([str(base_type) for base_type in sovereign_item
 # Class: [[tier 1-4 bases], [tier 1-8 bases], [tier 5-8 bases]]
 weapon_type_dict = {"Knight": [["Sword"], [], ["Saber", "Scythe"]],
                     "Ranger": [[], ["Bow"], ["Blaster"]],
-                    "Assassin": [[], ["Dagger"], ["Claws"]],
-                    "Mage": [["Rod"], [], ["Codex", "Caduceus Rod"]],
+                    "Assassin": [["Dagger"], [], ["Mirrorblades", "Claws"]],
+                    "Mage": [["Wand"], [], ["Codex", "Caduceus Rod"]],
                     "Weaver": [[], ["Threads"], []],
-                    "Rider": [["Hatchling", "Mare"], [], ["Dragon", "Pegasus"]],
+                    "Rider": [["Hatchling", "Mare"], [], ["Dragon", "Unicorn"]],
                     "Summoner": [["Serpent"], [], ["Basilisk", "Cerberus"]]}
 
 # Quality Map
@@ -236,5 +236,5 @@ hp_bar_dict = {1: [t1_hpbar_full, t1_hpbar_empty], 2: [t2_hpbar_full, t2_hpbar_e
                7: [t7_hpbar_full, t57_hpbar_empty], 8: [t8_hpbar_full, t68_hpbar_empty]}
 
 # MESSAGES
-abyss_msg = ("Within this cavern resides the Deep Void. The taint of the void can only be purified "
-             "through a more powerful darkness. Take great caution, there is nothing which can save you down there.")
+abyss_msg = ("Within the abyssal plane resides the Deep Void. The taint of the void can only be purified "
+             "through a more powerful darkness. Take great caution, dive too deep and nothing can pull you back out.")

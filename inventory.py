@@ -318,14 +318,7 @@ class CustomItem:
         # Add a roll and element to non-gem items.
         itemrolls.add_roll(self, 1)
         self.add_item_element(9)
-        # Handle weapon items.
-        if self.item_type == "W":
-            self.set_base_attack_speed()
-            item_data = gli.weapon_type_dict[self.item_damage_type]
-            combined_list = item_data[1] + item_data[2] if self.item_tier >= 5 else item_data[0] + item_data[1]
-            self.item_base_type = random.choice(combined_list)
-            return
-        # Handle non-weapon, non-gem items.
+        # Handle non-gem items.
         match self.item_type:
             case "A":
                 self.set_base_damage_mitigation()
@@ -338,6 +331,11 @@ class CustomItem:
                 self.item_base_type = wing_base_dict[self.item_tier]
             case "C":
                 self.item_base_type = "Diadem" if self.item_tier >= 5 else random.choice(crest_base_list)
+            case "W":
+                self.set_base_attack_speed()
+                item_data = gli.weapon_type_dict[self.item_damage_type]
+                combined_list = item_data[1] + item_data[2] if self.item_tier >= 5 else item_data[0] + item_data[1]
+                self.item_base_type = random.choice(combined_list)
             case _:
                 self.item_base_type = "base_type_error"
 
@@ -383,9 +381,10 @@ class CustomItem:
             stat_msg = f'{base_type}{display_base_stat}{aux_suffix}\n'
         # Set the bonus stat text.
         tier_specifier = {5: "Void", 6: "Wish", 7: "Abyss", 8: "Divine", 9: "Sacred"}
+        bonus_stat = self.item_bonus_stat
         if self.item_tier >= 5 and self.item_type != "W" and "D" not in self.item_type:
-            self.item_bonus_stat = f"{tier_specifier[self.item_tier]} Application ({self.item_bonus_stat})"
-        stat_msg += self.item_bonus_stat if "D" not in self.item_type else f"{self.get_gem_stat_message()}"
+            bonus_stat = f"{tier_specifier[self.item_tier]} Application ({self.item_bonus_stat})"
+        stat_msg += bonus_stat if "D" not in self.item_type else f"{self.get_gem_stat_message()}"
         if self.item_type == "R":
             rolls_msg = await ring.display_ring_values(self)
         elif self.item_base_type not in gli.sovereign_item_list:

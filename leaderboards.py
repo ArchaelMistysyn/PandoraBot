@@ -72,16 +72,15 @@ async def update_leaderboard(combat_tracker, player_obj, ctx_object):
 
 async def rerank_leaderboard(ctx_object):
     # Fetch the damage leaderboard, update the rankings.
-    damage_query = "SELECT * FROM Leaderboard ORDER BY player_damage DESC, damage_record_time ASC"
+    damage_query = "SELECT *, CAST(player_damage AS DECIMAL(65, 0)) as numeric_dmg FROM Leaderboard ORDER BY numeric_dmg DESC, player_id DESC"
     damage_df = await rqy(damage_query, return_value=True)
     damage_df['player_damage_rank'] = range(1, len(damage_df) + 1)
     damage_df = damage_df[['player_id', 'player_damage_rank']]
     # Fetch the dps leaderboard, update the rankings.
-    dps_query = "SELECT * FROM Leaderboard ORDER BY player_dps DESC, dps_record_time ASC"
+    dps_query = "SELECT *, CAST(player_dps AS DECIMAL(65, 0)) as numeric_dps FROM Leaderboard ORDER BY numeric_dps DESC, player_id DESC"
     dps_df = await rqy(dps_query, return_value=True)
     dps_df['player_dps_rank'] = range(1, len(dps_df) + 1)
     dps_df = dps_df[['player_id', 'player_dps_rank']]
-
     # Retrieve the current roles for rank 1 players
     raw_query = ("SELECT player_id, player_damage_rank, player_dps_rank "
                  "FROM Leaderboard WHERE player_damage_rank = 1 OR player_dps_rank = 1")
@@ -110,9 +109,8 @@ async def rerank_leaderboard(ctx_object):
         original_dps_id = int(original_df[original_df['player_dps_rank'] == 1]['player_id'].values[0])
     new_damage_id = int(damage_df[damage_df['player_damage_rank'] == 1]['player_id'].values[0])
     new_dps_id = int(dps_df[dps_df['player_dps_rank'] == 1]['player_id'].values[0])
-    damage_role = "Ranking Title - Damage Rank #1"
+    damage_role, dps_role = "Ranking Title - Damage Rank #1", "Ranking Title - DPS Rank #1"
     await handle_rank_changes(ctx_object, original_damage_id, new_damage_id, damage_role)
-    dps_role = "Ranking Title - DPS Rank #1"
     await handle_rank_changes(ctx_object, original_dps_id, new_dps_id, dps_role)
 
     # Update the ranks in the database for DPS leaderboard
@@ -125,28 +123,28 @@ async def rerank_leaderboard(ctx_object):
         raw_query = ("UPDATE Leaderboard "
                      "SET player_damage_rank = :damage_rank, player_dps_rank = :dps_rank WHERE player_id = :id")
         await rqy(raw_query, params={'damage_rank': damage_rank, 'dps_rank': dps_rank, 'id': player_id})
-    
 
 
 async def display_leaderboard(leaderboard_title, player_id):
     leaderboard_type = leaderboard_title.lower()
-    raw_query = (f"SELECT player_id, player_{leaderboard_type}_rank, player_{leaderboard_type} "
+    raw_query = (f"SELECT player_id, player_{leaderboard_type}_rank, "
+                 f"CAST(player_{leaderboard_type} AS DECIMAL(65, 0)) as numeric_{leaderboard_type} "
                  f"FROM Leaderboard ORDER BY player_{leaderboard_type}_rank ASC, player_id DESC")
     rank_df = await rqy(raw_query, return_value=True)
     
     # Build ranking embed.
-    embed = discord.Embed(color=discord.Color.blue(), title=f"{leaderboard_title} Leaderboard", description="")
-    if len(rank_df) != 0:
-        for index, row in rank_df.iterrows():
-            current_player = await player.get_player_by_id(int(row['player_id']))
-            current_rank = row[f'player_{leaderboard_type}_rank']
-            current_stat = sm.number_conversion(int(row[f'player_{leaderboard_type}']))
-            class_icon = gli.class_icon_dict[current_player.player_class]
-            ranking_row = f"{class_icon} Rank {current_rank}: {current_player.player_username} ({current_stat})"
-            if current_player.player_id == player_id:
-                ranking_row = f"**{ranking_row}**"
-            embed.add_field(name="", value=ranking_row, inline=False)
-    else:
-        embed.description = "No rankings posted."
+    description = "No rankings posted."
+    embed = discord.Embed(color=discord.Color.blue(), title=f"{leaderboard_title} Leaderboard", description=description)
+    if len(rank_df) == 0:
+        return embed
+    for index, row in rank_df.iterrows():
+        current_player = await player.get_player_by_id(int(row['player_id']))
+        current_rank = row[f'player_{leaderboard_type}_rank']
+        current_stat = sm.number_conversion(int(row[f'player_{leaderboard_type}']))
+        class_icon = gli.class_icon_dict[current_player.player_class]
+        ranking_row = f"{class_icon} Rank {current_rank}: {current_player.player_username} ({current_stat})"
+        if current_player.player_id == player_id:
+            ranking_row = f"**{ranking_row}**"
+        embed.add_field(name="", value=ranking_row, inline=False)
     return embed
 

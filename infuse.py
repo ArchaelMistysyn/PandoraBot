@@ -22,12 +22,12 @@ recipe_dict = {
     "Heavenly Infusion": {}, "Elemental Infusion": {}, "Crystal Infusion": {},
     "Void Infusion": {}, "Jewel Infusion": {}, "Skull Infusion": {},
     "Special Infusion": {
-        "Radiant Heart": [("Stone5", 1), ("Fragment2", 1), 20, "Heart1", None],
-        "Chaos Heart": [("Stone5", 1), ("Fragment3", 1), 20, "Heart2", None],
+        "Radiant Heart": [("Stone6", 1), ("Fragment2", 1), 20, "Heart1", None],
+        "Chaos Heart": [("Stone6", 1), ("Fragment3", 1), 20, "Heart2", None],
         "Abyss Flame": [("Crystal3", 1), ("Flame1", 10), 80, "Flame2", None],
         "Lotus of Serenity": [("Heart1", 99), ("Fragment2", 99), 99, "Lotus3"]},
     "Elemental Signet Infusion": {}, "Primordial Ring Infusion": {}, "Path Ring Infusion": {},
-    "Legendary Ring Infusion": {
+    "Fabled Ring Infusion": {
         "Dragon's Eye Diamond": [("Gemstone9", 15), ("Gemstone10", 3), 100, "7", "R"],
         "Bleeding Hearts": [("Gemstone9", 5), ("Heart1", 50), ("Heart2", 50), ("Gemstone10", 3), 100, "7", "R"],
         "Gambler's Masterpiece": [("Gemstone9", 1), ("Gemstone10", 1), 1, "7", "R"],
@@ -133,7 +133,7 @@ cat_icon = {
     "Elemental Signet Infusion": "<:Signet0:1253839691736678440>",
     "Primordial Ring Infusion": "<:E_Ring0:1253839617799487568>",
     "Path Ring Infusion": "<:Signet0:1253839691736678440>",
-    "Legendary Ring Infusion": "<:Signet0:1253839691736678440>",
+    "Fabled Ring Infusion": "<:Signet0:1253839691736678440>",
     "Sovereign Ring Infusion": "<:twin_rings:1266169349366874204>",
     "Sovereign Weapon Infusion": "<:p_hammer:1266169346338853015>",
     "Sovereign Special Infusion": "<:r_crown:1266169347198423090>"}
@@ -342,7 +342,7 @@ class CraftView(discord.ui.View):
             await interaction.response.edit_message(embed=self.embed_msg, view=self.new_view)
             return
         # Handle Gear Success
-        classification, item_tier = ("Sacred", 9) if is_sacred else ("Sovereign", 8)
+        classification, item_tier = ("Sacred", 9) if is_sacred else ("Sovereign", 8) if item_tier == 8 else (None, item_tier)
         new_item = inventory.CustomItem(self.player_obj.player_id, self.recipe_object.item_type, item_tier,
                                         base_type=self.recipe_object.recipe_name, is_sacred=is_sacred)
         # Handle Ring Exceptions
@@ -358,7 +358,8 @@ class CraftView(discord.ui.View):
         await inventory.add_custom_item(new_item)
         self.embed_msg = await new_item.create_citem_embed()
         await interaction.response.edit_message(embed=self.embed_msg, view=self.new_view)
-        await sm.send_notification(self.ctx_obj, self.player_obj, classification, new_item.item_base_type)
+        if classification is not None:
+            await sm.send_notification(self.ctx_obj, self.player_obj, classification, new_item.item_base_type)
         return
 
     @discord.ui.button(label="Infuse 1", style=discord.ButtonStyle.success, emoji="1️⃣")

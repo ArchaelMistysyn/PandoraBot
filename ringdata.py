@@ -19,8 +19,8 @@ ring_icons = {0: None, 1: None, 2: None, 3: None,
                                           "<:skull_ring:1266169381663015146>", "<:skull_ring:1266169381663015146>"]}
 
 ring_values_dict = {
-    # Legendary Rings
-    "Dragon's Eye Diamond": [[("Critical Rate Becomes X%", "perfect_rate", 100, ["Critical"]),
+    # Fabled Rings
+    "Dragon's Eye Diamond": [[("Critical Eye", "perfect_rate", 100, ["Critical"]),
                               ("Critical Damage X%", "critical_mult", 500, None),
                               ("[RESONANCE]", "resonance", 100, 4)], (0, None), [0]],
     "Bleeding Hearts": [[("Bleed Application +X", "appli", 5, None),
@@ -30,21 +30,20 @@ ring_values_dict = {
     "Lonely Ring of the Dark Star": [[
         ("Dark Dream", "spec_conv", 300, "DarkDream"),
         ("X% chance Non-Bloom hits trigger Stygian Bloom", "spec_conv", 25, "Stygian"),
-        ("[RESONANCE]", "resonance", 100, 2)], (0, None), ["all"]],
+        ("[RESONANCE]", "resonance", 100, 2)], (0, None), [0, 2, 3, 6, 8]],
     "Lonely Ring of the Light Star": [[
         ("Light Dream", "spec_conv", 300, "LightDream"),
         ("X% chance Bloom hits trigger Heavenly Bloom", "spec_conv", 25, "Heavenly"),
-        ("[RESONANCE]", "resonance", 100, 2)], (0, None), ["all"]],
+        ("[RESONANCE]", "resonance", 100, 2)], (0, None), [1, 4, 5, 7, 8]],
     # Sovereign Rings
-    "Stygian Calamity": [[("X% chance for Non-Bloom hits to trigger Calamity", "spec_conv", 99, "Calamity"),
+    "Stygian Calamity": [[("X% chance for Non-Bloom hits to trigger Calamity", "spec_conv", 90, "Calamity"),
                           ("X% Hybrid Curse (Chaos)", "elemental_curse", 999, (0, 2, 3, 6))], (0, None), [0, 2, 3, 6]],
-    "Heavenly Calamity": [[("X% chance for Non-Bloom hits to trigger Calamity", "spec_conv", 99, "Calamity"),
+    "Heavenly Calamity": [[("X% chance for Non-Bloom hits to trigger Calamity", "spec_conv", 90, "Calamity"),
                            ("X% Hybrid Curse (Holy)", "elemental_curse", 999, (1, 4, 5, 7))], (0, None), [1, 4, 5, 7]],
     "Hadal's Raindrop": [[("Aqua Cascade", "aqua_mode", 100, None), ("Aqua Conversion", None, 0, None),
                           ("Aqua Manifestation", None, 0, None)], (0, None), [1]],
     "Twin Rings of Divergent Stars":
-        [[("X% chance for Bloom hits to trigger Heavenly Bloom", "spec_conv", 50, "Heavenly"),
-          ("X% chance for Non-Bloom hits to trigger Stygian Bloom", "spec_conv", 50, "Stygian"),
+        [[("Heavenly Star", "spec_conv", 50, "Heavenly"), ("Stygian Star", "spec_conv", 50, "Stygian"),
           ("Omni Curse X%", "all_elemental_curse", 300, None)], (0, None), [6, 7, 8]],
     "Crown of Skulls": [["Avaricious Ruin", "Banquet of Bones"], (0, None), [5]],
     "Chromatic Tears": [["Rainbow's End", "Cursed Wish", "Resonance [The Wish]"], (0, None), ["all"]]}
@@ -77,7 +76,8 @@ for path_index, (ring_prefix, ring_suffix, resonance_index) in enumerate(path_ri
         for idx in element_indices:
             abilities.append((f"{gli.element_names[idx]} Curse X%", "elemental_curse", 250, idx))
     abilities.append(("[RESONANCE]", "resonance", 100, resonance_index))
-    ring_values_dict[f"{ring_prefix} Ring of {ring_suffix}"] = [abilities, (10, path_index), element_indices]
+    path_value = 10 if ring_suffix != "Celestia" else 20
+    ring_values_dict[f"{ring_prefix} Ring of {ring_suffix}"] = [abilities, (path_value, path_index), element_indices]
 
 ring_resonance_dict, ring_element_dict = {}, {}
 for ring_name, attributes in ring_values_dict.items():

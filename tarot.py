@@ -327,6 +327,7 @@ class TarotCard:
         self.num_stars = num_stars
         self.damage, self.hp, self.fd = tarot_damage[self.num_stars], tarot_hp[self.num_stars], tarot_fd[self.num_stars]
         self.card_enhancement = card_enhancement
+        self.resonance = 1
         if self.card_qty == 0:
             self.card_image_link = f"{gli.web_url}tarot/cardback.png"
         else:
@@ -345,17 +346,17 @@ class TarotCard:
 
     async def display_tarot_stats(self):
         player_obj = await player.get_player_by_id(self.player_id)
-        resonance_bonus = await self.check_resonance(player_obj)
+        await self.check_resonance(player_obj)
         card_data = card_stat_dict[self.card_numeral]
         pearl = gli.augment_icons[self.num_stars - 1]
-        path_string = "**Active Resonance**\n" if resonance_bonus == 2 else ""
+        path_string = "**Active Resonance**\n" if self.resonance == 2 else ""
         path_string += f"Path of {gli.path_names[card_data[0]]}" if card_data[0] != "All" else "All Paths"
-        stat_string = f"{path_string} +{path_point_values[self.num_stars] * resonance_bonus}\n"
-        stat_string += (f"{pearl} Base Damage {self.damage * resonance_bonus:,} - {self.damage * resonance_bonus:,}\n"
-                        f"{pearl} HP Bonus +{self.hp * resonance_bonus:,}\n"
-                        f"{pearl} Final Damage {self.fd * resonance_bonus:,}%")
+        stat_string = f"{path_string} +{path_point_values[self.num_stars] * self.resonance}\n"
+        stat_string += (f"{pearl} Base Damage {self.damage * self.resonance:,} - {self.damage * self.resonance:,}\n"
+                        f"{pearl} HP Bonus +{self.hp * self.resonance:,}\n"
+                        f"{pearl} Final Damage {self.fd * self.resonance:,}%")
         for ability_data in card_data[1:]:
-            ability_value = ability_data[1] * self.num_stars * resonance_bonus
+            ability_value = ability_data[1] * self.num_stars * self.resonance
             if "X" in ability_data[0]:
                 stat_string += f'\n{pearl} {ability_data[0].replace("X", str(ability_value))}'
             else:
@@ -364,25 +365,25 @@ class TarotCard:
         return stat_string
 
     async def assign_tarot_values(self, player_obj):
-        resonance_bonus = await self.check_resonance(player_obj)
+        await self.check_resonance(player_obj)
         card_data = card_stat_dict[self.card_numeral]
         # Apply Path bonuses
-        path_bonus = path_point_values[self.num_stars] * resonance_bonus
+        path_bonus = path_point_values[self.num_stars] * self.resonance
         if card_data[0] != "All":
             player_obj.gear_points[card_data[0]] += path_bonus
         else:
             player_obj.gear_points = [path + path_bonus for path in player_obj.gear_points]
         # Apply modifier bonuses
-        player_obj.player_damage_min += self.damage * resonance_bonus
-        player_obj.player_damage_max += self.damage * resonance_bonus
-        player_obj.hp_bonus += self.hp * resonance_bonus
-        player_obj.final_damage += self.fd * 0.01 * resonance_bonus
-        card_multiplier = self.num_stars * 0.01 * resonance_bonus
+        player_obj.player_damage_min += self.damage * self.resonance
+        player_obj.player_damage_max += self.damage * self.resonance
+        player_obj.hp_bonus += self.hp * self.resonance
+        player_obj.final_damage += self.fd * 0.01 * self.resonance
+        card_multiplier = self.num_stars * 0.01 * self.resonance
         for bonus_roll in card_data[1:]:
             attribute_value, attribute_name, attribute_position = bonus_roll[1], bonus_roll[2], bonus_roll[3]
             if "appli" not in attribute_name:
                 attribute_value *= 0.01
-            attribute_value *= self.num_stars * resonance_bonus
+            attribute_value *= self.num_stars * self.resonance
             if attribute_position is None:
                 setattr(player_obj, attribute_name, getattr(player_obj, attribute_name) + attribute_value)
             else:
@@ -391,18 +392,25 @@ class TarotCard:
 
     async def check_resonance(self, player_obj):
         if player_obj.player_equipped[4] == 0:
-            return 1
+            self.resonance = 1
+            return
         e_ring = await inventory.read_custom_item(player_obj.player_equipped[4])
+        # Universal Advent / Entwined Universe
+        if player_obj.player_equipped[0] != 0:
+            e_weapon = await inventory.read_custom_item(player_obj.player_equipped[0])
+            if e_weapon.item_base_type == "Pandora's Universe Hammer":
+                self.resonance = 2
+                return
         if e_ring.item_tier <= 4:
-            return 1
+            self.resonance = 1
+            return
         index = e_ring.roll_values[0] if e_ring.item_base_type != "Crown of Skulls" else e_ring.roll_values[2]
         numeral_key = get_key_by_index(int(index))
         # Universal Advent / Entwined Universe
         if player_obj.player_equipped[0] != 0:
             e_weapon = await inventory.read_custom_item(player_obj.player_equipped[0])
             if e_weapon.item_base_type == "Pandora's Universe Hammer":
-                return 2
-        return 2 if numeral_key == self.card_numeral else 1
+                self.resonance = 2 if numeral_key == self.card_numeral else 1
 
     async def synthesize_tarot(self):
         new_qty = self.card_qty - 1

@@ -74,7 +74,6 @@ class PlayerProfile:
         self.appli = {"Critical": 0, "Bleed": 0, "Ultimate": 0, "Life": 0, "Mana": 0,
                       "Temporal": 0, "Elemental": 0, "Combo": 0, "Aqua": 0}
         # Initialize misc Datasets.
-        self.resonance = [0] * 31
         self.banes = [0.0] * 7
         self.skill_damage_bonus = [0] * 4
         self.unique_conversion = [0.0] * 5
@@ -418,8 +417,6 @@ class PlayerProfile:
                 e_item.append(None)
         if e_item[0] is not None:
             base_attack_speed *= float(e_item[0].item_base_stat)
-            if self.player_class == "Rider":
-                base_attack_speed *= 1.25
         if e_item[1] is not None:
             base_mitigation = e_item[1].item_base_stat
         for y in range(1, 5):
@@ -470,8 +467,7 @@ class PlayerProfile:
         if self.unique_conversion[2] >= 1:
             unique_damage_types = {item.item_damage_type for item in e_item}
             match_count = len(unique_damage_types)
-        self.class_multiplier += 0.05 + self.unique_conversion[2]
-        self.class_multiplier *= match_count
+        self.class_multiplier += (0.05 + self.unique_conversion[2]) * match_count
         # Unique Bonus
         self.special_mult["Holy"] += self.spec_conv["LightDream"]
         self.special_pen["Holy"] += self.spec_conv["LightDream"]

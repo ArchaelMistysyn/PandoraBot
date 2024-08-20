@@ -267,9 +267,9 @@ reward_probabilities = {45: 1, 30: 2, 20: 3, 5: 5}
 # Reward data lists
 blessing_rewards = {("Incarnate", 8): ["Divine", "Crystal4", 15],
                     ("Arbiter", 7): ["Prismatic", "Summon3", 10],
-                    ("Arbiter", 0): ["ARBITER", "Stone6", 7],
+                    ("Arbiter", 0): ["ARBITER", "Stone5", 7],
                     ("Paragon", 6): ["Miraculous", "Summon2", 5],
-                    ("Paragon", 5): ["Sovereign's", "Summon1", 3],
+                    ("Paragon", 5): ["Deity's", "Summon1", 3],
                     ("Paragon", 0): ["PARAGON", "Stone4", 2]}
 
 jackpot_levels = [

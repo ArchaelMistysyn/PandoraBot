@@ -21,18 +21,18 @@ boss_loot_dict = {
             [1, "Ore1", 25], [2, "Ore2", 25], [3, "Ore3", 25], [4, "Ore4", 25],
             [1, "Potion1", 5], [2, "Potion2", 5], [3, "Potion3", 5], [4, "Potion4", 5],
             [5, "Potion4", 10], [6, "Potion4", 15], [7, "Potion4", 25], [8, "Potion4", 25],
-            [5, "Crystal1", 1], [6, "Crystal2", 1], [7, "Crystal3", 1], [8, "Crystal4", 1],
+            [6, "Crystal2", 1], [7, "Crystal3", 1], [8, "Crystal4", 1],
             [5, "Fragment1", 75], [6, "Fragment2", 75], [7, "Fragment3", 99], [8, "Fragment4", 99]],
     "Fortress": [[0, "Scrap", 100], [0, "Stone1", 60],
                  [1, "Trove1", 5], [2, "Trove2", 5], [3, "Trove3", 5], [4, "Trove4", 5], [0, "Ore5", 5]],
     "Dragon": [[0, "Unrefined1", 25], [0, "Stone2", 55],
                [1, "Gem1", 10], [2, "Gem1", 20], [3, "Gem1", 30], [4, "Jewel1", 40]],
-    "Demon": [[0, "Flame1", 10], [0, "Flame2", 1], [0, "Stone3", 50],
+    "Demon": [[0, "Flame1", 10], [0, "Flame2", 1], [0, "Stone3", 50], [0, "Unrefined2", 25],
               [1, "Gem2", 10], [2, "Gem2", 20], [3, "Gem2", 30], [4, "Jewel2", 40]],
     "Paragon": [[0, "Summon1", 5], [0, "Summon2", 1], [0, "Unrefined3", 25], [0, "Stone4", 45],
                 [1, "Gem3", 10], [2, "Gem3", 20], [3, "Gem3", 30],
                 [4, "Jewel3", 40], [5, "Jewel3", 50], [6, "Jewel3", 60], [6, "Gemstone10", 5]],
-    "Arbiter": [[0, "Summon3", 5], [0, "Stone6", 40], [7, "Lotus5", 5],
+    "Arbiter": [[0, "Summon3", 5], [0, "Stone5", 40], [7, "Lotus5", 5],
                 [1, "Token1", 5], [2, "Token2", 5], [3, "Token3", 5], [4, "Token4", 5],
                 [5, "Token5", 5], [6, "Token6", 5], [7, "Token7", 5],
                 [1, "Jewel4", 10], [2, "Jewel4", 20], [3, "Jewel4", 30], [4, "Jewel4", 40],
@@ -41,7 +41,7 @@ boss_loot_dict = {
                   [8, "Lotus2", 5], [8, "Lotus3", 5], [8, "Lotus4", 5], [8, "Lotus5", 5], [8, "Lotus6", 5],
                   [8, "Lotus7", 5], [8, "Lotus8", 5], [8, "Lotus9", 5], [8, "Lotus1", 5],
                   [8, "Lotus10", 1], [8, "DarkStar", 2], [8, "Nephilim", 1], [8, "EssenceXXX", 99]],
-    "Ruler": [[9, "Stone5", 33], [9, "Crystal4", 1], [9, "Lotus4", 0.1, [9, "Ruler", 0.05], [9, "Sacred", 0.01]]]}
+    "Ruler": [[9, "Stone6", 33], [9, "Crystal4", 1], [9, "Lotus4", 0.1, [9, "Ruler", 0.01], [9, "Sacred", 0.05]]]}
 incarnate_attempts_dict = {300: 1, 600: 2, 999: 5}
 
 
@@ -96,8 +96,6 @@ async def award_loot(boss_object, player_list, exp_amount, coin_amount, loot_mul
         fae_id, fae_qty = f"Fae{core_element}", random.randint(5, max(5, min(100, boss_object.boss_level)))
         fae_qty *= loot_mult
         msg, batch_df = update_loot_and_df(temp_player, fae_id, fae_qty, msg, counter, batch_df)
-        if boss_object.player_id == 0 and is_dropped(75):
-            msg, batch_df = update_loot_and_df(temp_player, "Stone5", 1, msg, counter, batch_df)
         min_shards, max_shards = (1 if magni != 0 else 0), magni
         # Check essence drops.
         if ' - ' in boss_object.boss_name and "XXX" not in boss_object.boss_name:
@@ -116,6 +114,8 @@ async def award_loot(boss_object, player_list, exp_amount, coin_amount, loot_mul
             elif "XXV" in boss_object.boss_name and is_dropped(5):
                 msg, batch_df = update_loot_and_df(temp_player, f"Lotus9", 1, msg, counter, batch_df)
                 await sm.send_notification(ctx, temp_player, "Item", "Lotus9")
+        if "Pandora" in boss_object.boss_name and is_dropped(0.1):
+            msg, batch_df = update_loot_and_df(temp_player, f"Pandora", 1, msg, counter, batch_df)
         if min_shards > 0:
             num_shards = random.randint(min_shards, max_shards)
             msg, batch_df = update_loot_and_df(temp_player, f"Shard", num_shards, msg, counter, batch_df)
