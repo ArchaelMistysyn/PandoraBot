@@ -85,7 +85,8 @@ def run_discord_bot():
 
     @pandora_bot.event
     async def on_ready():
-        print(f'{pandora_bot.user} Online!')
+        error_channel = pandora_bot.get_channel(gli.bot_logging_channel)
+        await error_channel.send(f'{pandora_bot.user} Online!')
         pandoracogs.StaminaCog(pandora_bot)
         pandora_bot.help_command = CustomHelpCommand()
 
@@ -98,12 +99,18 @@ def run_discord_bot():
 
     @pandora_bot.event
     async def on_shutdown():
-        print("Pandora Bot Off")
+        error_channel = pandora_bot.get_channel(gli.bot_logging_channel)
+        await error_channel.send("Pandora Bot Off")
         try:
             await close_database_session()
             await pandora_bot.close()
         except Exception as e:
-            print(f"Shutdown Error: {e}")
+            await error_channel.send(f"Shutdown Error: {e}")
+
+    @pandora_bot.event
+    async def on_disconnect():
+        error_channel = pandora_bot.get_channel(gli.bot_logging_channel)
+        await error_channel.send("<@185530717638230016> ALERT! Pandora Bot is disconnected!")
 
     @pandora_bot.event
     async def on_command_error(ctx, error):
