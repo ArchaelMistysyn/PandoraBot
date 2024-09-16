@@ -137,11 +137,13 @@ def run_discord_bot():
                                   gauntlet=gauntlet, mode=mode, magnitude=magnitude)
 
     # Admin Commands
-    async def admin_verification(ctx_object, return_target: discord.User = None, auth="GameAdmin"):
+    async def admin_verification(ctx_object, return_target: discord.User = None, auth="GameAdmin", method="default"):
         auth_dict = {"GameAdmin": gli.GM_id_dict.keys(), "Archael": [gli.reverse_GM_id_dict["Archael"]]}
         if ctx_object.author.id not in auth_dict[auth]:
             await ctx.send("Only game admins can use this command.")
             return True, None, None
+        if method == "DM":
+            return (not isinstance(ctx_object.channel, discord.DMChannel)), None, None
         player_obj = await sm.check_registration(ctx_object)
         if player_obj is None:
             return True, None, None
@@ -287,7 +289,7 @@ def run_discord_bot():
             count = await pilengine.generate_and_combine_images()
             await ctx.send(f"Admin item task completed. Task Count: {count}")
         elif keyword == "TestNotification":
-            test_dict = {"Level": 1, "Achievement": "Echelon 9", "Item": "Gemstone10"}
+            test_dict = {"Level": 1, "Achievement": "Echelon 9", "Item": "Gemstone11"}
             if value not in test_dict:
                 await ctx.send("Invalid notification type")
                 return
@@ -315,12 +317,10 @@ def run_discord_bot():
         ad_admin_role, ad_mod_role = "ArchDragon Administrator", "ArchDragon Moderator"
         if ctx.guild.id != 1011375205999968427:
             return
-        msg_lines = textwrap.wrap(message, width=40)
+        msg_lines = textwrap.wrap(message, width=35)
         if len(header) >= 25 or len(msg_lines) > 2:
             await ctx.send("Header or message is too long.")
             return
-        elif sum(1 for single_char in message if single_char.isupper()) >= 5:
-            message = message.lower()
         roles = [role.name for role in ctx.author.roles if ad_admin_role in role.name or ad_mod_role in role.name]
         if ctx.author.id == gli.reverse_GM_id_dict["Archael"]:
             boxtype, verification = "arch", "Owner"
@@ -344,6 +344,38 @@ def run_discord_bot():
         message, header = f"Turned off by Admin: {player_obj.player_username}", "Pandora Bot Shutdown"
         await ctx.send(file=discord.File(await sm.message_box(player_obj, message, header=header)))
         await on_shutdown()
+
+    @set_command_category('admin', 6)
+    @pandora_bot.command(name='giftcard', help="Admin can have bot issue code to user directly through DM.")
+    async def giftcard(ctx, target_user: discord.User, code: str, value: int):
+        await ctx.defer()
+        trigger_return, player_obj, _ = await admin_verification(ctx, method="DM")
+        if trigger_return:
+            return
+        try:
+            card_dict = {10: "Bronze", 25: "Silver", 50: "Gold", 100: "Platinum", 250: "Sovereign", 500: "Sacred"}
+            if value not in card_dict.keys():
+                await ctx.send("Invalid gift card value.")
+                return
+            message, header = f"ArchDragonStore.ca ${value:,} Giftcard", f"{card_dict[value]} Gift Card"
+            msg_lines = textwrap.wrap(message, width=35)
+            if len(header) >= 25 or len(msg_lines) > 2:
+                await ctx.send("Header or message is too long.")
+                return
+            verified = f"{gli.archdragon_emoji} Verified ArchDragonStore Gift Card: ||{code}||"
+            card_num = card_dict[value]
+            giftcard_path = file_path = f'{gli.image_path}GiftCard\\Giftcard_{card_num}.png'
+            gift_card = discord.File(giftcard_path)
+            file = await sm.message_box(player_obj, msg_lines, header=header, boxtype="arch")
+            await target_user.send(content=verified, file=discord.File(file))
+            await target_user.send(file=gift_card)
+            await ctx.send(f"Gift Card issued to {target_user.name}!")
+        except discord.Forbidden:
+            await ctx.send("Could not DM user. They might have DMs disabled.")
+
+    @pandora_bot.command()
+    async def ping(ctx):
+        await ctx.author.send("pong")
 
     # Game Commands
     @set_command_category('game', 0)
@@ -701,6 +733,26 @@ def run_discord_bot():
         if player_obj.player_quest < 10:
             new_view, embed_msg.description = None, "You are unable to enter the divine plane in your current state."
             embed_msg.set_image(url="")
+        await ctx.send(embed=embed_msg, view=new_view)
+
+    @set_command_category('location', 3)
+    @pandora_bot.hybrid_command(name='abyss', help="Explore the Abyssal Plane [Purify]")
+    @app_commands.guilds(discord.Object(id=guild_id))
+    async def enter_abyss(ctx):
+        await ctx.defer()
+        player_obj = await sm.check_registration(ctx)
+        if player_obj is None:
+            return
+        if player_obj.player_quest == 38:
+            await quest.assign_unique_tokens(player_obj, "Abyss")
+        num_visits = int(await player_obj.check_misc_data("eleuia_visits"))
+        new_view = menus.AbyssView(player_obj, num_visits)
+        description = "You are permitted to visit the higher plane by the grace of the arbiters."
+        embed_msg = sm.easy_embed("Black", "Abyssal Plane", description)
+        embed_msg.set_image(url=gli.abyss_img)
+        if player_obj.player_quest < 38:
+            new_view, embed_msg.description = None, "A great darkness clouds your path. Entry is impossible."
+            embed_msg.set_image(url=gli.abyss_img)
         await ctx.send(embed=embed_msg, view=new_view)
 
     # Gear commands
@@ -1102,9 +1154,9 @@ def run_discord_bot():
         await ctx.send(embed=embed_msg, view=infuse_view)
 
     @set_command_category('craft', 3)
-    @pandora_bot.hybrid_command(name='abyss', help="Go to the ???")
+    @pandora_bot.hybrid_command(name='purify', help="Go to the ???")
     @app_commands.guilds(discord.Object(id=guild_id))
-    async def void_purification(ctx):
+    async def purification(ctx):
         await ctx.defer()
         player_obj = await sm.check_registration(ctx)
         if player_obj is None:
@@ -1292,9 +1344,9 @@ def run_discord_bot():
                 await encounters.clear_all_encounter_info(server_id)
                 enginecogs.RaidSchedularCog(pandora_bot, pandora_bot.get_channel(raid_channel_id), raid_channel_id)
 
+    @set_command_category('combat', 0)
     @pandora_bot.hybrid_command(name='abandon', help="Abandon an active solo encounter.")
     @app_commands.guilds(discord.Object(id=1011375205999968427))
-    @set_command_category('combat', 0)
     async def abandon(ctx):
         await ctx.defer()
         player_obj = await sm.check_registration(ctx)
@@ -1309,40 +1361,40 @@ def run_discord_bot():
             return
         await ctx.send("You have flagged to abandon the encounter.")
 
+    @set_command_category('combat', 2)
     @pandora_bot.hybrid_command(name='fortress', help="Challenge a fortress boss. Cost: 1 Fortress Stone + 200 Stamina")
     @app_commands.guilds(discord.Object(id=1011375205999968427))
-    @set_command_category('combat', 1)
     async def fortress(ctx, magnitude=0):
         await solo(ctx, boss_type="Fortress", magnitude=magnitude)
 
+    @set_command_category('combat', 3)
     @pandora_bot.hybrid_command(name='dragon', help="Challenge a dragon boss. Cost: 1 Dragon Stone + 200 Stamina")
     @app_commands.guilds(discord.Object(id=1011375205999968427))
-    @set_command_category('combat', 2)
     async def dragon(ctx, magnitude=0):
         await solo(ctx, boss_type="Dragon", magnitude=magnitude)
 
+    @set_command_category('combat', 4)
     @pandora_bot.hybrid_command(name='demon', help="Challenge a demon boss. Cost: 1 Demon Stone + 200 Stamina")
     @app_commands.guilds(discord.Object(id=1011375205999968427))
-    @set_command_category('combat', 3)
     async def demon(ctx, magnitude=0):
         await solo(ctx, boss_type="Demon", magnitude=magnitude)
 
+    @set_command_category('combat', 5)
     @pandora_bot.hybrid_command(name='paragon', help="Challenge a paragon boss. Cost: 1 Paragon Stone + 200 Stamina")
     @app_commands.guilds(discord.Object(id=1011375205999968427))
-    @set_command_category('combat', 4)
     async def paragon(ctx, magnitude=0):
         await solo(ctx, boss_type="Paragon", magnitude=magnitude)
 
+    @set_command_category('combat', 6)
     @pandora_bot.hybrid_command(name='arbiter', help="Challenge a paragon boss. Cost: 1 Arbiter Stone + 200 Stamina")
     @app_commands.guilds(discord.Object(id=1011375205999968427))
-    @set_command_category('combat', 5)
     async def arbiter(ctx, magnitude=0):
         await solo(ctx, boss_type="Arbiter", magnitude=magnitude)
 
+    @set_command_category('combat', 1)
     @pandora_bot.hybrid_command(name='solo',
                                 help="Type Options: [Random/Fortress/Dragon/Demon/Paragon/Arbiter]. Stamina Cost: 200")
     @app_commands.guilds(discord.Object(id=1011375205999968427))
-    @set_command_category('combat', 6)
     async def solo(ctx, boss_type="random", magnitude=0):
         await ctx.defer()
         player_obj = await sm.check_registration(ctx)
@@ -1400,9 +1452,9 @@ def run_discord_bot():
         task = asyncio.create_task(solo_cog.run())
         await task
 
+    @set_command_category('combat', 7)
     @pandora_bot.hybrid_command(name='palace', help="Enter the Divine Palace. [WARNING: HARD]")
     @app_commands.guilds(discord.Object(id=1011375205999968427))
-    @set_command_category('combat', 7)
     async def palace(ctx):
         await ctx.defer()
         player_obj = await sm.check_registration(ctx)
@@ -1491,9 +1543,9 @@ def run_discord_bot():
             task = asyncio.create_task(solo_cog.run())
             await task
 
+    @set_command_category('combat', 8)
     @pandora_bot.hybrid_command(name='gauntlet', help="Challenge the gauntlet in the Spire of Illusions.")
     @app_commands.guilds(discord.Object(id=1011375205999968427))
-    @set_command_category('combat', 8)
     async def run_gauntlet(ctx, magnitude=0):
         await ctx.defer()
         player_obj = await sm.check_registration(ctx)
@@ -1532,10 +1584,10 @@ def run_discord_bot():
         task = asyncio.create_task(gauntlet_cog.run())
         await task
 
+    @set_command_category('combat', 9)
     @pandora_bot.hybrid_command(name='summon',
                                 help="Consume a summoning item to summon a high tier boss. Options [1-3]")
     @app_commands.guilds(discord.Object(id=1011375205999968427))
-    @set_command_category('combat', 9)
     async def summon(ctx, token_version: int, magnitude=0):
         await ctx.defer()
         player_obj = await sm.check_registration(ctx)
@@ -1585,9 +1637,9 @@ def run_discord_bot():
         task = asyncio.create_task(solo_cog.run())
         await task
 
+    @set_command_category('combat', 10)
     @pandora_bot.hybrid_command(name='arena', help="Enter pvp combat with another player.")
     @app_commands.guilds(discord.Object(id=1011375205999968427))
-    @set_command_category('combat', 10)
     async def arena(ctx):
         await ctx.defer()
         player_obj = await sm.check_registration(ctx)
@@ -1632,10 +1684,10 @@ def run_discord_bot():
         task = asyncio.create_task(pvp_cog.run())
         await task
 
+    @set_command_category('combat', 11)
     @pandora_bot.hybrid_command(name='automapper', help="Run a map automatically. "
                                                         "Default tier: Highest. Cost: 500 + (50 x Tier)")
     @app_commands.guilds(discord.Object(id=1011375205999968427))
-    @set_command_category('combat', 11)
     async def automapper(ctx, tier=0):
         await ctx.defer()
         player_obj = await sm.check_registration(ctx)
@@ -1837,9 +1889,13 @@ def run_discord_bot():
     async def credits_list(ctx):
         await ctx.defer()
         title = "Game created by: Kyle Mistysyn (Archael)"
-        artist_data = [("Daerun", "Character Illustrator (Upwork)"),
+        artist_data = [("Daerun", "Character Artist (Upwork)"),
+                       ("Daming Li", "Monster Artist (Upwork)"),
+                       ("Arjhon Tulio", "Scene Artist (Upwork)"),
+                       ("Jumana Walid", "Typography Artist (Upwork)"),
                        ("Tuul Huur @tuulhuur", "Item Icon Artist (Fiverr)"),
                        ("Nong Dit @Nong Dit", "Frame Artist (Fiverr)"),
+                       ("Rida Bargoute @ridabargoute", "Font Artist (Fiverr)"),
                        ("Aztra.studio @Artherrera", "Emoji/Icon Artist (Fiverr)"),
                        ("Labs @labcornerr", "Emoji/Icon Artist (Fiverr)"),
                        ("Daimiuk @daimiuk", "Scene/Icon Artist (Fiverr)"),

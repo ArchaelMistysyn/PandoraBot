@@ -49,24 +49,24 @@ glyph_data = {
 }
 path_perks = {
     "Storms": [["Water Damage X%", 5], ["Lightning Damage X%", 5],
-               ["Water Resistance X%", 1], ["Lightning Resistance X%", 1], ["Critical Damage X%", 3]],
+               ["Water Resistance X%", 0.1], ["Lightning Resistance X%", 0.1], ["Critical Damage X%", 3]],
     "Frostfire": [
         ["Ice Damage X%", 5], ["Fire Damage X%", 5],
-        ["Ice Resistance X%", 1], ["Fire Resistance X%", 1], ["Class Mastery X%", 1]],
+        ["Ice Resistance X%", 0.1], ["Fire Resistance X%", 0.1], ["Class Mastery X%", 1]],
     "Horizon": [["Earth Damage X%", 5], ["Wind Damage X%", 5],
-                ["Earth Resistance X%", 1], ["Wind Resistance X%", 1], ["Bleed Damage X%", 10]],
+                ["Earth Resistance X%", 0.1], ["Wind Resistance X%", 0.1], ["Bleed Damage X%", 10]],
     "Eclipse": [["Dark Damage X%", 5], ["Light Damage X%", 5],
-                ["Dark Resistance X%", 1], ["Light Resistance X%", 1], ["Ultimate Damage X%", 10]],
-    "Stars": [["Celestial Damage X%", 7], ["Celestial Resistance X%", 1], ["Combo Damage X%", 3]],
+                ["Dark Resistance X%", 0.1], ["Light Resistance X%", 0.1], ["Ultimate Damage X%", 10]],
+    "Stars": [["Celestial Damage X%", 7], ["Celestial Resistance X%", 0.1], ["Combo Damage X%", 3]],
     "Solar Flux": [["Fire Damage X%", 3], ["Wind Damage X%", 3], ["Light Damage X%", 3],
-                   ["Fire Resistance X%", 1], ["Wind Resistance X%", 1], ["Light Resistance X%", 1],
+                   ["Fire Resistance X%", 0.1], ["Wind Resistance X%", 0.1], ["Light Resistance X%", 0.1],
                    ["HP Multiplier X%", 1]],
     "Lunar Tides": [["Water Damage X%", 3], ["Ice Damage X%", 3], ["Shadow Damage X%", 3],
-                    ["Water Resistance X%", 1], ["Ice Resistance X%", 1], ["Shadow Resistance X%", 1],
+                    ["Water Resistance X%", 0.1], ["Ice Resistance X%", 0.1], ["Shadow Resistance X%", 0.1],
                     ["Mana Damage X%", 10]],
     "Terrestria": [["Singularity Damage X%", 10], ["Singularity Penetration X%", 5], ["Singularity Curse X%", 1]],
     "Confluence": [["Omni Damage X%", 1], ["Omni Curse X%", 1]],
-    "Waterfalls": [["Water Damage X%", 25], ["Water Resistance X%", 1]]
+    "Waterfalls": [["Water Damage X%", 25], ["Water Resistance X%", 0.2]]
 }
 
 
@@ -77,11 +77,11 @@ async def display_glyph(path_type, total_points, embed_msg, is_inline=True):
         bonus = current_data[0][1] * (total_points // 20)
         glyph_name = f"Glyph of {path_type}"
         # Build the description.
-        num_stars = min(8, total_points // 20)
+        num_stars = min(9, total_points // 20)
         blue_stars = f"{gli.star_icon[2] * num_stars}{gli.star_icon[0] * max(0, (8 - num_stars))}"
         description = sm.display_stars(num_stars) if path_type != "Waterfalls" else blue_stars
         for modifier in path_bonuses:
-            total_value = modifier[1] * total_points
+            total_value = round(modifier[1] * total_points, 1)
             modified_string = modifier[0].replace("X", str(total_value))
             description += f"\n{modified_string}"
         description += f"\n{current_data[0][0].replace('X', str(bonus))}"
@@ -163,7 +163,7 @@ def assign_path_multipliers(player_obj):
         player_obj.appli["Aqua"] += player_obj.aqua_mode // 20
         player_obj.appli["Aqua"] = sum(player_obj.appli.values())
         player_obj.appli = {key: (player_obj.appli["Aqua"] if key == "Aqua" else 0) for key in player_obj.appli}
-        player_obj.elemental_res[1] += 0.01 * player_obj.aqua_points
+        player_obj.elemental_res[1] += 0.002 * player_obj.aqua_points
         player_obj.elemental_mult[1] += (0.25 * player_obj.aqua_points) + (100 * player_obj.appli["Aqua"])
         return total_points
 
@@ -171,7 +171,7 @@ def assign_path_multipliers(player_obj):
     storm_bonus = total_points[0]
     for ele_idx in gli.element_dict["Storms"]:
         player_obj.elemental_mult[ele_idx] += 0.05 * storm_bonus
-        player_obj.elemental_res[ele_idx] += 0.01 * storm_bonus
+        player_obj.elemental_res[ele_idx] += 0.001 * storm_bonus
     player_obj.critical_mult += 0.03 * storm_bonus
     player_obj.appli["Critical"] += storm_bonus // 20
     if storm_bonus >= 100:
@@ -181,7 +181,7 @@ def assign_path_multipliers(player_obj):
     horizon_bonus = total_points[2]
     for ele_idx in gli.element_dict["Horizon"]:
         player_obj.elemental_mult[ele_idx] += 0.05 * horizon_bonus
-        player_obj.elemental_res[ele_idx] += 0.01 * horizon_bonus
+        player_obj.elemental_res[ele_idx] += 0.001 * horizon_bonus
     player_obj.bleed_mult += 0.1 * horizon_bonus
     player_obj.appli["Bleed"] += horizon_bonus // 20
     if horizon_bonus >= 80:
@@ -191,14 +191,14 @@ def assign_path_multipliers(player_obj):
     eclipse_bonus = total_points[3]
     for ele_idx in gli.element_dict["Eclipse"]:
         player_obj.elemental_mult[ele_idx] += 0.05 * eclipse_bonus
-        player_obj.elemental_res[ele_idx] += 0.01 * eclipse_bonus
+        player_obj.elemental_res[ele_idx] += 0.001 * eclipse_bonus
     player_obj.ultimate_mult += 0.1 * eclipse_bonus
     player_obj.appli["Ultimate"] += eclipse_bonus // 20
 
     # Star Path (4)
     star_bonus = total_points[4]
     player_obj.elemental_mult[8] += 0.07 * star_bonus
-    player_obj.elemental_res[8] += 0.01 * star_bonus
+    player_obj.elemental_res[8] += 0.001 * star_bonus
     player_obj.combo_mult += 0.03 * star_bonus
     star_skill_bonus = 0.25 * star_bonus // 20
     player_obj.skill_damage_bonus[0] += star_skill_bonus
@@ -210,7 +210,7 @@ def assign_path_multipliers(player_obj):
     solar_bonus = total_points[5]
     for ele_idx in gli.element_dict["Solar"]:
         player_obj.elemental_mult[ele_idx] += 0.03 * solar_bonus
-        player_obj.elemental_res[ele_idx] += 0.01 * solar_bonus
+        player_obj.elemental_res[ele_idx] += 0.001 * solar_bonus
     player_obj.appli["Life"] += solar_bonus // 20
     if total_points[5] >= 100:
         player_obj.hp_bonus *= 2
@@ -219,7 +219,7 @@ def assign_path_multipliers(player_obj):
     lunar_bonus = total_points[6]
     for ele_idx in gli.element_dict["Lunar"]:
         player_obj.elemental_mult[ele_idx] += 0.03 * lunar_bonus
-        player_obj.elemental_res[ele_idx] += 0.01 * lunar_bonus
+        player_obj.elemental_res[ele_idx] += 0.001 * lunar_bonus
     player_obj.appli["Mana"] += lunar_bonus // 20
     if total_points[6] >= 100:
         player_obj.mana_mult *= 2
@@ -228,7 +228,7 @@ def assign_path_multipliers(player_obj):
     terrestria_bonus = total_points[7]
     for ele_idx in gli.element_dict["Terrestria"]:
         player_obj.elemental_mult[ele_idx] += 0.03 * terrestria_bonus
-        player_obj.elemental_res[ele_idx] += 0.01 * terrestria_bonus
+        player_obj.elemental_res[ele_idx] += 0.001 * terrestria_bonus
     player_obj.appli["Temporal"] += terrestria_bonus // 20
 
     # Confluence Path (8)
@@ -244,7 +244,7 @@ def assign_path_multipliers(player_obj):
     frostfire_bonus = total_points[1]
     for ele_idx in gli.element_dict["Frostfire"]:
         player_obj.elemental_mult[ele_idx] += 0.05 * frostfire_bonus
-        player_obj.elemental_res[ele_idx] += 0.01 * frostfire_bonus
+        player_obj.elemental_res[ele_idx] += 0.001 * frostfire_bonus
         player_obj.elemental_pen[ele_idx] += frostfire_bonus // 20
     player_obj.class_multiplier += 0.01 * frostfire_bonus
 

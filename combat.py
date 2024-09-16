@@ -12,12 +12,6 @@ import quest
 import inventory
 from pandoradb import run_query as rqy
 
-combat_command_list = [("solo", "Type Options: [Random/Fortress/Dragon/Demon/Paragon/Arbiter]. Stamina Cost: 200", 0),
-                       ("summon", "Consume a summoning item to summon a high tier boss. Options [1-3]", 1),
-                       ("gauntlet", "Challenge the gauntlet in the Spire of Illusions.", 2),
-                       ("palace", "Enter the Divine Palace. [WARNING: HARD]", 3),
-                       ("arena", "Enter pvp combat with another player. Daily", 4),
-                       ("abandon", "Abandon an active solo boss encounter. 1 Minute delay.", 5)]
 shared_ruler_skills = ["King's Strike", "Sealing Chains", "Forbidden Command", "Heaven's Rule"]
 boss_attack_dict = {
     "Dragon": ["[ELEMENT] Claw Slash", "[ELEMENT] Wing Blast", "Amplified [ELEMENT] Breath"],
@@ -196,7 +190,7 @@ def handle_boss_actions(boss_obj, tracker_obj, player_obj, raid_atk=None):
 async def handle_player_actions(hit_list, tracker_obj, boss_obj, player_obj):
     regen_value = tracker_obj.hp_regen if tracker_obj.player_cHP != 0 else 0
     tracker_obj.player_cHP = min(player_obj.player_mHP, regen_value + tracker_obj.player_cHP)
-    combo_count, hits_per_cycle = 1 + player_obj.appli["Combo"], int(player_obj.attack_speed)
+    combo_count, hits_per_cycle = 1, int(player_obj.attack_speed)
     tracker_obj.remaining_hits += player_obj.attack_speed - hits_per_cycle
     while tracker_obj.remaining_hits >= 1:
         hits_per_cycle += 1
@@ -206,7 +200,7 @@ async def handle_player_actions(hit_list, tracker_obj, boss_obj, player_obj):
         hit_list.append(await hit_boss(tracker_obj, boss_obj, player_obj, combo_count))
         if tracker_obj.solar_stacks >= 35:
             hit_list.append(await trigger_flare(tracker_obj, player_obj, boss_obj=boss_obj))
-        combo_count += 1
+        combo_count += 1 + check_synchronized(player_obj)
         tracker_obj.charges += player_obj.appli["Ultimate"]
         # Handle Ultimate
         if tracker_obj.charges >= 20:
@@ -329,6 +323,10 @@ def scale_raid_damage(boss_obj, damage):
     return s_damage if s_damage <= base else int(min(base * (1 + math.log10(s_damage / base) / 3), base * 10))
 
 
+def check_synchronized(player_obj):
+    return 1 + int(random.randint(1, 100) <= player_obj.trigger_rate["Combo"])
+
+
 def check_bloom(player_obj, input_damage):
     damage, status_msg = input_damage, ""
     if random.randint(1, 100) <= int(round(player_obj.trigger_rate["Bloom"] * 100)):
@@ -378,10 +376,10 @@ def check_lock(player_obj, combat_tracker, damage):
 
 def handle_evasions(block_rate, dodge_rate, damage, bypass1=False, bypass2=False):
     damage_set = [damage, damage] if not isinstance(damage, list) else damage
-    if not bypass1 and not bypass2 and random.randint(1, 100) <= dodge_rate:
+    if not bypass1 and not bypass2 and random.randint(1, 100) <= dodge_rate * 100:
         damage_set = [0, 0]
         return (damage_set[0], " **DODGE**") if not isinstance(damage, list) else (damage_set, " **DODGE**")
-    elif not bypass2 and random.randint(1, 100) <= block_rate:
+    elif not bypass2 and random.randint(1, 100) <= block_rate * 100:
         damage_set = [int(damage_set[0] / 2), int(damage_set[1] / 2)]
         return (damage_set[0], " **BLOCK**") if not isinstance(damage, list) else (damage_set, " **BLOCK**")
     return (damage_set[0], "") if not isinstance(damage, list) else (damage_set, "")
@@ -409,7 +407,7 @@ def check_critical(player_obj, player_damage, num_elements):
         player_damage *= num_elements
         critical_type = " *FRACTAL*"
     # Check for regular critical.
-    elif critical_roll < player_obj.trigger_rate["Critical"]:
+    elif critical_roll <= player_obj.trigger_rate["Critical"]:
         player_damage *= (1 + player_obj.critical_mult)
         critical_type = " *CRITICAL*"
         # Check for omega critical.

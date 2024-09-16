@@ -52,14 +52,15 @@ class CurrentBoss:
         self.boss_typeweak, self.boss_eleweak, self.curse_debuffs = [0] * 7, [0] * 9, [0.0] * 9
         self.boss_element, self.damage_cap = 0, -1
         self.stun_cycles, self.stun_status = 0, ""
+        self.boss_thumbnail = "";
 
     def create_boss_embed(self, dps=0, extension=""):
         img_link = "https://i.ibb.co/0ngNM7h/castle.png"
         if "Demon" in self.boss_image or "Dragon" in self.boss_image or "Fortress" in self.boss_image:
             img_link = self.boss_image
-        tier_hearts = ["<:Gem1:1242206599481659442>", "<:Gem2:1242206600555532421>", "<:Gem3:1242206601385873498>",
-                       "<:Gem4:1242206602405347459>", "<:Gem5:1242206603441078363>", "<:Gem6:1242206603953049721>",
-                       "<:Gem7:1248490896379478129>", "<:Gem8:1242206660513108029>", "<:Gem8:1242206660513108029>"]
+        tier_hearts = ["<:Gem_1:1275569707801510001>", "<:Gem_2:1275569715078627359>", "<:Gem_3:1275569723568029786>",
+                       "<:Gem_4:1275569729737719879>", "<:Gem_5:1275569736205340773>", "<:Gem_6:1275569743130001520>",
+                       "<:Gem_7:1275569749173993503>", "<:Gem_8:1275569754932777072>", "<:Gem_8:1275569754932777072>"]
         # Set boss details
         dps_msg = f"{sm.number_conversion(dps)} / min"
         boss_title = f'{self.boss_name}{extension}'
@@ -84,6 +85,7 @@ class CurrentBoss:
         embed_msg.add_field(name=boss_field, value=boss_hp, inline=False)
         embed_msg.add_field(name=boss_weakness, value="", inline=False)
         embed_msg.add_field(name="Current DPS: ", value=dps_msg, inline=False)
+        embed_msg.set_thumbnail(url=self.boss_thumbnail)
         return embed_msg
 
     def generate_boss_name_image(self, boss_type, boss_tier):
@@ -143,6 +145,7 @@ async def spawn_boss(channel_id, player_id, boss_tier, boss_type, boss_level, ga
         boss_obj.damage_cap = -1
         if boss_obj.boss_tier <= 4:
             boss_obj.damage_cap = (10 ** int(boss_level / 10 + 4) - 1)
+        boss_obj.boss_thumbnail = f"{gli.web_url}/bosses/BossIcons/{boss_obj.boss_type}.png"
         return boss_obj
     # Create the boss object if it doesn't exist.
     if boss_type == "Ruler":
@@ -183,6 +186,7 @@ async def spawn_boss(channel_id, player_id, boss_tier, boss_type, boss_level, ga
     boss_info = f"{boss_obj.boss_name};{boss_obj.boss_image};{boss_obj.boss_type_num}"
     boss_data = f"{boss_level};{boss_tier};{str(int(boss_obj.boss_cHP))};{str(int(boss_obj.boss_mHP))}"
     boss_weakness = f"{boss_typeweak}/{boss_eleweak}"
+    boss_obj.boss_thumbnail = f"{gli.web_url}/bosses/BossIcons/{boss_type}.png"
     raw_query = ("INSERT INTO EncounterList "
                  "(channel_id, player_id, encounter, boss_info, boss_data, boss_weakness, abandon) "
                  "VALUES (:channel_id, :player_id, :encounter, :boss_info, :boss_data, :boss_weakness, :abandon)")
@@ -225,4 +229,5 @@ async def create_dead_boss_embed(channel_id, active_boss, dps, extension=""):
         player_obj = await player.get_player_by_id(x)
         output_list += f'{str(player_obj.player_username)}: {sm.number_conversion(int(damage_list[idx]))}\n'
     dead_embed.add_field(name="SLAIN", value=output_list, inline=False)
+    dead_embed.set_thumbnail(url=active_boss.boss_thumbnail)
     return dead_embed

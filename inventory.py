@@ -66,25 +66,25 @@ class BInventoryView(discord.ui.View):
         placeholder="Select Inventory Type!", min_values=1, max_values=1,
         options=[
             discord.SelectOption(
-                emoji="<a:eenergy:1145534127349706772>", label="Crafting", description="Crafting Items"),
+                emoji="<:Cry5:1274785116572614856>", label="Crafting", description="Crafting Items"),
             discord.SelectOption(
-                emoji="<a:eenergy:1145534127349706772>", label="Fae Cores", description="Fae Core Items"),
+                emoji="<:Fae8:1274786370497417330>", label="Fae Cores", description="Fae Core Items"),
             discord.SelectOption(
-                emoji="<a:eenergy:1145534127349706772>", label="Materials", description="Material Items"),
+                emoji="<:Scrap:1274787448681005158>", label="Materials", description="Material Items"),
             discord.SelectOption(
-                emoji="<a:eenergy:1145534127349706772>", label="Unprocessed", description="Unprocessed Items"),
+                emoji="<:Gem_5:1275569736205340773>", label="Unprocessed", description="Unprocessed Items"),
             discord.SelectOption(
                 emoji="<a:eenergy:1145534127349706772>", label="Essences", description="Essence Items"),
             discord.SelectOption(
-                emoji="<a:eenergy:1145534127349706772>", label="Summoning", description="Summoning Items"),
+                emoji="<:Compass:1274787464363380766>", label="Summoning", description="Summoning Items"),
             discord.SelectOption(
                 emoji="<a:eenergy:1145534127349706772>", label="Misc", description="Misc Items"),
             discord.SelectOption(
-                emoji="<:Gem1:1242206599481659442>", label="Gemstone", description="Gemstone Items"),
+                emoji="<:Alt:1275588731272953916>", label="Gemstone", description="Gemstone Items"),
             discord.SelectOption(
                 emoji="🐟", label="Fish", description="Fish Items"),
             discord.SelectOption(
-                emoji="<:Gemstone11:1243800661385023529>", label="Ultra Rare", description="Unprocessed Items")])
+                emoji="<:Lotus11:1274786525560701132>", label="Ultra Rare", description="Unprocessed Items")])
     async def inventory_callback(self, interaction: discord.Interaction, inventory_select: discord.ui.Select):
         if interaction.user.id != self.player_obj.discord_id:
             return
@@ -94,7 +94,7 @@ class BInventoryView(discord.ui.View):
         new_view = BInventoryView(self.player_obj, self.current_menu, self.view_type, self.include_id)
         await interaction.response.edit_message(content=content, embed=embed, view=new_view)
 
-    @discord.ui.button(label="Gear", style=discord.ButtonStyle.blurple, emoji="<:Sword5:1246945708939022367>")
+    @discord.ui.button(label="Gear", style=discord.ButtonStyle.blurple, emoji=gli.gear_icons_dict['W'])
     async def toggle_callback(self, interaction: discord.Interaction, button: discord.Button):
         if interaction.user.id != self.player_obj.discord_id:
             return
@@ -130,7 +130,7 @@ class CInventoryView(discord.ui.View):
         super().__init__(timeout=None)
         self.player_obj, self.include_id = player_obj, include_id
         select_options = [discord.SelectOption(
-            emoji="<a:eenergy:1145534127349706772>", label=custom_item_dict[key], value=reverse_item_loc_dict[value],
+            emoji=gli.gear_icons_dict[key], label=custom_item_dict[key], value=reverse_item_loc_dict[value],
             description=f"{custom_item_dict[key]} storage") for key, value in list(item_loc_dict.items())]
         self.select_menu = discord.ui.Select(
             placeholder="Select crafting base.", min_values=1, max_values=1, options=select_options)
@@ -365,8 +365,7 @@ class CustomItem:
         tier_colour, _ = sm.get_gear_tier_colours(self.item_tier)
         gem_min, gem_max = 0, 0
         stat_msg, base_type, aux_suffix = "", "", ""
-        item_types = ""
-        item_title = f'{self.item_name} '
+        item_types, item_title = "", f'{self.item_name} '
         self.update_damage()
         # Set the base stat text.
         if self.item_type == "W":
@@ -400,10 +399,10 @@ class CustomItem:
             e_gem = await read_custom_item(gem_id)
             if e_gem is not None:
                 display_stars += f" Socket: {gli.augment_icons[e_gem.item_tier - 1]} ({gem_id})"
-                gem_min, gem_max = e_gem.item_damage_min, e_gem.item_damage_max
+                # gem_min, gem_max = e_gem.item_damage_min, e_gem.item_damage_max
             elif self.item_num_sockets != 0:
                 display_stars += " Socket: <:esocket:1148387477615300740>"
-        damage_min, damage_max = str(gem_min + self.item_damage_min), str(gem_max + self.item_damage_max)
+        damage_min, damage_max = str(self.item_damage_min), str(self.item_damage_max)
         damage_bonus = f'Base Damage: {int(damage_min):,} - {int(damage_max):,}'
         embed_msg = discord.Embed(colour=tier_colour, title=item_title, description=display_stars)
         if self.item_name == "Bathyal, Enigmatic Chasm Bauble":

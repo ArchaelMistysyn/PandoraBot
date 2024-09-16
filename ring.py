@@ -19,7 +19,6 @@ async def assign_ring_values(player_obj, e_ring):
     if points > 0:
         player_obj.gear_points[path_index] += points
     player_obj.final_damage += e_ring.item_tier * 0.1
-    player_obj.hp_bonus += e_ring.item_tier * 500
     player_obj.attack_speed += e_ring.item_tier * 0.05
     # Exit on ring exceptions.
     if e_ring.item_base_type in scaling_rings:
@@ -52,7 +51,6 @@ async def display_ring_values(e_ring):
     _, augment = sm.get_gear_tier_colours(e_ring.item_tier)
     if points > 0:
         output += f"Path of {gli.path_names[path_index]} +{points}\n"
-    output += f"{augment} HP Bonus +{e_ring.item_tier * 500:,}\n"
     output += f"{augment} Final Damage {e_ring.item_tier * 10:,}%\n"
     output += f"{augment} Attack Speed {e_ring.item_tier * 5:,}%\n"
     # Handle rings with unique scaling.

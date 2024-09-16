@@ -315,7 +315,7 @@ quests_data = {
          "Attempt the Spire of Illusions with /gauntlet",
          [('Trove6', 5), ('Shard', 5), ('Chest', 5)], None],
     44: [1, "Cultivate Divinity (Part 6)", "Pandora, The Celestial",
-         "I'm sorry for getting mad at you earlier. I know it's not your fault that they shattered my precious hammer. "
+         "I'm sorry for getting mad at you earlier. I know it's not your fault that my precious hammer is shattered. "
          "Even if we gathered all the shards, it's beyond my power now to reforge it. "
          "\nYou should hold onto them. Maybe you can find a way. ",
          90, None, None,

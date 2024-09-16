@@ -61,7 +61,7 @@ guide_dict = {0: ["Beginner Guide", starter_guide],
               1: ["Intermediate Guide", intermediate_guide],
               2: ["Advanced Guide", advanced_guide]}
 
-thana_title = "XIII - Thana, The Death"
+thana_title, eleuia_title = "XIII - Thana, The Death", "Echo of Eleuia, The Wish"
 
 
 class GuideMenu(discord.ui.View):
@@ -136,7 +136,7 @@ class HelpView(discord.ui.View):
 def build_help_embed(category_dict, category_name):
     display_category_name = category_name.capitalize()
     embed = discord.Embed(title=f"{display_category_name} Commands:", color=discord.Colour.dark_orange())
-    commands = category_dict[category_name] if category_name != "combat" else combat.combat_command_list
+    commands = category_dict[category_name]
     commands.sort(key=lambda x: x[2])
     for command_name, description, _ in commands:
         embed.add_field(name=f"/{command_name}", value=f"{description}", inline=False)
@@ -337,6 +337,82 @@ class DivineView(discord.ui.View):
         await interaction.response.edit_message(embed=embed_msg, view=new_view)
 
 
+class AbyssView(discord.ui.View):
+    def __init__(self, player_obj, num_visits):
+        super().__init__(timeout=None)
+        self.player_obj, self.num_visits = player_obj, num_visits
+        if self.player_obj.player_quest < 47:
+            self.summon_callback.disabled = True
+        if self.num_visits > 0:
+            self.summon_callback.label = "Call Eleuia"
+
+    @discord.ui.button(label="Purify", style=discord.ButtonStyle.blurple, row=0)
+    async def purify_callback(self, interaction: discord.Interaction, button: discord.Button):
+        if interaction.user.id != self.player_obj.discord_id:
+            return
+        embed_msg = sm.easy_embed("Black", "Echo of Oblivia, The Void", gli.abyss_msg)
+        embed_msg.set_image(url=gli.abyss_img)
+        await interaction.response.edit_message(embed=embed_msg, view=forge.SelectView(self.player_obj, "purify"))
+
+    @discord.ui.button(label="?????", style=discord.ButtonStyle.blurple, row=0)
+    async def summon_callback(self, interaction: discord.Interaction, button: discord.Button):
+        if interaction.user.id != self.player_obj.discord_id:
+            return
+        description = (f"Honestly, I'd like to get to know you better. "
+                       f"I know the abyssal plane isn't the safest of places to sit and have a discussion. "
+                       f"Still, I'm glad that you came. Would you like to know about the past? "
+                       f"Or perhaps did you haev something else in mind?")
+        if self.num_visits == 0:
+            description = (f"Oh, {self.player_obj.player_username}, I didn't think you'd find me here. "
+                           f"The silence, the darkness, the soft longing pull of the abyss, I find it... relaxing. "
+                           f"I don't like the celestial plane much, it reminds me of the war. "
+                           f"It reminds me that I'm just a piece of the real Pandora, except for Thana, all of us are. "
+                           f"Most of all it reminds me of the Paragon War. In the end it was all my fault. "
+                           f"Pandora isn't here, she can't enter the abyssal plane, so I'll tell you. "
+                           f"\nShe feels the same way we do. She's afraid of losing herself to become whole again. "
+                           f"The original girl named Pandora is gone, maybe if you tell her that she'll listen. "
+                           f"She is Pandora now, and she's the only one who doesn't understand that. "
+                           f"No, she knows that better than anyone, she just refuses to accept herself. "
+                           f"\nDuty be damned. She has a right to live for herself. "
+                           f"I wish I'd been brave enough to tell her that. I wish I could've told her I'm sorry. "
+                           f"But we can only wish for the future, even Chrona cannot rewrite the past. "
+                           f"Once again my own wishes elude me. Why was I given this power at all? "
+                           f"\nShould you want to talk to me again, just call my name.")
+            await self.player_obj.update_misc_data("eleuia_visits", 1)
+        embed_msg = sm.easy_embed("Pink", eleuia_title, description)
+        embed_msg.set_image(url="")
+        tears_ring = False
+        if self.player_obj.player_equipped[4] != 0:
+            e_ring = await inventory.read_custom_item(self.player_obj.player_equipped[4])
+            if e_ring.item_base_type == "Chromatic Tears":
+                tears_ring = True
+        await interaction.response.edit_message(embed=embed_msg, view=TearLoreView(self.player_obj, tears_ring))
+
+
+class TearLoreView(discord.ui.View):
+    def __init__(self, player_obj, tears_ring):
+        super().__init__(timeout=None)
+        self.player_obj, self.num_visits = player_obj, tears_ring
+
+    @discord.ui.button(label="Talk", style=discord.ButtonStyle.blurple, row=0)
+    async def eleuia_lore_callback(self, interaction: discord.Interaction, button: discord.Button):
+        if interaction.user.id != self.player_obj.discord_id:
+            return
+        description = f"Lore will go here"
+        embed_msg = sm.easy_embed("Pink", eleuia_title, description)
+        lore_view = None
+        await interaction.response.edit_message(embed=embed_msg, view=lore_view)
+
+    @discord.ui.button(label="Imbue", style=discord.ButtonStyle.blurple, row=0)
+    async def imbue_callback(self, interaction: discord.Interaction, button: discord.Button):
+        if interaction.user.id != self.player_obj.discord_id:
+            return
+        description = "Tear menu will go here"
+        embed_msg = sm.easy_embed("Pink", eleuia_title, description)
+        imbue_view = None
+        await interaction.response.edit_message(embed=embed_msg, view=imbue_view)
+
+
 async def add_skull_fields(player_obj, embed_msg, method="Return"):
     await player_obj.reload_player()
     skull_items = [inventory.BasicItem(f"Skull{i}") for i in range(1, 5)]
@@ -366,6 +442,15 @@ class SkullSelectView(discord.ui.View):
         if skull_ring:
             self.feed_ring_callback.disabled = False
             self.feed_ring_callback.style = gli.button_colour_list[2]
+
+    @discord.ui.button(label="Talk", style=discord.ButtonStyle.blurple, row=0)
+    async def thana_lore_callback(self, interaction: discord.Interaction, button: discord.Button):
+        if interaction.user.id != self.player_obj.discord_id:
+            return
+        description = f"Lore will go here"
+        embed_msg = discord.Embed(colour=discord.Colour.dark_purple(), title=thana_title, description=description)
+        lore_view = None
+        await interaction.response.edit_message(embed=embed_msg, view=lore_view)
 
     @discord.ui.button(label="Return Skulls", style=discord.ButtonStyle.blurple, row=0)
     async def return_skulls_callback(self, interaction: discord.Interaction, button: discord.Button):
@@ -786,6 +871,7 @@ class TermsOfServiceView(discord.ui.View):
             return
         title = "Register - Select Class"
         embed_msg = discord.Embed(colour=discord.Colour.dark_teal(), title=title, description=quests.reg_msg)
+        embed_msg.set_image(url="https://www.pandoraportal.ca/gallery/Displays/Banners/Pandora%20Awoken.png")
         await interaction.response.edit_message(embed=embed_msg, view=ClassSelect(self.discord_id, self.username))
 
     @discord.ui.button(label="Deny", style=discord.ButtonStyle.red)

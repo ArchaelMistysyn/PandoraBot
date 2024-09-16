@@ -16,7 +16,6 @@ import sharedmethods as sm
 import player
 
 web_url = f"https://kyleportfolio.ca"
-image_path = 'C:\\Users\\GamerTech\\PycharmProjects\\PandoraBot\\botart\\'
 
 echelon_0 = "https://kyleportfolio.ca/botimages/roleicon/echelon1.png"
 echelon_1 = "https://kyleportfolio.ca/botimages/roleicon/echelon1.png"
@@ -60,6 +59,7 @@ url_index_dict = {'cardBG': 0, 'metal': 1, 'wing': 2, 'exp_bar': 3, 'role_icon':
 font_url = f"{web_url}//botimages/profilecards/fonts/"
 level_font_url = "aerolite/Aerolite.otf"
 name_font = "blackchancery/BLKCHCRY.TTF"
+my_font = "PandoraDiamond/PandoraDiamond.ttf"
 # level_font_url = "oranienbaum/Oranienbaum.ttf"
 
 
@@ -104,7 +104,7 @@ class RankCard:
 
 async def get_player_profile(player_obj, achievement_list):
     rank_card = RankCard(player_obj, achievement_list)
-    temp_path = f'{image_path}profilecard\\'
+    temp_path = f'{gli.image_path}profilecard/'
     cardBG = Image.open(requests.get(rank_card.cardBG, stream=True).raw)
     metal = Image.open(requests.get(rank_card.metal, stream=True).raw)
     wing = Image.open(requests.get(rank_card.wing, stream=True).raw)
@@ -186,9 +186,9 @@ async def generate_and_combine_gear(item_type, start_tier=1, end_tier=8, element
                 icon_url = f"{web_url}/botimages/Gear_Icon/{folder}/{sub_folder}{item_type.replace(' ', '_')}8.png"
             if item_type == "Ring" or item_type in gli.ring_item_type:
                 item_type = gli.ring_item_type[item_tier - 1]
-                sub_folder, sub_dir = f"{item_type.replace(' ', '_')}/", f"{item_type}\\"
+                sub_folder, sub_dir = f"{item_type.replace(' ', '_')}/", f"{item_type}/"
                 icon_url = f"{web_url}/botimages/Gear_Icon/{folder}/{sub_folder}{item_type}{element}.png"
-            output_dir = f'{image_path}Gear_Icon\\{folder}\\{sub_dir}'
+            output_dir = f'{gli.image_path}Gear_Icon/{folder}/{sub_dir}'
             file_name = f"Frame_{item_type.replace(' ', '_')}{element}_{item_tier}.png"
             file_path = f"{output_dir}{file_name}"
             frame, icon = await fetch_image(session, frame_url), await fetch_image(session, icon_url)
@@ -200,7 +200,7 @@ async def generate_and_combine_gear(item_type, start_tier=1, end_tier=8, element
                 for variant in ["Wrath", "Sloth", "Greed", "Envy", "Pride", "Lust", "Gluttony"]:
                     variant_url = f"{web_url}/botimages/Gear_Icon/Pact_Variants/{variant}.png"
                     variant_img = Image.open(requests.get(variant_url, stream=True).raw)
-                    output_dir = f'{image_path}Gear_Icon\\{item_type}\\'
+                    output_dir = f'{gli.image_path}Gear_Icon/{item_type}/'
                     file_name = f"Frame_{item_type}_{item_tier}_{variant}.png"
                     remote_dir = f"/public_html/botimages/Gear_Icon/{item_type}/"
                     result = Image.new("RGBA", (106, 106))
@@ -238,7 +238,7 @@ async def generate_and_combine_images():
             frame_url = gli.frame_icon_list[temp_item.item_tier - 1]
             frame_url = frame_url.replace("[EXT]", gli.frame_extension[0])
             icon_url = f"{web_url}/botimages/NonGear_Icon/{temp_item.item_category}/{item_id}.png"
-            output_dir, file_name = f'{image_path}NonGear_Icon\\{temp_item.item_category}\\', f"Frame_{item_id}.png"
+            output_dir, file_name = f'{gli.image_path}NonGear_Icon/{temp_item.item_category}/', f"Frame_{item_id}.png"
             file_path = f"{output_dir}{file_name}"
             frame, icon = await fetch_image(session, frame_url), await fetch_image(session, icon_url)
             # Construct the new image
@@ -303,8 +303,8 @@ async def build_notification(player_obj, message, notification_type, title_msg, 
     cardBG = Image.open(requests.get(banner_url, stream=True).raw)
     result = Image.new("RGBA", (width, height))
     result.paste(cardBG, (0, 0), cardBG)
-    name_font_file = requests.get((font_url + name_font), stream=True).raw
     level_font_file = requests.get((font_url + level_font_url), stream=True).raw
+    name_font_file = requests.get((font_url + my_font), stream=True).raw
     image_editable = ImageDraw.Draw(result)
     # Apply Title and Message Text.
     title_font_object = ImageFont.truetype(level_font_file, 38)
@@ -327,7 +327,7 @@ async def build_notification(player_obj, message, notification_type, title_msg, 
     elif notification_type == "Sacred":
         pass
     # Save and return image.
-    file_path = f'{image_path}notification\\Notification{player_obj.player_id}.png'
+    file_path = f'{gli.image_path}notification/Notification{player_obj.player_id}.png'
     result.save(file_path)
     return file_path
 
@@ -342,14 +342,13 @@ async def build_message_box(player_obj, message, header="", boxtype="default"):
     result = Image.new("RGBA", (width, height))
     result.paste(cardBG, (0, 0), cardBG)
     image_editable = ImageDraw.Draw(result)
-    name_font_file = requests.get((font_url + name_font), stream=True).raw
-    font_object = ImageFont.truetype(name_font_file, msg_size)
+    msg_font_file = requests.get((font_url + my_font), stream=True).raw
+    font_object = ImageFont.truetype(msg_font_file, msg_size)
     # Calculate positions for the message lines
-    message_lines = [message] if not isinstance(message, list) else message
-    text_x = image_editable.textlength(message, font=font_object)
-    position_x, position_y = (width - text_x) / 2 if boxtype == "default" else 60, [95, 130]
+    text_x = image_editable.textlength(message[0], font=font_object)
+    position_x, position_y = ((width - text_x) / 2 if boxtype == "default" else 60), [95, 130]
     # Draw message text
-    for idx, line_text in enumerate(message_lines):
+    for idx, line_text in enumerate(message):
         image_editable.text((position_x, position_y[idx]), line_text, fill="White", font=font_object)
     # Build the header
     if header != "":
@@ -363,7 +362,7 @@ async def build_message_box(player_obj, message, header="", boxtype="default"):
         header_position = ((width - text_x) / 2, 35) if boxtype == "default" else (130, 45)
         image_editable.text(header_position, header, fill=CyanColour, font=title_font_object)
     # Save and return image.
-    file_path = f'{image_path}notification\\Notification{"TEMP" if player_obj is None else player_obj.player_id}.png'
+    file_path = f'{gli.image_path}notification/Notification{"TEMP" if player_obj is None else player_obj.player_id}.png'
     result.save(file_path)
     return file_path
 
@@ -379,7 +378,7 @@ async def build_title_box(message):
     text_x = image_editable.textlength(message, font=title_font_object)
     image_editable.text(((width - text_x) / 2, 60), message, fill=GoldColour, font=title_font_object)
     # Save and return image.
-    file_path = f'{image_path}notification\\Title_Notification.png'
+    file_path = f'{gli.image_path}notification/Title_Notification.png'
     result.save(file_path)
     return file_path
 

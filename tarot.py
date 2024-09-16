@@ -227,7 +227,7 @@ class TarotView(discord.ui.View):
     async def previous_card(self, interaction: discord.Interaction, button: discord.Button):
         if interaction.user.id == self.player_user.discord_id:
             new_msg = await self.cycle_tarot(-1)
-            tarot = await check_tarot(self.player_user, card_dict[self.selected_numeral][0])
+            tarot = await check_tarot(self.player_user.player_id, card_dict[self.selected_numeral][0])
             reload_view = TarotView(self.player_user, self.current_position, tarot)
             await interaction.response.edit_message(embed=new_msg, view=reload_view)
 

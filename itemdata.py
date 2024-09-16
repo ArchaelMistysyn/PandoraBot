@@ -61,10 +61,10 @@ itemdata_dict = build_item_dict(itemdata_dict, stone_data, category="Stone")
 
 # Stamina Potion Data
 potion_values = [500, 1000, 2500, 5000]
-stamina_data = [[None, 'Lesser Stamina Potion', 100, 1, '<:estamina:1145534039684562994>', None, 2500],
-                [None, 'Standard Stamina Potion', 100, 2, '<:estamina:1145534039684562994>', None, 5000],
-                [None, 'Greater Stamina Potion', 100, 3, '<:estamina:1145534039684562994>', None, 10000],
-                [None, 'Ultimate Stamina Potion', 100, 4, '<:estamina:1145534039684562994>', None, 20000]]
+stamina_data = [[None, 'Lesser Stamina Potion', 100, 1, gli.stamina_icon, None, 2500],
+                [None, 'Standard Stamina Potion', 100, 2, gli.stamina_icon, None, 5000],
+                [None, 'Greater Stamina Potion', 100, 3, gli.stamina_icon, None, 10000],
+                [None, 'Ultimate Stamina Potion', 100, 4, gli.stamina_icon, None, 20000]]
 for index, row in enumerate(stamina_data):
     row[5] = f'Consume to restore {potion_values[index]} stamina.'
 itemdata_dict = build_item_dict(itemdata_dict, stamina_data, category="Potion")
@@ -136,7 +136,7 @@ skull_data = [[None, 'Cursed Golden Skull', 1, 5, '<:Skull1:1274786865211244575>
               [None, 'Radiant Golden Skull', 100, 7, '<:Skull3:1274786883771301941>',
                "A golden skull with a serene aura. Yet screaming can occasionally be heard from within."
                " [Ultra Rare]", 10000000],
-              [None, 'Prismatic Golden Skull', 1000, 8, '<:Skull4:1274786891677302784>',
+              [None, 'Prismatic Golden Skull', 1000, 9, '<:Skull4:1274786891677302784>',
                "A golden skull that sparkles extraordinarily. Beware the lustful voices calling your name."
                " [Ultimate Rare]", 100000000]]
 itemdata_dict = build_item_dict(itemdata_dict, skull_data, category="Skull")
@@ -188,7 +188,7 @@ essence_data = [['Essence0', 'Essence of The Reflection', 10, 1, '<a:elootitem:1
                 ['EssenceI', 'Essence of The Magic', 10, 1, '<a:elootitem:1144477550379274322>', None, 0],
                 ['EssenceII', 'Essence of The Celestial', 10, 4, '<a:elootitem:1144477550379274322>', None, 0],
                 ['EssenceIII', 'Essence Of The Void', 10, 5, '<a:elootitem:1144477550379274322>', None, 0],
-                ['EssenceIV', 'Essence Of The Infinite', 10, 6, '<a:elootitem:1144477550379274322>', None, 0],
+                ['EssenceIV', 'Essence Of The Infinite', 10, 5, '<a:elootitem:1144477550379274322>', None, 0],
                 ['EssenceV', 'Essence of The Duality', 10, 3, '<a:elootitem:1144477550379274322>', None, 0],
                 ['EssenceVI', 'Essence of The Love', 10, 1, '<a:elootitem:1144477550379274322>', None, 0],
                 ['EssenceVII', 'Essence of The Dragon', 10, 4, '<a:elootitem:1144477550379274322>', None, 0],
@@ -296,8 +296,8 @@ for (fish_name, fish_tier) in fish_list:
 itemdata_dict = build_item_dict(itemdata_dict, fish_data, starting_index=1, category="Fish")
 
 # Heart Item Data
-heart_data = [[None, 'Radiant Heart', 100, 6, '<Heart1:1274786406182420615>', 'Used for various infusions.', 0],
-              [None, 'Chaos Heart', 100, 7, '<Heart2:1274786413434507266>', 'Used for various infusions.', 0]]
+heart_data = [[None, 'Radiant Heart', 100, 6, '<:Heart1:1274786406182420615>', 'Used for various infusions.', 0],
+              [None, 'Chaos Heart', 100, 7, '<:Heart2:1274786413434507266>', 'Used for various infusions.', 0]]
 itemdata_dict = build_item_dict(itemdata_dict, heart_data, category="Heart")
 
 # Uncategorized Item Data

@@ -23,6 +23,8 @@ GM_id_dict = {185530717638230016: "Archael", 141837266866667520: "Zweii", 353090
 bot_logging_channel = 1266478401846247454
 reverse_GM_id_dict = {value: key for key, value in GM_id_dict.items()}
 web_url = "https://kyleportfolio.ca/botimages/"
+# LOCAL image_path = 'C:\\Users\\GamerTech\\PycharmProjects\\PandoraBot\\botart\\'
+image_path = '/home/ubuntu/PandoraBot/botart/'
 store_link = "https://ArchDragonStore.ca"
 
 # IMAGE DATA
@@ -39,13 +41,14 @@ archdragon_logo = f"{web_url}ArchDragon.png"
 # ICON DATA
 # General Icons
 archdragon_emoji = "<:ArchDragon:1274784590715686953>"
-stamina_icon = "<:estamina:1145534039684562994>"
-exp_icon, coin_icon = "<:eexp:1148088187516891156>", "<:Coin:1274784200133705830>"
+stamina_icon = "<:Stam:1283548805794369628>"
+stamina_thumbnail = f"{web_url}MiscIcon/Stamina.png"
+exp_icon, coin_icon = "<:EXP:1283548791936389131>", "<:Coin:1274784200133705830>"
 # Class Data
 class_icon_dict = {
     "Knight": "<:c1:1274783624834711685>",
     "Ranger": "<:c2:1274783343338193027>",
-    "Mage": "<:c3:1274783722625054510>",
+    "Mage": "<:c3:1277100146928386078>",
     "Assassin": "<:c4:1274784066012708979>",
     "Weaver": "<:c5:1274784117640265739>",
     "Rider": "<:c6:1274784093665628161>",
@@ -97,9 +100,13 @@ element_dict = {
     'Solar': [0, 7, 4], 'Lunar': [1, 5, 6], 'Terrestria': [2, 3, 8], 'Chaos': [0, 6, 2, 3], 'Holy': [1, 7, 4, 5],
     'Confluence': [0, 1, 2, 3, 4, 5, 6, 7, 8]}
 gear_types = ['Weapon', 'Armour', 'Greaves', 'Amulet', 'Ring', 'Wings', 'Crest', 'Gem']
-gear_icons = ['<:Sword5:1246945708939022367>', '<:Armour5:1246945463630823438>', '<:Greaves5:1246945410707095565>',
-              '<:Amulet5:1246945347637346315>', '<:E_Ring0:1253839617799487568>', '<:Wings5:1246945596821082197>',
-              '<:Crest5:1246945508048637972>', '<:Gem5:1242206603441078363>']
+gear_icons = ['<:Saber5:1275575137537888269>', '<:Armour5:1275570612089389179>', '<:Greaves5:1275575746890301632>',
+              '<:Amulet5:1275570527423172609>', '<:E_Ring0:1275563709519106190>', '<:Wings5:1275576146615992452>',
+              '<:Crest5:1275576378502156369>', '<:Gem5:1275569736205340773>']
+gear_icons_dict = {"W": "<:Saber5:1275575137537888269>", "A": "<:Armour5:1275570612089389179>",
+                   "V": "<:Greaves5:1275575746890301632>", "Y": "<:Amulet5:1275570527423172609>",
+                   "R": "<:E_Ring0:1275563709519106190>", "G": "<:Wings5:1275576146615992452>",
+                   "C": "<:Crest5:1275576378502156369>", "D": "<:Gem_5:1275569736205340773>"}
 
 # NAME LISTS
 # Path Names
@@ -142,7 +149,8 @@ sovereign_item_list = ["Crown of Skulls", "Twin Rings of Divergent Stars", "Hada
                        "Bathyal, Enigmatic Chasm Bauble", "Fallen Lotus of Nephilim", "Chromatic Tears"]
 available_sovereign = ["Crown of Skulls", "Twin Rings of Divergent Stars", "Hadal's Raindrop", "Heavenly Calamity",
                        "Stygian Calamity", "Pandora's Universe Hammer", "Ruler's Crest", "Fallen Lotus of Nephilim"]
-ring_item_type = [None, None, None, "Signet", "Element_Ring", "Path_Ring", "Fabled_Ring", "Sovereign_Ring", "Sacred_Ring"]
+ring_item_type = [None, None, None, "Signet", "Element_Ring", "Path_Ring", "Fabled_Ring", "Sovereign_Ring",
+                  "Sacred_Ring"]
 sovereign_batch_data = ', '.join([str(base_type) for base_type in sovereign_item_list])
 
 # WEAPON LISTS
@@ -152,7 +160,7 @@ weapon_type_dict = {"Knight": [["Sword"], [], ["Saber", "Scythe"]],
                     "Assassin": [["Dagger"], [], ["Mirrorblades", "Claws"]],
                     "Mage": [["Wand"], [], ["Codex", "Caduceus Rod"]],
                     "Weaver": [[], ["Threads"], []],
-                    "Rider": [["Hatchling", "Mare"], [], ["Dragon", "Unicorn"]],
+                    "Rider": [["Hatchling", "Mare"], [], ["Wyvern", "Unicorn"]],
                     "Summoner": [["Serpent"], [], ["Basilisk", "Cerberus"]]}
 
 # Quality Map

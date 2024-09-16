@@ -338,7 +338,7 @@ class PvPCog(commands.Cog):
     async def calculate_pvp_cycle(self):
         self.combat_tracker1.total_cycles += 1
         hit_list, stun_list = [], []
-        combo_count = [self.player1.appli["Combo"], self.player2.appli["Combo"]]
+        combo_count = [1, 1]
         num_hits1, excess_hits1 = divmod(self.combat_tracker1.remaining_hits + self.player1.attack_speed, 1)
         num_hits2, excess_hits2 = divmod(self.combat_tracker2.remaining_hits + self.player2.attack_speed, 1)
         self.combat_tracker1.remaining_hits, self.combat_tracker2.remaining_hits = excess_hits1, excess_hits2
@@ -351,7 +351,6 @@ class PvPCog(commands.Cog):
         if stun_msg2 is not None:
             stun_list.append(stun_msg2)
             num_hits2 = 0
-
         player_interval = [60 / num_hits1, 60 / num_hits2]
         attack_counter = player_interval
         combatants, trackers = [self.player1, self.player2], [self.combat_tracker1, self.combat_tracker2]
@@ -401,7 +400,7 @@ class PvPCog(commands.Cog):
         if stun_status is not None:
             trackers[defender].stun_status = stun_status
             trackers[defender].stun_cycles += 1
-        combo_count[attacker] += 1
+        combo_count[attacker] += 1 + combat.check_synchronized(combatants[attacker])
         hit_damage, skill_name = combat.skill_adjuster(combatants[attacker], trackers[attacker], hit_damage,
                                                        combo_count[attacker], is_ultimate)
         hit_damage, mana_msg = combat.check_mana(combatants[attacker], trackers[attacker], hit_damage)

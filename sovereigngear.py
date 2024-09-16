@@ -8,6 +8,7 @@ import sharedmethods as sm
 
 # Core imports
 import inventory
+import ring
 from tarot import tarot_damage
 from pandoradb import run_query as rqy
 
@@ -37,8 +38,8 @@ sov_item = {
          ("Stasis Zone", "Divine Aegis")]}
 
 random_values_dict = {"Solar Flare Blaster": (100, 500)}
-type_dict = {"Bathyal, Enigmatic Chasm Bauble": ["Critical", "Fractal", "Temporal", "Hyperbleed", "Bloom"],
-             "Pandora's Universe Hammer": gli.element_names + gli.path_names[:-4] + ["Omni"]}
+sov_type_dict = {"Bathyal, Enigmatic Chasm Bauble": ["Critical", "Fractal", "Temporal", "Hyperbleed", "Combo", "Bloom"],
+                 "Pandora's Universe Hammer": gli.element_names + gli.path_names[:-4] + ["Omni"]}
 
 
 def build_sovereign_item(new_item):
@@ -63,7 +64,7 @@ def build_sovereign_item(new_item):
             value_min, value_max = random_values_dict[new_item.item_base_type]
             skill_text = skill.replace("[VALUE]", f"{random.randint(value_min, value_max):,}")
         elif "(TYPE)" in skill:
-            new_type = random.choice(type_dict[new_item.item_base_type])
+            new_type = random.choice(sov_type_dict[new_item.item_base_type])
             skill_text = skill.replace("TYPE", new_type)
         new_item.roll_values.append(skill_text)
     if new_item.item_type == "W":
@@ -79,6 +80,9 @@ def display_sovereign_rolls(item_obj):
 
 
 async def assign_sovereign_values(player_obj, item_obj):
+    if item_obj.item_type == "R":
+        await ring.assign_ring_values(player_obj, item_obj)
+        return
     # Sacred Core
     if item_obj.is_sacred:
         player_obj.defence_pen += 0.5

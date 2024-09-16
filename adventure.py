@@ -589,7 +589,7 @@ class AdventureRoomView(discord.ui.View):
         self.expedition.luck = max(1, self.expedition.luck + luck_value)
         self.embed = discord.Embed(colour=self.expedition.colour, title=title, description=description)
         await interaction_obj.response.edit_message(embed=self.embed, view=self.new_view)
-        if sm.check_rare_item(target_item.item_id):
+        if target_item is not None and sm.check_rare_item(target_item.item_id):
             await sm.send_notification(self.expedition.ctx_object, self.expedition.player_obj,
                                        "Item", target_item.item_id)
 

@@ -119,15 +119,15 @@ for ring_name, gemstones in path_rings:
 recipe_index_dict = {}
 for i_category, recipes in recipe_dict.items():
     recipe_index_dict[i_category] = {recipe: index for index, recipe in enumerate(recipes.keys())}
-sov_icon = ["<:p_hammer:1266169346338853015>", "<:lotus_sword:1266169382053220457>",
-            "<:lotus_sword:1266169382053220457>", "<:lotus_sword:1266169382053220457>"]
-spec_icon = ["<:r_crown:1266169347198423090>"]
+sov_icon = ["<:p_hammer:1275566048619528252>", "<:lotus_sword:1275566042068025364>",
+            "<:lotus_sword:1275566042068025364>", "<:lotus_sword:1275566042068025364>"]
+spec_icon = ["<:ruler:1275566119343755384>"]
 cat_icon = {
     "Heavenly Infusion": "<:Fae0:1274786282010316913>",
     "Elemental Infusion": "<:Cata:1274786559996198944>",
     "Crystal Infusion": "<:Cry1:1274785116572614856>",
-    "Void Infusion": "<:Sword5:1246945708939022367>",
-    "Jewel Infusion": "<Gem_5:1275569736205340773>",
+    "Void Infusion": "<:Saber5:1275575137537888269>",
+    "Jewel Infusion": "<:Gem_5:1275569736205340773>",
     "Skull Infusion": "<:Skull4:1274786891677302784>",
     "Special Infusion": "<:Lotus3:1274786460486336605>",
     "Elemental Signet Infusion": "<:Signet0:1275564530088415242>",

@@ -69,8 +69,8 @@ class PlayerProfile:
         self.bloom_mult = 10.0
         self.temporal_mult = 1.0
         self.trigger_rate = {"Fractal": 0.0, "Hyperbleed": 0.0, "Critical": 0.0, "Omega": 0.0,
-                             "Temporal": 0.0, "Bloom": 0.0, "Status": 1.0}
-        self.perfect_rate = {"Fractal": 0, "Hyperbleed": 0, "Critical": 0, "Temporal": 0, "Bloom": 0}
+                             "Temporal": 0.0, "Bloom": 0.0, "Combo": 0.0, "Status": 1.0}
+        self.perfect_rate = {"Fractal": 0, "Hyperbleed": 0, "Critical": 0, "Temporal": 0, "Bloom": 0, "Combo": 0}
         self.appli = {"Critical": 0, "Bleed": 0, "Ultimate": 0, "Life": 0, "Mana": 0,
                       "Temporal": 0, "Elemental": 0, "Combo": 0, "Aqua": 0}
         # Initialize misc Datasets.
@@ -81,13 +81,13 @@ class PlayerProfile:
         # Initialize misc stats.
         self.charge_generation = 1
         self.attack_speed = 0.0
-        self.class_multiplier, self.final_damage, self.rng_bonus = 0.0, 0.0, 0.0
+        self.class_multiplier, self.total_class_mult, self.final_damage, self.rng_bonus = 0.05, 0.0, 0.0, 0.0
         self.defence_pen, self.resist_pen = 0.0, 0.0
         self.aqua_mode, self.aqua_points = 0, 0
         self.flare_type = ""
         # Initialize defensive stats.
         self.hp_bonus, self.hp_regen, self.hp_multiplier, self.recovery = 0.0, 0.0, 0.0, 3
-        self.block, self.dodge = 0, 0
+        self.block, self.dodge = 0.01, 0.01
         self.damage_mitigation, self.mitigation_bonus = 0.0, 0.0
         self.elemental_res, self.all_elemental_res = [0.0] * 9, 0.1
 
@@ -163,8 +163,8 @@ class PlayerProfile:
             for idy, y in enumerate(self.elemental_res):
                 stats += f"\n{gli.ele_icon[idy]} Resistance: {show_num(y)}%"
             stats += f"\nDamage Mitigation: {show_num(self.damage_mitigation, 1)}%"
-            stats += f"\nBlock Rate: {show_num(self.block, 1)}%"
-            stats += f"\nDodge Rate: {show_num(self.dodge, 1)}%"
+            stats += f"\nBlock Rate: {show_num(self.block)}%"
+            stats += f"\nDodge Rate: {show_num(self.dodge)}%"
             embed_msg.add_field(name="Defensive Stats", value=stats, inline=False)
             return embed_msg
         if method == 4:
@@ -187,7 +187,8 @@ class PlayerProfile:
                                      ("Omega Rate", self.trigger_rate["Omega"])])
             stats += set_appli(appli="Combo",
                                data=[("Combo Damage", show_num(self.combo_mult)),
-                                     ("Combo Penetration", show_num(self.combo_pen))])
+                                     ("Combo Penetration", show_num(self.combo_pen)),
+                                     ("Synchronized Rate", self.trigger_rate["Combo"])])
             stats += set_appli(appli="Ultimate",
                                data=[("Ultimate Damage", show_num(self.ultimate_mult)),
                                      ("Ultimate Penetration", show_num(self.ultimate_pen))])
@@ -232,6 +233,7 @@ class PlayerProfile:
             for idh, h in enumerate(self.banes[:-1]):
                 stats += f"\n{gli.boss_list[idh]} Bane: {show_num(h)}%" if idh < 5 else f"\nHuman Bane: {show_num(h)}%"
             stats += f"\nClass Mastery: {show_num(self.class_multiplier):,}%"
+            stats += f"\nClass Multiplier: {show_num(self.total_class_mult):,}%"
             stats += f"\nFinal Damage: {show_num(self.final_damage):,}%"
             stats += f"\nDefence Penetration: {show_num(self.defence_pen):,}%"
             stats += f"\nBloom Damage: {show_num(self.bloom_mult):,}%"
@@ -322,10 +324,11 @@ class PlayerProfile:
             'input_14': str(self.insignia), 'input_15': str(self.pact), 'input_16': int(self.vouch_points)}
         await rqy(raw_query, params=params)
         registered_player = await get_player_by_discord(self.discord_id)
-        raw_query = ("INSERT INTO MiscPlayerData (player_id, thana_visits, deaths, toggle_inv, quest_choice, oath_data)"
-                     " VALUES (:input_1, :input_2, :input_3, :input_4, :input_5, :input_6)")
-        params = {"input_1": registered_player.player_id, "input_2": 0, "input_3": 0,
-                  "input_4": 0, "input_5": 0, "input_6": "1;0;0"}
+        raw_query = ("INSERT INTO MiscPlayerData "
+                     "(player_id, thana_visits, eleuia_visits, deaths, toggle_inv, quest_choice, oath_data)"
+                     " VALUES (:input_1, :input_2, :input_3, :input_4, :input_5, :input_6, :input_7)")
+        params = {"input_1": registered_player.player_id, "input_2": 0, "input_3": 0, "input_4": 0,
+                  "input_5": 0, "input_6": 0, "input_7": "1;0;0"}
         await rqy(raw_query, params=params)
         return f"Welcome {self.player_username}!\nUse /quest to begin."
 
@@ -419,9 +422,9 @@ class PlayerProfile:
             base_attack_speed *= float(e_item[0].item_base_stat)
         if e_item[1] is not None:
             base_mitigation = e_item[1].item_base_stat
-        for y in range(1, 5):
-            if e_item[y]:
-                self.unique_ability_multipliers(e_item[y])
+        for y in e_item[1:]:
+            if y is not None:
+                self.unique_ability_multipliers(y)
         # Non-Gear Item Multipliers
         insignia.assign_insignia_values(self)
         if self.equipped_tarot != "":
@@ -458,16 +461,18 @@ class PlayerProfile:
         self.trigger_rate["Hyperbleed"] = min(100, int(round(self.trigger_rate["Hyperbleed"] + self.appli["Bleed"])) * 4)
         self.trigger_rate["Fractal"] = min(100, int(round(self.trigger_rate["Fractal"] + self.appli["Elemental"])) * 4)
         self.trigger_rate["Temporal"] = min(100, int(round(self.trigger_rate["Temporal"] + self.appli["Temporal"])) * 4)
+        self.trigger_rate["Combo"] = min(100, int(round(self.trigger_rate["Combo"] + self.appli["Combo"])) * 4)
         # Perfect Rates
         self.perfect_rate["Critical"] = 1 if self.aqua_points >= 80 else self.perfect_rate["Critical"]
         for mechanic in self.perfect_rate.keys():  
             self.trigger_rate[mechanic] = 100 if self.perfect_rate[mechanic] > 0 >= 80 else self.trigger_rate[mechanic]
         match_count = sum(1 for item in e_item if item is not None and item.item_damage_type == self.player_class)
         # Class Mastery
-        if self.unique_conversion[2] >= 1:
-            unique_damage_types = {item.item_damage_type for item in e_item}
+        if self.unique_conversion[2] > 0:
+            unique_damage_types = {item.item_damage_type for item in e_item if item is not None}
             match_count = len(unique_damage_types)
-        self.class_multiplier += (0.05 + self.unique_conversion[2]) * match_count
+        self.class_multiplier += self.unique_conversion[2]
+        self.total_class_mult = self.class_multiplier * match_count
         # Unique Bonus
         self.special_mult["Holy"] += self.spec_conv["LightDream"]
         self.special_pen["Holy"] += self.spec_conv["LightDream"]
@@ -536,7 +541,7 @@ class PlayerProfile:
     async def get_player_initial_damage(self):
         await self.get_player_base_damage()
         random_damage = random.randint(self.player_damage_min, self.player_damage_max)
-        return int(random_damage * (1 + self.class_multiplier) * (1 + self.final_damage))
+        return int(random_damage * (1 + self.total_class_mult) * (1 + self.final_damage))
 
     async def get_player_boss_damage(self, boss_object):
         e_weapon = await inventory.read_custom_item(self.player_equipped[0])
@@ -626,6 +631,7 @@ class PlayerProfile:
         max_stamina = 5000 if pact_object.pact_variant != "Sloth" else 2500
         stamina_title = f"{self.player_username}\'s Stamina: {str(self.player_stamina)} / {max_stamina}"
         embed_msg = discord.Embed(colour=discord.Colour.green(), title=stamina_title, description="")
+        embed_msg.set_thumbnail(url=gli.stamina_thumbnail)
         embed_msg.add_field(name="", value=potion_msg)
         return embed_msg
 

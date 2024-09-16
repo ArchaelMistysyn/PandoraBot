@@ -19,9 +19,6 @@ import itemrolls
 import loot
 
 item_type_lotus_dict = {"W": "Lotus1", "A": "Lotus6", "V": "Lotus3", "Y": "Lotus2", "G": "Lotus4", "C": "Lotus7"}
-itme_type_icon_dict = {"W": "<:Sword5:1246945708939022367>", "A": "<:Armour5:1246945463630823438>",
-                       "V": "<:Greaves5:1246945410707095565>", "Y": "<:Amulet5:1246945347637346315>",
-                       "G": "<:Wings5:1246945596821082197>", "C": "<:Crest5:1246945508048637972>"}
 
 
 class SelectView(discord.ui.View):
@@ -31,7 +28,7 @@ class SelectView(discord.ui.View):
         self.method, self.value = method, None
         exclusions = ['D', 'R']
         select_options = [
-            discord.SelectOption(emoji=itme_type_icon_dict[key], label=inventory.custom_item_dict[key],
+            discord.SelectOption(emoji=gli.gear_icons_dict[key], label=inventory.custom_item_dict[key],
                                  description=f"Equipped {inventory.custom_item_dict[key].lower()}")
             for key, value in inventory.item_loc_dict.items() if key not in exclusions]
         self.select_menu = discord.ui.Select(
