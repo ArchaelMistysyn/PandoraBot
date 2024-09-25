@@ -142,9 +142,9 @@ class ForgeView(discord.ui.View):
                      "description": "Add a socket to the item"},
             "Reforge": {"emoji": "<a:eshadow2:1141653468965257216>", "label": "Reforge",
                         "description": "Reforge the item with a new ability and base stats."},
-            "Attune": {"emoji": "<:eprl:1148390531345432647>", "label": "Cosmic Attunement",
+            "Attune": {"emoji": "<:Pearl:1274787439692615680>", "label": "Cosmic Attunement",
                        "description": "Upgrade the item rolls"},
-            "Augment": {"emoji": "<:Hammer:1243800065013714955>", "label": "Astral Augment",
+            "Augment": {"emoji": "<:Hammer:1274787429383147551>", "label": "Astral Augment",
                         "description": "Add/Modify the item rolls"},
             "Implant": {"emoji": "<a:eorigin:1145520263954440313>", "label": "Implant Element",
                         "description": "Add new elements to the item"}}

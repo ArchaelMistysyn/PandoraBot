@@ -440,8 +440,11 @@ quest_options = {
          "The star of light exists only at night in the physical world, "
          "meanwhile the star of darkness traverses the spiritual world during the daytime."
          "The misfortune they bring is a manifestation of their anguish as they cry amidst the lonely sky. "
-         "Now reunited, not a trace of malice remains. They radiate with the power of rebirth and a new life. "
-         "\nA lovely tale is it not? Do you think we too could start anew?"],
+         "Now reunited, not a trace of malice remains. They radiate with the power of rebirth. "
+         "\nA lovely tale, isn't it? A shame that fantasy and reality are so divided. ",
+         "The Pandora you knew is gone, but I am no less Pandora then she was. My many parts rejoined as a whole. "
+         "Yet you still chose me, as I am. Even as they fought against you for themselves, you fought for us. "
+         "\nMy decision is their decision, we will give you all of our love. "],
         ["Thana's Gift", [('EssenceXIII', 1)],
          "This ring, a legacy of my subordinates long gone. Unable to find rest, but free from misuse. "
          "They can continue to serve me for eternity, how very fitting. I will accept this gift, but are you certain? "

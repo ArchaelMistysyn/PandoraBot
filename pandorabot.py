@@ -9,9 +9,11 @@ import pandas as pd
 import re
 import sys
 import textwrap
+import time
 import random
 import traceback
 from datetime import datetime as dt, timedelta
+from zoneinfo import ZoneInfo
 
 # Data imports
 import globalitems as gli
@@ -67,12 +69,16 @@ with open("pandora_bot_token.txt", 'r') as token_file:
         token_info = line
 TOKEN = token_info
 
+utc = ZoneInfo("UTC")
+time_zone = ZoneInfo('America/Toronto')
 Mysmir_title = "Mysmir, The Changeling"
 
 
 class PandoraBot(commands.Bot):
     def __init__(self):
         super().__init__(command_prefix="!", intents=discord.Intents.all())
+        self.conn_status = "Connected"
+        self.down_time = None
 
 
 def run_discord_bot():
@@ -85,10 +91,19 @@ def run_discord_bot():
 
     @pandora_bot.event
     async def on_ready():
-        error_channel = pandora_bot.get_channel(gli.bot_logging_channel)
-        await error_channel.send(f'{pandora_bot.user} Online!')
+        if pandora_bot.conn_status == "Connected":
+            await send_log_msg(f'{pandora_bot.user} Online!')
         pandoracogs.StaminaCog(pandora_bot)
         pandora_bot.help_command = CustomHelpCommand()
+
+    @pandora_bot.event
+    async def on_resumed():
+        if pandora_bot.conn_status != "Connected":
+            time_msg = dt.now(utc) - pandora_bot.down_time if pandora_bot.down_time is not None else "Unknown"
+            user_ping, conn_msg = '<@185530717638230016> ', f'{pandora_bot.user} Reconnected! Downtime: {time_msg}'
+            conn_msg = conn_msg if pandora_bot.conn_status != 'Disconnect [Major]' else f'{user_ping}{conn_msg}'
+            await send_log_msg(conn_msg if '[Major]' not in pandora_bot.conn_status else f'{user_ping}{conn_msg}')
+            pandora_bot.conn_status, pandora_bot.down_time = "Connected", None
 
     def set_command_category(category, command_position):
         def decorator(func):
@@ -97,30 +112,47 @@ def run_discord_bot():
 
         return decorator
 
+    async def send_log_msg(msg):
+        error_channel = pandora_bot.get_channel(gli.bot_logging_channel)
+        try:
+            await error_channel.send(msg)
+        except Exception as e:
+            print(f"Error sending log message: {e}")
+
     @pandora_bot.event
     async def on_shutdown():
-        error_channel = pandora_bot.get_channel(gli.bot_logging_channel)
-        await error_channel.send("Pandora Bot Off")
+        await send_log_msg("Pandora Bot Off")
         try:
             await close_database_session()
             await pandora_bot.close()
         except Exception as e:
-            await error_channel.send(f"Shutdown Error: {e}")
+            await send_log_msg(f"Shutdown Error: {e}")
 
     @pandora_bot.event
     async def on_disconnect():
-        error_channel = pandora_bot.get_channel(gli.bot_logging_channel)
-        await error_channel.send("<@185530717638230016> ALERT! Pandora Bot is disconnected!")
+        pandora_bot.down_time = dt.now(utc)
+        # return if already in offline status
+        if pandora_bot.conn_status != 'Connected':
+            return
+        conn_status = "Disconnect"
+        print(conn_status)
+        await asyncio.sleep(10)
+        if not pandora_bot.is_closed():
+            conn_status = "Disconnect [Standard]"
+            await send_log_msg("Pandora Bot Disconnect [Standard]")
+        await asyncio.sleep(50)
+        if pandora_bot.is_closed():
+            conn_status = "Disconnect [Major]"
+            await send_log_msg("<@185530717638230016>\nPandora Bot Disconnect [Escalated]!")
 
     @pandora_bot.event
     async def on_command_error(ctx, error):
-        error_channel = pandora_bot.get_channel(gli.bot_logging_channel)
         tb_str = ''.join(traceback.format_exception(type(error), error, error.__traceback__))
         max_length = 1000 - len('```') * 2 - len('An error occurred:\n')
         parts = [tb_str[i:i + max_length] for i in range(0, len(tb_str), max_length)]
-        await error_channel.send(f'An error occurred:\n{error}\n```{parts[0]}```')
+        await send_log_msg(f'An error occurred:\n{error}\n```{parts[0]}```')
         for part in parts[1:]:
-            await error_channel.send(f'```{part}```')
+            await send_log_msg(f'```{part}```')
 
     class CustomHelpCommand(commands.DefaultHelpCommand):
         def __init__(self):
@@ -229,7 +261,7 @@ def run_discord_bot():
                 return
             target_item = inventory.BasicItem(item_id)
             await inventory.set_gift(player_obj, target_item, value)
-            message, header = f"{player_obj.player_username} issued a gift to all players. /claim", "Event Gift"
+            message, header = [f"{player_obj.player_username} issued a gift to all players. /claim"], "Event Gift"
             await ctx.send(file=discord.File(await sm.message_box(player_obj, message, header)))
             return
         await ctx.send('Admin task completed.')
@@ -348,7 +380,7 @@ def run_discord_bot():
         trigger_return, player_obj, _ = await admin_verification(ctx)
         if trigger_return:
             return
-        message, header = f"Turned off by Admin: {player_obj.player_username}", "Pandora Bot Shutdown"
+        message, header = [f"Turned off by Admin: {player_obj.player_username}"], "Pandora Bot Shutdown"
         await ctx.send(file=discord.File(await sm.message_box(player_obj, message, header=header)))
         await on_shutdown()
 
@@ -1098,7 +1130,7 @@ def run_discord_bot():
             return
         # Transfer and display item.
         await selected_item.give_item(target_player.player_id)
-        header, message = "Transfer Complete!", f"{target_player.player_username} has received Item ID: {item_id}!"
+        header, message = "Transfer Complete!", [f"{target_player.player_username} has received Item ID: {item_id}!"]
         await ctx.send(file=discord.File(await sm.message_box(player_obj, message, header=header)))
 
     @set_command_category('trade', 7)
