@@ -403,7 +403,7 @@ def run_discord_bot():
                 return
             verified = f"{gli.archdragon_emoji} Verified ArchDragonStore Gift Card: ||{code}||"
             card_num = card_dict[value]
-            giftcard_path = file_path = f'{gli.image_path}GiftCard\\Giftcard_{card_num}.png'
+            giftcard_path = file_path = f'{gli.image_path}GiftCard/Giftcard_{card_num}.png'
             gift_card = discord.File(giftcard_path)
             file = await sm.message_box(player_obj, msg_lines, header=header, boxtype="arch")
             await target_user.send(content=verified, file=discord.File(file))
@@ -1971,6 +1971,52 @@ def run_discord_bot():
         embed_msg = sm.easy_embed("Purple", "", description)
         await ctx.send(file=discord.File(await sm.title_box("Support Us")))
         await ctx.send(embed=embed_msg)
+
+    @pandora_bot.hybrid_command(name='vouch', help="Grants vouches to a user.")
+    @app_commands.guilds(discord.Object(id=1011375205999968427))
+    async def vouch(ctx, user: discord.User):
+        await ctx.defer()
+        if user.id == ctx.author.id:
+            await ctx.send("You cannot vouch for yourself.")
+        command_user = int(ctx.author.id)
+        role_points = {
+            1011375497265033216: 20,  # Owner role ID
+            1134301246648488097: 10,  # Administrator role ID
+            1134293907136585769: 5,  # Moderator role ID
+            1140738057381871707: 2,  # Guild Member role ID
+        }
+        default_points = 1
+        raw_query, params = "SELECT vouch_points FROM VouchList WHERE discord_id = :input1", {"input1": str(user.id)}
+        points_df = await rqy(raw_query, return_value=True, params=params)
+        user_roles = [role.id for role in ctx.author.roles]
+        highest_role_id = max(user_roles, key=lambda role_id: role_points.get(role_id, default_points))
+        new_points = num_points = role_points.get(highest_role_id, default_points)
+        if points_df is None or len(points_df.index) == 0:
+            update_query = "INSERT INTO VouchList (discord_id, vouch_points) VALUES (:input1, :input2)"
+            params = {"input1": str(user.id), "input2": num_points}
+        else:
+            new_points = num_points + int(points_df['vouch_points'].values[0])
+            update_query = "UPDATE VouchList SET vouch_points = :input2 WHERE discord_id = :input1"
+            params = {"input1": str(user.id), "input2": new_points}
+        await rqy(update_query, params=params)
+        if new_points >= 1000:
+            trusted_rat_role = discord.utils.get(ctx.guild.roles, name='Trusted Rat')
+            if trusted_rat_role not in user.roles:
+                await user.add_roles(trusted_rat_role)
+        await ctx.send(f"{num_points} vouch points awarded to {user.name}. New total: {new_points}")
+
+    @pandora_bot.hybrid_command(name='vcheck', help="Check the vouches of a user.")
+    @app_commands.guilds(discord.Object(id=1011375205999968427))
+    async def vcheck(ctx, user: discord.User):
+        await ctx.defer()
+        raw_query, params = "SELECT vouch_points FROM VouchList WHERE discord_id = :input1", {"input1": str(user.id)}
+        points_df = await rqy(raw_query, return_value=True, params=params)
+        num_vouches = 0
+        if points_df is not None and len(points_df.index) != 0:
+            num_vouches = int(points_df['vouch_points'].values[0])
+        msg_lines = [f"Vouch Count: {num_vouches:,}"]
+        verified = f"{gli.archdragon_emoji} Verified Message [Server {ctx.guild.name}]:"
+        await ctx.send(content=verified, file=discord.File(await sm.message_box(None, msg_lines, user.name, "admin")))
 
     def build_category_dict():
         temp_dict = {}

@@ -38,7 +38,7 @@ class PlayerProfile:
         self.player_class = ""
         self.player_quest, self.quest_tokens = 0, [0 for x in range(30)]
         self.quest_tokens[1] = 1
-        self.player_coins, self.player_stamina, self.vouch_points, self.luck_bonus = 0, 0, 0, 0
+        self.player_coins, self.player_stamina, self.luck_bonus = 0, 0, 0
         # Initialize player gear/stats info.
         self.player_stats, self.gear_points, self.player_equipped = [0] * 9, [0] * 9, [0] * 7
         self.pact, self.insignia, self.equipped_tarot = "", "", ""
@@ -301,7 +301,6 @@ class PlayerProfile:
         quest_tokens = ";".join(map(str, self.quest_tokens))
         raw_query = "SELECT * FROM PlayerList WHERE discord_id = :id_check"
         df = await rqy(raw_query, return_value=True, params={'id_check': self.discord_id})
-
         if df is not None and len(df.index) != 0:
             return f"Player with discord ID: ({self.discord_id}) is already registered."
         raw_query = "SELECT * FROM PlayerList WHERE player_username = :username_check"
@@ -311,17 +310,17 @@ class PlayerProfile:
         raw_query = ("INSERT INTO PlayerList "
                      "(discord_id, player_username, player_level, player_exp, player_echelon, player_quest, "
                      "quest_tokens, player_stamina, player_class, player_coins, player_stats, player_equipped, "
-                     "player_tarot, player_insignia, player_pact, vouch_points) "
+                     "player_tarot, player_insignia, player_pact) "
                      "VALUES (:input_1, :input_2, :input_3, :input_4, :input_5, :input_6,"
                      ":input_7, :input_8, :input_9, :input_10, :input_11, :input_12, :input_13, "
-                     ":input_14, :input_15, :input_16)")
+                     ":input_14, :input_15)")
         params = {
             'input_1': str(self.discord_id), 'input_2': str(self.player_username), 'input_3': int(self.player_level),
             'input_4': int(self.player_exp), 'input_5': int(self.player_echelon),
             'input_6': int(self.player_quest), 'input_7': quest_tokens,
             'input_8': int(self.player_stamina), 'input_9': str(self.player_class), 'input_10': int(self.player_coins),
             'input_11': player_stats, 'input_12': equipped_gear, 'input_13': str(self.equipped_tarot),
-            'input_14': str(self.insignia), 'input_15': str(self.pact), 'input_16': int(self.vouch_points)}
+            'input_14': str(self.insignia), 'input_15': str(self.pact)}
         await rqy(raw_query, params=params)
         registered_player = await get_player_by_discord(self.discord_id)
         raw_query = ("INSERT INTO MiscPlayerData "
@@ -726,7 +725,6 @@ async def df_to_player(row, reloading=None):
         temp.player_echelon, temp.player_quest = int(row['player_echelon']), int(row['player_quest'])
         temp.player_stamina, temp.player_coins = int(row['player_stamina']), int(row['player_coins'])
         temp.player_class = str(row['player_class'])
-        temp.vouch_points = int(row['vouch_points'])
     else:
         temp.player_id, temp.discord_id = int(row['player_id'].values[0]), int(row['discord_id'].values[0])
         temp.player_username = str(row["player_username"].values[0])
@@ -735,7 +733,6 @@ async def df_to_player(row, reloading=None):
         temp.player_echelon, temp.player_quest = int(row['player_echelon'].values[0]), int(row['player_quest'].values[0])
         temp.player_stamina, temp.player_coins = int(row['player_stamina'].values[0]), int(row['player_coins'].values[0])
         temp.player_class = str(row['player_class'].values[0])
-        temp.vouch_points = int(row['vouch_points'].values[0])
     string_list = temp_string.split(';')
     temp.quest_tokens = list(map(int, string_list))
     await temp.get_equipped()
