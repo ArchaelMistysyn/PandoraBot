@@ -631,22 +631,25 @@ async def display_cinventory(player_obj, item_type):
                  "ORDER BY item_tier DESC")
     params = {'player_id': player_obj.player_id, 'item_type': f'%{item_type}%'}
     df = await rqy(raw_query, True, params=params)
-    item_list = df[['item_id', 'item_name', 'item_tier', 'item_type']].values.tolist()
+    item_list = df[['item_id', 'item_name', 'item_tier', 'item_type', 'item_base_type', 'item_elements']].values.tolist()
     item_list.sort(key=lambda x: (-x[2], -x[0], x[1]))
     player_inventory = ""
     for item in item_list:
         item_id, item_name, item_tier, item_type, item_base_type, item_elements = item
+        element_list = item_elements.split(";")
         if item_type == "R":
             icon_key = item_base_type
             if item_tier == 6:
-                icon_key = (item_tier, item_elements.index(1))
-            elif item_tier <= 5:
                 icon_key = (item_tier, item_name.split()[-1])
+            elif item_tier <= 5:
+                icon_key = (item_tier, element_list.index("1"))
             item_icon = gli.ring_icon_dict[icon_key]
-        elif item_tier < 9:
-            item_icon = gli.gear_icons_map[(item_type, item_tier)]
-        else:
+        elif item_base_type in gli.sovereign_item_list:
             item_icon = gli.sov_icon_dict[item_base_type]
+        elif "D" in item_type:
+            item_icon = gli.gear_icons_map[("D", min(8, item_tier))]
+        else:
+            item_icon = gli.gear_icons_map[(item_type, min(8, item_tier))]
         player_inventory += f"{item_icon} <{item_id}> {item_name}\n"
     return player_inventory
 

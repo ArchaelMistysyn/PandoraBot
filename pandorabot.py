@@ -1999,7 +1999,7 @@ def run_discord_bot():
             update_query = "UPDATE VouchList SET vouch_points = :input2 WHERE discord_id = :input1"
             params = {"input1": str(user.id), "input2": new_points}
         await rqy(update_query, params=params)
-        if new_points >= 1000:
+        if new_points >= 100:
             trusted_rat_role = discord.utils.get(ctx.guild.roles, name='Trusted Rat')
             if trusted_rat_role not in user.roles:
                 await user.add_roles(trusted_rat_role)
