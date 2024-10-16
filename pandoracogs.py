@@ -16,8 +16,7 @@ import pact
 
 class StaminaCog(commands.Cog):
     def __init__(self, bot):
-        self.bot = bot
-        self.lock = asyncio.Lock()
+        self.bot, self.lock = bot, asyncio.Lock()
         self.stamina_manager.start()
 
     def cog_unload(self):
@@ -40,6 +39,40 @@ class StaminaCog(commands.Cog):
 
     @stamina_manager.error
     async def stamina_manager_error(self, e):
+        error_channel = self.bot.get_channel(gli.bot_logging_channel)
+        tb_str = ''.join(traceback.format_exception(type(e), e, e.__traceback__))
+        await error_channel.send(f'An error occurred:\n{e}\n```{tb_str}```')
+
+
+class MetricsCog(commands.Cog):
+    def __init__(self, bot):
+        self.bot, self.lock = bot, asyncio.Lock()
+        self.guild = self.bot.get_guild(1011375205999968427)
+        self.metrics_manager.start()
+
+    def cog_unload(self):
+        self.metrics_manager.cancel()
+
+    async def run_metrics(self):
+        total_members = self.guild.member_count
+        online_members = sum(1 for member in self.guild.members if member.status == discord.Status.online)
+        offline_members = sum(1 for member in self.guild.members if member.status == discord.Status.offline)
+        role_counts = {role.name: len(role.members) for role in self.guild.roles if role.name != "@everyone"}
+        message = (
+            f"Total Members: {total_members:,}\n"
+        )
+        metrics_channel = self.bot.get_channel(1156267612783779901)
+        if metrics_channel:
+            message_obj = await metrics_channel.fetch_message(1296207066284953664)
+            await message_obj.edit(content=message)
+
+    @tasks.loop(seconds=6000)
+    async def metrics_manager(self):
+        async with self.lock:
+            await self.run_metrics()
+
+    @metrics_manager.error
+    async def metrics_manager_error(self, e):
         error_channel = self.bot.get_channel(gli.bot_logging_channel)
         tb_str = ''.join(traceback.format_exception(type(e), e, e.__traceback__))
         await error_channel.send(f'An error occurred:\n{e}\n```{tb_str}```')

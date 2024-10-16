@@ -94,6 +94,7 @@ def run_discord_bot():
         if pandora_bot.conn_status == "Connected":
             await send_log_msg(f'{pandora_bot.user} Online!')
         pandoracogs.StaminaCog(pandora_bot)
+        pandoracogs.MetricsCog(pandora_bot)
         pandora_bot.help_command = CustomHelpCommand()
 
     @pandora_bot.event
@@ -1978,6 +1979,7 @@ def run_discord_bot():
         await ctx.defer()
         if user.id == ctx.author.id:
             await ctx.send("You cannot vouch for yourself.")
+            return
         command_user = int(ctx.author.id)
         role_points = {
             1011375497265033216: 20,  # Owner role ID
