@@ -76,7 +76,7 @@ CyanColour = hex_to_rgba(0x00FFFF)
 
 # Web Data for FTP Login
 web_data = None
-with open("web_data_login.txt", 'r') as data_file:
+with open("web_login_data.txt", 'r') as data_file:
     for line in data_file:
         web_data = line.split(";")
 
@@ -169,7 +169,7 @@ async def generate_exp_bar(exp_bar_image, exp_bar_start, exp_bar_end, fill_perce
 
 async def generate_and_combine_gear(item_type, start_tier=1, end_tier=8, element=""):
     # Ensure image is currently available.
-    if item_type not in gli.availability_list and item_type not in gli.sovereign_item_list:
+    if item_type not in item_type not in gli.sovereign_item_list:
         return 0
     ftp = await create_ftp_connection(web_data[0], web_data[1], web_data[2])
     folder, sub_folder, sub_dir = item_type, "", ""
@@ -202,7 +202,7 @@ async def generate_and_combine_gear(item_type, start_tier=1, end_tier=8, element
                     variant_img = Image.open(requests.get(variant_url, stream=True).raw)
                     output_dir = f'{gli.image_path}Gear_Icon/{item_type}/'
                     file_name = f"Frame_{item_type}_{item_tier}_{variant}.png"
-                    remote_dir = f"/public_html/botimages/Gear_Icon/{item_type}/"
+                    remote_dir = f"/botimages/Gear_Icon/{item_type}/"
                     result = Image.new("RGBA", (106, 106))
                     result.paste(frame, (0, 0), frame)
                     result.paste(icon, (17, 16), icon)
@@ -215,7 +215,7 @@ async def generate_and_combine_gear(item_type, start_tier=1, end_tier=8, element
             result.paste(icon, (17, 16), icon)
             result.save(file_path, format="PNG")
             # Upload the file.
-            remote_dir = f"/public_html/botimages/Gear_Icon/{folder}/{sub_folder}"
+            remote_dir = f"/botimages/Gear_Icon/{folder}/{sub_folder}"
             await upload_file_to_ftp(ftp, file_path, remote_dir, file_name)
     ftp.quit()
     return end_tier + 1 - start_tier
@@ -248,7 +248,7 @@ async def generate_and_combine_images():
             result.paste(icon, (17, 16), icon)
             result.save(file_path, format="PNG")
             # Upload the file.
-            remote_dir = f"/public_html/botimages/NonGear_Icon/{temp_item.item_category}/"
+            remote_dir = f"/botimages/NonGear_Icon/{temp_item.item_category}/"
             await upload_file_to_ftp(ftp, file_path, remote_dir, file_name)
     ftp.quit()
     return count
@@ -279,6 +279,7 @@ async def create_ftp_connection(hostname, username, password):
         return ftp
     except Exception as e:
         print(f"Failed to connect to FTP: {e}")
+        print(f"HOST: {hostname} USER: {username}")
         return None
 
 

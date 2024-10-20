@@ -196,9 +196,7 @@ skill_names_dict = {
 # ITEM LISTS
 crafting_gem = ["Blazing Ruby", "Drowned Sapphire", "Silent Topaz", "Ancient Agate", "Whispering Emerald",
                 "Arctic Zircon", "Haunted Obsidian", "Prismatic Opal", "Spatial Lapis", "Soul Diamond"]
-availability_list_nongear = ["Gemstone", "Fragment", "Crystal", "Heart", "Skull", "Misc"]
-availability_list = ["Sword", "Saber", "Bow", "Threads", "Armour", "Wings", "Amulet", "Crest", "Greaves",
-                     "Ring", "Gem", "Pact", "Dagger", "Mirrorblades", "Wand", "Caduceus Rod", "Mare", "Unicorn"]
+availability_list_nongear = ["Gemstone", "Fragment", "Crystal", "Heart", "Skull", "Misc", "Essence"]
 
 sovereign_item_list = ["Crown of Skulls", "Twin Rings of Divergent Stars", "Hadal's Raindrop", "Heavenly Calamity",
                        "Stygian Calamity", "Pandora's Universe Hammer", "Solar Flare Blaster", "Ruler's Crest",
