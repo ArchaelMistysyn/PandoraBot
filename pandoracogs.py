@@ -66,7 +66,7 @@ class MetricsCog(commands.Cog):
             message_obj = await metrics_channel.fetch_message(1296207066284953664)
             await message_obj.edit(content=message)
 
-    @tasks.loop(seconds=6000)
+    @tasks.loop(seconds=3600)
     async def metrics_manager(self):
         async with self.lock:
             await self.run_metrics()

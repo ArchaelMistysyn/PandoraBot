@@ -466,6 +466,8 @@ class BasicItem:
             self.item_image = ""
             if "Fish" in self.item_id:
                 self.item_image = f"{gli.web_url}NonGear_Icon/Fish/{self.item_id}.png"
+            elif "Essence" in self.item_id:
+                self.item_image = f"{gli.web_url}NonGear_Icon/Essence/Frame_Essence{self.item_tier}.png"
             elif "Void" in self.item_id:
                 name_data = self.item_name.split()
                 item_type = name_data[-1].strip('()') if "Weapon" not in self.item_name else "Saber"
