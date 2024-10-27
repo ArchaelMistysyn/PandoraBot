@@ -102,9 +102,6 @@ def get_gear_thumbnail(item):
             item_tag, element = gli.ring_item_type[item.item_tier - 1], item.item_elements.index(1)
         else:
             return None
-    # Ensure image is currently available.
-    if item_tag not in gli.availability_list and item_tag not in gli.ring_item_type and item_tag not in gli.available_sovereign:
-        return None
     new_tag = item_tag.replace(' ', '_')
     return f"{gli.web_url}Gear_Icon/{folder}/{sub_folder}Frame_{new_tag}{element}_{item.item_tier}.png"
 

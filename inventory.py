@@ -74,7 +74,7 @@ class BInventoryView(discord.ui.View):
             discord.SelectOption(
                 emoji="<:Gem_5:1275569736205340773>", label="Unprocessed", description="Unprocessed Items"),
             discord.SelectOption(
-                emoji="<a:eenergy:1145534127349706772>", label="Essences", description="Essence Items"),
+                emoji="<:Essence5:1297651547186139206>", label="Essences", description="Essence Items"),
             discord.SelectOption(
                 emoji="<:Compass:1274787464363380766>", label="Summoning", description="Summoning Items"),
             discord.SelectOption(
@@ -467,7 +467,7 @@ class BasicItem:
             if "Fish" in self.item_id:
                 self.item_image = f"{gli.web_url}NonGear_Icon/Fish/{self.item_id}.png"
             elif "Essence" in self.item_id:
-                self.item_image = f"{gli.web_url}NonGear_Icon/Essence/Frame_Essence{self.item_tier}.png"
+                self.item_image = f"{gli.web_url}NonGear_Icon/Essence/Frame_Essence_{self.item_tier}.png"
             elif "Void" in self.item_id:
                 name_data = self.item_name.split()
                 item_type = name_data[-1].strip('()') if "Weapon" not in self.item_name else "Saber"

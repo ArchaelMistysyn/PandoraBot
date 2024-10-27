@@ -230,7 +230,7 @@ async def generate_and_combine_images():
             temp_item = inventory.BasicItem(item_id)
             if temp_item.item_category not in gli.availability_list_nongear:
                 continue
-            set_items = ["Sacred", "LightStar", "DarkStar", "Catalyst", "Nephilim", "Pandora"]
+            set_items = []
             if temp_item.item_category == "Misc" and item_id not in set_items:
                 continue
             count += 1
@@ -239,6 +239,10 @@ async def generate_and_combine_images():
             frame_url = frame_url.replace("[EXT]", gli.frame_extension[0])
             icon_url = f"{web_url}/botimages/NonGear_Icon/{temp_item.item_category}/{item_id}.png"
             output_dir, file_name = f'{gli.image_path}NonGear_Icon/{temp_item.item_category}/', f"Frame_{item_id}.png"
+            if "Essence" in item_id:
+                # Could be improved since this is tier based, but no point.
+                icon_url = f"{web_url}/botimages/NonGear_Icon/{temp_item.item_category}/Essence{temp_item.item_tier}.png"
+                file_name = f"Frame_Essence_{temp_item.item_tier}.png"
             file_path = f"{output_dir}{file_name}"
             frame, icon = await fetch_image(session, frame_url), await fetch_image(session, icon_url)
             # Construct the new image
