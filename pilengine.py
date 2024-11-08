@@ -172,7 +172,7 @@ async def generate_and_combine_gear(item_type, start_tier=1, end_tier=8, element
     if item_type not in item_type not in gli.sovereign_item_list:
         return 0
     ftp = await create_ftp_connection(web_data[0], web_data[1], web_data[2])
-    folder, sub_folder, sub_dir = item_type, "", ""
+    folder, sub_dir = item_type, ""
     if item_type in gli.sovereign_item_list:
         folder = "Sovereign"
     async with aiohttp.ClientSession() as session:
@@ -180,18 +180,27 @@ async def generate_and_combine_gear(item_type, start_tier=1, end_tier=8, element
             # Handle the urls and paths.
             frame_url = gli.frame_icon_list[item_tier - 1]
             frame_url = frame_url.replace("[EXT]", gli.frame_extension[0])
-            icon_url = f"{web_url}/botimages/Gear_Icon/{folder}/{sub_folder}{item_type.replace(' ', '_')}"
-            icon_url = f"{icon_url}{item_tier}.png" if item_type not in gli.sovereign_item_list else f"{icon_url}.png"
+            icon_url = f"{web_url}/botimages/Gear_Icon/{folder}/{item_type.replace(' ', '_')}"
+            if item_type not in gli.sovereign_item_list and item_type not in gli.fabled_ringtypes:
+                icon_url = f"{icon_url}{item_tier}.png"
+            else:
+                icon_url = f"{icon_url}.png"
             if item_tier == 9 and item_type not in gli.sovereign_item_list:
-                icon_url = f"{web_url}/botimages/Gear_Icon/{folder}/{sub_folder}{item_type.replace(' ', '_')}8.png"
-            if item_type == "Ring" or item_type in gli.ring_item_type:
+                icon_url = f"{web_url}/botimages/Gear_Icon/{folder}/{item_type.replace(' ', '_')}8.png"
+            elif item_tier == 7 and item_type in gli.fabled_ringtypes:
+                folder, sub_dir = "Ring", "Fabled_Ring"
+                icon_url = f"{web_url}/botimages/Gear_Icon/{folder}/{sub_dir}/{item_type.replace(' ', '_')}.png"
+            elif item_type == "Ring" or item_type in gli.ring_item_type:
                 item_type = gli.ring_item_type[item_tier - 1]
-                sub_folder, sub_dir = f"{item_type.replace(' ', '_')}/", f"{item_type}/"
-                icon_url = f"{web_url}/botimages/Gear_Icon/{folder}/{sub_folder}{item_type}{element}.png"
-            output_dir = f'{gli.image_path}Gear_Icon/{folder}/{sub_dir}'
+                sub_dir = f"{item_type}/"
+                icon_url = f"{web_url}/botimages/Gear_Icon/{folder}/{sub_dir}{item_type}{element}.png"
+            output_dir = f"{gli.image_path}Gear_Icon/{folder}/{sub_dir}"
             file_name = f"Frame_{item_type.replace(' ', '_')}{element}_{item_tier}.png"
             file_path = f"{output_dir}{file_name}"
             frame, icon = await fetch_image(session, frame_url), await fetch_image(session, icon_url)
+            if icon is None:
+                print(f"Failed to load icon for {item_type} at tier {item_tier}")
+                continue
             # Handle Pact Variants
             if item_type == "Pact":
                 # Skip pacts for now doesn't need to be redone, reduce load.
@@ -215,7 +224,7 @@ async def generate_and_combine_gear(item_type, start_tier=1, end_tier=8, element
             result.paste(icon, (17, 16), icon)
             result.save(file_path, format="PNG")
             # Upload the file.
-            remote_dir = f"/botimages/Gear_Icon/{folder}/{sub_folder}"
+            remote_dir = f"/botimages/Gear_Icon/{folder}/{sub_dir}"
             await upload_file_to_ftp(ftp, file_path, remote_dir, file_name)
     ftp.quit()
     return end_tier + 1 - start_tier
@@ -273,6 +282,8 @@ async def fetch_image(session, url):
     async with session.get(url) as response:
         response.raise_for_status()
         data = await response.read()
+        if not data:
+            print(f"Failed to load image data from {url}")
         return Image.open(BytesIO(data))
 
 

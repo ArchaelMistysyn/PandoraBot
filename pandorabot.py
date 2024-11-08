@@ -305,25 +305,29 @@ def run_discord_bot():
             await ctx.send(f"Admin leaderboard task completed.")
         elif keyword == "MergeGear":
             count = 0
-            for class_name, (low_base, both_tiers, high_tiers) in gli.weapon_type_dict.items():
-                for item_type in low_base:
-                    count += await pilengine.generate_and_combine_gear(item_type, 1, 4)
-                    await asyncio.sleep(1)
-                for item_type in both_tiers:
-                    count += await pilengine.generate_and_combine_gear(item_type, 1, 9)
-                    await asyncio.sleep(1)
-                for item_type in high_tiers:
-                    count += await pilengine.generate_and_combine_gear(item_type, 5, 9)
-                    await asyncio.sleep(1)
+            # Enable to merge weapons
+            # for class_name, (low_base, both_tiers, high_tiers) in gli.weapon_type_dict.items():
+                # for item_type in low_base:
+                #    count += await pilengine.generate_and_combine_gear(item_type, 1, 4)
+                #    await asyncio.sleep(1)
+                #for item_type in both_tiers:
+                #    count += await pilengine.generate_and_combine_gear(item_type, 1, 9)
+                #    await asyncio.sleep(1)
+                #for item_type in high_tiers:
+                #    count += await pilengine.generate_and_combine_gear(item_type, 5, 9)
+                #    await asyncio.sleep(1)
             for ele_idx in range(9):
-                count += await pilengine.generate_and_combine_gear("Ring", 4, 5, ele_idx)
+                count += await pilengine.generate_and_combine_gear("Ring", 4, 6, ele_idx)
                 await asyncio.sleep(1)
-            for item_base in gli.available_sovereign:
+            for item_type in gli.fabled_ringtypes:
+                count += await pilengine.generate_and_combine_gear(item_type, 7, 7)
+                await asyncio.sleep(1)
+            for item_base in gli.sovereign_item_list:
                 count += await pilengine.generate_and_combine_gear(item_base, 8, 9)
                 await asyncio.sleep(1)
             non_weapon_list = ["Armour", "Greaves", "Amulet", "Wings", "Crest", "Gem", "Pact"]
-            for gear_type in non_weapon_list:
-                count += await pilengine.generate_and_combine_gear(gear_type, end_tier=9)
+            # for gear_type in non_weapon_list:
+               # count += await pilengine.generate_and_combine_gear(gear_type, end_tier=9)
             await ctx.send(f"Admin item task completed. Task Count: {count}")
         elif keyword == "MergeNongear":
             count = await pilengine.generate_and_combine_images()
@@ -1930,8 +1934,12 @@ def run_discord_bot():
         await ctx.defer()
         title = "Game created by: Kyle Mistysyn (Archael)"
         artist_data = [("Daerun", "Character Artist (Upwork)"),
+                       ("Heng Ming Chiun", "Character Artist (Upwork)"),
+                       ("Alina Arkhipova", "Character Artist (Upwork)"),
                        ("Daming Li", "Monster Artist (Upwork)"),
                        ("Arjhon Tulio", "Scene Artist (Upwork)"),
+                       ("Muhammad Faiq Ali", "Initial Sketch Artist (Upwork)"),
+                       ("Mario Ferrera", "Web Developer & Designer (Upwork)"),
                        ("Jumana Walid", "Typography Artist (Upwork)"),
                        ("Tuul Huur @tuulhuur", "Item Icon Artist (Fiverr)"),
                        ("Nong Dit @Nong Dit", "Frame Artist (Fiverr)"),
@@ -1943,7 +1951,8 @@ def run_discord_bot():
                        ("Faris @bigbullmonk", "Icon Artist (Fiverr)"),
                        ("Claudia", "Scene Artist (Volunteer)"),
                        ("Volff", "Photoshop Editing (Volunteer)")]
-        programming_data = [("Archael", "Programmer")]
+        programming_data = [("Archael", "Programmer, Web Developer & Designer"),
+                            ("Mario Ferrera", "Web Developer & Designer (Upwork)")]
         tester_data = [("Zweii", "Alpha Tester"), ("SoulViper", "Alpha Tester"),
                        ("Kaelen", "Alpha Tester"), ("Volff", "Alpha Tester")]
         misc_data = [("Bahamutt", "Programming Support"), ("Pota", "Programming Support")]

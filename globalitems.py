@@ -198,11 +198,11 @@ crafting_gem = ["Blazing Ruby", "Drowned Sapphire", "Silent Topaz", "Ancient Aga
                 "Arctic Zircon", "Haunted Obsidian", "Prismatic Opal", "Spatial Lapis", "Soul Diamond"]
 availability_list_nongear = ["Gemstone", "Fragment", "Crystal", "Heart", "Skull", "Misc", "Essence"]
 
+fabled_ringtypes = ["Dragon's Eye Diamond", "Bleeding Hearts", "Gambler's Masterpiece",
+                    "Lonely Ring of the Dark Star", "Lonely Ring of the Light Star"]
 sovereign_item_list = ["Crown of Skulls", "Twin Rings of Divergent Stars", "Hadal's Raindrop", "Heavenly Calamity",
                        "Stygian Calamity", "Pandora's Universe Hammer", "Solar Flare Blaster", "Ruler's Crest",
                        "Bathyal, Enigmatic Chasm Bauble", "Fallen Lotus of Nephilim", "Chromatic Tears"]
-available_sovereign = ["Crown of Skulls", "Twin Rings of Divergent Stars", "Hadal's Raindrop", "Heavenly Calamity",
-                       "Stygian Calamity", "Pandora's Universe Hammer", "Ruler's Crest", "Fallen Lotus of Nephilim"]
 ring_item_type = [None, None, None, "Signet", "Element_Ring", "Path_Ring", "Fabled_Ring", "Sovereign_Ring",
                   "Sacred_Ring"]
 sovereign_batch_data = ', '.join([str(base_type) for base_type in sovereign_item_list])

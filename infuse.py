@@ -120,7 +120,7 @@ recipe_index_dict = {}
 for i_category, recipes in recipe_dict.items():
     recipe_index_dict[i_category] = {recipe: index for index, recipe in enumerate(recipes.keys())}
 sov_icon = ["<:p_hammer:1275566048619528252>", "<:lotus_sword:1275566042068025364>",
-            "<:lotus_sword:1275566042068025364>", "<:lotus_sword:1275566042068025364>"]
+            "<:Blaster:1304109337500844154>", "<:Bathyal:1304109287164870687>"]
 spec_icon = ["<:ruler:1275566119343755384>"]
 cat_icon = {
     "Heavenly Infusion": "<:Fae0:1274786282010316913>",
@@ -132,8 +132,8 @@ cat_icon = {
     "Special Infusion": "<:Lotus3:1274786460486336605>",
     "Elemental Signet Infusion": "<:Signet0:1275564530088415242>",
     "Primordial Ring Infusion": "<:E_Ring0:1275563709519106190>",
-    "Path Ring Infusion": "<:Signet0:1275564530088415242>",
-    "Fabled Ring Infusion": "<:lone_ring1:1275566085101326569>",
+    "Path Ring Infusion": "<:P_Ring8:1303816617200713811>",
+    "Fabled Ring Infusion": "<:DE_Ring:1303816766899884042>",
     "Sovereign Ring Infusion": "<:twin_rings:1275566143238836295>",
     "Sovereign Weapon Infusion": "<:p_hammer:1275566048619528252>",
     "Sovereign Special Infusion": "<:ruler:1275566119343755384>"}
