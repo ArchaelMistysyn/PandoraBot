@@ -146,14 +146,14 @@ ring_icon_dict = {
     (5, 0): "<:E_Ring0:1275563709519106190>", (5, 1): "<:E_Ring1:1275563721183330366>", (5, 2): "<:E_Ring2:1275563735607672904>",
     (5, 3): "<:E_Ring3:1275563746789687413>", (5, 4): "<:E_Ring4:1275563755350134905>", (5, 5): "<:E_Ring5:1275563762593828914>",
     (5, 6): "<:E_Ring6:1275563771531890798>", (5, 7): "<:E_Ring7:1275563779169587263>", (5, 8): "<:E_Ring8:1275563788862750861>",
-    (6, "Storm"): "<:lone_ring1:1275566085101326569>", (6, "Frostfire"): "<:lone_ring1:1275566085101326569>",
-    (6, "Horizon"): "<:lone_ring1:1275566085101326569>", (6, "Eclipse"): "<:lone_ring1:1275566085101326569>",
-    (6, "Stars"): "<:lone_ring1:1275566085101326569>", (6, "Solar Flux"): "<:lone_ring1:1275566085101326569>",
-    (6, "Lunar Tides"): "<:lone_ring1:1275566085101326569>", (6, "Terrestria"): "<:lone_ring1:1275566085101326569>",
-    (6, "Confluence"): "<:lone_ring1:1275566085101326569>",
-    "Dragon's Eye Diamond": "<:lone_ring1:1275566085101326569>",
-    "Bleeding Hearts": "<:lone_ring1:1275566085101326569>",
-    "Gambler's Masterpiece": "<:lone_ring1:1275566085101326569>",
+    (6, "Storm"): "<:P_Ring0:1303816489513652224>", (6, "Frostfire"): "<:P_Ring1:1303816511231758336>",
+    (6, "Horizon"): "<:P_Ring2:1303816534157819994>", (6, "Eclipse"): "<:P_Ring3:1303816555636854796>",
+    (6, "Stars"): "<:P_Ring4:1303816568760832125>", (6, "Solar Flux"): "<:P_Ring5:1303816580114812938>",
+    (6, "Lunar Tides"): "<:P_Ring6:1303816591494086676>", (6, "Terrestria"): "<:P_Ring7:1303816605720907887>",
+    (6, "Confluence"): "<:P_Ring8:1303816617200713811>",
+    "Dragon's Eye Diamond": "<:DE_Ring:1303816766899884042>",
+    "Bleeding Hearts": "<:BH_Ring:1303816753511665794>",
+    "Gambler's Masterpiece": "<:GM_Ring:1303816779021156352>",
     "Lonely Ring of the Dark Star": "<:lone_ring1:1275566085101326569>",
     "Lonely Ring of the Light Star": "<:lone_ring2:1275566092504404038>",
     "Stygian Calamity": "<:sc_ring:1275566074779275426>",
@@ -161,7 +161,7 @@ ring_icon_dict = {
     "Hadal's Raindrop": "<:hadal_ring:1275566060447207558>",
     "Twin Rings of Divergent Stars": "<:twin_rings:1275566143238836295>",
     "Crown of Skulls": "<:skull_ring:1275566027429773352>",
-    "Chromatic Tears": "<:skull_ring:1275566027429773352>"
+    "Chromatic Tears": "<:C_Tears:1304109254914998272>"
 }
 
 # NAME LISTS
