@@ -84,7 +84,7 @@ class RankCard:
             if attr != 'frame_icon':
                 index = loc[url_index_dict[attr]]
                 setattr(self, attr, url_list[index])
-        self.frame_icon = gli.frame_icon_list[loc[5]].replace("[EXT]", gli.frame_extension[1])
+        self.frame_icon = gli.frame_icon_list[loc[4]].replace("[EXT]", gli.frame_extension[1])
         self.class_icon = sm.get_thumbnail_by_class(self.user.player_class)
         self.fill_percent = round(self.user.player_exp / player.get_max_exp(self.user.player_level), 2)
 
