@@ -68,6 +68,10 @@ with open("pandora_bot_token.txt", 'r') as token_file:
     for line in token_file:
         token_info = line
 TOKEN = token_info
+# Get API Info
+with open("twitch_api_login.txt", 'r') as twitch_file:
+    line = twitch_file.readline().strip()
+    twitch_client_id, twitch_client_secret = line.split(';')
 
 utc = ZoneInfo("UTC")
 time_zone = ZoneInfo('America/Toronto')
@@ -2029,6 +2033,20 @@ def run_discord_bot():
         msg_lines = [f"Vouch Count: {num_vouches:,}"]
         verified = f"{gli.archdragon_emoji} Verified Message [Server {ctx.guild.name}]:"
         await ctx.send(content=verified, file=discord.File(await sm.message_box(None, msg_lines, user.name, "admin")))
+
+    @pandora_bot.hybrid_command(name="gamefinder", help="Post a request to find players for a specific game.")
+    @app_commands.guilds(discord.Object(id=guild_id))
+    async def gamefinder(ctx, game: str, when: str):
+        await ctx.defer()
+        thumbnail_url, error_message = await sm.get_game_thumbnail(game, twitch_client_id, twitch_client_secret)
+        embed = sm.easy_embed("blue", f"{ctx.author.display_name} wants to play {game}", f"**When:** {when}")
+        embed.set_footer(text=f"Request by {ctx.author.display_name}", icon_url=ctx.author.avatar.url)
+        if error_message is not None:
+            await send_log_msg(error_message)
+            return
+        elif thumbnail_url is not None:
+            embed.set_thumbnail(url=thumbnail_url)
+        await ctx.send(embed=embed)
 
     def build_category_dict():
         temp_dict = {}

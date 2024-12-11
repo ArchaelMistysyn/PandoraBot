@@ -5,6 +5,7 @@ import pandas as pd
 import random
 import re
 from decimal import Decimal, getcontext
+import requests
 
 # Data imports
 import globalitems as gli
@@ -217,3 +218,53 @@ async def cost_embed(player_obj, cost_items, cost_qty):
         cost_msg += f"{item.item_emoji} {item.item_name}: {item_stock:,} / {qty:,}\n"
         can_afford = item_stock >= qty and can_afford
     return cost_msg, can_afford
+
+
+async def get_game_thumbnail(game_name, client_id, client_secret):
+    def preprocess_game_name(raw_name):
+        temp_name = raw_name.lower()
+        temp_name = re.sub(r'[^a-z0-9\s]', '', temp_name)
+        temp_name = re.sub(r'\s+', ' ', temp_name).strip()
+        return temp_name
+
+    game_name = preprocess_game_name(game_name)
+    # Get an access token
+    token_response = requests.post(
+        "https://id.twitch.tv/oauth2/token",
+        data={
+            "client_id": client_id,
+            "client_secret": client_secret,
+            "grant_type": "client_credentials"
+        }
+    )
+    if token_response.status_code != 200:
+        return None, f"Failed to get access token: {token_response.text}"
+    token = token_response.json().get("access_token")
+
+    # Query the IGDB API for the game
+    headers = {"Client-ID": client_id, "Authorization": f"Bearer {token}"}
+    body = f'search "{game_name}"; fields cover.url;'
+    response = requests.post(
+        "https://api.igdb.com/v4/games",
+        headers=headers,
+        data=body
+    )
+    if response.status_code != 200:
+        return None, f"Failed to query IGDB API: {response.text}"
+    data = response.json()
+
+    # Extract the thumbnail URL
+    if data and "cover" in data[0]:
+        cover_id = data[0]["cover"]["id"]
+        cover_response = requests.post(
+            "https://api.igdb.com/v4/covers",
+            headers=headers,
+            data=f'fields url; where id = {cover_id};'
+        )
+        if cover_response.status_code != 200:
+            return None, f"Failed to fetch cover details: {cover_response.text}"
+        cover_data = cover_response.json()
+        if cover_data:
+            return f"https:{cover_data[0]['url'].replace('t_thumb', 't_cover_big')}", None
+    return None, None
+

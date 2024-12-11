@@ -385,7 +385,7 @@ async def build_title_box(message):
     result.paste(cardBG, (0, 0), cardBG)
     image_editable = ImageDraw.Draw(result)
     font_file = requests.get((font_base_url + my_font_url), stream=True).raw
-    title_font = ImageFont.truetype(font_file, 80)
+    title_font = ImageFont.truetype(font_file, 64)
     text_x = image_editable.textlength(message, font=title_font)
     image_editable.text(((width - text_x) / 2 + 2, 60 + 2), message, fill="black", font=title_font)
     image_editable.text(((width - text_x) / 2, 60), message, fill=GoldColour, font=title_font)

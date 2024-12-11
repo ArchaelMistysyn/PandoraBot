@@ -342,6 +342,8 @@ class PlayerProfile:
         raw_query = f"SELECT {field_name} FROM MiscPlayerData WHERE player_id = :player_check"
         params = {"player_check": self.player_id}
         result_df = await rqy(raw_query, params=params, return_value=True)
+        if result_df.empty or len(result_df) == 0:
+            return "1;0;0"
         return result_df[field_name].values[0]
 
     async def spend_stamina(self, cost) -> bool:
