@@ -16,20 +16,7 @@ import sharedmethods as sm
 import player
 
 web_url = f"https://kyleportfolio.ca"
-
-echelon_0 = "https://kyleportfolio.ca/botimages/roleicon/echelon1.png"
-echelon_1 = "https://kyleportfolio.ca/botimages/roleicon/echelon1.png"
-echelon_2 = "https://kyleportfolio.ca/botimages/roleicon/echelon2.png"
-echelon_3 = "https://kyleportfolio.ca/botimages/roleicon/echelon3.png"
-echelon_4 = "https://kyleportfolio.ca/botimages/roleicon/echelon4.png"
-echelon_5 = "https://kyleportfolio.ca/botimages/roleicon/echelon5noflare.png"
-echelon_5flare = "https://kyleportfolio.ca/botimages/roleicon/echelon5flare.png"
-special_icon = "https://kyleportfolio.ca/botimages/roleicon/exclusivenoflare.png"
-special_iconflare = f"{web_url}/botimages/roleicon/exclusiveflare.png"
-rank_url_list = [echelon_0, echelon_1, echelon_2, echelon_3, echelon_4, echelon_5, echelon_5flare,
-                 special_icon, special_iconflare]
 generic_frame_url = f"{web_url}/botimages/iconframes/Iconframe.png"
-
 rank_colour = ["Green", "Blue", "Purple", "Gold", "Red", "Magenta"]
 profile_url = f"{web_url}/botimages/profilecards/"
 card_url = "cardBG/Rankcard_card_"
@@ -53,14 +40,11 @@ metal_url_list = [f"{profile_url}{metal_url}Bronze.png", f"{profile_url}{metal_u
                   f"{profile_url}{metal_url}Gold.png", f"{profile_url}{metal_url}GoldPlus.png",
                   f"{profile_url}{metal_url}Stygian.png"]
 url_dict = {'cardBG': rank_card_url_list, 'metal': metal_url_list, 'wing': wing_gem_url_list,
-            'exp_bar': exp_bar_url_list, 'role_icon': rank_url_list, 'frame_icon': gli.frame_icon_list}
-url_index_dict = {'cardBG': 0, 'metal': 1, 'wing': 2, 'exp_bar': 3, 'role_icon': 4, 'frame_icon': 5}
+            'exp_bar': exp_bar_url_list, 'frame_icon': gli.frame_icon_list}
+url_index_dict = {'cardBG': 0, 'metal': 1, 'wing': 2, 'exp_bar': 3, 'frame_icon': 4}
 # Load Resources
-font_url = f"{web_url}//botimages/profilecards/fonts/"
-level_font_url = "aerolite/Aerolite.otf"
-name_font = "blackchancery/BLKCHCRY.TTF"
-my_font = "PandoraDiamond/PandoraDiamond.ttf"
-# level_font_url = "oranienbaum/Oranienbaum.ttf"
+font_base_url = f"{web_url}//botimages/profilecards/fonts/"
+my_font_url = "PandoraDiamond/PandoraDiamond.ttf"
 
 
 # COLOURS
@@ -73,6 +57,9 @@ def hex_to_rgba(hex_value, alpha=255):
 
 GoldColour = hex_to_rgba(0xD4931A)
 CyanColour = hex_to_rgba(0x00FFFF)
+BrandBlue = hex_to_rgba(0x007BFF)
+BrandPurple = hex_to_rgba(0x780AC3)
+BrandRed = hex_to_rgba(0xFF0000)
 
 # Web Data for FTP Login
 web_data = None
@@ -84,15 +71,15 @@ with open("web_login_data.txt", 'r') as data_file:
 class RankCard:
     def __init__(self, user, achievement_list):
         self.user, self.echelon = user, user.player_echelon
-        self.cardBG, self.metal, self.wing, self.exp_bar, self.role_icon, self.frame_icon = "", "", "", "", "", ""
+        self.cardBG, self.metal, self.wing, self.exp_bar, self.frame_icon = "", "", "", "", ""
         scaled_echelon = (self.echelon // 2)
         loc = [scaled_echelon for _ in range(6)]
-        self.fill_colour = "black"
+        self.fill_colour = [BrandBlue, "black"]
         if "Exclusive Title Holder" in achievement_list:
-            self.fill_colour = "white"
-            loc = [6, 6, 6, 6, 7, 6] if scaled_echelon < 5 else [5, 6, 5, 5, 7, 6]
-        elif "Herrscher - Subscriber" in achievement_list:
-            loc = [7, loc[1], 7, 7, loc[4], 5] if scaled_echelon < 5 else [5, 5, 5, 5, loc[4], 5]
+            self.fill_colour = [BrandRed, "black"]
+            loc = [6, 6, 6, 6, 6] if scaled_echelon < 5 else [5, 6, 5, 5, 6]
+        elif "Subscriber - Star Supporter" in achievement_list or "Subscriber - Crowned Supporter" in achievement_list:
+            loc = [7, loc[1], 7, 7, 5] if scaled_echelon < 5 else [5, 5, 5, 5, 5]
         for attr, url_list in url_dict.items():
             if attr != 'frame_icon':
                 index = loc[url_index_dict[attr]]
@@ -108,25 +95,28 @@ async def get_player_profile(player_obj, achievement_list):
     cardBG = Image.open(requests.get(rank_card.cardBG, stream=True).raw)
     metal = Image.open(requests.get(rank_card.metal, stream=True).raw)
     wing = Image.open(requests.get(rank_card.wing, stream=True).raw)
-    rank_icon = Image.open(requests.get(rank_card.role_icon, stream=True).raw)
     rank_icon_frame = Image.open(requests.get(rank_card.frame_icon, stream=True).raw)
     class_icon_frame = Image.open(requests.get(generic_frame_url, stream=True).raw)
     class_icon = Image.open(requests.get(rank_card.class_icon, stream=True).raw)
     exp_bar_image = Image.open(requests.get(rank_card.exp_bar, stream=True).raw)
-    name_font_file = requests.get((font_url + name_font), stream=True).raw
-    level_font_file = requests.get((font_url + level_font_url), stream=True).raw
+    font_file_small = requests.get((font_base_url + my_font_url), stream=True).raw
+    font_file_big = requests.get((font_base_url + my_font_url), stream=True).raw
     result = Image.new("RGBA", cardBG.size)
     result.paste(cardBG, (0, 0), cardBG)
     result.paste(metal, (0, 0), metal)
     result.paste(wing, (0, 0), wing)
-    title_font = ImageFont.truetype(name_font_file, 54)
-    level_font = ImageFont.truetype(level_font_file, 40)
+    title_font = ImageFont.truetype(font_file_small, 46)
+    level_font = ImageFont.truetype(font_file_big, 48)
+    fill_colour = rank_card.fill_colour
     # Username
     title_text = player_obj.player_username
-    title_text = title_text.center(10)
     image_editable = ImageDraw.Draw(result)
-    fill_colour = rank_card.fill_colour
-    image_editable.text((200, 215), title_text, fill=fill_colour, font=title_font)
+    text_bbox = image_editable.textbbox((0, 0), title_text, font=title_font)
+    text_width, text_height = text_bbox[2] - text_bbox[0], text_bbox[3] - text_bbox[1]
+    center_x, center_y = 326, 242
+    position_x, position_y = center_x - text_width // 2, center_y - text_height // 2
+    image_editable.text((position_x + 2, position_y + 2), title_text, fill=fill_colour[1], font=title_font)
+    image_editable.text((position_x, position_y), title_text, fill=fill_colour[0], font=title_font)
     # Class Icon
     new_size = (68, 68)
     class_icon = class_icon.resize(new_size)
@@ -135,10 +125,6 @@ async def get_player_profile(player_obj, achievement_list):
     new_size = (68, 68)
     class_icon_frame = class_icon_frame.resize(new_size)
     result.paste(class_icon_frame, (131, 214), mask=class_icon_frame)
-    # Rank Icon
-    new_size = (120, 120)
-    rank_icon = rank_icon.resize(new_size)
-    result.paste(rank_icon, (629, 215), mask=rank_icon)
     # Rank Icon Frame
     new_size = (125, 125)
     rank_icon_frame = rank_icon_frame.resize(new_size)
@@ -149,9 +135,14 @@ async def get_player_profile(player_obj, achievement_list):
     exp_bar_result = await generate_exp_bar(exp_bar_image, exp_bar_start, exp_bar_end, rank_card.fill_percent)
     result.paste(exp_bar_result, (exp_bar_start, 0), mask=exp_bar_result)
     # Level and Exp Text
+    image_editable = ImageDraw.Draw(result)
     level_text = f"{player_obj.player_level}"
-    level_text_position = (90, 230)
-    image_editable.text(level_text_position, level_text, fill=fill_colour, font=level_font)
+    text_position = (688, 270)
+    text_bbox = image_editable.textbbox((0, 0), level_text, font=level_font)
+    text_width, text_height = text_bbox[2] - text_bbox[0], text_bbox[3] - text_bbox[1]
+    center_x, center_y = text_position[0] - text_width // 2, text_position[1] - text_height // 2
+    image_editable.text((center_x + 2, center_y + 2), level_text, font=level_font, fill=fill_colour[1])
+    image_editable.text((center_x, center_y), level_text, font=level_font, fill=fill_colour[0])
     # Save File
     file_path = f"{temp_path}ProfileCard{player_obj.player_id}.png"
     result.save(file_path)
@@ -319,27 +310,29 @@ async def build_notification(player_obj, message, notification_type, title_msg, 
     cardBG = Image.open(requests.get(banner_url, stream=True).raw)
     result = Image.new("RGBA", (width, height))
     result.paste(cardBG, (0, 0), cardBG)
-    level_font_file = requests.get((font_url + level_font_url), stream=True).raw
-    name_font_file = requests.get((font_url + my_font), stream=True).raw
+    font_file_small = requests.get((font_base_url + my_font_url), stream=True).raw
+    font_file_big = requests.get((font_base_url + my_font_url), stream=True).raw
     image_editable = ImageDraw.Draw(result)
     # Apply Title and Message Text.
-    title_font_object = ImageFont.truetype(level_font_file, 38)
-    font_object = ImageFont.truetype(name_font_file, 42)
+    title_font = ImageFont.truetype(font_file_small, 34)
+    text_font = ImageFont.truetype(font_file_big, 38)
     message_colour = "White"
-    image_editable.text((55, 40), title_msg, fill=title_colour, font=title_font_object)
-    image_editable.text((138, 95), message, fill=message_colour, font=font_object)
+    image_editable.text((55 + 2, 50 + 2), title_msg, fill="black", font=title_font)
+    image_editable.text((55, 50), title_msg, fill=title_colour, font=title_font)
+    image_editable.text((115, 100), message, fill=message_colour, font=text_font)
     # Achievement Icon Loading.
     if notification_type == "Achievement":
-        icon_size = (72, 72)
-        icon_url = rank_url_list[player_obj.player_echelon // 2]
+        icon_size = (54, 54)
+        star_code = "Alt" if player_obj.player_echelon == 9 else 9 if player_obj.player_echelon == 10 else player_obj.player_echelon
+        icon_url = f"https://PandoraPortal.ca/gallery/Icons/Stars/Original/Star{star_code}.png"
         role_icon = Image.open(requests.get(icon_url, stream=True).raw)
         role_icon = role_icon.resize(icon_size)
-        result.paste(role_icon, (60, 85), mask=role_icon)
+        result.paste(role_icon, (42, 90), mask=role_icon)
     elif notification_type == "Item":
         if item.item_image != "":
             image_url = item.item_image.replace("Frame_", "")
-            role_icon = Image.open(requests.get(image_url, stream=True).raw)
-            result.paste(role_icon, (60, 85), mask=role_icon)
+            item_icon = Image.open(requests.get(image_url, stream=True).raw)
+            result.paste(item_icon, (35, 85), mask=item_icon)
     elif notification_type == "Sacred":
         pass
     # Save and return image.
@@ -358,25 +351,27 @@ async def build_message_box(player_obj, message, header="", boxtype="default"):
     result = Image.new("RGBA", (width, height))
     result.paste(cardBG, (0, 0), cardBG)
     image_editable = ImageDraw.Draw(result)
-    msg_font_file = requests.get((font_url + my_font), stream=True).raw
-    font_object = ImageFont.truetype(msg_font_file, msg_size)
+    font_file_small = requests.get((font_base_url + my_font_url), stream=True).raw
+    font_object = ImageFont.truetype(font_file_small, msg_size)
     # Calculate positions for the message lines
     text_x = image_editable.textlength(message[0], font=font_object)
-    position_x, position_y = ((width - text_x) / 2 if boxtype == "default" else 60), [95, 130]
+    position_x, position_y = ((width - text_x) / 2 if boxtype == "default" else 60), [98, 136]
     # Draw message text
     for idx, line_text in enumerate(message):
         image_editable.text((position_x, position_y[idx]), line_text, fill="White", font=font_object)
     # Build the header
     if header != "":
-        level_font_file = requests.get((font_url + level_font_url), stream=True).raw
-        title_font_object = ImageFont.truetype(level_font_file, title_size)
+        font_file_big = requests.get((font_base_url + my_font_url), stream=True).raw
+        title_font = ImageFont.truetype(font_file_big, title_size)
         if boxtype != "default":
-            role_icon = Image.open(requests.get(gli.archdragon_logo, stream=True).raw)
-            role_icon = role_icon.resize((64, 64))
-            result.paste(role_icon, (50, 32), mask=role_icon)
-        text_x = image_editable.textlength(header, font=title_font_object)
+            guild_icon = Image.open(requests.get(gli.archdragon_logo, stream=True).raw)
+            guild_icon = guild_icon.resize((60, 60))
+            result.paste(guild_icon, (50, 32), mask=guild_icon)
+        text_x = image_editable.textlength(header, font=title_font)
         header_position = ((width - text_x) / 2, 35) if boxtype == "default" else (130, 45)
-        image_editable.text(header_position, header, fill=CyanColour, font=title_font_object)
+        shadow_position = (header_position[0] + 2, header_position[1] + 2)
+        image_editable.text(shadow_position, header, fill="black", font=title_font)
+        image_editable.text(header_position, header, fill=CyanColour, font=title_font)
     # Save and return image.
     file_path = f'{gli.image_path}notification/Notification{"TEMP" if player_obj is None else player_obj.player_id}.png'
     result.save(file_path)
@@ -389,10 +384,11 @@ async def build_title_box(message):
     result = Image.new("RGBA", (width, height))
     result.paste(cardBG, (0, 0), cardBG)
     image_editable = ImageDraw.Draw(result)
-    level_font_file = requests.get((font_url + level_font_url), stream=True).raw
-    title_font_object = ImageFont.truetype(level_font_file, 80)
-    text_x = image_editable.textlength(message, font=title_font_object)
-    image_editable.text(((width - text_x) / 2, 60), message, fill=GoldColour, font=title_font_object)
+    font_file = requests.get((font_base_url + my_font_url), stream=True).raw
+    title_font = ImageFont.truetype(font_file, 80)
+    text_x = image_editable.textlength(message, font=title_font)
+    image_editable.text(((width - text_x) / 2 + 2, 60 + 2), message, fill="black", font=title_font)
+    image_editable.text(((width - text_x) / 2, 60), message, fill=GoldColour, font=title_font)
     # Save and return image.
     file_path = f'{gli.image_path}notification/Title_Notification.png'
     result.save(file_path)

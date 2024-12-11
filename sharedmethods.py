@@ -62,13 +62,15 @@ def check_rare_item(item_id):
 
 
 async def send_notification(ctx_object, player_obj, notice_type, value):
+    # Consider custom achievement icons in future.
     rarity = "Ultimate Rare" if value in ultimate_id_list else "Uber Rare" if value in uber_id_list else "Ultra Rare"
     item = inventory.BasicItem(value) if notice_type == "Item" and value is not None else None
     notification_dict = {
         "Level": [(f"Congratulations {player_obj.player_username}", f"Reached Level: {player_obj.player_level}"), 1],
-        "Achievement": [(f"{player_obj.player_username} Unlocked", f"Achievement: {value}"), 20],
-        "Item": [(f"{player_obj.player_username} Obtained {rarity}", f"{item.item_name}" if item is not None else ""),
-                 5],
+        "Achievement": [(f"{player_obj.player_username} Unlocked",
+                         value if len(value) > 24 else f"Achievement: {value}"), 20],
+        "Item": [(f"{player_obj.player_username} Obtained {rarity} Item",
+                  f"{item.item_name}" if item is not None else ""), 5],
         "Sovereign": [(f"{player_obj.player_username} Obtained Sovereign Item", value), 10],
         "Sacred": [(f"{player_obj.player_username} Obtained Sacred Item", value), 100]}
     if notice_type not in notification_dict.keys():

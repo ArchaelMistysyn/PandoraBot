@@ -40,7 +40,7 @@ archdragon_logo = f"{web_url}ArchDragon.png"
 
 # ICON DATA
 # General Icons
-archdragon_emoji = "<:ArchDragon:1274784590715686953>"
+archdragon_emoji = "<:ArchDragon:1316493899073847369>"
 stamina_icon = "<:Stam:1283548805794369628>"
 stamina_thumbnail = f"{web_url}MiscIcon/Stamina.png"
 exp_icon, coin_icon = "<:EXP:1283548791936389131>", "<:Coin:1274784200133705830>"

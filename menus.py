@@ -18,6 +18,7 @@ import skillpaths
 import bazaar
 import market
 import infuse
+import questdata
 
 # Item/crafting imports
 import loot
@@ -870,7 +871,7 @@ class TermsOfServiceView(discord.ui.View):
         if interaction.user.id != self.discord_id:
             return
         title = "Register - Select Class"
-        embed_msg = discord.Embed(colour=discord.Colour.dark_teal(), title=title, description=quests.reg_msg)
+        embed_msg = discord.Embed(colour=discord.Colour.dark_teal(), title=title, description=questdata.reg_msg)
         embed_msg.set_image(url="https://www.pandoraportal.ca/gallery/Displays/Banners/Pandora%20Awoken.png")
         await interaction.response.edit_message(embed=embed_msg, view=ClassSelect(self.discord_id, self.username))
 

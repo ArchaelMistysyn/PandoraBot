@@ -333,7 +333,7 @@ def run_discord_bot():
             count = await pilengine.generate_and_combine_images()
             await ctx.send(f"Admin item task completed. Task Count: {count}")
         elif keyword == "TestNotification":
-            test_dict = {"Level": 1, "Achievement": "Echelon 9", "Item": "Gemstone11"}
+            test_dict = {"Level": 1, "Achievement": "Ranking Title - Damage Rank #1", "Item": "Ruler"}
             if value not in test_dict:
                 await ctx.send("Invalid notification type")
                 return
@@ -1938,6 +1938,7 @@ def run_discord_bot():
                        ("Alina Arkhipova", "Character Artist (Upwork)"),
                        ("Daming Li", "Monster Artist (Upwork)"),
                        ("Arjhon Tulio", "Scene Artist (Upwork)"),
+                       ("Nina Hvozdzeva", "Logo Artist (Upwork)"),
                        ("Muhammad Faiq Ali", "Initial Sketch Artist (Upwork)"),
                        ("Mario Ferrera", "Web Developer & Designer (Upwork)"),
                        ("Jumana Walid", "Typography Artist (Upwork)"),
