@@ -152,7 +152,7 @@ class Room:
                 demon_type, pact_type = pact.demon_variants[demon_tier], random.choice(list(pact.pact_variants.keys()))
                 self.variant = f"{demon_tier};{pact_type}"
                 title = f"{title} [{pact_type}]"
-                pact_url = f"https://www.kyleportfolio.ca/botimages/Gear_Icon/Pact/Frame_Pact_{demon_tier}_{pact_type}.png"
+                pact_url = f"https://www.PandoraPortal.ca/botimages/Gear_Icon/Pact/Frame_Pact_{demon_tier}_{pact_type}.png"
             case "trial_room":
                 self.variant = random.choice(list(adventuredata.trial_variants_dict.keys()))
                 trial_type = adventuredata.trial_variants_dict[self.variant]

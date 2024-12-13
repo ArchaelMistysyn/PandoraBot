@@ -15,7 +15,7 @@ import sharedmethods as sm
 # Core imports
 import player
 
-web_url = f"https://kyleportfolio.ca"
+web_url = f"https://PandoraPortal.ca"
 generic_frame_url = f"{web_url}/botimages/iconframes/Iconframe.png"
 rank_colour = ["Green", "Blue", "Purple", "Gold", "Red", "Magenta"]
 profile_url = f"{web_url}/botimages/profilecards/"

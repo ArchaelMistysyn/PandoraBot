@@ -22,7 +22,7 @@ GM_id_dict = {185530717638230016: "Archael", 141837266866667520: "Zweii", 353090
               1177738094666059877: "Eleuia"}
 bot_logging_channel = 1266478401846247454
 reverse_GM_id_dict = {value: key for key, value in GM_id_dict.items()}
-web_url = "https://kyleportfolio.ca/botimages/"
+web_url = "https://PandoraPortal.ca/botimages/"
 # LOCAL image_path = 'C:\\Users\\GamerTech\\PycharmProjects\\PandoraBot\\botart\\'
 image_path = '/home/ubuntu/PandoraBot/botart/'
 store_link = "https://ArchDragonStore.ca"
