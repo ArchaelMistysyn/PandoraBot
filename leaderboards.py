@@ -131,20 +131,19 @@ async def display_leaderboard(leaderboard_title, player_id):
                  f"CAST(player_{leaderboard_type} AS DECIMAL(65, 0)) as numeric_{leaderboard_type} "
                  f"FROM Leaderboard ORDER BY player_{leaderboard_type}_rank ASC, player_id DESC")
     rank_df = await rqy(raw_query, return_value=True)
-    
     # Build ranking embed.
     description = "No rankings posted."
     embed = discord.Embed(color=discord.Color.blue(), title=f"{leaderboard_title} Leaderboard", description=description)
     if len(rank_df) == 0:
         return embed
+    embed.description = ""
     for index, row in rank_df.iterrows():
         current_player = await player.get_player_by_id(int(row['player_id']))
         current_rank = row[f'player_{leaderboard_type}_rank']
-        current_stat = sm.number_conversion(int(row[f'player_{leaderboard_type}']))
+        current_stat = sm.number_conversion(int(row[f'numeric_{leaderboard_type}']))
         class_icon = gli.class_icon_dict[current_player.player_class]
-        ranking_row = f"{class_icon} Rank {current_rank}: {current_player.player_username} ({current_stat})"
-        if current_player.player_id == player_id:
-            ranking_row = f"**{ranking_row}**"
+        bold_username = f"**{current_player.player_username}**" if current_player.player_id == player_id else current_player.player_username
+        ranking_row = f"{class_icon} Rank {current_rank}: {bold_username} ({current_stat})"
         embed.add_field(name="", value=ranking_row, inline=False)
     return embed
 
