@@ -350,6 +350,13 @@ def run_discord_bot():
             await encounters.clear_automapper(None, startup=True)
             await encounters.clear_all_encounter_info(ctx.guild.id)
             await ctx.send('Pandora Bot startup tasks completed!')
+        elif keyword == "ItemData":
+            output_message = "Item List:\n"
+            for item_id, item_data in itemdata.itemdata_dict.items():
+                output_message += f"{item_data['name']}: {item_data['item_id']}\n"
+            message_chunks = [output_message[i:i + 1000] for i in range(0, len(output_message), 1000)]
+            for chunk in message_chunks:
+                await ctx.send(chunk)
         elif keyword == "Test":
             title = ""
             description = gli.t57_hpbar_empty[0]
@@ -1817,7 +1824,7 @@ def run_discord_bot():
                      "**8** - I understand that the services may be changed/terminated at any time.\n"
                      "**9** - I understand that the bot is not responsible for any choices of the user.\n"
                      "**10** - I accept any resolution or decision issued by the developer and moderators.\n"
-                     "**11** - I understand that all contents are fictional and I do not own anything\n"
+                     "**11** - I understand that all contents are fictional and I do not own anything.\n"
                      "**12** - By using the bot I consent to allowing it to use any data provided by me.\n"
                      "**13** - The bot does not take responsibility for any RMT actions of it's users.")
         embed_msg = sm.easy_embed("Blue", "Terms of Service", terms_msg)
@@ -1953,14 +1960,13 @@ def run_discord_bot():
                        ("Labs @labcornerr", "Emoji/Icon Artist (Fiverr)"),
                        ("Daimiuk @daimiuk", "Scene/Icon Artist (Fiverr)"),
                        ("Emikohana @emikohana", "Fishing Emoji Artist (Fiverr)"),
-                       ("Faris @bigbullmonk", "Icon Artist (Fiverr)"),
                        ("Claudia", "Scene Artist (Volunteer)"),
                        ("Volff", "Photoshop Editing (Volunteer)")]
         programming_data = [("Archael", "Programmer, Web Developer & Designer"),
                             ("Mario Ferrera", "Web Developer & Designer (Upwork)")]
-        tester_data = [("Zweii", "Alpha Tester"), ("SoulViper", "Alpha Tester"),
-                       ("Kaelen", "Alpha Tester"), ("Volff", "Alpha Tester")]
-        misc_data = [("Bahamutt", "Programming Support"), ("Pota", "Programming Support")]
+        tester_data = [("Zweii", "Alpha Tester (Volunteer)"), ("SoulViper", "Alpha Tester (Volunteer)"),
+                       ("Kaelen", "Alpha Tester (Volunteer)"), ("Volff", "Alpha Tester (Volunteer)")]
+        misc_data = [("Bahamutt", "Programming Support"), ("Pota", "Programming Support (Volunteer)")]
         artist_list = "\n".join(f"**{name}** - {role}" for name, role in artist_data)
         programmer_list = "\n".join(f"**{name}** - {role}" for name, role in programming_data)
         tester_list = "\n".join(f"**{name}** - {role}" for name, role in tester_data)

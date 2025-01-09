@@ -892,8 +892,10 @@ class AdventureRoomView(discord.ui.View):
         if self.expedition.room.room_deity not in tarot.card_dict.keys():
             boss_num = gli.boss_list.index(self.expedition.room.room_deity)
         shrine_data = adventuredata.shrine_dict[boss_num]
-        reward_2_id = f"Unrefined{boss_num}" if boss_num != 4 else f"Token{inventory.generate_random_tier(max_tier=7)}"
-        self.reward_items = [inventory.BasicItem(f"Gem{boss_num}"), inventory.BasicItem(reward_2_id), None]
+        shrine_reward_id = [f"Gem{boss_num}", f"Unrefined{boss_num}"]
+        if boss_num == 4:
+            shrine_reward_id = [f"Jewel{boss_num}", f"Token{inventory.generate_random_tier(max_tier=7)}"]
+        self.reward_items = [inventory.BasicItem(shrine_reward_id[0]), inventory.BasicItem(shrine_reward_id[1]), None]
         res_list = [player_obj.elemental_res[3], player_obj.elemental_res[4],
                     player_obj.elemental_res[active_room.room_element]]
         selected_elements = [shrine_data[1], shrine_data[3], active_room.room_element]
