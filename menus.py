@@ -965,8 +965,7 @@ class ClassChangeView(discord.ui.View):
 class StatView(discord.ui.View):
     def __init__(self, player_user, target_user):
         super().__init__(timeout=None)
-        self.player_user = player_user
-        self.target_user = target_user
+        self.player_user, self.target_user = player_user, target_user
 
     @discord.ui.button(label="Offence", style=discord.ButtonStyle.blurple, row=1)
     async def offensive_stats(self, interaction: discord.Interaction, button: discord.Button):
@@ -1002,6 +1001,13 @@ class StatView(discord.ui.View):
     async def misc(self, interaction: discord.Interaction, button: discord.Button):
         new_msg = await self.target_user.get_player_stats(7)
         await interaction.response.edit_message(embed=new_msg)
+
+    @discord.ui.button(label="Webpage", style=discord.ButtonStyle.success, row=2)
+    async def webpage(self, interaction: discord.Interaction, button: discord.Button):
+        button.disabled = True
+        await interaction.response.edit_message(view=self)
+        link_message = f"https://pandoraportal.ca/characters.php?search_input={self.target_user.player_id}"
+        await interaction.followup.send(link_message)
 
 
 class BuyView(discord.ui.View):
