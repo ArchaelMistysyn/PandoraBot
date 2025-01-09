@@ -104,7 +104,7 @@ def get_gear_thumbnail(item):
         if item.item_tier in [4, 5]:
             item_tag, element = gli.ring_item_type[item.item_tier - 1], item.item_elements.index(1)
         else:
-            return None
+            return f"{gli.web_url}Gear_Icon/{folder}/{sub_folder}Frame_{item_tag.replace(' ', '_')}_{item.item_tier}.png"
     new_tag = item_tag.replace(' ', '_')
     return f"{gli.web_url}Gear_Icon/{folder}/{sub_folder}Frame_{new_tag}{element}_{item.item_tier}.png"
 
