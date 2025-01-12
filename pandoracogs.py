@@ -9,6 +9,7 @@ import traceback
 import globalitems as gli
 from pandoradb import run_query as rqy
 import player
+import timezone
 
 # Item/crafting imports
 import pact
@@ -61,9 +62,9 @@ class MetricsCog(commands.Cog):
         message = (
             f"Total Members: {total_members:,}\n"
         )
-        metrics_channel = self.bot.get_channel(1156267612783779901)
+        metrics_channel = self.bot.get_channel(gli.metrics_channel)
         if metrics_channel:
-            message_obj = await metrics_channel.fetch_message(1296207066284953664)
+            message_obj = await metrics_channel.fetch_message(gli.metrics_message_id)
             await message_obj.edit(content=message)
 
     @tasks.loop(seconds=3600)

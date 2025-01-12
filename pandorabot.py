@@ -39,6 +39,7 @@ import skillpaths
 import pilengine
 import adventure
 import fishing
+import timezone
 
 # Item/crafting imports
 import loot
@@ -99,6 +100,7 @@ def run_discord_bot():
             await send_log_msg(f'{pandora_bot.user} Online!')
         pandoracogs.StaminaCog(pandora_bot)
         pandoracogs.MetricsCog(pandora_bot)
+        await timezone.init_time_menu(pandora_bot)
         pandora_bot.help_command = CustomHelpCommand()
 
     @pandora_bot.event
@@ -935,7 +937,7 @@ def run_discord_bot():
         description = "You've come a long way from home child. Tell me, what kind of power do you seek?"
         if player_obj.player_quest < 20:
             new_view, description = None, "You can't yet handle my threads. This is no place for the weak."
-        sm.easy_embed("Orange", "Isolde, The Soulweaver", description)
+        embed_msg = sm.easy_embed("Orange", "Isolde, The Soulweaver", description)
         await ctx.send(embed=embed_msg, view=new_view)
 
     @set_command_category('gear', 5)
@@ -2039,6 +2041,13 @@ def run_discord_bot():
         msg_lines = [f"Vouch Count: {num_vouches:,}"]
         verified = f"{gli.archdragon_emoji} Verified Message [Server {ctx.guild.name}]:"
         await ctx.send(content=verified, file=discord.File(await sm.message_box(None, msg_lines, user.name, "admin")))
+
+    @pandora_bot.hybrid_command(name='time', help="Check the current time of a user.")
+    @app_commands.guilds(discord.Object(id=1011375205999968427))
+    async def timecheck(ctx, user: discord.User):
+        await ctx.defer()
+        time_embed = await timezone.get_time_embed(user)
+        await ctx.send(embed=time_embed)
 
     @pandora_bot.hybrid_command(name="gamefinder", help="Post a request to find players for a specific game.")
     @app_commands.guilds(discord.Object(id=guild_id))

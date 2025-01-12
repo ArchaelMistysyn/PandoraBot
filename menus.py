@@ -9,6 +9,7 @@ import globalitems as gli
 from questdata import reg_msg
 
 # Core imports
+from pandoradb import run_query as rqy
 import player
 import inventory
 import quest
@@ -136,7 +137,7 @@ class HelpView(discord.ui.View):
 
 def build_help_embed(category_dict, category_name):
     display_category_name = category_name.capitalize()
-    embed = discord.Embed(title=f"{display_category_name} Commands:", color=discord.Colour.dark_orange())
+    embed = sm.easy_embed("Orange", f"{display_category_name} Commands:", "")
     commands = category_dict[category_name]
     commands.sort(key=lambda x: x[2])
     for command_name, description, _ in commands:
@@ -438,8 +439,7 @@ async def add_skull_fields(player_obj, embed_msg, method="Return"):
 class SkullSelectView(discord.ui.View):
     def __init__(self, player_obj, skull_ring):
         super().__init__(timeout=None)
-        self.player_obj = player_obj
-        self.skull_ring = skull_ring
+        self.player_obj, self.skull_ring = player_obj, skull_ring
         if skull_ring:
             self.feed_ring_callback.disabled = False
             self.feed_ring_callback.style = gli.button_colour_list[2]

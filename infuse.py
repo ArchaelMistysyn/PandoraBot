@@ -180,8 +180,7 @@ class RecipeObject:
         return True
 
     async def perform_infusion(self, player_obj, num_crafts):
-        result = 0
-        labels = ['player_id', 'item_id', 'item_qty']
+        result, labels = 0, ['player_id', 'item_id', 'item_qty']
         batch_df = pd.DataFrame(columns=labels)
         # Deduct the cost for each item
         for (item, qty) in self.cost_items:
@@ -305,7 +304,7 @@ class CraftView(discord.ui.View):
             return
         self.new_view = CraftView(self.ctx_obj, self.player_obj, self.recipe_object)
         item_tier, full_inv = 0 if self.recipe_object.item_type is None else int(self.recipe_object.outcome_item), False
-        target_qty = 0 if self.recipe_object.item_type is None else 1
+        target_qty = selected_qty if self.recipe_object.item_type is None else 1
         # Handle cannot afford response
         if not await self.recipe_object.can_afford(self.player_obj, target_qty):
             self.embed_msg = await self.recipe_object.create_cost_embed(self.player_obj)

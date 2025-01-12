@@ -20,7 +20,10 @@ servers = {1011375205999968427: ([1157937444931514408],
                                  1252681803916116211, 1157937444931514408, 1157937444931514408)}
 GM_id_dict = {185530717638230016: "Archael", 141837266866667520: "Zweii", 353090154044325906: "Viper",
               1177738094666059877: "Eleuia"}
+# ArchDRagon Exclusive Channel Features
 bot_logging_channel = 1266478401846247454
+time_zone_channel, time_zone_message_id = 1328062692778315797, 1328099757796884520
+metrics_channel, metrics_message_id = 1156267612783779901, 1296207066284953664
 reverse_GM_id_dict = {value: key for key, value in GM_id_dict.items()}
 web_url = "https://PandoraPortal.ca/botimages/"
 # LOCAL image_path = 'C:\\Users\\GamerTech\\PycharmProjects\\PandoraBot\\botart\\'
@@ -244,3 +247,44 @@ hp_bar_dict = {1: [hp_bars.t1_hpbar_full, hp_bars.t1_hpbar_empty], 2: [hp_bars.t
 # MESSAGES
 abyss_msg = ("Within the abyssal plane resides the Deep Void. The taint of the void can only be purified "
              "through a more powerful darkness. Take great caution, dive too deep and nothing can pull you back out.")
+
+timezone_list = [
+    ("UTC (UTC+0)", "Coordinated Universal Time", "UTC"),
+    ("CET (UTC+1)", "Central European Time", "UTC+1"),
+    ("EET (UTC+2)", "Eastern European Time", "UTC+2"),
+    ("MSK (UTC+3)", "Moscow Time", "UTC+3"),
+    ("GST (UTC+4)", "Gulf Standard Time", "UTC+4"),
+    ("PKT (UTC+5)", "Pakistan Standard Time", "UTC+5"),
+    ("BST (UTC+6)", "Bangladesh Standard Time", "UTC+6"),
+    ("ICT (UTC+7)", "Indochina Time", "UTC+7"),
+    ("CST (UTC+8)", "China Standard Time", "UTC+8"),
+    ("JST (UTC+9)", "Japan Standard Time", "UTC+9"),
+    ("AEST (UTC+10)", "Australian Eastern Standard Time", "UTC+10"),
+    ("SBT (UTC+11)", "Solomon Islands Time", "UTC+11"),
+    ("NZST (UTC+12)", "New Zealand Standard Time", "UTC+12"),
+    ("AZOST (UTC-1)", "Azores Standard Time", "UTC-1"),
+    ("GST (UTC-2)", "South Georgia Time", "UTC-2"),
+    ("ART (UTC-3)", "Argentina Time", "UTC-3"),
+    ("AST (UTC-4)", "Atlantic Standard Time", "UTC-4"),
+    ("EST (UTC-5)", "Eastern Standard Time", "UTC-5"),
+    ("CST (UTC-6)", "Central Standard Time", "UTC-6"),
+    ("MST (UTC-7)", "Mountain Standard Time", "UTC-7"),
+    ("PST (UTC-8)", "Pacific Standard Time", "UTC-8"),
+    ("AKST (UTC-9)", "Alaska Standard Time", "UTC-9"),
+    ("HST (UTC-10)", "Hawaii-Aleutian Standard Time", "UTC-10"),
+    ("SST (UTC-11)", "Samoa Standard Time", "UTC-11"),
+    ("BIT (UTC-12)", "Baker Island Time", "UTC-12")]
+timezone_map = {tz_code: name for _, name, tz_code in timezone_list}
+dst_regions = {
+    "None": {"start": (3, 14), "end": (11, 7)},  # Default DST (e.g., US Standard)
+    "EU/UK": {"start": (3, 31), "end": (10, 27)},  # European Union
+    "Australia": {"start": (10, 1), "end": (4, 1)},  # Australia
+    "NewZealand": {"start": (9, 24), "end": (4, 2)},  # New Zealand
+    "Chile": {"start": (9, 1), "end": (4, 1)},  # Chile
+    "Argentina": {"start": (10, 1), "end": (3, 15)},  # Argentina
+    "Mexico": {"start": (4, 1), "end": (10, 31)},  # Mexico
+    "Egypt": {"start": (4, 1), "end": (10, 31)},  # Egypt
+    "Israel": {"start": (3, 24), "end": (10, 29)},  # Israel
+    "Jordan": {"start": (2, 24), "end": (10, 27)},  # Jordan
+    "Lebanon": {"start": (3, 30), "end": (10, 26)},  # Lebanon
+}
