@@ -51,7 +51,7 @@ class TimeZoneMenu(discord.ui.View):
 
     async def timezone_callback(self, interaction: discord.Interaction):
         selected_code = interaction.data['values'][0]
-        await timezone_handler(interaction, selected_code)
+        await timezone_handler(interaction, code=selected_code)
 
 
 class RegionExceptionMenu(discord.ui.View):
@@ -79,7 +79,7 @@ async def timezone_handler(interaction: discord.Interaction, code=None, region_e
     message, color = "Your timezone settings have been updated.", "Green"
     select_query = f"SELECT * FROM timezone_handler WHERE discord_id = :discord_id"
     user_df = await rqy(select_query, return_value=True, params={"discord_id": discord_id})
-    if region_exception:
+    if region_exception != "None":
         if region_exception == "Reset":
             update_query = "DELETE FROM timezone_handler WHERE discord_id = :discord_id"
             params = {"discord_id": discord_id}

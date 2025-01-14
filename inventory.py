@@ -157,14 +157,14 @@ class CInventoryView(discord.ui.View):
 
 
 class CustomItem:
-    def __init__(self, player_owner, item_type, item_tier, base_type="", is_sacred=False):
+    def __init__(self, player_owner, item_type, item_tier, base_type="", is_sacred=False, random_enhance=False):
         # initialize input data.
         self.player_owner = player_owner
         self.item_type, self.item_tier = item_type, item_tier
         self.is_sacred = is_sacred
         # Initialize single default values
         self.item_id, self.item_name = 0, ""
-        self.item_enhancement, self.item_quality_tier = 0, 1
+        self.item_enhancement, self.item_quality_tier = self.set_enhancement(random_enhance), 1
         self.item_elements = [0] * 9
         # Initialize associated default values.
         self.item_num_rolls, self.roll_values = 0, []
@@ -196,6 +196,42 @@ class CustomItem:
 
     def reforge_class(self, specific_class=""):
         self.item_damage_type = specific_class if specific_class != "" else random.choice(gli.class_names)
+
+    def set_enhancement(self, random_enhance):
+        if not random_enhance or self.item_tier <= 0:
+            return 0
+        else:
+            calc_tier = generate_random_tier(1, min(self.item_tier, 8))
+            rare_roll = random.randint(1, 1000)
+            if rare_roll <= 1:
+                return gli.max_enhancement[self.item_tier - 1]
+            rare_bonus = 1 if rare_roll >= 50 else 2 if rare_roll > 10 else 4
+            bonus_value = ((calc_tier - 1) * 5 * rare_bonus) + random.randint(5 * rare_bonus, 15 * rare_bonus)
+            return min(bonus_value, gli.max_enhancement[self.item_tier - 1])
+
+    def get_gear_score(self):
+        quality_score, base_damage_score, base_max, rolls_score = 1500, 0, 150000, 3000
+        tier_score = 0 if self.item_tier <= 8 else 999
+        enhancement_score = round((self.item_enhancement / 200) * 1500)
+        if "D" not in self.item_type and self.item_type != "R":
+            quality_score = round((self.item_quality_tier / 5) * 1500)
+            base_max = 250000
+        base_stat_max = 4.00 if self.item_type == "W" else 30.00 if self.item_type == "A" else 0
+        base_stat_score = round((self.item_base_stat / base_stat_max) * 1500) if base_stat_max > 0 else 1500
+        if self.item_base_type in gli.sovereign_item_list or self.item_type == "R":
+            base_damage_score = 1500
+        elif self.base_damage_min > 0 and self.base_damage_max > 0:
+            base_damage_score = round((self.base_damage_min / base_max) * 750 + (self.base_damage_max / base_max) * 750)
+        # 5. Rolls Completion
+        if self.item_type == "R":
+            rolls_score = round(min(self.item_tier, 8) / 8 * 3000)
+        elif self.item_base_type not in gli.sovereign_item_list:
+            roll_scores = []
+            for roll in self.roll_values:
+                if roll:
+                    roll_scores.append(round((min(int(roll[0]), 8) / 8) * 500))
+            rolls_score = sum(roll_scores) if roll_scores else 0
+        return tier_score + enhancement_score + quality_score + base_stat_score + base_damage_score + rolls_score
 
     def reforge_stats(self, unlock=False):
         self.get_tier_damage()
@@ -414,6 +450,9 @@ class CustomItem:
             embed_msg.add_field(name="", value=rolls_msg, inline=False)
         if self.item_id != 0:
             embed_msg.add_field(name=f'Item ID: {self.item_id}', value="", inline=False)
+        gear_score = self.get_gear_score()
+        star_symbol = "☆" if gear_score < 9999 else "★"
+        embed_msg.add_field(name=f'Gear Score: {star_symbol}{gear_score}', value="", inline=False)
         thumbnail_url = sm.get_gear_thumbnail(self)
         if thumbnail_url is not None:
             pass
@@ -755,13 +794,13 @@ def try_refine(player_owner, item_type, target_tier):
         is_success = False
         if item_type == "W" or random.randint(1, 100) <= 80:
             is_success = True
-        new_item = inventory.CustomItem(player_owner, item_type, target_tier)
+        new_item = inventory.CustomItem(player_owner, item_type, target_tier, random_enhance=True)
         return new_item, is_success
     is_success = True if random.randint(1, 100) <= 75 else False
     # All other refinement.
     new_tier = generate_random_tier() if target_tier == 4 else generate_random_tier(min_tier=target_tier, max_tier=8)
     new_tier = 2 if new_tier == 1 else new_tier
-    new_item = inventory.CustomItem(player_owner, item_type, new_tier)
+    new_item = inventory.CustomItem(player_owner, item_type, new_tier, random_enhance=True)
     return new_item, is_success
 
 

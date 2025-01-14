@@ -855,7 +855,7 @@ class AdventureRoomView(discord.ui.View):
             return
         # Handle gear item rewards.
         reward_tier = inventory.generate_random_tier(max_tier=4, luck_bonus=self.expedition.luck)
-        reward_item = inventory.CustomItem(self.expedition.player_obj.player_id, treasure_type, reward_tier)
+        reward_item = inventory.CustomItem(self.expedition.player_obj.player_id, treasure_type, reward_tier, random_enhance=True)
         self.embed, self.new_view = await reward_item.create_citem_embed(), ItemView(self.expedition, reward_item)
         await interaction.response.edit_message(embed=self.embed, view=self.new_view)
         return

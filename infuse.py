@@ -343,7 +343,7 @@ class CraftView(discord.ui.View):
         # Handle Gear Success
         classification, item_tier = ("Sacred", 9) if is_sacred else ("Sovereign", 8) if item_tier == 8 else (None, item_tier)
         new_item = inventory.CustomItem(self.player_obj.player_id, self.recipe_object.item_type, item_tier,
-                                        base_type=self.recipe_object.recipe_name, is_sacred=is_sacred)
+                                        base_type=self.recipe_object.recipe_name, is_sacred=is_sacred, random_enhance=True)
         # Handle Ring Exceptions
         if self.recipe_object.item_type == "R":
             new_item.roll_values[0] = random.randint(0, 30) if new_item.item_tier in [8, 9] \
