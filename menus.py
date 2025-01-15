@@ -20,6 +20,7 @@ import bazaar
 import market
 import infuse
 import questdata
+import monument
 
 # Item/crafting imports
 import loot
@@ -146,9 +147,16 @@ def build_help_embed(category_dict, category_name):
 
 
 class TownView(discord.ui.View):
-    def __init__(self, ctx_obj, player_obj):
+    def __init__(self, ctx_obj, player_obj, monument_data):
         super().__init__(timeout=None)
         self.ctx_obj, self.player_obj = ctx_obj, player_obj
+        monument_claims = monument_data.split(';')
+        if self.player_obj.player_level >= 15:
+            self.monument_callback.label = "Monument"
+            self.monument_callback.style = gli.button_colour_list[0]
+            if not monument_claims[0] == "1":
+                self.monument_callback.disabled = False
+                self.monument_callback.style = gli.button_colour_list[1]
 
     @discord.ui.button(label="Refinery", style=discord.ButtonStyle.blurple, row=0)
     async def refinery_callback(self, interaction: discord.Interaction, button: discord.Button):
@@ -187,14 +195,26 @@ class TownView(discord.ui.View):
         embed_msg.set_image(url=gli.bazaar_img)
         await interaction.response.edit_message(embed=embed_msg, view=bazaar.BazaarView(self.player_obj))
 
+    @discord.ui.button(label="?????", style=discord.ButtonStyle.secondary, disabled=True, row=1)
+    async def monument_callback(self, interaction: discord.Interaction, button: discord.Button):
+        if interaction.user.id != self.player_obj.discord_id:
+            return
+        await monument.get_monument_embed(interaction, self.ctx_obj, self.player_obj, 0)
+
 
 class CelestialView(discord.ui.View):
-    def __init__(self, player_obj, num_visits):
+    def __init__(self, ctx_obj, player_obj, num_visits, monument_data):
         super().__init__(timeout=None)
-        self.player_obj = player_obj
-        self.num_visits = num_visits
+        self.ctx_obj, self.player_obj, self.num_visits = ctx_obj, player_obj, num_visits
+        monument_claims = monument_data.split(';')
         if self.num_visits > 0:
             self.summon_callback.label = "Call Thana"
+        if self.player_obj.player_level >= 30:
+            self.monument_callback.label = "Monument"
+            self.monument_callback.style = gli.button_colour_list[0]
+            if not monument_claims[1] == "1":
+                self.monument_callback.disabled = False
+                self.monument_callback.style = gli.button_colour_list[1]
 
     @discord.ui.button(label="Forge", style=discord.ButtonStyle.blurple, row=0)
     async def forge_callback(self, interaction: discord.Interaction, button: discord.Button):
@@ -256,11 +276,18 @@ class CelestialView(discord.ui.View):
                 skull_ring = True
         await interaction.response.edit_message(embed=embed_msg, view=SkullSelectView(self.player_obj, skull_ring))
 
+    @discord.ui.button(label="?????", style=discord.ButtonStyle.secondary, disabled=True, row=1)
+    async def monument_callback(self, interaction: discord.Interaction, button: discord.Button):
+        if interaction.user.id != self.player_obj.discord_id:
+            return
+        await monument.get_monument_embed(interaction, self.ctx_obj, self.player_obj, 1)
+
 
 class DivineView(discord.ui.View):
-    def __init__(self, player_obj):
+    def __init__(self, ctx_obj, player_obj, monument_data):
         super().__init__(timeout=None)
-        self.player_obj = player_obj
+        self.ctx_obj, self.player_obj = ctx_obj, player_obj
+        monument_claims = monument_data.split(';')
         if self.player_obj.player_quest < 10:
             self.changeling_callback.disabled, self.changeling_callback.style = True, gli.button_colour_list[3]
             self.points_callback.disabled, self.points_callback.style = True, gli.button_colour_list[3]
@@ -272,6 +299,12 @@ class DivineView(discord.ui.View):
             self.sanctuary_callback.disabled, self.sanctuary_callback.style = True, gli.button_colour_list[3]
         if self.player_obj.player_quest < 51:
             self.cathedral_callback.disabled, self.cathedral_callback.style = True, gli.button_colour_list[3]
+        if self.player_obj.player_level >= 45:
+            self.monument_callback.label = "Monument"
+            self.monument_callback.style = gli.button_colour_list[0]
+            if not monument_claims[2] == "1":
+                self.monument_callback.disabled = False
+                self.monument_callback.style = gli.button_colour_list[1]
 
     @discord.ui.button(label="Mysmir", style=discord.ButtonStyle.blurple, row=0)
     async def changeling_callback(self, interaction: discord.Interaction, button: discord.Button):
@@ -338,15 +371,28 @@ class DivineView(discord.ui.View):
         new_view = tarot.SearchTierView(self.player_obj, cathedral=True)
         await interaction.response.edit_message(embed=embed_msg, view=new_view)
 
+    @discord.ui.button(label="?????", style=discord.ButtonStyle.secondary, disabled=True, row=2)
+    async def monument_callback(self, interaction: discord.Interaction, button: discord.Button):
+        if interaction.user.id != self.player_obj.discord_id:
+            return
+        await monument.get_monument_embed(interaction, self.ctx_obj, self.player_obj, 2)
+
 
 class AbyssView(discord.ui.View):
-    def __init__(self, player_obj, num_visits):
+    def __init__(self, ctx_obj, player_obj, num_visits, monument_data):
         super().__init__(timeout=None)
-        self.player_obj, self.num_visits = player_obj, num_visits
+        self.ctx_obj, self.player_obj, self.num_visits = ctx_obj, player_obj, num_visits
+        monument_claims = monument_data.split(';')
         if self.player_obj.player_quest < 47:
             self.summon_callback.disabled = True
         if self.num_visits > 0:
             self.summon_callback.label = "Call Eleuia"
+        if self.player_obj.player_level >= 60:
+            self.monument_callback.label = "Monument"
+            self.monument_callback.style = gli.button_colour_list[0]
+            if not monument_claims[3] == "1":
+                self.monument_callback.disabled = False
+                self.monument_callback.style = gli.button_colour_list[1]
 
     @discord.ui.button(label="Purify", style=discord.ButtonStyle.blurple, row=0)
     async def purify_callback(self, interaction: discord.Interaction, button: discord.Button):
@@ -389,6 +435,12 @@ class AbyssView(discord.ui.View):
             if e_ring.item_base_type == "Chromatic Tears":
                 tears_ring = True
         await interaction.response.edit_message(embed=embed_msg, view=TearLoreView(self.player_obj, tears_ring))
+
+    @discord.ui.button(label="?????", style=discord.ButtonStyle.secondary, disabled=True, row=1)
+    async def monument_callback(self, interaction: discord.Interaction, button: discord.Button):
+        if interaction.user.id != self.player_obj.discord_id:
+            return
+        await monument.get_monument_embed(interaction, self.ctx_obj, self.player_obj, 3)
 
 
 class TearLoreView(discord.ui.View):

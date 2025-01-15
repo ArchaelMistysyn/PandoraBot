@@ -28,6 +28,7 @@ import player
 import quest
 import inventory
 import menus
+import monument
 
 # Combat imports
 import encounters
@@ -750,7 +751,8 @@ def run_discord_bot():
             return
         if player_obj.player_quest == 11:
             await quest.assign_unique_tokens(player_obj, "Town")
-        location_view = menus.TownView(ctx, player_obj)
+        monument_data = await player_obj.check_misc_data('monument_data')
+        location_view = menus.TownView(ctx, player_obj, monument_data)
         description = "A bustling town thriving with opportunity."
         embed_msg = sm.easy_embed("Orange", "Nearby Town", description)
         embed_msg.set_image(url="")
@@ -767,7 +769,8 @@ def run_discord_bot():
         if player_obj.player_quest == 11:
             await quest.assign_unique_tokens(player_obj, "Town")
         num_visits = int(await player_obj.check_misc_data("thana_visits"))
-        location_view = menus.CelestialView(player_obj, num_visits)
+        monument_data = await player_obj.check_misc_data('monument_data')
+        location_view = menus.CelestialView(ctx, player_obj, num_visits, monument_data)
         description = "Pandora's domain and home to her celestial forge."
         embed_msg = sm.easy_embed("Purple", "Celestial Realm", description)
         embed_msg.set_image(url="")
@@ -783,7 +786,8 @@ def run_discord_bot():
             return
         if player_obj.player_quest == 17:
             await quest.assign_unique_tokens(player_obj, "Divine")
-        new_view = menus.DivineView(player_obj)
+        monument_data = await player_obj.check_misc_data('monument_data')
+        new_view = menus.DivineView(ctx, player_obj, monument_data)
         description = "You are permitted to visit the higher plane by the grace of the arbiters."
         embed_msg = sm.easy_embed("Gold", "Divine Plane", description)
         embed_msg.set_image(url="")
@@ -803,7 +807,8 @@ def run_discord_bot():
         if player_obj.player_quest == 38:
             await quest.assign_unique_tokens(player_obj, "Abyss")
         num_visits = int(await player_obj.check_misc_data("eleuia_visits"))
-        new_view = menus.AbyssView(player_obj, num_visits)
+        monument_data = await player_obj.check_misc_data('monument_data')
+        new_view = menus.AbyssView(ctx, player_obj, num_visits, monument_data)
         description = "You are permitted to visit the higher plane by the grace of the arbiters."
         embed_msg = sm.easy_embed("Black", "Abyssal Plane", description)
         embed_msg.set_image(url=gli.abyss_img)
