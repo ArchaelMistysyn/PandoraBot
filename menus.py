@@ -908,11 +908,6 @@ class ManageCustomItemView(discord.ui.View):
             await interaction.response.edit_message(embed=new_embed, view=None)
 
 
-def create_error_embed(error_msg):
-    embed_msg = discord.Embed(colour=discord.Colour.dark_red(), title="Error", description=error_msg)
-    return embed_msg
-
-
 class TermsOfServiceView(discord.ui.View):
     def __init__(self, discord_id, username):
         super().__init__(timeout=None)

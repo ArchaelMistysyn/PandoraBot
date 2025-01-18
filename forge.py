@@ -43,9 +43,8 @@ class SelectView(discord.ui.View):
         location = inventory.reverse_item_dict[item_select]
         selected_item = self.player_obj.player_equipped[location]
         if selected_item == 0:
-            error_msg = "Not equipped"
-            embed_msg = menus.create_error_embed(error_msg)
-            await interaction.response.edit_message(embed=embed_msg, view=None)
+            embed_msg = sm.easy_embed("Red", "Not Equipped", "Please select a different base")
+            await interaction.response.edit_message(embed=embed_msg)
             return
         self.selected_item = await inventory.read_custom_item(selected_item)
         embed_msg = await self.selected_item.create_citem_embed()
@@ -122,7 +121,7 @@ class PurifyView(discord.ui.View):
         if interaction.user.id != self.player_obj.discord_id:
             return
         if not self.embed:
-            self.embed = discord.Embed(colour=discord.Colour.blurple(), title="Echo of Oblivia", description=gli.abyss_msg)
+            self.embed = sm.easy_embed("Purple", "Echo of Oblivia", gli.abyss_msg)
             self.embed.set_image(url=gli.abyss_img)
             self.new_view = SelectView(self.player_obj, "purify")
         await interaction.response.edit_message(embed=self.embed, view=self.new_view)
