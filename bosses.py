@@ -52,7 +52,7 @@ class CurrentBoss:
         self.boss_typeweak, self.boss_eleweak, self.curse_debuffs = [0] * 7, [0] * 9, [0.0] * 9
         self.boss_element, self.damage_cap = 0, -1
         self.stun_cycles, self.stun_status = 0, ""
-        self.boss_thumbnail = "";
+        self.boss_thumbnail = ""
 
     def create_boss_embed(self, dps=0, extension=""):
         img_link = "https://i.ibb.co/0ngNM7h/castle.png"
@@ -97,6 +97,7 @@ class CurrentBoss:
         self.boss_name, self.boss_element = random.choice(target_list), 9
         match boss_type:
             case "Fortress":
+                self.boss_image =f'{gli.web_gallery_url}Tarot/Arbiter/XVI - Aurora, The Fortress.webp'
                 if boss_tier != 4:
                     self.boss_element = random.randint(0, 8)
                     extension = "" if self.boss_element >= 6 else "the "

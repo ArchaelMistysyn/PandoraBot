@@ -26,19 +26,23 @@ time_zone_channel, time_zone_message_id = 1328062692778315797, 13280997577968845
 metrics_channel, metrics_message_id = 1156267612783779901, 1296207066284953664
 reverse_GM_id_dict = {value: key for key, value in GM_id_dict.items()}
 web_url = "https://PandoraPortal.ca/botimages/"
+web_gallery_url = "https://PandoraPortal.ca/gallery/"
 # LOCAL image_path = 'C:\\Users\\GamerTech\\PycharmProjects\\PandoraBot\\botart\\'
 image_path = '/home/ubuntu/PandoraBot/botart/'
 store_link = "https://ArchDragonStore.ca"
 
 # IMAGE DATA
-forge_img, refinery_img = f"{web_url}scenes/Forge.png", f"{web_url}scenes/Refinery.png"
-abyss_img = f"{web_url}scenes/Abyss.png"
-planetarium_img = f"{web_url}scenes/Tarot_Planetarium.png"
+forge_img = f"{web_gallery_url}Displays/Locations/Celestial Forge.webp"
+refinery_img = f"{web_gallery_url}Displays/Locations/Refinery.webp"
+abyss_img = f"{web_gallery_url}Displays/Locations/Abyssal Plane.webp"
+planetarium_img = f"{web_gallery_url}Displays/Locations/Planetarium.webp"
 market_img, bazaar_img = "", ""
-infuse_img = f"{web_url}scenes/Infuse.png"
-sanctuary_img, cathedral_img = f"{web_url}scenes/Sanctuary.png", f"{web_url}scenes/Cathedral.png"
-palace_night_img, palace_day_img = f"{web_url}scenes/Palace1.png", f"{web_url}scenes/Palace2.png"
-map_img = f"{web_url}scenes/Map.png"
+infuse_img = f"{web_gallery_url}Displays/Locations/Alchemist Shop.webp"
+sanctuary_img = f"{web_gallery_url}Displays/Locations/Sanctuary.webp"
+cathedral_img = f"{web_gallery_url}Displays/Locations/Cathedral.webp"
+palace_night_img = f"{web_gallery_url}Displays/Locations/Palace (Dormant).webp"
+palace_day_img = f"{web_gallery_url}Displays/Locations/Palace (Active).webp"
+map_img = f"{web_gallery_url}Displays/Locations/Map.webp"
 archdragon_logo = f"{web_url}ArchDragon.png"
 
 # ICON DATA

@@ -329,7 +329,7 @@ class TarotCard:
         self.card_enhancement = card_enhancement
         self.resonance = 1
         if self.card_qty == 0:
-            self.card_image_link = f"{gli.web_url}tarot/cardback.png"
+            self.card_image_link = f"{gli.web_gallery_url}Tarot/Paragon/Cardback.webp"
         else:
             self.card_image_link = f"{gli.web_url}tarot/{self.card_numeral}/{self.card_numeral}_{self.num_stars}.png"
 
