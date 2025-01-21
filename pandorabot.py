@@ -28,7 +28,6 @@ import player
 import quest
 import inventory
 import menus
-import monument
 
 # Combat imports
 import encounters
