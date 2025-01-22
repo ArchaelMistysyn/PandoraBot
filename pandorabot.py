@@ -1728,7 +1728,7 @@ def run_discord_bot():
                 return
         await player_obj.set_cooldown("arena", "")
         if player_obj.player_username == opponent_player.player_username:
-            opponent_player.player_username = f"Shadow {opponent_player.player_username}"
+            opponent_player.player_username = f"[Shadow] {opponent_player.player_username}"
         pvp_msg = f"{player_obj.player_username} vs {opponent_player.player_username}!"
         pvp_embed = sm.easy_embed(player_obj.player_echelon, "Arena PvP", "")
         # pvp_embed.set_thumbnail(url="")

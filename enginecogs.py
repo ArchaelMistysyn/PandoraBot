@@ -387,12 +387,12 @@ class PvPCog(commands.Cog):
             return
         hit_data = await self.handle_pvp_hit_damage(role_order, combatants, trackers, combo_count, hit_list, True)
         scaled_dmg, skill_name, mana_msg, status_msg, second_msg, critical_type, evade = hit_data
-        hit_msg = f"{combatant[attacker].player_username} - Ultimate: {skill_name} {sm.number_conversion(scaled_dmg)}"
+        hit_msg = f"{combatants[attacker].player_username} - Ultimate: {skill_name} {sm.number_conversion(scaled_dmg)}"
         hit_msg += f"{mana_msg}{status_msg}{second_msg}{critical_type}{evade}"
         hit_list.append([scaled_dmg, hit_msg])
         tracker[defender].player_cHP -= scaled_dmg
-        if combatant[attacker].appli["Bleed"] >= 1:
-            await self.handle_pvp_bleed(role_order, combatant, tracker, hit_list, True)
+        if combatants[attacker].appli["Bleed"] >= 1:
+            await self.handle_pvp_bleed(role_order, combatants, tracker, hit_list, True)
 
     async def handle_pvp_hit_damage(self, role_order, combatants, trackers, combo_count, hit_list, is_ultimate=False):
         attacker, defender = role_order[0], role_order[1]
@@ -410,7 +410,7 @@ class PvPCog(commands.Cog):
         if combatants[attacker].unique_glyph_ability[2]:
             hit_damage *= (1 + combatants[attacker].bleed_mult)
         if status_msg == " *TIME SHATTER*" or critical_type != "":
-            hit_damage *= random.randint(1, combatants[attacker].rng_bonus)
+            hit_damage *= random.randint(1, max(1, combatants[attacker].rng_bonus))
         scaled_dmg = combat.pvp_scale_damage(role_order, combatants, hit_damage)
         return scaled_dmg, skill_name, mana_msg, status_msg, second_msg, critical_type, evade
 

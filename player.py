@@ -81,7 +81,7 @@ class PlayerProfile:
         # Initialize misc stats.
         self.charge_generation = 1
         self.attack_speed = 0.0
-        self.class_multiplier, self.total_class_mult, self.final_damage, self.rng_bonus = 0.05, 0.0, 0.0, 0.0
+        self.class_multiplier, self.total_class_mult, self.final_damage, self.rng_bonus = 0.05, 0.0, 0.0, 0
         self.defence_pen, self.resist_pen = 0.0, 0.0
         self.aqua_mode, self.aqua_points = 0, 0
         self.flare_type = ""
