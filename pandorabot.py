@@ -941,7 +941,8 @@ def run_discord_bot():
         if player_obj.player_quest < 20:
             new_view, description = None, "You can't yet handle my threads. This is no place for the weak."
         embed_msg = sm.easy_embed("Orange", "Isolde, The Soulweaver", description)
-        embed_msg.set_image(f'{gli.web_gallery_url}Tarot/Arbiter/XXIV - Isolde, The Soulweaver.webp')
+        isolde_img = f'{gli.web_gallery_url}Tarot/Arbiter/XXIV- Isolde, The Soulweaver.webp'
+        embed_msg.set_image(url=isolde_img.replace(' ', "%20"))
         await ctx.send(embed=embed_msg, view=new_view)
 
     @set_command_category('gear', 5)

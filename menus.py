@@ -267,7 +267,8 @@ class CelestialView(discord.ui.View):
             name, value = "", "Out with it now, what can the embodiment of death do for you today?"
         embed_msg = discord.Embed(colour=discord.Colour.dark_purple(), title=thana_title, description=description)
         embed_msg.add_field(name=name, value=value, inline=False)
-        embed_msg.set_image(url=f"{gli.web_gallery_url}/Tarot/Paragon/XIII - Thana, The Death.webp")
+        thana_img = f"{gli.web_gallery_url}/Tarot/Paragon/XIII - Thana, The Death.webp"
+        embed_msg.set_image(url=thana_img.replace(' ', "%20"))
         skull_ring = False
         if self.player_obj.player_equipped[4] != 0:
             e_ring = await inventory.read_custom_item(self.player_obj.player_equipped[4])
