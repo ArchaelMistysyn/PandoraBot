@@ -111,8 +111,10 @@ path_rings = [
     ("Boundary Ring of Horizon", [(3, 5), (4, 5), (10, 2)]),
     ("Hidden Ring of Eclipse", [(6, 5), (7, 5), (10, 2)]),
     ("Cosmic Ring of Stars", [(8, 10), (10, 2)]),
-    ("Rainbow Ring of Confluence", [(0, 2), (1, 2), (2, 2), (3, 2), (4, 2), (5, 2), (6, 2), (7, 2), (8, 2), (10, 2)]),
-    ("Lonely Ring of Solitude", [(9, 10), (10, 2)])]
+    ("Orbital Ring of Solar Flux", [(0, 5), (4, 5), (7, 5), (10, 2)]),
+    ("Orbital Ring of Lunar Tides", [(1, 5), (5, 5), (6, 5), (10, 2)]),
+    ("Orbital Ring of Terrestria", [(2, 5), (3, 5), (8, 5), (10, 2)]),
+    ("Rainbow Ring of Confluence", [(0, 2), (1, 2), (2, 2), (3, 2), (4, 2), (5, 2), (6, 2), (7, 2), (8, 2), (10, 2)])]
 for ring_name, gemstones in path_rings:
     add_recipe("Path Ring Infusion", ring_name, [(f"Gemstone{idx}", qty) for idx, qty in gemstones] + [100, "6", "R"])
 
