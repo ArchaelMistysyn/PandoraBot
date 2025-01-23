@@ -210,10 +210,10 @@ class CustomItem:
             return min(bonus_value, gli.max_enhancement[self.item_tier - 1])
 
     def get_gear_score(self):
-        quality_score, base_damage_score, base_max, rolls_score = 1500, 0, 150000, 3000
+        quality_score, base_damage_score, base_max, rolls_score, enhancement_score = 1500, 0, 150000, 3000, 1500
         tier_score = 0 if self.item_tier <= 8 else 999
-        enhancement_score = round((self.item_enhancement / 200) * 1500)
         if "D" not in self.item_type and self.item_type != "R":
+            enhancement_score = round((self.item_enhancement / 200) * 1500)
             quality_score = round((self.item_quality_tier / 5) * 1500)
             base_max = 250000
         base_stat_max = 4.00 if self.item_type == "W" else 30.00 if self.item_type == "A" else 0
