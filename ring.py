@@ -23,9 +23,9 @@ async def assign_ring_values(player_obj, e_ring):
     # Exit on ring exceptions.
     if e_ring.item_base_type in scaling_rings:
         if e_ring.item_base_type == "Chromatic Tears":
-            player_obj.all_elemental_mult += e_ring.roll_values[1] // 100
-            player_obj.all_elemental_pen += e_ring.roll_values[1] // 100
-            player_obj.all_elemental_curse += (e_ring.roll_values[0] // 100) + (e_ring.roll_values[1] // 100)
+            player_obj.all_elemental_mult += int(e_ring.roll_values[1]) // 100
+            player_obj.all_elemental_pen += int(e_ring.roll_values[1]) // 100
+            player_obj.all_elemental_curse += (int(e_ring.roll_values[0]) // 100) + (int(e_ring.roll_values[1]) // 100)
         return
     # Handle everything else
     for (attr_name, attr, value, index) in bonuses:

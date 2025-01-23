@@ -39,7 +39,7 @@ ring_icons = {0: None, 1: None, 2: None, 3: None,
                                        "<:lone_ring1:1275566085101326569>", "<:lone_ring2:1275566092504404038>"],
               "Sovereign Ring Infusion": ["<:sc_ring:1275566074779275426>", "<:hc_ring:1275566068466847776>",
                                           "<:hadal_ring:1275566060447207558>", "<:twin_rings:1275566143238836295>",
-                                          "<:skull_ring:1275566027429773352>", "<:skull_ring:1275566027429773352>"]}
+                                          "<:skull_ring:1275566027429773352>", "<:C_Tears:1304109254914998272>"]}
 
 ring_values_dict = {
     # Fabled Rings

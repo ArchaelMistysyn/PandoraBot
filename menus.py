@@ -66,7 +66,6 @@ guide_dict = {0: ["Beginner Guide", starter_guide],
 
 thana_title, eleuia_title = "XIII - Thana, The Death", "Echo of Eleuia, The Wish"
 
-
 class GuideMenu(discord.ui.View):
     def __init__(self):
         super().__init__(timeout=None)
@@ -409,7 +408,7 @@ class AbyssView(discord.ui.View):
         description = (f"Honestly, I'd like to get to know you better. "
                        f"I know the abyssal plane isn't the safest of places to sit and have a discussion. "
                        f"Still, I'm glad that you came. Would you like to know about the past? "
-                       f"Or perhaps did you haev something else in mind?")
+                       f"Or perhaps did you have something else in mind?")
         if self.num_visits == 0:
             description = (f"Oh, {self.player_obj.player_username}, I didn't think you'd find me here. "
                            f"The silence, the darkness, the soft longing pull of the abyss, I find it... relaxing. "
@@ -461,10 +460,58 @@ class TearLoreView(discord.ui.View):
     async def imbue_callback(self, interaction: discord.Interaction, button: discord.Button):
         if interaction.user.id != self.player_obj.discord_id:
             return
-        description = "Tear menu will go here"
+        description = "You've collected more of my teardrops?\nYou really don't need to do this, but I'm glad you did."
         embed_msg = sm.easy_embed("Pink", eleuia_title, description)
-        imbue_view = None
-        await interaction.response.edit_message(embed=embed_msg, view=imbue_view)
+        await interaction.response.edit_message(embed=embed_msg, view=ImbueView(self.player_obj))
+
+
+class ImbueView(discord.ui.View):
+    def __init__(self, player_obj):
+        super().__init__(timeout=None)
+        self.player_obj = player_obj
+        self.embed = None
+
+    @discord.ui.button(label="1 Tear", style=discord.ButtonStyle.primary, emoji=gli.tears_icon)
+    async def submit_one_tear(self, interaction: discord.Interaction, button: discord.Button):
+        await self.imbue_callback(interaction, 1)
+
+    @discord.ui.button(label="5 Tears", style=discord.ButtonStyle.primary, emoji=gli.tears_icon)
+    async def submit_five_tears(self, interaction: discord.Interaction, button: discord.Button):
+        await self.imbue_callback(interaction, 5)
+
+    @discord.ui.button(label="10 Tears", style=discord.ButtonStyle.primary, emoji=gli.tears_icon)
+    async def submit_ten_tears(self, interaction: discord.Interaction, button: discord.Button):
+        await self.imbue_callback(interaction, 10)
+
+    async def imbue_callback(self, interaction: discord.Interaction, num_tears):
+        if interaction.user.id != self.player_obj.discord_id:
+            return
+        reload_view = ImbueView(self.player_obj)
+        if self.embed is not None:
+            await interaction.response.edit_message(embed=self.embed, view=reload_view)
+            return
+        await self.player_obj.reload_player()
+        equipped_ring_id = self.player_obj.player_equipped[4]
+        self.embed = sm.easy_embed("Pink", eleuia_title, "Could you put the ring back on for me? Please.")
+        if equipped_ring_id == 0:
+            await interaction.response.edit_message(embed=self.embed, view=reload_view)
+            return
+        equipped_ring = await inventory.read_custom_item(equipped_ring_id)
+        if equipped_ring.item_base_type != "Chromatic Tears":
+            await interaction.response.edit_message(embed=self.embed, view=reload_view)
+            return
+        tears_stock = await inventory.check_stock(self.player_obj, "Gemstone10")
+        if tears_stock < num_tears:
+            self.embed.description = "I don't think you have that many."
+            await interaction.response.edit_message(embed=self.embed, view=reload_view)
+            return
+        await inventory.update_stock(self.player_obj, "Gemstone10", (-1 * num_tears))
+        equipped_ring.roll_values[0] = str(int(equipped_ring.roll_values[0]) + num_tears)
+        await equipped_ring.update_stored_item()
+        description = "Such a beautiful glow. I've imbued it for you, may it keep you safe until you return."
+        self.embed = await equipped_ring.create_citem_embed()
+        self.embed.add_field(name="", value=description, inline=False)
+        await interaction.response.edit_message(embed=self.embed, view=reload_view)
 
 
 async def add_skull_fields(player_obj, embed_msg, method="Return"):
@@ -637,7 +684,7 @@ class SkullsView(discord.ui.View):
         name, value = "", "Out with it now, what can the embodiment of death do for you today?"
         embed_msg = discord.Embed(colour=discord.Colour.dark_purple(), title=thana_title, description=description)
         embed_msg.add_field(name=name, value=value, inline=False)
-        embed_msg.set_image(url="")
+        embed_msg.set_image(url=f"{gli.web_gallery_url}Tarot/Arbiter/XIII - Thana, The Death.webp")
         skull_ring = False
         if self.player_obj.player_equipped[4] != 0:
             e_ring = await inventory.read_custom_item(self.player_obj.player_equipped[4])

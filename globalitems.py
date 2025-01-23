@@ -32,16 +32,16 @@ image_path = '/home/ubuntu/PandoraBot/botart/'
 store_link = "https://ArchDragonStore.ca"
 
 # IMAGE DATA
-forge_img = f"{web_gallery_url}Displays/Locations/Celestial Forge.webp"
+forge_img = f"{web_gallery_url}Displays/Locations/Celestial%20Forge.webp"
 refinery_img = f"{web_gallery_url}Displays/Locations/Refinery.webp"
-abyss_img = f"{web_gallery_url}Displays/Locations/Abyssal Plane.webp"
+abyss_img = f"{web_gallery_url}Displays/Locations/Abyssal%20Plane.webp"
 planetarium_img = f"{web_gallery_url}Displays/Locations/Planetarium.webp"
 market_img, bazaar_img = "", ""
-infuse_img = f"{web_gallery_url}Displays/Locations/Alchemist Shop.webp"
+infuse_img = f"{web_gallery_url}Displays/Locations/Alchemist%20Shop.webp"
 sanctuary_img = f"{web_gallery_url}Displays/Locations/Sanctuary.webp"
 cathedral_img = f"{web_gallery_url}Displays/Locations/Cathedral.webp"
-palace_night_img = f"{web_gallery_url}Displays/Locations/Palace (Dormant).webp"
-palace_day_img = f"{web_gallery_url}Displays/Locations/Palace (Active).webp"
+palace_night_img = f"{web_gallery_url}Displays/Locations/Palace%20(Dormant).webp"
+palace_day_img = f"{web_gallery_url}Displays/Locations/Palace%20(Active).webp"
 map_img = f"{web_gallery_url}Displays/Locations/Map.webp"
 archdragon_logo = f"{web_url}ArchDragon.png"
 
@@ -100,6 +100,8 @@ ele_icon = [
     "<:e8:1274784236876075068>"
 ]
 omni_icon = "🌈"
+tears_icon = "<:Gem10:1274786217375830027>"
+
 element_dict = {
     'Fire': [0], 'Water': [1], 'Lightning': [2], 'Earth': [3], 'Wind': [4],
     'Ice': [5], 'Shadow': [6], 'Light': [7], 'Celestial': [8],

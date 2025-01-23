@@ -40,7 +40,8 @@ async def get_monument_embed(interaction, ctx_obj, player_obj, monument_num):
     loot_msg = f"{reward.item_emoji} {qty}x {reward.item_name}"
     embed_msg.add_field(name="", value=f"{gli.exp_icon} {exp_msg} Exp Acquired.\n{loot_msg}", inline=False)
     update_stock = await inventory.update_stock(player_obj, reward.item_id, qty)
-    embed_msg.set_image(url=f"{gli.web_gallery_url}Displays/Locations/{monument_title[monument_num]}.webp")
+    spaced_title = monument_title[monument_num].replace(' ', '%20')
+    embed_msg.set_image(url=f"{gli.web_gallery_url}Displays/Locations/{spaced_title}.webp")
     await interaction.response.edit_message(embed=embed_msg, view=None)
     if lvl_change != 0:
         await sm.send_notification(ctx_obj, player_obj, "Level", lvl_change)

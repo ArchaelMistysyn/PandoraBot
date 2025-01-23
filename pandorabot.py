@@ -813,7 +813,6 @@ def run_discord_bot():
         embed_msg.set_image(url=gli.abyss_img)
         if player_obj.player_quest < 38:
             new_view, embed_msg.description = None, "A great darkness clouds your path. Entry is impossible."
-            embed_msg.set_image(url=gli.abyss_img)
         await ctx.send(embed=embed_msg, view=new_view)
 
     # Gear commands
