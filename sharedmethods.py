@@ -62,7 +62,7 @@ def check_rare_item(item_id):
     return True if item_id in u_rarity_id_list else False
 
 
-async def send_notification(ctx_object, player_obj, notice_type, value):
+async def send_notification(ctx_object, player_obj, notice_type, value, followup=False):
     # Consider custom achievement icons in future.
     rarity = "Ultimate Rare" if value in ultimate_id_list else "Uber Rare" if value in uber_id_list else "Ultra Rare"
     item = inventory.BasicItem(value) if notice_type == "Item" and value is not None else None

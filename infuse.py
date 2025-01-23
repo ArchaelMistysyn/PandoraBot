@@ -274,6 +274,7 @@ class CraftView(discord.ui.View):
         super().__init__(timeout=None)
         self.ctx_obj, self.player_obj, self.recipe_object = ctx_obj, player_obj, recipe_object
         self.embed_msg, self.new_view = None, None
+        self.new_item, self.classification = None, None
         r_cat, r_name = recipe_object.category, recipe_object.recipe_name
         if ("Ring" in r_cat or "Signet" in r_cat) or r_cat in ["Sovereign Weapon Infusion", "Sovereign Special Infusion"]:
             self.remove_item(self.children[2])
@@ -303,6 +304,8 @@ class CraftView(discord.ui.View):
         await self.player_obj.reload_player()
         if self.embed_msg is not None:
             await interaction.response.edit_message(embed=self.embed_msg, view=self.new_view)
+            if self.classification is not None:
+                await sm.send_notification(self.ctx_obj, self.player_obj, self.classification, self.new_item.item_base_type)
             return
         self.new_view = CraftView(self.ctx_obj, self.player_obj, self.recipe_object)
         item_tier, full_inv = 0 if self.recipe_object.item_type is None else int(self.recipe_object.outcome_item), False
@@ -343,24 +346,24 @@ class CraftView(discord.ui.View):
             await interaction.response.edit_message(embed=self.embed_msg, view=self.new_view)
             return
         # Handle Gear Success
-        classification, item_tier = ("Sacred", 9) if is_sacred else ("Sovereign", 8) if item_tier == 8 else (None, item_tier)
-        new_item = inventory.CustomItem(self.player_obj.player_id, self.recipe_object.item_type, item_tier,
-                                        base_type=self.recipe_object.recipe_name, is_sacred=is_sacred, random_enhance=True)
+        self.classification, item_tier = ("Sacred", 9) if is_sacred else ("Sovereign", 8) if item_tier == 8 else (None, item_tier)
+        self.new_item = inventory.CustomItem(self.player_obj.player_id, self.recipe_object.item_type, item_tier,
+                                             base_type=self.recipe_object.recipe_name, is_sacred=is_sacred, random_enhance=True)
         # Handle Ring Exceptions
         if self.recipe_object.item_type == "R":
-            new_item.roll_values[0] = random.randint(0, 30) if new_item.item_tier in [8, 9] \
-                else rrd[new_item.item_base_type]
-            if new_item.item_base_type == "Crown of Skulls":
-                new_item.roll_values[2] = new_item.roll_values[0]  # Store resonance in slot 3
-                new_item.roll_values[0], new_item.roll_values[1] = 1000, 0
-            elif new_item.item_base_type == "Chromatic Tears":
-                new_item.roll_values[2] = 25  # Store static resonance in slot 3
-                new_item.roll_values[0], new_item.roll_values[1] = 10, 500
-        await inventory.add_custom_item(new_item)
-        self.embed_msg = await new_item.create_citem_embed()
+            self.new_item.roll_values[0] = random.randint(0, 30) if self.new_item.item_tier in [8, 9] \
+                else rrd[self.new_item.item_base_type]
+            if self.new_item.item_base_type == "Crown of Skulls":
+                self.new_item.roll_values[2] = self.new_item.roll_values[0]  # Store resonance in slot 3
+                self.new_item.roll_values[0], self.new_item.roll_values[1] = 1000, 0
+            elif self.new_item.item_base_type == "Chromatic Tears":
+                self.new_item.roll_values[2] = 25  # Store static resonance in slot 3
+                self.new_item.roll_values[0], self.new_item.roll_values[1] = 10, 500
+        await inventory.add_custom_item(self.new_item)
+        self.embed_msg = await self.new_item.create_citem_embed()
         await interaction.response.edit_message(embed=self.embed_msg, view=self.new_view)
-        if classification is not None:
-            await sm.send_notification(self.ctx_obj, self.player_obj, classification, new_item.item_base_type)
+        if self.classification is not None:
+            await sm.send_notification(self.ctx_obj, self.player_obj, self.classification, self.new_item.item_base_type)
         return
 
     @discord.ui.button(label="Infuse 1", style=discord.ButtonStyle.success, emoji="1️⃣")

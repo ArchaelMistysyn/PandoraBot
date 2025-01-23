@@ -218,7 +218,7 @@ class CustomItem:
             base_max = 250000
         base_stat_max = 4.00 if self.item_type == "W" else 30.00 if self.item_type == "A" else 0
         base_stat_score = round((self.item_base_stat / base_stat_max) * 1500) if base_stat_max > 0 else 1500
-        if self.item_base_type in gli.sovereign_item_list or self.item_type == "R":
+        if self.item_base_type in gli.sovereign_item_list and self.item_type != "R":
             base_damage_score = 1500
         elif self.base_damage_min > 0 and self.base_damage_max > 0:
             base_damage_score = round((self.base_damage_min / base_max) * 750 + (self.base_damage_max / base_max) * 750)
