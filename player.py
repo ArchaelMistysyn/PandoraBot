@@ -93,12 +93,15 @@ class PlayerProfile:
 
     async def get_player_stats(self, method):
         await self.reload_player()
+        gear_score = await self.get_total_gear_score()
         # Construct the base embed.
         echelon_colour, _ = sm.get_gear_tier_colours((self.player_echelon + 1) // 2)
         resources = f'<:estamina:1145534039684562994> {self.player_username}\'s stamina: {self.player_stamina:,}'
         resources += f'\n{gli.coin_icon} Lotus Coins: {self.player_coins:,}'
         exp = f'Level: {self.player_level} Exp: ({self.player_exp:,} / {get_max_exp(self.player_level):,})'
         id_msg = f'User ID: {self.player_id}\nClass: {gli.class_icon_dict[self.player_class]}'
+        id_msg += f"\n Total Gear Score: ★{gear_score:,}"
+
         embed_msg = discord.Embed(colour=echelon_colour, title=self.player_username, description=id_msg)
         embed_msg.add_field(name=exp, value=resources, inline=False)
         embed_msg.set_thumbnail(url=f"{sm.get_thumbnail_by_class(self.player_class)}")
@@ -328,7 +331,7 @@ class PlayerProfile:
                      "quest_choice, oath_data, monument_data)"
                      " VALUES (:input_1, :input_2, :input_3, :input_4, :input_5, :input_6, :input_7, :input_8)")
         params = {"input_1": registered_player.player_id, "input_2": 0, "input_3": 0, "input_4": 0,
-                  "input_5": 0, "input_6": 0, "input_7": "1;0;0", "input_8": "0;0;0;0"}
+                  "input_5": 0, "input_6": 0, "input_7": "1;0;0", "input_8": "0;0;0;0;0"}
         await rqy(raw_query, params=params)
         return f"Welcome {self.player_username}!\nUse /quest to begin."
 
@@ -365,6 +368,22 @@ class PlayerProfile:
         self.equipped_tarot = str(df['player_tarot'].values[0])
         self.insignia = str(df['player_insignia'].values[0])
         self.pact = str(df['player_pact'].values[0])
+
+    async def get_total_gear_score(self):
+        gear_score = 0
+        gem_id_list = []
+        item_list = await inventory.read_custom_item(fetch_equipped=self.player_equipped)
+        for e_item in item_list:
+            gear_score += e_item.get_gear_score()
+            if e_item is not None:
+                gem_id_list.append(e_item.item_inlaid_gem_id)
+            else:
+                gem_id_list.append(0)
+        gem_list = await inventory.read_custom_item(fetch_equipped=gem_id_list)
+        for e_gem in gem_list:
+            if e_gem is not None:
+                gear_score += e_gem.get_gear_score()
+        return gear_score
 
     async def reset_skill_points(self):
         self.player_stats = [0] * 9

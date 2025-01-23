@@ -65,6 +65,8 @@ guide_dict = {0: ["Beginner Guide", starter_guide],
               2: ["Advanced Guide", advanced_guide]}
 
 thana_title, eleuia_title = "Thana, The Death", "Echo of Eleuia, The Wish"
+thana_img = f"{gli.web_gallery_url}/Tarot/Paragon/XIII - Thana, The Death.webp"
+
 
 class GuideMenu(discord.ui.View):
     def __init__(self):
@@ -267,7 +269,6 @@ class CelestialView(discord.ui.View):
             name, value = "", "Out with it now, what can the embodiment of death do for you today?"
         embed_msg = discord.Embed(colour=discord.Colour.dark_purple(), title=thana_title, description=description)
         embed_msg.add_field(name=name, value=value, inline=False)
-        thana_img = f"{gli.web_gallery_url}/Tarot/Paragon/XIII - Thana, The Death.webp"
         embed_msg.set_image(url=thana_img.replace(' ', "%20"))
         skull_ring = False
         if self.player_obj.player_equipped[4] != 0:
@@ -379,7 +380,7 @@ class DivineView(discord.ui.View):
 
 
 class AbyssView(discord.ui.View):
-    def __init__(self, ctx_obj, player_obj, num_visits, monument_data):
+    def __init__(self, ctx_obj, player_obj, num_visits, monument_data, gear_score):
         super().__init__(timeout=None)
         self.ctx_obj, self.player_obj, self.num_visits = ctx_obj, player_obj, num_visits
         monument_claims = monument_data.split(';')
@@ -393,6 +394,13 @@ class AbyssView(discord.ui.View):
             if not monument_claims[3] == "1":
                 self.monument_callback.disabled = False
                 self.monument_callback.style = gli.button_colour_list[1]
+        self.gear_monument_callback.label = f"★{gear_score:,}"
+        if gear_score > 149999:
+            self.gear_monument_callback.label = f"☆{gear_score}"
+            self.gear_monument_callback.style = gli.button_colour_list[0]
+            if not monument_claims[4] == "1":
+                self.gear_monument_callback.disabled = False
+                self.gear_monument_callback.style = gli.button_colour_list[1]
 
     @discord.ui.button(label="Purify", style=discord.ButtonStyle.blurple, row=0)
     async def purify_callback(self, interaction: discord.Interaction, button: discord.Button):
@@ -441,6 +449,12 @@ class AbyssView(discord.ui.View):
         if interaction.user.id != self.player_obj.discord_id:
             return
         await monument.get_monument_embed(interaction, self.ctx_obj, self.player_obj, 3)
+
+    @discord.ui.button(label="★", style=discord.ButtonStyle.secondary, disabled=True, row=1)
+    async def gear_monument_callback(self, interaction: discord.Interaction, button: discord.Button):
+        if interaction.user.id != self.player_obj.discord_id:
+            return
+        await monument.get_monument_embed(interaction, self.ctx_obj, self.player_obj, 4)
 
 
 class TearLoreView(discord.ui.View):

@@ -807,7 +807,8 @@ def run_discord_bot():
             await quest.assign_unique_tokens(player_obj, "Abyss")
         num_visits = int(await player_obj.check_misc_data("eleuia_visits"))
         monument_data = await player_obj.check_misc_data('monument_data')
-        new_view = menus.AbyssView(ctx, player_obj, num_visits, monument_data)
+        gear_score = await player_obj.get_total_gear_score()
+        new_view = menus.AbyssView(ctx, player_obj, num_visits, monument_data, gear_score)
         description = "You are permitted to visit the higher plane by the grace of the arbiters."
         embed_msg = sm.easy_embed("Black", "Abyssal Plane", description)
         embed_msg.set_image(url=gli.abyss_img)
