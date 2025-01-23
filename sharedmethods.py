@@ -103,6 +103,15 @@ def get_gear_thumbnail(item):
         folder, sub_folder = "Ring", f"{gli.ring_item_type[item.item_tier - 1]}/"
         if item.item_tier in [4, 5]:
             item_tag, element = gli.ring_item_type[item.item_tier - 1], item.item_elements.index(1)
+        elif item.item_tier == 6:
+            active_elements = [index for index, active in enumerate(item.item_elements) if active == 1]
+            item_tag = gli.ring_item_type[item.item_tier - 1]
+            for path_name, element_indices in gli.element_dict.items():
+                if active_elements == element_indices:
+                    element = gli.path_names.index(path_name)
+                    break
+        elif item.item_tier == 7:
+            item_tag = item.item_base_type
         else:
             return f"{gli.web_url}Gear_Icon/{folder}/{sub_folder}Frame_{item_tag.replace(' ', '_')}_{item.item_tier}.png"
     new_tag = item_tag.replace(' ', '_')
