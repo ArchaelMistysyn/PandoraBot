@@ -395,7 +395,7 @@ class AbyssView(discord.ui.View):
                 self.monument_callback.disabled = False
                 self.monument_callback.style = gli.button_colour_list[1]
         self.gear_monument_callback.label = f"★{gear_score:,}"
-        if gear_score > 149999:
+        if gear_score > 99999:
             self.gear_monument_callback.label = f"☆{gear_score}"
             self.gear_monument_callback.style = gli.button_colour_list[0]
             if not monument_claims[4] == "1":
