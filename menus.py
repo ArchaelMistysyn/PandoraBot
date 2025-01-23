@@ -64,7 +64,7 @@ guide_dict = {0: ["Beginner Guide", starter_guide],
               1: ["Intermediate Guide", intermediate_guide],
               2: ["Advanced Guide", advanced_guide]}
 
-thana_title, eleuia_title = "XIII - Thana, The Death", "Echo of Eleuia, The Wish"
+thana_title, eleuia_title = "Thana, The Death", "Echo of Eleuia, The Wish"
 
 class GuideMenu(discord.ui.View):
     def __init__(self):

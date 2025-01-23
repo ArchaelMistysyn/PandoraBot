@@ -579,6 +579,9 @@ class PlayerProfile:
     async def get_bleed_damage(self, boss_obj):
         weapon = await inventory.read_custom_item(self.player_equipped[0])
         player_damage = await self.get_player_initial_damage()
+        if boss_obj is None:
+            self.total_damage = player_damage
+            return
         self.total_damage = self.boss_adjustments(player_damage, boss_obj, weapon)
 
     async def equip(self, selected_item):
