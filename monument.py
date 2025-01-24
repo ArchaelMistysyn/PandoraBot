@@ -49,3 +49,5 @@ async def get_monument_embed(interaction, ctx_obj, player_obj, monument_num):
     await interaction.response.edit_message(embed=embed_msg, view=None)
     if lvl_change != 0:
         await sm.send_notification(ctx_obj, player_obj, "Level", lvl_change)
+    if sm.check_rare_item(reward.item_id):
+        await sm.send_notification(ctx_obj, player_obj, "Item", reward.item_id)
