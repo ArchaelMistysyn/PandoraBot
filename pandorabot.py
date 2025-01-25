@@ -38,6 +38,7 @@ import bosses
 import skillpaths
 import pilengine
 import adventure
+import adventuredata
 import fishing
 import timezone
 
