@@ -381,7 +381,7 @@ class PvPCog(commands.Cog):
             flare_data = await combat.trigger_flare(trackers[attacker], combatants[attacker], pvp_data=trackers[defender])
             hit_list.append(flare_data)
 
-    async def handle_pvp_ultimate(self, role_order, combatant, tracker, combo_count, hit_list):
+    async def handle_pvp_ultimate(self, role_order, combatants, tracker, combo_count, hit_list):
         attacker, defender = role_order[0], role_order[1]
         if tracker[attacker].charges < 20:
             return

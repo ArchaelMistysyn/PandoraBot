@@ -706,7 +706,7 @@ async def display_binventory(player_obj, method, view_type, include_id=False):
         "Gemstone": "^(Catalyst|Gemstone([0-9]|1[0]))$",
         "Fish": "^(Fish)",
         "Misc": "^(Potion|Trove|Chest|Stone|Token|Skull[0-3])",
-        "Ultra Rare": "^(Lotus|LightStar|DarkStar|Gemstone12|Skull4|Nephilim|Nadir|RoyalCoin)"}
+        "Ultra Rare": "^(Lotus|LightStar|DarkStar|Gemstone12|Skull4|Nephilim|Nadir|Salvation|RoyalCoin)"}
     content, title = "", f'__**{player_obj.player_username}\'s {method} Inventory:\n**__'
     raw_query = ("SELECT item_id, item_qty FROM BasicInventory "
                  "WHERE player_id = :id_check AND item_qty <> 0 ORDER BY item_id ASC")

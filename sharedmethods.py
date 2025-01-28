@@ -18,7 +18,7 @@ import pilengine
 ultra_id_list = ["Skull3", "EssenceXXX"]
 ultra_id_list += [f"Lotus{x}" for x in range(1, 10)]
 uber_id_list = ["Gemstone11", "DarkStar", "LightStar", "Nadir", "Lotus10"]
-ultimate_id_list = ["Skull4", "Nephilim", "Sacred", "Ruler", "Pandora", "Lotus11"]
+ultimate_id_list = ["Skull4", "Nephilim", "Sacred", "Ruler", "Salvation", "Pandora", "Lotus11"]
 u_rarity_id_list = ultra_id_list + uber_id_list + ultimate_id_list
 embed_colour_dict = {
     "red": discord.Colour(0xFF0000), "blue": discord.Colour(0x0000FF), "green": discord.Colour(0x00FF00),

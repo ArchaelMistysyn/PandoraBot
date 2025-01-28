@@ -343,6 +343,9 @@ uncategorized_data = [
      "Rare drop from raid bosses. Can be optionally consumed as an additional cost to guarantee a 'Sacred' "
      "outcome during infusion. It can also be used to upgrade tier 8 gear to tier 9."
      " [Ultimate Rare]", 0],
+    ['Salvation', "Seal of Salvation", 100, 9, '<:Sacred:1274786598336331807>',
+     "Rare drop from raid bosses. Can be consumed to guarantee an on-class skill roll on an Amulet."
+     " [Ultimate Rare]", 0],
     ['Metamorphite', 'Metamorphite Ore', 100, 7, '<a:elootitem:1144477550379274322>',
      "A mysterious ore that can drastically change an item.", 0]]
 itemdata_dict = build_item_dict(itemdata_dict, uncategorized_data, unique_index=True)

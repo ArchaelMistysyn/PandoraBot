@@ -342,7 +342,9 @@ class ItemRoll:
         current_roll = current[self.roll_code]
         self.roll_value = current_roll[1] * roll_adjust
         temp_msg = f"{current_roll[0]}"
-        self.roll_msg = f"{temp_msg} {int(round(self.roll_value * 100))}%"
+        roll_percentage = self.roll_value * 100
+        roll_str = f"{int(roll_percentage)}" if roll_percentage == int(roll_percentage) else f"{roll_percentage:.1f}"
+        self.roll_msg = f"{temp_msg} {roll_str}%"
         if "X" in temp_msg:
             self.roll_msg = temp_msg.replace("X", str(int(round(self.roll_value * 100))))
         self.roll_name = current_roll[0]
@@ -388,7 +390,7 @@ def add_roll(selected_item, num_rolls):
         selected_item.item_num_rolls += 1
 
 
-def reroll_roll(selected_item, method_type):
+def reroll_roll(selected_item, method_type, player_class):
     # Handle full reroll
     if method_type == "all":
         tier_list = [ItemRoll(roll_id).roll_tier for roll_id in selected_item.roll_values]
@@ -405,6 +407,8 @@ def reroll_roll(selected_item, method_type):
     # Determine the roll list and total weighting based on method
     if method == "unique":
         roll_list, total_weighting = handle_unique(selected_item)
+    elif method == "Salvation":
+        roll_list, total_weighting = handle_unique(selected_item, specific_class=player_class, combined=False)
     else:
         roll_list, total_weighting = item_roll_master_dict[method][0], item_roll_master_dict[method][1]
     # Build the list of exclusions and identify the roll to be replaced
@@ -424,16 +428,17 @@ def reroll_roll(selected_item, method_type):
     selected_item.roll_values[original_roll_location] = new_roll_id
 
 
-def handle_unique(selected_item, specific_class=None):
+def handle_unique(selected_item, specific_class=None, combined=True):
     # Determine the unique rolls to use.
     shared_roll_dict = {"W": "w", "A": "a", "V": "a", "Y": "y", "G": "y", "C": "y"}
     specific_type = shared_roll_dict[selected_item.item_type]
     selected_unique_type = ["s", specific_type]
     # Combine the data.
-    combined_dict = {}
-    combined_dict.update(unique_rolls[selected_unique_type[0]][0])
-    combined_dict.update(unique_rolls[selected_unique_type[1]][0])
-    combined_weighting = unique_rolls[selected_unique_type[0]][1] + unique_rolls[selected_unique_type[1]][1]
+    combined_dict, combined_weighting = {}, 0
+    if combined:
+        combined_dict.update(unique_rolls[selected_unique_type[0]][0])
+        combined_dict.update(unique_rolls[selected_unique_type[1]][0])
+        combined_weighting = unique_rolls[selected_unique_type[0]][1] + unique_rolls[selected_unique_type[1]][1]
     if specific_type == "y":
         temp_list = unique_rolls["SKILL"][0]
         if specific_class is not None:

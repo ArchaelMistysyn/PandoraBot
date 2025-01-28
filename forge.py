@@ -146,7 +146,11 @@ class ForgeView(discord.ui.View):
             "Augment": {"emoji": "<:Hammer:1274787429383147551>", "label": "Astral Augment",
                         "description": "Add/Modify the item rolls"},
             "Implant": {"emoji": "<a:eorigin:1145520263954440313>", "label": "Implant Element",
-                        "description": "Add new elements to the item"}}
+                        "description": "Add new elements to the item"}
+        }
+        if selected_item.item_type == "Y":
+            options_dict["Salvation"] = {"emoji": "<:Hammer:1274787429383147551>", "label": "Salvation",
+                                         "description": "Guarantee an on-class skill"}
         option_data = [discord.SelectOption(emoji=options_dict[key]["emoji"], label=options_dict[key]["label"],
                                             description=options_dict[key]["description"]) for key in options_dict]
         select_menu = discord.ui.Select(placeholder="Select crafting method!", min_values=1, max_values=1,
@@ -191,7 +195,7 @@ class SubSelectView(discord.ui.View):
                     description += f"+ 1x {item_2.item_name}"
             elif craft_method == "Fusion":
                 description_list = ["Add/Reroll", "Reroll defensive", "Reroll All", "Reroll damage",
-                                    "Reroll penetration", "Reroll curse", "Reroll unique"]
+                                    "Reroll penetration", "Reroll curse", "Reroll unique", "Class reroll"]
                 item_1, item_2 = inventory.BasicItem("Hammer"), None
                 description = f"{description_list[i]}: {cost_qty}x {item_1.item_name} "
                 if i >= 3:
@@ -237,7 +241,7 @@ class UpgradeView(discord.ui.View):
         self.change_method.emoji = self.change_base.emoji = "↩️"
         # Method: num_buttons, button_names, material_ids, crafting_method
         method_dict = {
-            "Enhance": [2, ["Enhance", "Gemstone"], ["Enhance", "EnhanceAll"],
+            "Enhance": [2, ["Enhance", "Gemstone"], ["Enhance", "EnhanceFull"],
                         [f"Fae{self.element}", f"Gemstone{self.element}"]],
             "Upgrade": [1, ["Reinforce"], ["Reinforce"], ["Ore5"]],
             "Open Socket": [1, ["Create Socket"], ["Open"], ["Matrix"]],
@@ -246,11 +250,13 @@ class UpgradeView(discord.ui.View):
             "Cosmic Attunement": [1, ["Attune"], ["Attunement"], ["Pearl"]],
             "Astral Augment": [1, ["Star Fusion (Add/Reroll)", "Radiant Fusion (Defensive)", "Chaos Fusion (All)",
                                    "Void Fusion (Damage)", "Wish Fusion (Penetration)", "Abyss Fusion (Curse)",
-                                   "Divine Fusion (Unique)"],
+                                   "Divine Fusion (Unique)", "Salvation (Class)"],
                                ["any fusion", "defensive fusion", "all fusion", "damage fusion",
-                                "penetration fusion", "curse fusion", "unique fusion"], ["Hammer"]],
+                                "penetration fusion", "curse fusion", "unique fusion", "salvation"], ["Hammer"]],
             "Implant Element": [1, [f"Implant ({gli.element_names[self.element]})"], ["Implant"],
-                                [f"Gemstone{self.element}"]]}
+                                [f"Gemstone{self.element}"]],
+            "Salvation": [1, ["Salvation"], ["Salvation"], ["Salvation"]]
+        }
         self.menu_details = method_dict[self.menu_type]
         self.method, self.material_id = self.menu_details[2], self.menu_details[3]
         # Construct the buttons.
@@ -343,7 +349,7 @@ def check_maxed(target_item, method, material_id, element):
     material_item = inventory.BasicItem(material_id)
     success_rate = material_item.item_base_rate
     match method:
-        case "Enhance" | "EnhanceAll":
+        case "Enhance" | "EnhanceFull":
             success_rate = max(5, (100 - (target_item.item_enhancement // 10) * 5)) if method == "Enhance" else 100
             if target_item.item_enhancement >= gli.max_enhancement[(target_item.item_tier - 1)]:
                 return True, 0
@@ -377,7 +383,7 @@ async def craft_item(player_obj, item_obj, material_item, method_type):
     cost_list.append(material_item)
     # Handle secondary costs if applicable.
     secondary_item = None
-    if method_type in ["Enhance", "EnhanceAll"]:
+    if method_type in ["Enhance", "EnhanceFull"]:
         if item_obj.item_tier >= 5:
             secondary_item = inventory.BasicItem(f"Fragment{item_obj.item_tier - 4}")
     elif method_type == "Purify":
@@ -396,7 +402,7 @@ async def craft_item(player_obj, item_obj, material_item, method_type):
         cost_list.append(secondary_item)
     # Attempt the craft.
     match method_type:
-        case "Enhance" | "EnhanceAll":
+        case "Enhance" | "EnhanceFull":
             outcome = await enhance_item(player_obj, item_obj, cost_list, success_check, cost_qty=cost_1)
         case "Reinforce":
             outcome = await reinforce_item(player_obj, item_obj, cost_list, success_check)
@@ -406,6 +412,8 @@ async def craft_item(player_obj, item_obj, material_item, method_type):
             outcome = await reforge_item(player_obj, item_obj, cost_list, success_rate, success_check, "Abyss")
         case "ReforgeM":
             outcome = await reforge_item(player_obj, item_obj, cost_list, success_rate, success_check, "Mutate")
+        case "Salvation":
+            outcome = await modify_rolls(player_obj, item_obj, cost_list, success_rate, success_check, "Salvation")
         case "Open":
             outcome = await open_item(player_obj, item_obj, cost_list, success_rate, success_check)
         case "Attunement":
@@ -508,16 +516,16 @@ async def modify_rolls(player_obj, selected_item, cost_list, success_rate, succe
         # Material is consumed. Attempts to re-roll the item.
         await handle_craft_costs(player_obj, cost_list)
         if success_check <= success_rate:
-            itemrolls.reroll_roll(selected_item, method)
+            itemrolls.reroll_roll(selected_item, method, player_obj.player_class)
             outcome = 1
     else:
         # Check eligibility for which methods can be used on the item.
-        if method not in itemrolls.roll_structure_dict[selected_item.item_type] and method != "all":
+        if method not in itemrolls.roll_structure_dict[selected_item.item_type] and method != "all" and method != "Salvation":
             return 3
         # Material is consumed. Attempts to re-roll the item.
         await handle_craft_costs(player_obj, cost_list)
         if success_check <= success_rate:
-            itemrolls.reroll_roll(selected_item, method)
+            itemrolls.reroll_roll(selected_item, method, player_obj.player_class)
             outcome = 1
     # Update the item if applicable.
     if outcome == 1:
