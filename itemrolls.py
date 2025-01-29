@@ -401,14 +401,16 @@ def reroll_roll(selected_item, method_type, player_class):
         return
     # Handle single reroll
     method = random.choice(roll_structure_dict[selected_item.item_type]) if method_type == "any" else method_type
+    if method_type == "Salvation":
+        method = "unique"
     exclusions_list, exclusions_weighting = [], []
     max_count = roll_structure_dict[selected_item.item_type].count(method)
     target_count = random.randint(1, max_count)
     # Determine the roll list and total weighting based on method
-    if method == "unique":
-        roll_list, total_weighting = handle_unique(selected_item)
-    elif method == "Salvation":
+    if method_type == "Salvation":
         roll_list, total_weighting = handle_unique(selected_item, specific_class=player_class, combined=False)
+    elif method == "unique":
+        roll_list, total_weighting = handle_unique(selected_item)
     else:
         roll_list, total_weighting = item_roll_master_dict[method][0], item_roll_master_dict[method][1]
     # Build the list of exclusions and identify the roll to be replaced
@@ -416,9 +418,12 @@ def reroll_roll(selected_item, method_type, player_class):
         current_roll = ItemRoll(roll_id)
         if current_roll.roll_category != method:
             continue
-        exclusions_list.append(current_roll.roll_code)
-        roll_weighting = roll_list[current_roll.roll_code][2]
-        exclusions_weighting.append(roll_weighting)
+        if current_roll.roll_code in roll_list:
+            exclusions_list.append(current_roll.roll_code)
+            roll_weighting = roll_list[current_roll.roll_code][2]
+            exclusions_weighting.append(roll_weighting)
+        else:
+            original_roll_tier, original_roll_location = current_roll.roll_tier, roll_index
         if len(exclusions_list) == target_count:
             original_roll_tier, original_roll_location = current_roll.roll_tier, roll_index
     available_rolls = [roll for roll in roll_list if roll not in exclusions_list]
