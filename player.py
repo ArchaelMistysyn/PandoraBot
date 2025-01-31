@@ -374,8 +374,8 @@ class PlayerProfile:
         gem_id_list = []
         item_list = await inventory.read_custom_item(fetch_equipped=self.player_equipped)
         for e_item in item_list:
-            gear_score += e_item.get_gear_score()
             if e_item is not None:
+                gear_score += e_item.get_gear_score()
                 gem_id_list.append(e_item.item_inlaid_gem_id)
             else:
                 gem_id_list.append(0)
