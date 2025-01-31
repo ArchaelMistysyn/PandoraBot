@@ -381,18 +381,18 @@ class PvPCog(commands.Cog):
             flare_data = await combat.trigger_flare(trackers[attacker], combatants[attacker], pvp_data=trackers[defender])
             hit_list.append(flare_data)
 
-    async def handle_pvp_ultimate(self, role_order, combatants, tracker, combo_count, hit_list):
+    async def handle_pvp_ultimate(self, role_order, combatants, trackers, combo_count, hit_list):
         attacker, defender = role_order[0], role_order[1]
-        if tracker[attacker].charges < 20:
+        if trackers[attacker].charges < 20:
             return
         hit_data = await self.handle_pvp_hit_damage(role_order, combatants, trackers, combo_count, hit_list, True)
         scaled_dmg, skill_name, mana_msg, status_msg, second_msg, critical_type, evade = hit_data
         hit_msg = f"{combatants[attacker].player_username} - Ultimate: {skill_name} {sm.number_conversion(scaled_dmg)}"
         hit_msg += f"{mana_msg}{status_msg}{second_msg}{critical_type}{evade}"
         hit_list.append([scaled_dmg, hit_msg])
-        tracker[defender].player_cHP -= scaled_dmg
+        trackers[defender].player_cHP -= scaled_dmg
         if combatants[attacker].appli["Bleed"] >= 1:
-            await self.handle_pvp_bleed(role_order, combatants, tracker, hit_list, True)
+            await self.handle_pvp_bleed(role_order, combatants, trackers, hit_list, True)
 
     async def handle_pvp_hit_damage(self, role_order, combatants, trackers, combo_count, hit_list, is_ultimate=False):
         attacker, defender = role_order[0], role_order[1]
