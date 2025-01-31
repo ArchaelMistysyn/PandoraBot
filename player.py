@@ -380,9 +380,10 @@ class PlayerProfile:
             else:
                 gem_id_list.append(0)
         gem_list = await inventory.read_custom_item(fetch_equipped=gem_id_list)
-        for e_gem in gem_list:
-            if e_gem is not None:
-                gear_score += e_gem.get_gear_score()
+        if gem_list is not None:
+            for e_gem in gem_list:
+                if e_gem is not None:
+                    gear_score += e_gem.get_gear_score()
         return gear_score
 
     async def reset_skill_points(self):
