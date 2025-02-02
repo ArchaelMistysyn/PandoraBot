@@ -813,11 +813,9 @@ async def sell(user, item, embed_msg):
         response_embed.add_field(name="Item Not Sold!", value=response, inline=False)
         return response_embed
     # Sell the item.
-    sell_msg = await user.adjust_coins(sell_value)
-
+    sell_msg = await user.adjust_coins(sell_value, apply_pact=False)
     raw_query = "DELETE FROM CustomInventory WHERE item_id = :item_check"
     await rqy(raw_query, params={'item_check': item.item_id})
-
     currency_msg = f'You now have {user.player_coins:,} lotus coins!'
     response_embed.add_field(name=f"Item Sold! {gli.coin_icon} {sell_msg} lotus coins acquired!",
                              value=currency_msg, inline=False)

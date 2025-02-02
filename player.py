@@ -4,8 +4,11 @@ import discord
 import random
 from datetime import datetime as dt, timedelta
 from zoneinfo import ZoneInfo
-
 import math
+from Crypto.Cipher import AES
+from Crypto.Random import get_random_bytes
+import base64
+import secrets
 
 # Data imports
 import globalitems as gli
@@ -90,6 +93,32 @@ class PlayerProfile:
         self.block, self.dodge = 0.01, 0.01
         self.damage_mitigation, self.mitigation_bonus = 0.0, 0.0
         self.elemental_res, self.all_elemental_res = [0.0] * 9, 0.1
+
+    async def set_login_key(self, SECRET_KEY):
+        login_key = secrets.token_hex(16)
+        cipher = AES.new(SECRET_KEY.encode(), AES.MODE_CBC)
+        iv = cipher.iv
+        encrypted_data = cipher.encrypt(pad(login_key.encode()))
+        encrypted_b64 = base64.b64encode(iv + encrypted_data).decode()
+        query = (f"INSERT INTO LoginKeys (discord_id, encrypted_key) "
+                 f"VALUES (:discord_id, :encrypted_key) "
+                 f"ON DUPLICATE KEY UPDATE encrypted_key = VALUES(encrypted_key)")
+        params = {"discord_id": self.discord_id, "encrypted_key": encrypted_b64}
+        await rqy(query, params=params)
+        return login_key
+
+    async def get_login_key(self, SECRET_KEY):
+        query = "SELECT encrypted_key FROM LoginKeys WHERE discord_id = :discord_id"
+        params = {"discord_id": self.discord_id}
+        data_df = await rqy(query, return_value=True, params=params)
+        if data_df is None or len(data_df) == 0:
+            return None
+        encrypted_data = data_df['encrypted_key'].values[0]
+        encrypted_data = base64.b64decode(encrypted_data)
+        iv = encrypted_data[:16]
+        cipher = AES.new(SECRET_KEY.encode(), AES.MODE_CBC, iv)
+        decrypted_data = unpad(cipher.decrypt(encrypted_data[16:]))
+        return decrypted_data.decode()
 
     async def get_player_stats(self, method):
         await self.reload_player()
@@ -801,3 +830,12 @@ def show_num(input_number, adjust=100):
 def apply_singularity(data_list, bonus):
     highest_index = data_list.index(max(data_list))
     data_list[highest_index] += bonus
+
+
+# Encryption Padding
+def pad(data):
+    return data + (16 - len(data) % 16) * chr(16 - len(data) % 16).encode()
+
+
+def unpad(data):
+    return data[:-ord(data[-1:])]

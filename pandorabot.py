@@ -70,6 +70,12 @@ with open("pandora_bot_token.txt", 'r') as token_file:
     for line in token_file:
         token_info = line
 TOKEN = token_info
+# Get encryption info
+token_info = None
+with open("encryption.txt", 'r') as encryption_key_file:
+    for line in encryption_key_file:
+        encryption_info = line
+SECRET_KEY = encryption_info
 # Get API Info
 with open("twitch_api_login.txt", 'r') as twitch_file:
     line = twitch_file.readline().strip()
@@ -112,6 +118,32 @@ def run_discord_bot():
             conn_msg = conn_msg if pandora_bot.conn_status != 'Disconnect [Major]' else f'{user_ping}{conn_msg}'
             await send_log_msg(conn_msg if '[Major]' not in pandora_bot.conn_status else f'{user_ping}{conn_msg}')
             pandora_bot.conn_status, pandora_bot.down_time = "Connected", None
+
+    @pandora_bot.event
+    async def on_message(message):
+        if message.author.bot:
+            return
+        if isinstance(message.channel, discord.DMChannel):
+            user_message = message.content.lower()
+            player_obj = await player.get_player_by_discord(str(message.author.id))
+            if player_obj is None:
+                await message.author.send("Target user is not registered.")
+                return
+            response_msg = (f"DM Commands\n"
+                            f"'login' - Create web login key or display existing web login key.\n"
+                            f"'reset' - Reset web login key")
+            if user_message == "play" or user_message == "reset":
+                new_key = await player_obj.set_login_key(SECRET_KEY)
+                response_msg = f"Discord ID: {player_obj.discord_id}\nYour new secure login key is ||{new_key}||"
+            elif user_message == "login":
+                existing_key = await player_obj.get_login_key(SECRET_KEY)
+                if existing_key:
+                    response_msg = f"Discord ID: {player_obj.discord_id}\nYour secure login key is ||{existing_key}||"
+                else:
+                    new_key = await player_obj.set_login_key(SECRET_KEY)
+                    response_msg = f"Discord ID: {player_obj.discord_id}\nYour new secure login key is ||{new_key}||"
+            if not user_message.startswith("!"):
+                await message.author.send(response_msg)
 
     def set_command_category(category, command_position):
         def decorator(func):
