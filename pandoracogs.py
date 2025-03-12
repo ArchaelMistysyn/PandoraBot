@@ -68,8 +68,6 @@ class MetricsCog(commands.Cog):
             message_obj = await metrics_channel.fetch_message(gli.metrics_message_id)
             await message_obj.edit(content=message)
 
-    import datetime
-
     async def run_credit(self):
         # Note for future self. This can be more efficient done via batches if needed.
         now = dt.now()
@@ -87,7 +85,7 @@ class MetricsCog(commands.Cog):
                 else:
                     new_credit = current + 1
                     await player.update_credit(discord_id, new_credit)
-                credited_users.append((member, new_credit))
+                    credited_users.append((member, new_credit))
         for user, credit in credited_users:
             credit_msg = (f"You've received 1 ArchDragon Store credit. Your new balance is {credit:,}.\n"
                           f"Credit is deducted as the highest eligible gift card value: 10, 25, 50, 100, 250, 500\n"

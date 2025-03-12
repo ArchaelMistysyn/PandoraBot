@@ -857,7 +857,7 @@ async def update_credit(discord_id, change):
 
 
 async def check_credit(discord_id):
-    raw_query = f"SELECT store_credit FROM ArchDragonRewards WHERE player_id = :player_check"
+    raw_query = f"SELECT store_credit FROM ArchDragonRewards WHERE discord_id = :player_check"
     params = {"player_check": str(discord_id)}
     result_df = await rqy(raw_query, params=params, return_value=True)
     if result_df.empty or len(result_df) == 0:

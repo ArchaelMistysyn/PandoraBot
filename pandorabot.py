@@ -133,7 +133,7 @@ def run_discord_bot():
                 if credit is None or credit < 10:
                     await message.author.send("You need at least 10 credits to checkout.")
                     return
-                deducted = next(tier for tier in tiers if credit >= tier)
+                deducted = next(tier for tier in credit_tiers if credit >= tier)
                 new_balance = credit - deducted
                 await player.update_credit(str(message.author.id), new_balance)
                 await message.author.send(
