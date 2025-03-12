@@ -9,7 +9,7 @@ import traceback
 import globalitems as gli
 from pandoradb import run_query as rqy
 import player
-import timezone
+from datetime import datetime as dt
 
 # Item/crafting imports
 import pact
@@ -72,7 +72,7 @@ class MetricsCog(commands.Cog):
 
     async def run_credit(self):
         # Note for future self. This can be more efficient done via batches if needed.
-        now = timezone.get_now()
+        now = dt.now()
         if now.day != 1:
             return
         eligible_roles = [role for role in self.guild.roles if "Subscriber" in role.name]
