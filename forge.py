@@ -354,8 +354,10 @@ def check_maxed(target_item, method, material_id, element):
             if target_item.item_enhancement >= gli.max_enhancement[(target_item.item_tier - 1)]:
                 return True, 0
             return False, success_rate
-        case "ReforgveA" | "ReforgeV" | "ReforgeM":
+        case "ReforgveA" | "ReforgeM":
             return False, success_rate
+        case "ReforgeV":
+            return False if target_item.item_type != "W" else True, success_rate
         case "Reinforce":
             success_rate = 100 - target_item.item_quality_tier * 10
             return (True, 0) if target_item.item_quality_tier == 5 else (False, success_rate)
@@ -489,6 +491,8 @@ async def open_item(player_obj, selected_item, cost_list, success_rate, success_
 
 async def reforge_item(player_obj, selected_item, cost_list, success_rate, success_check, method):
     outcome = 0
+    if method == "Abyss" and selected_item.item_type == "W":
+        return 2
     # Material is consumed. Attempts to re-roll and update the item.
     await handle_craft_costs(player_obj, cost_list)
     if success_check <= success_rate:

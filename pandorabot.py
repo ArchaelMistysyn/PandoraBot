@@ -15,6 +15,7 @@ import traceback
 from datetime import datetime as dt, timedelta
 from zoneinfo import ZoneInfo
 
+import globalitems
 # Data imports
 import globalitems as gli
 import questdata
@@ -84,6 +85,8 @@ with open("twitch_api_login.txt", 'r') as twitch_file:
 utc = ZoneInfo("UTC")
 time_zone = ZoneInfo('America/Toronto')
 Mysmir_title = "Mysmir, The Changeling"
+card_dict = {10: "Bronze", 25: "Silver", 50: "Gold", 100: "Platinum", 250: "Sovereign", 500: "Sacred"}
+credit_tiers = [500, 250, 100, 50, 25, 10]
 
 
 class PandoraBot(commands.Bot):
@@ -125,6 +128,22 @@ def run_discord_bot():
             return
         if isinstance(message.channel, discord.DMChannel):
             user_message = message.content.lower()
+            if user_message == "checkout":
+                credit = await player.check_credit(str(message.author.id))
+                if credit is None or credit < 10:
+                    await message.author.send("You need at least 10 credits to checkout.")
+                    return
+                deducted = next(tier for tier in tiers if credit >= tier)
+                new_balance = credit - deducted
+                await player.update_credit(str(message.author.id), new_balance)
+                await message.author.send(
+                    f"You've checked out {deducted:,} credits. Your remaining balance is {new_balance:,}.\n"
+                    f"A Server Admin has been notified to issue your gift card.")
+                admin_user = await pandora_bot.fetch_user(globalitems.reverse_GM_id_dict["Archael"])
+                await admin_user.send(
+                    f"{message.author} checked out {deducted:,} credits.\n"
+                    f"New balance: {new_balance:,}.")
+                return
             player_obj = await player.get_player_by_discord(str(message.author.id))
             if player_obj is None:
                 await message.author.send("Target user is not registered.")
@@ -443,7 +462,6 @@ def run_discord_bot():
         if trigger_return:
             return
         try:
-            card_dict = {10: "Bronze", 25: "Silver", 50: "Gold", 100: "Platinum", 250: "Sovereign", 500: "Sacred"}
             if value not in card_dict.keys():
                 await ctx.send("Invalid gift card value.")
                 return

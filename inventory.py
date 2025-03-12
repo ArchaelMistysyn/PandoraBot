@@ -195,7 +195,11 @@ class CustomItem:
         _ = await read_custom_item(self.item_id, reloading=self)
 
     def reforge_class(self, specific_class=""):
-        self.item_damage_type = specific_class if specific_class != "" else random.choice(gli.class_names)
+        if specific_class:
+            self.item_damage_type = specific_class
+        else:
+            available_classes = [cls for cls in gli.class_names if cls != self.item_damage_type]
+            self.item_damage_type = random.choice(available_classes)
 
     def set_enhancement(self, random_enhance):
         if not random_enhance or self.item_tier <= 0:

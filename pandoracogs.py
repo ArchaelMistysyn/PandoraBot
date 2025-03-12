@@ -50,6 +50,7 @@ class MetricsCog(commands.Cog):
         self.bot, self.lock = bot, asyncio.Lock()
         self.guild = self.bot.get_guild(1011375205999968427)
         self.metrics_manager.start()
+        self.credit_manager.start()
 
     def cog_unload(self):
         self.metrics_manager.cancel()
@@ -67,10 +68,41 @@ class MetricsCog(commands.Cog):
             message_obj = await metrics_channel.fetch_message(gli.metrics_message_id)
             await message_obj.edit(content=message)
 
+    import datetime
+
+    async def run_credit(self):
+        # Note for future self. This can be more efficient done via batches if needed.
+        now = timezone.get_now()
+        if now.day != 1:
+            return
+        eligible_roles = [role for role in self.guild.roles if "Subscriber" in role.name]
+        credited_users = []
+        for member in self.guild.members:
+            if any(role in member.roles for role in eligible_roles):
+                discord_id = member.id
+                current = await player.check_credit(discord_id)
+                if current is None:
+                    await player.set_credit(discord_id, 1)
+                    new_credit = 1
+                else:
+                    new_credit = current + 1
+                    await player.update_credit(discord_id, new_credit)
+                credited_users.append((member, new_credit))
+        for user, credit in credited_users:
+            credit_msg = (f"You've received 1 ArchDragon Store credit. Your new balance is {credit:,}.\n"
+                          f"Credit is deducted as the highest eligible gift card value: 10, 25, 50, 100, 250, 500\n"
+                          f"Message me 'cashout' or open a basic ticket in the server to request your gift card.")
+            await user.send(credit_msg)
+
     @tasks.loop(seconds=3600)
     async def metrics_manager(self):
         async with self.lock:
             await self.run_metrics()
+
+    @tasks.loop(seconds=86401)
+    async def credit_manager(self):
+        async with self.lock:
+            await self.run_credit()
 
     @metrics_manager.error
     async def metrics_manager_error(self, e):

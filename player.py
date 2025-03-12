@@ -303,7 +303,6 @@ class PlayerProfile:
         max_exp = get_max_exp(self.player_level)
         level_increase = 0
         max_level = 999 if self.player_quest > 53 else 200 if self.player_quest > 52 else 150 if self.player_quest > 50 else 100
-
         while self.player_exp > max_exp and self.player_level < max_level:
             self.player_exp -= max_exp
             level_increase += 1
@@ -475,6 +474,10 @@ class PlayerProfile:
             base_mitigation = e_item[1].item_base_stat
         for y in e_item[1:]:
             if y is not None:
+                # TRYING TO CATCH DUMB ERROR
+                if "D" in item.item_type or item.item_bonus_stat.isnumeric():
+                    force_array = {}
+                    x = force_array[item.item_id]
                 self.unique_ability_multipliers(y)
         # Non-Gear Item Multipliers
         insignia.assign_insignia_values(self)
@@ -839,3 +842,24 @@ def pad(data):
 
 def unpad(data):
     return data[:-ord(data[-1:])]
+
+
+async def set_credit(discord_id, change):
+    raw_query = f"INSERT INTO ArchDragonRewards (discord_id, store_credit) VALUES (:check, 0)"
+    params = {"check": str(discord_id)}
+    await rqy(raw_query, params=params)
+
+
+async def update_credit(discord_id, change):
+    raw_query = f"UPDATE ArchDragonRewards SET store_credit = :new_value WHERE discord_id = :check"
+    params = {"new_value": change, "check": str(discord_id)}
+    await rqy(raw_query, params=params)
+
+
+async def check_credit(discord_id):
+    raw_query = f"SELECT store_credit FROM ArchDragonRewards WHERE player_id = :player_check"
+    params = {"player_check": str(discord_id)}
+    result_df = await rqy(raw_query, params=params, return_value=True)
+    if result_df.empty or len(result_df) == 0:
+        return None
+    return result_df['store_credit'].values[0]

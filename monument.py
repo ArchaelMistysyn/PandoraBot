@@ -17,7 +17,7 @@ async def get_monument_embed(interaction, ctx_obj, player_obj, monument_num):
     monument_title = ["Monument of Beginnings", "Monument of Journeys",
                       "Monument of Providence", "Monument of Endings",
                       "Monument of Apotheosis"]
-    monument_description = ["The immaculate monument resonates with the life and hope.\n"
+    monument_description = ["The immaculate monument resonates with life and hope.\n"
                             "The unfamiliar markings grant you new perspective and understanding.",
                             "The abstract monument resonates with passion and freedom.\n"
                             "The ambiguous markings grant you new perspective and understanding.",
