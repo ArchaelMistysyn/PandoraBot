@@ -845,8 +845,8 @@ def unpad(data):
 
 
 async def set_credit(discord_id, change):
-    raw_query = f"INSERT INTO ArchDragonRewards (discord_id, store_credit) VALUES (:check, 0)"
-    params = {"check": str(discord_id)}
+    raw_query = f"INSERT INTO ArchDragonRewards (discord_id, store_credit) VALUES (:check, :change)"
+    params = {"check": str(discord_id), "change": change}
     await rqy(raw_query, params=params)
 
 

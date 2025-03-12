@@ -79,15 +79,15 @@ class MetricsCog(commands.Cog):
             if any(role in member.roles for role in eligible_roles):
                 discord_id = member.id
                 current = await player.check_credit(discord_id)
+                credit_amount = 2 if any("Crowned" in role.name for role in member.roles) else 1
                 if current is None:
-                    await player.set_credit(discord_id, 1)
-                    new_credit = 1
+                    await player.set_credit(discord_id, credit_amount)
+                    new_credit = credit_amount
                 else:
-                    new_credit = current + 1
+                    new_credit = current + credit_amount
                     await player.update_credit(discord_id, new_credit)
-                    credited_users.append((member, new_credit))
         for user, credit in credited_users:
-            credit_msg = (f"You've received 1 ArchDragon Store credit. Your new balance is {credit:,}.\n"
+            credit_msg = (f"You received {credit_amount} ArchDragon Store credit(s). Your new balance is {credit:,}.\n"
                           f"Credit is deducted as the highest eligible gift card value: 10, 25, 50, 100, 250, 500\n"
                           f"Message me 'cashout' or open a basic ticket in the server to request your gift card.")
             await user.send(credit_msg)
