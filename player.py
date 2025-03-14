@@ -475,9 +475,9 @@ class PlayerProfile:
         for y in e_item[1:]:
             if y is not None:
                 # TRYING TO CATCH DUMB ERROR
-                if "D" in item.item_type or item.item_bonus_stat.isnumeric():
-                    force_array = {}
-                    x = force_array[item.item_id]
+                # if "D" in y.item_type or y.item_bonus_stat.isnumeric():
+                    # force_array = {}
+                    # x = force_array[y.item_id]
                 self.unique_ability_multipliers(y)
         # Non-Gear Item Multipliers
         insignia.assign_insignia_values(self)
