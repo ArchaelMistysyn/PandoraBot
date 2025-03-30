@@ -400,7 +400,7 @@ class PvPCog(commands.Cog):
         if stun_status is not None:
             trackers[defender].stun_status = stun_status
             trackers[defender].stun_cycles += 1
-        combo_count[attacker] += 1 + combat.check_synchronized(combatants[attacker])
+        combo_count[attacker] += combat.check_synchronized(combatants[attacker])
         hit_damage, skill_name = combat.skill_adjuster(combatants[attacker], trackers[attacker], hit_damage,
                                                        combo_count[attacker], is_ultimate)
         hit_damage, mana_msg = combat.check_mana(combatants[attacker], trackers[attacker], hit_damage)

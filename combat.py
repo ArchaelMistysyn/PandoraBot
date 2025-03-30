@@ -200,7 +200,7 @@ async def handle_player_actions(hit_list, tracker_obj, boss_obj, player_obj):
         hit_list.append(await hit_boss(tracker_obj, boss_obj, player_obj, combo_count))
         if tracker_obj.solar_stacks >= 35:
             hit_list.append(await trigger_flare(tracker_obj, player_obj, boss_obj=boss_obj))
-        combo_count += 1 + check_synchronized(player_obj)
+        combo_count += check_synchronized(player_obj)
         tracker_obj.charges += player_obj.appli["Ultimate"]
         # Handle Ultimate
         if tracker_obj.charges >= 20:
