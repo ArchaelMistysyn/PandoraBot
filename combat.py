@@ -386,7 +386,7 @@ def handle_evasions(block_rate, dodge_rate, damage, bypass1=False, bypass2=False
 
 
 def boss_defences(method, player_obj, boss_object, location, e_weapon):
-    mult = (1 - (0.05 * boss_object.boss_tier - 1))
+    mult = (1 - (0.05 * (boss_object.boss_tier - 1)))
     if method == "Element" and boss_object.boss_eleweak[location] != 1:
         return mult
     c_idx, w_idx = gli.class_names.index(player_obj.player_class), gli.class_names.index(e_weapon.item_damage_type)
