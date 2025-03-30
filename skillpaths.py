@@ -17,7 +17,7 @@ glyph_data = {
     "Horizon": [["Bleed Application +X", 1],
                 ["Red Boundary", None, 20], ["Vermilion Dawn", None, 40], ["Scarlet Sunset", None, 60],
                 ["Ruby Skies", "Bleed Penetration is Doubled", 80],
-                ["Scarlet Divide", "Bleed Damage applies to all hits", 100]],
+                ["Scarlet Divide", "Bleed Damage/Pen applies to all hits", 100]],
     "Eclipse": [["Ultimate Application +X", 1],
                 ["Nightfall", None, 20], ["Moonshadow", None, 40], ["Umbra", None, 60],
                 ["Twilight", "Ultimate Application is Doubled", 80],

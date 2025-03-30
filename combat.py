@@ -249,7 +249,7 @@ async def hit_boss(tracker_obj, boss_obj, player_obj, combo_count, hit_type="Reg
     damage, status_msg = check_lock(player_obj, tracker_obj, damage)
     damage, second_msg = check_bloom(player_obj, damage)
     if player_obj.unique_glyph_ability[2]:
-        damage *= (1 + player_obj.bleed_mult)
+        damage *= (1 + player_obj.bleed_mult) * (1+player_obj.bleed_pen)
     if status_msg == " *TIME SHATTER*" or critical_type != "":
         damage *= random.randint(1, max(1, player_obj.rng_bonus))
     damage, extension = (boss_obj.damage_cap, " *LIMIT*") if damage >= boss_obj.damage_cap != -1 else (damage, "")
