@@ -89,13 +89,15 @@ for row in trove_data:
 itemdata_dict = build_item_dict(itemdata_dict, trove_data, category="Trove")
 
 # Ore and Soul List Data in the new structure
+heaven_ore = ("A fully purified ore chunk. It shines with the same spectacular light as the most exceptional of items. "
+              "Used for reinforcing gear items. Increasing the quality.")
 ore_data = [[None, 'Crude Ore', 2, 1, '<:eore:1145534835507593236>', None, 2500],
             [None, 'Cosmite Ore', 5, 2, '<:eore:1145534835507593236>', None, 5000],
             [None, 'Celestite Ore', 10, 3, '<:eore:1145534835507593236>', None, 10000],
             [None, 'Crystallite Ore', 50, 4, '<:eore:1145534835507593236>', None, 50000],
-            [None, 'Heavenly Ore', 100, 5, '<:eore:1145534835507593236>', None, 0]]
+            [None, 'Heavenly Ore', 100, 5, '<:eore:1145534835507593236>', heaven_ore, 0]]
 for row in ore_data:
-    row[5] = f'Ore with {row[2]}% purity. Used for reinforcing gear items. Increasing the quality.'
+    row[5] = f'Ore with {row[2]}% purity. With enough samples, perhaps the purity can be raised.'
 itemdata_dict = build_item_dict(itemdata_dict, ore_data, category="Ore")
 
 # Flame Items

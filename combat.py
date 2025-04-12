@@ -76,8 +76,8 @@ class CombatTracker:
         self.bleed_tracker = 0.0
 
 
-async def run_solo_cycle(tracker_obj, boss_obj, player_obj):
-    hit_list, msg, p_alive, b_alive, total_damage = await run_cycle(tracker_obj, boss_obj, player_obj)
+async def run_solo_cycle(tracker_obj, boss_obj, player_obj, magnitude=0):
+    hit_list, msg, p_alive, b_alive, total_damage = await run_cycle(tracker_obj, boss_obj, player_obj, magnitude=magnitude)
     total_dps = int(tracker_obj.total_dps / tracker_obj.total_cycles)
     embed_msg = boss_obj.create_boss_embed(total_dps)
     embed_msg.add_field(name="", value=msg, inline=False)
@@ -99,7 +99,7 @@ async def run_raid_cycle(tracker_obj, boss_obj, player_obj, raid_atk):
     return player_msg, total_damage
 
 
-async def run_cycle(tracker_obj, boss_obj, player_obj, raid_attack=None):
+async def run_cycle(tracker_obj, boss_obj, player_obj, raid_attack=None, magnitude=0):
     tracker_obj.total_cycles += 1
     hit_list, total_damage = [], 0
     player_alive, boss_alive = True, True
@@ -108,7 +108,7 @@ async def run_cycle(tracker_obj, boss_obj, player_obj, raid_attack=None):
     if status_effects_result is not None:
         return hit_list, status_effects_result, player_alive, boss_obj.boss_cHP > 0, total_damage
     # Step 2: Boss takes action
-    player_alive, boss_action_msg = handle_boss_actions(boss_obj, tracker_obj, player_obj, raid_attack)
+    player_alive, boss_action_msg = handle_boss_actions(boss_obj, tracker_obj, player_obj, raid_attack, magnitude)
     if not player_alive:
         tracker_obj.hp_regen = 0
         battle_msg = f"{player_obj.player_username} has been felled!"
@@ -144,7 +144,7 @@ def handle_status(tracker_obj, player_obj):
     return battle_msg
 
 
-def handle_boss_actions(boss_obj, tracker_obj, player_obj, raid_atk=None):
+def handle_boss_actions(boss_obj, tracker_obj, player_obj, raid_atk=None, magnitude=0):
     is_alive, boss_msg = True, ""
     # Handle Boss Status
     if boss_obj.stun_cycles > 0 and boss_obj.boss_type != "Ruler":
@@ -175,7 +175,7 @@ def handle_boss_actions(boss_obj, tracker_obj, player_obj, raid_atk=None):
         base_set = [2 * value for value in base_set]
     damage_set = [base_set[0] * boss_obj.boss_level * skill_bonus, base_set[1] * boss_obj.boss_level * skill_bonus]
     damage_set, _ = handle_evasions(player_obj.block, player_obj.dodge, damage_set, bypass1=bypass1, bypass2=bypass2)
-    is_alive, damage = take_combat_damage(player_obj, tracker_obj, damage_set, boss_element, bypass2)
+    is_alive, damage = take_combat_damage(player_obj, tracker_obj, damage_set, boss_element, bypass2, magnitude=magnitude)
     boss_msg += f"{boss_obj.boss_name} uses {skill} dealing {sm.number_conversion(damage)} damage!\n"
     # Handle boss regen.
     if boss_obj.boss_type_num < 3:
@@ -215,7 +215,7 @@ async def handle_player_actions(hit_list, tracker_obj, boss_obj, player_obj):
     return hit_list
 
 
-def take_combat_damage(player_obj, tracker_obj, damage_set, dmg_element, bypass_immortal, no_trigger=False):
+def take_combat_damage(player_obj, tracker_obj, damage_set, dmg_element, bypass_immortal, no_trigger=False, magnitude=0):
     damage = random.randint(damage_set[0], damage_set[1])
     player_resist = 0
     if dmg_element != -1:
@@ -225,6 +225,8 @@ def take_combat_damage(player_obj, tracker_obj, damage_set, dmg_element, bypass_
             tracker_obj.stun_status = gli.element_status_list[dmg_element]
             tracker_obj.stun_cycles += 1
     damage -= damage * player_resist
+    if magnitude != 0:
+        damage *= ((1 + magnitude) ^ 2)
     damage = int(damage - (damage * player_obj.damage_mitigation * 0.01))
     tracker_obj.player_cHP -= damage
     if tracker_obj.player_cHP > 0:
@@ -249,7 +251,7 @@ async def hit_boss(tracker_obj, boss_obj, player_obj, combo_count, hit_type="Reg
     damage, status_msg = check_lock(player_obj, tracker_obj, damage)
     damage, second_msg = check_bloom(player_obj, damage)
     if player_obj.unique_glyph_ability[2]:
-        damage *= (1 + player_obj.bleed_mult) * (1+player_obj.bleed_pen)
+        damage *= (1 + player_obj.bleed_mult) * (1 + player_obj.bleed_pen)
     if status_msg == " *TIME SHATTER*" or critical_type != "":
         damage *= random.randint(1, max(1, player_obj.rng_bonus))
     damage, extension = (boss_obj.damage_cap, " *LIMIT*") if damage >= boss_obj.damage_cap != -1 else (damage, "")
@@ -420,7 +422,7 @@ def check_critical(player_obj, player_damage, num_elements):
 
 def skill_adjuster(player_obj, combat_tracker, hit_damage, combo_count, is_ultimate):
     mult_dict = {0: 0.5, 1: 0.75, 2: 1, 3: 2}
-    combo_mult = (1 + (player_obj.combo_mult * combo_count)) * (1 + player_obj.combo_pen)
+    combo_mult = (1 + player_obj.combo_mult * combo_count) * (1 + player_obj.combo_pen)
     ultimate_mult = (1 + player_obj.ultimate_mult) * (1 + player_obj.ultimate_pen)
     skill_list = gli.skill_names_dict[player_obj.player_class]
     if player_obj.aqua_points >= 100:

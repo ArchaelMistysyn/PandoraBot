@@ -199,7 +199,8 @@ class SoloCog(commands.Cog):
     
     async def solo_boss(self):
         self.boss_obj.curse_debuffs = self.player_obj.elemental_curse
-        self.embed, p_alive, boss_alive = await combat.run_solo_cycle(self.tracker_obj, self.boss_obj, self.player_obj)
+        self.embed, p_alive, boss_alive = await combat.run_solo_cycle(self.tracker_obj, self.boss_obj,
+                                                                      self.player_obj, self.magnitude)
         await bosses.update_boss_cHP(self.channel_id, self.player_obj.player_id, self.boss_obj)
         if not p_alive:
             await self.sent_message.edit(embed=self.embed)
