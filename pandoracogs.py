@@ -86,6 +86,7 @@ class MetricsCog(commands.Cog):
                 else:
                     new_credit = current + credit_amount
                     await player.update_credit(discord_id, new_credit)
+                credited_users.append((member, new_credit))
         for user, credit in credited_users:
             credit_msg = (f"You received {credit_amount} ArchDragon Store credit(s). Your new balance is {credit:,}.\n"
                           f"Credit is deducted as the highest eligible gift card value: 10, 25, 50, 100, 250, 500\n"
