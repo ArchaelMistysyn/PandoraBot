@@ -124,6 +124,7 @@ def run_discord_bot():
 
     @pandora_bot.event
     async def on_message(message):
+        await pandora_bot.process_commands(message)
         if message.author.bot:
             return
         if isinstance(message.channel, discord.DMChannel):
@@ -455,7 +456,7 @@ def run_discord_bot():
         await on_shutdown()
 
     @set_command_category('admin', 6)
-    @pandora_bot.command(name='giftcard', help="Admin can have bot issue code to user directly through DM.")
+    @pandora_bot.command(name='giftcard', help="Admin can have bot issue code to user directly through DM.", extras={"dm_enabled": True})
     async def giftcard(ctx, target_user: discord.User, code: str, value: int):
         await ctx.defer()
         trigger_return, player_obj, _ = await admin_verification(ctx, method="DM")

@@ -6,7 +6,7 @@ reg_msg = ('In an ancient ruin, you come across an empty room in which sits a pe
            'Then the voice disappears without a trace amidst the fleeing spirits. '
            'Silence falls and all that remains is an otherworldly girl staring at you in confusion.')
 
-# Key (Quest Num): Quest Type Num, Quest Title,
+# Key (Quest Num): Quest Type Num, Quest Title, NPC
 # Story Message,
 # Cost Num, Token Num, Item Hand-in,
 # Quest Message,
