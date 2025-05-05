@@ -97,7 +97,7 @@ class CurrentBoss:
         self.boss_name, self.boss_element = random.choice(target_list), 9
         match boss_type:
             case "Fortress":
-                self.boss_image =f'{gli.web_gallery_url}Tarot/Arbiter/XVI - Aurora, The Fortress.webp'
+                self.boss_image =f'{gli.web_gallery_url}Tarot/Paragon/XVI - Aurora, The Fortress.webp'
                 if boss_tier != 4:
                     self.boss_element = random.randint(0, 8)
                     extension = "" if self.boss_element >= 6 else "the "

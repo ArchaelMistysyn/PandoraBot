@@ -584,6 +584,8 @@ async def purify_item(player_obj, selected_item, cost_list, success_rate, succes
         return 3
     if selected_item.item_num_sockets == 0:
         return 3
+    if selected_item.item_quality_tier < 5:
+        return 3
     # Material is consumed. Attempts to enhance the item.
     await handle_craft_costs(player_obj, cost_list)
     if success_check <= success_rate:

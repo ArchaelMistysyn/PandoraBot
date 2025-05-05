@@ -863,7 +863,7 @@ def run_discord_bot():
         new_view = menus.AbyssView(ctx, player_obj, num_visits, monument_data, gear_score)
         description = "You are permitted to visit the higher plane by the grace of the arbiters."
         embed_msg = sm.easy_embed("Black", "Abyssal Plane", description)
-        embed_msg.set_image(url=gli.abyss_img)
+        embed_msg.set_image(url=gli.abyss2_img)
         if player_obj.player_quest < 38:
             new_view, embed_msg.description = None, "A great darkness clouds your path. Entry is impossible."
         await ctx.send(embed=embed_msg, view=new_view)
@@ -2007,12 +2007,16 @@ def run_discord_bot():
         artist_data = [("Daerun", "Character Artist (Upwork)"),
                        ("Heng Ming Chiun", "Character Artist (Upwork)"),
                        ("Alina Arkhipova", "Character Artist (Upwork)"),
+                       ("Denny Rasyid Salam", "Character Artist (Upwork)"),
+                       ("Martin Steffen", "Character Artist (Upwork)"),
                        ("Daming Li", "Monster Artist (Upwork)"),
                        ("Arjhon Tulio", "Scene Artist (Upwork)"),
                        ("Nina Hvozdzeva", "Logo Artist (Upwork)"),
                        ("Muhammad Faiq Ali", "Initial Sketch Artist (Upwork)"),
                        ("Mario Ferrera", "Web Developer & Designer (Upwork)"),
                        ("Jumana Walid", "Typography Artist (Upwork)"),
+                       ("Meerab Aliya", "Writer (Upwork)"),
+                       ("Brandon Brown", "Item Icon Artist (Upwork)"),
                        ("Tuul Huur @tuulhuur", "Item Icon Artist (Fiverr)"),
                        ("Nong Dit @Nong Dit", "Frame Artist (Fiverr)"),
                        ("Rida Bargoute @ridabargoute", "Font Artist (Fiverr)"),

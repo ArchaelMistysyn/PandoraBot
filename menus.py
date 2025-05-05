@@ -341,8 +341,7 @@ class DivineView(discord.ui.View):
             return
         e_weapon = await inventory.read_custom_item(self.player_obj.player_equipped[0])
         title = "Vexia, The Scribe"
-        entry_msg = ("You are the only recorded mortal to have entered the divine plane. "
-                     "We are not your allies, but we will not treat you unfairly."
+        entry_msg = ("We need not turn you away, mortal."
                      "\nThe oracle has already foretold your failure. Now it need only be written into truth.")
         embed_msg = discord.Embed(colour=discord.Colour.blurple(), title=title, description=entry_msg)
         embed_msg.set_image(url=gli.cathedral_img)
@@ -366,7 +365,7 @@ class DivineView(discord.ui.View):
             return
         title = "Yubelle, The Adjudicator"
         entry_msg = ("You would still follow Pandora's path in her place? Very well, I am no longer in a position "
-                     "to object. I suppose such things do indeed fall within my purview.")
+                     "to object. I suppose, even as an echo, such things do indeed fall within my purview.")
         embed_msg = discord.Embed(colour=discord.Colour.blurple(), title=title, description=entry_msg)
         embed_msg.set_image(url=gli.cathedral_img)
         new_view = tarot.SearchTierView(self.player_obj, cathedral=True)
@@ -402,7 +401,7 @@ class AbyssView(discord.ui.View):
                 self.gear_monument_callback.disabled = False
                 self.gear_monument_callback.style = gli.button_colour_list[1]
 
-    @discord.ui.button(label="Purify", style=discord.ButtonStyle.blurple, row=0)
+    @discord.ui.button(label="Deep Void", style=discord.ButtonStyle.blurple, row=0)
     async def purify_callback(self, interaction: discord.Interaction, button: discord.Button):
         if interaction.user.id != self.player_obj.discord_id:
             return
@@ -1173,7 +1172,7 @@ class PointsView(discord.ui.View):
                 token_obj = inventory.BasicItem("Token3")
                 token_cost = sum(self.player_obj.player_stats) // 10
                 token_stock = await inventory.check_stock(self.player_obj, "Token3")
-                response = (f"The farther you are, the harder it is to go back to the start.\nReset Cost:\n "
+                response = (f"The farther you walk your path, the harder it is to change what you've become.\nReset Cost:\n "
                             f"{token_obj.item_emoji} {token_obj.item_name}: {token_stock} / {token_cost}")
                 embed_msg = discord.Embed(colour=discord.Colour.dark_orange(),
                                           title="Avalon, The Pathwalker",
