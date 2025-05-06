@@ -638,7 +638,7 @@ def run_discord_bot():
             highest_tier = max(highest_tier, reward_object.item_tier)
             description_list.append(f"{reward_object.item_emoji} {item_qty}x {reward_object.item_name}\n")
             if sm.check_rare_item(reward_object.item_id):
-                notifications.append((reward_object.item_id, "Item", player_obj))
+                notifications.append((reward_object.item_id, player_obj))
         # Update the data and messages.
         batch_df = sm.list_to_batch(player_obj, reward_list)
         await inventory.update_stock(None, None, None, batch=batch_df)

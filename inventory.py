@@ -101,7 +101,7 @@ class BInventoryView(discord.ui.View):
         title = f'{self.player_obj.player_username}\'s Equipment:\n'
         player_inv = await display_cinventory(self.player_obj, "W")
         new_embed = discord.Embed(colour=discord.Colour.dark_orange(), title=title, description=player_inv)
-        await interaction.response.edit_message(embed=new_embed, view=CInventoryView(self.player_obj, self.include_id))
+        await interaction.response.edit_message(content=None, embed=new_embed, view=CInventoryView(self.player_obj, self.include_id))
 
     @discord.ui.button(label="Show ID", style=discord.ButtonStyle.blurple)
     async def show_id(self, interaction: discord.Interaction, button: discord.Button):
