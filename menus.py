@@ -865,11 +865,11 @@ class GearView(discord.ui.View):
         # Handle gear positions.
         if self.current_position <= 6:
             item_type = inventory.item_type_dict[self.current_position]
-            selected_item = self.target_user.player_equipped[self.current_position]
-            if selected_item == 0:
+            selected_id = self.target_user.player_equipped[self.current_position]
+            if selected_id is None or selected_id == 0:
                 return no_item_msg
             # Handle the view variations.
-            equipped_item = await inventory.read_custom_item(selected_item)
+            equipped_item = await inventory.read_custom_item(selected_id)
             if self.view_type == "Gem":
                 if equipped_item.item_inlaid_gem_id == 0:
                     return no_item_msg
@@ -916,7 +916,7 @@ class GearView(discord.ui.View):
             return
         self.view_type = "Gear" if self.view_type == "Gem" else "Gem"
         self.new_embed = await self.cycle_gear(0)
-        self.new_view = GearView(self.target_user, self.target_user, self.current_position, self.view_type)
+        self.new_view = GearView(self.player_user, self.target_user, self.current_position, self.view_type)
         await interaction.response.edit_message(embed=self.new_embed, view=self.new_view)
 
     @discord.ui.button(style=discord.ButtonStyle.blurple, emoji="➡️")
@@ -927,7 +927,7 @@ class GearView(discord.ui.View):
             await interaction.response.edit_message(embed=self.new_embed, view=self.new_view)
             return
         self.new_embed = await self.cycle_gear(1)
-        self.new_view = GearView(self.target_user, self.target_user, self.current_position, self.view_type)
+        self.new_view = GearView(self.player_user, self.target_user, self.current_position, self.view_type)
         await interaction.response.edit_message(embed=self.new_embed, view=self.new_view)
 
 
