@@ -262,7 +262,7 @@ class CustomItem:
     def set_base_damage_mitigation(self):
         self.item_base_stat = 30.00
         if self.item_tier < 9:
-            self.item_base_stat = round(random.uniform(10, 14), 2) + self.item_tier * 2
+            self.item_base_stat = round(random.uniform(10, 14), 2) + (self.item_tier - 1) * 2
 
     def assign_bonus_stat(self):
         if self.item_type in ["W"] or "D" in self.item_type:
@@ -842,7 +842,7 @@ async def purge(player_obj, item_type, tier):
     inlaid_gem_list = []
     item_list = await inventory.read_custom_item(fetch_equipped=exclusion_list)
     for e_item in item_list:
-        if e_item.item_inlaid_gem_id != 0:
+        if e_item is not None and e_item.item_inlaid_gem_id != 0:
             inlaid_gem_list.append(e_item.item_inlaid_gem_id)
     exclusion_list += inlaid_gem_list
     params = {'id_check': player_obj.player_id, 'tier_check': tier}

@@ -796,7 +796,7 @@ class StaminaView(discord.ui.View):
     async def t1_stamina_callback(self, interaction: discord.Interaction, button: discord.Button):
         await self.drink_potion(interaction, 1, 500)
 
-    @discord.ui.button(label="Stamina Potion", style=discord.ButtonStyle.success, emoji=gli.stamina_icon)
+    @discord.ui.button(label="Standard Potion", style=discord.ButtonStyle.success, emoji=gli.stamina_icon)
     async def t2_stamina_callback(self, interaction: discord.Interaction, button: discord.Button):
         await self.drink_potion(interaction, 2, 1000)
 

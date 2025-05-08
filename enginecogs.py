@@ -352,14 +352,14 @@ class PvPCog(commands.Cog):
         if stun_msg2 is not None:
             stun_list.append(stun_msg2)
             num_hits2 = 0
-        player_interval = [60 / num_hits1, 60 / num_hits2]
-        attack_counter = player_interval
+        player_interval = [60 / num_hits if num_hits > 0 else 61 for num_hits in (num_hits1, num_hits2)]
+        attack_counter = player_interval[:]
         combatants, trackers = [self.player1, self.player2], [self.combat_tracker1, self.combat_tracker2]
         while attack_counter[0] <= 60 or attack_counter[1] <= 60:
             await self.handle_pvp_attack(combatants, trackers, combo_count, attack_counter, player_interval, hit_list)
         if self.player1.appli["Bleed"] >= 1:
             await self.handle_pvp_bleed([0, 1], combatants, trackers, hit_list, False)
-        if self.player1.appli["Bleed"] >= 1:
+        if self.player2.appli["Bleed"] >= 1:
             await self.handle_pvp_bleed([1, 0], combatants, trackers, hit_list, False)
         return stun_list, hit_list, self.combat_tracker1.player_cHP > 0, self.combat_tracker2.player_cHP > 0
 

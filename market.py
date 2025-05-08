@@ -176,7 +176,7 @@ class ExchangeView(discord.ui.View):
             return
         colour, title, description = discord.Colour.dark_orange(), "Black Market", "Everything has a price."
         embed_msg = discord.Embed(colour=colour, title=title, description=description)
-        fish_obj, trade_obj = await market.get_daily_fish_items()
+        fish_obj, trade_obj = await get_daily_fish_items()
         new_view = TierSelectView(self.player_obj, fish_obj, trade_obj)
         await interaction.response.edit_message(embed=embed_msg, view=new_view)
 
@@ -230,7 +230,7 @@ class PurchaseView(discord.ui.View):
             return
         colour, title, description = discord.Colour.dark_orange(), "Black Market", "Everything has a price."
         embed_msg = discord.Embed(colour=colour, title=title, description=description)
-        fish_obj, trade_obj = await market.get_daily_fish_items()
+        fish_obj, trade_obj = await get_daily_fish_items()
         new_view = TierSelectView(self.player_obj, fish_obj, trade_obj)
         await interaction.response.edit_message(embed=embed_msg, view=new_view)
 
@@ -352,7 +352,9 @@ class LotusPurchaseView(discord.ui.View):
             await interaction.response.edit_message(embed=temp_embed, view=new_view)
             return
         await inventory.update_stock(self.player_obj, "Token6", (self.token_cost * -1))
-        _ = [await inventory.update_stock(self.player_obj, self.lotus_object, -1) for lotus_item in lotus_list[:-1]]
+        # UPDATE TO BULK DEDUCTION REQUIRED
+        for lotus_item in lotus_list[:-1]:
+            await inventory.update_stock(self.player_obj, lotus_item['item_id'], -1)
         await inventory.update_stock(self.player_obj, self.lotus_object.item_id, 1)
         temp_embed.description = f"{self.lotus_object.item_emoji} 1x {self.lotus_object.item_name} acquired"
         self.embed_msg = temp_embed

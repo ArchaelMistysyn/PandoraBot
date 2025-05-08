@@ -334,7 +334,11 @@ class ItemRoll:
             current = category_dict[0]
             current_roll = current[self.roll_code]
             self.roll_value = current_roll[1] * roll_adjust
-            self.roll_msg, self.roll_name = f"{current_roll[0]} {int(round(self.roll_value * 100))}%", current_roll[0]
+            if current_roll[0] in ["Recovery"]:
+                self.roll_msg = f"{current_roll[0]} +{int(round(self.roll_value * 100))}"
+            else:
+                self.roll_msg = f"{current_roll[0]} {int(round(self.roll_value * 100))}%"
+            self.roll_name = current_roll[0]
             return
         # Handle unique roll
         self.roll_code += f"-{roll_details[3]}"

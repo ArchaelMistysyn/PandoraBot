@@ -53,12 +53,12 @@ class Expedition:
         new_room_type = self.random_room() if new_room_num != (self.length - 1) else "greater_treasure"
         self.room = Room(new_room_type, self.tier)
         await self.room.display_room_embed(self)
-        self.room_view = AdventureRoomView(ctx_object, player_obj, self)
         status_msg = sm.display_hp(self.player_obj.player_cHP, self.player_obj.player_mHP)
         status_msg += f"\nLuck: {self.luck}"
         if player_obj.hp_regen > 0:
             status_msg = f"{self.handle_regen()}\n{status_msg}"
         self.room.embed.add_field(name="", value=status_msg, inline=False)
+        self.room_view = AdventureRoomView(ctx_object, player_obj, self)
         return self.room.embed, self.room_view
 
     def teleport(self):

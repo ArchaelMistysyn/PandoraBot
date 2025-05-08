@@ -2003,6 +2003,23 @@ def run_discord_bot():
     @app_commands.guilds(discord.Object(id=guild_id))
     async def credits_list(ctx):
         await ctx.defer()
+
+        def split_safely(data, max_chars=1000):
+            chunks = []
+            current_chunk = []
+            current_length = 0
+            for entry in data:
+                text = f"**{entry[0]}** - {entry[1]}\n"
+                if current_length + len(text) > max_chars:
+                    chunks.append(current_chunk)
+                    current_chunk = []
+                    current_length = 0
+                current_chunk.append(entry)
+                current_length += len(text)
+            if current_chunk:
+                chunks.append(current_chunk)
+            return chunks
+
         title = "Game created by: Kyle Mistysyn (Archael)"
         artist_data = [("Daerun", "Character Artist (Upwork)"),
                        ("Heng Ming Chiun", "Character Artist (Upwork)"),
@@ -2031,18 +2048,20 @@ def run_discord_bot():
         tester_data = [("Zweii", "Alpha Tester (Volunteer)"), ("SoulViper", "Alpha Tester (Volunteer)"),
                        ("Kaelen", "Alpha Tester (Volunteer)"), ("Volff", "Alpha Tester (Volunteer)")]
         misc_data = [("Bahamutt", "Programming Support"), ("Pota", "Programming Support (Volunteer)")]
-        artist_list = "\n".join(f"**{name}** - {role}" for name, role in artist_data)
-        programmer_list = "\n".join(f"**{name}** - {role}" for name, role in programming_data)
-        tester_list = "\n".join(f"**{name}** - {role}" for name, role in tester_data)
-        misc_list = "\n".join(f"**{name}** - {role}" for name, role in misc_data)
-        # Unauthorized use of this bot, it's associated contents, code, and assets are strictly prohibited.
-        copy_msg = f"© 2024 Kyle Mistysyn. All rights reserved."
         embed_msg = sm.easy_embed("Purple", title, "")
-        embed_msg.add_field(name="__Artists__", value=artist_list.rstrip(), inline=False)
-        embed_msg.add_field(name="__Programmers__", value=programmer_list.rstrip(), inline=False)
-        embed_msg.add_field(name="__Testers__", value=tester_list.rstrip(), inline=False)
-        embed_msg.add_field(name="__Misc__", value=misc_list.rstrip(), inline=False)
-        embed_msg.set_footer(text=f"Copyright: {copy_msg}")
+        # Process all categories
+        for category, data in [("Artists", artist_data),
+                               ("Programmers", programming_data),
+                               ("Testers", tester_data),
+                               ("Misc", misc_data)]:
+            chunks = split_safely(data)
+            if not chunks and data:
+                continue
+            for i, chunk in enumerate(chunks):
+                title_part = f"__{category}{(f' (Part {i + 1})') if len(chunks) > 1 else ''}__"
+                value = "\n".join(f"**{n}** - {r}" for n, r in chunk) if chunk else "None listed"
+                embed_msg.add_field(name=title_part, value=value, inline=False)
+        embed_msg.set_footer(text="© 2024 Kyle Mistysyn. All rights reserved.")
         embed_msg.set_thumbnail(url=gli.archdragon_logo)
         await ctx.send(file=discord.File(await sm.title_box("Pandora Bot Credits")))
         await ctx.send(embed=embed_msg)

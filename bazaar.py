@@ -140,4 +140,4 @@ async def buy_item(item_id):
     seller_object = await player.get_player_by_id(seller_id)
     if seller_object is not None:
         item_cost = await get_item_cost(item_id)
-        _ = await seller_object.adjust_coins(item_cost)
+        _ = await seller_object.adjust_coins(item_cost, True)
