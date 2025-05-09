@@ -1135,7 +1135,7 @@ class BuyView(discord.ui.View):
                     display_msg = "Cannot Purchase!"
                     if self.player_user.player_coins >= item_cost and self.player_user.player_id != seller_id:
                         # Process purchase
-                        await bazaar.buy_item(self.player_user, self.selected_item.item_id)
+                        await bazaar.buy_item(self.player_user, self.selected_item.item_id, item_cost, seller_id)
                         self.selected_item.player_owner = self.player_user.player_id
                         await self.selected_item.update_stored_item()
                         display_msg = "PURCHASE COMPLETED!"

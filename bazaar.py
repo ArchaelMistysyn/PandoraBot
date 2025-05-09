@@ -78,8 +78,10 @@ async def retrieve_items(player_id):
 async def show_bazaar_items(player_obj, sort_type="Tier", filter_type=""):
     sort_dict = {"Cost": " ORDER BY CustomBazaar.cost DESC",
                  "Tier": " ORDER BY CustomInventory.item_tier DESC, CustomInventory.item_base_dmg_max DESC"}
-    filter_dict = {"Class": f" WHERE CustomInventory.item_damage_type = '{player_obj.player_class}' ",
-                   "Sovereign": f" WHERE CustomInventory.item_base_type IN ({gli.sovereign_batch_data}) "}
+    filter_dict = {
+        "Class": f" WHERE CustomInventory.item_damage_type = '{player_obj.player_class}' ",
+        "Sovereign": f" WHERE CustomInventory.item_base_type IN {tuple(gli.sovereign_batch_data.split(','))} "
+    }
     if sort_type in sort_dict:
         sort_type = sort_dict[sort_type]
     if filter_type in filter_dict:
@@ -133,12 +135,10 @@ async def get_item_cost(item_id):
     return int(df['cost'].values[0]) if len(df.index) != 0 else 0
 
 
-async def buy_item(buyer_obj, item_id):
-    item_cost = await get_item_cost(item_id)
+async def buy_item(buyer_obj, item_id, item_cost, seller_id):
     await buyer_obj.adjust_coins(item_cost, True)
     raw_query = "DELETE FROM CustomBazaar WHERE item_id = :item_check"
     await rqy(raw_query, params={'item_check': item_id})
-    seller_id = await get_seller_by_item(item_id)
     seller_object = await player.get_player_by_id(seller_id)
     if seller_object is not None:
         _ = await seller_object.adjust_coins(item_cost)
