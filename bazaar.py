@@ -135,7 +135,7 @@ async def get_item_cost(item_id):
 
 async def buy_item(buyer_obj, item_id):
     item_cost = await get_item_cost(item_id)
-    buyer_obj.adjust_coins(item_cost, True)
+    await buyer_obj.adjust_coins(item_cost, True)
     raw_query = "DELETE FROM CustomBazaar WHERE item_id = :item_check"
     await rqy(raw_query, params={'item_check': item_id})
     seller_id = await get_seller_by_item(item_id)

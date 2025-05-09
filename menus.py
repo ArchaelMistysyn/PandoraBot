@@ -1129,11 +1129,18 @@ class BuyView(discord.ui.View):
         try:
             if interaction.user.id == self.player_user.discord_id:
                 if self.selected_item.player_owner == -1:
-                    await bazaar.buy_item(self.player_user, self.selected_item.item_id)
-                    self.selected_item.player_owner = self.player_user.player_id
-                    await self.selected_item.update_stored_item()
-                    embed_msg = await self.selected_item.create_citem_embed()
-                embed_msg.add_field(name="PURCHASE COMPLETED!", value="", inline=False)
+                    # COMBINE LATER
+                    item_cost = await bazaar.get_item_cost(self.selected_item.item_id)
+                    seller_id = await bazaar.get_seller_by_item(self.selected_item.item_id)
+                    display_msg = "Cannot Purchase!"
+                    if self.player_user.player_coins >= item_cost and self.player_user.player_id != seller_id:
+                        # Process purchase
+                        await bazaar.buy_item(self.player_user, self.selected_item.item_id)
+                        self.selected_item.player_owner = self.player_user.player_id
+                        await self.selected_item.update_stored_item()
+                        display_msg = "PURCHASE COMPLETED!"
+                embed_msg = await self.selected_item.create_citem_embed()
+                embed_msg.add_field(name=display_msg, value="", inline=False)
                 await interaction.response.edit_message(embed=embed_msg, view=None)
         except Exception as e:
             print(e)
