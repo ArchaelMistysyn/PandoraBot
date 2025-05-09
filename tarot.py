@@ -23,7 +23,7 @@ card_dict = {
     "VI": ["Kama, The Love", 1], "VII": ["Astratha, The Dimensional", 4], "VIII": ["Tyra, The Behemoth", 4],
     "IX": ["Alaya, The Memory", 1], "X": ["Chrona, The Temporal", 3], "XI": ["Nua, The Heavens", 3],
     "XII": ["Rua, The Abyss", 3], "XIII": ["Thana, The Death", 3], "XIV": ["Arcelia, The Clarity", 2],
-    "XV": ["Diabla, The Primordial", 4], "XVI": ["Aurora, The Fortress", 4], "XVII": ["Nova, The Star", 2],
+    "XV": ["Diabla, The Primordial", 4], "XVI": ["Aurora, The Fortress", 4], "XVII": ["Nova, The Starlight", 2],
     "XVIII": ["Luna, The Moon", 2], "XIX": ["Luma, The Sun", 2], "XX": ["Aria, The Requiem", 2],
     "XXI": ["Ultima, The Creation", 3], "XXII": ["Mysmir, The Changeling", 1],
     "XXIII": ["Avalon, The Pathwalker", 2], "XXIV": ["Isolde, The Soulweaver", 3],
@@ -488,7 +488,7 @@ async def get_resonance(card_num):
     resonance_list = ['The Reflection', 'The Magic', 'The Celestial', 'The Void', 'The Infinite',
                       'The Duality', 'The Love', 'The Dragon', 'The Behemoth', 'The Memory',
                       'The Temporal', 'The Heavens', 'The Abyss', 'The Death', 'The Clarity',
-                      'The Primordial', 'The Fortress', 'The Star', 'The Moon', 'The Sun',
+                      'The Primordial', 'The Fortress', 'The Starlight', 'The Moon', 'The Sun',
                       'The Requiem', 'The Creation', 'The Changeling', 'The Pathwalker', 'The Soulweaver',
                       'The Wish', 'The Lifeblood', 'The Scribe', 'The Oracle', 'The Adjudicator', 'The Lotus']
     if card_num == -1:

@@ -133,7 +133,7 @@ class CInventoryView(discord.ui.View):
             emoji=gli.gear_icons_dict[key], label=custom_item_dict[key], value=reverse_item_loc_dict[value],
             description=f"{custom_item_dict[key]} storage") for key, value in list(item_loc_dict.items())]
         self.select_menu = discord.ui.Select(
-            placeholder="Select crafting base.", min_values=1, max_values=1, options=select_options)
+            placeholder="Select item base.", min_values=1, max_values=1, options=select_options)
         self.select_menu.callback = self.inventory_callback
         self.add_item(self.select_menu)
 
@@ -796,6 +796,8 @@ def try_refine(player_owner, item_type, target_tier):
     # Handle flat-tier refinement (Tier 5+ non-gems)
     if "D" not in item_type and target_tier >= 5:
         is_success = False
+        new_tier = generate_random_tier()
+        new_tier = target_tier if new_tier <= target_tier else new_tier
         if item_type == "W" or random.randint(1, 100) <= 80:
             is_success = True
         new_item = inventory.CustomItem(player_owner, item_type, target_tier, random_enhance=True)

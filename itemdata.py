@@ -203,7 +203,7 @@ essence_data = [['Essence0', 'Essence of The Reflection', 10, 1, '<:Essence1:129
                 ['EssenceXIV', 'Essence of The Clarity', 10, 1, '<:Essence1:1297651488432062585>', None, 0],
                 ['EssenceXV', 'Essence of The Primordial', 10, 4, '<:Essence4:1297651533139411024>', None, 0],
                 ['EssenceXVI', 'Essence of The Fortress', 10, 4, '<:Essence4:1297651533139411024>', None, 0],
-                ['EssenceXVII', 'Essence of The Star', 10, 2, '<:Essence2:1297651504416817162>', None, 0],
+                ['EssenceXVII', 'Essence of The Starlight', 10, 2, '<:Essence2:1297651504416817162>', None, 0],
                 ['EssenceXVIII', 'Essence of The Moon', 10, 2, '<:Essence2:1297651504416817162>', None, 0],
                 ['EssenceXIX', 'Essence of The Sun', 10, 2, '<:Essence2:1297651504416817162>', None, 0],
                 ['EssenceXX', 'Essence of The Requiem', 10, 2, '<:Essence2:1297651504416817162>', None, 0],
