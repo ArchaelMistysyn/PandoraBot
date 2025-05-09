@@ -800,7 +800,7 @@ def try_refine(player_owner, item_type, target_tier):
         new_tier = target_tier if new_tier <= target_tier else new_tier
         if item_type == "W" or random.randint(1, 100) <= 80:
             is_success = True
-        new_item = inventory.CustomItem(player_owner, item_type, target_tier, random_enhance=True)
+        new_item = inventory.CustomItem(player_owner, item_type, new_tier, random_enhance=True)
         return new_item, is_success
     is_success = True if random.randint(1, 100) <= 75 else False
     # All other refinement.

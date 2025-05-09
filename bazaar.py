@@ -17,10 +17,10 @@ class BazaarView(discord.ui.View):
         self.player_obj = player_obj
         self.sort_type, self.filter_type = sort_type, filter_type
 
-    async def handle_sort_and_filter(self, interaction, sort_type=None, filter_type=None):
-        if sort_type is not None:
+    async def handle_sort_and_filter(self, interaction, sort_type="", filter_type=""):
+        if sort_type != "":
             self.sort_type = sort_type
-        if filter_type is not None:
+        if filter_type != "":
             self.filter_type = filter_type
         new_embed = await show_bazaar_items(self.player_obj, sort_type=self.sort_type, filter_type=self.filter_type)
         new_view = BazaarView(self.player_obj, sort_type=self.sort_type, filter_type=self.filter_type)
@@ -36,7 +36,7 @@ class BazaarView(discord.ui.View):
 
     @discord.ui.button(label="Filter: None", style=discord.ButtonStyle.blurple, row=2)
     async def clear_filters(self, interaction: discord.Interaction, button: discord.Button):
-        await self.handle_sort_and_filter(interaction, filter_type=None)
+        await self.handle_sort_and_filter(interaction, filter_type="")
 
     @discord.ui.button(label="Filter: Class", style=discord.ButtonStyle.blurple, row=2)
     async def class_filter(self, interaction: discord.Interaction, button: discord.Button):
@@ -133,11 +133,12 @@ async def get_item_cost(item_id):
     return int(df['cost'].values[0]) if len(df.index) != 0 else 0
 
 
-async def buy_item(item_id):
+async def buy_item(buyer_obj, item_id):
+    item_cost = await get_item_cost(item_id)
+    buyer_obj.adjust_coins(item_cost, True)
     raw_query = "DELETE FROM CustomBazaar WHERE item_id = :item_check"
     await rqy(raw_query, params={'item_check': item_id})
     seller_id = await get_seller_by_item(item_id)
     seller_object = await player.get_player_by_id(seller_id)
     if seller_object is not None:
-        item_cost = await get_item_cost(item_id)
-        _ = await seller_object.adjust_coins(item_cost, True)
+        _ = await seller_object.adjust_coins(item_cost)

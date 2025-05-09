@@ -1129,7 +1129,7 @@ class BuyView(discord.ui.View):
         try:
             if interaction.user.id == self.player_user.discord_id:
                 if self.selected_item.player_owner == -1:
-                    await bazaar.buy_item(self.selected_item.item_id)
+                    await bazaar.buy_item(self.player_user, self.selected_item.item_id)
                     self.selected_item.player_owner = self.player_user.player_id
                     await self.selected_item.update_stored_item()
                     embed_msg = await self.selected_item.create_citem_embed()
