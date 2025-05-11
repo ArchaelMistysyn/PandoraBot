@@ -653,8 +653,12 @@ async def add_custom_item(item):
     }
     await rqy(insert_query, params=params)
     # Fetch the item id of the inserted item
-    select_query = "SELECT item_id FROM CustomInventory WHERE player_id = :player_check AND item_name = :name_check"
-    df = await rqy(select_query, return_value=True, params={'player_check': item.player_owner, 'name_check': item.item_name})
+    select_query = ("SELECT item_id FROM CustomInventory WHERE player_id = :player_check AND item_name = :name_check "
+                    "AND item_base_dmg_min = :min_check AND item_base_dmg_max = :max_check "
+                    "AND item_elements = :element_check")
+    params = {"player_check": item.player_owner, "name_check": item.item_name,
+              "min_check": item.base_damage_min, "max_check": item.base_damage_max, "element_check": element_str}
+    df = await rqy(select_query, return_value=True, params=params)
     if len(df) == 0:
         return 0
     id_list = list(df['item_id'])
@@ -802,7 +806,10 @@ def try_refine(player_owner, item_type, target_tier):
             is_success = True
         new_item = inventory.CustomItem(player_owner, item_type, new_tier, random_enhance=True)
         return new_item, is_success
-    is_success = True if random.randint(1, 100) <= 75 else False
+    random_check = random.randint(1, 100)
+    is_success = False
+    if ("D" in item_type and target_tier >= 5 and random_check <= 50) or (target_tier <= 4 and random_check <= 75):
+        is_success = True
     # All other refinement.
     new_tier = generate_random_tier() if target_tier == 4 else generate_random_tier(min_tier=target_tier, max_tier=8)
     new_tier = 2 if new_tier == 1 else new_tier
@@ -1019,8 +1026,15 @@ async def claim_gifts(player_obj):
 
 
 async def check_capacity(player_id, item_type):
-    raw_query = "SELECT * FROM CustomInventory WHERE player_id = :player_check AND item_type = :item_check"
-    params = {'player_check': player_id, 'item_check': item_type}
+    # For gem types (D1-D5), we need to check all gem items
+    if item_type in ['D1', 'D2', 'D3', 'D4', 'D5']:
+        raw_query = ("SELECT * FROM CustomInventory WHERE player_id = :player_check "
+                     "AND (item_type = 'D1' OR item_type = 'D2' OR item_type = 'D3' "
+                     "OR item_type = 'D4' OR item_type = 'D5')")
+        params = {'player_check': player_id}
+    else:
+        raw_query = "SELECT * FROM CustomInventory WHERE player_id = :player_check AND item_type = :item_check"
+        params = {'player_check': player_id, 'item_check': item_type}
     check_df = await rqy(raw_query, return_value=True, params=params)
     if len(check_df) > 40:
         return True

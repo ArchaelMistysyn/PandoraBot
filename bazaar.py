@@ -10,6 +10,12 @@ from pandoradb import run_query as rqy
 import player
 import inventory
 
+escaped_items = []
+for s_item in gli.sovereign_item_list:
+    escaped_item = s_item.replace("'", "''")
+    escaped_items.append(f"'{escaped_item}'")
+in_clause = ", ".join(escaped_items)
+
 
 class BazaarView(discord.ui.View):
     def __init__(self, player_obj, sort_type="Tier", filter_type=""):
@@ -17,7 +23,7 @@ class BazaarView(discord.ui.View):
         self.player_obj = player_obj
         self.sort_type, self.filter_type = sort_type, filter_type
 
-    async def handle_sort_and_filter(self, interaction, sort_type="", filter_type=""):
+    async def handle_sort_and_filter(self, interaction, sort_type="Tier", filter_type=""):
         if sort_type != "":
             self.sort_type = sort_type
         if filter_type != "":
@@ -36,7 +42,8 @@ class BazaarView(discord.ui.View):
 
     @discord.ui.button(label="Filter: None", style=discord.ButtonStyle.blurple, row=2)
     async def clear_filters(self, interaction: discord.Interaction, button: discord.Button):
-        await self.handle_sort_and_filter(interaction, filter_type="")
+        self.sort_type, self.filter_type = "Tier", ""
+        await self.handle_sort_and_filter(interaction)
 
     @discord.ui.button(label="Filter: Class", style=discord.ButtonStyle.blurple, row=2)
     async def class_filter(self, interaction: discord.Interaction, button: discord.Button):
@@ -78,21 +85,17 @@ async def retrieve_items(player_id):
 async def show_bazaar_items(player_obj, sort_type="Tier", filter_type=""):
     sort_dict = {"Cost": " ORDER BY CustomBazaar.cost DESC",
                  "Tier": " ORDER BY CustomInventory.item_tier DESC, CustomInventory.item_base_dmg_max DESC"}
-    filter_dict = {
-        "Class": f" WHERE CustomInventory.item_damage_type = '{player_obj.player_class}' ",
-        "Sovereign": f" WHERE CustomInventory.item_base_type IN {tuple(gli.sovereign_batch_data.split(','))} "
-    }
-    if sort_type in sort_dict:
-        sort_type = sort_dict[sort_type]
-    if filter_type in filter_dict:
-        filter_type = filter_dict[filter_type]
+    filter_dict = {"Class": f" WHERE CustomInventory.item_damage_type = '{player_obj.player_class}' ",
+                   "Sovereign": f" WHERE CustomInventory.item_base_type IN ({in_clause}) "}
+    sort_clause = sort_dict.get(sort_type, sort_dict["Tier"])
+    filter_clause = filter_dict.get(filter_type, "")
     raw_query = (f"SELECT CustomBazaar.item_id, CustomBazaar.seller_id, CustomBazaar.cost, "
                  f"CustomInventory.item_name, CustomInventory.item_type, "
                  f"CustomInventory.item_damage_type, CustomInventory.item_elements, "
                  f"CustomInventory.item_tier, CustomInventory.item_bonus_stat, "
                  f"CustomInventory.item_base_dmg_min, CustomInventory.item_base_dmg_max "
                  f"FROM CustomBazaar INNER JOIN CustomInventory ON CustomBazaar.item_id = CustomInventory.item_id"
-                 f"{filter_type}{sort_type}")
+                 f"{filter_clause}{sort_clause}")
     df = await rqy(raw_query, return_value=True)
     bazaar_embed = discord.Embed(colour=discord.Colour.dark_orange(), title="The Bazaar", description="Open Marketplace")
     if df is None or len(df.index) == 0:

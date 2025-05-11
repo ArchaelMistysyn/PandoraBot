@@ -101,6 +101,7 @@ class Quest:
         batch_df = sm.list_to_batch(player_obj, reward_list)
         await inventory.update_stock(None, None, None, batch=batch_df)
         if self.award_role:
+            # role is not currently being assigned in discord.
             rewards += f"New Role Achieved: {self.award_role}!"
             player_obj.player_echelon += 1
             await player_obj.set_player_field("player_echelon", player_obj.player_echelon)
@@ -216,8 +217,11 @@ class QuestView(discord.ui.View):
     async def handin_callback(self, interaction: discord.Interaction, button: discord.Button):
         if interaction.user.id != self.player_obj.discord_id:
             return
-        if self.embed_msg is not None:
-            await interaction.response.edit_message(embed=self.embed_msg, view=self.new_view)
+        if self.quest_obj is None:
+            result_embed = sm.easy_embed("Red", "Error!", "Quest error successfully handled.")
+            if self.embed_msg is not None:
+                result_embed = self.embed_msg
+            await interaction.response.edit_message(embed=result_embed, view=self.new_view)
             return
         await self.player_obj.reload_player()
         temp_embed, is_completed = \
@@ -229,10 +233,12 @@ class QuestView(discord.ui.View):
             return
         # Handle completed quest.
         self.embed_msg = temp_embed
+        award_role = self.quest_obj.award_role
+        self.quest_obj = None
         self.new_view = RewardView(self.ctx_object, self.player_obj)
         await interaction.response.edit_message(embed=self.embed_msg, view=self.new_view)
-        if self.quest_obj.award_role is not None:
-            add_role = discord.utils.get(interaction.guild.roles, name=self.quest_obj.award_role)
+        if award_role is not None:
+            add_role = discord.utils.get(interaction.guild.roles, name=award_role)
             await interaction.user.add_roles(add_role)
             if self.player_obj.player_echelon >= 2:
                 previous_rolename = f"Echelon {self.player_obj.player_echelon - 1}"
