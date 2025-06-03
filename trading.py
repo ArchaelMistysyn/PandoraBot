@@ -101,6 +101,8 @@ class TradeView(discord.ui.View):
         if self.new_embed is not None:
             await interaction.response.edit_message(embed=self.new_embed, view=self.new_view)
             return
+        self.trade_obj.target_player.reload_player()
+        self.trade_obj.offer_player.reload_player()
         self.new_embed = self.trade_obj.trade_msg
         fail_msg = await self.trade_obj.perform_trade()
         if fail_msg != "":

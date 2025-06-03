@@ -108,7 +108,7 @@ def run_discord_bot():
     async def on_ready():
         if pandora_bot.conn_status == "Connected":
             await send_log_msg(f'{pandora_bot.user} Online!')
-        pandoracogs.StaminaCog(pandora_bot)
+        pandoracogs.HourCog(pandora_bot)
         pandoracogs.MetricsCog(pandora_bot)
         await timezone.init_time_menu(pandora_bot)
         pandora_bot.help_command = CustomHelpCommand()
@@ -2143,6 +2143,45 @@ def run_discord_bot():
         elif thumbnail_url is not None:
             embed.set_thumbnail(url=thumbnail_url)
         await ctx.send(embed=embed)
+
+    @pandora_bot.hybrid_command(name='setreminder', help="Set a recurring daily reminder.")
+    @app_commands.guilds(discord.Object(id=guild_id))
+    async def set_reminder(ctx, day: int, hour: int, message: str):
+        await ctx.defer()
+        # Validate day and hour
+        if not (0 <= day <= 7):
+            await ctx.send("Invalid day. Use 0 (All) or 1 (Monday) to 7 (Sunday).")
+            return
+        if not (0 <= hour <= 23):
+            await ctx.send("Invalid hour. Use 0–23 for 24-hour time.")
+            return
+        # Get user's timezone
+        user_timezone, dst_offset = await timezone.get_user_timezone(ctx.author.id)
+        offset = int(user_timezone.replace("UTC", ""))
+        utc_hour = (hour - offset - dst_offset) % 24
+        if user_timezone is None:
+            await ctx.send("Please set your timezone first using #time-zones channel.")
+            return
+        msg_lines = textwrap.wrap(message, width=35)
+        if len(message) == 0 or len(msg_lines) > 1:
+            await ctx.send("Your reminder message is too long.")
+            return
+        test_query = "SELECT * FROM UserReminders"
+        await rqy(test_query)
+        # Store reminder in DB (multiple per user allowed)
+        insert_query = ("INSERT INTO UserReminders (discord_id, weekday, hour, message) "
+                        "VALUES (:discord_id, :weekday, :hour, :msg)")
+        params = {"discord_id": str(ctx.author.id), "weekday": day, "hour": utc_hour, "msg": message}
+        await rqy(insert_query, params=params)
+        await ctx.send("Your reminder has been set.")
+
+    @pandora_bot.hybrid_command(name='purgereminders', help="Clear all your reminders.")
+    @app_commands.guilds(discord.Object(id=guild_id))
+    async def clear_reminder(ctx):
+        await ctx.defer()
+        delete_query = "DELETE FROM UserReminders WHERE discord_id = :id"
+        await rqy(delete_query, params={"id": str(ctx.author.id)})
+        await ctx.send("All your reminders have been cleared.")
 
     def build_category_dict():
         temp_dict = {}

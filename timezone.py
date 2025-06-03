@@ -124,24 +124,8 @@ async def get_time_embed(user):
         sign = 1 if "+" in tz_code else -1
     now += timedelta(hours=sign * offset_hours)
     # Handle DST and Region Exceptions
-    if region_exception != "Disable":
-        dst_data = gli.dst_regions[region_exception]
-        start_month, start_day = dst_data["start"]
-        end_month, end_day = dst_data["end"]
-        if start_month <= end_month:
-            is_dst_active = (
-                    (start_month < now.month < end_month) or
-                    (now.month == start_month and now.day >= start_day) or
-                    (now.month == end_month and now.day <= end_day)
-            )
-        else:
-            is_dst_active = (
-                    (now.month > start_month or now.month < end_month) or
-                    (now.month == start_month and now.day >= start_day) or
-                    (now.month == end_month and now.day <= end_day)
-            )
-        if is_dst_active:
-            now += timedelta(hours=1)
+    if is_dst_active(region_exception, now):
+        now += timedelta(hours=1)
     f_time = now.strftime("**%-I:%M%p**, %b %-d")
     timezone_name = gli.timezone_map[tz_code]
     description = f"{f_time}\n{timezone_name}\n{f'DST Exception ({region_exception})' if region_exception else ''}"
@@ -162,4 +146,35 @@ async def init_time_menu(bot):
         if error_channel:
             tb_str = ''.join(traceback.format_exception(type(e), e, e.__traceback__))
             await error_channel.send(f"An error occurred:\n{e}\n```{tb_str}```")
+
+
+async def get_user_timezone(discord_id: str):
+    query = "SELECT tz_code, region_exception FROM timezone_handler WHERE discord_id = :id"
+    row = await rqy(query, return_value=True, params={"id": discord_id})
+    if row is None or len(row.index) == 0:
+        return None, 0
+    region_exception = row["region_exception"].values[0]
+    dst_offset = int(is_dst_active(region_exception, dt.utcnow()))
+    return row["tz_code"].values[0], dst_offset
+
+
+def is_dst_active(region: str, now: dt):
+    if region not in gli.dst_regions or region == "Disable":
+        return False
+    start_month, start_day = gli.dst_regions[region]["start"]
+    end_month, end_day = gli.dst_regions[region]["end"]
+    if start_month <= end_month:
+        return (
+            (start_month < now.month < end_month) or
+            (now.month == start_month and now.day >= start_day) or
+            (now.month == end_month and now.day <= end_day)
+        )
+    else:
+        return (
+            (now.month > start_month or now.month < end_month) or
+            (now.month == start_month and now.day >= start_day) or
+            (now.month == end_month and now.day <= end_day)
+        )
+
+
 

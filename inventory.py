@@ -657,7 +657,7 @@ async def add_custom_item(item):
                     "AND item_base_dmg_min = :min_check AND item_base_dmg_max = :max_check "
                     "AND item_elements = :element_check")
     params = {"player_check": item.player_owner, "name_check": item.item_name,
-              "min_check": item.base_damage_min, "max_check": item.base_damage_max, "element_check": element_str}
+              "min_check": item.base_damage_min, "max_check": item.base_damage_max, "element_check": item_elements}
     df = await rqy(select_query, return_value=True, params=params)
     if len(df) == 0:
         return 0

@@ -95,7 +95,7 @@ ore_data = [[None, 'Crude Ore', 2, 1, '<:eore:1145534835507593236>', None, 2500]
             [None, 'Cosmite Ore', 5, 2, '<:eore:1145534835507593236>', None, 5000],
             [None, 'Celestite Ore', 10, 3, '<:eore:1145534835507593236>', None, 10000],
             [None, 'Crystallite Ore', 50, 4, '<:eore:1145534835507593236>', None, 50000],
-            [None, 'Heavenly Ore', 100, 5, '<:eore:1145534835507593236>', heaven_ore, 0]]
+            [None, 'Heavenly Ore', 100, 5, '<:eore:1145534835507593236>', heaven_ore, 1000000]]
 for row in ore_data:
     row[5] = f'Ore with {row[2]}% purity. With enough samples, perhaps the purity can be raised.'
 itemdata_dict = build_item_dict(itemdata_dict, ore_data, category="Ore")
