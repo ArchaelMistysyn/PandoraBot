@@ -228,7 +228,8 @@ async def generate_and_combine_images():
         for item_id in itemdata.itemdata_dict.keys():
             # Ensure image is currently available.
             temp_item = inventory.BasicItem(item_id)
-            if temp_item.item_category not in gli.availability_list_nongear:
+            run_list = ["Trove", "Ore"]
+            if temp_item.item_category not in run_list:
                 continue
             set_items = []
             if temp_item.item_category == "Misc" and item_id not in set_items:

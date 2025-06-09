@@ -288,4 +288,4 @@ selection_pools = [
     ["Skull2", "Hammer", "Pearl", "Ore5", "Token7", "Token6", "Trove7", "Trove6", "Summon3", "Crystal3",
      "Jewel4", "Compass", "ESS"],
     ["Skull3", "Lotus2", "Lotus3", "Lotus4", "Lotus5", "Lotus6", "Lotus7", "Lotus8", "Lotus9", "Lotus1",
-     "Lotus10", "DarkStar", "LightStar", "Trove8", "Crystal4", "Jewel5", "ESS"]]
+     "Lotus10", "DarkStar", "LightStar", "Trove8", "Crystal4", "Jewel5", "ESS", "Trove9"]]

@@ -72,30 +72,36 @@ itemdata_dict = build_item_dict(itemdata_dict, stamina_data, category="Potion")
 # Trove Data
 trove_rewards = {1: [1000, 5000, 1], 2: [5000, 10000, 10], 3: [10000, 20000, 50], 4: [20000, 35000, 100],
                  5: [35000, 50000, 500], 6: [50000, 75000, 1000], 7: [75000, 100000, 2000],
-                 8: [100000, 1000000, 3000]}
-trove_data = [[None, 'Lesser Lotus Trove', 100, 1, '<a:elootitem:1144477550379274322>', None, 0],
-              [None, 'Standard Lotus Trove', 100, 2, '<a:elootitem:1144477550379274322>', None, 0],
-              [None, 'Greater Lotus Trove', 100, 3, '<a:elootitem:1144477550379274322>', None, 0],
-              [None, 'Ultimate Lotus Trove', 100, 4, '<a:elootitem:1144477550379274322>', None, 0],
-              [None, 'Voidworn Lotus Trove', 100, 5, '<a:elootitem:1144477550379274322>', None, 0],
-              [None, 'Miraculous Lotus Trove', 100, 6, '<a:elootitem:1144477550379274322>', None, 0],
-              [None, 'Abyssal Lotus Trove', 100, 7, '<a:elootitem:1144477550379274322>', None, 0],
-              [None, 'Divine Lotus Trove', 100, 8, '<a:elootitem:1144477550379274322>', None, 0]]
+                 8: [100000, 1000000, 3000], 9: [1000000, 10000000, 25000]}
+trove_data = [[None, 'Lesser Lotus Trove', 100, 1, '<:T1:1381687964215677028>', None, 0],
+              [None, 'Standard Lotus Trove', 100, 2, '<:T2:1381687990400581743>', None, 0],
+              [None, 'Greater Lotus Trove', 100, 3, '<:T3:1381688005156143216>', None, 0],
+              [None, 'Ultimate Lotus Trove', 100, 4, '<:T4:1381688022210445454>', None, 0],
+              [None, 'Voidworn Lotus Trove', 100, 5, '<:T5:1381688061104095394>', None, 0],
+              [None, 'Miraculous Lotus Trove', 100, 6, '<:T6:1381688080838164490>', None, 0],
+              [None, 'Abyssal Lotus Trove', 100, 7, '<:T7:1381688095296196618>', None, 0],
+              [None, 'Divine Lotus Trove', 100, 8, '<:T8:1381688107853676554>', None, 0],
+              [None, 'Sacred Lotus Trove', 100, 8, '<:T9:1381688120231067749>', None, 0]]
 for row in trove_data:
     tier = row[3]
     bounds = trove_rewards[tier]
     lotus_rate = f"{bounds[2] / 1000:.4f}".rstrip('0').rstrip('.')
-    row[5] = f'Open to receive {bounds[0]:,} - {bounds[1]:,} lotus coins. Lotus chance: {lotus_rate}%'
+    row[5] = f'Open to receive {bounds[0]:,} - {bounds[1]:,} lotus coins.\nSpecial reward rates: '
+    if tier == 9:
+        t9_msg = f'\n50% Base Lotus\n15% Seal of Salvation\n15% Sacred Blood\n15% Divine Lotus\n5% Rainbow Lotus'
+        row[5] += trove_9_msg
+    else:
+        row[5] += f'{lotus_rate}%'
 itemdata_dict = build_item_dict(itemdata_dict, trove_data, category="Trove")
 
 # Ore and Soul List Data in the new structure
 heaven_ore = ("A fully purified ore chunk. It shines with the same spectacular light as the most exceptional of items. "
               "Used for reinforcing gear items. Increasing the quality.")
-ore_data = [[None, 'Crude Ore', 2, 1, '<:eore:1145534835507593236>', None, 2500],
-            [None, 'Cosmite Ore', 5, 2, '<:eore:1145534835507593236>', None, 5000],
-            [None, 'Celestite Ore', 10, 3, '<:eore:1145534835507593236>', None, 10000],
-            [None, 'Crystallite Ore', 50, 4, '<:eore:1145534835507593236>', None, 50000],
-            [None, 'Heavenly Ore', 100, 5, '<:eore:1145534835507593236>', heaven_ore, 1000000]]
+ore_data = [[None, 'Crude Ore', 2, 1, '<:O1:1381693225697284287>', None, 2500],
+            [None, 'Cosmite Ore', 5, 2, '<:O2:1381693241543495831>', None, 5000],
+            [None, 'Celestite Ore', 10, 3, '<:O3:1381693256311509142>', None, 10000],
+            [None, 'Crystallite Ore', 50, 4, '<:O4:1381693272195600576>', None, 50000],
+            [None, 'Heavenly Ore', 100, 5, '<:O5:1381693284014882846>', heaven_ore, 1000000]]
 for row in ore_data:
     row[5] = f'Ore with {row[2]}% purity. With enough samples, perhaps the purity can be raised.'
 itemdata_dict = build_item_dict(itemdata_dict, ore_data, category="Ore")

@@ -41,7 +41,7 @@ boss_loot_dict = {
                   [8, "Lotus2", 5], [8, "Lotus3", 5], [8, "Lotus4", 5], [8, "Lotus5", 5], [8, "Lotus6", 5],
                   [8, "Lotus7", 5], [8, "Lotus8", 5], [8, "Lotus9", 5], [8, "Lotus1", 5],
                   [8, "Lotus10", 1], [8, "DarkStar", 2], [8, "Nephilim", 1], [8, "EssenceXXX", 99]],
-    "Ruler": [[9, "Stone6", 33], [9, "Crystal4", 1], [9, "Lotus4", 0.1],
+    "Ruler": [[9, "Stone6", 33], [9, "Crystal4", 1], [9, "Trove9", 0.5],
               [9, "Salvation", 0.2], [9, "Ruler", 0.01], [9, "Sacred", 0.05]]}
 incarnate_attempts_dict = {300: 1, 600: 2, 999: 5}
 
@@ -177,10 +177,10 @@ def generate_random_item(quantity=1):
 
 def generate_trove_reward(trove_object, trove_stock):
     lotus_rate_dict = {}
-    num_coins, num_lotus = 0, 0
+    num_coins, num_reward = 0, 0
     bounds = itemdata.trove_rewards[trove_object.item_tier]
     for _ in range(trove_stock):
         num_coins += random.randint(bounds[0], bounds[1])
-        if random.randint(1, 100000) <= bounds[2]:
-            num_lotus += 1
-    return num_lotus, num_coins, f"{trove_object.item_emoji} {trove_stock:,}x {trove_object.item_name} opened: "
+        if random.randint(1, 100000) <= bounds[2] or trove_object.item_tier == 9:
+            num_reward += 1
+    return num_reward, num_coins, f"{trove_object.item_emoji} {trove_stock:,}x {trove_object.item_name} opened: "

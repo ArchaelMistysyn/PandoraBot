@@ -693,16 +693,19 @@ def run_discord_bot():
         # embed_msg.set_thumbnail(url="") add highest tier trove thumbnail once able
         message = await ctx.send(embed=embed_msg)
         # Handle the opening.
-        num_lotus, reward_coins = 0, 0
+        num_lotus, num_special, reward_coins = 0, 0, 0
         for trove_index, (trove_id, trove_qty) in enumerate(trove_details):
             if trove_qty != 0:
                 _, tier_icon = sm.get_gear_tier_colours(trove_index + 1)
                 trove_object = inventory.BasicItem(trove_id)
-                lotus_count, trove_coins, trove_msg = loot.generate_trove_reward(trove_object, abs(trove_qty))
+                item_count, trove_coins, trove_msg = loot.generate_trove_reward(trove_object, abs(trove_qty))
                 reward_coins += trove_coins
                 coin_msg = await player_obj.adjust_coins(trove_coins)
-                lotus_msg = " **LOTUS FOUND**" if lotus_count > 0 else ""
-                num_lotus += lotus_count
+                lotus_msg = " **SPECIAL REWARD**" if item_count > 0 else ""
+                if trove_object.item_tier == 9:
+                    num_special += item_count
+                else:
+                    num_lotus += item_count
                 embed_msg.add_field(name="", value=f"{tier_icon} {trove_msg}", inline=False)
                 await message.edit(embed=embed_msg)
                 await asyncio.sleep(2)
@@ -715,6 +718,25 @@ def run_discord_bot():
         loot_msg, lotus_msg = f"TOTAL: {gli.coin_icon} {reward_coins:,}x lotus coins!\n", ""
         embed_msg.add_field(name="", value=loot_msg, inline=False)
         lotus_items = {}
+
+        def trove_add_item(item_id):
+            if item_id in lotus_items:
+                lotus_items[item_id] += 1
+            else:
+                lotus_items[item_id] = 1
+
+        for _ in range(num_special):
+            result = random.randint(1, 100)
+            if result <= 50:
+                num_lotus += 1
+            elif result <= 65:
+                trove_add_item("Salvation")
+            elif result <= 80:
+                trove_add_item("Sacred")
+            elif result <= 95:
+                trove_add_item("Lotus10")
+            else:
+                trove_add_item("Lotus11")
         for _ in range(num_lotus):
             lotus_id = f"Lotus{random.randint(1, 10)}"
             lotus_items[lotus_id] = (lotus_items[lotus_id] + 1) if lotus_id in lotus_items else 1
@@ -728,7 +750,7 @@ def run_discord_bot():
             embed_msg.add_field(name="", value=lotus_msg, inline=False)
         await asyncio.sleep(2)
         await message.edit(embed=embed_msg)
-        for lotus_id in sorted(lotus_items.keys(), key=lambda x: int(x[5:])):
+        for lotus_id in sorted(lotus_items.keys(), key=lambda x: int(x[5:]) if x.startswith("Lotus") else 99):
             for _ in range(lotus_items[lotus_id]):
                 await sm.send_notification(ctx, player_obj, "Item", lotus_id)
 
@@ -2026,6 +2048,7 @@ def run_discord_bot():
                        ("Alina Arkhipova", "Character Artist (Upwork)"),
                        ("Denny Rasyid Salam", "Character Artist (Upwork)"),
                        ("Martin Steffen", "Character Artist (Upwork)"),
+                       ("Tan kwokYeow", "Character Artist (Upwork)"),
                        ("Daming Li", "Monster Artist (Upwork)"),
                        ("Arjhon Tulio", "Scene Artist (Upwork)"),
                        ("Nina Hvozdzeva", "Logo Artist (Upwork)"),
@@ -2033,6 +2056,7 @@ def run_discord_bot():
                        ("Mario Ferrera", "Web Developer & Designer (Upwork)"),
                        ("Jumana Walid", "Typography Artist (Upwork)"),
                        ("Meerab Aliya", "Writer (Upwork)"),
+                       ("Miqdam UL Ghani", "Item Icon Artist (Upwork)"),
                        ("Brandon Brown", "Item Icon Artist (Upwork)"),
                        ("Tuul Huur @tuulhuur", "Item Icon Artist (Fiverr)"),
                        ("Nong Dit @Nong Dit", "Frame Artist (Fiverr)"),
