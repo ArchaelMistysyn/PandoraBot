@@ -61,10 +61,10 @@ itemdata_dict = build_item_dict(itemdata_dict, stone_data, category="Stone")
 
 # Stamina Potion Data
 potion_values = [500, 1000, 2500, 5000]
-stamina_data = [[None, 'Lesser Stamina Potion', 100, 1, gli.stamina_icon, None, 2500],
-                [None, 'Standard Stamina Potion', 100, 2, gli.stamina_icon, None, 5000],
-                [None, 'Greater Stamina Potion', 100, 3, gli.stamina_icon, None, 10000],
-                [None, 'Ultimate Stamina Potion', 100, 4, gli.stamina_icon, None, 20000]]
+stamina_data = [[None, 'Lesser Stamina Potion', 100, 1, "<:Pot1:1388915732863258774>", None, 2500],
+                [None, 'Standard Stamina Potion', 100, 2, "<:Pot2:1388915746226049165>", None, 5000],
+                [None, 'Greater Stamina Potion', 100, 3, "<:Pot3:1388915758939246612>", None, 10000],
+                [None, 'Ultimate Stamina Potion', 100, 4, "<:Pot4:1388915769756352583>", None, 20000]]
 for index, row in enumerate(stamina_data):
     row[5] = f'Consume to restore {potion_values[index]} stamina.'
 itemdata_dict = build_item_dict(itemdata_dict, stamina_data, category="Potion")
@@ -81,7 +81,7 @@ trove_data = [[None, 'Lesser Lotus Trove', 100, 1, '<:T1:1381687964215677028>', 
               [None, 'Miraculous Lotus Trove', 100, 6, '<:T6:1381688080838164490>', None, 0],
               [None, 'Abyssal Lotus Trove', 100, 7, '<:T7:1381688095296196618>', None, 0],
               [None, 'Divine Lotus Trove', 100, 8, '<:T8:1381688107853676554>', None, 0],
-              [None, 'Sacred Lotus Trove', 100, 8, '<:T9:1381688120231067749>', None, 0]]
+              [None, 'Sacred Lotus Trove', 100, 9, '<:T9:1381688120231067749>', None, 0]]
 for row in trove_data:
     tier = row[3]
     bounds = trove_rewards[tier]
@@ -89,7 +89,7 @@ for row in trove_data:
     row[5] = f'Open to receive {bounds[0]:,} - {bounds[1]:,} lotus coins.\nSpecial reward rates: '
     if tier == 9:
         t9_msg = f'\n50% Base Lotus\n15% Seal of Salvation\n15% Sacred Blood\n15% Divine Lotus\n5% Rainbow Lotus'
-        row[5] += trove_9_msg
+        row[5] += t9_msg
     else:
         row[5] += f'{lotus_rate}%'
 itemdata_dict = build_item_dict(itemdata_dict, trove_data, category="Trove")
@@ -312,9 +312,9 @@ itemdata_dict = build_item_dict(itemdata_dict, heart_data, category="Heart")
 uncategorized_data = [
     ['Catalyst', 'Gemstone Catalyst', 100, 5, '<:Cata:1274786559996198944>',
      "A hollow transparent gemstone. It's true nature can be revealed through elemental infusion.", 500000],
-    ["Hammer", 'Astral Hammer', 80, 2, '<:Hammer:1274787429383147551>',
+    ["Hammer", 'Astral Hammer', 80, 2, '<:Hmr:1388913551443361872>',
      'Used to reroll specific item rolls. Works on tier 4 and lower gear items.', 50000],
-    ["Pearl", 'Stellar Pearl', 75, 4, '<:Pearl:1274787439692615680>',
+    ["Pearl", 'Stellar Pearl', 75, 4, '<:Prl:1388913620775076000>',
      'Augments an item roll. Increases the tier by 1.', 50000],
     ["Matrix", 'Socket Matrix', 5, 3, '<a:elootitem:1144477550379274322>',
      '5% Chance to add a socket to a gear item.', 5000],
@@ -323,7 +323,7 @@ uncategorized_data = [
      "A fragment of an ancient weapon. Perhaps it can be reforged.", 0],
     ['Scrap', 'Equipment Scrap', 100, 1, '<:Scrap:1274787448681005158>',
      "One of many countless pieces of Pandora's Legendary Hammer.", 0],
-    ['Compass', 'Illusory Compass', 100, 6, '<:Compass:1274787464363380766>',
+    ['Compass', 'Illusory Compass', 100, 6, '<:Cmps:1388913589535899758>',
      'An enigmatic compass said to be capable of locating the Spire of Illusions.', 500000],
     ['DarkStar', 'Dark Star of Shattered Dreams', 100, 8, '<:DarkStar:1274786619446267954>',
      "Legend tells of a star engulfed in black flames that heralds great disasters. "
@@ -354,6 +354,6 @@ uncategorized_data = [
     ['Salvation', "Seal of Salvation", 100, 9, '<:Sacred:1274786598336331807>',
      "Rare drop from raid bosses. Can be consumed to guarantee an on-class skill roll on an Amulet."
      " [Ultimate Rare]", 0],
-    ['Metamorphite', 'Metamorphite Ore', 100, 7, '<a:elootitem:1144477550379274322>',
+    ['Metamorphite', 'Metamorphite Ore', 100, 7, '<:O6:1388913354113945680>',
      "A mysterious ore that can drastically change an item.", 0]]
 itemdata_dict = build_item_dict(itemdata_dict, uncategorized_data, unique_index=True)

@@ -66,7 +66,7 @@ def assign_pact_values(player_obj):
             player_obj.recovery *= 2
             player_obj.attack_speed = int(round(player_obj.attack_speed / 2)) if player_obj.attack_speed != 0 else 0
         case "Greed":
-            for key in ["Omega", "Hyperbleed", "Fractal", "Time Lock", "Bloom"]:
+            for key in ["Omega", "Hyperbleed", "Fractal", "Temporal", "Bloom"]:
                 player_obj.trigger_rate[key] *= 2
             player_obj.charge_generation = int(round(player_obj.charge_generation / 2))
         case "Gluttony":

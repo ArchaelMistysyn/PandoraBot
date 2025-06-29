@@ -675,7 +675,7 @@ def run_discord_bot():
         trove_details = []
         total_stock = 0
         # Get the trove data.
-        for trove_tier in range(8):
+        for trove_tier in range(9):
             trove_id = f"Trove{trove_tier + 1}"
             stock_count = await inventory.check_stock(player_obj, trove_id)
             total_stock += stock_count
@@ -740,17 +740,18 @@ def run_discord_bot():
         for _ in range(num_lotus):
             lotus_id = f"Lotus{random.randint(1, 10)}"
             lotus_items[lotus_id] = (lotus_items[lotus_id] + 1) if lotus_id in lotus_items else 1
-        for lotus_id in sorted(lotus_items.keys(), key=lambda x: int(x[5:])):
+        sorted_lotus_ids = sorted(lotus_items.keys(), key=lambda x: int(x[5:]) if x.startswith("Lotus") else 99)
+        for lotus_id in sorted_lotus_ids:
             lotus_item = inventory.BasicItem(lotus_id)
             lotus_msg += f"{sm.reward_message(lotus_item, lotus_items[lotus_id])}\n"
         batch_df = sm.list_to_batch(player_obj, [(lotus_id, lotus_qty) for lotus_id, lotus_qty in lotus_items.items()])
         await inventory.update_stock(None, None, None, batch=batch_df)
         embed_msg.title = title_msg
-        if num_lotus > 0:
+        if lotus_items:
             embed_msg.add_field(name="", value=lotus_msg, inline=False)
         await asyncio.sleep(2)
         await message.edit(embed=embed_msg)
-        for lotus_id in sorted(lotus_items.keys(), key=lambda x: int(x[5:]) if x.startswith("Lotus") else 99):
+        for lotus_id in sorted_lotus_ids:
             for _ in range(lotus_items[lotus_id]):
                 await sm.send_notification(ctx, player_obj, "Item", lotus_id)
 

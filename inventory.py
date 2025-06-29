@@ -76,7 +76,7 @@ class BInventoryView(discord.ui.View):
             discord.SelectOption(
                 emoji="<:Essence5:1297651547186139206>", label="Essences", description="Essence Items"),
             discord.SelectOption(
-                emoji="<:Compass:1274787464363380766>", label="Summoning", description="Summoning Items"),
+                emoji="<:Cmps:1388913589535899758>", label="Summoning", description="Summoning Items"),
             discord.SelectOption(
                 emoji="<a:eenergy:1145534127349706772>", label="Misc", description="Misc Items"),
             discord.SelectOption(
@@ -707,7 +707,7 @@ async def display_binventory(player_obj, method, view_type, include_id=False):
     regex_dict = {
         "Crafting": "^(Matrix|Hammer|Pearl|Fragment|Crystal)",
         "Fae Cores": "^(Fae)",
-        "Materials": "^(Scrap|Ore|Shard|Heart)",
+        "Materials": "^(Scrap|Ore|Metamorphite|Shard|Heart)",
         "Unprocessed": "^(Unrefined|Gem|Jewel|Void)",
         "Essences": "^(Essence)",
         "Summoning": "^(Compass|Summon)",

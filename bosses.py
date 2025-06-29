@@ -39,6 +39,8 @@ raid_bosses = {0: "Geb, Sacred Ruler of Sin", 1: "Tiamat, Sacred Ruler of Fury",
 raid_element_dict = {
     "Geb, Sacred Ruler of Sin": [3, 6, 7], "Tiamat, Sacred Ruler of Fury": [0, 2, 5],
     "Veritas, Sacred Ruler of Prophecy": [1, 4, 8], "Alaric, Sacred Ruler of Totality": [x for x in range(9)]}
+boss_numeral_map = {"Alaric, Sacred Ruler of Totality": "A", "Tiamat, Sacred Ruler of Fury": "B",
+                    "Veritas, Sacred Ruler of Prophecy": "C", "Geb, Sacred Ruler of Sin": "D"}
 
 
 # Boss class
@@ -107,6 +109,9 @@ class CurrentBoss:
             case "Paragon" | "Arbiter" | "Incarnate":
                 boss_numeral = self.boss_name.split()[0]
                 self.boss_image = f'{gli.web_url}tarot/{boss_numeral}/{boss_numeral}_8.png'
+            case "Ruler":
+                boss_numeral = boss_numeral_map[self.boss_name]
+                self.boss_image = f'{gli.web_url}tarot/XXX{boss_numeral}/{boss_numeral}_8.png'
             case "Demon":
                 if boss_tier != 4:
                     self.boss_element = random.randint(0, 8)

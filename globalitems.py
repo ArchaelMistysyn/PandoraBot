@@ -27,7 +27,9 @@ metrics_channel, metrics_message_id = 1156267612783779901, 1296207066284953664
 reverse_GM_id_dict = {value: key for key, value in GM_id_dict.items()}
 web_url = "https://PandoraPortal.ca/botimages/"
 web_gallery_url = "https://PandoraPortal.ca/gallery/"
-# LOCAL image_path = 'C:\\Users\\GamerTech\\PycharmProjects\\PandoraBot\\botart\\'
+# LOCAL
+# image_path = 'C:\\Users\\GamerTech\\PycharmProjects\\PandoraBot\\botart\\'
+# REMOTEbu
 image_path = '/home/ubuntu/PandoraBot/botart/'
 store_link = "https://ArchDragonStore.ca"
 
@@ -206,7 +208,8 @@ skill_names_dict = {
 # ITEM LISTS
 crafting_gem = ["Blazing Ruby", "Drowned Sapphire", "Silent Topaz", "Ancient Agate", "Whispering Emerald",
                 "Arctic Zircon", "Haunted Obsidian", "Prismatic Opal", "Spatial Lapis", "Soul Diamond"]
-availability_list_nongear = ["Gemstone", "Fragment", "Crystal", "Heart", "Skull", "Misc", "Essence", "Trove", "Ore"]
+availability_list_nongear = ["Gemstone", "Fragment", "Crystal", "Heart", "Skull", "Misc", "Essence", "Trove", "Ore",
+                             "Potion"]
 
 fabled_ringtypes = ["Dragon's Eye Diamond", "Bleeding Hearts", "Gambler's Masterpiece",
                     "Lonely Ring of the Dark Star", "Lonely Ring of the Light Star"]
