@@ -490,7 +490,7 @@ class CustomItem:
 
 class BasicItem:
     def __init__(self, item_id):
-        self.item_id, self.item_name, self.item_tier = 1, "", ""
+        self.item_id, self.item_name, self.item_tier = "", "", 1
         self.item_category, self.item_description, = "", ""
         self.item_emoji, self.item_image = "", ""
         self.item_cost, self.item_base_rate = 0, 0

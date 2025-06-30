@@ -214,7 +214,7 @@ def easy_embed(colour, title, description):
 async def cost_embed(player_obj, cost_items, cost_qty):
     cost_msg = ""
     if not isinstance(cost_items, list):
-        item_stock = await inventory.check_stock(player_obj, cost_items)
+        item_stock = await inventory.check_stock(player_obj, cost_items.item_id)
         cost_msg = f"{cost_items.item_emoji} {cost_items.item_name}: {item_stock:,} / {cost_qty:,}\n"
         return cost_msg, item_stock >= cost_qty
     can_afford = True

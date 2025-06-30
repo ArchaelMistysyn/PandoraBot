@@ -210,6 +210,7 @@ class QuestView(discord.ui.View):
     def __init__(self, ctx_object, player_obj, quest_obj, choice_num, choice_reward):
         super().__init__(timeout=None)
         self.ctx_object, self.player_obj, self.quest_obj = ctx_object, player_obj, quest_obj
+        self.quest_num = self.quest_obj.quest_num
         self.embed_msg, self.new_view = None, None
         self.choice_num, self.choice_reward = choice_num, choice_reward
 
@@ -217,13 +218,13 @@ class QuestView(discord.ui.View):
     async def handin_callback(self, interaction: discord.Interaction, button: discord.Button):
         if interaction.user.id != self.player_obj.discord_id:
             return
-        if self.quest_obj is None:
+        await self.player_obj.reload_player()
+        if self.quest_obj is None or self.player_obj.quest_num != self.quest_num:
             result_embed = sm.easy_embed("Red", "Error!", "Quest error successfully handled.")
             if self.embed_msg is not None:
                 result_embed = self.embed_msg
             await interaction.response.edit_message(embed=result_embed, view=self.new_view)
             return
-        await self.player_obj.reload_player()
         temp_embed, is_completed = \
             await self.quest_obj.hand_in(self.ctx_object, self.player_obj, self.choice_num, self.choice_reward)
         if not is_completed:

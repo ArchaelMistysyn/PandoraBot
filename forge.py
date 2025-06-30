@@ -133,23 +133,23 @@ class ForgeView(discord.ui.View):
         self.player_obj, self.selected_item = player_obj, selected_item
         # Build the option menu.
         options_dict = {
-            "Enhance": {"emoji": "<a:eenergy:1145534127349706772>", "label": "Enhance",
+            "Enhance": {"emoji": "<:Fae0:1274786282010316913>", "label": "Enhance",
                         "description": "Enhance the item"},
-            "Upgrade": {"emoji": "<:eore:1145534835507593236>", "label": "Upgrade",
+            "Upgrade": {"emoji": "<:O5:1381693284014882846>", "label": "Upgrade",
                         "description": "Upgrade the item quality"},
             "Open": {"emoji": "<a:elootitem:1144477550379274322>", "label": "Open Socket",
                      "description": "Add a socket to the item"},
             "Reforge": {"emoji": "<a:eshadow2:1141653468965257216>", "label": "Reforge",
                         "description": "Reforge the item with a new ability and base stats."},
-            "Attune": {"emoji": "<:Pearl:1274787439692615680>", "label": "Cosmic Attunement",
+            "Attune": {"emoji": "<:Prl:1388913620775076000>", "label": "Cosmic Attunement",
                        "description": "Upgrade the item rolls"},
-            "Augment": {"emoji": "<:Hammer:1274787429383147551>", "label": "Astral Augment",
+            "Augment": {"emoji": "<:Hmr:1388913551443361872>", "label": "Astral Augment",
                         "description": "Add/Modify the item rolls"},
             "Implant": {"emoji": "<a:eorigin:1145520263954440313>", "label": "Implant Element",
                         "description": "Add new elements to the item"}
         }
         if selected_item.item_type == "Y":
-            options_dict["Salvation"] = {"emoji": "<:Hammer:1274787429383147551>", "label": "Salvation",
+            options_dict["Salvation"] = {"emoji": "<:Hmr:1388913551443361872>", "label": "Salvation",
                                          "description": "Guarantee an on-class skill"}
         option_data = [discord.SelectOption(emoji=options_dict[key]["emoji"], label=options_dict[key]["label"],
                                             description=options_dict[key]["description"]) for key in options_dict]

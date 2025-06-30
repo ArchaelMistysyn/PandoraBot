@@ -248,7 +248,7 @@ class SkillSelectView(discord.ui.View):
                 if current_roll.roll_code == "unique-0-y":
                     npc_comment = "Oho, you have impeccable taste.\n"
             token_obj = inventory.BasicItem("Token4")
-            cost_msg = await sm.cost_embed(self.player_obj, token_obj, cost_list[self.total_rolls - 1])
+            cost_msg, _ = await sm.cost_embed(self.player_obj, token_obj, cost_list[self.total_rolls - 1])
             self.embed = sm.easy_embed("green", NPC_name, f"{npc_comment}{skill_display}\n{cost_msg}")
             self.new_view = SkillPurchaseView(self.player_obj, self.selected_item, self.total_rolls, self.skills, skill_display)
         await interaction.response.edit_message(embed=self.embed, view=self.new_view)
@@ -272,7 +272,7 @@ class SkillPurchaseView(discord.ui.View):
         # Display the cost failed message. Reload the same view.
         cost_msg, can_afford = await sm.cost_embed(self.player_obj, token_obj, cost_list[self.total_rolls - 1])
         if not can_afford:
-            npc_comment = "If you really want this then you'd better provide a sufficient offering."
+            npc_comment = f"If you really want this then you'd better provide a sufficient offering.\n"
             embed_msg = sm.easy_embed("green", NPC_name, f"{npc_comment}{self.skill_display}\n{cost_msg}")
             current_stock = await inventory.check_stock(self.player_obj, token_obj.item_id)
             stock_msg = sm.get_stock_msg(token_obj, current_stock, custom_cost)
