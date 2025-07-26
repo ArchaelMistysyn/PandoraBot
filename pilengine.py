@@ -228,12 +228,14 @@ async def generate_and_combine_images():
         for item_id in itemdata.itemdata_dict.keys():
             # Ensure image is currently available.
             temp_item = inventory.BasicItem(item_id)
-            run_list = ["Ore"]
+            run_list = ["Misc"]
             if temp_item.item_category not in run_list:
                 continue
-            set_items = []
+            set_items = ["Nadir", "Chest"]
             if temp_item.item_category == "Misc" and item_id not in set_items:
                 continue
+            # if temp_item.item_category == "Fish" and int(temp_item.item_id.replace("Fish", "")) > 7:
+              #  continue  # Skip Fish8+
             count += 1
             # Handle the urls and paths.
             frame_url = gli.frame_icon_list[temp_item.item_tier - 1]

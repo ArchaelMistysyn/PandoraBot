@@ -64,7 +64,7 @@ for idx, (ore, count) in enumerate(zip(['Crude', 'Cosmite', 'Celestite', 'Crysta
                [(f"Ore{idx}", count), (f"Stone{idx}", 5), 75, "Ore5", None])
 
 primordial_rings = [("Ruby", "Incineration"), ("Sapphire", "Atlantis"), ("Topaz", "Dancing Thunder"),
-                    ("Agate", "Seismic Tremors"), ("Emerald", "Wailing Winds"), ("Zircon", "Frozen Castle"),
+                    ("Agate", "Seismic Tremors"), ("Emerald", "Wailing Winds"), ("Zircon", "the Frozen Castle"),
                     ("Obsidian", "Tormented Souls"), ("Opal", "Scintillation"), ("Amethyst", "Shifting Stars")]
 # Elemental Infusions
 for idx, (element, (gemstone, ring_name)) in enumerate(zip(gli.element_names, primordial_rings)):

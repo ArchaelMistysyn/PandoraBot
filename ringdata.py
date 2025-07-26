@@ -35,8 +35,8 @@ ring_icons = {0: None, 1: None, 2: None, 3: None,
                   "<:P_Ring8:1303816617200713811>"
               ],
               "Fabled Ring Infusion": ["<:DE_Ring:1303816766899884042>", "<:BH_Ring:1303816753511665794>",
-                                       "<:GM_Ring:1303816779021156352>",
-                                       "<:lone_ring1:1275566085101326569>", "<:lone_ring2:1275566092504404038>"],
+                                       "<:GM_Ring:1303816779021156352>", "<:lone_ring2:1275566092504404038>",
+                                       "<:lone_ring1:1275566085101326569>"],
               "Sovereign Ring Infusion": ["<:sc_ring:1275566074779275426>", "<:hc_ring:1275566068466847776>",
                                           "<:hadal_ring:1275566060447207558>", "<:twin_rings:1275566143238836295>",
                                           "<:skull_ring:1275566027429773352>", "<:C_Tears:1304109254914998272>"]}
@@ -77,7 +77,7 @@ for i, element in enumerate(gli.element_names):
     ring_values_dict[f"Elemental Signet of {element}"] = ring_data
 # Primordial Rings
 ele_rings = [("Ruby", "Incineration", 1), ("Sapphire", "Atlantis", 14), ("Topaz", "Dancing Thunder", 8),
-             ("Agate", "Seismic Tremors", 16), ("Emerald", "Wailing Winds", 9), ("Zircon", "Frozen Castle", 13),
+             ("Agate", "Seismic Tremors", 16), ("Emerald", "Wailing Winds", 9), ("Zircon", "the Frozen Castle", 13),
              ("Obsidian", "Tormented Souls", 12), ("Opal", "Scintillation", 11), ("Amethyst", "Shifting Stars", 17)]
 for elemental_index, (ring_prefix, ring_suffix, resonance_index) in enumerate(ele_rings):
     abilities = [(f"{gli.element_names[elemental_index]} Curse X%", "elemental_curse", 500, elemental_index),

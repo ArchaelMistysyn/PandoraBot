@@ -219,7 +219,7 @@ class QuestView(discord.ui.View):
         if interaction.user.id != self.player_obj.discord_id:
             return
         await self.player_obj.reload_player()
-        if self.quest_obj is None or self.player_obj.quest_num != self.quest_num:
+        if self.quest_obj is None or self.player_obj.player_quest != self.quest_num:
             result_embed = sm.easy_embed("Red", "Error!", "Quest error successfully handled.")
             if self.embed_msg is not None:
                 result_embed = self.embed_msg

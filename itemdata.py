@@ -49,12 +49,12 @@ itemdata_dict = build_item_dict(itemdata_dict, summon_data, category="Summon")
 
 # Stone List Data
 stone_type = ["Fortress", "Dragon", "Demon", "Paragon", "Ruler", "Arbiter"]
-stone_data = [[None, 'Fortress Stone', 100, 1, '<a:elootitem:1144477550379274322>', None, 0],
-              [None, 'Dragon Stone', 100, 2, '<a:elootitem:1144477550379274322>', None, 0],
-              [None, 'Demon Stone', 100, 3, '<a:elootitem:1144477550379274322>', None, 0],
-              [None, 'Paragon Stone', 100, 4, '<a:elootitem:1144477550379274322>', None, 0],
-              [None, "Ruler's Stone", 100, 8, '<a:elootitem:1144477550379274322>', None, 0],
-              [None, 'Arbiter Stone', 100, 6, '<a:elootitem:1144477550379274322>', None, 0]]
+stone_data = [[None, 'Fortress Stone', 100, 1, '<:St1:1398709966818381954>', None, 0],
+              [None, 'Dragon Stone', 100, 2, '<:St2:1398709978126352504>', None, 0],
+              [None, 'Demon Stone', 100, 3, '<:St3:1398709988423372970>', None, 0],
+              [None, 'Paragon Stone', 100, 4, '<:St4:1398710000448176188>', None, 0],
+              [None, "Ruler's Stone", 100, 8, '<:St5:1398710011366084670>', None, 0],
+              [None, 'Arbiter Stone', 100, 6, '<:St6:1398710023055740988>', None, 0]]
 for index, row in enumerate(stone_data):
     row[5] = f'Obtained from {stone_type[index].lower()} bosses. It\'s a stone.'
 itemdata_dict = build_item_dict(itemdata_dict, stone_data, category="Stone")
@@ -299,8 +299,11 @@ fish_list = [("**Sawshark** [Pristiophoridae]", 1), ("**Slippery Dick** [Halicho
              ("**Viperfish** [Chauliodus sloani]", 7), ("**Spookfish** [Opisthoproctidae]", 7)]
 fish_description = 'Amazing! What a cute fish. So adorable!'
 fish_data = []
+fish_icon_list = ["<:F1:1398709770147467347>", "<:F2:1398709784412291102>", "<:F3:1398709795636379748>",
+                  "<:F4:1398709807556460634>", "<:F5:1398709820466659471>", "<:F6:1398709831476711586>",
+                  "<:F7:1398709857573535867>"]
 for (fish_name, fish_tier) in fish_list:
-    fish_data.append([None, fish_name, 100, fish_tier, "🐟", fish_description, 0])
+    fish_data.append([None, fish_name, 100, fish_tier, fish_icon_list[fish_tier - 1], fish_description, 0])
 itemdata_dict = build_item_dict(itemdata_dict, fish_data, starting_index=1, category="Fish")
 
 # Heart Item Data
@@ -318,7 +321,7 @@ uncategorized_data = [
      'Augments an item roll. Increases the tier by 1.', 50000],
     ["Matrix", 'Socket Matrix', 5, 3, '<a:elootitem:1144477550379274322>',
      '5% Chance to add a socket to a gear item.', 5000],
-    ['Chest', 'Chest', 100, 1, '<a:elootitem:1144477550379274322>', 'Contains a random item.', 50000],
+    ['Chest', 'Chest', 100, 1, '<:Chest:1398709914381324318>', 'Contains a random item.', 50000],
     ['Shard', "Sovereign Shard", 100, 7, '<a:elootitem:1144477550379274322>',
      "A fragment of an ancient weapon. Perhaps it can be reforged.", 0],
     ['Scrap', 'Equipment Scrap', 100, 1, '<:Scrap:1274787448681005158>',
@@ -333,7 +336,7 @@ uncategorized_data = [
      "Legend tells of a star often spotted by lovers as it dazzles and sparkles amidst the black night. "
      "The old records indicate that the star was so beautiful it would steal the hearts of those who saw it."
      " [Uber Rare]", 0],
-    ['Nadir', 'Phantasm of Nadir', 100, 8, '<a:elootitem:1144477550379274322>',
+    ['Nadir', 'Phantasm of Nadir', 100, 8, '<:Nadir:1398709896697872435>',
      "Amidst the vastest oceans, this tiny fish is exceedingly elusive. They dwell in the deepest trenches. "
      "Their pitch-black scales conceal precious and unique gems that grow inside their small bodies. [Ultimate Rare]", 0],
     ['RoyalCoin', 'Royal Lotus Coin', 100, 8, '<:rCoin:1274786667277848657>',

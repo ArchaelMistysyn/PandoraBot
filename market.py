@@ -52,7 +52,7 @@ async def display_fish_shop(player_obj, fish_obj, trade_obj):
     item_msg = f"Today's Item: {trade_obj.item_emoji} {trade_obj.item_name}"
     embed_msg = discord.Embed(colour=discord.Colour.blue(), title=title, description=item_msg)
     fish_stock = await inventory.check_stock(player_obj, fish_obj.item_id)
-    cost_msg = f"{fish_stock} / 10 {fish_obj.item_emoji} {fish_obj.item_name}"
+    cost_msg = f"{fish_stock} / 5 {fish_obj.item_emoji} {fish_obj.item_name}"
     embed_msg.add_field(name="Cost", value=cost_msg, inline=False)
     exchange_view = ExchangeView(player_obj, fish_obj, trade_obj)
     return fish_stock, embed_msg, exchange_view
@@ -153,15 +153,15 @@ class ExchangeView(discord.ui.View):
         if interaction.user.id != self.player_obj.discord_id:
             return
         fish_stock, fish_embed, exchange_view = await display_fish_shop(self.player_obj, self.fish_obj, self.trade_obj)
-        if fish_stock < 10:
-            stock_msg = sm.get_stock_msg(self.fish_obj, fish_stock, 10)
+        if fish_stock < 5:
+            stock_msg = sm.get_stock_msg(self.fish_obj, fish_stock, 5)
             fish_embed.add_field(name="Insufficient Fish!", value=stock_msg, inline=False)
             await interaction.response.edit_message(embed=fish_embed, view=exchange_view)
             return
         if not self.is_paid:
             labels = ['player_id', 'item_id', 'item_qty']
             batch_df = pd.DataFrame(columns=labels)
-            batch_df.loc[len(batch_df)] = [self.player_obj.player_id, self.fish_obj.item_id, -10]
+            batch_df.loc[len(batch_df)] = [self.player_obj.player_id, self.fish_obj.item_id, -5]
             batch_df.loc[len(batch_df)] = [self.player_obj.player_id, self.trade_obj.item_id, 1]
             await inventory.update_stock(None, None, None, batch=batch_df)
             self.is_paid = True

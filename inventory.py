@@ -507,7 +507,9 @@ class BasicItem:
             self.item_base_rate, self.item_cost = int(item['rate']), int(item['cost'])
             self.item_emoji = item['emoji']
             self.item_image = ""
-            if "Fish" in self.item_id:
+            if "Nadir" in self.item_id:
+                self.item_image = f"{gli.web_url}NonGear_Icon/Misc/{self.item_id}.png"
+            elif "Fish" in self.item_id:
                 self.item_image = f"{gli.web_url}NonGear_Icon/Fish/{self.item_id}.png"
             elif "Essence" in self.item_id:
                 self.item_image = f"{gli.web_url}NonGear_Icon/Essence/Frame_Essence_{self.item_tier}.png"
