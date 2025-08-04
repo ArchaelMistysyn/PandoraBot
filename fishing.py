@@ -11,6 +11,7 @@ import sharedmethods as sm
 # Core imports
 import player
 import inventory
+import menus
 
 # Trade imports
 from market import get_daily_fish_items as daily_fish
@@ -48,7 +49,7 @@ async def go_fishing(ctx, player_obj, method="default"):
     boosted_rate_fish = await daily_fish(fish_only=True)
     # Handle existing cooldown.
     if difference:
-        wait_time = timedelta(minutes=5)
+        wait_time = timedelta(minutes=0) # change later
         cooldown = wait_time - difference
         if difference <= wait_time:
             time_msg = f"You can fish again in {int(cooldown.total_seconds() / 60)} minutes."
@@ -57,7 +58,9 @@ async def go_fishing(ctx, player_obj, method="default"):
             return
         await player_obj.clear_cooldown("fishing")
     if not await player_obj.spend_stamina(250 if method == "default" else 1000):
-        await ctx.send("Insufficient stamina to go fishing.")
+        embed_msg = await player_obj.create_stamina_embed()
+        stamina_view = menus.StaminaView(player_obj)
+        await ctx.send(embed=embed_msg, view=stamina_view)
         return
     await player_obj.set_cooldown("fishing", "")
     # Initialize the fishing grid

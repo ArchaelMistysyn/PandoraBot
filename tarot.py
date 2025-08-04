@@ -88,13 +88,13 @@ card_stat_dict = {
             ["Bloom Damage", 1000, "bloom_mult", None]],
     "XXV": ["All", ["Omni Damage", 25, "all_elemental_mult", None],
             ["Omni Curse", 25, "all_elemental_curse", None]]}
-synthesis_success_rate = {0: 0, 1: 75, 2: 50, 3: 40, 4: 30, 5: 20, 6: 10, 7: 99, 8: 0}
+synthesis_success_rate = {0: 0, 1: 75, 2: 50, 3: 40, 4: 30, 5: 20, 6: 10, 7: 99, 8: 100, 9: 0}
 card_variant = ["Empty", "Prelude", "Emergence", "Chromatic", "Prismatic",
-                "Resplendent", "Iridescent", "Transcendent", "Masterpiece"]
-tarot_damage = [0, 5000, 25000, 50000, 100000, 250000, 500000, 750000, 1000000]
-tarot_hp = [0, 500, 1000, 1500, 2000, 2500, 5000, 10000, 20000]
-tarot_fd = [0, 10, 20, 30, 40, 50, 70, 100, 200]
-path_point_values = [0, 1, 2, 3, 4, 5, 7, 10, 20]
+                "Resplendent", "Iridescent", "Transcendent", "Masterpiece", "Inverted"]
+tarot_damage = [0, 5000, 25000, 50000, 100000, 250000, 500000, 750000, 1000000, 10000000]
+tarot_hp = [0, 500, 1000, 1500, 2000, 2500, 5000, 10000, 20000, 50000]
+tarot_fd = [0, 10, 20, 30, 40, 50, 70, 100, 200, 500]
+path_point_values = [0, 1, 2, 3, 4, 5, 7, 10, 20, 50]
 
 
 class SearchTierView(discord.ui.View):
@@ -130,12 +130,9 @@ class SearchCardView(discord.ui.View):
                          tier == selected_tier]
 
         # Build the option list.
-        select_options = [
-            discord.SelectOption(
-                label=f"{card_number} - {card_name}",
-                description="",
-                value=f"{card_number}"
-            ) for card_number, card_name in selected_data]
+        select_options = [discord.SelectOption(
+            label=f"{card_number} - {card_name}", description="", value=f"{card_number}"
+        ) for card_number, card_name in selected_data]
         select_menu = discord.ui.Select(placeholder="Search Card!", min_values=1, max_values=1, options=select_options)
         select_menu.callback = self.card_select_callback
         self.add_item(select_menu)
@@ -191,7 +188,7 @@ class TarotView(discord.ui.View):
         self.attempt_bind.label = f"Bind ({self.bind_success_rate}%)"
         if tarot is not None:
             synthesis_rate = synthesis_success_rate[tarot.num_stars]
-            if tarot.num_stars != 8:
+            if tarot.num_stars != 9:
                 self.synthesize.label = f"Synth ({synthesis_success_rate[tarot.num_stars]}%)"
             else:
                 self.synthesize.label = "Synth [MAX]"
@@ -295,20 +292,27 @@ class TarotView(discord.ui.View):
                 self.embed.title, self.embed.description = title, "Not enough cards in possession."
                 await interaction.response.edit_message(embed=self.embed, view=reload_view)
                 return
-            if active_card.num_stars >= 8:
+            if active_card.num_stars >= 9:
                 self.embed.title, self.embed.description = title, "Card cannot be upgraded further."
                 await interaction.response.edit_message(embed=self.embed, view=reload_view)
                 return
-            # Handle tier 7 exception.
+            # Handle tier 7/8 lotus costs.
+            lotus_item, lotus_qty, msg_type = None, 1, ""
             if active_card.num_stars == 7:
                 lotus_item = inventory.BasicItem("Lotus9")
+                msg_type = "Divine Synthesis"
+            elif active_card.num_stars == 8:
+                lotus_item = inventory.BasicItem("Lotus11")
+                lotus_qty = active_card.card_tier
+                msg_type = "Inversion"
+            if lotus_item is not None:
                 player_stock = await inventory.check_stock(self.player_user, lotus_item.item_id)
-                if player_stock < 1:
-                    description = f"Divine Synthesis requires: {lotus_item.item_emoji} 1x {lotus_item.item_name}"
+                if player_stock < lotus_qty:
+                    description = f"{msg_type} requires: {lotus_item.item_emoji} {lotus_qty}x {lotus_item.item_name}"
                     self.embed.title, self.embed.description = title, description
                     await interaction.response.edit_message(embed=self.embed, view=reload_view)
                     return
-                await inventory.update_stock(self.player_user, lotus_item.item_id, -1)
+                await inventory.update_stock(self.player_user, lotus_item.item_id, -lotus_qty)
             # Attempt Synthesis
             title, description = await active_card.synthesize_tarot()
             self.embed = await self.cycle_tarot(0)
