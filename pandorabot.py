@@ -424,23 +424,24 @@ def run_discord_bot():
     @app_commands.guilds(discord.Object(id=1011375205999968427))
     async def modspeak(ctx, header="Verified Message", message=""):
         await ctx.defer()
-        ad_admin_role, ad_mod_role = "ArchDragon Administrator", "ArchDragon Moderator"
+        target_roles = ["Vice Leader - Heather", "Head Administrator - Zweii",
+                        "ArchDragon Administrator", "ArchDragon Moderator"]
         if ctx.guild.id != 1011375205999968427:
             return
         msg_lines = textwrap.wrap(message, width=35)
         if len(header) >= 25 or len(msg_lines) > 2:
             await ctx.send("Header or message is too long.")
             return
-        roles = [role.name for role in ctx.author.roles if ad_admin_role in role.name or ad_mod_role in role.name]
+        roles = [role.name for role in ctx.author.roles if any(target in role.name for target in target_roles)]
         if ctx.author.id == gli.reverse_GM_id_dict["Archael"]:
             boxtype, verification = "arch", "Owner"
-        elif "Vice Leader - Heather" in roles:
+        elif target_roles[0] in roles:
             boxtype, verification = "Vice Leader", "Vice Leader"
-        elif "Head Administrator" in roles:
+        elif target_roles[1] in roles:
             boxtype, verification = "Head Admin", "Head Administrator"
-        elif ad_admin_role in roles:
+        elif target_roles[2] in roles:
             boxtype, verification = "admin", "Administrator"
-        elif ad_mod_role in roles:
+        elif target_roles[3] in roles:
             boxtype, verification = "mod", "Moderator"
         else:
             return
@@ -538,7 +539,7 @@ def run_discord_bot():
         if player_obj is None:
             return
         embed_msg = await player_obj.create_stamina_embed()
-        stamina_view = menus.StaminaView(player_obj)
+        stamina_view = menus.StaminaView(ctx, player_obj)
         await ctx.send(embed=embed_msg, view=stamina_view)
 
     @set_command_category('game', 3)
@@ -813,9 +814,12 @@ def run_discord_bot():
         fishing_menu += f"/ultimatefishing - 2500 Stamina - Lv6 Fish King+\n"
         fishing_menu += f"/omegafishing - 5000 Stamina - Lv8 God of Fish+\n"
         fish_embed = sm.easy_embed("Blue", "Angler's Association", fishing_menu)
-        _, fish_level, _ = await fishing.check_fish_level(player_obj)
+        fish_points, fish_level, _ = await fishing.check_fish_level(player_obj)
+        current_points = fish_points - fishing.get_max_fish_points(fish_level - 1)
+        fish_pts_max = fishing.get_max_fish_points(fish_level)
         fishing_header = f"{player_obj.player_username} - Lv{fish_level} - {fishing.fish_levels[fish_level]}"
-        fishing_info = f"{gli.stamina_icon} Stamina: {player_obj.player_stamina:,} / 5000"
+        fishing_info = f"🎣 Fish EXP: {current_points} / {fish_pts_max}\n"
+        fishing_info += f"{gli.stamina_icon} Stamina: {player_obj.player_stamina:,} / 5000"
         fish_embed.add_field(name=fishing_header, value=fishing_info, inline=False)
         fish_view = fishing.FishView(ctx, player_obj, fish_level)
         await ctx.send(embed=fish_embed, view=fish_view)

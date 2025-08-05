@@ -1222,14 +1222,11 @@ class SkipView(discord.ui.View):
             title, description = "Manifest - Out of Stock", sm.get_stock_msg(self.cost_item, cost_stock, cost=5)
             self.new_embed = sm.easy_embed(int(self.method_info[2]), title, description)
             self.new_view = SkipView(self.ctx_obj, self.player_user, self.method_info, self.sent_message)
-            await interaction.response.edit_message(embed=self.new_embed, view=self)
+            await interaction.response.edit_message(embed=self.new_embed, view=self.new_view)
             return
         difference, method_info = await self.player_user.check_cooldown("manifest")
-        if not difference:
-            await interaction.response.edit_message(view=self.new_view)
-            return
         wait_time = timedelta(hours=(14 + self.player_user.player_echelon))
-        if difference <= wait_time:
+        if difference and difference <= wait_time:
             await inventory.update_stock(self.player_user, self.cost_item.item_id, -5)
             await self.player_user.set_cooldown("manifest", "", rewind_days=2)
         self.skip_cooldown.disabled = True

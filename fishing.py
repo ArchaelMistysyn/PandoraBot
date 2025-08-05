@@ -19,52 +19,6 @@ from market import get_daily_fish_items as daily_fish
 # Gear/item imports
 import loot
 
-
-class FishView(discord.ui.View):
-    def __init__(self, ctx, player_obj, fish_level):
-        super().__init__(timeout=None)
-        self.ctx, self.player_obj, self.fish_level = ctx, player_obj, fish_level
-        fishing_labels = {"Basic Fish": 0, "Quick Fish": 2, "Turbo Fish": 4, "Ultimate Fish": 6, "Omega Fish": 8}
-        for child in self.children:
-            if isinstance(child, discord.ui.Button):
-                required_level = fishing_labels[child.label]
-                if self.fish_level < required_level:
-                    child.disabled = True
-                    child.style = discord.ButtonStyle.secondary
-
-    @discord.ui.button(label="Basic Fish", style=discord.ButtonStyle.success, emoji="🐟")
-    async def default_fish(self, interaction: discord.Interaction, button: discord.Button):
-        await self.fishing(interaction, "fish", 250)
-
-    @discord.ui.button(label="Quick Fish", style=discord.ButtonStyle.blurple, emoji="🐟")
-    async def quick_fish(self, interaction: discord.Interaction, button: discord.Button):
-        await self.fishing(interaction, "quickfish", 500)
-
-    @discord.ui.button(label="Turbo Fish", style=discord.ButtonStyle.blurple, emoji="🐟")
-    async def turbo_fish(self, interaction: discord.Interaction, button: discord.Button):
-        await self.fishing(interaction, "turbofishing", 1000)
-
-    @discord.ui.button(label="Ultimate Fish", style=discord.ButtonStyle.blurple, emoji="🐟")
-    async def ultimate_fish(self, interaction: discord.Interaction, button: discord.Button):
-        await self.fishing(interaction, "ultimatefishing", 2500)
-
-    @discord.ui.button(label="Omega Fish", style=discord.ButtonStyle.red, emoji="🐟")
-    async def omega_fish(self, interaction: discord.Interaction, button: discord.Button):
-        await self.fishing(interaction, "omegafishing", 5000)
-
-    async def fishing(self, interaction, fish_method, stamina_cost):
-        if interaction.user.id != self.player.discord_id:
-            return
-        await self.player.reload_player()
-        if self.player_obj.player_stamina < stamina_cost:
-            stamina_menu = menus.StaminaView(self.player_obj)
-            stamina_embed = await self.player_obj.create_stamina_embed()
-            await interaction.response.edit_message(embed=stamina_embed, view=stamina_menu)
-            return
-        await interaction.response.edit_message(embed=None, view=None)
-        await go_fishing(self.ctx, self.player_obj, method=fish_method)
-
-
 fish_levels = ["Fishless Loser", "Fish Owner", "Fishing Adept", "Fishing Pro", "Fishing Master",
                "Fishing Legend", "Fish King", "Fish Wizard", "God of Fish", "Progenitor of Fish", "Bathyal's Chosen"]
 
@@ -74,9 +28,13 @@ async def check_fish_level(player_obj):
     total_fish_points = int(fish_points)
     if total_fish_points < 1:
         return 0, 0, fish_levels[0]
-    fish_level = len(str(total_fish_points)) - 1
+    fish_level = len(str(total_fish_points))
     fish_level = min(fish_level, len(fish_levels) - 1)
     return total_fish_points, fish_level, fish_levels[fish_level]
+
+
+def get_max_fish_points(level):
+    return 10 ** level if (len(fish_levels) > level >= 0) else 0
 
 
 async def update_fish_points(player_obj, points, overwrite=False):
@@ -100,13 +58,96 @@ boom_mapping = {b_fish: r_fish, b_water: r_water, b_worm: r_boom, b_chest: r_boo
 directions = [(-1, 0), (1, 0), (0, -1), (0, 1), (-1, -1), (-1, 1), (1, -1), (1, 1)]
 opposite_directions = {(1, 0): (-1, 0), (-1, 0): (1, 0), (0, 1): (0, -1), (0, -1): (0, 1),
                        (1, 1): (-1, -1), (-1, -1): (1, 1), (1, -1): (-1, 1), (-1, 1): (1, -1)}
-fishing_sets = {"fish": [5, 5, 3, 6, 0, 2, 0, 2, 0, 1], "quickfishing": [5, 5, 3, 6, 0, 2, 0, 2, 0, 1],
-                "turbofishing": [5, 5, 3, 6, 0, 2, 0, 2, 0, 1], "ultimatefishing": [8, 8, 8, 15, 3, 5, 0, 3, 1, 2],
-                "omegafishing": [8, 8, 8, 15, 3, 5, 0, 3, 1, 2]}
-fishing_stamina = {"fish": 250, "quickfishing": 500, "turbofishing": 1000, "ultimatefishing": 2500, "omegafishing": 5000}
+# Sets are Size, Size, Worms Min, Worms Max, Chest Min, Chest Max, Mines Min, Mines Max, Stars Min, Stars Max
+fishing_sets = {"fish": [5, 5, 3, 4, 0, 1, 1, 2, 0, 1], "quickfish": [5, 5, 5, 6, 0, 2, 1, 2, 1, 1],
+                "turbofishing": [6, 6, 7, 8, 1, 2, 1, 2, 1, 1], "ultimatefishing": [7, 7, 9, 10, 3, 4, 1, 3, 1, 2],
+                "omegafishing": [8, 8, 11, 12, 4, 5, 1, 4, 2, 3]}
+fishing_stamina = {"fish": 250, "quickfish": 500, "turbofishing": 1000, "ultimatefishing": 2500, "omegafishing": 5000}
 
 
-async def go_fishing(ctx, player_obj, method="fish"):
+class FishView(discord.ui.View):
+    def __init__(self, ctx, player_obj, fish_level):
+        super().__init__(timeout=None)
+        self.ctx, self.player_obj, self.fish_level = ctx, player_obj, fish_level
+        fishing_labels = {"Basic Fish": 0, "Quick Fish": 2, "Turbo Fish": 4, "Ultimate Fish": 6, "Omega Fish": 8}
+        for child in self.children:
+            if isinstance(child, discord.ui.Button):
+                required_level = fishing_labels[child.label]
+                if self.fish_level < required_level:
+                    child.disabled = True
+                    child.style = discord.ButtonStyle.secondary
+
+    @discord.ui.button(label="Basic Fish", style=discord.ButtonStyle.success, emoji="🐟")
+    async def default_fish(self, interaction: discord.Interaction, button: discord.Button):
+        method = "fish"
+        await self.fishing(interaction, method, fishing_stamina[method])
+
+    @discord.ui.button(label="Quick Fish", style=discord.ButtonStyle.blurple, emoji="🐟")
+    async def quick_fish(self, interaction: discord.Interaction, button: discord.Button):
+        method = "quickfish"
+        await self.fishing(interaction, method, fishing_stamina[method])
+
+    @discord.ui.button(label="Turbo Fish", style=discord.ButtonStyle.blurple, emoji="🐟")
+    async def turbo_fish(self, interaction: discord.Interaction, button: discord.Button):
+        method = "turbofishing"
+        await self.fishing(interaction, method, fishing_stamina[method])
+
+    @discord.ui.button(label="Ultimate Fish", style=discord.ButtonStyle.blurple, emoji="🐟")
+    async def ultimate_fish(self, interaction: discord.Interaction, button: discord.Button):
+        method = "ultimatefishing"
+        await self.fishing(interaction, method, fishing_stamina[method])
+
+    @discord.ui.button(label="Omega Fish", style=discord.ButtonStyle.red, emoji="🐟")
+    async def omega_fish(self, interaction: discord.Interaction, button: discord.Button):
+        method = "omegafishing"
+        await self.fishing(interaction, method, fishing_stamina[method])
+
+    async def fishing(self, interaction, fish_method, stamina_cost):
+        if interaction.user.id != self.player_obj.discord_id:
+            return
+        await self.player_obj.reload_player()
+        if self.player_obj.player_stamina < stamina_cost:
+            stamina_menu = menus.StaminaView(self.ctx, self.player_obj)
+            stamina_embed = await self.player_obj.create_stamina_embed()
+            await interaction.response.edit_message(embed=stamina_embed, view=stamina_menu)
+            return
+        await interaction.message.delete()
+        await go_fishing(self.ctx, self.player_obj, method=fish_method)
+
+
+class FishResetView(discord.ui.View):
+    def __init__(self, ctx, player_obj, fish_level, method):
+        super().__init__(timeout=None)
+        self.ctx, self.player_obj, self.fish_level, self.method = ctx, player_obj, fish_level, method
+        self.new_embed, self.new_view = None, None
+        self.cost_item = inventory.BasicItem("RoyalCoin")
+        self.reset_fish.emoji = self.cost_item.item_emoji
+
+    @discord.ui.button(label="Advance Cooldown", style=discord.ButtonStyle.red, emoji="🐟")
+    async def reset_fish(self, interaction: discord.Interaction, button: discord.Button):
+        await self.fish_again(interaction, self.method, fishing_stamina[self.method])
+
+    async def fish_again(self, interaction, fish_method, stamina_cost):
+        if await sm.check_click(interaction, self.player_obj, self.new_embed, self.new_view):
+            return
+        await self.player_obj.reload_player()
+        cost_stock = await inventory.check_stock(self.player_obj, self.cost_item.item_id)
+        if cost_stock < 5:
+            title, description = "Manifest - Out of Stock", sm.get_stock_msg(self.cost_item, cost_stock, cost=5)
+            self.new_embed = sm.easy_embed(int(self.method_info[2]), title, description)
+            self.new_view = FishResetView(self.ctx, self.player_obj, self.fish_level, self.method)
+            await interaction.response.edit_message(embed=self.new_embed, view=self.new_view)
+            return
+        if self.player_obj.player_stamina < stamina_cost:
+            stamina_menu = menus.StaminaView(self.ctx, self.player_obj)
+            stamina_embed = await self.player_obj.create_stamina_embed()
+            await interaction.response.edit_message(embed=stamina_embed, view=stamina_menu)
+            return
+        await interaction.message.delete()
+        await go_fishing(self.ctx, self.player_obj, method=fish_method, skipping=True)
+
+
+async def go_fishing(ctx, player_obj, method="fish", skipping=False):
     data_value = fishing_sets[method]
     size_x, size_y = data_value[0], data_value[1]
     num_worms, num_chests = random.randint(data_value[2], data_value[3]), random.randint(data_value[4], data_value[5])
@@ -114,20 +155,25 @@ async def go_fishing(ctx, player_obj, method="fish"):
     difference, _ = await player_obj.check_cooldown("fishing")
     boosted_rate_fish = await daily_fish(fish_only=True)
     _, fish_level, _ = await check_fish_level(player_obj)
-    fish_cooldown = 22 - fish_level
+    fish_cooldowns = [60, 50, 40, 30, 20, 15, 10, 7, 4, 2, 1]
+    cost_item = None
     # Handle existing cooldown.
     if difference:
-        wait_time = timedelta(minutes=fish_cooldown)
+        wait_time = timedelta(minutes=fish_cooldowns[fish_level])
         cooldown = wait_time - difference
-        if difference <= wait_time:
+        if difference <= wait_time and not skipping:
             time_msg = f"You can fish again in {int(cooldown.total_seconds() / 60)} minutes."
             embed_msg = sm.easy_embed("blue", "Fish on Vacation!", time_msg)
-            await ctx.send(embed=embed_msg)
+            reset_view = FishResetView(ctx, player_obj, fish_level, method)
+            await ctx.send(embed=embed_msg, view=reset_view)
             return
+        if skipping:
+            cost_item = inventory.BasicItem("RoyalCoin")
+            await inventory.update_stock(player_obj, cost_item.item_id, -5)
         await player_obj.clear_cooldown("fishing")
     if not await player_obj.spend_stamina(fishing_stamina[method]):
         embed_msg = await player_obj.create_stamina_embed()
-        stamina_view = menus.StaminaView(player_obj)
+        stamina_view = menus.StaminaView(ctx, player_obj)
         await ctx.send(embed=embed_msg, view=stamina_view)
         return
     await player_obj.set_cooldown("fishing", "")
@@ -213,6 +259,8 @@ async def go_fishing(ctx, player_obj, method="fish"):
         base_points = (fish.item_tier + gli.fishing_modes[method]) * fish_qty
         if is_fish:
             base_points *= 2
+            if fish.item_tier == 8:
+                base_points *= 100
         base_points *= fishing_bonus
         total_points += base_points
         fish_output += f"🪝 Caught: {fish.item_emoji} {fish_qty}x {fish.item_name}\n"
@@ -220,8 +268,9 @@ async def go_fishing(ctx, player_obj, method="fish"):
             await sm.send_notification(ctx, player_obj, "Item", fish_id)
     await update_fish_points(player_obj, total_points)
     fish_points, fish_level, fish_title = await check_fish_level(player_obj)
-    fish_pts_max = 10 ** (fish_level + 1) if fish_level + 1 < len(fish_levels) else "MAX"
-    fish_output += f"{fish_title}\n🎣 Fish EXP: {fish_points} / {fish_pts_max}\n"
+    current_points = fish_points - get_max_fish_points(fish_level - 1)
+    fish_pts_max = get_max_fish_points(fish_level)
+    fish_output += f"**Reputation**\nLv{fish_level} - {fish_title}\n🎣 Fish EXP: {current_points} / {fish_pts_max}\n"
     batch_df = sm.list_to_batch(player_obj, [(fish_id, fish_qty) for fish_id, fish_qty in caught_fish.items()])
     await inventory.update_stock(None, None, None, batch=batch_df)
     await sent_msg.edit(content=f"{display_grid(grid)}")

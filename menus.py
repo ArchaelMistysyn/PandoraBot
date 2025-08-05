@@ -789,45 +789,76 @@ class ConfirmInlayView(discord.ui.View):
 
 
 class StaminaView(discord.ui.View):
-    def __init__(self, player_user):
+    def __init__(self, ctx_obj, player_user, mode="Basic"):
         super().__init__(timeout=None)
-        self.player = player_user
+        self.ctx_obj, self.player, self.mode = ctx_obj, player_user, mode
+        if mode != "Basic":
+            for child in self.children:
+                if isinstance(child, discord.ui.Button):
+                    if "Potion" in child.label:
+                        child.style = discord.ButtonStyle.blurple
+                        child.emoji = gli.exp_icon
+                    else:
+                        child.emoji = gli.stamina_icon
+                        child.label = "Return"
 
-    @discord.ui.button(label="Lesser Potion", style=discord.ButtonStyle.success, emoji=gli.stamina_icon)
+    @discord.ui.button(label="Lesser Potion", style=discord.ButtonStyle.success, emoji=gli.stamina_icon, row=1)
     async def t1_stamina_callback(self, interaction: discord.Interaction, button: discord.Button):
         await self.drink_potion(interaction, 1, 500)
 
-    @discord.ui.button(label="Standard Potion", style=discord.ButtonStyle.success, emoji=gli.stamina_icon)
+    @discord.ui.button(label="Standard Potion", style=discord.ButtonStyle.success, emoji=gli.stamina_icon, row=1)
     async def t2_stamina_callback(self, interaction: discord.Interaction, button: discord.Button):
         await self.drink_potion(interaction, 2, 1000)
 
-    @discord.ui.button(label="Greater Potion", style=discord.ButtonStyle.success, emoji=gli.stamina_icon)
+    @discord.ui.button(label="Greater Potion", style=discord.ButtonStyle.success, emoji=gli.stamina_icon, row=2)
     async def t3_stamina_callback(self, interaction: discord.Interaction, button: discord.Button):
         await self.drink_potion(interaction, 3, 2500)
 
-    @discord.ui.button(label="Ultimate Potion", style=discord.ButtonStyle.success, emoji=gli.stamina_icon)
+    @discord.ui.button(label="Ultimate Potion", style=discord.ButtonStyle.success, emoji=gli.stamina_icon, row=2)
     async def t4_stamina_callback(self, interaction: discord.Interaction, button: discord.Button):
         await self.drink_potion(interaction, 4, 5000)
+
+    @discord.ui.button(label="EXP Transmutation", style=discord.ButtonStyle.red, emoji=gli.exp_icon, row=3)
+    async def transmute_callback(self, interaction: discord.Interaction, button: discord.Button):
+        if interaction.user.id != self.player.discord_id:
+            return
+        await self.player.reload_player()
+        stamina_embed = await self.player.create_stamina_embed()
+        new_mode = "Basic"
+        if self.mode == "Basic":
+            new_mode = "EXP"
+            description = "Potions will be consumed at 10x the rate, to grant EXP instead of stamina."
+            stamina_embed.add_field(name="EXP Transmutation", value=description, inline=False)
+        new_view = StaminaView(self.ctx_obj, self.player, new_mode)
+        await interaction.response.edit_message(embed=stamina_embed, view=new_view)
 
     async def drink_potion(self, interaction, potion_version, potion_value):
         if interaction.user.id != self.player.discord_id:
             return
         await self.player.reload_player()
-        embed_msg = await self.use_stamina_potion(f"Potion{potion_version}", potion_value)
-        await interaction.response.edit_message(embed=embed_msg, view=self)
+        embed_msg, lvl_change = await self.use_stamina_potion(f"Potion{potion_version}", potion_value)
+        await interaction.response.edit_message(embed=embed_msg)
+        if lvl_change == 0:
+            return
+        await sm.send_notification(self.ctx_obj, self.player, "Level", lvl_change)
 
     async def use_stamina_potion(self, item_id, restore_amount):
         potion_stock = await inventory.check_stock(self.player, item_id)
-        if potion_stock > 0:
+        if potion_stock > 0 or (potion_stock >= 10 and self.mode != "Basic"):
             pact_object = pact.Pact(self.player.pact)
             max_stamina = 5000 if pact_object.pact_variant != "Sloth" else 2500
-            await inventory.update_stock(self.player, item_id, -1)
+            await inventory.update_stock(self.player, item_id, (-1 if self.mode == "Basic" else -10))
+            if self.mode != "Basic":
+                exp_message, lvl_change = await self.player.adjust_exp(restore_amount)
+                embed_msg = await self.player.create_stamina_embed()
+                embed_msg.add_field(name="", value=f"{gli.exp_icon} {exp_message} Exp Acquired.", inline=False)
+                return embed_msg, lvl_change
             self.player.player_stamina += restore_amount
             if self.player.player_stamina > max_stamina:
                 self.player.player_stamina = max_stamina
             await self.player.set_player_field("player_stamina", self.player.player_stamina)
         embed_msg = await self.player.create_stamina_embed()
-        return embed_msg
+        return embed_msg, 0
 
 
 gear_button_list = ["Weapon", "Armour", "Greaves", "Amulet", "Ring", "Wing", "Crest", "Pact", "Insignia", "Tarot"]

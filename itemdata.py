@@ -61,10 +61,10 @@ itemdata_dict = build_item_dict(itemdata_dict, stone_data, category="Stone")
 
 # Stamina Potion Data
 potion_values = [500, 1000, 2500, 5000]
-stamina_data = [[None, 'Lesser Stamina Potion', 100, 1, "<:Pot1:1388915732863258774>", None, 2500],
-                [None, 'Standard Stamina Potion', 100, 2, "<:Pot2:1388915746226049165>", None, 5000],
-                [None, 'Greater Stamina Potion', 100, 3, "<:Pot3:1388915758939246612>", None, 10000],
-                [None, 'Ultimate Stamina Potion', 100, 4, "<:Pot4:1388915769756352583>", None, 20000]]
+stamina_data = [[None, 'Lesser Stamina Potion', 100, 1, "<:Pot1:1388915732863258774>", None, 12500],
+                [None, 'Standard Stamina Potion', 100, 2, "<:Pot2:1388915746226049165>", None, 25000],
+                [None, 'Greater Stamina Potion', 100, 3, "<:Pot3:1388915758939246612>", None, 50000],
+                [None, 'Ultimate Stamina Potion', 100, 4, "<:Pot4:1388915769756352583>", None, 100000]]
 for index, row in enumerate(stamina_data):
     row[5] = f'Consume to restore {potion_values[index]} stamina.'
 itemdata_dict = build_item_dict(itemdata_dict, stamina_data, category="Potion")
