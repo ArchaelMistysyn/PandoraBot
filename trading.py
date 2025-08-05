@@ -63,7 +63,7 @@ async def create_trade(offer_player, target_player, offer_item, offer_qty, recei
             select_obj = inventory.BasicItem(select_item)
             select_stock = await inventory.check_stock(select_player, select_item)
             if select_stock < select_qty:
-                return None, f"{select_player.player_username} only has {select_item.item_emoji} {select_obj.item_name} {select_stock:,}x"
+                return None, f"{select_player.player_username} only has {select_obj.item_emoji} {select_obj.item_name} {select_stock:,}x"
             return select_obj, ""
         return None, ""
 
@@ -101,8 +101,8 @@ class TradeView(discord.ui.View):
         if self.new_embed is not None:
             await interaction.response.edit_message(embed=self.new_embed, view=self.new_view)
             return
-        self.trade_obj.target_player.reload_player()
-        self.trade_obj.offer_player.reload_player()
+        await self.trade_obj.target_player.reload_player()
+        await self.trade_obj.offer_player.reload_player()
         self.new_embed = self.trade_obj.trade_msg
         fail_msg = await self.trade_obj.perform_trade()
         if fail_msg != "":

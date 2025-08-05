@@ -434,6 +434,10 @@ def run_discord_bot():
         roles = [role.name for role in ctx.author.roles if ad_admin_role in role.name or ad_mod_role in role.name]
         if ctx.author.id == gli.reverse_GM_id_dict["Archael"]:
             boxtype, verification = "arch", "Owner"
+        elif "Vice Leader - Heather" in roles:
+            boxtype, verification = "Vice Leader", "Vice Leader"
+        elif "Head Administrator" in roles:
+            boxtype, verification = "Head Admin", "Head Administrator"
         elif ad_admin_role in roles:
             boxtype, verification = "admin", "Administrator"
         elif ad_mod_role in roles:
@@ -795,24 +799,63 @@ def run_discord_bot():
         embed_msg.set_image(url=gli.cathedral_img)
         await ctx.send(embed=embed_msg, view=tarot.SearchTierView(player_obj, cathedral=True))
 
-    @set_command_category('fish', 9)
-    @pandora_bot.hybrid_command(name='fishing', help="Catch fish! Consumes 250 stamina.")
+    @set_command_category('game', 9)
+    @pandora_bot.hybrid_command(name='fishmenu', help="Catch fish!")
     @app_commands.guilds(discord.Object(id=guild_id))
-    async def catch_fish(ctx, method="default"):
+    async def fish_menu(ctx):
         await ctx.defer()
         player_obj = await sm.check_registration(ctx)
         if player_obj is None:
             return
-        if method not in ["default", "turbo"]:
-            await ctx.send("Methods: [default and turbo]")
+        fishing_menu = f"/fish - 250 Stamina - No Requirement\n"
+        fishing_menu += f"/quickfish - 500 Stamina - Lv2 Fishing Adept+\n"
+        fishing_menu += f"/turbofishing - 1000 Stamina - Lv4 Fishing Master+\n"
+        fishing_menu += f"/ultimatefishing - 2500 Stamina - Lv6 Fish King+\n"
+        fishing_menu += f"/omegafishing - 5000 Stamina - Lv8 God of Fish+\n"
+        fish_embed = sm.easy_embed("Blue", "Angler's Association", fishing_menu)
+        _, fish_level, _ = await fishing.check_fish_level(player_obj)
+        fishing_header = f"{player_obj.player_username} - Lv{fish_level} - {fishing.fish_levels[fish_level]}"
+        fishing_info = f"{gli.stamina_icon} Stamina: {player_obj.player_stamina:,} / 5000"
+        fish_embed.add_field(name=fishing_header, value=fishing_info, inline=False)
+        fish_view = fishing.FishView(ctx, player_obj, fish_level)
+        await ctx.send(embed=fish_embed, view=fish_view)
+
+    @pandora_bot.hybrid_command(name='fish', help="Catch fish! Consumes 250 stamina.")
+    @app_commands.guilds(discord.Object(id=guild_id))
+    async def catch_fish(ctx, method="fish"):
+        await ctx.defer()
+        player_obj = await sm.check_registration(ctx)
+        if player_obj is None:
+            return
+        if method not in gli.fishing_modes.keys():
+            await ctx.send("Methods: [fish (default), quickfish, turbofishing, ultimatefishing, omegafishing]")
+            return
+        _, fish_level, _ = await fishing.check_fish_level(player_obj)
+        if fish_level < gli.fishing_modes[method]:
+            await ctx.send("Beware the treacherous tides. Your fishing skills are insufficient")
             return
         await ctx.send(f"{player_obj.player_username} Goes Fishing!")
         await fishing.go_fishing(ctx, player_obj, method=method)
 
-    @pandora_bot.hybrid_command(name='turbofishing', help="Catch HELLA fish! Consumes 1000 stamina.")
+    @pandora_bot.hybrid_command(name='quickfish', help="Large pond fishing! Consumes 500 stamina.")
+    @app_commands.guilds(discord.Object(id=guild_id))
+    async def quick_fish(ctx):
+        await catch_fish(ctx, method="quickfish")
+
+    @pandora_bot.hybrid_command(name='turbofishing', help="Foggy lake fishing! Consumes 1000 stamina.")
     @app_commands.guilds(discord.Object(id=guild_id))
     async def turbo_fish(ctx):
-        await catch_fish(ctx, method="turbo")
+        await catch_fish(ctx, method="turbofishing")
+
+    @pandora_bot.hybrid_command(name='ultimatefishing', help="Glacial ocean fishing! Consumes 2500 stamina.")
+    @app_commands.guilds(discord.Object(id=guild_id))
+    async def ultimate_fish(ctx):
+        await catch_fish(ctx, method="ultimatefishing")
+
+    @pandora_bot.hybrid_command(name='omegafishing', help="Abyssal trench fishing! Consumes 5000 stamina.")
+    @app_commands.guilds(discord.Object(id=guild_id))
+    async def omega_fish(ctx):
+        await catch_fish(ctx, method="omegafishing")
 
     # Location Commands
     @set_command_category('location', 0)
@@ -2110,7 +2153,9 @@ def run_discord_bot():
             return
         command_user = int(ctx.author.id)
         role_points = {
-            1011375497265033216: 20,  # Owner role ID
+            1011375497265033216: 25,  # Owner role ID
+            1393093283479158824: 20,  # Vice role ID
+            1371180845993300049: 15, # Head Administrator role ID
             1134301246648488097: 10,  # Administrator role ID
             1134293907136585769: 5,  # Moderator role ID
             1140738057381871707: 2,  # Guild Member role ID

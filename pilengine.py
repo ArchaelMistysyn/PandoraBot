@@ -348,7 +348,8 @@ async def build_message_box(player_obj, message, header="", boxtype="default"):
     width, height = 800, 200
     modspeak_size_title, modspeak_size_msg = 38, 38
     title_size, msg_size = (54, 36) if boxtype == "default" else (44, 36)
-    type_dict = {"default": "game_banner", "mod": "blank_banner_1", "admin": "blank_banner_2", "arch": "blank_banner_3"}
+    type_dict = {"default": "game_banner", "mod": "blank_banner_1", "admin": "blank_banner_2",
+                 "Head Admin": "blank_banner_2", "Vice Leader": "blank_banner_3", "arch": "blank_banner_3"}
     # Load background image and fonts
     cardBG = Image.open(requests.get(f"{web_url}/botimages/banners/{type_dict[boxtype]}.png", stream=True).raw)
     result = Image.new("RGBA", (width, height))

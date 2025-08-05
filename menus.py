@@ -49,6 +49,7 @@ intermediate_guide += "\n6. Use /engrave to engrave an insignia on your soul. Re
 intermediate_guide += "\n7. Use /refinery to refine powerful unprocessed gear items."
 intermediate_guide += "\n8. Use /tarot [card number] to bind essence items to tarot cards."
 intermediate_guide += "\n9. Use /bazaar, /sell, /give, /trade, and /buy to trade items."
+intermediate_guide += "\n10. Use /fishmenu, /quickfish, /turbofishing, /ultimatefishing, and /omegafishing to fish."
 
 advanced_guide = "1. Use /summon and spend summoning items to fight powerful opponents above tier 5!"
 advanced_guide += "\n2. Use /gauntlet to challenge the difficult Spire of Illusions for great rewards!"

@@ -529,6 +529,8 @@ class BasicItem:
                 self.item_image = f"{gli.web_url}Gear_Icon/Frame_{icon[self.item_id]}.png"
             elif "Lotus" in self.item_id:
                 self.item_image = f"{gli.web_url}NonGear_Icon/Lotus/Frame_{self.item_id}.png"
+            elif "Sacred" in self.item_id:
+                self.item_image = f"{gli.web_url}NonGear_Icon/Misc/Frame_{self.item_id}.png"
             elif self.item_category in gli.availability_list_nongear:
                 self.item_image = f"{gli.web_url}NonGear_Icon/{self.item_category}/Frame_{self.item_id}.png"
         else:
