@@ -66,7 +66,7 @@ class_icon_dict = {
 }
 class_names = list(class_icon_dict.keys())
 class_icon_list = [class_icon_dict[class_name] for class_name in class_names]
-fishing_modes = {"fish": 1, "quickfish": 10, "turbofishing": 100, "ultimatefishing": 1000, "omegafishing": 10000}
+fishing_modes = {"fish": 0, "quickfish": 2, "turbofishing": 4, "ultimatefishing": 6, "omegafishing": 8}
 # Path Icons
 path_icon = ["<a:eenergy:1145534127349706772>", "<a:eenergy:1145534127349706772>", "<a:eenergy:1145534127349706772>",
              "<a:eenergy:1145534127349706772>", "<a:eenergy:1145534127349706772>", "<a:eenergy:1145534127349706772>",
