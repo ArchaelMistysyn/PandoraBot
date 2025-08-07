@@ -709,7 +709,7 @@ async def display_cinventory(player_obj, item_type):
 
 async def display_binventory(player_obj, method, view_type, include_id=False):
     regex_dict = {
-        "Crafting": "^(Matrix|Hammer|Pearl|Fragment|Crystal)",
+        "Crafting": "^(Matrix|Hammer|Pearl|Fragment|Crystal|Flame)",
         "Fae Cores": "^(Fae)",
         "Materials": "^(Scrap|Ore|Metamorphite|Shard|Heart)",
         "Unprocessed": "^(Unrefined|Gem|Jewel|Void)",

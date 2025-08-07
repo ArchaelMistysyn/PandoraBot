@@ -256,11 +256,11 @@ async def go_fishing(ctx, player_obj, method="fish", skipping=False):
     for fish_id, fish_qty in caught_fish.items():
         fish = inventory.BasicItem(fish_id)
         is_fish = fish_id.startswith("Fish")
-        base_points = (fish.item_tier + gli.fishing_modes[method]) * fish_qty
+        base_points = fish.item_tier * gli.fishing_modes[method]
         if is_fish:
-            base_points *= 2
+            base_points *= fish_qty
             if fish.item_tier == 8:
-                base_points *= 100
+                base_points *= 1000
         base_points *= fishing_bonus
         total_points += base_points
         fish_output += f"🪝 Caught: {fish.item_emoji} {fish_qty}x {fish.item_name}\n"
