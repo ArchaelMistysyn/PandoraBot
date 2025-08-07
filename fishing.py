@@ -21,7 +21,7 @@ import loot
 
 fish_levels = ["Fishless Loser", "Fish Owner", "Fishing Adept", "Fishing Pro", "Fishing Master",
                "Fishing Legend", "Fish King", "Fish Wizard", "God of Fish", "Progenitor of Fish", "Bathyal's Chosen"]
-zone_bonus = {"fish": 1, "quickfish": 10, "turbofishing": 100, "ultimatefishing": 1000, "omegafishing": 10000}
+
 
 async def check_fish_level(player_obj):
     fish_points = await player_obj.check_misc_data("fish_points")
@@ -251,16 +251,18 @@ async def go_fishing(ctx, player_obj, method="fish", skipping=False):
         return
     fish_output = ""
     _, fish_level, _ = await check_fish_level(player_obj)
-    fishing_bonus = fish_level + 1
+    fishing_bonus = 5 * (fish_level + 1) * gli.fishing_modes[method]
     total_points = 0
     for fish_id, fish_qty in caught_fish.items():
         fish = inventory.BasicItem(fish_id)
         is_fish = fish_id.startswith("Fish")
-        base_points = fish.item_tier * zone_bonus[method]
+        base_points = fish.item_tier
         if is_fish:
             base_points *= fish_qty
             if fish.item_tier == 8:
                 base_points *= 1000
+        else:
+            base_points *= fish.item_tier // 2 + 1
         base_points *= fishing_bonus
         total_points += base_points
         fish_output += f"🪝 Caught: {fish.item_emoji} {fish_qty}x {fish.item_name}\n"
