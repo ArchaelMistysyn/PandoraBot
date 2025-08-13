@@ -818,7 +818,7 @@ def run_discord_bot():
         current_points = fish_points - fishing.get_max_fish_points(fish_level - 1)
         fish_pts_max = fishing.get_max_fish_points(fish_level)
         fishing_header = f"{player_obj.player_username} - Lv{fish_level} - {fishing.fish_levels[fish_level]}"
-        fishing_info = f"🎣 Fish EXP: {current_points} / {fish_pts_max}\n"
+        fishing_info = f"🎣 Fish EXP: {current_points:,} / {fish_pts_max:,}\n"
         fishing_info += f"{gli.stamina_icon} Stamina: {player_obj.player_stamina:,} / 5000"
         fish_embed.add_field(name=fishing_header, value=fishing_info, inline=False)
         fish_view = fishing.FishView(ctx, player_obj, fish_level)

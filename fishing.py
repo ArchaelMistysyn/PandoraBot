@@ -201,6 +201,7 @@ async def go_fishing(ctx, player_obj, method="fish", skipping=False):
     # Run the fishing animation
     moves, move_limit, worm_count, chest_count, caught_fish = 0, 50, 0, 0, {}
     last_move = None
+    bonus_mult = 0
     while moves < move_limit:
         moves += 1
         await asyncio.sleep(1)
@@ -222,9 +223,11 @@ async def go_fishing(ctx, player_obj, method="fish", skipping=False):
             grid = [[boom_mapping.get(cell, cell) for cell in row] for row in grid]
             break
         elif current_cell == b_worm:
+            bonus_mult += 1
             worm_count += 1
             grid[fish_pos[1]][fish_pos[0]] = b_dia
         elif current_cell == b_chest:
+            bonus_mult += 2
             chest_count += 1
             grid[fish_pos[1]][fish_pos[0]] = b_dia
         elif current_cell == b_water:
@@ -238,6 +241,7 @@ async def go_fishing(ctx, player_obj, method="fish", skipping=False):
                 await asyncio.sleep(1)
             grid = [[star_mapping.get(cell, cell) for cell in row] for row in grid]
             title = f"{player_obj.player_username} Caught All {total_items:,} Fish!"
+            bonus_mult += 10
             break
         await sent_msg.edit(content=f"{display_grid(grid)}")
     for _ in range(worm_count):
@@ -251,20 +255,17 @@ async def go_fishing(ctx, player_obj, method="fish", skipping=False):
         return
     fish_output = ""
     _, fish_level, _ = await check_fish_level(player_obj)
-    fishing_bonus = 5 * (fish_level + 1) * gli.fishing_modes[method]
+    fish_mult = ((5 * fish_level) + 1) * (gli.fishing_modes[method] + 1) * min(max(fish_level * 2, 1), bonus_mult)
     total_points = 0
     for fish_id, fish_qty in caught_fish.items():
         fish = inventory.BasicItem(fish_id)
         is_fish = fish_id.startswith("Fish")
-        base_points = fish.item_tier
+        base_points = 2 + fish.item_tier // 2
         if is_fish:
             base_points *= fish_qty
             if fish.item_tier == 8:
                 base_points *= 1000
-        else:
-            base_points *= fish.item_tier // 2 + 1
-        base_points *= fishing_bonus
-        total_points += base_points
+        total_points += base_points * fish_mult
         fish_output += f"🪝 Caught: {fish.item_emoji} {fish_qty}x {fish.item_name}\n"
         if sm.check_rare_item(fish_id):
             await sm.send_notification(ctx, player_obj, "Item", fish_id)
@@ -272,7 +273,7 @@ async def go_fishing(ctx, player_obj, method="fish", skipping=False):
     fish_points, fish_level, fish_title = await check_fish_level(player_obj)
     current_points = fish_points - get_max_fish_points(fish_level - 1)
     fish_pts_max = get_max_fish_points(fish_level)
-    fish_output += f"**Reputation**\nLv{fish_level} - {fish_title}\n🎣 Fish EXP: {current_points} / {fish_pts_max}\n"
+    fish_output += f"**Reputation**\nLv{fish_level} - {fish_title}\n🎣 Fish EXP: {current_points:,} / {fish_pts_max:,}\n"
     batch_df = sm.list_to_batch(player_obj, [(fish_id, fish_qty) for fish_id, fish_qty in caught_fish.items()])
     await inventory.update_stock(None, None, None, batch=batch_df)
     await sent_msg.edit(content=f"{display_grid(grid)}")

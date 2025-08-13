@@ -2,7 +2,7 @@
 Pandora Bot Repository
 PandoraPortal.ca is the website for this bot. The bot is accessible from the discord server linked on the website.
 
-prerequisite installs instructions:
+prerequisite installs instructions (Not Updated):
 sudo apt install python3-pip (install pip)
 sudo apt update (update)
 sudo apt install software-properties-common (deadsnakes PPA)
