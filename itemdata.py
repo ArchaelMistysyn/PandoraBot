@@ -22,28 +22,28 @@ fae_data = [[None, f'Fae Core ({element})', 100, 1, emoji,
 itemdata_dict = build_item_dict(itemdata_dict, fae_data, starting_index=0, category="Fae")
 
 # Token List Data
-token_data = [[None, 'Changeling Token', 100, 1, '<a:elootitem:1144477550379274322>',
+token_data = [[None, 'Changeling Token', 100, 1, '<:Tok7:1412842887200243873>',
                'An ancient token. Can be used to change your class or username.', 100000],
-              [None, 'Soulweaver Token', 100, 2, '<a:elootitem:1144477550379274322>',
+              [None, 'Soulweaver Token', 100, 2, '<:Tok2:1412842823883030558>',
                'An ancient token. Can be used for insignia engraving and upgrades.', 100000],
-              [None, 'Pathwalker Token', 100, 3, '<a:elootitem:1144477550379274322>',
+              [None, 'Pathwalker Token', 100, 3, '<:Tok3:1412842832263119000>',
                'An ancient token. Can be used to reset all skill points.', 100000],
-              [None, 'Lifeblood Token', 100, 4, '<a:elootitem:1144477550379274322>',
+              [None, 'Lifeblood Token', 100, 4, '<:Tok4:1412842841859690517>',
                'An ancient token. Can be used to reshape dragon heart gems.', 100000],
-              [None, 'Scribe Token', 100, 5, '<a:elootitem:1144477550379274322>',
+              [None, 'Scribe Token', 100, 5, '<:Tok5:1412842850357612584>',
                'An ancient token. Can be used to enscribe weapons.', 250000],
-              [None, 'Oracle Token', 100, 6, '<a:elootitem:1144477550379274322>',
+              [None, 'Oracle Token', 100, 6, '<:Tok6:1412842858985033802>',
                'An ancient token. Can be used to obtain lotus items.', 500000],
-              [None, 'Adjudicator Token', 100, 7, '<a:elootitem:1144477550379274322>',
+              [None, 'Adjudicator Token', 100, 7, '<:Tok7:1412842887200243873>',
                'An ancient token. ???.', 500000]]
 itemdata_dict = build_item_dict(itemdata_dict, token_data, category="Token")
 
 # Summoning List Data
-summon_data = [[None, 'Summoning Relic', 100, 5, '<a:elootitem:1144477550379274322>',
+summon_data = [[None, 'Summoning Relic', 100, 5, '<:Sum1:1412843204247552060>',
                 'Perform a summoning ritual to summon a tier 5 paragon solo boss.', 50000],
-               [None, 'Summoning Artifact', 100, 6, '<a:elootitem:1144477550379274322>',
+               [None, 'Summoning Artifact', 100, 6, '<:Sum2:1412843211528867840>',
                 'Perform a summoning ritual to summon a tier 6 paragon solo boss.', 100000],
-               [None, 'Summoning Prism', 100, 7, '<a:elootitem:1144477550379274322>',
+               [None, 'Summoning Prism', 100, 7, '<:Sum3:1412843220555268277>',
                 'Perform a summoning ritual to summon a tier 7 arbiter solo boss.', 500000]]
 itemdata_dict = build_item_dict(itemdata_dict, summon_data, category="Summon")
 
@@ -107,9 +107,9 @@ for row in ore_data:
 itemdata_dict = build_item_dict(itemdata_dict, ore_data, category="Ore")
 
 # Flame Items
-flame_data = [[None, 'Purgatorial Flame', 50, 3, '<a:eshadow2:1141653468965257216>',
+flame_data = [[None, 'Purgatorial Flame', 50, 3, '<:Flm1:1412843378122555452>',
                '75% chance to reforge the base stats and unique ability of a gear item within its tier.', 5000],
-              [None, 'Abyss Flame', 75, 7, '<a:evoid:1145520260573827134>',
+              [None, 'Abyss Flame', 75, 7, '<:Flm2:1412843387538899034>',
                '50% chance to reroll a unique ability on tier 5+ gear.', 0]]
 itemdata_dict = build_item_dict(itemdata_dict, flame_data, category="Flame")
 
@@ -319,10 +319,10 @@ uncategorized_data = [
      'Used to reroll specific item rolls. Works on tier 4 and lower gear items.', 50000],
     ["Pearl", 'Stellar Pearl', 75, 4, '<:Prl:1388913620775076000>',
      'Augments an item roll. Increases the tier by 1.', 50000],
-    ["Matrix", 'Socket Matrix', 5, 3, '<a:elootitem:1144477550379274322>',
+    ["Matrix", 'Socket Matrix', 5, 3, '<:Matrix:1412843539028639905>',
      '5% Chance to add a socket to a gear item.', 5000],
     ['Chest', 'Chest', 100, 1, '<:Chest:1398709914381324318>', 'Contains a random item.', 50000],
-    ['Shard', "Sovereign Shard", 100, 7, '<a:elootitem:1144477550379274322>',
+    ['Shard', "Sovereign Shard", 100, 7, '<:Shard:1412843550852255805>',
      "A fragment of an ancient weapon. Perhaps it can be reforged.", 0],
     ['Scrap', 'Equipment Scrap', 100, 1, '<:Scrap:1274787448681005158>',
      "One of many countless pieces of Pandora's Legendary Hammer.", 0],

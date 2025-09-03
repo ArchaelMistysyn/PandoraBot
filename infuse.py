@@ -25,7 +25,7 @@ recipe_dict = {
         "Radiant Heart": [("Stone6", 1), ("Fragment2", 1), 20, "Heart1", None],
         "Chaos Heart": [("Stone6", 1), ("Fragment3", 1), 20, "Heart2", None],
         "Abyss Flame": [("Crystal3", 1), ("Flame1", 10), 80, "Flame2", None],
-        "Lotus of Serenity": [("Heart1", 99), ("Fragment2", 99), 99, "Lotus3"]},
+        "Lotus of Serenity": [("Heart1", 99), ("Fragment2", 99), 99, "Lotus3", None]},
     "Elemental Signet Infusion": {}, "Primordial Ring Infusion": {}, "Path Ring Infusion": {},
     "Fabled Ring Infusion": {
         "Dragon's Eye Diamond": [("Gemstone9", 15), ("Gemstone10", 3), 100, "7", "R"],
@@ -125,7 +125,7 @@ sov_icon = ["<:p_hammer:1275566048619528252>", "<:lotus_sword:127556604206802536
             "<:Blaster:1304109337500844154>", "<:Bathyal:1304109287164870687>"]
 spec_icon = ["<:ruler:1275566119343755384>"]
 cat_icon = {
-    "Heavenly Infusion": "<:Fae0:1274786282010316913>",
+    "Heavenly Infusion": "<:O5:1381693284014882846>",
     "Elemental Infusion": "<:Cata:1274786559996198944>",
     "Crystal Infusion": "<:Cry1:1274785116572614856>",
     "Void Infusion": "<:Saber5:1275575137537888269>",

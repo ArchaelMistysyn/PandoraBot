@@ -78,11 +78,11 @@ class BInventoryView(discord.ui.View):
             discord.SelectOption(
                 emoji="<:Cmps:1388913589535899758>", label="Summoning", description="Summoning Items"),
             discord.SelectOption(
-                emoji="<a:eenergy:1145534127349706772>", label="Misc", description="Misc Items"),
+                emoji="<:Chest:1398709914381324318>", label="Misc", description="Misc Items"),
             discord.SelectOption(
                 emoji="<:Alt:1275588731272953916>", label="Gemstone", description="Gemstone Items"),
             discord.SelectOption(
-                emoji="🐟", label="Fish", description="Fish Items"),
+                emoji="<:F5:1398709820466659471>", label="Fish", description="Fish Items"),
             discord.SelectOption(
                 emoji="<:Lotus11:1274786525560701132>", label="Ultra Rare", description="Unprocessed Items")])
     async def inventory_callback(self, interaction: discord.Interaction, inventory_select: discord.ui.Select):
