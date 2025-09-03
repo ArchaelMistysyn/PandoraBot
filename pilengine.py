@@ -326,11 +326,14 @@ async def build_notification(player_obj, message, notification_type, title_msg, 
     # Achievement Icon Loading.
     if notification_type == "Achievement":
         icon_size = (54, 54)
-        star_code = "Alt" if player_obj.player_echelon == 9 else 9 if player_obj.player_echelon == 10 else player_obj.player_echelon
-        icon_url = f"https://PandoraPortal.ca/gallery/Icons/Stars/Original/Star{star_code}.png"
-        role_icon = Image.open(requests.get(icon_url, stream=True).raw)
-        role_icon = role_icon.resize(icon_size)
-        result.paste(role_icon, (42, 90), mask=role_icon)
+        if "Fishing" in f"{value}":
+            pass
+        else:
+            star_code = "Alt" if player_obj.player_echelon == 9 else 9 if player_obj.player_echelon == 10 else player_obj.player_echelon
+            icon_url = f"https://PandoraPortal.ca/gallery/Icons/Stars/Original/Star{star_code}.png"
+            role_icon = Image.open(requests.get(icon_url, stream=True).raw)
+            role_icon = role_icon.resize(icon_size)
+            result.paste(role_icon, (42, 90), mask=role_icon)
     elif notification_type == "Item":
         if item.item_image != "":
             image_url = item.item_image.replace("Frame_", "")

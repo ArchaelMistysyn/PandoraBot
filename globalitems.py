@@ -20,7 +20,8 @@ servers = {1011375205999968427: ([1157937444931514408],
                                  1252681803916116211, 1157937444931514408, 1157937444931514408)}
 GM_id_dict = {185530717638230016: "Archael", 141837266866667520: "Zweii", 353090154044325906: "Viper",
               1177738094666059877: "Eleuia"}
-# ArchDRagon Exclusive Channel Features
+moderation_roles = {"ArchDragon Administrator", "ArchDragon Moderator", "Server Owner - Archael"}
+# ArchDragon Exclusive Channel Features
 bot_logging_channel = 1266478401846247454
 time_zone_channel, time_zone_message_id = 1328062692778315797, 1328099757796884520
 metrics_channel, metrics_message_id = 1156267612783779901, 1296207066284953664
@@ -299,3 +300,15 @@ dst_regions = {
     "Jordan": {"start": (2, 24), "end": (10, 27)},  # Jordan
     "Lebanon": {"start": (3, 30), "end": (10, 26)},  # Lebanon
 }
+
+# Moderation
+ALLOWED_LINK_ROLE_NAMES = [
+    "Trusted Rat", "ArchDragon Moderator", "ArchDragon Administrator", "Premium NPC",
+    "Head Administrator - Zweii", "Vice Leader - Heather", "Server Owner - Archael",
+    "Activity Rank 7", "Activity Rank 8", "Activity Rank 9", "Activity Rank 10 (MAX)"
+]
+LINK_TRIGGERS = ["https://", "discord.gg/", "discord.com/invite/"]
+EXEMPT_LINKS = ["twitch.tv"]
+UNCONDITIONAL_EXEMPT_LINKS = ["tenor.com", "giphy.com", "imgur.com", "youtube.com", "youtu.be", "discordapp", "x.com",
+                              "arca.live", "reddit", "shadowverse", "pathofexile", "hoyo"]
+

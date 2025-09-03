@@ -69,7 +69,7 @@ async def send_notification(ctx_object, player_obj, notice_type, value, followup
     notification_dict = {
         "Level": [(f"Congratulations {player_obj.player_username}", f"Reached Level: {player_obj.player_level}"), 1],
         "Achievement": [(f"{player_obj.player_username} Unlocked",
-                         value if len(f"value") > 24 else f"Achievement: {value}"), 20],
+                         value if len(f"{value}") > 24 else f"Achievement: {value}"), 20],
         "Item": [(f"{player_obj.player_username} Obtained {rarity} Item",
                   f"{item.item_name}" if item is not None else ""), 5],
         "Sovereign": [(f"{player_obj.player_username} Obtained Sovereign Item", value), 10],

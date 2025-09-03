@@ -164,6 +164,21 @@ def run_discord_bot():
                     response_msg = f"Discord ID: {player_obj.discord_id}\nYour new secure login key is ||{new_key}||"
             if not user_message.startswith("!"):
                 await message.author.send(response_msg)
+        elif message.guild:
+            content_l = message.content.lower()
+            if any(trigger_text in content_l for trigger_text in gli.LINK_TRIGGERS):
+                user_role_names = {role_obj.name for role_obj in message.author.roles}
+                is_unconditional = any(host in content_l for host in gli.UNCONDITIONAL_EXEMPT_LINKS)
+                is_exempt = any(host in content_l for host in gli.EXEMPT_LINKS)
+                has_passcard = "Passcard - Guild Access" in user_role_names
+                has_allowed_role = any(role_name in user_role_names for role_name in gli.ALLOWED_LINK_ROLE_NAMES)
+                if not (is_unconditional or (is_exempt and has_passcard) or has_allowed_role):
+                    warning_msg = "Link requires mod/admin approval."
+                    warning_embed = sm.easy_embed("Red", "Insufficient Permissions!", warning_msg)
+                    warning_embed.set_thumbnail(url=gli.archdragon_logo)
+                    approval_view = menus.LinkReviewView(message.content)
+                    await message.channel.send(content=message.author.mention, embed=warning_embed, view=approval_view)
+                    await message.delete()
 
     def set_command_category(category, command_position):
         def decorator(func):
@@ -617,19 +632,19 @@ def run_discord_bot():
             return
         Chest_id = "Chest"
         loot_item = inventory.BasicItem(Chest_id)
-        Chest_stock = await inventory.check_stock(player_obj, Chest_id)
+        chest_stock = await inventory.check_stock(player_obj, Chest_id)
         if not quantity.isnumeric():
             if quantity != "all":
                 await ctx.send("Enter a valid number or 'all' in the quantity field.")
                 return
-            quantity = min(50, Chest_stock)
+            quantity = min(50, chest_stock)
         else:
-            quantity = int(quantity)
+            quantity = min(50, int(quantity))
         if quantity <= 0:
             await ctx.send(sm.get_stock_msg(loot_item, 0))
             return
-        if Chest_stock < quantity:
-            stock_msg = sm.get_stock_msg(loot_item, Chest_stock, quantity)
+        if chest_stock < quantity:
+            stock_msg = sm.get_stock_msg(loot_item, chest_stock, quantity)
             await ctx.send(stock_msg)
             return
         await inventory.update_stock(player_obj, Chest_id, (-1 * quantity))
@@ -2157,14 +2172,14 @@ def run_discord_bot():
             return
         command_user = int(ctx.author.id)
         role_points = {
-            1011375497265033216: 25,  # Owner role ID
-            1393093283479158824: 20,  # Vice role ID
-            1371180845993300049: 15, # Head Administrator role ID
-            1134301246648488097: 10,  # Administrator role ID
-            1134293907136585769: 5,  # Moderator role ID
-            1140738057381871707: 2,  # Guild Member role ID
+            1011375497265033216: 30,  # Owner role ID
+            1393093283479158824: 25,  # Vice role ID
+            1371180845993300049: 20,  # Head Administrator role ID
+            1134301246648488097: 15,  # Administrator role ID
+            1134293907136585769: 10,  # Moderator role ID
+            1140738057381871707: 5,  # Guild Member role ID
         }
-        default_points = 1
+        default_points = 2
         raw_query, params = "SELECT vouch_points FROM VouchList WHERE discord_id = :input1", {"input1": str(user.id)}
         points_df = await rqy(raw_query, return_value=True, params=params)
         user_roles = [role.id for role in ctx.author.roles]

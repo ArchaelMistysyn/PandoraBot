@@ -154,17 +154,17 @@ async def go_fishing(ctx, player_obj, method="fish", skipping=False):
     num_mines, num_stars = random.randint(data_value[6], data_value[7]), random.randint(data_value[8], data_value[9])
     difference, _ = await player_obj.check_cooldown("fishing")
     boosted_rate_fish = await daily_fish(fish_only=True)
-    _, fish_level, _ = await check_fish_level(player_obj)
+    _, starting_fish_level, _ = await check_fish_level(player_obj)
     fish_cooldowns = [60, 50, 40, 30, 20, 15, 10, 7, 4, 2, 1]
     cost_item = None
     # Handle existing cooldown.
     if difference:
-        wait_time = timedelta(minutes=fish_cooldowns[fish_level])
+        wait_time = timedelta(minutes=fish_cooldowns[starting_fish_level])
         cooldown = wait_time - difference
         if difference <= wait_time and not skipping:
             time_msg = f"You can fish again in {int(cooldown.total_seconds() / 60)} minutes."
             embed_msg = sm.easy_embed("blue", "Fish on Vacation!", time_msg)
-            reset_view = FishResetView(ctx, player_obj, fish_level, method)
+            reset_view = FishResetView(ctx, player_obj, starting_fish_level, method)
             await ctx.send(embed=embed_msg, view=reset_view)
             return
         if skipping:
@@ -275,6 +275,12 @@ async def go_fishing(ctx, player_obj, method="fish", skipping=False):
     fish_pts_max = get_max_fish_points(fish_level)
     fish_output += f"**Reputation**\nLv{fish_level} - {fish_title}\n🎣 Fish EXP: {current_points:,} / {fish_pts_max:,}\n"
     batch_df = sm.list_to_batch(player_obj, [(fish_id, fish_qty) for fish_id, fish_qty in caught_fish.items()])
+    if fish_level - starting_fish_level >= 1:
+        await sm.send_notification(ctx, player_obj, "Achievement", f"Fishing: {fish_title}")
+        if fish_level == 10:
+            role = discord.utils.get(ctx.guild.roles, name="Bathyal's Chosen")
+            if role not in ctx.author.roles:
+                await ctx.author.add_roles(role)
     await inventory.update_stock(None, None, None, batch=batch_df)
     await sent_msg.edit(content=f"{display_grid(grid)}")
     await ctx.send(content=f"**{title}**\n{fish_output}")

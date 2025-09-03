@@ -1300,3 +1300,36 @@ class ResetView(discord.ui.View):
             if self.embed_msg:
                 embed_msg.add_field(name="ALL SKILL POINTS RESET!", value="", inline=False)
             await interaction.response.edit_message(embed=embed_msg, view=points_view)
+
+
+class LinkReviewView(discord.ui.View):
+    def __init__(self, link, reviewing=False):
+        super().__init__(timeout=None)
+        self.link, self.reviewing = link, reviewing
+        if self.reviewing:
+            self.review_callback.disabled = True
+            self.review_callback.style = gli.button_colour_list[3]
+
+    @discord.ui.button(label="Approve", style=discord.ButtonStyle.success, emoji="✅")
+    async def approve_callback(self, interaction: discord.Interaction, button: discord.ui.Button):
+        if not any(role.name in gli.moderation_roles for role in interaction.user.roles):
+            return
+        link_message = f"Approved by: {interaction.user.display_name}\n{self.link}"
+        embed = sm.easy_embed("Green", "Approved", link_message)
+        await interaction.response.edit_message(embed=embed, view=None)
+
+    @discord.ui.button(label="Review", style=discord.ButtonStyle.blurple, emoji="⚠️")
+    async def review_callback(self, interaction: discord.Interaction, button: discord.ui.Button):
+        if not any(role.name in gli.moderation_roles for role in interaction.user.roles):
+            return
+        broken = self.link.replace(".", "[.]").replace("/", "／")
+        embed = sm.easy_embed("Yellow", "Reviewing Link", f"||{broken}||")
+        await interaction.response.edit_message(embed=embed, view=LinkReviewView(self.link, True))
+
+    @discord.ui.button(label="Deny", style=discord.ButtonStyle.danger, emoji="⛔")
+    async def deny_callback(self, interaction: discord.Interaction, button: discord.ui.Button):
+        if not any(role.name in gli.moderation_roles for role in interaction.user.roles):
+            return
+        embed = sm.easy_embed("Red", "Denied", f"Denied by: {interaction.user.display_name}")
+        await interaction.response.edit_message(embed=embed, view=None)
+
