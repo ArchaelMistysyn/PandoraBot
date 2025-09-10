@@ -238,13 +238,13 @@ class QuestView(discord.ui.View):
         self.quest_obj = None
         self.new_view = RewardView(self.ctx_object, self.player_obj)
         await interaction.response.edit_message(embed=self.embed_msg, view=self.new_view)
-        if award_role is not None:
-            add_role = discord.utils.get(interaction.guild.roles, name=award_role)
+        if award_role is not None and award_role == "Echelon 10 (MAX)":
+            add_role = discord.utils.get(interaction.guild.roles, name="Gem Title - Ruler of Stars")
             await interaction.user.add_roles(add_role)
-            if self.player_obj.player_echelon >= 2:
-                previous_rolename = f"Echelon {self.player_obj.player_echelon - 1}"
-                remove_role = discord.utils.get(interaction.guild.roles, name=previous_rolename)
-                await interaction.user.remove_roles(remove_role)
+            # if self.player_obj.player_echelon >= 2:
+                # previous_rolename = f"Echelon {self.player_obj.player_echelon - 1}"
+                # remove_role = discord.utils.get(interaction.guild.roles, name=previous_rolename)
+                # await interaction.user.remove_roles(remove_role)
 
 
 class RewardView(discord.ui.View):

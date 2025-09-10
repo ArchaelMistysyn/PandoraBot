@@ -19,17 +19,31 @@ import pact
 
 class HourCog(commands.Cog):
     def __init__(self, bot):
-        self.bot, self.lock = bot, asyncio.Lock()
-        self.bot.loop.create_task(self.align_hour())
-
-    def cog_unload(self):
-        self.hour_manager.cancel()
+        self.bot = bot
+        self.lock = asyncio.Lock()
 
     @tasks.loop(hours=1)
     async def hour_manager(self):
         async with self.lock:
             await self.update_stamina()
             await self.send_reminders()
+
+    @hour_manager.before_loop
+    async def _align_to_hour(self):
+        await self.bot.wait_until_ready()
+        while True:
+            now = dt.utcnow()
+            nxt = (now.replace(minute=0, second=0, microsecond=0) + timedelta(hours=1))
+            await asyncio.sleep((nxt - now).total_seconds())
+            return
+
+    def cog_load(self):
+        if not self.hour_manager.is_running():
+            self.hour_manager.start()
+
+    def cog_unload(self):
+        if self.hour_manager.is_running():
+            self.hour_manager.cancel()
 
     async def update_stamina(self):
         player_list = await player.get_all_users()
@@ -46,6 +60,7 @@ class HourCog(commands.Cog):
             await rqy(query, batch=True, params=update_params)
 
     async def send_reminders(self):
+        print("Check Reminders")
         now_utc = dt.now(ZoneInfo('UTC'))
         current_weekday = now_utc.weekday() + 1
         reminder_query = ("SELECT discord_id, message FROM UserReminders "
@@ -53,6 +68,7 @@ class HourCog(commands.Cog):
         params = {'current_hour': now_utc.hour, 'current_weekday': current_weekday}
         df = await rqy(reminder_query, params=params, return_value=True)
         if df is None or len(df.index) == 0:
+            print("0 reminders sent")
             return
         for _, row in df.iterrows():
             try:
@@ -62,6 +78,7 @@ class HourCog(commands.Cog):
                 await user.send(file=discord.File(msg_file))
             except (discord.Forbidden, discord.NotFound):
                 continue
+        print("All reminders sent")
 
     async def align_hour(self):
         now = dt.utcnow()
@@ -82,25 +99,31 @@ class HourCog(commands.Cog):
 class MetricsCog(commands.Cog):
     def __init__(self, bot):
         self.bot, self.lock = bot, asyncio.Lock()
-        self.guild = self.bot.get_guild(1011375205999968427)
-        self.metrics_manager.start()
-        self.credit_manager.start()
+        self.guild = None
+
+    def cog_load(self):
+        if not self.metrics_manager.is_running():
+            self.metrics_manager.start()
+        if not self.credit_manager.is_running():
+            self.credit_manager.start()
 
     def cog_unload(self):
-        self.metrics_manager.cancel()
+        if self.metrics_manager.is_running():
+            self.metrics_manager.cancel()
+        if self.credit_manager.is_running():
+            self.credit_manager.cancel()
 
     async def run_metrics(self):
+        print("Updating Metrics")
         total_members = self.guild.member_count
         online_members = sum(1 for member in self.guild.members if member.status == discord.Status.online)
         offline_members = sum(1 for member in self.guild.members if member.status == discord.Status.offline)
         role_counts = {role.name: len(role.members) for role in self.guild.roles if role.name != "@everyone"}
-        message = (
-            f"Total Members: {total_members:,}\n"
-        )
         metrics_channel = self.bot.get_channel(gli.metrics_channel)
         if metrics_channel:
             message_obj = await metrics_channel.fetch_message(gli.metrics_message_id)
-            await message_obj.edit(content=message)
+            await message_obj.edit(content=f"Total Members: {total_members:,}\n")
+        print("Metrics Updated")
 
     async def run_credit(self):
         # Note for future self. This can be more efficient done via batches if needed.
@@ -108,6 +131,7 @@ class MetricsCog(commands.Cog):
         now = dt.now(time_zone)
         if now.day != 1:
             return
+        print("Updating Credits")
         eligible_roles = [role for role in self.guild.roles if "Subscriber" in role.name]
         credited_users = []
         for member in self.guild.members:
@@ -127,19 +151,31 @@ class MetricsCog(commands.Cog):
                           f"Credit is deducted as the highest eligible gift card value: 10, 25, 50, 100, 250, 500\n"
                           f"Message me 'checkout' or open a basic ticket in the server to request your gift card.")
             await user.send(credit_msg)
+        print("Credits Updated")
 
     @tasks.loop(seconds=3600)
     async def metrics_manager(self):
         async with self.lock:
             await self.run_metrics()
 
+    @metrics_manager.before_loop
+    async def _metrics_wait_ready(self):
+        await self.bot.wait_until_ready()
+        self.guild = self.bot.get_guild(1011375205999968427)
+
     @tasks.loop(seconds=86401)
     async def credit_manager(self):
         async with self.lock:
             await self.run_credit()
+
+    @credit_manager.before_loop
+    async def _credit_wait_ready(self):
+        await self.bot.wait_until_ready()
+        self.guild = self.bot.get_guild(1011375205999968427)
 
     @metrics_manager.error
     async def metrics_manager_error(self, e):
         error_channel = self.bot.get_channel(gli.bot_logging_channel)
         tb_str = ''.join(traceback.format_exception(type(e), e, e.__traceback__))
         await error_channel.send(f'An error occurred:\n{e}\n```{tb_str}```')
+

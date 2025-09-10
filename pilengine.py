@@ -2,6 +2,7 @@
 from PIL import Image, ImageFont, ImageDraw, ImageOps, ImageFilter
 import requests
 import os
+import asyncio
 from ftplib import FTP
 import aiohttp
 from io import BytesIO
@@ -14,6 +15,8 @@ import sharedmethods as sm
 
 # Core imports
 import player
+
+headers = {"Referer": "https://pandoraportal.ca/", "User-Agent": "Chrome/123.0.0.0", "Accept": "image/*"}
 
 web_url = f"https://PandoraPortal.ca"
 generic_frame_url = f"{web_url}/botimages/iconframes/Iconframe.png"
@@ -75,7 +78,7 @@ class RankCard:
         scaled_echelon = (self.echelon // 2)
         loc = [scaled_echelon for _ in range(6)]
         self.fill_colour = [BrandBlue, "black"]
-        if "Exclusive Title Holder" in achievement_list:
+        if "Relic Title Holder" in achievement_list:
             self.fill_colour = [BrandRed, "black"]
             loc = [6, 6, 6, 6, 6] if scaled_echelon < 5 else [5, 6, 5, 5, 6]
         elif "Subscriber - Star Supporter" in achievement_list or "Subscriber - Crowned Supporter" in achievement_list:
@@ -160,13 +163,13 @@ async def generate_exp_bar(exp_bar_image, exp_bar_start, exp_bar_end, fill_perce
 
 async def generate_and_combine_gear(item_type, start_tier=1, end_tier=8, element=""):
     # Ensure image is currently available.
-    if item_type not in item_type not in gli.sovereign_item_list:
+    if item_type not in gli.sovereign_item_list:
         return 0
     ftp = await create_ftp_connection(web_data[0], web_data[1], web_data[2])
     folder, sub_dir = item_type, ""
     if item_type in gli.sovereign_item_list:
         folder = "Sovereign"
-    async with aiohttp.ClientSession() as session:
+    async with aiohttp.ClientSession(headers=headers) as session:
         for item_tier in range(start_tier, end_tier + 1):
             # Handle the urls and paths.
             frame_url = gli.frame_icon_list[item_tier - 1]
@@ -195,6 +198,7 @@ async def generate_and_combine_gear(item_type, start_tier=1, end_tier=8, element
             # Handle Pact Variants
             if item_type == "Pact":
                 # Skip pacts for now doesn't need to be redone, reduce load.
+                ftp.quit()
                 return 0
             if item_type == "Pact":
                 for variant in ["Wrath", "Sloth", "Greed", "Envy", "Pride", "Lust", "Gluttony"]:
@@ -224,18 +228,19 @@ async def generate_and_combine_gear(item_type, start_tier=1, end_tier=8, element
 async def generate_and_combine_images():
     count = 0
     ftp = await create_ftp_connection(web_data[0], web_data[1], web_data[2])
-    async with (aiohttp.ClientSession() as session):
+    async with (aiohttp.ClientSession(headers=headers) as session):
         for item_id in itemdata.itemdata_dict.keys():
-            # Ensure image is currently available.
+            # Choose categories to update, and ensure images are available.
             temp_item = inventory.BasicItem(item_id)
-            run_list = ["Misc"]
+            run_list = ["Essence"]
             if temp_item.item_category not in run_list:
                 continue
-            set_items = ["Nadir", "Chest"]
+            set_items = []
             if temp_item.item_category == "Misc" and item_id not in set_items:
                 continue
             # if temp_item.item_category == "Fish" and int(temp_item.item_id.replace("Fish", "")) > 7:
               #  continue  # Skip Fish8+
+            print(item_id)
             count += 1
             # Handle the urls and paths.
             frame_url = gli.frame_icon_list[temp_item.item_tier - 1]
@@ -243,11 +248,19 @@ async def generate_and_combine_images():
             icon_url = f"{web_url}/botimages/NonGear_Icon/{temp_item.item_category}/{item_id}.png"
             output_dir, file_name = f'{gli.image_path}NonGear_Icon/{temp_item.item_category}/', f"Frame_{item_id}.png"
             if "Essence" in item_id:
+                frame_url = gli.frame_icon_list[8]
+                frame_url = frame_url.replace("[EXT]", gli.frame_extension[0])
                 # Could be improved since this is tier based, but no point.
-                icon_url = f"{web_url}/botimages/NonGear_Icon/{temp_item.item_category}/Essence{temp_item.item_tier}.png"
-                file_name = f"Frame_Essence_{temp_item.item_tier}.png"
+                icon_url = f"{web_url}/botimages/NonGear_Icon/Essence/Essence9.png"
+                file_name = f"Frame_Essence_9.png"
+                item_id = "Exit"
             file_path = f"{output_dir}{file_name}"
-            frame, icon = await fetch_image(session, frame_url), await fetch_image(session, icon_url)
+            print(file_path)
+            icon = await fetch_image(session, icon_url)
+            print("icon loaded")
+            await asyncio.sleep(1)
+            frame = await fetch_image(session, frame_url)
+            print("frame loaded")
             # Construct the new image
             # result = pixel_blend(frame, icon)
             result = Image.new("RGBA", (106, 106))
@@ -257,6 +270,9 @@ async def generate_and_combine_images():
             # Upload the file.
             remote_dir = f"/botimages/NonGear_Icon/{temp_item.item_category}/"
             await upload_file_to_ftp(ftp, file_path, remote_dir, file_name)
+            if item_id == "Exit":
+                ftp.quit()
+                return count
     ftp.quit()
     return count
 
@@ -273,9 +289,12 @@ def pixel_blend(image_1, image_2):
 
 
 async def fetch_image(session, url):
-    async with session.get(url) as response:
-        response.raise_for_status()
+
+    async with session.get(url, headers=headers) as response:
+        print(url, response.status, response.content_type)
+        print("Content-Type:", response.headers.get("Content-Type"))
         data = await response.read()
+        print(data)
         if not data:
             print(f"Failed to load image data from {url}")
         return Image.open(BytesIO(data))
@@ -283,9 +302,11 @@ async def fetch_image(session, url):
 
 async def create_ftp_connection(hostname, username, password):
     try:
-        ftp = FTP(hostname)
-        ftp.login(user=username, passwd=password)
-        return ftp
+        def _connect():
+            ftp = FTP(hostname, timeout=10)
+            ftp.login(user=username, passwd=password)
+            return ftp
+        return await asyncio.to_thread(_connect)
     except Exception as e:
         print(f"Failed to connect to FTP: {e}")
         print(f"HOST: {hostname} USER: {username}")

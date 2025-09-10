@@ -278,7 +278,7 @@ async def go_fishing(ctx, player_obj, method="fish", skipping=False):
     if fish_level - starting_fish_level >= 1:
         await sm.send_notification(ctx, player_obj, "Achievement", f"Fishing: {fish_title}")
         if fish_level == 10:
-            role = discord.utils.get(ctx.guild.roles, name="Bathyal's Chosen")
+            role = discord.utils.get(ctx.guild.roles, name="Gem Title - Bathyal's Apostle")
             if role not in ctx.author.roles:
                 await ctx.author.add_roles(role)
     await inventory.update_stock(None, None, None, batch=batch_df)

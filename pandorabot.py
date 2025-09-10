@@ -95,6 +95,12 @@ class PandoraBot(commands.Bot):
         self.conn_status = "Connected"
         self.down_time = None
 
+    async def setup_hook(self):
+        if not self.get_cog("HourCog"):
+            await self.add_cog(pandoracogs.HourCog(self))
+        if not self.get_cog("MetricsCog"):
+            await self.add_cog(pandoracogs.MetricsCog(self))
+
 
 def run_discord_bot():
     print(sys.version)
@@ -108,8 +114,6 @@ def run_discord_bot():
     async def on_ready():
         if pandora_bot.conn_status == "Connected":
             await send_log_msg(f'{pandora_bot.user} Online!')
-        pandoracogs.HourCog(pandora_bot)
-        pandoracogs.MetricsCog(pandora_bot)
         await timezone.init_time_menu(pandora_bot)
         pandora_bot.help_command = CustomHelpCommand()
 
@@ -2017,7 +2021,7 @@ def run_discord_bot():
         if user is not None:
             target_id, user_object = user.id, user
             target_id = user.id
-        achv_list = [role.name for role in user_object.roles if "Holder" in role.name or "Herrscher" in role.name]
+        achv_list = [role.name for role in user_object.roles if "Holder" in role.name or "Subscriber" in role.name]
         target_user = await player.get_player_by_discord(target_id)
         if target_user is None:
             await ctx.send(f"Target user {user_object.name} is not registered.")
