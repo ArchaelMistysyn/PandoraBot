@@ -95,13 +95,21 @@ class RankCard:
 async def get_player_profile(player_obj, achievement_list):
     rank_card = RankCard(player_obj, achievement_list)
     temp_path = f'{gli.image_path}profilecard/'
-    cardBG = Image.open(requests.get(rank_card.cardBG, stream=True).raw)
-    metal = Image.open(requests.get(rank_card.metal, stream=True).raw)
-    wing = Image.open(requests.get(rank_card.wing, stream=True).raw)
-    rank_icon_frame = Image.open(requests.get(rank_card.frame_icon, stream=True).raw)
-    class_icon_frame = Image.open(requests.get(generic_frame_url, stream=True).raw)
-    class_icon = Image.open(requests.get(rank_card.class_icon, stream=True).raw)
-    exp_bar_image = Image.open(requests.get(rank_card.exp_bar, stream=True).raw)
+    # cardBG = Image.open(requests.get(rank_card.cardBG, stream=True).raw)
+    # metal = Image.open(requests.get(rank_card.metal, stream=True).raw)
+    # wing = Image.open(requests.get(rank_card.wing, stream=True).raw)
+    # rank_icon_frame = Image.open(requests.get(rank_card.frame_icon, stream=True).raw)
+    # class_icon_frame = Image.open(requests.get(generic_frame_url, stream=True).raw)
+    # class_icon = Image.open(requests.get(rank_card.class_icon, stream=True).raw)
+    # exp_bar_image = Image.open(requests.get(rank_card.exp_bar, stream=True).raw)
+    async with aiohttp.ClientSession(headers=headers) as session:
+        cardBG = await fetch_image(session, rank_card.cardBG)
+        metal = await fetch_image(session, rank_card.metal)
+        wing = await fetch_image(session, rank_card.wing)
+        rank_icon_frame = await fetch_image(session, rank_card.frame_icon)
+        class_icon_frame = await fetch_image(session, generic_frame_url)
+        class_icon = await fetch_image(session, rank_card.class_icon)
+        exp_bar_image = await fetch_image(session, rank_card.exp_bar)
     font_file_small = requests.get((font_base_url + my_font_url), stream=True).raw
     font_file_big = requests.get((font_base_url + my_font_url), stream=True).raw
     result = Image.new("RGBA", cardBG.size)
@@ -203,7 +211,8 @@ async def generate_and_combine_gear(item_type, start_tier=1, end_tier=8, element
             if item_type == "Pact":
                 for variant in ["Wrath", "Sloth", "Greed", "Envy", "Pride", "Lust", "Gluttony"]:
                     variant_url = f"{web_url}/botimages/Gear_Icon/Pact_Variants/{variant}.png"
-                    variant_img = Image.open(requests.get(variant_url, stream=True).raw)
+                    # variant_img = Image.open(requests.get(variant_url, stream=True).raw)
+                    variant_img = await fetch_image(session, variant_url)
                     output_dir = f'{gli.image_path}Gear_Icon/{item_type}/'
                     file_name = f"Frame_{item_type}_{item_tier}_{variant}.png"
                     remote_dir = f"/botimages/Gear_Icon/{item_type}/"
@@ -331,37 +340,41 @@ async def build_notification(player_obj, message, notification_type, title_msg, 
     elif rarity == "Ultimate Rare" or notification_type == "Sacred":
         title_colour, banner = CyanColour, "blank_banner_3"
     banner_url = f"{web_url}/botimages/banners/{banner}.png"
-    cardBG = Image.open(requests.get(banner_url, stream=True).raw)
-    result = Image.new("RGBA", (width, height))
-    result.paste(cardBG, (0, 0), cardBG)
-    font_file_small = requests.get((font_base_url + my_font_url), stream=True).raw
-    font_file_big = requests.get((font_base_url + my_font_url), stream=True).raw
-    image_editable = ImageDraw.Draw(result)
-    # Apply Title and Message Text.
-    title_font = ImageFont.truetype(font_file_small, 34)
-    text_font = ImageFont.truetype(font_file_big, 38)
-    message_colour = "White"
-    image_editable.text((55 + 2, 50 + 2), title_msg, fill="black", font=title_font)
-    image_editable.text((55, 50), title_msg, fill=title_colour, font=title_font)
-    image_editable.text((115, 100), message, fill=message_colour, font=text_font)
-    # Achievement Icon Loading.
-    if notification_type == "Achievement":
-        icon_size = (54, 54)
-        if "Fishing" in f"{value}":
+    async with aiohttp.ClientSession(headers=headers) as session:
+        # cardBG = Image.open(requests.get(banner_url, stream=True).raw)
+        cardBG = await fetch_image(session, banner_url)
+        result = Image.new("RGBA", (width, height))
+        result.paste(cardBG, (0, 0), cardBG)
+        font_file_small = requests.get((font_base_url + my_font_url), stream=True).raw
+        font_file_big = requests.get((font_base_url + my_font_url), stream=True).raw
+        image_editable = ImageDraw.Draw(result)
+        # Apply Title and Message Text.
+        title_font = ImageFont.truetype(font_file_small, 34)
+        text_font = ImageFont.truetype(font_file_big, 38)
+        message_colour = "White"
+        image_editable.text((55 + 2, 50 + 2), title_msg, fill="black", font=title_font)
+        image_editable.text((55, 50), title_msg, fill=title_colour, font=title_font)
+        image_editable.text((115, 100), message, fill=message_colour, font=text_font)
+        # Achievement Icon Loading.
+        if notification_type == "Achievement":
+            icon_size = (54, 54)
+            if "Fishing" in f"{value}":
+                pass
+            else:
+                star_code = "Alt" if player_obj.player_echelon == 9 else 9 if player_obj.player_echelon == 10 else player_obj.player_echelon
+                icon_url = f"https://PandoraPortal.ca/gallery/Icons/Stars/Original/Star{star_code}.png"
+                # role_icon = Image.open(requests.get(icon_url, stream=True).raw)
+                role_icon = await fetch_image(session, icon_url)
+                role_icon = role_icon.resize(icon_size)
+                result.paste(role_icon, (42, 90), mask=role_icon)
+        elif notification_type == "Item":
+            if item.item_image != "":
+                image_url = item.item_image.replace("Frame_", "")
+                # item_icon = Image.open(requests.get(image_url, stream=True).raw)
+                item_icon = await fetch_image(session, image_url)
+                result.paste(item_icon, (35, 85), mask=item_icon)
+        elif notification_type == "Sacred":
             pass
-        else:
-            star_code = "Alt" if player_obj.player_echelon == 9 else 9 if player_obj.player_echelon == 10 else player_obj.player_echelon
-            icon_url = f"https://PandoraPortal.ca/gallery/Icons/Stars/Original/Star{star_code}.png"
-            role_icon = Image.open(requests.get(icon_url, stream=True).raw)
-            role_icon = role_icon.resize(icon_size)
-            result.paste(role_icon, (42, 90), mask=role_icon)
-    elif notification_type == "Item":
-        if item.item_image != "":
-            image_url = item.item_image.replace("Frame_", "")
-            item_icon = Image.open(requests.get(image_url, stream=True).raw)
-            result.paste(item_icon, (35, 85), mask=item_icon)
-    elif notification_type == "Sacred":
-        pass
     # Save and return image.
     file_path = f'{gli.image_path}notification/Notification{player_obj.player_id}.png'
     result.save(file_path)
@@ -375,31 +388,34 @@ async def build_message_box(player_obj, message, header="", boxtype="default"):
     type_dict = {"default": "game_banner", "mod": "blank_banner_1", "admin": "blank_banner_2",
                  "Head Admin": "blank_banner_2", "Vice Leader": "blank_banner_3", "arch": "blank_banner_3"}
     # Load background image and fonts
-    cardBG = Image.open(requests.get(f"{web_url}/botimages/banners/{type_dict[boxtype]}.png", stream=True).raw)
-    result = Image.new("RGBA", (width, height))
-    result.paste(cardBG, (0, 0), cardBG)
-    image_editable = ImageDraw.Draw(result)
-    font_file_small = requests.get((font_base_url + my_font_url), stream=True).raw
-    font_object = ImageFont.truetype(font_file_small, msg_size)
-    # Calculate positions for the message lines
-    text_x = image_editable.textlength(message[0], font=font_object)
-    position_x, position_y = ((width - text_x) / 2 if boxtype == "default" else 60), [98, 136]
-    # Draw message text
-    for idx, line_text in enumerate(message):
-        image_editable.text((position_x, position_y[idx]), line_text, fill="White", font=font_object)
-    # Build the header
-    if header != "":
-        font_file_big = requests.get((font_base_url + my_font_url), stream=True).raw
-        title_font = ImageFont.truetype(font_file_big, title_size)
-        if boxtype != "default":
-            guild_icon = Image.open(requests.get(gli.archdragon_logo, stream=True).raw)
-            guild_icon = guild_icon.resize((60, 60))
-            result.paste(guild_icon, (50, 32), mask=guild_icon)
-        text_x = image_editable.textlength(header, font=title_font)
-        header_position = ((width - text_x) / 2, 35) if boxtype == "default" else (130, 45)
-        shadow_position = (header_position[0] + 2, header_position[1] + 2)
-        image_editable.text(shadow_position, header, fill="black", font=title_font)
-        image_editable.text(header_position, header, fill=CyanColour, font=title_font)
+    async with aiohttp.ClientSession(headers=headers) as session:
+        # cardBG = Image.open(requests.get(f"{web_url}/botimages/banners/{type_dict[boxtype]}.png", stream=True).raw)
+        cardBG = await fetch_image(session, f"{web_url}/botimages/banners/{type_dict[boxtype]}.png")
+        result = Image.new("RGBA", (width, height))
+        result.paste(cardBG, (0, 0), cardBG)
+        image_editable = ImageDraw.Draw(result)
+        font_file_small = requests.get((font_base_url + my_font_url), stream=True).raw
+        font_object = ImageFont.truetype(font_file_small, msg_size)
+        # Calculate positions for the message lines
+        text_x = image_editable.textlength(message[0], font=font_object)
+        position_x, position_y = ((width - text_x) / 2 if boxtype == "default" else 60), [98, 136]
+        # Draw message text
+        for idx, line_text in enumerate(message):
+            image_editable.text((position_x, position_y[idx]), line_text, fill="White", font=font_object)
+        # Build the header
+        if header != "":
+            font_file_big = requests.get((font_base_url + my_font_url), stream=True).raw
+            title_font = ImageFont.truetype(font_file_big, title_size)
+            if boxtype != "default":
+                # guild_icon = Image.open(requests.get(gli.archdragon_logo, stream=True).raw)
+                guild_icon = await fetch_image(session, gli.archdragon_logo)
+                guild_icon = guild_icon.resize((60, 60))
+                result.paste(guild_icon, (50, 32), mask=guild_icon)
+            text_x = image_editable.textlength(header, font=title_font)
+            header_position = ((width - text_x) / 2, 35) if boxtype == "default" else (130, 45)
+            shadow_position = (header_position[0] + 2, header_position[1] + 2)
+            image_editable.text(shadow_position, header, fill="black", font=title_font)
+            image_editable.text(header_position, header, fill=CyanColour, font=title_font)
     # Save and return image.
     file_path = f'{gli.image_path}notification/Notification{"TEMP" if player_obj is None else player_obj.player_id}.png'
     result.save(file_path)
@@ -408,7 +424,9 @@ async def build_message_box(player_obj, message, header="", boxtype="default"):
 
 async def build_title_box(message):
     width, height = 800, 200
-    cardBG = Image.open(requests.get(f"{web_url}/botimages/banners/game_banner.png", stream=True).raw)
+    async with aiohttp.ClientSession(headers=headers) as session:
+        # cardBG = Image.open(requests.get(f"{web_url}/botimages/banners/game_banner.png", stream=True).raw)
+        await fetch_image(session, f"{web_url}/botimages/banners/game_banner.png")
     result = Image.new("RGBA", (width, height))
     result.paste(cardBG, (0, 0), cardBG)
     image_editable = ImageDraw.Draw(result)

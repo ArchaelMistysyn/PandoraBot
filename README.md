@@ -16,7 +16,7 @@ sudo apt install libpq-dev (install missed dependency psycopg2)
 pip install --upgrade pip (update pip)
 
 setup instructions:
-python3.11 -m venv venv (create virtual environment)
+python3 -m venv venv (create virtual environment)
 source venv/bin/activate (activate virtual environment)
 pip install -r requirements.txt (to install requirements)
 sudo apt install screen (Install screen to run the session)

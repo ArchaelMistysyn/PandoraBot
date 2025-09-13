@@ -25,7 +25,8 @@ with open("bot_db_login.txt", 'r') as data_file:
 def start_engine():
     try:
         engine_url = f'mysql+pymysql://{db_info[2]}:{db_info[3]}@{db_info[0]}/{db_info[1]}'
-        engine = create_engine(engine_url, pool_size=10, max_overflow=20, pool_recycle=3600, pool_pre_ping=True)
+        # Recycle time 6 hours.
+        engine = create_engine(engine_url, pool_size=10, max_overflow=20, pool_recycle=43200, pool_pre_ping=True)
         SessionFactory = sessionmaker(bind=engine)
         session_obj = scoped_session(SessionFactory)
         return Database(session_obj)
@@ -73,6 +74,7 @@ class Database:
                 self.session.rollback()
                 retries += 1
                 time.sleep(backoff_factor * (2 ** retries))
+                # if retries > 1:
                 print(f"Retrying... Attempt {retries} due to Database Error: {err}")
             except Exception as e:
                 print(f"Unhandled exception: {e}")

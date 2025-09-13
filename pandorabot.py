@@ -94,12 +94,14 @@ class PandoraBot(commands.Bot):
         super().__init__(command_prefix="!", intents=discord.Intents.all())
         self.conn_status = "Connected"
         self.down_time = None
+        self.cogs_loaded = False
 
     async def setup_hook(self):
-        if not self.get_cog("HourCog"):
+        if not self.cogs_loaded:
+            print("New Instance")
             await self.add_cog(pandoracogs.HourCog(self))
-        if not self.get_cog("MetricsCog"):
             await self.add_cog(pandoracogs.MetricsCog(self))
+        self.cogs_loaded = True
 
 
 def run_discord_bot():

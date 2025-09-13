@@ -21,23 +21,26 @@ class HourCog(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
         self.lock = asyncio.Lock()
+        self.execution_count = 0
 
     @tasks.loop(hours=1)
     async def hour_manager(self):
+        self.execution_count += 1
         async with self.lock:
-            await self.update_stamina()
             await self.send_reminders()
+            await self.update_stamina()
 
     @hour_manager.before_loop
     async def _align_to_hour(self):
         await self.bot.wait_until_ready()
-        while True:
-            now = dt.utcnow()
-            nxt = (now.replace(minute=0, second=0, microsecond=0) + timedelta(hours=1))
-            await asyncio.sleep((nxt - now).total_seconds())
-            return
+        now = dt.utcnow()
+        next_hour = (now.replace(minute=0, second=0, microsecond=0) + timedelta(hours=1))
+        delay = (next_hour - now).total_seconds()
+        print(f"[HourCog] Delaying first run for {delay / 60:.1f} minutes.")
+        await asyncio.sleep(delay)
 
     def cog_load(self):
+        print("Inner Check")
         if not self.hour_manager.is_running():
             self.hour_manager.start()
 
@@ -61,23 +64,27 @@ class HourCog(commands.Cog):
 
     async def send_reminders(self):
         print("Check Reminders")
-        now_utc = dt.now(ZoneInfo('UTC'))
-        current_weekday = now_utc.weekday() + 1
-        reminder_query = ("SELECT discord_id, message FROM UserReminders "
-                          "WHERE hour = :current_hour AND (weekday = :current_weekday OR weekday = 0)")
-        params = {'current_hour': now_utc.hour, 'current_weekday': current_weekday}
-        df = await rqy(reminder_query, params=params, return_value=True)
-        if df is None or len(df.index) == 0:
-            print("0 reminders sent")
-            return
-        for _, row in df.iterrows():
-            try:
-                user_id = row["discord_id"]
-                user = await self.bot.fetch_user(int(user_id))
-                msg_file = await sm.message_box(None, [row['message']], "Reminder")
-                await user.send(file=discord.File(msg_file))
-            except (discord.Forbidden, discord.NotFound):
-                continue
+        print(f"hour_manager STARTING (execution #{self.execution_count})")
+        try:
+            now_utc = dt.now(ZoneInfo('UTC'))
+            current_weekday = now_utc.weekday() + 1
+            reminder_query = ("SELECT discord_id, message FROM UserReminders "
+                              "WHERE hour = :current_hour AND (weekday = :current_weekday OR weekday = 0)")
+            params = {'current_hour': now_utc.hour, 'current_weekday': current_weekday}
+            df = await rqy(reminder_query, params=params, return_value=True)
+            if df is None or len(df.index) == 0:
+                print("0 reminders sent")
+                return
+            for _, row in df.iterrows():
+                try:
+                    user_id = row["discord_id"]
+                    user = await self.bot.fetch_user(int(user_id))
+                    msg_file = await sm.message_box(None, [row['message']], "Reminder")
+                    await user.send(file=discord.File(msg_file))
+                except (discord.Forbidden, discord.NotFound):
+                    continue
+        except Exception as e:
+            print(F"EXCEPTION: {e}")
         print("All reminders sent")
 
     async def align_hour(self):
@@ -116,13 +123,30 @@ class MetricsCog(commands.Cog):
     async def run_metrics(self):
         print("Updating Metrics")
         total_members = self.guild.member_count
-        online_members = sum(1 for member in self.guild.members if member.status == discord.Status.online)
-        offline_members = sum(1 for member in self.guild.members if member.status == discord.Status.offline)
-        role_counts = {role.name: len(role.members) for role in self.guild.roles if role.name != "@everyone"}
+        online_members = sum(1 for m in self.guild.members if m.status == discord.Status.online)
+        offline_members = sum(1 for m in self.guild.members if m.status == discord.Status.offline)
+        # List of (label, role_id) pairs
+        role_checks = [
+            ("Server Guild Member", 1140738057381871707),
+            ("Private Access Member", 1076760869620437002),
+            ("Gem Title Holder", 1415355530729361528),
+            ("Relic Title Holder", 1157565406366666792),
+            ("ArchDragon Partner", 1411594840793288815),
+            ("ArchDragon Moderator", 1134293907136585769),
+            ("ArchDragon Administrator", 1134301246648488097)
+        ]
+        # Build output text
+        metrics_text = f"Total Members: {total_members:,}\n"
+        for label, role_id in role_checks:
+            role = self.guild.get_role(role_id)
+            if role:
+                metrics_text += f"{label}: {len(role.members):,}\n"
+            else:
+                metrics_text += f"{label}: Role not found\n"
         metrics_channel = self.bot.get_channel(gli.metrics_channel)
         if metrics_channel:
             message_obj = await metrics_channel.fetch_message(gli.metrics_message_id)
-            await message_obj.edit(content=f"Total Members: {total_members:,}\n")
+            await message_obj.edit(content=metrics_text)
         print("Metrics Updated")
 
     async def run_credit(self):
