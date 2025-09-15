@@ -1333,3 +1333,75 @@ class LinkReviewView(discord.ui.View):
         embed = sm.easy_embed("Red", "Denied", f"Denied by: {interaction.user.display_name}")
         await interaction.response.edit_message(embed=embed, view=None)
 
+
+class ColourView(discord.ui.View):
+    def __init__(self, ctx):
+        super().__init__(timeout=None)
+        self.ctx = ctx
+        self.colour_roles = [
+            {"title": "Gem Title - Herald of Enlightenment", "role": "Gem Colour 1",
+             "label": "Herald", "emoji": "<:Gemstone5:1415356666509000846>", "row": 1},
+            {"title": "Gem Title - Bathyal's Polarity", "role": "Gem Colour 2",
+             "label": "Bathyal", "emoji": "<:Gemstone6:1415356677598740480>", "row": 1},
+            {"title": "Gem Title - Chosen by Fate", "role": "Gem Colour 3",
+             "label": "Fate", "emoji": "<:Gemstone4:1415356495263961238>", "row": 1},
+            {"title": "Gem Title - Tournament Winner", "role": "Gem Colour 4",
+             "label": "Winner", "emoji": "<:Gemstone3:1415356650922971278>", "row": 1},
+            {"title": "Gem Title - Beyond Time", "role": "Gem Colour 5",
+             "label": "Time", "emoji": "<:Gemstone9:1415356723505528913>", "row": 1},
+            {"title": "Gem Title - Ruler of Stars", "role": "Gem Colour 6",
+             "label": "Stars", "emoji": "<:Gemstone8:1415356711967129751>", "row": 2},
+            {"title": "Gem Title - Transcendence", "role": "Gem Colour 7",
+             "label": "Transcend", "emoji": "<:Gemstone1:1415356624909893803>", "row": 2},
+            {"title": "Gem Title - Flame of Trust", "role": "Gem Colour 8",
+             "label": "Flame", "emoji": "<:Gemstone0:1415356608753696868>", "row": 2},
+            {"title": "Gem Title - Cherished Hearts", "role": "Gem Colour 9",
+             "label": "Hearts", "emoji": "<:Gemstone7:1415356697408704523>", "row": 2},
+            {"title": "Exlusive", "role": "Relic Colour 1",
+             "label": "Exclusive", "emoji": "<:r_lotus:1275615878456541215>", "row": 3},
+            {"title": "Ranking", "role": "Relic Colour 2",
+             "label": "Ranking", "emoji": "<:r_lotus:1275615878456541215>", "row": 3}
+        ]
+        self.keyword_roles = {
+            "Exlusive": [
+                "Exclusive Title - King of Games",
+                "Exclusive Title - ArchDragon Saviour",
+                "Exclusive Title - Pandora's Saviour"],
+            "Ranking": [
+                "Ranking Title - DPS Rank #1",
+                "Ranking Title - Damage Rank #1",
+                "Ranking Title - Player Level Rank #1",
+                "Ranking Title - Activity Rank #1"
+            ]}
+        member_roles = [role.name for role in self.ctx.author.roles]
+        for role_set in self.colour_roles:
+            title = role_set["title"]
+            if title in self.keyword_roles.keys():
+                enabled = any(role in member_roles for role in self.keyword_roles[title])
+            else:
+                enabled = title in member_roles
+            style = discord.ButtonStyle.blurple if enabled else discord.ButtonStyle.gray
+
+            async def _callback(interaction: discord.Interaction, colour_role=role_set['role']):
+                if interaction.user.id != self.ctx.author.id:
+                    return
+                await self.assign_colour(interaction, colour_role)
+
+            btn = discord.ui.Button(label=role_set["label"], style=style, disabled=(not enabled),
+                                    emoji=role_set["emoji"], row=role_set["row"])
+            btn.callback = _callback
+            self.add_item(btn)
+
+    async def assign_colour(self, interaction, selected_role):
+        target_role = discord.utils.get(interaction.guild.roles, name=selected_role)
+        roles_to_remove = [discord.utils.get(interaction.guild.roles, name=role_set["role"])
+                           for role_set in self.colour_roles]
+        roles_to_remove = [role for role in roles_to_remove if role in interaction.user.roles]
+        if roles_to_remove:
+            await interaction.user.remove_roles(*roles_to_remove)
+        await interaction.user.add_roles(target_role)
+        role_msg = "Roles have successfully been updated. New colour applied."
+        colour_embed = sm.easy_embed("Green", "Colour Selector", role_msg)
+        await interaction.response.edit_message(embed=colour_embed, view=ColourView(self.ctx))
+
+

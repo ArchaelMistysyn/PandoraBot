@@ -2278,6 +2278,22 @@ def run_discord_bot():
         await rqy(delete_query, params={"id": str(ctx.author.id)})
         await ctx.send("All your reminders have been cleared.")
 
+    @pandora_bot.hybrid_command(name='setcolour', help="Open title holder role colour menu.")
+    @app_commands.guilds(discord.Object(id=guild_id))
+    async def set_colour(ctx):
+        await ctx.defer()
+        gem_role = discord.utils.get(ctx.guild.roles, name="Gem Title Holder")
+        relic_role = discord.utils.get(ctx.guild.roles, name="Relic Title Holder")
+        if gem_role in ctx.author.roles:
+            title_identifier = "Gem Title Holder"
+            if relic_role in ctx.author.roles:
+                title_identifier = "Relic Title Holder"
+            role_msg = f"Welcome **{title_identifier}**. Select a role colour based on your unlocked titles."
+            colour_embed = sm.easy_embed("Blue", "Colour Selector", role_msg)
+            await ctx.send(embed=colour_embed, view=menus.ColourView(ctx))
+        else:
+            await ctx.send("Only title holders may change their role colour.")
+
     def build_category_dict():
         temp_dict = {}
         for command in pandora_bot.walk_commands():

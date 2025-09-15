@@ -73,15 +73,15 @@ path_icon = ["<a:eenergy:1145534127349706772>", "<a:eenergy:1145534127349706772>
              "<a:eenergy:1145534127349706772>", "<a:eenergy:1145534127349706772>", "<a:eenergy:1145534127349706772>",
              "<a:eenergy:1145534127349706772>", "<a:eenergy:1145534127349706772>", "<a:eenergy:1145534127349706772>"]
 # Icon Frames
-frame_icon_list = [f"{web_url}iconframes/Icon_Border_[EXT]/Icon_border_Bronze_[EXT].png",
-                   f"{web_url}iconframes/Icon_Border_[EXT]/Icon_border_Silver_[EXT].png",
-                   f"{web_url}iconframes/Icon_Border_[EXT]/Icon_border_SilverPurple_[EXT].png",
-                   f"{web_url}iconframes/Icon_Border_[EXT]/Icon_border_Goldblue_[EXT].png",
-                   f"{web_url}iconframes/Icon_Border_[EXT]/Icon_border_Goldred_[EXT].png",
-                   f"{web_url}iconframes/Icon_Border_[EXT]/Icon_border_Pink_[EXT].png",
-                   f"{web_url}iconframes/Icon_Border_[EXT]/Icon_border_Black_[EXT].png",
-                   f"{web_url}iconframes/Icon_Border_[EXT]/Icon_border_white_[EXT].png",
-                   f"{web_url}iconframes/Icon_Border_[EXT]/Icon_border_Ruby_[EXT].png"]
+frame_icon_list = [f"botart/icon_frame/Icon_Border_[EXT]/Icon_border_Bronze_[EXT].png",
+                   f"botart/icon_frame/Icon_Border_[EXT]/Icon_border_Silver_[EXT].png",
+                   f"botart/icon_frame/Icon_Border_[EXT]/Icon_border_SilverPurple_[EXT].png",
+                   f"botart/icon_frame/Icon_Border_[EXT]/Icon_border_Goldblue_[EXT].png",
+                   f"botart/icon_frame/Icon_Border_[EXT]/Icon_border_Goldred_[EXT].png",
+                   f"botart/icon_frame/Icon_Border_[EXT]/Icon_border_Pink_[EXT].png",
+                   f"botart/icon_frame/Icon_Border_[EXT]/Icon_border_Black_[EXT].png",
+                   f"botart/icon_frame/Icon_Border_[EXT]/Icon_border_white_[EXT].png",
+                   f"botart/icon_frame/Icon_Border_[EXT]/Icon_border_Ruby_[EXT].png"]
 frame_extension = ["106px", "1484px"]
 # Star Icons
 star_icon = ["<:SB:1274787239473315942>", "<:S1:1274787087375270020>", "<:S2:1274787094476230779>",
