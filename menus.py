@@ -1366,12 +1366,14 @@ class ColourView(discord.ui.View):
             "Exlusive": [
                 "Exclusive Title - King of Games",
                 "Exclusive Title - ArchDragon Saviour",
-                "Exclusive Title - Pandora's Saviour"],
+                "Exclusive Title - Pandora's Saviour"
+            ],
             "Ranking": [
                 "Ranking Title - DPS Rank #1",
                 "Ranking Title - Damage Rank #1",
                 "Ranking Title - Player Level Rank #1",
-                "Ranking Title - Activity Rank #1"
+                "Ranking Title - Activity Rank #1",
+                "Ranking Title - Vouch Rank #1"
             ]}
         member_roles = [role.name for role in self.ctx.author.roles]
         for role_set in self.colour_roles:

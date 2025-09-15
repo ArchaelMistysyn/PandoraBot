@@ -2169,10 +2169,29 @@ def run_discord_bot():
         await ctx.send(file=discord.File(await sm.title_box("Support Us")))
         await ctx.send(embed=embed_msg)
 
+    async def update_vouch_role(ctx):
+        role_name = "Ranking Title - Vouch Rank #1"
+        vouch_role = discord.utils.get(ctx.guild.roles, name=role_name)
+        query = "SELECT discord_id FROM VouchList ORDER BY vouch_points DESC LIMIT 1"
+        points_df = await rqy(query, return_value=True)
+        if points_df is None or points_df.empty:
+            return
+        top_id = int(points_df["discord_id"][0])
+        top_user = ctx.guild.get_member(top_id)
+        current_holders = vouch_role.members
+        for holder in current_holders:
+            if holder.id != top_id:
+                await holder.remove_roles(vouch_role)
+        if vouch_role not in top_user.roles:
+            await top_user.add_roles(vouch_role)
+
     @pandora_bot.hybrid_command(name='vouch', help="Grants vouches to a user.")
     @app_commands.guilds(discord.Object(id=1011375205999968427))
     async def vouch(ctx, user: discord.User):
         await ctx.defer()
+        if user.id == 1011375497265033216:
+            await ctx.send("Thank you! I appreciate you! Vouches are not tracked for the server owner.")
+            return
         if user.id == ctx.author.id:
             await ctx.send("You cannot vouch for yourself.")
             return
@@ -2204,6 +2223,7 @@ def run_discord_bot():
             if trusted_rat_role not in user.roles:
                 await user.add_roles(trusted_rat_role)
         await ctx.send(f"{num_points} vouch points awarded to {user.name}. New total: {new_points}")
+        await update_vouch_role(ctx)
 
     @pandora_bot.hybrid_command(name='vcheck', help="Check the vouches of a user.")
     @app_commands.guilds(discord.Object(id=1011375205999968427))
@@ -2217,6 +2237,25 @@ def run_discord_bot():
         msg_lines = [f"Vouch Count: {num_vouches:,}"]
         verified = f"{gli.archdragon_emoji} Verified Message [Server {ctx.guild.name}]:"
         await ctx.send(content=verified, file=discord.File(await sm.message_box(None, msg_lines, user.name, "admin")))
+
+    @pandora_bot.hybrid_command(name='vboard', help="Show the top 10 vouch leaderboard.")
+    @app_commands.guilds(discord.Object(id=1011375205999968427))
+    async def vboard(ctx):
+        await ctx.defer()
+        query = "SELECT discord_id, vouch_points FROM VouchList ORDER BY vouch_points DESC LIMIT 10"
+        points_df = await rqy(query, return_value=True)
+        if points_df is None or len(points_df.index) == 0:
+            await ctx.send("Empty")
+            return
+        content = ""
+        for idx, row in points_df.iterrows():
+            user = ctx.guild.get_member(int(row['discord_id']))
+            username = user.display_name if user else f"Unknown ({int(row['discord_id'])})"
+            content += f"**{idx + 1}.** {username} — {int(row['vouch_points']):,} pts\n"
+        file = discord.File(await sm.title_box("Vouch Leaderboard"))
+        embed = sm.easy_embed("Purple", f"**{gli.archdragon_emoji} Vouch Leaderboard [Top 10]**", content)
+        embed.set_thumbnail(url=gli.archdragon_logo)
+        await ctx.send(embed=embed, file=file)
 
     @pandora_bot.hybrid_command(name='time', help="Check the current time of a user.")
     @app_commands.guilds(discord.Object(id=1011375205999968427))

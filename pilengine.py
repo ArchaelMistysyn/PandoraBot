@@ -432,9 +432,9 @@ async def build_title_box(message):
     width, height = 800, 200
     # async with aiohttp.ClientSession(headers=headers) as session:
     # cardBG = Image.open(requests.get(f"{web_url}/botimages/banners/game_banner.png", stream=True).raw)
-    await fetch_image(None, f"botart/banners/game_banner.png")
+    title_box = await fetch_image(None, f"botart/banners/game_banner.png")
     result = Image.new("RGBA", (width, height))
-    result.paste(cardBG, (0, 0), cardBG)
+    result.paste(title_box, (0, 0), title_box)
     image_editable = ImageDraw.Draw(result)
     # font_file = requests.get((font_base_url + my_font_url), stream=True).raw
     title_font = ImageFont.truetype(f"fonts/{my_font_url}", 64)
