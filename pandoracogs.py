@@ -56,7 +56,7 @@ class HourCog(commands.Cog):
         for player_user in player_list:
             pact_object = pact.Pact(player_user.pact)
             max_stamina = 5000 if pact_object.pact_variant != "Sloth" else 2500
-            new_stamina_value = min(player_user.player_stamina + 25, max_stamina)
+            new_stamina_value = min(player_user.player_stamina + 500, max_stamina)
             update_params.append({'player_check': player_user.player_id, 'input_1': new_stamina_value})
         if update_params:
             query = "UPDATE PlayerList SET player_stamina = :input_1 WHERE player_id = :player_check"
