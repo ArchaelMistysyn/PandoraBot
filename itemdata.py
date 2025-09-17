@@ -250,7 +250,7 @@ lotus_data = [[None, 'Lotus of Nightmares', 100, 8, '<:Lotus1:127478643586970427
                'Used for Divine Synthesis (Tarot).  Increases the tier to 8. [Ultra Rare]', 0],
               [None, 'Divine Lotus', 100, 8, '<:Lotus10:1274786518111748177>',
                "The key to divinity and the object of the Arbiter's worship. [Uber Rare]", 0],
-              [None, 'Rainbow Lotus', 100, 8, '<:Lotus11:1274786525560701132>',
+              [None, 'Rainbow Lotus', 100, 9, '<:Lotus11:1274786525560701132>',
                'A mythical lotus dyed by the colours of fate. [Ultimate Rare]', 0]]
 itemdata_dict = build_item_dict(itemdata_dict, lotus_data, category="Lotus")
 

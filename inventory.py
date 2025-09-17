@@ -509,8 +509,6 @@ class BasicItem:
             self.item_image = ""
             if "Nadir" in self.item_id:
                 self.item_image = f"{gli.web_url}NonGear_Icon/Misc/{self.item_id}.png"
-            elif "Fish" in self.item_id:
-                self.item_image = f"{gli.web_url}NonGear_Icon/Fish/{self.item_id}.png"
             elif "Essence" in self.item_id:
                 self.item_image = f"{gli.web_url}NonGear_Icon/Essence/Frame_Essence_{self.item_tier}.png"
             elif "Void" in self.item_id:
@@ -527,10 +525,6 @@ class BasicItem:
             elif "Jewel" in self.item_id:
                 icon = {"Jewel1": "Gem_1", "Jewel2": "Gem_1", "Jewel3": "Gem_5", "Jewel4": "Gem_7", "Jewel5": "Gem_8"}
                 self.item_image = f"{gli.web_url}Gear_Icon/Frame_{icon[self.item_id]}.png"
-            elif "Lotus" in self.item_id:
-                self.item_image = f"{gli.web_url}NonGear_Icon/Lotus/Frame_{self.item_id}.png"
-            elif "Sacred" in self.item_id:
-                self.item_image = f"{gli.web_url}NonGear_Icon/Misc/Frame_{self.item_id}.png"
             elif self.item_category in gli.availability_list_nongear:
                 self.item_image = f"{gli.web_url}NonGear_Icon/{self.item_category}/Frame_{self.item_id}.png"
         else:

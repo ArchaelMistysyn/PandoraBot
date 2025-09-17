@@ -210,8 +210,8 @@ skill_names_dict = {
 # ITEM LISTS
 crafting_gem = ["Blazing Ruby", "Drowned Sapphire", "Silent Topaz", "Ancient Agate", "Whispering Emerald",
                 "Arctic Zircon", "Haunted Obsidian", "Prismatic Opal", "Spatial Lapis", "Soul Diamond"]
-availability_list_nongear = ["Gemstone", "Fragment", "Crystal", "Heart", "Skull", "Misc", "Essence", "Trove", "Ore",
-                             "Potion"]
+availability_list_nongear = ["Gemstone", "Fish", "Fragment", "Crystal", "Heart", "Skull", "Misc", "Essence", "Trove",
+                             "Ore", "Potion", "Lotus", "Flame", "Summon", "Stone", "Token", "Fae"]
 
 fabled_ringtypes = ["Dragon's Eye Diamond", "Bleeding Hearts", "Gambler's Masterpiece",
                     "Lonely Ring of the Dark Star", "Lonely Ring of the Light Star"]
