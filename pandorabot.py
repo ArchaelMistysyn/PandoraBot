@@ -2112,8 +2112,10 @@ def run_discord_bot():
             return chunks
 
         title = "Game created by: Kyle Mistysyn (Archael)"
-        artist_data = [("Daerun", "Character Artist (Upwork)"),
+        artist_data = [("Daerun ☆", "Character Artist (Upwork)"),
+                       ("Elvany Destiani", "Character Artist (Upwork)"),
                        ("Heng Ming Chiun", "Character Artist (Upwork)"),
+                       ("Maybelle Gormate", "Character Artist (Upwork)"),
                        ("Alina Arkhipova", "Character Artist (Upwork)"),
                        ("Denny Rasyid Salam", "Character Artist (Upwork)"),
                        ("Martin Steffen", "Character Artist (Upwork)"),
@@ -2122,23 +2124,24 @@ def run_discord_bot():
                        ("Arjhon Tulio", "Scene Artist (Upwork)"),
                        ("Nina Hvozdzeva", "Logo Artist (Upwork)"),
                        ("Muhammad Faiq Ali", "Initial Sketch Artist (Upwork)"),
-                       ("Mario Ferrera", "Web Developer & Designer (Upwork)"),
                        ("Jumana Walid", "Typography Artist (Upwork)"),
                        ("Meerab Aliya", "Writer (Upwork)"),
-                       ("Miqdam UL Ghani", "Item Icon Artist (Upwork)"),
+                       ("Miqdam UL Ghani ☆", "Item Icon Artist (Upwork)"),
                        ("Brandon Brown", "Item Icon Artist (Upwork)"),
-                       ("Tuul Huur @tuulhuur", "Item Icon Artist (Fiverr)"),
+                       ("Tuul Huur @tuulhuur ☆", "Item Icon Artist (Fiverr)"),
                        ("Nong Dit @Nong Dit", "Frame Artist (Fiverr)"),
                        ("Rida Bargoute @ridabargoute", "Font Artist (Fiverr)"),
-                       ("Aztra.studio @Artherrera", "Emoji/Icon Artist (Fiverr)"),
+                       ("Aztra.studio @Artherrera ☆", "Emoji/Icon Artist (Fiverr)"),
                        ("Labs @labcornerr", "Emoji/Icon Artist (Fiverr)"),
                        ("Daimiuk @daimiuk", "Scene/Icon Artist (Fiverr)"),
-                       ("Emikohana @emikohana", "Fishing Emoji Artist (Fiverr)"),
-                       ("Claudia", "Scene Artist (Volunteer)"),
-                       ("Volff", "Photoshop Editing (Volunteer)")]
+                       ("Emikohana @emikohana", "Fishing Emoji Artist (Fiverr)")]
         programming_data = [("Archael", "Programmer, Web Developer & Designer"),
-                            ("Mario Ferrera", "Web Developer & Designer (Upwork)")]
-        tester_data = [("Zweii", "Alpha Tester (Volunteer)"), ("SoulViper", "Alpha Tester (Volunteer)"),
+                            ("Mario Ferrera ☆", "Web Developer & Designer (Upwork)")]
+        writer_data = [("Archael", "Story Concept, Co-Writer"),
+                       ("Laura Davies ☆", "Revisions, Co-Writer"),
+                       ("Meerab Aliya", "Co-Writer")]
+        tester_data = [("Heather ☆", "Alpha Tester (Volunteer)"),
+                       ("Zweii ☆", "Alpha Tester (Volunteer)"), ("SoulViper", "Alpha Tester (Volunteer)"),
                        ("Kaelen", "Alpha Tester (Volunteer)"), ("Volff", "Alpha Tester (Volunteer)")]
         misc_data = [("Bahamutt", "Programming Support"), ("Pota", "Programming Support (Volunteer)")]
         embed_msg = sm.easy_embed("Purple", title, "")
