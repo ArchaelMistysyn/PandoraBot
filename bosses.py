@@ -19,8 +19,8 @@ fortress_names = [["Keep"], ["Stronghold"], ["Castle"], ["XVI - Aurora, The Fort
 dragon_names = [["Zelphyros, Wind", "Sahjvadiir, Earth", "Cyries'vael, Ice"],
                 ["Arkadrya, Lightning", "Phyyratha, Fire", "Elyssrya, Water"],
                 ["Y'thana, Light", "Rahk'vath, Shadow"], ["VII - Astratha, The Dimensional"]]
-demon_names = [["Beelzebub", "Azazel", "Astaroth", "Belial"], ["Abbadon", "Asura", "Baphomet", "Charybdis"],
-               ["Iblis", "Lilith", "Ifrit", "Scylla"], ["VIII - Tyra, The Behemoth"]]
+demon_names = [["Azazel", "Belial"], ["Scylla", "Charybdis"],
+               ["Iblis", "Astaroth"], ["VIII - Tyra, The Behemoth"]]
 demon_colours = ["Crimson", "Azure", "Violet", "Bronze", "Jade", "Ivory", "Stygian", "Gold", "Rose"]
 paragon_names, arbiter_names, incarnate_names = [[] for _ in range(6)], [[] for _ in range(7)], [[] for _ in range(8)]
 for numeral, (name, tier) in card_dict.items():
@@ -57,9 +57,7 @@ class CurrentBoss:
         self.boss_thumbnail = ""
 
     def create_boss_embed(self, dps=0, extension=""):
-        img_link = "https://i.ibb.co/0ngNM7h/castle.png"
-        if "Demon" in self.boss_image or "Dragon" in self.boss_image or "Fortress" in self.boss_image:
-            img_link = self.boss_image
+        img_link = self.boss_image
         tier_hearts = ["<:Gem_1:1275569707801510001>", "<:Gem_2:1275569715078627359>", "<:Gem_3:1275569723568029786>",
                        "<:Gem_4:1275569729737719879>", "<:Gem_5:1275569736205340773>", "<:Gem_6:1275569743130001520>",
                        "<:Gem_7:1275569749173993503>", "<:Gem_8:1275569754932777072>", "<:Gem_8:1275569754932777072>"]
@@ -113,11 +111,10 @@ class CurrentBoss:
                 boss_numeral = boss_numeral_map[self.boss_name]
                 self.boss_image = f'{gli.web_url}tarot/XXX{boss_numeral}/{boss_numeral}_8.png'
             case "Demon":
+                self.boss_image = f'{gli.web_gallery_url}Tarot/Paragon/VII%20-%20Tyra,%20The%20Behemoth.webp'
                 if boss_tier != 4:
                     self.boss_element = random.randint(0, 8)
                     boss_colour = demon_colours[self.boss_element]
-                    if boss_colour not in ["Crimson", "Azure", "Jade", "Violet", "Gold"]:
-                        self.boss_image = ""
                     self.boss_image = f'{gli.web_url}bosses/Demon/{boss_colour}/{self.boss_name}_{boss_colour}.png'
                     self.boss_name = f'{boss_colour} {self.boss_name}'
             case "Dragon":

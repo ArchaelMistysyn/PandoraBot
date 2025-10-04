@@ -310,5 +310,5 @@ ALLOWED_LINK_ROLE_NAMES = [
 LINK_TRIGGERS = ["https://", "discord.gg/", "discord.com/invite/"]
 EXEMPT_LINKS = ["twitch.tv"]
 UNCONDITIONAL_EXEMPT_LINKS = ["tenor.com", "giphy.com", "imgur.com", "youtube.com", "youtu.be", "discordapp", "x.com",
-                              "arca.live", "reddit", "shadowverse", "pathofexile", "hoyo"]
+                              "arca.live", "reddit", "shadowverse", "pathofexile", "hoyo", ".jpg", ".jpeg", ".png"]
 

@@ -211,6 +211,7 @@ class MapSelectView(discord.ui.View):
         self.ctx_object = ctx_object
         self.player_user = player_user
         self.new_embed, self.new_view = None, None
+        # UPDATE ICON
         select_options = [discord.SelectOption(
                 emoji="<a:eenergy:1145534127349706772>", label=map_name, description=f"Tier {index} Expedition"
             ) for index, map_name in enumerate(adventuredata.map_tier_dict.keys(), start=1)]

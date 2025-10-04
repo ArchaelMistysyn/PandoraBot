@@ -508,7 +508,7 @@ class BasicItem:
             self.item_emoji = item['emoji']
             self.item_image = ""
             if "Nadir" in self.item_id:
-                self.item_image = f"{gli.web_url}NonGear_Icon/Misc/{self.item_id}.png"
+                self.item_image = f"{gli.web_url}NonGear_Icon/Misc/Frame_{self.item_id}.png"
             elif "Essence" in self.item_id:
                 self.item_image = f"{gli.web_url}NonGear_Icon/Essence/Frame_Essence_{self.item_tier}.png"
             elif "Void" in self.item_id:
