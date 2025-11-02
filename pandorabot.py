@@ -5,6 +5,7 @@ from discord.ext.commands import Bot
 from discord.ui import Button, View
 from discord import app_commands
 import asyncio
+import importlib
 import pandas as pd
 import re
 import sys
@@ -12,6 +13,7 @@ import textwrap
 import time
 import random
 import traceback
+import PIL
 from datetime import datetime as dt, timedelta
 from zoneinfo import ZoneInfo
 
@@ -98,10 +100,24 @@ class PandoraBot(commands.Bot):
 
     async def setup_hook(self):
         if not self.cogs_loaded:
-            print("New Instance")
+            print("Running Setup")
             await self.add_cog(pandoracogs.HourCog(self))
             await self.add_cog(pandoracogs.MetricsCog(self))
+            await self.tree.fetch_commands()
+            await self.bot_warmup()
+            print("System Ready")
         self.cogs_loaded = True
+
+    async def bot_warmup(self):
+        WARM_MODULES = (
+            "PIL", "questdata", "sharedmethods", "itemdata", "leaderboards", "player", "quest",
+            "inventory", "menus", "encounters", "combat", "bosses", "skillpaths",
+            "pilengine", "adventure", "adventuredata", "fishing", "timezone", "loot",
+            "itemrolls", "tarot", "insignia", "forge", "trading", "market", "bazaar", "infuse"
+        )
+        for bot_module in WARM_MODULES:
+            imported_module = importlib.import_module(bot_module)
+            _ = dir(imported_module)
 
 
 def run_discord_bot():
@@ -2222,7 +2238,7 @@ def run_discord_bot():
             params = {"input1": str(user.id), "input2": new_points}
         await rqy(update_query, params=params)
         if new_points >= 100:
-            trusted_rat_role = discord.utils.get(ctx.guild.roles, name='Trusted Rat')
+            trusted_rat_role = discord.utils.get(ctx.guild.roles, name='Gem Title - Flame of Trust')
             if trusted_rat_role not in user.roles:
                 await user.add_roles(trusted_rat_role)
         await ctx.send(f"{num_points} vouch points awarded to {user.name}. New total: {new_points}")

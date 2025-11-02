@@ -377,6 +377,7 @@ async def build_notification(player_obj, message, notification_type, title_msg, 
         if item.item_image != "":
             image_url = item.item_image.replace("Frame_", "")
             # item_icon = Image.open(requests.get(image_url, stream=True).raw)
+            image_url = image_url.replace(gli.web_url, "botart/")
             item_icon = await fetch_image(None, image_url)
             result.paste(item_icon, (35, 85), mask=item_icon)
     elif notification_type == "Sacred":

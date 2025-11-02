@@ -3,7 +3,9 @@ import discord
 from discord.ui import Button, View
 import traceback
 import asyncio
-from datetime import datetime as dt, timedelta
+import datetime, calendar
+dt = datetime.datetime
+timedelta = datetime.timedelta
 
 # Data imports
 import globalitems as gli
@@ -62,7 +64,7 @@ class RegionExceptionMenu(discord.ui.View):
             discord.SelectOption(label="Disable DST", description="Daylight Savings Time not observed",
                                  value="Disabled")
         ]
-        for region, dates in gli.dst_regions.items():
+        for region, date_rule in gli.dst_regions.items():
             if region not in ["None"]:
                 options.append(discord.SelectOption(label=region, description=f"Region Exception", value=region))
         self.select_menu = discord.ui.Select(placeholder="Select an option", options=options)
@@ -161,20 +163,20 @@ async def get_user_timezone(discord_id: str):
 def is_dst_active(region: str, now: dt):
     if region not in gli.dst_regions or region == "Disable":
         return False
-    start_month, start_day = gli.dst_regions[region]["start"]
-    end_month, end_day = gli.dst_regions[region]["end"]
-    if start_month <= end_month:
-        return (
-            (start_month < now.month < end_month) or
-            (now.month == start_month and now.day >= start_day) or
-            (now.month == end_month and now.day <= end_day)
-        )
-    else:
-        return (
-            (now.month > start_month or now.month < end_month) or
-            (now.month == start_month and now.day >= start_day) or
-            (now.month == end_month and now.day <= end_day)
-        )
+    start_rule = gli.dst_regions[region]["start"]
+    end_rule = gli.dst_regions[region]["end"]
+    dst_start = nth_weekday_of_month(now.year, start_rule[0], start_rule[1], start_rule[2])
+    dst_end = nth_weekday_of_month(now.year, end_rule[0], end_rule[1], end_rule[2])
+    current_date = now.date()
+    if dst_start < dst_end:
+        return dst_start <= current_date < dst_end
+    return current_date >= dst_start or current_date < dst_end
 
+
+def nth_weekday_of_month(year, month, weekday, n):
+    month_matrix = calendar.monthcalendar(year, month)
+    if n > 0:
+        return datetime.date(year, month, month_matrix[n - 1][weekday])
+    return datetime.date(year, month, month_matrix[n][weekday])
 
 

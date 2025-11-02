@@ -288,17 +288,17 @@ timezone_list = [
     ("BIT (UTC-12)", "Baker Island Time", "UTC-12")]
 timezone_map = {tz_code: name for _, name, tz_code in timezone_list}
 dst_regions = {
-    "None": {"start": (3, 14), "end": (11, 7)},  # Default DST (e.g., US Standard)
-    "EU/UK": {"start": (3, 31), "end": (10, 27)},  # European Union
-    "Australia": {"start": (10, 1), "end": (4, 1)},  # Australia
-    "NewZealand": {"start": (9, 24), "end": (4, 2)},  # New Zealand
-    "Chile": {"start": (9, 1), "end": (4, 1)},  # Chile
-    "Argentina": {"start": (10, 1), "end": (3, 15)},  # Argentina
-    "Mexico": {"start": (4, 1), "end": (10, 31)},  # Mexico
-    "Egypt": {"start": (4, 1), "end": (10, 31)},  # Egypt
-    "Israel": {"start": (3, 24), "end": (10, 29)},  # Israel
-    "Jordan": {"start": (2, 24), "end": (10, 27)},  # Jordan
-    "Lebanon": {"start": (3, 30), "end": (10, 26)},  # Lebanon
+    "None":     {"start": (3, 6, 2),  "end": (11, 6, 1)},  # default US/Canada
+    "EU/UK":         {"start": (3, 6, -1), "end": (10, 6, -1)},
+    "Australia":     {"start": (10, 6, 1), "end": (4, 6, 1)},
+    "NewZealand":    {"start": (9, 6, -1), "end": (4, 6, 1)},
+    "Chile":         {"start": (9, 6, 1),  "end": (4, 6, 1)},
+    "Argentina":     {"start": None, "end": None},
+    "Mexico":        {"start": None, "end": None},
+    "Jordan":        {"start": None, "end": None},
+    "Egypt":         {"start": (4, 4, -1), "end": (10, 3, -1)},
+    "Israel":        {"start": (3, 4, -1), "end": (10, 6, -1)},
+    "Lebanon":       {"start": (3, 6, -1), "end": (10, 6, -1)}
 }
 
 # Moderation

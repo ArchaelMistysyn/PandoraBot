@@ -111,7 +111,7 @@ class CurrentBoss:
                 boss_numeral = boss_numeral_map[self.boss_name]
                 self.boss_image = f'{gli.web_url}tarot/XXX{boss_numeral}/{boss_numeral}_8.png'
             case "Demon":
-                self.boss_image = f'{gli.web_gallery_url}Tarot/Paragon/VII%20-%20Tyra,%20The%20Behemoth.webp'
+                self.boss_image = f'{gli.web_gallery_url}Tarot/Paragon/VIII%20-%20Tyra,%20The%20Behemoth.webp'
                 if boss_tier != 4:
                     self.boss_element = random.randint(0, 8)
                     boss_colour = demon_colours[self.boss_element]
