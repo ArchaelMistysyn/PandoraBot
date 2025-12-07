@@ -1339,30 +1339,42 @@ class ColourView(discord.ui.View):
         super().__init__(timeout=None)
         self.ctx = ctx
         self.colour_roles = [
+            # Gem Titles
             {"title": "Gem Title - Seraph of Resonance", "role": "Gem Colour 0",
              "label": "Seraph", "emoji": "<:Gemstone2:1415356639074058292>", "row": 1},
             {"title": "Gem Title - Herald of Enlightenment", "role": "Gem Colour 1",
              "label": "Herald", "emoji": "<:Gemstone5:1415356666509000846>", "row": 1},
-            {"title": "Gem Title - Bathyal's Polarity", "role": "Gem Colour 2",
+            {"title": "Gem Title - Beyond Time", "role": "Gem Colour 2",
+             "label": "Time", "emoji": "<:Gemstone9:1415356723505528913>", "row": 1},
+            {"title": "Gem Title - Bathyal's Polarity", "role": "Gem Colour 3",
              "label": "Bathyal", "emoji": "<:Gemstone6:1415356677598740480>", "row": 1},
-            {"title": "Gem Title - Chosen by Fate", "role": "Gem Colour 3",
-             "label": "Fate", "emoji": "<:Gemstone4:1415356495263961238>", "row": 1},
-            {"title": "Gem Title - Tournament Winner", "role": "Gem Colour 4",
-             "label": "Winner", "emoji": "<:Gemstone3:1415356650922971278>", "row": 2},
-            {"title": "Gem Title - Beyond Time", "role": "Gem Colour 5",
-             "label": "Time", "emoji": "<:Gemstone9:1415356723505528913>", "row": 2},
-            {"title": "Gem Title - Ruler of Stars", "role": "Gem Colour 6",
+            {"title": "Gem Title - Ruler of Stars", "role": "Gem Colour 4",
              "label": "Stars", "emoji": "<:Gemstone8:1415356711967129751>", "row": 2},
-            {"title": "Gem Title - Transcendence", "role": "Gem Colour 7",
+            {"title": "Gem Title - Transcendence", "role": "Gem Colour 5",
              "label": "Transcend", "emoji": "<:Gemstone1:1415356624909893803>", "row": 2},
+            {"title": "Gem Title - Chosen by Fate", "role": "Gem Colour 6",
+             "label": "Fate", "emoji": "<:Gemstone4:1415356495263961238>", "row": 2},
+            {"title": "Gem Title - Tournament Winner", "role": "Gem Colour 7",
+             "label": "Winner", "emoji": "<:Gemstone3:1415356650922971278>", "row": 2},
             {"title": "Gem Title - Flame of Trust", "role": "Gem Colour 8",
              "label": "Flame", "emoji": "<:Gemstone0:1415356608753696868>", "row": 3},
-            {"title": "Gem Title - Cherished Hearts", "role": "Gem Colour 9",
-             "label": "Hearts", "emoji": "<:Gemstone7:1415356697408704523>", "row": 3},
-            {"title": "Exlusive", "role": "Relic Colour 1",
+            # Exclusive Titles
+            {"title": "Exclusive", "role": "Relic Colour 1",
              "label": "Exclusive", "emoji": "<:r_lotus:1275615878456541215>", "row": 3},
+            # Ranking Titles
             {"title": "Ranking", "role": "Relic Colour 2",
-             "label": "Ranking", "emoji": "<:r_lotus:1275615878456541215>", "row": 3}
+             "label": "Ranking", "emoji": "<:r_lotus:1275615878456541215>", "row": 3},
+            # Collection Titles
+            {"title": "Collection", "role": "Relic Colour 3",
+             "label": "Soul", "emoji": "<:Gemstone7:1415356697408704523>", "row": 3},
+            # Special Titles
+            {"title": "Precious Title - Dragon Coin", "role": "Relic Colour 4",
+             "label": "Coin", "emoji": "<:r_lotus:1275615878456541215>", "row": 4},
+            {"title": "Precious Title - Cherished Hearts", "role": "Relic Colour 5",
+             "label": "Hearts", "emoji": "<:r_lotus:1275615878456541215>", "row": 4},
+            # Perfection Titles
+            {"title": "Perfection Title - Golden Wish", "role": "Perfect Colour 1",
+             "label": "Perfect", "emoji": "<:r_gem:1275615826015424543>", "row": 4}
         ]
         self.keyword_roles = {
             "Exlusive": [
@@ -1376,7 +1388,13 @@ class ColourView(discord.ui.View):
                 "Ranking Title - Player Level Rank #1",
                 "Ranking Title - Activity Rank #1",
                 "Ranking Title - Vouch Rank #1"
-            ]}
+            ],
+            "Collection": [
+                "Collection Title - Soul of Destiny",
+                "Collection Title - Soul of Eternity",
+                "Collection Title - Soul of Harmony"
+            ]
+        }
         member_roles = [role.name for role in self.ctx.author.roles]
         for role_set in self.colour_roles:
             title = role_set["title"]

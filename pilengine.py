@@ -359,20 +359,23 @@ async def build_notification(player_obj, message, notification_type, title_msg, 
     message_colour = "White"
     image_editable.text((55 + 2, 50 + 2), title_msg, fill="black", font=title_font)
     image_editable.text((55, 50), title_msg, fill=title_colour, font=title_font)
+    if "Fishing" in f"{message}":
+        message, fishing_level = message.split(";")
+        fishing_level = int(fishing_level)
     image_editable.text((115, 100), message, fill=message_colour, font=text_font)
     # Achievement Icon Loading.
     if notification_type == "Achievement":
         icon_size = (54, 54)
-        if "Fishing" in f"{value}":
-            pass
+        if "Fishing" in f"{message}":
+            star_code = "Alt" if fishing_level == 9 else 9 if fishing_level == 10 else fishing_level
         else:
             star_code = "Alt" if player_obj.player_echelon == 9 else 9 if player_obj.player_echelon == 10 else player_obj.player_echelon
             # icon_url = f"https://PandoraPortal.ca/gallery/Icons/Stars/Original/Star{star_code}.png"
-            icon_url = f"botart/stars/S{star_code}.png"
-            # role_icon = Image.open(requests.get(icon_url, stream=True).raw)
-            role_icon = await fetch_image(None, icon_url)
-            role_icon = role_icon.resize(icon_size)
-            result.paste(role_icon, (42, 90), mask=role_icon)
+        icon_url = f"botart/stars/S{star_code}.png"
+        # role_icon = Image.open(requests.get(icon_url, stream=True).raw)
+        role_icon = await fetch_image(None, icon_url)
+        role_icon = role_icon.resize(icon_size)
+        result.paste(role_icon, (42, 90), mask=role_icon)
     elif notification_type == "Item":
         if item.item_image != "":
             image_url = item.item_image.replace("Frame_", "")

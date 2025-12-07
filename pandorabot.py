@@ -855,8 +855,8 @@ def run_discord_bot():
         current_points = fish_points - fishing.get_max_fish_points(fish_level - 1)
         fish_pts_max = fishing.get_max_fish_points(fish_level)
         fishing_header = f"{player_obj.player_username} - Lv{fish_level} - {fishing.fish_levels[fish_level]}"
-        fishing_info = f"🎣 Fish EXP: {current_points:,} / {fish_pts_max:,}\n"
-        fishing_info += f"{gli.stamina_icon} Stamina: {player_obj.player_stamina:,} / 5000"
+        fish_msg = f"{current_points:,}pt / {fish_pts_max:,}pt" if fish_level < 10 else "[MAX]"
+        fishing_info = f"🎣 Fish EXP: {fish_msg}\n{gli.stamina_icon} Stamina: {player_obj.player_stamina:,} / 5000"
         fish_embed.add_field(name=fishing_header, value=fishing_info, inline=False)
         fish_view = fishing.FishView(ctx, player_obj, fish_level)
         await ctx.send(embed=fish_embed, view=fish_view)
@@ -2311,7 +2311,7 @@ def run_discord_bot():
         # Get user's timezone
         user_timezone, dst_offset = await timezone.get_user_timezone(ctx.author.id)
         offset = int(user_timezone.replace("UTC", ""))
-        utc_hour = (hour - offset - dst_offset) % 24
+        utc_hour = (hour - offset) % 24
         if user_timezone is None:
             await ctx.send("Please set your timezone first using #time-zones channel.")
             return

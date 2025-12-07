@@ -28,9 +28,10 @@ async def check_fish_level(player_obj):
     total_fish_points = int(fish_points)
     if total_fish_points < 1:
         return 0, 0, fish_levels[0]
-    fish_level = len(str(total_fish_points))
-    fish_level = min(fish_level, len(fish_levels) - 1)
-    return total_fish_points, fish_level, fish_levels[fish_level]
+    fish_level = min(10, len(str(9 * total_fish_points + 1)) - 1)
+    consumed_fish_points = (10 ** (fish_level - 1) - 1) // 9
+    current_fish_points = total_fish_points - consumed_fish_points
+    return current_fish_points, fish_level, fish_levels[fish_level]
 
 
 def get_max_fish_points(level):
@@ -47,12 +48,16 @@ b_dia, g_dia, r_dia = "<:bd:1275581714206560400>", "<:gd:1275581722205097995>", 
 b_worm, b_chest = "<:bm:1275581779067146260>", "<:bc:1275582170701893694>"
 b_mine, g_mine, r_boom = "<:bb:1275582230160474194>", "<:gb:1275582236854452244>", "<:rx:1275582291820675194>"
 b_star, g_star = "<:bs:1275582378282319974>", "<:gs:1275582416999940239>"
+br_star, gr_star = "<:br:1447270029740474602>", "<:gr:1447270021108863090>"
+s_star, gs_star = "<:sb:1447315330010579126>", "<:sg:1447315338235740383>"
+color_emojis_green = ["🟩", "🟦", "⬜"]
+color_emojis_red = ["🟥", "⬛", "🟦"]
 color_emojis = ["🟥", "🟧", "🟨", "🟩", "🟦", "🟪"]
 
 star_mapping = {b_fish: g_fish, b_water: g_water, b_worm: g_dia, b_chest: g_dia, b_dia: g_dia,
-                b_mine: g_mine, b_star: g_star}
+                b_mine: g_mine, b_star: g_star, br_star: gr_star, s_star: gs_star}
 boom_mapping = {b_fish: r_fish, b_water: r_water, b_worm: r_boom, b_chest: r_boom, b_dia: r_dia,
-                b_mine: r_boom, b_star: r_boom}
+                b_mine: r_boom, b_star: r_boom, br_star: r_boom, s_star: r_boom}
 
 # Default Datasets
 directions = [(-1, 0), (1, 0), (0, -1), (0, 1), (-1, -1), (-1, 1), (1, -1), (1, 1)]
@@ -60,8 +65,8 @@ opposite_directions = {(1, 0): (-1, 0), (-1, 0): (1, 0), (0, 1): (0, -1), (0, -1
                        (1, 1): (-1, -1), (-1, -1): (1, 1), (1, -1): (-1, 1), (-1, 1): (1, -1)}
 # Sets are Size, Size, Worms Min, Worms Max, Chest Min, Chest Max, Mines Min, Mines Max, Stars Min, Stars Max
 fishing_sets = {"fish": [5, 5, 3, 4, 0, 1, 1, 2, 0, 1], "quickfish": [5, 5, 5, 6, 0, 2, 1, 2, 1, 1],
-                "turbofishing": [6, 6, 7, 8, 1, 2, 1, 2, 1, 1], "ultimatefishing": [7, 7, 9, 10, 3, 4, 1, 3, 1, 2],
-                "omegafishing": [8, 8, 11, 12, 4, 5, 1, 4, 2, 3]}
+                "turbofishing": [6, 6, 7, 8, 1, 2, 1, 2, 1, 2], "ultimatefishing": [7, 7, 9, 10, 3, 4, 1, 3, 2, 3],
+                "omegafishing": [8, 8, 11, 12, 4, 5, 1, 4, 3, 5]}
 fishing_stamina = {"fish": 250, "quickfish": 500, "turbofishing": 1000, "ultimatefishing": 2500, "omegafishing": 5000}
 
 
@@ -148,6 +153,7 @@ class FishResetView(discord.ui.View):
 
 
 async def go_fishing(ctx, player_obj, method="fish", skipping=False):
+    final_mult = 1
     data_value = fishing_sets[method]
     size_x, size_y = data_value[0], data_value[1]
     num_worms, num_chests = random.randint(data_value[2], data_value[3]), random.randint(data_value[4], data_value[5])
@@ -195,7 +201,13 @@ async def go_fishing(ctx, player_obj, method="fish", skipping=False):
     for x, y in mine_positions:
         grid[y][x] = b_mine
     for x, y in star_positions:
-        grid[y][x] = b_star
+        star_type = b_star
+        generate_star = random.randint(1, 10)
+        if generate_star <= 3 and starting_fish_level >= 6:
+            star_type = br_star
+        elif generate_star >= 9 and starting_fish_level >= 8:
+            star_type = s_star
+        grid[y][x] = star_type
     grid[fish_pos[1]][fish_pos[0]] = b_fish
     sent_msg = await ctx.send(f"{display_grid(grid)}")
     # Run the fishing animation
@@ -232,16 +244,25 @@ async def go_fishing(ctx, player_obj, method="fish", skipping=False):
             grid[fish_pos[1]][fish_pos[0]] = b_dia
         elif current_cell == b_water:
             grid[fish_pos[1]][fish_pos[0]] = b_fish
-        elif current_cell == b_star:
+        elif current_cell in [b_star,  br_star, s_star]:
             worm_count, chest_count, total_items = num_worms, num_chests, num_worms + num_chests
             for _ in range(5):
-                random_grid = generate_random_colored_grid(size_x, size_y)
+                random_grid = generate_random_colored_grid(size_x, size_y, current_cell)
                 fish_grid = "\n".join("".join(row) for row in random_grid)
                 await sent_msg.edit(content=f"{fish_grid}")
                 await asyncio.sleep(1)
             grid = [[star_mapping.get(cell, cell) for cell in row] for row in grid]
             title = f"{player_obj.player_username} Caught All {total_items:,} Fish!"
             bonus_mult += 10
+            final_mult = 2
+            if current_cell == br_star:
+                bonus_mult += 20
+                final_mult = 10
+            elif current_cell == s_star:
+                bonus_mult += 50
+                final_mult = 20
+            if starting_fish_level >= 8:
+                final_mult *= 5
             break
         await sent_msg.edit(content=f"{display_grid(grid)}")
     for _ in range(worm_count):
@@ -263,20 +284,26 @@ async def go_fishing(ctx, player_obj, method="fish", skipping=False):
         base_points = 2 + fish.item_tier // 2
         if is_fish:
             base_points *= fish_qty
-            if fish.item_tier == 8:
-                base_points *= 1000
+        if fish_id == "Nadir":
+            final_mult = max(1000, final_mult * 200)
         total_points += base_points * fish_mult
         fish_output += f"🪝 Caught: {fish.item_emoji} {fish_qty}x {fish.item_name}\n"
         if sm.check_rare_item(fish_id):
             await sm.send_notification(ctx, player_obj, "Item", fish_id)
+    if final_mult < 10 and starting_fish_level >= 6:
+        final_mult += starting_fish_level
+    total_points *= final_mult
+    _, starting_fish_level, _ = await check_fish_level(player_obj)
     await update_fish_points(player_obj, total_points)
     fish_points, fish_level, fish_title = await check_fish_level(player_obj)
     current_points = fish_points - get_max_fish_points(fish_level - 1)
     fish_pts_max = get_max_fish_points(fish_level)
-    fish_output += f"**Reputation**\nLv{fish_level} - {fish_title}\n🎣 Fish EXP: {current_points:,} / {fish_pts_max:,}\n"
+    fish_output += f"**Reputation**\nLv{fish_level} - {fish_title}\n"
+    fish_msg = f"{current_points:,}pt / {fish_pts_max:,}pt" if fish_level < 10 else "[MAX]"
+    fish_output += f"🎣 Fish EXP: {fish_msg}\nExp Gain: (+{total_points:,}pt)\n"
     batch_df = sm.list_to_batch(player_obj, [(fish_id, fish_qty) for fish_id, fish_qty in caught_fish.items()])
     if fish_level - starting_fish_level >= 1:
-        await sm.send_notification(ctx, player_obj, "Achievement", f"Fishing: {fish_title}")
+        await sm.send_notification(ctx, player_obj, "Achievement", f"Fishing: {fish_title};{fish_level}")
         if fish_level == 10:
             role = discord.utils.get(ctx.guild.roles, name="Gem Title - Bathyal's Polarity")
             if role not in ctx.author.roles:
@@ -310,5 +337,6 @@ def display_grid(grid):
     return "\n".join("".join(row) for row in grid)
 
 
-def generate_random_colored_grid(grid_x, grid_y):
-    return [[random.choice(color_emojis) for _ in range(grid_x)] for _ in range(grid_y)]
+def generate_random_colored_grid(grid_x, grid_y, grid_type):
+    star_chart = {b_star: color_emojis_green, br_star: color_emojis_red, s_star: color_emojis}
+    return [[random.choice(star_chart[grid_type]) for _ in range(grid_x)] for _ in range(grid_y)]

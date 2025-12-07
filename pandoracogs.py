@@ -11,10 +11,16 @@ import globalitems as gli
 import sharedmethods as sm
 from pandoradb import run_query as rqy
 import player
-from datetime import datetime as dt, timedelta
 
 # Item/crafting imports
 import pact
+
+# Misc Imports
+import timezone
+import datetime, calendar
+dt = datetime.datetime
+timedelta = datetime.timedelta
+tz = datetime.timezone
 
 
 class HourCog(commands.Cog):
@@ -64,20 +70,25 @@ class HourCog(commands.Cog):
 
     async def send_reminders(self):
         print("Check Reminders")
-        print(f"hour_manager STARTING (execution #{self.execution_count})")
         try:
             now_utc = dt.now(ZoneInfo('UTC'))
             current_weekday = now_utc.weekday() + 1
-            reminder_query = ("SELECT discord_id, message FROM UserReminders "
-                              "WHERE hour = :current_hour AND (weekday = :current_weekday OR weekday = 0)")
-            params = {'current_hour': now_utc.hour, 'current_weekday': current_weekday}
+            reminder_query = ("SELECT discord_id, message, hour FROM UserReminders "
+                              "WHERE (weekday = :current_weekday OR weekday = 0)")
+            params = {'current_weekday': current_weekday}
             df = await rqy(reminder_query, params=params, return_value=True)
             if df is None or len(df.index) == 0:
                 print("0 reminders sent")
                 return
             for _, row in df.iterrows():
                 try:
+                    if not (now_utc.hour <= int(row["hour"]) <= now_utc.hour + 1):
+                        continue
                     user_id = row["discord_id"]
+                    tz_code, dst_offset = await timezone.get_user_timezone(user_id)
+                    if not (((now_utc.hour == int(row["hour"]) and dst_offset == 0) or
+                            (now_utc.hour != int(row["hour"]) and dst_offset == 1))):
+                        continue
                     user = await self.bot.fetch_user(int(user_id))
                     msg_file = await sm.message_box(None, [row['message']], "Reminder")
                     await user.send(file=discord.File(msg_file))
@@ -135,6 +146,7 @@ class MetricsCog(commands.Cog):
             ("ArchDragon Moderator", 1134293907136585769),
             ("ArchDragon Administrator", 1134301246648488097)
         ]
+        reaction_msg = await self.get_top_reactions_week()
         # Build output text
         metrics_text = f"Total Members: {total_members:,}\n"
         for label, role_id in role_checks:
@@ -143,11 +155,32 @@ class MetricsCog(commands.Cog):
                 metrics_text += f"{label}: {len(role.members):,}\n"
             else:
                 metrics_text += f"{label}: Role not found\n"
+        metrics_text += f"\nTop Reactions (7d):\n{reaction_msg}\n"
         metrics_channel = self.bot.get_channel(gli.metrics_channel)
         if metrics_channel:
             message_obj = await metrics_channel.fetch_message(gli.metrics_message_id)
             await message_obj.edit(content=metrics_text)
         print("Metrics Updated")
+
+    async def get_top_reactions_week(self, days=7, limit=5):
+        reaction_counts = {}
+        time_threshold = dt.now(tz.utc) - timedelta(days=days)
+        for channel in self.guild.text_channels:
+            try:
+                async for message in channel.history(after=time_threshold, limit=None):
+                    for reaction in message.reactions:
+                        emoji_key = str(reaction.emoji)
+                        reaction_counts[emoji_key] = reaction_counts.get(emoji_key, 0) + reaction.count
+            except Exception:
+                # Skip channels the bot has no access to
+                continue
+        sorted_reactions = sorted(reaction_counts.items(), key=lambda x: x[1], reverse=True)
+        top_reactions = sorted_reactions[:limit]
+        reaction_msg = ""
+        if top_reactions:
+            for emoji, count in top_reactions:
+                reaction_msg += f"{emoji}: {count:,}\n"
+        return reaction_msg
 
     async def run_credit(self):
         # Note for future self. This can be more efficient done via batches if needed.

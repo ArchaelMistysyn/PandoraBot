@@ -21,6 +21,7 @@ adjuster_dict = {"basic_monster": 1, "elite_monster": 2, "legend_monster": 3, "p
 
 shrine_dict = {1: ["Land", 3, "Sky", 4], 2: ["Fear", 6, "Suffering", 0],
                3: ["Illumination", 7, "Tranquility", 1], 4: ["Retribution", 2, "Imprisonment", 5]}
+boss_element_map = {1: (3, 4), 2: (6, 0), 3: (7, 1), 4: (2, 5)}
 
 # {room_type: [num_buttons, [button_label], [button_icon], [button_colour], [button_callback]]}
 room_data_dict = {

@@ -897,7 +897,8 @@ class AdventureRoomView(discord.ui.View):
         if boss_num == 4:
             shrine_reward_id = [f"Jewel{boss_num}", f"Token{inventory.generate_random_tier(max_tier=7)}"]
         self.reward_items = [inventory.BasicItem(shrine_reward_id[0]), inventory.BasicItem(shrine_reward_id[1]), None]
-        res_list = [player_obj.elemental_res[3], player_obj.elemental_res[4],
+        ele1, ele2 = adventuredata.boss_element_map[boss_num]
+        res_list = [player_obj.elemental_res[ele1], player_obj.elemental_res[ele2],
                     player_obj.elemental_res[active_room.room_element]]
         selected_elements = [shrine_data[1], shrine_data[3], active_room.room_element]
         self.success_rates = [min(100, int(resistance * 100) + 5) for resistance in res_list]

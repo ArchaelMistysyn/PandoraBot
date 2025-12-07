@@ -175,8 +175,10 @@ def is_dst_active(region: str, now: dt):
 
 def nth_weekday_of_month(year, month, weekday, n):
     month_matrix = calendar.monthcalendar(year, month)
-    if n > 0:
-        return datetime.date(year, month, month_matrix[n - 1][weekday])
-    return datetime.date(year, month, month_matrix[n][weekday])
+    idx = n - 1 if n > 0 else n
+    day = month_matrix[idx][weekday]
+    if day == 0:
+        day = next(w[weekday] for w in month_matrix if w[weekday] != 0)
+    return datetime.date(year, month, day)
 
 
