@@ -79,6 +79,7 @@ class RaidCog(commands.Cog):
         self.tracker_list = []
         self.lock = asyncio.Lock()
         self.raid_boss_manager.start()
+        self.loot_awarded = False
 
     def end_cog(self):
         self.raid_boss_manager.cancel()
@@ -128,7 +129,10 @@ class RaidCog(commands.Cog):
             embed_msg, is_alive = self.boss_obj.create_boss_embed(dps=dps), True
         else:
             embed_msg, is_alive = bosses.create_dead_boss_embed(self.channel_id, self.boss_obj, dps), False
-            loot_embed = await loot.create_loot_embed(embed_msg, self.boss_obj, player_list, loot_mult=5)
+            loot_embed = None
+            if not self.loot_awarded:
+                self.loot_awarded = True
+                loot_embed = await loot.create_loot_embed(embed_msg, self.boss_obj, player_list, loot_mult=5)
         skill_msg = f"{self.boss_obj.boss_name} uses {skill_list[skill_index]} on all players\n"
         skill_msg += f"{self.boss_obj.boss_name} regenerates 1% HP"
         embed_msg.add_field(name="", value=skill_msg, inline=False)
@@ -164,16 +168,19 @@ class RaidView(discord.ui.View):
 class SoloCog(commands.Cog):
     def __init__(self, bot, player_obj, boss_obj, channel_id, sent_message, ctx_object,
                  gauntlet=False, mode=0, magnitude=0):
+        self.__cog_name__ = f"SoloCog_{player_obj.player_id}"
         self.bot = bot
         self.player_obj, self.boss_obj = player_obj, boss_obj
         self.sent_message, self.embed = sent_message, None
         self.ctx_object, self.channel_obj, self.channel_id = ctx_object, ctx_object.channel, channel_id
         self.tracker_obj = combat.CombatTracker(player_obj)
         self.gauntlet, self.mode, self.magnitude = gauntlet, mode, magnitude
+        self.loot_awarded = False
         self.lock = asyncio.Lock()
 
-    async def run(self):
-        self.solo_manager.start()
+    def cog_load(self):
+        if not self.solo_manager.is_running():
+            self.solo_manager.start()
 
     def cog_unload(self):
         self.solo_manager.cancel()
@@ -184,12 +191,12 @@ class SoloCog(commands.Cog):
             if await combat.abandon_flag(self.player_obj) == 1:
                 await encounters.clear_boss_encounter_info(self.channel_id, self.player_obj.player_id)
                 await self.ctx_object.send(f"{self.player_obj.player_username} Abandon successful.")
-                self.cog_unload()
+                await self.bot.remove_cog(self.__cog_name__)
                 return
             continue_encounter = await self.solo_boss()
             if continue_encounter:
                 return
-            self.cog_unload()
+            await self.bot.remove_cog(self.__cog_name__)
 
     @solo_manager.error
     async def solo_manager_error(self, e):
@@ -230,8 +237,11 @@ class SoloCog(commands.Cog):
         if "XXX" in self.boss_obj.boss_name:
             loot_bonus = loot.incarnate_attempts_dict[self.boss_obj.boss_level]
             await leaderboards.update_leaderboard(self.tracker_obj, self.player_obj, self.ctx_object)
-        loot_embed = await loot.create_loot_embed(self.embed, self.boss_obj, player_list, ctx=self.ctx_object,
-                                                  loot_mult=loot_bonus, gauntlet=self.gauntlet, magni=self.magnitude)
+        loot_embed = None
+        if not self.loot_awarded:
+            self.loot_awarded = True
+            loot_embed = await loot.create_loot_embed(self.embed, self.boss_obj, player_list, ctx=self.ctx_object,
+                                                      loot_mult=loot_bonus, gauntlet=self.gauntlet, magni=self.magnitude)
         await encounters.clear_boss_encounter_info(self.channel_id, self.player_obj.player_id)
         if self.tracker_obj.total_cycles <= 5:
             await self.sent_message.edit(embed=loot_embed)
@@ -255,6 +265,7 @@ class SoloCog(commands.Cog):
 
 class PvPCog(commands.Cog):
     def __init__(self, bot, ctx_obj, player1, player2, sent_message, channel_obj):
+        self.__cog_name__ = f"SoloCog_{player_obj.player_id}"
         self.bot, self.ctx_obj = bot, ctx_obj
         self.channel_obj = channel_obj
         self.player1, self.player2 = player1, player2
@@ -265,8 +276,9 @@ class PvPCog(commands.Cog):
         self.hit_list = []
         self.lock = asyncio.Lock()
 
-    async def run(self):
-        self.pvp_manager.start()
+    def cog_load(self):
+        if not self.pvp_manager.is_running():
+            self.pvp_manager.start()
 
     def cog_unload(self):
         self.pvp_manager.cancel()
@@ -315,7 +327,7 @@ class PvPCog(commands.Cog):
         await self.sent_message.edit(embed=pvp_embed)
         if lvl_adjust != 0:
             await sm.send_notification(self.ctx_obj, self.player1, "Level", lvl_adjust)
-        self.cog_unload()
+        await self.bot.remove_cog(self.__cog_name__)
 
     async def update_combat_embed(self, stun_list, hit_list):
         pvp_embed = discord.Embed(title="Arena PvP", description="", color=self.colour)
@@ -427,6 +439,7 @@ class PvPCog(commands.Cog):
 
 class MapCog(commands.Cog):
     def __init__(self, bot, ctx_obj, player_obj, map_tier, sent_message, colour):
+        self.__cog_name__ = f"SoloCog_{player_obj.player_id}"
         self.bot, self.ctx_obj = bot, ctx_obj
         self.player_obj, self.player_cHP, self.player_mHP = player_obj, player_obj.player_mHP, player_obj.player_mHP
         self.player_regen = int(self.player_mHP * player_obj.hp_regen)
@@ -437,8 +450,9 @@ class MapCog(commands.Cog):
         self.lock = asyncio.Lock()
         self.exp_accumulated, self.coins_accumulated, self.items_accumulated = 0, 0, {}
 
-    async def run(self):
-        self.map_manager.start()
+    def cog_load(self):
+        if not self.map_manager.is_running():
+            self.map_manager.start()
 
     def cog_unload(self):
         self.map_manager.cancel()
@@ -460,7 +474,7 @@ class MapCog(commands.Cog):
                 end_embed = await self.accumulated_output(end_embed)
                 await self.sent_message.edit(embed=end_embed)
                 await encounters.clear_automapper(self.player_obj.player_id)
-                self.cog_unload()
+                await self.bot.remove_cog(self.__cog_name__)
             self.room_num += 1
 
     @map_manager.error

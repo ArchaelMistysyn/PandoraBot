@@ -73,9 +73,9 @@ async def award_loot(boss_object, player_list, exp_amount, coin_amount, loot_mul
     msg = []
     labels = ['player_id', 'item_id', 'item_qty']
     batch_df = pd.DataFrame(columns=labels)
-    for counter, x in enumerate(player_list):
+    for counter, player_id in enumerate(player_list):
         # Handle coins and exp.
-        temp_player = await player.get_player_by_id(x)
+        temp_player = await player.get_player_by_id(player_id)
         coin_msg = await temp_player.adjust_coins(coin_amount)
         exp_amount = 200000 if 'XXX' in boss_object.boss_name else exp_amount
         exp_msg, lvl_change = await temp_player.adjust_exp(exp_amount)

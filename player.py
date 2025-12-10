@@ -88,6 +88,7 @@ class PlayerProfile:
         self.defence_pen, self.resist_pen = 0.0, 0.0
         self.aqua_mode, self.aqua_points = 0, 0
         self.flare_type = ""
+        self.ruler_mult = 0.0
         # Initialize defensive stats.
         self.hp_bonus, self.hp_regen, self.hp_multiplier, self.recovery = 0.0, 0.0, 0.0, 3
         self.block, self.dodge = 0.01, 0.01
@@ -595,7 +596,7 @@ class PlayerProfile:
     async def get_player_initial_damage(self):
         await self.get_player_base_damage()
         random_damage = random.randint(self.player_damage_min, self.player_damage_max)
-        return int(random_damage * (1 + self.total_class_mult) * (1 + self.final_damage))
+        return int(random_damage * (1 + self.total_class_mult) * (1 + self.final_damage) * (1 + self.ruler_mult))
 
     async def get_player_boss_damage(self, boss_object):
         e_weapon = await inventory.read_custom_item(self.player_equipped[0])

@@ -449,6 +449,8 @@ def run_discord_bot():
             message_chunks = [output_message[i:i + 1000] for i in range(0, len(output_message), 1000)]
             for chunk in message_chunks:
                 await ctx.send(chunk)
+        elif keyword == "KillCog":
+            ctx.bot.remove_cog(value)
         elif keyword == "Test":
             title = ""
             description = gli.t57_hpbar_empty[0]
@@ -1629,7 +1631,7 @@ def run_discord_bot():
             await ctx.send("You must have a weapon equipped.")
             return
         existing_id = await encounters.get_encounter_id(ctx.channel.id, player_obj.player_id)
-        if existing_id is not None:
+        if f"SoloCog_{player_obj.player_id}" in ctx.bot.cogs:
             await ctx.send("You already have a solo boss or map encounter running.")
             return
         if not await player_obj.spend_stamina(200):
@@ -1671,8 +1673,7 @@ def run_discord_bot():
         await ctx.send(msg)
         sent_message = await ctx.channel.send(embed=embed_msg)
         solo_cog = await run_solo_cog(player_obj, boss_obj, ctx.channel.id, sent_message, ctx, magnitude=magnitude)
-        task = asyncio.create_task(solo_cog.run())
-        await task
+        await ctx.bot.add_cog(solo_cog)
 
     @set_command_category('combat', 7)
     @pandora_bot.hybrid_command(name='palace', help="Enter the Divine Palace. [WARNING: HARD]")
@@ -1716,6 +1717,7 @@ def run_discord_bot():
             super().__init__(timeout=None)
             self.player_obj, self.lotus_obj, self.lotus_stock = player_obj, lotus_obj, lotus_stock
             self.ctx, self.sent_message = ctx, sent_message
+            self.bot = ctx.bot
             self.embed_msg = None
             if self.lotus_stock <= 0:
                 for button in self.children:
@@ -1762,8 +1764,7 @@ def run_discord_bot():
             await asyncio.sleep(1)
             solo_cog = await run_solo_cog(self.player_obj, boss_obj, self.ctx.channel.id, self.sent_message, self.ctx,
                                           mode=difficulty)
-            task = asyncio.create_task(solo_cog.run())
-            await task
+            await self.ctx.bot.add_cog(solo_cog)
 
     @set_command_category('combat', 8)
     @pandora_bot.hybrid_command(name='gauntlet', help="Challenge the gauntlet in the Spire of Illusions.")
@@ -1803,8 +1804,7 @@ def run_discord_bot():
         sent_message = await ctx.channel.send(embed=embed_msg)
         gauntlet_cog = await run_solo_cog(player_obj, boss_obj, ctx.channel.id, sent_message, ctx,
                                           gauntlet=True, magnitude=magnitude)
-        task = asyncio.create_task(gauntlet_cog.run())
-        await task
+        await ctx.bot.add_cog(gauntlet_cog)
 
     @set_command_category('combat', 9)
     @pandora_bot.hybrid_command(name='summon',
@@ -1856,8 +1856,7 @@ def run_discord_bot():
         embed_msg = boss_obj.create_boss_embed()
         sent_message = await ctx.channel.send(embed=embed_msg)
         solo_cog = await run_solo_cog(player_obj, boss_obj, ctx.channel.id, sent_message, ctx, magnitude=magnitude)
-        task = asyncio.create_task(solo_cog.run())
-        await task
+        await ctx.bot.add_cog(solo_cog)
 
     @set_command_category('combat', 10)
     @pandora_bot.hybrid_command(name='arena', help="Enter pvp combat with another player.")
@@ -1903,8 +1902,7 @@ def run_discord_bot():
             return enginecogs.PvPCog(pandora_bot, ctx, player_obj, opponent_player, message, channel_obj)
 
         pvp_cog = await run_pvp_cog()
-        task = asyncio.create_task(pvp_cog.run())
-        await task
+        await ctx.bot.add_cog(pvp_cog)
 
     @set_command_category('combat', 11)
     @pandora_bot.hybrid_command(name='automapper', help="Run a map automatically. "
@@ -1943,8 +1941,7 @@ def run_discord_bot():
             return enginecogs.MapCog(pandora_bot, ctx, player_obj, tier, message, colour)
 
         map_cog = await run_map_cog()
-        task = asyncio.create_task(map_cog.run())
-        await task
+        await ctx.bot.add_cog(map_cog)
 
     # Info commands
     @set_command_category('info', 0)
@@ -2136,6 +2133,7 @@ def run_discord_bot():
                        ("Denny Rasyid Salam", "Character Artist (Upwork)"),
                        ("Martin Steffen", "Character Artist (Upwork)"),
                        ("Tan kwokYeow", "Character Artist (Upwork)"),
+                       ("Leonardo Guinard", "Character Artist (Upwork)"),
                        ("Daming Li", "Monster Artist (Upwork)"),
                        ("Arjhon Tulio", "Scene Artist (Upwork)"),
                        ("Nina Hvozdzeva", "Logo Artist (Upwork)"),

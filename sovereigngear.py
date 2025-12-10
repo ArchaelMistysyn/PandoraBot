@@ -35,7 +35,7 @@ sov_item = {
     "Ruler's Crest":
         [(9999999, 9999999), None,
          ("Ruler's Glare", "Ruler's Tenacity"),
-         ("Stasis Zone", "Divine Aegis")]}
+         ("Divine Glare", "Ruler's Aegis")]}
 
 random_values_dict = {"Solar Flare Blaster": (100, 500)}
 sov_type_dict = {"Bathyal, Enigmatic Chasm Bauble": ["Critical", "Fractal", "Temporal", "Hyperbleed", "Combo", "Bloom"],
@@ -133,9 +133,10 @@ async def assign_sovereign_values(player_obj, item_obj):
                 player_obj.start_mana = 0
         case "Ruler's Crest":
             player_obj.hp_multiplier += 10
+            player_obj.ruler_mult = player_obj.player_level * 0.05
             if item_obj.is_sacred:
                 player_obj.hp_multiplier += 10
-            # Ruler's Glare goes here
+                player_obj.ruler_mult *= 2
             if item_obj.is_sacred:
                 pass
         case _:

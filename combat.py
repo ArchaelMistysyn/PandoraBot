@@ -425,7 +425,18 @@ def skill_adjuster(player_obj, combat_tracker, hit_damage, combo_count, is_ultim
     combo_mult = (1 + player_obj.combo_mult * combo_count) * (1 + player_obj.combo_pen)
     ultimate_mult = (1 + player_obj.ultimate_mult) * (1 + player_obj.ultimate_pen)
     skill_list = gli.skill_names_dict[player_obj.player_class]
-    if player_obj.aqua_points >= 100:
+    if player_obj.ruler_mult > player_obj.player_level * 0.06:
+        skill_list = ["Stasis Eater", "Stasis Eater", "Stasis Eater", "Finale"]
+        ruler_damage = min(4, max(2, player_obj.player_level // 250))
+        ruler_finale = max(10, player_obj.player_level // 100)
+        if player_obj.aqua_points >= 100:
+            ruler_finale = max(50, player_obj.player_level // 50)
+            skill_list[3] = "Splash"
+        mult_dict = {0: ruler_damage, 1: ruler_damage, 2: ruler_damage, 3: ruler_finale}
+    elif player_obj.ruler_mult > 0:
+        skill_list = ["Stasis Breaker", "Stasis Breaker", "Stasis Breaker", "Stasis Breaker"]
+        mult_dict = {0: 2, 1: 2, 2: 2, 3: 2}
+    elif player_obj.aqua_points >= 100:
         skill_list = ["Sea of Subjugation", "Ocean of Oppression", "Deluge of Domination", "Tides of Annihilation"]
         mult_dict = {0: 1, 1: 1.5, 2: 2, 3: 5}
     if is_ultimate:
