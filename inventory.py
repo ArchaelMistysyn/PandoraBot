@@ -492,7 +492,7 @@ class BasicItem:
     def __init__(self, item_id):
         self.item_id, self.item_name, self.item_tier = "", "", 1
         self.item_category, self.item_description, = "", ""
-        self.item_emoji, self.item_image = "", ""
+        self.item_emoji, self.item_image, self.no_frame = "", "", ""
         self.item_cost, self.item_base_rate = 0, 0
         self.get_bitem_by_id(item_id)
 
@@ -506,27 +506,34 @@ class BasicItem:
             self.item_category, self.item_description = item['category'], item['description']
             self.item_base_rate, self.item_cost = int(item['rate']), int(item['cost'])
             self.item_emoji = item['emoji']
-            self.item_image = ""
             if "Nadir" in self.item_id:
                 self.item_image = f"{gli.web_url}NonGear_Icon/Misc/Frame_{self.item_id}.png"
+                self.no_frame = f"{gli.web_url}NonGear_Icon/Misc/{self.item_id}.png"
             elif "Essence" in self.item_id:
                 self.item_image = f"{gli.web_url}NonGear_Icon/Essence/Frame_Essence_{self.item_tier}.png"
+                self.no_frame = f"{gli.web_url}NonGear_Icon/Essence/Essence{self.item_tier}.png"
             elif "Void" in self.item_id:
                 name_data = self.item_name.split()
                 item_type = name_data[-1].strip('()') if "Weapon" not in self.item_name else "Saber"
                 self.item_image = f"{gli.web_url}Gear_Icon/{item_type}/Frame_{item_type}_5.png"
+                self.no_frame = f"{gli.web_url}Gear_Icon/{item_type}/{item_type}5.png"
             elif "Unrefined" in self.item_id:
                 item_type = self.item_name.split()[-1]
                 self.item_image = f"{gli.web_url}Gear_Icon/{item_type}/Frame_{item_type}_4.png"
+                self.no_frame = f"{gli.web_url}Gear_Icon/{item_type}/{item_type}4.png"
             elif "Gem" in self.item_id and "Gemstone" not in self.item_id:
                 self.item_image = f"{gli.web_url}/Gear_Icon/Frame_{self.item_id.replace('Gem', 'Gem_')}.png"
+                self.no_frame = f"{gli.web_url}/Gear_Icon/{self.item_id}.png"
             elif self.item_id in ["Gemstone10", "Gemstone11"]:
                 self.item_image = f"{gli.web_url}NonGear_Icon/Gemstone/Frame_{self.item_id}.png"
+                self.no_frame = f"{gli.web_url}NonGear_Icon/Gemstone/{self.item_id}.png"
             elif "Jewel" in self.item_id:
                 icon = {"Jewel1": "Gem_1", "Jewel2": "Gem_1", "Jewel3": "Gem_5", "Jewel4": "Gem_7", "Jewel5": "Gem_8"}
                 self.item_image = f"{gli.web_url}Gear_Icon/Frame_{icon[self.item_id]}.png"
+                self.no_frame = f"{gli.web_url}Gear_Icon/{icon[self.item_id].replace('Gem_', 'Gem')}.png"
             elif self.item_category in gli.availability_list_nongear:
                 self.item_image = f"{gli.web_url}NonGear_Icon/{self.item_category}/Frame_{self.item_id}.png"
+                self.no_frame = f"{gli.web_url}NonGear_Icon/{self.item_category}/{self.item_id}.png"
         else:
             print(f"Item with ID '{item_id}' not found in itemdata_dict.")
 

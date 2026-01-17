@@ -1313,6 +1313,7 @@ class LinkReviewView(discord.ui.View):
     @discord.ui.button(label="Approve", style=discord.ButtonStyle.success, emoji="✅")
     async def approve_callback(self, interaction: discord.Interaction, button: discord.ui.Button):
         if not any(role.name in gli.moderation_roles for role in interaction.user.roles):
+            await interaction.response.send_message("You do not have permission to approve links.", ephemeral=True)
             return
         link_message = f"Approved by: {interaction.user.display_name}\n{self.link}"
         embed = sm.easy_embed("Green", "Approved", link_message)
@@ -1321,6 +1322,7 @@ class LinkReviewView(discord.ui.View):
     @discord.ui.button(label="Review", style=discord.ButtonStyle.blurple, emoji="⚠️")
     async def review_callback(self, interaction: discord.Interaction, button: discord.ui.Button):
         if not any(role.name in gli.moderation_roles for role in interaction.user.roles):
+            await interaction.response.send_message("You do not have permission to approve links.", ephemeral=True)
             return
         broken = self.link.replace(".", "[.]").replace("/", "／")
         embed = sm.easy_embed("Yellow", "Reviewing Link", f"||{broken}||")
@@ -1329,6 +1331,33 @@ class LinkReviewView(discord.ui.View):
     @discord.ui.button(label="Deny", style=discord.ButtonStyle.danger, emoji="⛔")
     async def deny_callback(self, interaction: discord.Interaction, button: discord.ui.Button):
         if not any(role.name in gli.moderation_roles for role in interaction.user.roles):
+            await interaction.response.send_message("You do not have permission to approve links.", ephemeral=True)
+            return
+        embed = sm.easy_embed("Red", "Denied", f"Denied by: {interaction.user.display_name}")
+        await interaction.response.edit_message(embed=embed, view=None)
+
+
+class InviteReviewView(discord.ui.View):
+    def __init__(self, ctx_object):
+        super().__init__(timeout=None)
+        self.ctx_object = ctx_object
+
+    @discord.ui.button(label="Approve", style=discord.ButtonStyle.success, emoji="✅")
+    async def approve_callback(self, interaction: discord.Interaction, button: discord.ui.Button):
+        if not any(role.name in gli.moderation_roles for role in interaction.user.roles):
+            await interaction.response.send_message("You do not have permission to approve invites.", ephemeral=True)
+            return
+        invite = await sm.update_invite(self.ctx_object)
+        if invite is None:
+            await interaction.response.send_message("Link Error - Delete the broken request.", ephemeral=True)
+            return
+        link_embed = sm.easy_embed("Green", f"{gli.archdragon_emoji} Approved 7 Day Link", invite.url)
+        await interaction.response.edit_message(embed=link_embed, view=None)
+
+    @discord.ui.button(label="Deny", style=discord.ButtonStyle.danger, emoji="⛔")
+    async def deny_callback(self, interaction: discord.Interaction, button: discord.ui.Button):
+        if not any(role.name in gli.moderation_roles for role in interaction.user.roles):
+            await interaction.response.send_message("You do not have permission to approve invites.", ephemeral=True)
             return
         embed = sm.easy_embed("Red", "Denied", f"Denied by: {interaction.user.display_name}")
         await interaction.response.edit_message(embed=embed, view=None)
@@ -1349,7 +1378,7 @@ class ColourView(discord.ui.View):
             {"title": "Gem Title - Bathyal's Polarity", "role": "Gem Colour 3",
              "label": "Bathyal", "emoji": "<:Gemstone6:1415356677598740480>", "row": 1},
             {"title": "Gem Title - Ruler of Stars", "role": "Gem Colour 4",
-             "label": "Stars", "emoji": "<:Gemstone8:1415356711967129751>", "row": 2},
+             "label": "Stars", "emoji": "<:Gemstone8:1415356711967129751>", "row": 1},
             {"title": "Gem Title - Transcendence", "role": "Gem Colour 5",
              "label": "Transcend", "emoji": "<:Gemstone1:1415356624909893803>", "row": 2},
             {"title": "Gem Title - Chosen by Fate", "role": "Gem Colour 6",
@@ -1357,7 +1386,9 @@ class ColourView(discord.ui.View):
             {"title": "Gem Title - Tournament Winner", "role": "Gem Colour 7",
              "label": "Winner", "emoji": "<:Gemstone3:1415356650922971278>", "row": 2},
             {"title": "Gem Title - Flame of Trust", "role": "Gem Colour 8",
-             "label": "Flame", "emoji": "<:Gemstone0:1415356608753696868>", "row": 3},
+             "label": "Flame", "emoji": "<:Gemstone0:1415356608753696868>", "row": 2},
+            {"title": "Gem Title - Plague Coalescence", "role": "Gem Colour 9",
+             "label": "Plague", "emoji": "🐀", "row": 2},
             # Exclusive Titles
             {"title": "Exclusive", "role": "Relic Colour 1",
              "label": "Exclusive", "emoji": "<:r_lotus:1275615878456541215>", "row": 3},
@@ -1392,7 +1423,8 @@ class ColourView(discord.ui.View):
             "Collection": [
                 "Collection Title - Soul of Destiny",
                 "Collection Title - Soul of Eternity",
-                "Collection Title - Soul of Harmony"
+                "Collection Title - Soul of Harmony",
+                "Collection Title - Soul of Infinity"
             ]
         }
         member_roles = [role.name for role in self.ctx.author.roles]

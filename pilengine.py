@@ -377,8 +377,8 @@ async def build_notification(player_obj, message, notification_type, title_msg, 
         role_icon = role_icon.resize(icon_size)
         result.paste(role_icon, (42, 90), mask=role_icon)
     elif notification_type == "Item":
-        if item.item_image != "":
-            image_url = item.item_image.replace("Frame_", "")
+        if item.no_frame != "":
+            image_url = item.no_frame
             # item_icon = Image.open(requests.get(image_url, stream=True).raw)
             image_url = image_url.replace(gli.web_url, "botart/")
             item_icon = await fetch_image(None, image_url)

@@ -176,6 +176,7 @@ class SoloCog(commands.Cog):
         self.tracker_obj = combat.CombatTracker(player_obj)
         self.gauntlet, self.mode, self.magnitude = gauntlet, mode, magnitude
         self.loot_awarded = False
+        self.loot_embed = None
         self.lock = asyncio.Lock()
 
     def cog_load(self):
@@ -237,17 +238,16 @@ class SoloCog(commands.Cog):
         if "XXX" in self.boss_obj.boss_name:
             loot_bonus = loot.incarnate_attempts_dict[self.boss_obj.boss_level]
             await leaderboards.update_leaderboard(self.tracker_obj, self.player_obj, self.ctx_object)
-        loot_embed = None
         if not self.loot_awarded:
             self.loot_awarded = True
-            loot_embed = await loot.create_loot_embed(self.embed, self.boss_obj, player_list, ctx=self.ctx_object,
-                                                      loot_mult=loot_bonus, gauntlet=self.gauntlet, magni=self.magnitude)
+            self.loot_embed = await loot.create_loot_embed(self.embed, self.boss_obj, player_list, ctx=self.ctx_object,
+                                                           loot_mult=loot_bonus, gauntlet=self.gauntlet, magni=self.magnitude)
         await encounters.clear_boss_encounter_info(self.channel_id, self.player_obj.player_id)
         if self.tracker_obj.total_cycles <= 5:
-            await self.sent_message.edit(embed=loot_embed)
+            await self.sent_message.edit(embed=self.loot_embed)
             return False
         await self.sent_message.edit(embed=self.embed)
-        await self.ctx_object.send(embed=loot_embed)
+        await self.ctx_object.send(embed=self.loot_embed)
         return False
 
     async def handle_cycle_limit(self):

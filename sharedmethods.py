@@ -9,6 +9,7 @@ import requests
 
 # Data imports
 import globalitems as gli
+from pandoradb import run_query as rqy
 
 # Core imports
 import player
@@ -33,11 +34,11 @@ embed_colour_dict = {
     6: 0xE91E63, 7: 0xFFFFFF, 8: 0x000000, 9: 0x000000}
 
 
-async def check_registration(ctx):
+async def check_registration(ctx, check_channel=True):
     if ctx.guild.id not in gli.servers.keys():
         await ctx.send("Server not active")
         return
-    if ctx.channel.id not in gli.servers[int(ctx.guild.id)][0]:
+    if ctx.channel.id not in gli.servers[int(ctx.guild.id)][0] and check_channel:
         await ctx.send("This command may not be used in this channel.")
         return None
     command_user = await player.get_player_by_discord(ctx.author.id)
@@ -56,6 +57,77 @@ async def check_click(interaction, player_obj, new_embed, new_view):
         await interaction.response.edit_message(embed=new_embed, view=new_view)
         return True
     return False
+
+
+async def update_invite(ctx):
+    channel = ctx.guild.get_channel(1170621004993810492)
+    # Check user data
+    query = "SELECT invite_code FROM DiscordList WHERE discord_id = :uid"
+    params = {"uid": str(ctx.author.id)}
+    df = await rqy(query, return_value=True, params=params)
+    # Check and revoke old invite
+    old_code = None
+    if df is not None and not df.empty:
+        old_code = df["invite_code"].values[0] or None
+    if old_code is not None:
+        ctx.bot.invites[ctx.guild.id] = await ctx.guild.invites()
+        for invite in ctx.bot.invites[ctx.guild.id]:
+            if invite.code == old_code:
+                await invite.delete()
+                break
+    # Create new invite
+    username = ctx.author.display_name
+    invite = await channel.create_invite(max_uses=10, max_age=604800, unique=True, reason=f"{username}'s Invite")
+    ctx.bot.invites[ctx.guild.id] = await ctx.guild.invites()
+    # Insert or update DB
+    invite_query = "UPDATE DiscordList SET invite_code = :code WHERE discord_id = :uid"
+    params = {"uid": str(ctx.author.id), "code": invite.code}
+    if df is None or df.empty:
+        invite_query = ("INSERT INTO DiscordList (discord_id, vouch_points, invite_code) "
+                        "VALUES (:uid, 0, :code)")
+    await rqy(invite_query, params=params)
+    return invite
+
+
+async def give_vouch_points(guild, target_user, point_gain):
+    if point_gain <= 0:
+        return 0
+    query = "SELECT vouch_points FROM DiscordList WHERE discord_id = :uid"
+    params = {"uid": str(target_user.id)}
+    df = await rqy(query, return_value=True, params=params)
+    if df is None or df.empty:
+        insert_query = "INSERT INTO DiscordList (discord_id, vouch_points, invite_code) VALUES (:uid, :pts, '')"
+        params = {"uid": str(target_user.id), "pts": point_gain}
+        await rqy(insert_query, params=params)
+        return point_gain
+    new_points = int(df["vouch_points"].values[0]) + point_gain
+    update_query = "UPDATE DiscordList SET vouch_points = :pts WHERE discord_id = :uid"
+    params = {"uid": str(target_user.id), "pts": new_points}
+    await rqy(update_query, params=params)
+    # Trusted role unlock
+    if new_points >= 100:
+        trusted_rat_role = discord.utils.get(guild.roles, name='Gem Title - Flame of Trust')
+        if trusted_rat_role not in target_user.roles:
+            await target_user.add_roles(trusted_rat_role)
+    await update_vouch_role(guild)
+    return new_points
+
+
+async def update_vouch_role(guild):
+    role_name = "Ranking Title - Vouch Rank #1"
+    vouch_role = discord.utils.get(guild.roles, name=role_name)
+    query = "SELECT discord_id FROM DiscordList ORDER BY vouch_points DESC LIMIT 1"
+    points_df = await rqy(query, return_value=True)
+    if points_df is None or points_df.empty:
+        return
+    top_id = int(points_df["discord_id"][0])
+    top_user = guild.get_member(top_id)
+    current_holders = vouch_role.members
+    for holder in current_holders:
+        if holder.id != top_id:
+            await holder.remove_roles(vouch_role)
+    if vouch_role not in top_user.roles:
+        await top_user.add_roles(vouch_role)
 
 
 def check_rare_item(item_id):

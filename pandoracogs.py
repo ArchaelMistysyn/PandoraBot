@@ -75,8 +75,13 @@ class HourCog(commands.Cog):
             current_weekday = now_utc.weekday() + 1
             reminder_query = ("SELECT discord_id, message, hour FROM UserReminders "
                               "WHERE (weekday = :current_weekday OR weekday = 0)")
+            prev_day = 7 if current_weekday == 1 else current_weekday - 1
             params = {'current_weekday': current_weekday}
             df = await rqy(reminder_query, params=params, return_value=True)
+            dst_query = ("SELECT discord_id, message, hour FROM UserReminders "
+                         "WHERE (weekday = :prev_day)")
+            params = {'prev_day': prev_day}
+            dst_df = await rqy(dst_query, params=params, return_value=True)
             if df is None or len(df.index) == 0:
                 print("0 reminders sent")
                 return
@@ -88,6 +93,21 @@ class HourCog(commands.Cog):
                     tz_code, dst_offset = await timezone.get_user_timezone(user_id)
                     if not (((now_utc.hour == int(row["hour"]) and dst_offset == 0) or
                             (now_utc.hour != int(row["hour"]) and dst_offset == 1))):
+                        continue
+                    user = await self.bot.fetch_user(int(user_id))
+                    msg_file = await sm.message_box(None, [row['message']], "Reminder")
+                    await user.send(file=discord.File(msg_file))
+                except (discord.Forbidden, discord.NotFound):
+                    continue
+            # DST adjusted check ONLY
+            if dst_df is None or len(dst_df.index) == 0:
+                print("All reminders sent")
+                return
+            for _, row in dst_df.iterrows():
+                try:
+                    user_id = row["discord_id"]
+                    tz_code, dst_offset = await timezone.get_user_timezone(user_id)
+                    if not (dst_offset == 1 and int(row["hour"]) == 23 and now_utc.hour == 0):
                         continue
                     user = await self.bot.fetch_user(int(user_id))
                     msg_file = await sm.message_box(None, [row['message']], "Reminder")
@@ -146,7 +166,7 @@ class MetricsCog(commands.Cog):
             ("ArchDragon Moderator", 1134293907136585769),
             ("ArchDragon Administrator", 1134301246648488097)
         ]
-        reaction_msg = await self.get_top_reactions_week()
+        # reaction_msg = await self.get_top_reactions_week()
         # Build output text
         metrics_text = f"Total Members: {total_members:,}\n"
         for label, role_id in role_checks:
@@ -155,7 +175,7 @@ class MetricsCog(commands.Cog):
                 metrics_text += f"{label}: {len(role.members):,}\n"
             else:
                 metrics_text += f"{label}: Role not found\n"
-        metrics_text += f"\nTop Reactions (7d):\n{reaction_msg}\n"
+        # metrics_text += f"\nTop Reactions (7d):\n{reaction_msg}\n"
         metrics_channel = self.bot.get_channel(gli.metrics_channel)
         if metrics_channel:
             message_obj = await metrics_channel.fetch_message(gli.metrics_message_id)

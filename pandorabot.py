@@ -123,6 +123,7 @@ class PandoraBot(commands.Bot):
 def run_discord_bot():
     print(sys.version)
     pandora_bot = PandoraBot()
+    pandora_bot.invites = {}
 
     class CommandPlaceholder:
         def __init__(self, category):
@@ -132,6 +133,8 @@ def run_discord_bot():
     async def on_ready():
         if pandora_bot.conn_status == "Connected":
             await send_log_msg(f'{pandora_bot.user} Online!')
+        for guild in pandora_bot.guilds:
+            pandora_bot.invites[guild.id] = await guild.invites()
         await timezone.init_time_menu(pandora_bot)
         pandora_bot.help_command = CustomHelpCommand()
 
@@ -195,7 +198,7 @@ def run_discord_bot():
                 has_passcard = "Passcard - Guild Access" in user_role_names
                 has_allowed_role = any(role_name in user_role_names for role_name in gli.ALLOWED_LINK_ROLE_NAMES)
                 if not (is_unconditional or (is_exempt and has_passcard) or has_allowed_role):
-                    warning_msg = "Link requires mod/admin approval."
+                    warning_msg = f"Link requires {gli.mod_mention} approval."
                     warning_embed = sm.easy_embed("Red", "Insufficient Permissions!", warning_msg)
                     warning_embed.set_thumbnail(url=gli.archdragon_logo)
                     approval_view = menus.LinkReviewView(message.content)
@@ -251,6 +254,60 @@ def run_discord_bot():
         for part in parts[1:]:
             await send_log_msg(f'```{part}```')
 
+    @pandora_bot.event
+    async def on_member_join(member):
+        guild = member.guild
+        if guild.id not in pandora_bot.invites:
+            pandora_bot.invites[guild.id] = await guild.invites()
+            return
+        role_bronze = discord.utils.get(guild.roles, name="Pack Rat")
+        role_silver = discord.utils.get(guild.roles, name="Rat Swarm")
+        role_gold = discord.utils.get(guild.roles, name="Rat Tide")
+        role_diamond = discord.utils.get(guild.roles, name="Gem Title - Plague Coalescence")
+        inviter_roles = [role_bronze, role_silver, role_gold, role_diamond]
+        invites_before = pandora_bot.invites[guild.id]
+        invites_after = await guild.invites()
+        used_invite = None
+        # Determine used invite
+        for before in invites_before:
+            after = next((i for i in invites_after if i.code == before.code), None)
+            if after and after.uses > before.uses:
+                used_invite = after
+                break
+        pandora_bot.invites[guild.id] = invites_after
+        if used_invite is None:
+            return
+        # Update roles
+        raw_query = "SELECT discord_id FROM DiscordList WHERE invite_code = :code LIMIT 1"
+        params = {"code": used_invite.code}
+        df = await rqy(raw_query, return_value=True, params=params)
+        if df is None or df.empty:
+            return
+        inviter_id = int(df["discord_id"].values[0])
+        inviter_member = guild.get_member(inviter_id)
+        if inviter_member is None:
+            return
+        await sm.give_vouch_points(guild, inviter_member, 5)
+        target_role = role_bronze
+        previous_role = None
+        if role_diamond in inviter_member.roles:
+            await inviter_member.add_roles(target_role)
+            await inviter_member.remove_roles(target_role)
+            return
+        current_index = -1
+        for i, role in enumerate(inviter_roles):
+            if role in inviter_member.roles:
+                current_index = i
+                break
+        if current_index != -1:
+            if current_index + 1 >= len(inviter_roles):
+                return
+            previous_role = inviter_roles[current_index]
+            target_role = inviter_roles[current_index + 1]
+        if previous_role:
+            await inviter_member.remove_roles(previous_role)
+        await inviter_member.add_roles(target_role)
+
     class CustomHelpCommand(commands.DefaultHelpCommand):
         def __init__(self):
             super().__init__()
@@ -280,7 +337,7 @@ def run_discord_bot():
             return True, None, None
         if method == "DM":
             return (not isinstance(ctx_object.channel, discord.DMChannel)), None, None
-        player_obj = await sm.check_registration(ctx_object)
+        player_obj = await sm.check_registration(ctx_object, check_channel=False)
         if player_obj is None:
             return True, None, None
         target_player = player_obj
@@ -449,6 +506,9 @@ def run_discord_bot():
             message_chunks = [output_message[i:i + 1000] for i in range(0, len(output_message), 1000)]
             for chunk in message_chunks:
                 await ctx.send(chunk)
+        elif keyword == "GameSpin":
+            games = ["Monster Hunter", "Rocket League", "Wild Card"]
+            await ctx.send(random.choice(games))
         elif keyword == "KillCog":
             ctx.bot.remove_cog(value)
         elif keyword == "Test":
@@ -2186,22 +2246,6 @@ def run_discord_bot():
         await ctx.send(file=discord.File(await sm.title_box("Support Us")))
         await ctx.send(embed=embed_msg)
 
-    async def update_vouch_role(ctx):
-        role_name = "Ranking Title - Vouch Rank #1"
-        vouch_role = discord.utils.get(ctx.guild.roles, name=role_name)
-        query = "SELECT discord_id FROM VouchList ORDER BY vouch_points DESC LIMIT 1"
-        points_df = await rqy(query, return_value=True)
-        if points_df is None or points_df.empty:
-            return
-        top_id = int(points_df["discord_id"][0])
-        top_user = ctx.guild.get_member(top_id)
-        current_holders = vouch_role.members
-        for holder in current_holders:
-            if holder.id != top_id:
-                await holder.remove_roles(vouch_role)
-        if vouch_role not in top_user.roles:
-            await top_user.add_roles(vouch_role)
-
     @pandora_bot.hybrid_command(name='vouch', help="Grants vouches to a user.")
     @app_commands.guilds(discord.Object(id=1011375205999968427))
     async def vouch(ctx, user: discord.User):
@@ -2212,7 +2256,6 @@ def run_discord_bot():
         if user.id == ctx.author.id:
             await ctx.send("You cannot vouch for yourself.")
             return
-        command_user = int(ctx.author.id)
         role_points = {
             1011375497265033216: 30,  # Owner role ID
             1393093283479158824: 25,  # Vice role ID
@@ -2222,31 +2265,17 @@ def run_discord_bot():
             1140738057381871707: 5,  # Guild Member role ID
         }
         default_points = 2
-        raw_query, params = "SELECT vouch_points FROM VouchList WHERE discord_id = :input1", {"input1": str(user.id)}
-        points_df = await rqy(raw_query, return_value=True, params=params)
         user_roles = [role.id for role in ctx.author.roles]
         highest_role_id = max(user_roles, key=lambda role_id: role_points.get(role_id, default_points))
-        new_points = num_points = role_points.get(highest_role_id, default_points)
-        if points_df is None or len(points_df.index) == 0:
-            update_query = "INSERT INTO VouchList (discord_id, vouch_points) VALUES (:input1, :input2)"
-            params = {"input1": str(user.id), "input2": num_points}
-        else:
-            new_points = num_points + int(points_df['vouch_points'].values[0])
-            update_query = "UPDATE VouchList SET vouch_points = :input2 WHERE discord_id = :input1"
-            params = {"input1": str(user.id), "input2": new_points}
-        await rqy(update_query, params=params)
-        if new_points >= 100:
-            trusted_rat_role = discord.utils.get(ctx.guild.roles, name='Gem Title - Flame of Trust')
-            if trusted_rat_role not in user.roles:
-                await user.add_roles(trusted_rat_role)
+        num_points = role_points.get(highest_role_id, default_points)
+        new_points = await sm.give_vouch_points(ctx.guild, user, num_points)
         await ctx.send(f"{num_points} vouch points awarded to {user.name}. New total: {new_points}")
-        await update_vouch_role(ctx)
 
     @pandora_bot.hybrid_command(name='vcheck', help="Check the vouches of a user.")
     @app_commands.guilds(discord.Object(id=1011375205999968427))
     async def vcheck(ctx, user: discord.User):
         await ctx.defer()
-        raw_query, params = "SELECT vouch_points FROM VouchList WHERE discord_id = :input1", {"input1": str(user.id)}
+        raw_query, params = "SELECT vouch_points FROM DiscordList WHERE discord_id = :input1", {"input1": str(user.id)}
         points_df = await rqy(raw_query, return_value=True, params=params)
         num_vouches = 0
         if points_df is not None and len(points_df.index) != 0:
@@ -2259,7 +2288,7 @@ def run_discord_bot():
     @app_commands.guilds(discord.Object(id=1011375205999968427))
     async def vboard(ctx):
         await ctx.defer()
-        query = "SELECT discord_id, vouch_points FROM VouchList ORDER BY vouch_points DESC LIMIT 10"
+        query = "SELECT discord_id, vouch_points FROM DiscordList ORDER BY vouch_points DESC LIMIT 10"
         points_df = await rqy(query, return_value=True)
         if points_df is None or len(points_df.index) == 0:
             await ctx.send("Empty")
@@ -2349,6 +2378,34 @@ def run_discord_bot():
             await ctx.send(embed=colour_embed, view=menus.ColourView(ctx))
         else:
             await ctx.send("Only title holders may change their role colour.")
+
+    @pandora_bot.hybrid_command(name='invite', help="Get a scorable invite link.")
+    @app_commands.guilds(discord.Object(id=guild_id))
+    async def get_invite(ctx):
+        await ctx.defer()
+        # guild_role = discord.utils.get(ctx.guild.roles, name="Passcard - Guild Access")
+        # if guild_role not in ctx.author.roles:
+            # approval = sm.easy_embed("Yellow", f"{gli.archdragon_emoji} Pending Approval", gli.mod_mention)
+            # await ctx.send(embed=approval, view=menus.InviteReviewView(ctx))
+            # return
+        invite = await sm.update_invite(ctx)
+        link_embed = sm.easy_embed("Green", f"{gli.archdragon_emoji} Approved 7 Day Link", invite.url)
+        await ctx.send(embed=link_embed)
+
+    @pandora_bot.hybrid_command(name='togin', help="Archael only. Toggle invitation role.")
+    @app_commands.guilds(discord.Object(id=guild_id))
+    async def toggle_invitation(ctx, target_user: discord.Member):
+        await ctx.defer()
+        trigger_return, _, _ = await admin_verification(ctx, auth="Archael")
+        if trigger_return:
+            return
+        invite_role = discord.utils.get(ctx.guild.roles, name="Passcard - Archael's Invitation")
+        if invite_role not in target_user.roles:
+            await target_user.add_roles(invite_role)
+            await ctx.send(file=discord.File(await sm.title_box(f"{target_user.display_name} - Invitation")))
+            return
+        await target_user.remove_roles(invite_role)
+        await ctx.send(f"{target_user.display_name} - Invitation Off")
 
     def build_category_dict():
         temp_dict = {}

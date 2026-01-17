@@ -84,14 +84,12 @@ async def award_loot(boss_object, player_list, exp_amount, coin_amount, loot_mul
         base_reward_msg = f"{gli.exp_icon} {exp_msg} EXP\n"
         base_reward_msg += f"{gli.coin_icon} {coin_msg} lotus coins\n"
         msg.append(base_reward_msg)
-
         # Handle ring souls
         if temp_player.player_equipped[4] != 0:
             e_ring = await inventory.read_custom_item(temp_player.player_equipped[4])
             if e_ring.item_base_type == "Crown of Skulls":
                 e_ring.roll_values[1] = str(int(e_ring.roll_values[1]) + 1)
                 await e_ring.update_stored_item()
-
         # Check unscaled drops.
         core_element = boss_object.boss_element if boss_object.boss_element != 9 else random.randint(0, 8)
         fae_id, fae_qty = f"Fae{core_element}", random.randint(5, max(5, min(100, boss_object.boss_level)))
@@ -120,7 +118,6 @@ async def award_loot(boss_object, player_list, exp_amount, coin_amount, loot_mul
         if min_shards > 0:
             num_shards = random.randint(min_shards, max_shards)
             msg, batch_df = update_loot_and_df(temp_player, f"Shard", num_shards, msg, counter, batch_df)
-
         # Handle boss drops.
         possible_loot = boss_loot_dict[boss_object.boss_type] + boss_loot_dict['All']
         possible_loot = [loot_entry for loot_entry in possible_loot if loot_entry[0] == boss_tier or loot_entry[0] == 0]

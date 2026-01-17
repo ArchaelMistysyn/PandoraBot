@@ -21,6 +21,8 @@ servers = {1011375205999968427: ([1157937444931514408],
 GM_id_dict = {185530717638230016: "Archael", 141837266866667520: "Zweii", 353090154044325906: "Viper",
               1177738094666059877: "Eleuia"}
 moderation_roles = {"ArchDragon Administrator", "ArchDragon Moderator", "Server Owner - Archael"}
+mod_mention = "<@&1134293907136585769>"
+admin_mention = "<@&1134301246648488097>"
 # ArchDragon Exclusive Channel Features
 bot_logging_channel = 1266478401846247454
 time_zone_channel, time_zone_message_id = 1328062692778315797, 1328099757796884520
