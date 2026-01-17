@@ -129,7 +129,7 @@ class CurrentBoss:
                 pass
 
 
-async def spawn_boss(channel_id, player_id, boss_tier, boss_type, boss_level, gauntlet=False, magnitude=0):
+async def spawn_boss(channel_id, player_id, boss_tier, boss_type, boss_level, gauntlet=False, magnitude=0, limiter=1):
     df = await encounters.get_encounter_id(channel_id, player_id, id_only=False)
     # Load existing boss.
     if df is not None:
@@ -147,7 +147,7 @@ async def spawn_boss(channel_id, player_id, boss_tier, boss_type, boss_level, ga
         # Set the damage cap.
         boss_obj.damage_cap = -1
         if boss_obj.boss_tier <= 4:
-            boss_obj.damage_cap = (10 ** int(boss_level / 10 + 4) - 1)
+            boss_obj.damage_cap = (10 ** int(boss_level / 10 + 4) - 1) * limiter
         boss_obj.boss_thumbnail = f"{gli.web_url}/bosses/BossIcons/{boss_obj.boss_type}.png"
         return boss_obj
     # Create the boss object if it doesn't exist.
@@ -179,7 +179,7 @@ async def spawn_boss(channel_id, player_id, boss_tier, boss_type, boss_level, ga
         multiplier_count = (boss_obj.boss_level - 100) // 100 + 1
         total_hp *= (10 ** multiplier_count)
     encounter_type = "solo" if not gauntlet else "gauntlet"
-    boss_obj.damage_cap = total_hp // 10 - 1
+    boss_obj.damage_cap = (total_hp // 10 - 1) * limiter
     if boss_type == "Ruler":
         encounter_type, boss_obj.damage_cap = "Raid", (total_hp // 1000 - 1)
     elif boss_obj.boss_type == "Incarnate":

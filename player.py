@@ -62,6 +62,7 @@ class PlayerProfile:
         self.special_curse = {"Storms": 0.0, "Eclipse": 0.0, "Horizon": 0.0, "Frostfire": 0.0, "Holy": 0.0, "Chaos": 0.0}
         self.singularity_mult, self.singularity_pen, self.singularity_curse = 0.0, 0.0, 0.0
         # Initialize specialization stats.
+        self.limit_shift = 1.0
         self.unique_glyph_ability = [False] * 9
         self.elemental_capacity = 3
         self.mana_mult, self.start_mana, self.mana_limit, self.mana_shatter = 1.0, 250, 250, False
@@ -269,6 +270,10 @@ class PlayerProfile:
             stats += f"\nClass Multiplier: {show_num(self.total_class_mult):,}%"
             stats += f"\nFinal Damage: {show_num(self.final_damage):,}%"
             stats += f"\nDefence Penetration: {show_num(self.defence_pen):,}%"
+            if self.limit_shift > 1:
+                stats += f"\nBoss Damage Limit: {show_num(self.limit_shift):,}%"
+            else:
+                stats += f"\nBoss Damage Limit: FREE"
             stats += f"\nBloom Damage: {show_num(self.bloom_mult):,}%"
             stats += f"\nBloom Rate: {show_num(self.trigger_rate['Bloom']):,}%"
             embed_msg.add_field(name=title_msg, value=stats, inline=False)
@@ -286,7 +291,7 @@ class PlayerProfile:
                 coin_change = int(round(coin_change / 2))
                 adjust_msg = " [Gluttony Penalty]"
         self.player_coins += coin_change
-        await self.set_player_field("player_coins", self.player_coins)
+        await self.set_player_field("player_coins", str(self.player_coins))
         return f"{coin_change:,}x{adjust_msg}"
 
     async def adjust_exp(self, exp_change, apply_pact=True):
@@ -350,7 +355,7 @@ class PlayerProfile:
             'input_1': str(self.discord_id), 'input_2': str(self.player_username), 'input_3': int(self.player_level),
             'input_4': int(self.player_exp), 'input_5': int(self.player_echelon),
             'input_6': int(self.player_quest), 'input_7': quest_tokens,
-            'input_8': int(self.player_stamina), 'input_9': str(self.player_class), 'input_10': int(self.player_coins),
+            'input_8': int(self.player_stamina), 'input_9': str(self.player_class), 'input_10': str(self.player_coins),
             'input_11': player_stats, 'input_12': equipped_gear, 'input_13': str(self.equipped_tarot),
             'input_14': str(self.insignia), 'input_15': str(self.pact)}
         await rqy(raw_query, params=params)

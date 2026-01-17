@@ -1725,7 +1725,7 @@ def run_discord_bot():
         # Spawn the boss
         new_boss_tier = bosses.get_random_bosstier(boss_type)
         boss_obj = await bosses.spawn_boss(ctx.channel.id, player_obj.player_id, new_boss_tier, boss_type,
-                                           player_obj.player_level, magnitude=magnitude)
+                                           player_obj.player_level, magnitude=magnitude, limiter=player_obj.limit_shift)
         boss_obj.player_id = player_obj.player_id
         embed_msg = boss_obj.create_boss_embed()
         magnitude_msg = f" [Magnitude: {magnitude}]" if magnitude > 0 else ""
@@ -1856,7 +1856,7 @@ def run_discord_bot():
         await quest.assign_unique_tokens(player_obj, "Gauntlet")
         boss_obj = await bosses.spawn_boss(
             ctx.channel.id, player_obj.player_id, 1, "Fortress",
-            player_obj.player_level, gauntlet=True, magnitude=magnitude)
+            player_obj.player_level, gauntlet=True, magnitude=magnitude, limiter=player_obj.limit_shift)
         boss_obj.player_id = player_obj.player_id
         magnitude_msg = f" [Magnitude: {magnitude}]" if magnitude > 0 else ""
         await ctx.send(f"{player_obj.player_username} has entered the Spire of Illusions!{magnitude_msg}")
@@ -1908,7 +1908,8 @@ def run_discord_bot():
         boss_type = "Paragon" if token_version < 3 else "Arbiter"
         new_boss_tier = 4 + token_version
         boss_obj = await bosses.spawn_boss(ctx.channel.id, player_obj.player_id, new_boss_tier,
-                                           boss_type, player_obj.player_level, magnitude=magnitude)
+                                           boss_type, player_obj.player_level,
+                                           magnitude=magnitude, limiter=player_obj.limit_shift)
         boss_obj.player_id = player_obj.player_id
         magnitude_msg = f" [Magnitude: {magnitude}]" if magnitude > 0 else ""
         msg = f"{player_obj.player_username} has summoned a tier {boss_obj.boss_tier} boss!{magnitude_msg}"

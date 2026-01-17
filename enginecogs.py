@@ -227,7 +227,8 @@ class SoloCog(commands.Cog):
             if self.boss_obj.boss_tier < 4:
                 boss_type = random.choice(["Fortress", "Dragon", "Demon", "Paragon"])
             self.boss_obj = await bosses.spawn_boss(self.channel_id, self.player_obj.player_id, new_tier,
-                                                    boss_type, self.player_obj.player_level, gauntlet=self.gauntlet)
+                                                    boss_type, self.player_obj.player_level, gauntlet=self.gauntlet,
+                                                    limiter=self.player_obj.limit_shift)
             current_dps = int(self.tracker_obj.total_dps / self.tracker_obj.total_cycles)
             self.embed = self.boss_obj.create_boss_embed(dps=current_dps, extension=extension)
             await self.sent_message.edit(embed=self.embed)
