@@ -6,6 +6,7 @@ from functools import reduce
 # Data imports
 import globalitems as gli
 import sharedmethods as sm
+import pilengine
 
 # Core imports
 import player
@@ -67,7 +68,11 @@ class Insignia:
         self.insignia_output = sm.easy_embed(self.stars, self.name, sm.display_stars(self.stars))
         self.insignia_output.add_field(name=element_icons, value=damage_details, inline=False)
         self.insignia_output.add_field(name="Insignia Bonus", value=item_rolls, inline=False)
-        self.insignia_output.set_thumbnail(url=f"{gli.frame_icon_list[self.stars - 1].replace('[EXT]', gli.frame_extension[0])}")
+        selected = sorted(i for i, v in enumerate(self.element_list) if v == 1)
+        digits = "012345678" if len(selected) == 9 else "".join(str(i) for i in selected)
+        file_name = f"Frame_Insignia{digits}_{self.stars}.png"
+        web_url = "https://PandoraPortal.ca/botimages/Gear_Icon/Insignia/Frame_Insignia/"
+        self.insignia_output.set_thumbnail(url=f"{web_url}{file_name}")
 
 
 def check_tier(echelon, mutation_tier):

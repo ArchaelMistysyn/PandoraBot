@@ -2,6 +2,7 @@
 from PIL import Image, ImageFont, ImageDraw, ImageOps, ImageFilter
 import requests
 import os
+import glob
 import asyncio
 from ftplib import FTP
 import aiohttp
@@ -174,6 +175,8 @@ async def generate_exp_bar(exp_bar_image, exp_bar_start, exp_bar_end, fill_perce
 
 async def generate_and_combine_gear(item_type, start_tier=1, end_tier=8, element=""):
     # Ensure image is currently available.
+    if item_type == "Insignia":
+        return await build_insignia_images()
     if item_type not in gli.sovereign_item_list:
         return 0
     ftp = await create_ftp_connection(web_data[0], web_data[1], web_data[2])
@@ -202,7 +205,7 @@ async def generate_and_combine_gear(item_type, start_tier=1, end_tier=8, element
             output_dir = f"{gli.image_path}Gear_Icon/{folder}/{sub_dir}"
             file_name = f"Frame_{item_type.replace(' ', '_')}{element}_{item_tier}.png"
             file_path = f"{output_dir}{file_name}"
-            frame, icon = await fetch_image(session, frame_url), await fetch_image(session, icon_url)
+            frame, icon = await fetch_image(None, frame_url), await fetch_image(session, icon_url)
             if icon is None:
                 print(f"Failed to load icon for {item_type} at tier {item_tier}")
                 continue
@@ -235,6 +238,39 @@ async def generate_and_combine_gear(item_type, start_tier=1, end_tier=8, element
             await upload_file_to_ftp(ftp, file_path, remote_dir, file_name)
     ftp.quit()
     return end_tier + 1 - start_tier
+
+
+async def build_insignia_images():
+    base_dir = "botart/Gear_Icon/Insignia/"
+    output_dir = f"{gli.image_path}Gear_Icon/Insignia/Frame_Insignia/"
+    remote_dir = "/botimages/Gear_Icon/Insignia/Frame_Insignia/"
+    insignia_files = glob.glob(f"{base_dir}Insignia*.png")
+    ftp = await create_ftp_connection(web_data[0], web_data[1], web_data[2])
+    count = 0
+    insignia_background = await fetch_image(None, "botart/Gear_Icon/Insignia/BackShader.png")
+    for insignia_path in insignia_files:
+        digits = os.path.splitext(os.path.basename(insignia_path))[0].replace("Insignia", "")
+        insignia_base = await fetch_image(None, insignia_path)
+        for tier in range(1, 10):
+            file_name = f"Frame_Insignia{digits}_{tier}.png"
+            file_path = f"{output_dir}{file_name}"
+            if os.path.exists(file_path):
+                count += 1
+                continue
+            frame_url = gli.frame_icon_list[tier - 1].replace("[EXT]", gli.frame_extension[0])
+            frame = await fetch_image(None, frame_url)
+
+            result = Image.new("RGBA", (106, 106), (0, 0, 0, 0))
+            result.paste(frame, (0, 0), frame)
+            result.paste(insignia_background, (17, 16), insignia_background)
+            result.paste(insignia_base, (17, 16), insignia_base)
+            result.save(file_path, format="PNG")
+
+            await upload_file_to_ftp(ftp, file_path, remote_dir, file_name)
+            count += 1
+        await asyncio.sleep(1)
+    ftp.quit()
+    return count
 
 
 async def generate_and_combine_images():
@@ -271,7 +307,7 @@ async def generate_and_combine_images():
             icon = await fetch_image(session, icon_url)
             print("icon loaded")
             await asyncio.sleep(1)
-            frame = await fetch_image(session, frame_url)
+            frame = await fetch_image(None, frame_url)
             print("frame loaded")
             # Construct the new image
             # result = pixel_blend(frame, icon)

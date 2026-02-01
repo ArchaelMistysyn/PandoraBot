@@ -209,7 +209,10 @@ class MetricsCog(commands.Cog):
         if now.day != 1:
             return
         print("Updating Credits")
-        eligible_roles = [role for role in self.guild.roles if "Subscriber" in role.name]
+        eligible_roles = [
+            role for role in self.guild.roles
+            if "Subscriber" in role.name and "Server" not in role.name
+        ]
         credited_users = []
         for member in self.guild.members:
             if any(role in member.roles for role in eligible_roles):

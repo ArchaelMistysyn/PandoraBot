@@ -266,7 +266,7 @@ class SoloCog(commands.Cog):
 
 class PvPCog(commands.Cog):
     def __init__(self, bot, ctx_obj, player1, player2, sent_message, channel_obj):
-        self.__cog_name__ = f"SoloCog_{player_obj.player_id}"
+        self.__cog_name__ = f"SoloCog_{player1.player_id}"
         self.bot, self.ctx_obj = bot, ctx_obj
         self.channel_obj = channel_obj
         self.player1, self.player2 = player1, player2

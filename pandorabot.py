@@ -14,7 +14,7 @@ import time
 import random
 import traceback
 import PIL
-from datetime import datetime as dt, timedelta
+from datetime import datetime as dt, timedelta, timezone as tz
 from zoneinfo import ZoneInfo
 
 import globalitems
@@ -481,6 +481,9 @@ def run_discord_bot():
             non_weapon_list = ["Armour", "Greaves", "Amulet", "Wings", "Crest", "Gem", "Pact"]
             # for gear_type in non_weapon_list:
                # count += await pilengine.generate_and_combine_gear(gear_type, end_tier=9)
+            await ctx.send(f"Admin item task completed. Task Count: {count}")
+        elif keyword == "Insignia":
+            count = await pilengine.generate_and_combine_gear("Insignia")
             await ctx.send(f"Admin item task completed. Task Count: {count}")
         elif keyword == "MergeNongear":
             count = await pilengine.generate_and_combine_images()
@@ -2407,6 +2410,18 @@ def run_discord_bot():
             return
         await target_user.remove_roles(invite_role)
         await ctx.send(f"{target_user.display_name} - Invitation Off")
+
+    @pandora_bot.hybrid_command(name='timestamp', help="Get a timestamp. Input 0-23")
+    @app_commands.guilds(discord.Object(id=guild_id))
+    async def create_timestamp(ctx, time_value: int):
+        await ctx.defer()
+        if not 0 <= time_value <= 23:
+            await ctx.send("Time must be between 0 and 23.")
+            return
+        now = dt.now(tz.utc)
+        target_dt = now.replace(hour=time_value, minute=0, second=0, microsecond=0)
+        unix_ts = int(target_dt.timestamp())
+        await ctx.send(f"Timestamp: {time_value} UTC\nExample: <t:{unix_ts}:t>\nCopy:```<t:{unix_ts}:t>```")
 
     def build_category_dict():
         temp_dict = {}
