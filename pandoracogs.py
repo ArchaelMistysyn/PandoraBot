@@ -162,6 +162,7 @@ class MetricsCog(commands.Cog):
             ("Private Access Member", 1076760869620437002),
             ("Gem Title Holder", 1415355530729361528),
             ("Relic Title Holder", 1157565406366666792),
+            ("Active Subscriber", 1519033869041537166),
             ("ArchDragon Partner", 1411594840793288815),
             ("ArchDragon Moderator", 1134293907136585769),
             ("ArchDragon Administrator", 1134301246648488097)
@@ -246,7 +247,8 @@ class MetricsCog(commands.Cog):
     @tasks.loop(seconds=86401)
     async def credit_manager(self):
         async with self.lock:
-            await self.run_credit()
+            pass
+            # await self.run_credit()
 
     @credit_manager.before_loop
     async def _credit_wait_ready(self):

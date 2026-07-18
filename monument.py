@@ -34,6 +34,7 @@ async def get_monument_embed(interaction, ctx_obj, player_obj, monument_num):
     monument_claims = monument_data.split(';')
     if monument_claims[monument_num] == "1":
         embed_msg = sm.easy_embed("Red", monument_title[monument_num], "Already Claimed")
+        await interaction.edit_original_response(embed=embed_msg, view=None)
         return
     monument_claims[monument_num] = "1"
     new_data = ';'.join(monument_claims)
@@ -46,7 +47,7 @@ async def get_monument_embed(interaction, ctx_obj, player_obj, monument_num):
     update_stock = await inventory.update_stock(player_obj, reward.item_id, qty)
     spaced_title = monument_title[monument_num].replace(' ', '%20')
     embed_msg.set_image(url=f"{gli.web_gallery_url}Displays/Locations/{spaced_title}.webp")
-    await interaction.response.edit_message(embed=embed_msg, view=None)
+    await interaction.edit_original_response(embed=embed_msg, view=None)
     if lvl_change != 0:
         await sm.send_notification(ctx_obj, player_obj, "Level", lvl_change)
     if sm.check_rare_item(reward.item_id):

@@ -24,13 +24,14 @@ class BazaarView(discord.ui.View):
         self.sort_type, self.filter_type = sort_type, filter_type
 
     async def handle_sort_and_filter(self, interaction, sort_type="Tier", filter_type=""):
+        await interaction.response.edit_message(embed=gli.processing_embed)
         if sort_type != "":
             self.sort_type = sort_type
         if filter_type != "":
             self.filter_type = filter_type
         new_embed = await show_bazaar_items(self.player_obj, sort_type=self.sort_type, filter_type=self.filter_type)
         new_view = BazaarView(self.player_obj, sort_type=self.sort_type, filter_type=self.filter_type)
-        await interaction.response.edit_message(embed=new_embed, view=new_view)
+        await interaction.edit_original_response(embed=new_embed, view=new_view)
 
     @discord.ui.button(label="Sort: Tier", style=discord.ButtonStyle.blurple, row=1)
     async def tier_sort(self, interaction: discord.Interaction, button: discord.Button):

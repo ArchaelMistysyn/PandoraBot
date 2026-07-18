@@ -218,10 +218,11 @@ class InfuseView(discord.ui.View):
     async def select_callback(self, interaction: discord.Interaction):
         if interaction.user.id != self.player_obj.discord_id:
             return
+        await interaction.response.edit_message(embed=gli.processing_embed)
         embed_msg = sm.easy_embed("Magenta", NPC_name, NPC_description)
         embed_msg.set_image(url=gli.infuse_img)
         new_view = SelectRecipeView(self.ctx_obj, self.player_obj, interaction.data['values'][0])
-        await interaction.response.edit_message(embed=embed_msg, view=new_view)
+        await interaction.edit_original_response(embed=embed_msg, view=new_view)
 
 
 class SelectRecipeView(discord.ui.View):
@@ -258,15 +259,16 @@ class SelectRecipeView(discord.ui.View):
     async def recipe_callback(self, interaction: discord.Interaction):
         if interaction.user.id != self.player_obj.discord_id:
             return
+        await interaction.response.edit_message(embed=gli.processing_embed)
         if self.embed is not None:
-            await interaction.response.edit_message(embed=self.embed, view=self.new_view)
+            await interaction.edit_original_response(embed=self.embed, view=self.new_view)
             return
         await self.player_obj.reload_player()
         selected_option = interaction.data['values'][0]
         recipe_object = RecipeObject(self.category, selected_option)
         self.embed = await recipe_object.create_cost_embed(self.player_obj)
         self.new_view = CraftView(self.ctx_obj, self.player_obj, recipe_object)
-        await interaction.response.edit_message(embed=self.embed, view=self.new_view)
+        await interaction.edit_original_response(embed=self.embed, view=self.new_view)
 
 
 class CraftView(discord.ui.View):
@@ -301,9 +303,10 @@ class CraftView(discord.ui.View):
     async def run_button(self, interaction, selected_qty):
         if interaction.user.id != self.player_obj.discord_id:
             return
+        await interaction.response.edit_message(embed=gli.processing_embed)
         await self.player_obj.reload_player()
         if self.embed_msg is not None:
-            await interaction.response.edit_message(embed=self.embed_msg, view=self.new_view)
+            await interaction.edit_original_response(embed=self.embed_msg, view=self.new_view)
             if self.classification is not None:
                 await sm.send_notification(self.ctx_obj, self.player_obj, self.classification, self.new_item.item_base_type)
             return
@@ -315,7 +318,7 @@ class CraftView(discord.ui.View):
             self.embed_msg = await self.recipe_object.create_cost_embed(self.player_obj)
             self.embed_msg.add_field(name="Not Enough Materials!",
                                      value="Please come back when you have more materials.", inline=False)
-            await interaction.response.edit_message(embed=self.embed_msg, view=self.new_view)
+            await interaction.edit_original_response(embed=self.embed_msg, view=self.new_view)
             return
         if self.recipe_object.item_type is not None:
             is_sacred = False if item_tier != 8 else True if selected_qty == 5 or random.randint(1, 100) <= 5 else False
@@ -326,7 +329,7 @@ class CraftView(discord.ui.View):
                 header, description = "Full Inventory!", f"Please make space in your {type_name.lower()} inventory."
                 self.embed_msg.add_field(name=header, value=description, inline=False)
                 self.new_view = CraftView(self.ctx_obj, self.player_obj, self.recipe_object)
-                await interaction.response.edit_message(embed=self.embed_msg, view=self.new_view)
+                await interaction.edit_original_response(embed=self.embed_msg, view=self.new_view)
                 return
         # Handle infusion
         result = await self.recipe_object.perform_infusion(self.player_obj, target_qty)
@@ -336,14 +339,14 @@ class CraftView(discord.ui.View):
             header, description = "Infusion Failed!", "I guess it's just not your day today. How about another try?"
             self.embed_msg.add_field(name=header, value=description, inline=False)
             self.new_view = CraftView(self.ctx_obj, self.player_obj, self.recipe_object)
-            await interaction.response.edit_message(embed=self.embed_msg, view=self.new_view)
+            await interaction.edit_original_response(embed=self.embed_msg, view=self.new_view)
             return
         elif self.recipe_object.item_type is None:
             # Non-Gear Success
             outcome_item = self.recipe_object.outcome_item
             header, description = "Infusion Successful!", f"\n{outcome_item.item_emoji} {result:,}x {outcome_item.item_name}"
             self.embed_msg.add_field(name=header, value=description, inline=False)
-            await interaction.response.edit_message(embed=self.embed_msg, view=self.new_view)
+            await interaction.edit_original_response(embed=self.embed_msg, view=self.new_view)
             return
         # Handle Gear Success
         self.classification, item_tier = ("Sacred", 9) if is_sacred else ("Sovereign", 8) if item_tier == 8 else (None, item_tier)
@@ -361,7 +364,7 @@ class CraftView(discord.ui.View):
                 self.new_item.roll_values[0], self.new_item.roll_values[1] = 10, 500
         await inventory.add_custom_item(self.new_item)
         self.embed_msg = await self.new_item.create_citem_embed()
-        await interaction.response.edit_message(embed=self.embed_msg, view=self.new_view)
+        await interaction.edit_original_response(embed=self.embed_msg, view=self.new_view)
         if self.classification is not None:
             await sm.send_notification(self.ctx_obj, self.player_obj, self.classification, self.new_item.item_base_type)
         return
@@ -382,7 +385,8 @@ class CraftView(discord.ui.View):
     async def reselect_callback(self, interaction: discord.Interaction, button: discord.Button):
         if interaction.user.id != self.player_obj.discord_id:
             return
+        await interaction.response.edit_message(embed=gli.processing_embed)
         embed_msg = sm.easy_embed("Magenta", NPC_name, NPC_description)
         new_view = InfuseView(self.ctx_obj, self.player_obj)
         embed_msg.set_image(url=gli.infuse_img)
-        await interaction.response.edit_message(embed=embed_msg, view=new_view)
+        await interaction.edit_original_response(embed=embed_msg, view=new_view)

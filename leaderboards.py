@@ -22,16 +22,18 @@ class LeaderbaordView(discord.ui.View):
     @discord.ui.button(label="DPS", style=discord.ButtonStyle.blurple)
     async def dps_leaderboard(self, interaction: discord.Interaction, button: discord.Button):
         try:
+            await interaction.response.edit_message(embed=gli.processing_embed)
             embed_msg = await display_leaderboard("DPS", self.player_user.player_id)
-            await interaction.response.edit_message(embed=embed_msg)
+            await interaction.edit_original_response(embed=embed_msg)
         except Exception as e:
             print(e)
 
     @discord.ui.button(label="Damage", style=discord.ButtonStyle.blurple)
     async def damage_leaderboard(self, interaction: discord.Interaction, button: discord.Button):
         try:
+            await interaction.response.edit_message(embed=gli.processing_embed)
             embed_msg = await display_leaderboard("Damage", self.player_user.player_id)
-            await interaction.response.edit_message(embed=embed_msg)
+            await interaction.edit_original_response(embed=embed_msg)
         except Exception as e:
             print(e)
 

@@ -200,10 +200,11 @@ class ChoiceView(discord.ui.View):
     async def handle_choice(self, interaction, choice):
         if interaction.user.id != self.player_obj.discord_id:
             return
+        await interaction.response.edit_message(embed=gli.processing_embed)
         await self.player_obj.update_misc_data("quest_choice", choice, overwrite_value=True)
         quest_view = QuestView(self.ctx_object, self.player_obj, self.quest_obj, choice, self.choices[choice - 1][1])
         embed = await self.quest_obj.get_quest_embed(self.player_obj, self.choices[choice - 1][2])
-        await interaction.response.edit_message(embed=embed, view=quest_view)
+        await interaction.edit_original_response(embed=embed, view=quest_view)
 
 
 class QuestView(discord.ui.View):
@@ -218,26 +219,27 @@ class QuestView(discord.ui.View):
     async def handin_callback(self, interaction: discord.Interaction, button: discord.Button):
         if interaction.user.id != self.player_obj.discord_id:
             return
+        await interaction.response.edit_message(embed=gli.processing_embed)
         await self.player_obj.reload_player()
         if self.quest_obj is None or self.player_obj.player_quest != self.quest_num:
             result_embed = sm.easy_embed("Red", "Error!", "Quest error successfully handled.")
             if self.embed_msg is not None:
                 result_embed = self.embed_msg
-            await interaction.response.edit_message(embed=result_embed, view=self.new_view)
+            await interaction.edit_original_response(embed=result_embed, view=self.new_view)
             return
         temp_embed, is_completed = \
             await self.quest_obj.hand_in(self.ctx_object, self.player_obj, self.choice_num, self.choice_reward)
         if not is_completed:
             temp_embed.add_field(name="", value="Quest is not completed!", inline=False)
             quest_view = QuestView(self.ctx_object, self.player_obj, self.quest_obj, self.choice_num, self.choice_reward)
-            await interaction.response.edit_message(embed=temp_embed, view=quest_view)
+            await interaction.edit_original_response(embed=temp_embed, view=quest_view)
             return
         # Handle completed quest.
         self.embed_msg = temp_embed
         award_role = self.quest_obj.award_role
         self.quest_obj = None
         self.new_view = RewardView(self.ctx_object, self.player_obj)
-        await interaction.response.edit_message(embed=self.embed_msg, view=self.new_view)
+        await interaction.edit_original_response(embed=self.embed_msg, view=self.new_view)
         if award_role is not None and award_role == "Echelon 10 (MAX)":
             add_role = discord.utils.get(interaction.guild.roles, name="Gem Title - Ruler of Stars")
             await interaction.user.add_roles(add_role)
@@ -256,6 +258,7 @@ class RewardView(discord.ui.View):
     async def next_quest(self, interaction: discord.Interaction, button: discord.Button):
         if interaction.user.id != self.player_obj.discord_id:
             return
+        await interaction.response.edit_message(embed=gli.processing_embed)
         await self.player_obj.reload_player()
         player_choice, reward, choice_message = None, None, None
         c_quest, quest_obj = self.player_obj.player_quest, quest_list[self.player_obj.player_quest]
@@ -273,7 +276,7 @@ class RewardView(discord.ui.View):
                 reward, choice_message = choice_data[player_choice - 1][1], choice_data[player_choice - 1][2]
         embed_msg = await quest_obj.get_quest_embed(self.player_obj)
         new_view = QuestView(self.ctx_object, self.player_obj, quest_obj, player_choice, reward) if c_quest < 55 else None
-        await interaction.response.edit_message(embed=embed_msg, view=new_view)
+        await interaction.edit_original_response(embed=embed_msg, view=new_view)
 
 
 # Initialize the quest list.

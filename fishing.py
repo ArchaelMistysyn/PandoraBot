@@ -110,13 +110,14 @@ class FishView(discord.ui.View):
     async def fishing(self, interaction, fish_method, stamina_cost):
         if interaction.user.id != self.player_obj.discord_id:
             return
+        await interaction.response.edit_message(embed=gli.processing_embed)
         await self.player_obj.reload_player()
         if self.player_obj.player_stamina < stamina_cost:
             stamina_menu = menus.StaminaView(self.ctx, self.player_obj)
             stamina_embed = await self.player_obj.create_stamina_embed()
-            await interaction.response.edit_message(embed=stamina_embed, view=stamina_menu)
+            await interaction.edit_original_response(embed=stamina_embed, view=stamina_menu)
             return
-        await interaction.message.delete()
+        await interaction.delete_original_response()
         await go_fishing(self.ctx, self.player_obj, method=fish_method)
 
 
@@ -135,6 +136,7 @@ class FishResetView(discord.ui.View):
     async def fish_again(self, interaction, fish_method, stamina_cost):
         if await sm.check_click(interaction, self.player_obj, self.new_embed, self.new_view):
             return
+        await interaction.response.edit_message(embed=gli.processing_embed)
         await self.player_obj.reload_player()
         cost_stock = await inventory.check_stock(self.player_obj, self.cost_item.item_id)
         if cost_stock < 5:
@@ -146,9 +148,9 @@ class FishResetView(discord.ui.View):
         if self.player_obj.player_stamina < stamina_cost:
             stamina_menu = menus.StaminaView(self.ctx, self.player_obj)
             stamina_embed = await self.player_obj.create_stamina_embed()
-            await interaction.response.edit_message(embed=stamina_embed, view=stamina_menu)
+            await interaction.edit_original_response(embed=stamina_embed, view=stamina_menu)
             return
-        await interaction.message.delete()
+        await interaction.delete_original_response()
         await go_fishing(self.ctx, self.player_obj, method=fish_method, skipping=True)
 
 

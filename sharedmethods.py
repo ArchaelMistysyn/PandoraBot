@@ -114,7 +114,7 @@ async def give_vouch_points(guild, target_user, point_gain):
 
 
 async def update_vouch_role(guild):
-    role_name = "Ranking Title - Vouch Rank #1"
+    role_name = "Ranking Title - Headpat Rank #1"
     vouch_role = discord.utils.get(guild.roles, name=role_name)
     query = "SELECT discord_id FROM DiscordList ORDER BY vouch_points DESC LIMIT 1"
     points_df = await rqy(query, return_value=True)

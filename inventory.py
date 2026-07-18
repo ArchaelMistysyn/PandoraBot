@@ -88,41 +88,45 @@ class BInventoryView(discord.ui.View):
     async def inventory_callback(self, interaction: discord.Interaction, inventory_select: discord.ui.Select):
         if interaction.user.id != self.player_obj.discord_id:
             return
+        await interaction.response.edit_message(embed=gli.processing_embed)
         self.current_menu = inventory_select.values[0]
         self.view_type = int(await self.player_obj.check_misc_data("toggle_inv"))
         content, embed = await display_binventory(self.player_obj, self.current_menu, self.view_type, self.include_id)
         new_view = BInventoryView(self.player_obj, self.current_menu, self.view_type, self.include_id)
-        await interaction.response.edit_message(content=content, embed=embed, view=new_view)
+        await interaction.edit_original_response(content=content, embed=embed, view=new_view)
 
     @discord.ui.button(label="Gear", style=discord.ButtonStyle.blurple, emoji=gli.gear_icons_dict['W'])
     async def toggle_callback(self, interaction: discord.Interaction, button: discord.Button):
         if interaction.user.id != self.player_obj.discord_id:
             return
+        await interaction.response.edit_message(embed=gli.processing_embed)
         title = f'{self.player_obj.player_username}\'s Equipment:\n'
         player_inv = await display_cinventory(self.player_obj, "W")
         new_embed = discord.Embed(colour=discord.Colour.dark_orange(), title=title, description=player_inv)
-        await interaction.response.edit_message(content=None, embed=new_embed, view=CInventoryView(self.player_obj, self.include_id))
+        await interaction.edit_original_response(content=None, embed=new_embed, view=CInventoryView(self.player_obj, self.include_id))
 
     @discord.ui.button(label="Show ID", style=discord.ButtonStyle.blurple)
     async def show_id(self, interaction: discord.Interaction, button: discord.Button):
         if interaction.user.id != self.player_obj.discord_id:
             return
+        await interaction.response.edit_message(embed=gli.processing_embed)
         self.view_type = int(await self.player_obj.check_misc_data("toggle_inv"))
         self.include_id = True if not self.include_id else False
         content, embed = await display_binventory(self.player_obj, self.current_menu, self.view_type, self.include_id)
         new_view = BInventoryView(self.player_obj, self.current_menu, self.view_type, self.include_id)
-        await interaction.response.edit_message(content=content, embed=embed, view=new_view)
+        await interaction.edit_original_response(content=content, embed=embed, view=new_view)
 
     @discord.ui.button(label="Toggle View", style=discord.ButtonStyle.blurple)
     async def toggle_view(self, interaction: discord.Interaction, button: discord.Button):
         if interaction.user.id != self.player_obj.discord_id:
             return
+        await interaction.response.edit_message(embed=gli.processing_embed)
         self.view_type = int(await self.player_obj.check_misc_data("toggle_inv"))
         self.view_type = 1 if self.view_type == 0 else 0
         await self.player_obj.update_misc_data("toggle_inv", self.view_type, overwrite_value=True)
         content, embed = await display_binventory(self.player_obj, self.current_menu, self.view_type, self.include_id)
         new_view = BInventoryView(self.player_obj, self.current_menu, self.view_type, self.include_id)
-        await interaction.response.edit_message(content=content, embed=embed, view=new_view)
+        await interaction.edit_original_response(content=content, embed=embed, view=new_view)
 
 
 class CInventoryView(discord.ui.View):
@@ -140,20 +144,22 @@ class CInventoryView(discord.ui.View):
     async def inventory_callback(self, interaction: discord.Interaction):
         if interaction.user.id != self.player_obj.discord_id:
             return
+        await interaction.response.edit_message(embed=gli.processing_embed)
         selected_item = interaction.data['values'][0]
         inventory_title = f'{self.player_obj.player_username}\'s Inventory:\n'
         player_inv = await display_cinventory(self.player_obj, selected_item)
         new_embed = discord.Embed(colour=discord.Colour.dark_orange(), title=inventory_title, description=player_inv)
-        await interaction.response.edit_message(embed=new_embed)
+        await interaction.edit_original_response(embed=new_embed)
 
     @discord.ui.button(label="Items", style=discord.ButtonStyle.blurple)
     async def toggle_callback(self, interaction: discord.Interaction, button: discord.Button):
         if interaction.user.id != self.player_obj.discord_id:
             return
+        await interaction.response.edit_message(embed=gli.processing_embed)
         view_type = int(await self.player_obj.check_misc_data("toggle_inv"))
         new_view = BInventoryView(self.player_obj, "Crafting", view_type)
         content, embed = await display_binventory(self.player_obj, "Crafting", view_type, self.include_id)
-        await interaction.response.edit_message(content=content, embed=embed, view=new_view)
+        await interaction.edit_original_response(content=content, embed=embed, view=new_view)
 
 
 class CustomItem:

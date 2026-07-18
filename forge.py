@@ -39,26 +39,27 @@ class SelectView(discord.ui.View):
     async def select_callback(self, interaction: discord.Interaction):
         if interaction.user.id != self.player_obj.discord_id:
             return
+        await interaction.response.edit_message(embed=gli.processing_embed)
         item_select = interaction.data['values'][0]
         location = inventory.reverse_item_dict[item_select]
         selected_item = self.player_obj.player_equipped[location]
         if selected_item == 0:
             embed_msg = sm.easy_embed("Red", "Not Equipped", "Please select a different base")
-            await interaction.response.edit_message(embed=embed_msg)
+            await interaction.edit_original_response(embed=embed_msg)
             return
         self.selected_item = await inventory.read_custom_item(selected_item)
         embed_msg = await self.selected_item.create_citem_embed()
         if self.selected_item.item_base_type in gli.sovereign_item_list:
             title, description = "Cannot Upgrade", "Sovereign class item cannot be upgraded."
             embed_msg.add_field(name=title, value=description, inline=False)
-            await interaction.response.edit_message(embed=embed_msg, view=None)
+            await interaction.edit_original_response(embed=embed_msg, view=None)
             return
         # Handle the Forge view.
         if self.method == "celestial":
             if self.selected_item.item_tier == 9:
                 title, description = "Cannot Upgrade", "Sacred items can no longer be modified."
                 embed_msg.add_field(name=title, value=description, inline=False)
-                await interaction.response.edit_message(embed=embed_msg, view=None)
+                await interaction.edit_original_response(embed=embed_msg, view=None)
                 return
             new_view = ForgeView(self.player_obj, self.selected_item)
         # Handle the Purify view.
@@ -72,7 +73,7 @@ class SelectView(discord.ui.View):
         # Display the Scribe view.
         elif self.method == "custom":
             new_view = itemrolls.SelectRollsView(self.player_obj, self.selected_item)
-        await interaction.response.edit_message(embed=embed_msg, view=new_view)
+        await interaction.edit_original_response(embed=embed_msg, view=new_view)
 
 
 class PurifyView(discord.ui.View):
@@ -111,20 +112,22 @@ class PurifyView(discord.ui.View):
     async def purify_callback(self, interaction: discord.Interaction, button: discord.Button, method):
         if interaction.user.id != self.player_obj.discord_id:
             return
+        await interaction.response.edit_message(embed=gli.processing_embed)
         if self.embed is None:
             self.embed, self.selected_item = await run_button(self.player_obj, self.selected_item,
                                                               self.material.item_id, method)
             self.new_view = PurifyView(self.player_obj, self.selected_item)
-        await interaction.response.edit_message(embed=self.embed, view=self.new_view)
+        await interaction.edit_original_response(embed=self.embed, view=self.new_view)
 
     async def reselect_callback(self, interaction: discord.Interaction, button: discord.Button):
         if interaction.user.id != self.player_obj.discord_id:
             return
+        await interaction.response.edit_message(embed=gli.processing_embed)
         if not self.embed:
             self.embed = sm.easy_embed("Purple", "Echo of Oblivia", gli.abyss_msg)
             self.embed.set_image(url=gli.abyss_img)
             self.new_view = SelectView(self.player_obj, "purify")
-        await interaction.response.edit_message(embed=self.embed, view=self.new_view)
+        await interaction.edit_original_response(embed=self.embed, view=self.new_view)
 
 
 class ForgeView(discord.ui.View):
@@ -162,22 +165,23 @@ class ForgeView(discord.ui.View):
         selected_option = interaction.data['values'][0]
         if interaction.user.id != self.player_obj.discord_id:
             return
+        await interaction.response.edit_message(embed=gli.processing_embed)
         await self.selected_item.reload_item()
         # Handle Element Selections
         if selected_option in ["Enhance", "Implant Element"]:
             new_view = SubSelectView(self.player_obj, self.selected_item, selected_option)
-            await interaction.response.edit_message(view=new_view)
+            await interaction.edit_original_response(view=new_view)
             return
         # Handle hammer methods.
         if "Augment" in selected_option:
             new_view = UpgradeView(self.player_obj, self.selected_item, selected_option, 0, 0)
             if self.selected_item.item_num_rolls == 6:
                 new_view = SubSelectView(self.player_obj, self.selected_item, selected_option)
-            await interaction.response.edit_message(view=new_view)
+            await interaction.edit_original_response(view=new_view)
             return
         # Handle all other upgrade options.
         new_view = UpgradeView(self.player_obj, self.selected_item, selected_option, -1, 0)
-        await interaction.response.edit_message(view=new_view)
+        await interaction.edit_original_response(view=new_view)
 
 
 class SubSelectView(discord.ui.View):
@@ -223,12 +227,13 @@ class SubSelectView(discord.ui.View):
         self.add_item(self.select_menu)
 
     async def select_callback(self, interaction: discord.Interaction):
-        method_select = int(interaction.data['values'][0])
-        hammer_select = method_select if self.menu_type == "Fusion" else -1
         if interaction.user.id != self.player_obj.discord_id:
             return
+        await interaction.response.edit_message(embed=gli.processing_embed)
+        method_select = int(interaction.data['values'][0])
+        hammer_select = method_select if self.menu_type == "Fusion" else -1
         new_view = UpgradeView(self.player_obj, self.selected_item, self.method, hammer_select, method_select)
-        await interaction.response.edit_message(view=new_view)
+        await interaction.edit_original_response(view=new_view)
 
 
 # Regular Crafting
@@ -308,22 +313,24 @@ class UpgradeView(discord.ui.View):
     async def button_callback(self, button_interaction: discord.Interaction, button: discord.Button):
         if button_interaction.user.id != self.player_obj.discord_id:
             return
+        await interaction.response.edit_message(embed=gli.processing_embed)
         button_id = int(button.custom_id)
         material_id = self.material_id[0] if self.menu_type == "Astral Augment" else self.material_id[button_id]
         embed_msg, self.selected_item = await run_button(self.player_obj, self.selected_item, material_id, self.method[button_id])
         new_view = UpgradeView(self.player_obj, self.selected_item, self.menu_type, self.hammer_type, self.element)
-        await button_interaction.response.edit_message(embed=embed_msg, view=new_view)
+        await button_interaction.edit_original_response(embed=embed_msg, view=new_view)
 
     async def reselect_callback(self, button_interaction: discord.Interaction, button: discord.Button, method):
         if button_interaction.user.id != self.player_obj.discord_id:
             return
+        await interaction.response.edit_message(embed=gli.processing_embed)
         await self.selected_item.reload_item()
         if self.selected_item is None:
             return
         view = ForgeView(self.player_obj, self.selected_item) if method == "change_method" \
             else SelectView(self.player_obj, "celestial")
         embed_msg = await self.selected_item.create_citem_embed()
-        await button_interaction.response.edit_message(embed=embed_msg, view=view)
+        await button_interaction.edit_original_response(embed=embed_msg, view=view)
 
 
 async def run_button(player_obj, selected_item, material_id, method):
@@ -649,9 +656,10 @@ class RefSelectView(discord.ui.View):
     )
     async def ref_select_callback(self, interaction: discord.Interaction, ref_select: discord.ui.Select):
         if interaction.user.id == self.player_user.discord_id:
+            await interaction.response.edit_message(embed=gli.processing_embed)
             selected_type = self.item_dict[ref_select.values[0]]
             new_view = RefineItemView(self.player_user, selected_type)
-            await interaction.response.edit_message(view=new_view)
+            await interaction.edit_original_response(view=new_view)
 
 
 class RefineItemView(discord.ui.View):
@@ -725,6 +733,7 @@ class RefineItemView(discord.ui.View):
 
     async def selected_callback(self, interaction: discord.Interaction, button: discord.Button):
         if interaction.user.id == self.player_user.discord_id:
+            await interaction.response.edit_message(embed=gli.processing_embed)
             if not self.embed:
                 button_id = int(button.custom_id)
                 selected_tier = self.menu_details[3][button_id]
@@ -733,7 +742,7 @@ class RefineItemView(discord.ui.View):
                 item_type = f"D{button_id + 1}" if self.selected_type in ["Gem", "Jewel"] else self.selected_type
                 self.embed = await refine_item(self.player_user, item_type, selected_tier, required_material)
             new_view = RefineItemView(self.player_user, self.selected_type)
-            await interaction.response.edit_message(embed=self.embed, view=new_view)
+            await interaction.edit_original_response(embed=self.embed, view=new_view)
 
     async def reselect_callback(self, interaction: discord.Interaction, button: discord.Button):
         if interaction.user.id != self.player_user.discord_id:
@@ -742,7 +751,7 @@ class RefineItemView(discord.ui.View):
         new_embed = discord.Embed(colour=discord.Colour.dark_orange(),
                                   title='Refinery', description="Please select the item to refine")
         new_embed.set_image(url=gli.refinery_img)
-        await interaction.response.edit_message(embed=new_embed, view=new_view)
+        await interaction.edit_original_response(embed=new_embed, view=new_view)
 
 
 async def refine_item(player_user, selected_type, selected_tier, required_material, cost=1):
@@ -784,8 +793,9 @@ class MeldView(discord.ui.View):
     async def meld_gems(self, interaction: discord.Interaction, button: discord.Button):
         if interaction.user.id != self.player_obj.discord_id:
             return
+        await interaction.response.edit_message(embed=gli.processing_embed)
         if self.embed is not None:
-            await interaction.response.edit_message(embed=self.embed, view=self.new_view)
+            await interaction.edit_original_response(embed=self.embed, view=self.new_view)
             return
         # Reload the data.
         await self.player_obj.reload_player()
@@ -797,7 +807,7 @@ class MeldView(discord.ui.View):
         # Check the cost
         if stock < self.cost:
             self.embed.description = "Begone fool. Those without tokens have no right to stand before me."
-            await interaction.response.edit_message(embed=self.embed, view=self.new_view)
+            await interaction.edit_original_response(embed=self.embed, view=self.new_view)
             return
         # Pay the cost
         await inventory.update_stock(self.player_obj, "Token4", (self.cost * -1))
@@ -805,16 +815,16 @@ class MeldView(discord.ui.View):
         if random.randint(1, 100) > self.affinity:
             await inventory.delete_item(self.player_obj, self.gem_2)
             self.embed.description = "The jewels were not compatible enough, the sacrificial heart died."
-            await interaction.response.edit_message(embed=self.embed, view=self.new_view)
+            await interaction.edit_original_response(embed=self.embed, view=self.new_view)
             return
         error_msg, roll_change_list = await meld_gems(self.player_obj, self.gem_1, self.gem_2)
         # Handle error.
         if error_msg != "":
             self.embed.description = error_msg
-            await interaction.response.edit_message(embed=self.embed, view=self.new_view)
+            await interaction.edit_original_response(embed=self.embed, view=self.new_view)
             return
         self.embed = await self.gem_1.create_citem_embed(roll_change_list)
-        await interaction.response.edit_message(embed=self.embed, view=self.new_view)
+        await interaction.edit_original_response(embed=self.embed, view=self.new_view)
         return
 
 

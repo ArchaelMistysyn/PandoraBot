@@ -83,11 +83,12 @@ class TierSelectView(discord.ui.View):
         for x in item_list:
             embed_msg.add_field(name=f"{x.item_emoji} {x.item_name}", value=f"Cost: {x.item_cost:,}", inline=False)
         shop_view = ShopView(self.player_obj, tier_colour, selected_tier, item_list)
-        await interaction.response.edit_message(embed=embed_msg, view=shop_view)
+        await interaction.edit_original_response(embed=embed_msg, view=shop_view)
 
     async def tier_select_callback(self, interaction: discord.Interaction):
         if interaction.user.id != self.player_obj.discord_id:
             return
+        await interaction.response.edit_message(embed=gli.processing_embed)
         selected_type = interaction.data['values'][0]
         if selected_type == "Fae Cores":
             shop_msg = f"Black Market - Fae Cores."
@@ -95,14 +96,14 @@ class TierSelectView(discord.ui.View):
             return
         elif selected_type == "Daily Fish Exchange":
             _, fish_embed, exchange_view = await display_fish_shop(self.player_obj, self.fish_obj, self.trade_obj)
-            await interaction.response.edit_message(embed=fish_embed, view=exchange_view)
+            await interaction.edit_original_response(embed=fish_embed, view=exchange_view)
             return
         else:
             selected_tier = int(selected_type[5])
         if selected_tier > (self.player_obj.player_echelon + 1):
             embed_msg = discord.Embed(colour=discord.Colour.dark_orange(), title="Black Market",
                                       description="You're not a high enough echelon to buy these items.")
-            await interaction.response.edit_message(embed=embed_msg, view=self)
+            await interaction.edit_original_response(embed=embed_msg, view=self)
             return
         selected_tier = int(selected_type[5])
         shop_msg = f"Black Market - Tier {selected_tier} items."
@@ -127,8 +128,9 @@ class ShopView(discord.ui.View):
     async def shop_callback(self, interaction: discord.Interaction):
         if interaction.user.id != self.player_obj.discord_id:
             return
+        await interaction.response.edit_message(embed=gli.processing_embed)
         embed_msg, purchase_view = await show_item(self.player_obj, interaction.data['values'][0])
-        await interaction.response.edit_message(embed=embed_msg, view=purchase_view)
+        await interaction.edit_original_response(embed=embed_msg, view=purchase_view)
 
 
 async def show_item(player_user, selected_info):
@@ -152,11 +154,12 @@ class ExchangeView(discord.ui.View):
     async def handle_exchange(self, interaction: discord.Interaction, button: discord.Button):
         if interaction.user.id != self.player_obj.discord_id:
             return
+        await interaction.response.edit_message(embed=gli.processing_embed)
         fish_stock, fish_embed, exchange_view = await display_fish_shop(self.player_obj, self.fish_obj, self.trade_obj)
         if fish_stock < 5:
             stock_msg = sm.get_stock_msg(self.fish_obj, fish_stock, 5)
             fish_embed.add_field(name="Insufficient Fish!", value=stock_msg, inline=False)
-            await interaction.response.edit_message(embed=fish_embed, view=exchange_view)
+            await interaction.edit_original_response(embed=fish_embed, view=exchange_view)
             return
         if not self.is_paid:
             labels = ['player_id', 'item_id', 'item_qty']
@@ -168,17 +171,18 @@ class ExchangeView(discord.ui.View):
         _, fish_embed, exchange_view = await display_fish_shop(self.player_obj, self.fish_obj, self.trade_obj)
         swap_msg = f"1x {self.trade_obj.item_emoji} {self.trade_obj.item_name} received."
         fish_embed.add_field(name="Swap Successful", value=swap_msg, inline=False)
-        await interaction.response.edit_message(embed=fish_embed, view=exchange_view)
+        await interaction.edit_original_response(embed=fish_embed, view=exchange_view)
 
     @discord.ui.button(label="Return", style=discord.ButtonStyle.blurple, emoji="↩️")
     async def return_callback(self, interaction: discord.Interaction, button: discord.Button):
         if interaction.user.id != self.player_obj.discord_id:
             return
+        await interaction.response.edit_message(embed=gli.processing_embed)
         colour, title, description = discord.Colour.dark_orange(), "Black Market", "Everything has a price."
         embed_msg = discord.Embed(colour=colour, title=title, description=description)
         fish_obj, trade_obj = await get_daily_fish_items()
         new_view = TierSelectView(self.player_obj, fish_obj, trade_obj)
-        await interaction.response.edit_message(embed=embed_msg, view=new_view)
+        await interaction.edit_original_response(embed=embed_msg, view=new_view)
 
 
 class PurchaseView(discord.ui.View):
@@ -209,30 +213,34 @@ class PurchaseView(discord.ui.View):
     @discord.ui.button(label="Buy 1", style=discord.ButtonStyle.success, emoji="1️⃣")
     async def buy_one(self, interaction: discord.Interaction, button: discord.Button):
         if interaction.user.id == self.player_obj.discord_id:
+            await interaction.response.edit_message(embed=gli.processing_embed)
             embed_msg, new_view = await self.handle_purchase(1)
-            await interaction.response.edit_message(embed=embed_msg, view=new_view)
+            await interaction.edit_original_response(embed=embed_msg, view=new_view)
 
     @discord.ui.button(label="Buy 10", style=discord.ButtonStyle.success, emoji="🔟")
     async def buy_ten(self, interaction: discord.Interaction, button: discord.Button):
         if interaction.user.id == self.player_obj.discord_id:
+            await interaction.response.edit_message(embed=gli.processing_embed)
             embed_msg, new_view = await self.handle_purchase(10)
-            await interaction.response.edit_message(embed=embed_msg, view=new_view)
+            await interaction.edit_original_response(embed=embed_msg, view=new_view)
 
     @discord.ui.button(label="Buy 100", style=discord.ButtonStyle.success, emoji="💯")
     async def buy_hundred(self, interaction: discord.Interaction, button: discord.Button):
         if interaction.user.id == self.player_obj.discord_id:
+            await interaction.response.edit_message(embed=gli.processing_embed)
             embed_msg, new_view = await self.handle_purchase(100)
-            await interaction.response.edit_message(embed=embed_msg, view=new_view)
+            await interaction.edit_original_response(embed=embed_msg, view=new_view)
 
     @discord.ui.button(label="Reselect", style=discord.ButtonStyle.blurple, emoji="↩️")
     async def reselect_callback(self, interaction: discord.Interaction, button: discord.Button):
         if interaction.user.id != self.player_obj.discord_id:
             return
+        await interaction.response.edit_message(embed=gli.processing_embed)
         colour, title, description = discord.Colour.dark_orange(), "Black Market", "Everything has a price."
         embed_msg = discord.Embed(colour=colour, title=title, description=description)
         fish_obj, trade_obj = await get_daily_fish_items()
         new_view = TierSelectView(self.player_obj, fish_obj, trade_obj)
-        await interaction.response.edit_message(embed=embed_msg, view=new_view)
+        await interaction.edit_original_response(embed=embed_msg, view=new_view)
 
 
 class ChangelingShopView(discord.ui.View):
@@ -246,23 +254,24 @@ class ChangelingShopView(discord.ui.View):
     async def exchange(self, interaction: discord.Interaction, button: discord.Button):
         if interaction.user.id != self.player_obj.discord_id:
             return
+        await interaction.response.edit_message(embed=gli.processing_embed)
         token_stock = await inventory.check_stock(self.player_obj, self.token_obj.item_id)
         new_view = ChangelingShopView(self.player_obj, self.token_obj, self.ore_obj)
         if self.embed_msg is not None:
-            await interaction.response.edit_message(embed=self.embed_msg, view=None)
+            await interaction.edit_original_response(embed=self.embed_msg, view=None)
             return
         if token_stock < 10:
             temp_embed = await changeling_cost_msg(self.token_obj, token_stock, self.ore_obj)
             cost_msg = "It seems you're not prepared. I'll be waiting."
             temp_embed.add_field(name="Insufficient Tokens", value=cost_msg, inline=False)
-            await interaction.response.edit_message(embed=temp_embed, view=new_view)
+            await interaction.edit_original_response(embed=temp_embed, view=new_view)
             return
         self.embed_msg = await changeling_cost_msg(self.token_obj, token_stock - 10, self.ore_obj)
         acquisition_msg = f"{self.ore_obj.item_emoji} 1x {self.ore_obj.item_name} acquired"
         self.embed_msg.add_field(name="", value=acquisition_msg, inline=False)
         await inventory.update_stock(self.player_obj, self.token_obj.item_id, -10)
         await inventory.update_stock(self.player_obj, self.ore_obj.item_id, 1)
-        await interaction.response.edit_message(embed=self.embed_msg, view=new_view)
+        await interaction.edit_original_response(embed=self.embed_msg, view=new_view)
 
 
 class LotusSelectView(discord.ui.View):
@@ -281,6 +290,7 @@ class LotusSelectView(discord.ui.View):
         lotus_id = str(interaction.data['values'][0])
         if interaction.user.id != self.player_obj.discord_id:
             return
+        await interaction.response.edit_message(embed=gli.processing_embed)
         token_obj = inventory.BasicItem("Token6")
         token_stock = await inventory.check_stock(self.player_obj, token_obj.item_id)
         lotus_object = inventory.BasicItem(lotus_id)
@@ -293,7 +303,7 @@ class LotusSelectView(discord.ui.View):
             embed_msg = discord.Embed(colour=discord.Colour.blurple(), title=Fleur_Name, description=purchase_msg)
             embed_msg.add_field(name="Offering", value=cost_msg, inline=False)
             new_view = LotusPurchaseView(self.player_obj, token_obj, lotus_object)
-            await interaction.response.edit_message(embed=embed_msg, view=new_view)
+            await interaction.edit_original_response(embed=embed_msg, view=new_view)
             return
         # Handle divine lotus.
         purchase_msg = (f"You've evaded my foresight again. Truly remarkable. ... I suppose it could be done. "
@@ -307,7 +317,7 @@ class LotusSelectView(discord.ui.View):
         embed_msg = discord.Embed(colour=discord.Colour.blurple(), title=Fleur_Name, description=purchase_msg)
         embed_msg.add_field(name="Offering", value=cost_msg, inline=False)
         new_view = LotusPurchaseView(self.player_obj, token_obj, lotus_object)
-        await interaction.response.edit_message(embed=embed_msg, view=new_view)
+        await interaction.edit_original_response(embed=embed_msg, view=new_view)
         return
 
 
@@ -327,29 +337,30 @@ class LotusPurchaseView(discord.ui.View):
     async def pluck(self, interaction: discord.Interaction, button: discord.Button):
         if interaction.user.id != self.player_obj.discord_id:
             return
+        await interaction.response.edit_message(embed=gli.processing_embed)
         token_stock = await inventory.check_stock(self.player_obj, "Token6")
         temp_embed = discord.Embed(colour=discord.Colour.dark_orange(), title=Fleur_Name, description="")
         new_view = LotusPurchaseView(self.player_obj, self.token_obj, self.lotus_object)
         if self.embed_msg is not None:
-            await interaction.response.edit_message(embed=self.embed_msg, view=None)
+            await interaction.edit_original_response(embed=self.embed_msg, view=None)
             return
         # Handle regular lotus.
         if self.lotus_object.item_id not in ["Lotus10", "Lotus11"]:
             if token_stock < self.token_cost:
                 temp_embed.description = "You'll have to come back with something a little more convincing."
-                await interaction.response.edit_message(embed=temp_embed, view=new_view)
+                await interaction.edit_original_response(embed=temp_embed, view=new_view)
                 return
             await inventory.update_stock(self.player_obj, "Token6", (self.token_cost * -1))
             await inventory.update_stock(self.player_obj, self.lotus_object.item_id, 1)
             temp_embed.description = f"{self.lotus_object.item_emoji} 1x {self.lotus_object.item_name} acquired"
             self.embed_msg = temp_embed
-            await interaction.response.edit_message(embed=self.embed_msg, view=new_view)
+            await interaction.edit_original_response(embed=self.embed_msg, view=new_view)
             return
         # Handle divine lotus.
         lotus_stock = [await inventory.check_stock(self.player_obj, lotus_item.item_id) for lotus_item in lotus_list[:-1]]
         if token_stock < self.token_cost or any(stock == 0 for stock in lotus_stock):
             temp_embed.description = "I'm offended you had the gall to ask without sufficient preparations."
-            await interaction.response.edit_message(embed=temp_embed, view=new_view)
+            await interaction.edit_original_response(embed=temp_embed, view=new_view)
             return
         await inventory.update_stock(self.player_obj, "Token6", (self.token_cost * -1))
         # UPDATE TO BULK DEDUCTION REQUIRED
@@ -358,16 +369,17 @@ class LotusPurchaseView(discord.ui.View):
         await inventory.update_stock(self.player_obj, self.lotus_object.item_id, 1)
         temp_embed.description = f"{self.lotus_object.item_emoji} 1x {self.lotus_object.item_name} acquired"
         self.embed_msg = temp_embed
-        await interaction.response.edit_message(embed=self.embed_msg, view=new_view)
+        await interaction.edit_original_response(embed=self.embed_msg, view=new_view)
 
     @discord.ui.button(label="Reselect", style=discord.ButtonStyle.blurple, emoji="↩️")
     async def reselect_callback(self, interaction: discord.Interaction, button: discord.Button):
         if interaction.user.id != self.player_obj.discord_id:
             return
+        await interaction.response.edit_message(embed=gli.processing_embed)
         description = "Surely you didn't come all this way just to flirt with the divine maiden."
         embed_msg = discord.Embed(colour=discord.Colour.dark_orange(), title=Fleur_Name, description=description)
         new_view = LotusSelectView(self.player_obj)
-        await interaction.response.edit_message(embed=embed_msg, view=new_view)
+        await interaction.edit_original_response(embed=embed_msg, view=new_view)
 
 
 class EssencePurchaseView(discord.ui.View):
@@ -383,32 +395,34 @@ class EssencePurchaseView(discord.ui.View):
     async def exchange(self, interaction: discord.Interaction, button: discord.Button):
         if interaction.user.id != self.player_obj.discord_id:
             return
+        await interaction.response.edit_message(embed=gli.processing_embed)
         token_stock = await inventory.check_stock(self.player_obj, self.token_obj.item_id)
         new_view = EssencePurchaseView(self.player_obj, self.token_obj, self.essence_obj)
         if self.embed_msg is not None:
-            await interaction.response.edit_message(embed=self.embed_msg, view=None)
+            await interaction.edit_original_response(embed=self.embed_msg, view=None)
             return
         if token_stock < self.token_cost:
             temp_embed = await cathedral_cost_msg(self.token_obj, token_stock, self.essence_obj)
             cost_msg = "I'm not your servant *hero*, you must compensate me appropriately."
             temp_embed.add_field(name="Insufficient Tokens", value=cost_msg, inline=False)
-            await interaction.response.edit_message(embed=temp_embed, view=new_view)
+            await interaction.edit_original_response(embed=temp_embed, view=new_view)
             return
         self.embed_msg = await cathedral_cost_msg(self.token_obj, token_stock - self.token_cost, self.essence_obj)
         acquisition_msg = f"{self.essence_obj.item_emoji} 1x {self.essence_obj.item_name} acquired"
         self.embed_msg.add_field(name="", value=acquisition_msg, inline=False)
         await inventory.update_stock(self.player_obj, self.token_obj.item_id, (self.token_cost * -1))
         await inventory.update_stock(self.player_obj, self.essence_obj.item_id, 1)
-        await interaction.response.edit_message(embed=self.embed_msg, view=new_view)
+        await interaction.edit_original_response(embed=self.embed_msg, view=new_view)
 
     @discord.ui.button(label="Reselect", style=discord.ButtonStyle.blurple, emoji="↩️")
     async def reselect_callback(self, interaction: discord.Interaction, button: discord.Button):
         if interaction.user.id != self.player_obj.discord_id:
             return
+        await interaction.response.edit_message(embed=gli.processing_embed)
         description = "Hurry up."
         embed_msg = discord.Embed(colour=discord.Colour.dark_orange(), title=Yubelle, description=description)
         new_view = tarot.SearchTierView(self.player_obj, cathedral=True)
-        await interaction.response.edit_message(embed=embed_msg, view=new_view)
+        await interaction.edit_original_response(embed=embed_msg, view=new_view)
 
 
 async def cathedral_cost_msg(token_obj, token_stock, essence_obj):

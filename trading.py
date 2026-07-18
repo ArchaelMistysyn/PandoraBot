@@ -98,8 +98,9 @@ class TradeView(discord.ui.View):
     async def accept_trade(self, interaction: discord.Interaction, button: discord.Button):
         if interaction.user.id != self.trade_obj.target_player.discord_id:
             return
+        await interaction.response.edit_message(embed=gli.processing_embed)
         if self.new_embed is not None:
-            await interaction.response.edit_message(embed=self.new_embed, view=self.new_view)
+            await interaction.edit_original_response(embed=self.new_embed, view=self.new_view)
             return
         await self.trade_obj.target_player.reload_player()
         await self.trade_obj.offer_player.reload_player()
@@ -108,14 +109,15 @@ class TradeView(discord.ui.View):
         if fail_msg != "":
             self.new_embed.add_field(name="Trade Failed", value=fail_msg, inline=False)
             self.new_view = TradeView(self.trade_obj)
-            await interaction.response.edit_message(embed=self.new_embed, view=self.new_view)
+            await interaction.edit_original_response(embed=self.new_embed, view=self.new_view)
             return
         self.new_embed.add_field(name="Trade Completed", value="Items/Coins have been transferred.", inline=False)
-        await interaction.response.edit_message(embed=self.new_embed, view=self.new_view)
+        await interaction.edit_original_response(embed=self.new_embed, view=self.new_view)
 
     @discord.ui.button(label="Cancel", style=discord.ButtonStyle.danger, emoji="✖️")
     async def cancel_trade(self, interaction: discord.Interaction, button: discord.Button):
         if interaction.user.id in [self.trade_obj.offer_player.discord_id, self.trade_obj.target_player.discord_id]:
+            await interaction.response.edit_message(embed=gli.processing_embed)
             title, description = "Trade Cancelled", f"User {interaction.user.display_name} cancelled the trade."
             self.new_embed = discord.Embed(colour=discord.Colour.red(), title=title, description=description)
-            await interaction.response.edit_message(embed=self.new_embed, view=self.new_view)
+            await interaction.edit_original_response(embed=self.new_embed, view=self.new_view)

@@ -20,6 +20,7 @@ servers = {1011375205999968427: ([1157937444931514408],
                                  1252681803916116211, 1157937444931514408, 1157937444931514408)}
 GM_id_dict = {185530717638230016: "Archael", 141837266866667520: "Zweii", 353090154044325906: "Viper",
               1177738094666059877: "Eleuia"}
+AD_id_dict = {185530717638230016: "Archael", 141837266866667520: "Zweii", 828851643675705426: "Heather"}
 moderation_roles = {"ArchDragon Administrator", "ArchDragon Moderator", "Server Owner - Archael"}
 mod_mention = "<@&1134293907136585769>"
 admin_mention = "<@&1134301246648488097>"
@@ -32,7 +33,7 @@ web_url = "https://PandoraPortal.ca/botimages/"
 web_gallery_url = "https://PandoraPortal.ca/gallery/"
 # LOCAL
 # image_path = 'C:\\Users\\GamerTech\\PycharmProjects\\PandoraBot\\botart\\'
-# REMOTEbu
+# REMOTE
 image_path = '/home/ubuntu/PandoraBot/botart/'
 store_link = "https://ArchDragonStore.ca"
 
@@ -306,11 +307,18 @@ dst_regions = {
 # Moderation
 ALLOWED_LINK_ROLE_NAMES = [
     "Trusted Rat", "ArchDragon Moderator", "ArchDragon Administrator", "Premium NPC",
-    "Head Administrator - Zweii", "Vice Leader - Heather", "Server Owner - Archael",
-    "Activity Rank 7", "Activity Rank 8", "Activity Rank 9", "Activity Rank 10 (MAX)"
+    "Vice Leader - Zweii", "Guiding Star", "Server Owner - Archael",
+    "Activity Rank 7", "Activity Rank 8", "Activity Rank 9", "Activity Rank 10 (MAX)",
+    "Passcard - Heart Access Card"
 ]
 LINK_TRIGGERS = ["https://", "discord.gg/", "discord.com/invite/"]
 EXEMPT_LINKS = ["twitch.tv"]
 UNCONDITIONAL_EXEMPT_LINKS = ["tenor.com", "giphy.com", "imgur.com", "youtube.com", "youtu.be", "discordapp", "x.com",
+                              "bilibili.com", "chess.com", "poe.ninja", "poe2wiki.net",
                               "arca.live", "reddit", "shadowverse", "pathofexile", "hoyo", ".jpg", ".jpeg", ".png"]
 
+processing_embed = discord.Embed(
+        title="Processing",
+        description=f"Processing...",
+        colour=discord.Colour.blue()
+    )

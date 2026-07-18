@@ -115,9 +115,10 @@ class SearchTierView(discord.ui.View):
 
     async def tier_select_callback(self, interaction: discord.Interaction):
         if interaction.user.id == self.player_user.discord_id:
+            await interaction.response.edit_message(embed=gli.processing_embed)
             selected_option = interaction.data['values'][0]
             new_view = SearchCardView(self.player_user, int(selected_option), cathedral=self.cathedral)
-            await interaction.response.edit_message(view=new_view)
+            await interaction.edit_original_response(view=new_view)
 
 
 class SearchCardView(discord.ui.View):
@@ -140,6 +141,7 @@ class SearchCardView(discord.ui.View):
     async def card_select_callback(self, interaction: discord.Interaction):
         if interaction.user.id != self.player_user.discord_id:
             return
+        await interaction.response.edit_message(embed=gli.processing_embed)
         selected_numeral = interaction.data['values'][0]
         selected_card = await get_index_by_key(selected_numeral)
         tarot = await check_tarot(self.player_user.player_id, card_dict[selected_numeral][0])
@@ -152,7 +154,7 @@ class SearchCardView(discord.ui.View):
             new_view = market.EssencePurchaseView(self.player_user, token_obj, essence_obj)
         else:
             new_embed = await tarot_menu_embed(self.player_user, selected_numeral)
-        await interaction.response.edit_message(embed=new_embed, view=new_view)
+        await interaction.edit_original_response(embed=new_embed, view=new_view)
 
 
 class CollectionView(discord.ui.View):
@@ -163,16 +165,18 @@ class CollectionView(discord.ui.View):
     @discord.ui.button(label="View Collection", style=discord.ButtonStyle.blurple)
     async def view_collection(self, interaction: discord.Interaction, button: discord.Button):
         if interaction.user.id == self.player_user.discord_id:
+            await interaction.response.edit_message(embed=gli.processing_embed)
             new_msg = await tarot_menu_embed(self.player_user, "0")
             tarot = await check_tarot(self.player_user.player_id, card_dict["0"][0])
             new_view = TarotView(self.player_user, 0, tarot)
-            await interaction.response.edit_message(embed=new_msg, view=new_view)
+            await interaction.edit_original_response(embed=new_msg, view=new_view)
 
     @discord.ui.button(label="Search Card", style=discord.ButtonStyle.blurple, emoji="🔎")
     async def search_collection(self, interaction: discord.Interaction, button: discord.Button):
         if interaction.user.id == self.player_user.discord_id:
+            await interaction.response.edit_message(embed=gli.processing_embed)
             new_view = SearchTierView(self.player_user)
-            await interaction.response.edit_message(view=new_view)
+            await interaction.edit_original_response(view=new_view)
 
 
 class TarotView(discord.ui.View):
@@ -223,33 +227,37 @@ class TarotView(discord.ui.View):
     @discord.ui.button(label="Previous", style=discord.ButtonStyle.blurple, row=1)
     async def previous_card(self, interaction: discord.Interaction, button: discord.Button):
         if interaction.user.id == self.player_user.discord_id:
+            await interaction.response.edit_message(embed=gli.processing_embed)
             new_msg = await self.cycle_tarot(-1)
             tarot = await check_tarot(self.player_user.player_id, card_dict[self.selected_numeral][0])
             reload_view = TarotView(self.player_user, self.current_position, tarot)
-            await interaction.response.edit_message(embed=new_msg, view=reload_view)
+            await interaction.edit_original_response(embed=new_msg, view=reload_view)
 
     @discord.ui.button(label="Search", style=discord.ButtonStyle.blurple, emoji="🔎", row=1)
     async def search_card(self, interaction: discord.Interaction, button: discord.Button):
         if interaction.user.id == self.player_user.discord_id:
+            await interaction.response.edit_message(embed=gli.processing_embed)
             completion_count = await collection_check(self.player_user)
             embed_msg = discord.Embed(colour=discord.Colour.magenta(),
                                       title=f"{self.player_user.player_username}'s Tarot Collection",
                                       description=f"Completion Total: {completion_count} / 31")
             embed_msg.set_image(url=gli.planetarium_img)
             new_view = SearchTierView(self.player_user)
-            await interaction.response.edit_message(embed=embed_msg, view=new_view)
+            await interaction.edit_original_response(embed=embed_msg, view=new_view)
 
     @discord.ui.button(label="Next", style=discord.ButtonStyle.blurple, row=1)
     async def next_card(self, interaction: discord.Interaction, button: discord.Button):
         if interaction.user.id == self.player_user.discord_id:
+            await interaction.response.edit_message(embed=gli.processing_embed)
             new_msg = await self.cycle_tarot(1)
             tarot = await check_tarot(self.player_user.player_id, card_dict[self.selected_numeral][0])
             reload_view = TarotView(self.player_user, self.current_position, tarot)
-            await interaction.response.edit_message(embed=new_msg, view=reload_view)
+            await interaction.edit_original_response(embed=new_msg, view=reload_view)
 
     @discord.ui.button(label="Equip", style=discord.ButtonStyle.success, row=2)
     async def equip(self, interaction: discord.Interaction, button: discord.Button):
         if interaction.user.id == self.player_user.discord_id:
+            await interaction.response.edit_message(embed=gli.processing_embed)
             embed_msg = await tarot_menu_embed(self.player_user, self.selected_numeral)
             active_card = await check_tarot(self.player_user.player_id, card_dict[self.selected_numeral][0])
             if active_card:
@@ -261,17 +269,18 @@ class TarotView(discord.ui.View):
                 embed_msg.add_field(name="Cannot Equip!", value="You do not own this card.", inline=False)
             tarot = await check_tarot(self.player_user.player_id, card_dict[self.selected_numeral][0])
             reload_view = TarotView(self.player_user, self.current_position, tarot)
-            await interaction.response.edit_message(embed=embed_msg, view=reload_view)
+            await interaction.edit_original_response(embed=embed_msg, view=reload_view)
 
     @discord.ui.button(label="Bind", style=discord.ButtonStyle.success, row=2)
     async def attempt_bind(self, interaction: discord.Interaction, button: discord.Button):
         try:
             if interaction.user.id == self.player_user.discord_id:
+                await interaction.response.edit_message(embed=gli.processing_embed)
                 if not self.embed:
                     self.embed = await binding_ritual(self.player_user, self.selected_numeral, self.bind_success_rate)
                 tarot = await check_tarot(self.player_user.player_id, card_dict[self.selected_numeral][0])
                 reload_view = TarotView(self.player_user, self.current_position, tarot)
-                await interaction.response.edit_message(embed=self.embed, view=reload_view)
+                await interaction.edit_original_response(embed=self.embed, view=reload_view)
         except Exception as e:
             print(e)
 
@@ -279,6 +288,7 @@ class TarotView(discord.ui.View):
     async def synthesize(self, interaction: discord.Interaction, button: discord.Button):
         if interaction.user.id != self.player_user.discord_id:
             return
+        await interaction.response.edit_message(embed=gli.processing_embed)
         active_card = await check_tarot(self.player_user.player_id, card_dict[self.selected_numeral][0])
         reload_view = TarotView(self.player_user, self.current_position, active_card)
         title = "Cannot Synthesize!"
@@ -286,15 +296,15 @@ class TarotView(discord.ui.View):
             self.embed = await tarot_menu_embed(self.player_user, self.selected_numeral)
             if not active_card:
                 self.embed.title, self.embed.description = title, "You do not own this card."
-                await interaction.response.edit_message(embed=self.embed, view=reload_view)
+                await interaction.edit_original_response(embed=self.embed, view=reload_view)
                 return
             if active_card.card_qty <= 1:
                 self.embed.title, self.embed.description = title, "Not enough cards in possession."
-                await interaction.response.edit_message(embed=self.embed, view=reload_view)
+                await interaction.edit_original_response(embed=self.embed, view=reload_view)
                 return
             if active_card.num_stars >= 9:
                 self.embed.title, self.embed.description = title, "Card cannot be upgraded further."
-                await interaction.response.edit_message(embed=self.embed, view=reload_view)
+                await interaction.edit_original_response(embed=self.embed, view=reload_view)
                 return
             # Handle tier 7/8 lotus costs.
             lotus_item, lotus_qty, msg_type = None, 1, ""
@@ -310,7 +320,7 @@ class TarotView(discord.ui.View):
                 if player_stock < lotus_qty:
                     description = f"{msg_type} requires: {lotus_item.item_emoji} {lotus_qty}x {lotus_item.item_name}"
                     self.embed.title, self.embed.description = title, description
-                    await interaction.response.edit_message(embed=self.embed, view=reload_view)
+                    await interaction.edit_original_response(embed=self.embed, view=reload_view)
                     return
                 await inventory.update_stock(self.player_user, lotus_item.item_id, -lotus_qty)
             # Attempt Synthesis
@@ -319,7 +329,7 @@ class TarotView(discord.ui.View):
             self.embed.add_field(name=title, value=description, inline=False)
             tarot = await check_tarot(self.player_user.player_id, card_dict[self.selected_numeral][0])
             reload_view = TarotView(self.player_user, self.current_position, tarot)
-        await interaction.response.edit_message(embed=self.embed, view=reload_view)
+        await interaction.edit_original_response(embed=self.embed, view=reload_view)
 
 
 class TarotCard:

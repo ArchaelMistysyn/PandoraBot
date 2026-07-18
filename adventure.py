@@ -197,9 +197,10 @@ def get_random_quantity(luck=1, is_lucky=False):
 
 async def handle_map_interaction(view_obj, interaction):
     if interaction.user.id != view_obj.expedition.player_obj.discord_id:
+        await interaction.edit_original_response(embed=view_obj.embed, view=view_obj)
         return True
     if view_obj.embed is not None:
-        await interaction.response.edit_message(embed=view_obj.embed, view=view_obj.new_view)
+        await interaction.edit_original_response(embed=view_obj.embed, view=view_obj.new_view)
         return True
     view_obj.embed = view_obj.expedition.room.embed
     return False
@@ -221,14 +222,15 @@ class MapSelectView(discord.ui.View):
         self.add_item(self.select_menu)
 
     async def map_select_callback(self, interaction: discord.Interaction):
-        await self.player_user.reload_player()
         if interaction.user.id != self.player_user.discord_id:
             return
+        await interaction.response.edit_message(embed=gli.processing_embed)
+        await self.player_user.reload_player()
         selected_map = interaction.data['values'][0]
         selected_tier = adventuredata.map_tier_dict[selected_map]
         # Handle already paid cost.
         if self.new_embed is not None:
-            await interaction.response.edit_message(embed=self.new_embed, view=self.new_view)
+            await interaction.edit_original_response(embed=self.new_embed, view=self.new_view)
             return
         temp_embed = sm.easy_embed("orange", "Map Exploration", "Please select an expedition.")
         temp_embed.set_image(url=gli.map_img)
@@ -236,12 +238,12 @@ class MapSelectView(discord.ui.View):
         if self.player_user.player_echelon < (selected_tier - 1):
             not_ready_msg = "You are only qualified for expeditions one tier above your echelon."
             temp_embed.add_field(name="Too Perilous!", value=not_ready_msg, inline=False)
-            await interaction.response.edit_message(embed=temp_embed, view=self)
+            await interaction.edit_original_response(embed=temp_embed, view=self)
             return
         # Handle stamina cost
         if not await self.player_user.spend_stamina((200 + selected_tier * 50)):
             temp_embed.add_field(name="Not Enough Stamina!", value="Please check your /stamina!", inline=False)
-            await interaction.response.edit_message(embed=temp_embed, view=self)
+            await interaction.edit_original_response(embed=temp_embed, view=self)
             return
         # Assign quest token
         if self.player_user.player_quest == 2:
@@ -249,7 +251,7 @@ class MapSelectView(discord.ui.View):
         # Begin expedition
         new_expedition = Expedition(self.ctx_object, self.player_user, selected_tier)
         self.new_embed, self.new_view = await new_expedition.display_next_room(self.ctx_object, self.player_user)
-        await interaction.response.edit_message(embed=self.new_embed, view=self.new_view)
+        await interaction.edit_original_response(embed=self.new_embed, view=self.new_view)
 
 
 class AdventureRoomView(discord.ui.View):
@@ -291,14 +293,17 @@ class AdventureRoomView(discord.ui.View):
 
     @discord.ui.button(label="Blank", style=discord.ButtonStyle.success, row=1)
     async def option1(self, interaction: discord.Interaction, button: discord.Button):
+        await interaction.response.edit_message(embed=gli.processing_embed)
         await self.run_button(interaction, int(button.custom_id))
 
     @discord.ui.button(label="Blank", style=discord.ButtonStyle.success, row=1)
     async def option2(self, interaction: discord.Interaction, button: discord.Button):
+        await interaction.response.edit_message(embed=gli.processing_embed)
         await self.run_button(interaction, int(button.custom_id))
 
     @discord.ui.button(label="Blank", style=discord.ButtonStyle.success, row=1)
     async def option3(self, interaction: discord.Interaction, button: discord.Button):
+        await interaction.response.edit_message(embed=gli.processing_embed)
         await self.run_button(interaction, int(button.custom_id))
 
     async def run_button(self, interaction, variant):
@@ -327,7 +332,7 @@ class AdventureRoomView(discord.ui.View):
         self.embed, self.new_view = await self.expedition.display_next_room(self.expedition.ctx_object,
                                                                             self.expedition.player_obj)
         self.expedition.room_num += 1
-        await interaction.response.edit_message(embed=self.embed, view=self.new_view)
+        await interaction.edit_original_response(embed=self.embed, view=self.new_view)
 
     async def trap_callback(self, interaction, variant, active_room):
         if variant != 0:
@@ -338,7 +343,7 @@ class AdventureRoomView(discord.ui.View):
             return
         await self.trap_triggered(interaction)
 
-    async def statue_callback(self, interaction_obj, variant, active_room):
+    async def statue_callback(self, interaction, variant, active_room):
         deity = active_room.room_deity
 
         async def pray_callback():
@@ -358,14 +363,14 @@ class AdventureRoomView(discord.ui.View):
                 await inventory.update_stock(self.expedition.player_obj, reward_item.item_id, 1)
                 self.expedition.luck += matching_rewards[2]
                 self.embed.add_field(name=blessing_msg, value=item_msg, inline=False)
-                await interaction_obj.response.edit_message(embed=self.embed, view=self.new_view)
+                await interaction.edit_original_response(embed=self.embed, view=self.new_view)
                 return
             # Handle heal occurrence
             heal_total = int(self.expedition.player_obj.player_mHP * (random.randint(self.expedition.tier, 10) * 0.01))
             self.expedition.player_obj.player_cHP += heal_total
             hp_msg = sm.display_hp(self.expedition.player_obj.player_cHP, self.expedition.player_obj.player_mHP)
             self.embed.add_field(name="Health Restored", value=hp_msg, inline=False)
-            await interaction_obj.response.edit_message(embed=self.embed, view=self.new_view)
+            await interaction.edit_original_response(embed=self.embed, view=self.new_view)
 
         async def destroy_callback():
             # Handle wrath outcome
@@ -376,7 +381,7 @@ class AdventureRoomView(discord.ui.View):
                 # Handle Death
                 if outcome == 1:
                     self.new_view = None
-                    await interaction_obj.response.edit_message(embed=self.embed, view=self.new_view)
+                    await interaction.edit_original_response(embed=self.embed, view=self.new_view)
                     self.embed.add_field(name=f"{embed_title} - Run Ended", value=wrath_msg, inline=False)
                     await self.expedition.player_obj.update_misc_data("deaths", 1)
                     return
@@ -385,22 +390,22 @@ class AdventureRoomView(discord.ui.View):
                     if outcome == 2:
                         self.expedition.teleport()
                     self.embed.add_field(name=embed_title, value=wrath_msg, inline=False)
-                    await interaction_obj.response.edit_message(embed=self.embed, view=self.new_view)
+                    await interaction.edit_original_response(embed=self.embed, view=self.new_view)
                     return
                 # Handle Damage
                 await self.expedition.take_damage(outcome, outcome, -1, True)
                 hp_msg = sm.display_hp(self.player_obj.player_cHP, self.player_obj.player_mHP)
                 wrath_msg += f"\nYou took {outcome:,} damage!\n{hp_msg}"
-                if await self.check_death(interaction_obj, result_msg=wrath_msg, title_msg=embed_title):
+                if await self.check_death(interaction, result_msg=wrath_msg, title_msg=embed_title):
                     return
                 self.embed.add_field(name=embed_title, value=wrath_msg, inline=False)
-                await interaction_obj.response.edit_message(embed=self.embed, view=self.new_view)
+                await interaction.edit_original_response(embed=self.embed, view=self.new_view)
                 return
 
             # Handle no item outcome
             if random.randint(1, 100) > self.success_rates[1]:
                 self.embed.add_field(name="Nothing happens.", value="Better keep moving.", inline=False)
-                await interaction_obj.response.edit_message(embed=self.embed, view=self.new_view)
+                await interaction.edit_original_response(embed=self.embed, view=self.new_view)
                 return
             # Handle excavation outcome
             reward_list = loot.generate_random_item()
@@ -410,13 +415,13 @@ class AdventureRoomView(discord.ui.View):
             item_msg = f"{loot_item.item_emoji} {reward_qty} {loot_item.item_name} found in the rubble!"
             await inventory.update_stock(self.expedition.player_obj, reward_id, reward_qty)
             self.embed.add_field(name=embed_title, value=item_msg, inline=False)
-            await interaction_obj.response.edit_message(embed=self.embed, view=self.new_view)
+            await interaction.edit_original_response(embed=self.embed, view=self.new_view)
 
         # Run the selected option
         callbacks = {0: pray_callback, 1: destroy_callback}
         await callbacks[variant]()
 
-    async def rest_callback(self, interaction_obj, variant, active_room):
+    async def rest_callback(self, interaction, variant, active_room):
         heal_amount = random.randint(self.expedition.tier, (10 + self.expedition.luck))
         heal_total = int(self.expedition.player_obj.player_mHP * (heal_amount * 0.01))
         if variant == 1:
@@ -427,14 +432,14 @@ class AdventureRoomView(discord.ui.View):
                 damage = self.expedition.take_damage(heal_total, heal_total, active_room.room_element)
                 hp = sm.display_hp(self.expedition.player_obj.player_cHP, self.expedition.player_obj.player_mHP)
                 title, description = "Ambushed!", f"You were attacked while resting! You took {damage:,} damage."
-                if await self.check_death(interaction_obj, result_msg=description):
+                if await self.check_death(interaction, result_msg=description):
                     return
                 self.embed = discord.Embed(colour=self.expedition.colour, title=title, description=description)
                 self.embed.add_field(name="", value=hp, inline=False)
                 return
             title, description = "Recovery Failed!", "Nothing good will come from staying any longer."
             self.embed = discord.Embed(colour=self.expedition.colour, title=title, description=description)
-            await interaction_obj.response.edit_message(embed=self.embed, view=self.new_view)
+            await interaction.edit_original_response(embed=self.embed, view=self.new_view)
             return
         # Handle healing
         title, description = "Recovery Successful!", f"You restore **{heal_total:,}** HP."
@@ -442,19 +447,19 @@ class AdventureRoomView(discord.ui.View):
         self.expedition.player_obj.player_cHP += heal_total
         hp = sm.display_hp(self.expedition.player_obj.player_cHP, self.expedition.player_obj.player_mHP)
         self.embed.add_field(name="", value=hp, inline=False)
-        await interaction_obj.response.edit_message(embed=self.embed, view=self.new_view)
+        await interaction.edit_original_response(embed=self.embed, view=self.new_view)
 
-    async def basic_monster_callback(self, interaction_obj, variant, active_room):
-        await self.monster_callback(interaction_obj, variant, active_room, adventuredata.adjuster_dict["basic_monster"])
+    async def basic_monster_callback(self, interaction, variant, active_room):
+        await self.monster_callback(interaction, variant, active_room, adventuredata.adjuster_dict["basic_monster"])
 
-    async def elite_monster_callback(self, interaction_obj, variant, active_room):
-        await self.monster_callback(interaction_obj, variant, active_room, adventuredata.adjuster_dict["elite_monster"])
+    async def elite_monster_callback(self, interaction, variant, active_room):
+        await self.monster_callback(interaction, variant, active_room, adventuredata.adjuster_dict["elite_monster"])
 
-    async def legend_monster_callback(self, interaction_obj, variant, active_room):
-        await self.monster_callback(interaction_obj, variant, active_room,
+    async def legend_monster_callback(self, interaction, variant, active_room):
+        await self.monster_callback(interaction, variant, active_room,
                                     adventuredata.adjuster_dict["legend_monster"])
 
-    async def monster_callback(self, interaction_obj, variant, active_room, adjuster):
+    async def monster_callback(self, interaction, variant, active_room, adjuster):
         self.new_view = TransitionView(self.expedition)
         min_dmg, max_dmg = (100 * adjuster), (300 * adjuster)
         min_dmg, max_dmg = (min_dmg, max_dmg) if adjuster != 3 else (min_dmg * 5, max_dmg * 5)
@@ -462,7 +467,7 @@ class AdventureRoomView(discord.ui.View):
         async def fight_callback():
             temp_user = await player.get_player_by_id(self.expedition.player_obj.player_id)
             exp_reward = (500 + (100 * self.expedition.tier) + (25 * self.expedition.luck)) * adjuster
-            trigger, msg = await self.handle_combat(interaction_obj, min_dmg, max_dmg,
+            trigger, msg = await self.handle_combat(interaction, min_dmg, max_dmg,
                                                     int(self.expedition.luck * 2 / adjuster))
             if trigger:
                 return
@@ -475,7 +480,7 @@ class AdventureRoomView(discord.ui.View):
                 if e_ring.item_base_type == "Crown of Skulls":
                     e_ring.roll_values[1] = str(int(e_ring.roll_values[1]) + adjuster)
                     await e_ring.update_stored_item()
-            await interaction_obj.response.edit_message(embed=self.embed, view=self.new_view)
+            await interaction.edit_original_response(embed=self.embed, view=self.new_view)
             if lvl_change != 0:
                 await sm.send_notification(self.expedition.ctx_object, temp_user, "Level", lvl_change)
 
@@ -484,32 +489,33 @@ class AdventureRoomView(discord.ui.View):
             if random.randint(1, 100) <= self.success_rates[1]:
                 title, description = "Stealth Successful!", "You have successfully avoided the encounter."
                 self.embed = discord.Embed(colour=self.expedition.colour, title=title, description=description)
-                await interaction_obj.response.edit_message(embed=self.embed, view=self.new_view)
+                await interaction.edit_original_response(embed=self.embed, view=self.new_view)
                 return
             # Handle stealth failure
             damage = self.expedition.take_damage(min_dmg, max_dmg, active_room.room_element)
             hp_msg = sm.display_hp(self.expedition.player_obj.player_cHP, self.expedition.player_obj.player_mHP)
             dmg_msg = f'You take {damage:,} damage!'
             self.embed.add_field(name="Stealth Failed", value=f"{dmg_msg}\n{hp_msg}", inline=False)
-            if await self.check_death(interaction_obj):
+            if await self.check_death(interaction):
                 return
             self.new_view = AdventureRoomView(self.ctx_object, self.player_obj, self.expedition)
-            await interaction_obj.response.edit_message(embed=self.embed, view=self.new_view)
+            await interaction.edit_original_response(embed=self.embed, view=self.new_view)
 
         # Run the selected option
         callbacks = {0: fight_callback, 1: stealth_callback}
         await callbacks[variant]()
 
-    async def epitaph_callback(self, interaction_obj, variant, active_room):
+    async def epitaph_callback(self, interaction, variant, active_room):
+
         async def search_callback():
             # Handle search success
             if random.randint(1, 100) <= self.success_rates[0]:
-                await self.treasure_found(interaction_obj, "W")
+                await self.treasure_found(interaction, "W")
                 return
             # Handle search failure
             title, description = "Search Failed!", "You leave empty handed."
             self.embed = discord.Embed(colour=self.expedition.colour, title=title, description=description)
-            await interaction_obj.response.edit_message(embed=self.embed, view=self.new_view)
+            await interaction.edit_original_response(embed=self.embed, view=self.new_view)
 
         async def decipher_callback():
             # Handle decryption success
@@ -518,25 +524,25 @@ class AdventureRoomView(discord.ui.View):
                 self.expedition.luck += luck_gained
                 title, description = "Decryption Success!", f"**+{luck_gained} Luck**"
                 self.embed = discord.Embed(colour=self.expedition.colour, title=title, description=description)
-                await interaction_obj.response.edit_message(embed=self.embed, view=self.new_view)
+                await interaction.edit_original_response(embed=self.embed, view=self.new_view)
                 return
             # Handle decryption failure
             title, description = "Decryption Failed!", "You leave empty handed."
             self.embed = discord.Embed(colour=self.expedition.colour, title=title, description=description)
-            await interaction_obj.response.edit_message(embed=self.embed, view=self.new_view)
+            await interaction.edit_original_response(embed=self.embed, view=self.new_view)
 
         # Run the selected option
         callbacks = {0: search_callback, 1: decipher_callback}
         await callbacks[variant]()
 
-    async def penetralia_callback(self, interaction_obj, variant, active_room):
+    async def penetralia_callback(self, interaction, variant, active_room):
         async def search_callback():
             if random.randint(1, 100) > self.success_rates[0]:
                 title, description = "Search Failed!", "No amulets found!"
                 self.embed = discord.Embed(colour=self.expedition.colour, title=title, description=description)
-                await interaction_obj.response.edit_message(embed=self.embed, view=self.new_view)
+                await interaction.edit_original_response(embed=self.embed, view=self.new_view)
                 return
-            await self.treasure_found(interaction_obj, "Y")
+            await self.treasure_found(interaction, "Y")
 
         async def collect_callback():
             base_coins, jackpot_chance, trove_rate = random.randint(1000, 2000), 5 * self.expedition.luck, 1
@@ -569,12 +575,12 @@ class AdventureRoomView(discord.ui.View):
             if bonus_coins > 0:
                 bonus_msg = f"Acquired {gli.coin_icon} {bonus_coins:,} bonus lotus coins!"
                 self.embed.add_field(name=reward_title, value=bonus_msg, inline=False)
-            await interaction_obj.response.edit_message(embed=self.embed, view=self.new_view)
+            await interaction.edit_original_response(embed=self.embed, view=self.new_view)
 
         callbacks = {0: search_callback, 1: collect_callback}
         await callbacks[variant]()
 
-    async def heart_callback(self, interaction_obj, variant, active_room):
+    async def heart_callback(self, interaction, variant, active_room):
         if random.randint(1, 100000) <= self.expedition.luck:
             luck_value, title = 10, "Ultimate Heart Acquired!"
             heart_id = "Pandora" if variant == 0 else "Nephilim"
@@ -589,18 +595,18 @@ class AdventureRoomView(discord.ui.View):
             description = f"{sm.reward_message(target_item)} acquired!\n Luck +{luck_value}"
         self.expedition.luck = max(1, self.expedition.luck + luck_value)
         self.embed = discord.Embed(colour=self.expedition.colour, title=title, description=description)
-        await interaction_obj.response.edit_message(embed=self.embed, view=self.new_view)
+        await interaction.edit_original_response(embed=self.embed, view=self.new_view)
         if target_item is not None and sm.check_rare_item(target_item.item_id):
             await sm.send_notification(self.expedition.ctx_object, self.expedition.player_obj,
                                        "Item", target_item.item_id)
 
-    async def selection_callback(self, interaction_obj, variant, active_room):
+    async def selection_callback(self, interaction, variant, active_room):
         async def option_callback():
             target_item = self.reward_items[variant]
             await inventory.update_stock(self.expedition.player_obj, target_item.item_id, 1)
             title, description = "Item Selected!", f"{target_item.item_emoji} 1x {target_item.item_name} acquired!"
             self.embed = discord.Embed(colour=self.expedition.colour, title=title, description=description)
-            await interaction_obj.response.edit_message(embed=self.embed, view=self.new_view)
+            await interaction.edit_original_response(embed=self.embed, view=self.new_view)
             if sm.check_rare_item(target_item.item_id):
                 await sm.send_notification(self.expedition.ctx_object, self.expedition.player_obj,
                                            "Item", target_item.item_id)
@@ -608,7 +614,7 @@ class AdventureRoomView(discord.ui.View):
         async def speed_callback():
             # Handle trap
             if random.randint(1, 100) > self.success_rates[2]:
-                await self.trap_triggered(interaction_obj)
+                await self.trap_triggered(interaction)
                 return
             # Award both items
             await inventory.update_stock(self.expedition.player_obj, self.reward_items[0].item_id, 1)
@@ -617,7 +623,7 @@ class AdventureRoomView(discord.ui.View):
             output_msg += f"{self.reward_items[1].item_emoji} 1x {self.reward_items[1].item_name} acquired!"
             title = "Received Both Items!"
             self.embed = discord.Embed(colour=self.expedition.colour, title=title, description=output_msg)
-            await interaction_obj.response.edit_message(embed=self.embed, view=self.new_view)
+            await interaction.edit_original_response(embed=self.embed, view=self.new_view)
             if sm.check_rare_item(self.reward_items[0].item_id):
                 await sm.send_notification(self.expedition.ctx_object, self.expedition.player_obj,
                                            "Item", self.reward_items[0].item_id)
@@ -628,7 +634,7 @@ class AdventureRoomView(discord.ui.View):
         callbacks = {0: option_callback, 1: option_callback, 2: speed_callback}
         await callbacks[variant]()
 
-    async def shrine_callback(self, interaction_obj, variant, active_room):
+    async def shrine_callback(self, interaction, variant, active_room):
         adjuster = 1 if active_room.variant == "" else 2
         # Handle regular success
         self.embed = discord.Embed(colour=self.expedition.colour, title="Ritual Success!", description="")
@@ -639,27 +645,27 @@ class AdventureRoomView(discord.ui.View):
                 await inventory.update_stock(self.expedition.player_obj, item_id, quantity)
                 self.embed.description = (f"{self.reward_items[variant].item_emoji} {quantity}x "
                                           f"{self.reward_items[variant].item_name}")
-                await interaction_obj.response.edit_message(embed=self.embed, view=self.new_view)
+                await interaction.edit_original_response(embed=self.embed, view=self.new_view)
                 return
             # Handle chaos success
             quantity = random.randint(1, 3) * adjuster
             self.expedition.luck += quantity
             self.embed.description = f"**Gained +{quantity} Luck**"
-            await interaction_obj.response.edit_message(embed=self.embed, view=self.new_view)
+            await interaction.edit_original_response(embed=self.embed, view=self.new_view)
             return
         # Handle failure
         damage = self.expedition.take_damage((adjuster * 100), (adjuster * 300), active_room.room_element)
         dmg_msg = f'Unable to hold out you took {damage:,} damage.'
         hp_msg = sm.display_hp(self.expedition.player_obj.player_cHP, self.expedition.player_obj.player_mHP)
         self.embed.title, self.embed.description = "Ritual Failed!", dmg_msg
-        if await self.check_death(interaction_obj):
+        if await self.check_death(interaction):
             return
         self.expedition.luck = max(1, (self.expedition.luck - adjuster))
         output_msg = f"**Lost -{adjuster} Luck**\n{hp_msg}"
         self.embed.add_field(name="", value=output_msg, inline=False)
-        await interaction_obj.response.edit_message(embed=self.embed, view=self.new_view)
+        await interaction.edit_original_response(embed=self.embed, view=self.new_view)
 
-    async def trial_callback(self, interaction_obj, variant, active_room):
+    async def trial_callback(self, interaction, variant, active_room):
         player_obj = self.expedition.player_obj
         temp_player = await player.get_player_by_id(player_obj.player_id)
         output_msg = "Cost could not be paid. Nothing Gained."
@@ -695,9 +701,9 @@ class AdventureRoomView(discord.ui.View):
             title = "Trial Passed!"
             self.expedition.luck += reward
         self.embed = discord.Embed(colour=self.expedition.colour, title=title, description=output_msg)
-        await interaction_obj.response.edit_message(embed=self.embed, view=self.new_view)
+        await interaction.edit_original_response(embed=self.embed, view=self.new_view)
 
-    async def crystal_callback(self, interaction_obj, variant, active_room):
+    async def crystal_callback(self, interaction, variant, active_room):
         reward_id = "Scrap"
         prefix = ""
         if self.expedition.tier > 5:
@@ -711,25 +717,25 @@ class AdventureRoomView(discord.ui.View):
             title_msg, output_msg = f"Nothing Found!", f"You leave empty handed.\n**Luck -{luck_qty}**"
             self.expedition.luck = max(1, self.expedition.luck - luck_qty)
             self.embed = discord.Embed(colour=self.expedition.colour, title=title_msg, description=output_msg)
-            await interaction_obj.response.edit_message(embed=self.embed, view=self.new_view)
+            await interaction.edit_original_response(embed=self.embed, view=self.new_view)
             return
         # Handle success
         title, output_msg = "Found Materials!", f"{reward.item_emoji} {item_qty}x {reward.item_name}\n**Luck +1**"
         await inventory.update_stock(self.expedition.player_obj, reward.item_id, item_qty)
         self.expedition.luck += luck_qty
         self.embed = discord.Embed(colour=self.expedition.colour, title=title, description=output_msg)
-        await interaction_obj.response.edit_message(embed=self.embed, view=self.new_view)
+        await interaction.edit_original_response(embed=self.embed, view=self.new_view)
 
-    async def sanctuary_callback(self, interaction_obj, variant, active_room):
+    async def sanctuary_callback(self, interaction, variant, active_room):
         item_type = "Gemstone" if "Gemstone" in self.reward_items[variant].item_id else "Cores"
         qty = 1 if item_type == "Gemstone" else random.randint((1 + self.expedition.luck), (10 + self.expedition.luck))
         await inventory.update_stock(self.expedition.player_obj, self.reward_items[variant].item_id, qty)
         title = f"{item_type} Collected!"
         output_msg = f"{self.reward_items[variant].item_emoji} {qty}x {self.reward_items[variant].item_name}"
         self.embed = discord.Embed(colour=self.expedition.colour, title=title, description=output_msg)
-        await interaction_obj.response.edit_message(embed=self.embed, view=self.new_view)
+        await interaction.edit_original_response(embed=self.embed, view=self.new_view)
 
-    async def pact_callback(self, interaction_obj, variant, active_room):
+    async def pact_callback(self, interaction, variant, active_room):
         pact_details = active_room.variant.split(';')
         demon_type = pact.demon_variants[int(pact_details[0])]
 
@@ -739,7 +745,7 @@ class AdventureRoomView(discord.ui.View):
             if self.expedition.player_obj.player_cHP <= blood_cost:
                 output = f"Unable to provide sufficient blood to forge the pact, the {demon_type} consumes you."
                 self.expedition.player_obj.player_cHP = 0
-                if await self.check_death(interaction_obj, result_msg=output):
+                if await self.check_death(interaction, result_msg=output):
                     return
             # Pay the cost. Forge the pact.
             self.expedition.player_obj.player_cHP -= blood_cost
@@ -747,11 +753,11 @@ class AdventureRoomView(discord.ui.View):
             temp_user.pact = active_room.variant
             await temp_user.set_player_field("player_pact", temp_user.pact)
             self.embed = pact.display_pact(temp_user)
-            await interaction_obj.response.edit_message(embed=self.embed, view=self.new_view)
+            await interaction.edit_original_response(embed=self.embed, view=self.new_view)
 
         async def refuse_pact():
             min_dmg, max_dmg = 100 * int(pact_details[0]), 300 * int(pact_details[0])
-            trigger_return, description = await self.handle_combat(interaction_obj, min_dmg, max_dmg, 10 + self.expedition.luck)
+            trigger_return, description = await self.handle_combat(interaction, min_dmg, max_dmg, 10 + self.expedition.luck)
             if trigger_return:
                 return
             hp_msg = sm.display_hp(self.expedition.player_obj.player_cHP, self.expedition.player_obj.player_mHP)
@@ -760,7 +766,7 @@ class AdventureRoomView(discord.ui.View):
             exp_message, lvl_change = await temp_user.adjust_exp(exp_value)
             description = f"{description}\n{hp_msg}\n{gli.exp_icon} {exp_message} Exp Acquired."
             self.embed.add_field(name=f"{demon_type} Defeated!", value=description, inline=False)
-            await interaction_obj.response.edit_message(embed=self.embed, view=self.new_view)
+            await interaction.edit_original_response(embed=self.embed, view=self.new_view)
             if lvl_change == 0:
                 return
             await sm.send_notification(self.expedition.ctx_object, temp_user, "Level", lvl_change)
@@ -768,14 +774,14 @@ class AdventureRoomView(discord.ui.View):
         callbacks = {0: refuse_pact, 1: forge_pact}
         await callbacks[variant]()
 
-    async def treasure_callback(self, interaction_obj, variant, active_room):
+    async def treasure_callback(self, interaction, variant, active_room):
         # Handle bypass option
         if variant == 1:
-            await self.bypass_callback(interaction_obj)
+            await self.bypass_callback(interaction)
             return
         # Handle treasure outcome.
         if not active_room.check_trap(self.expedition.luck):
-            await self.treasure_found(interaction_obj, active_room.reward_type)
+            await self.treasure_found(interaction, active_room.reward_type)
             return
         # Handle greater trap outcome.
         if active_room.room_type != "treasure":
@@ -783,16 +789,16 @@ class AdventureRoomView(discord.ui.View):
             self.embed.add_field(name="Eaten - Run Ended", value=trap_msg, inline=False)
             await self.expedition.player_obj.update_misc_data("deaths", 1)
             self.expedition.player_obj.player_cHP = 0
-            if await self.check_death(interaction_obj):
+            if await self.check_death(interaction):
                 return
         # Handle regular trap outcome
         damage = self.expedition.take_damage(100, 300, active_room.room_element)
         dmg_msg = f'The mimic bites you dealing {damage:,} damage.'
-        if await self.check_death(interaction_obj, result_msg=dmg_msg):
+        if await self.check_death(interaction, result_msg=dmg_msg):
             return
         hp_msg = f'{self.expedition.player_obj.player_cHP} / {self.expedition.player_obj.player_mHP} HP'
         self.embed.add_field(name="", value=f"{dmg_msg}\n{hp_msg}", inline=False)
-        await interaction_obj.response.edit_message(embed=self.embed, view=self.new_view)
+        await interaction.edit_original_response(embed=self.embed, view=self.new_view)
 
     async def trap_triggered(self, interaction):
         self.embed = self.expedition.room.embed
@@ -808,7 +814,7 @@ class AdventureRoomView(discord.ui.View):
         # Handle teleport
         if self.expedition.room.room_element >= 6:
             self.expedition.teleport()
-            await interaction.response.edit_message(embed=self.embed, view=self.new_view)
+            await interaction.edit_original_response(embed=self.embed, view=self.new_view)
             return
         # Handle damage
         dmg_msg = f'You took {self.expedition.take_damage(100, 300, room_element):,} damage.'
@@ -817,7 +823,7 @@ class AdventureRoomView(discord.ui.View):
             return
         hp_msg = sm.display_hp(self.expedition.player_obj.player_cHP, self.expedition.player_obj.player_mHP)
         self.embed.add_field(name="", value=hp_msg, inline=False)
-        await interaction.response.edit_message(embed=self.embed, view=self.new_view)
+        await interaction.edit_original_response(embed=self.embed, view=self.new_view)
         return
 
     async def handle_combat(self, interaction, min_dmg, max_dmg, unscathed_rate):
@@ -841,7 +847,7 @@ class AdventureRoomView(discord.ui.View):
         self.embed = discord.Embed(colour=self.expedition.colour, title=title_msg, description=result_msg)
         self.embed.add_field(name=death_header, value=death_msg, inline=False)
         self.new_view = None
-        await interaction.response.edit_message(embed=self.embed, view=self.new_view)
+        await interaction.edit_original_response(embed=self.embed, view=self.new_view)
         return True
 
     async def treasure_found(self, interaction, treasure_type):
@@ -852,13 +858,13 @@ class AdventureRoomView(discord.ui.View):
             loot_msg = f"{reward.item_emoji} {qty}x {reward.item_name}"
             self.embed = discord.Embed(colour=self.expedition.colour, title="Fragments Acquired!", description=loot_msg)
             update_stock = await inventory.update_stock(self.expedition.player_obj, reward.item_id, qty)
-            await interaction.response.edit_message(embed=self.embed, view=self.new_view)
+            await interaction.edit_original_response(embed=self.embed, view=self.new_view)
             return
         # Handle gear item rewards.
         reward_tier = inventory.generate_random_tier(max_tier=4, luck_bonus=self.expedition.luck)
         reward_item = inventory.CustomItem(self.expedition.player_obj.player_id, treasure_type, reward_tier, random_enhance=True)
         self.embed, self.new_view = await reward_item.create_citem_embed(), ItemView(self.expedition, reward_item)
-        await interaction.response.edit_message(embed=self.embed, view=self.new_view)
+        await interaction.edit_original_response(embed=self.embed, view=self.new_view)
         return
 
     def custom_assignments(self):
@@ -947,12 +953,13 @@ class TransitionView(discord.ui.View):
 
     @discord.ui.button(label="Proceed", style=discord.ButtonStyle.blurple, emoji="⬆️")
     async def proceed_callback(self, interaction: discord.Interaction, button: discord.Button):
+        await interaction.response.edit_message(embed=gli.processing_embed)
         if await handle_map_interaction(self, interaction):
             return
         self.embed, self.new_view = await self.expedition.display_next_room(self.expedition.ctx_object,
                                                                             self.expedition.player_obj)
         self.expedition.room_num += 1
-        await interaction.response.edit_message(embed=self.embed, view=self.new_view)
+        await interaction.edit_original_response(embed=self.embed, view=self.new_view)
 
 
 class ItemView(discord.ui.View):
@@ -964,20 +971,22 @@ class ItemView(discord.ui.View):
 
     @discord.ui.button(label="Claim Item", style=discord.ButtonStyle.blurple)
     async def claim_callback(self, interaction: discord.Interaction, button: discord.Button):
+        await interaction.response.edit_message(embed=gli.processing_embed)
         if await handle_map_interaction(self, interaction):
             return
         self.item.item_id = await inventory.add_custom_item(self.item)
         self.new_view = TransitionView(self.expedition)
         if self.item.item_id == 0:
             self.embed = inventory.full_inventory_embed(self.item, self.expedition.colour)
-            await interaction.response.edit_message(embed=self.embed, view=self.new_view)
+            await interaction.edit_original_response(embed=self.embed, view=self.new_view)
             return
         title, description = "Item Claimed!", f"Item ID: {self.item.item_id} has been placed in your gear inventory."
         self.embed = discord.Embed(colour=self.expedition.colour, title=title, description=description)
-        await interaction.response.edit_message(embed=self.embed, view=self.new_view)
+        await interaction.edit_original_response(embed=self.embed, view=self.new_view)
 
     @discord.ui.button(label="Sell Item", style=discord.ButtonStyle.success)
     async def sell_callback(self, interaction: discord.Interaction, button: discord.Button):
+        await interaction.response.edit_message(embed=gli.processing_embed)
         if await handle_map_interaction(self, interaction):
             return
         self.new_view = TransitionView(self.expedition)
@@ -986,10 +995,11 @@ class ItemView(discord.ui.View):
         sell_msg = await temp_user.adjust_coins(sell_value)
         title, description = "Item Sold!", f"{gli.coin_icon} {sell_msg} lotus coins acquired."
         self.embed = discord.Embed(colour=self.expedition.colour, title=title, description=description)
-        await interaction.response.edit_message(embed=self.embed, view=self.new_view)
+        await interaction.edit_original_response(embed=self.embed, view=self.new_view)
 
     @discord.ui.button(label="Scrap Item", style=discord.ButtonStyle.success)
     async def scrap_callback(self, interaction: discord.Interaction, button: discord.Button):
+        await interaction.response.edit_message(embed=gli.processing_embed)
         if await handle_map_interaction(self, interaction):
             return
         self.new_view = TransitionView(self.expedition)
@@ -997,7 +1007,7 @@ class ItemView(discord.ui.View):
         await inventory.update_stock(self.expedition.player_obj, scrap_item.item_id, self.item.item_tier)
         title, description = "Item Scrapped!", f"{scrap_item.item_emoji} {self.item.item_tier}x {scrap_item.item_name}"
         self.embed = discord.Embed(colour=self.expedition.colour, title=title, description=description)
-        await interaction.response.edit_message(embed=self.embed, view=self.new_view)
+        await interaction.edit_original_response(embed=self.embed, view=self.new_view)
 
 
 def check_essence(selected_items, pool_tier):
@@ -1170,14 +1180,17 @@ class ManifestView(discord.ui.View):
 
     @discord.ui.button(label="Hunt", style=discord.ButtonStyle.success, emoji="⚔️")
     async def hunt_callback(self, interaction: discord.Interaction, map_select: discord.ui.Select):
+        await interaction.response.edit_message(embed=gli.processing_embed)
         await self.manifest_callback(interaction, "Hunt")
 
     @discord.ui.button(label="Gather", style=discord.ButtonStyle.success, emoji="⚔️")
     async def gather_callback(self, interaction: discord.Interaction, map_select: discord.ui.Select):
+        await interaction.response.edit_message(embed=gli.processing_embed)
         await self.manifest_callback(interaction, "Gather")
 
     @discord.ui.button(label="Mine", style=discord.ButtonStyle.success, emoji="⚔️")
     async def mine_callback(self, interaction: discord.Interaction, map_select: discord.ui.Select):
+        await interaction.response.edit_message(embed=gli.processing_embed)
         await self.manifest_callback(interaction, "Mine")
 
     async def manifest_callback(self, interaction, method):
@@ -1189,7 +1202,7 @@ class ManifestView(discord.ui.View):
         # Check existing manifestation
         if existing_timestamp:
             embed.add_field(name="In Progress!", value="You've already got a manifestation running!")
-            await interaction.response.edit_message(embed=embed, view=self.new_view)
+            await interaction.edit_original_response(embed=embed, view=self.new_view)
             return
         # Handle successful embark
         if await self.player_user.spend_stamina(500):
@@ -1199,11 +1212,11 @@ class ManifestView(discord.ui.View):
             name, value = f"{self.e_tarot.card_name} Embarks [{method}]", f"Expected return time: {self.hours} hours."
             self.new_embed.add_field(name=name, value=value, inline=False)
             self.new_view = SkipView(self.ctx_obj, self.player_user, method_info, self.sent_message)
-            await interaction.response.edit_message(embed=self.new_embed, view=self.new_view)
+            await interaction.edit_original_response(embed=self.new_embed, view=self.new_view)
             return
         # Handle insufficient stamina
         embed.add_field(name="Not Enough Stamina!", value="Please check your /stamina!")
-        await interaction.response.edit_message(embed=embed, view=self)
+        await interaction.edit_original_response(embed=embed, view=self)
 
 
 class SkipView(discord.ui.View):
@@ -1219,12 +1232,13 @@ class SkipView(discord.ui.View):
     async def skip_cooldown(self, interaction: discord.Interaction, button: discord.ui.Button):
         if await sm.check_click(interaction, self.player_user, self.new_embed, self.new_view):
             return
+        await interaction.response.edit_message(embed=gli.processing_embed)
         cost_stock = await inventory.check_stock(self.player_user, self.cost_item.item_id)
         if cost_stock < 5:
             title, description = "Manifest - Out of Stock", sm.get_stock_msg(self.cost_item, cost_stock, cost=5)
             self.new_embed = sm.easy_embed(int(self.method_info[2]), title, description)
             self.new_view = SkipView(self.ctx_obj, self.player_user, self.method_info, self.sent_message)
-            await interaction.response.edit_message(embed=self.new_embed, view=self.new_view)
+            await interaction.edit_original_response(embed=self.new_embed, view=self.new_view)
             return
         difference, method_info = await self.player_user.check_cooldown("manifest")
         wait_time = timedelta(hours=(14 + self.player_user.player_echelon))
@@ -1232,7 +1246,7 @@ class SkipView(discord.ui.View):
             await inventory.update_stock(self.player_user, self.cost_item.item_id, -5)
             await self.player_user.set_cooldown("manifest", "", rewind_days=2)
         self.skip_cooldown.disabled = True
-        await interaction.response.edit_message(view=self)
+        await interaction.edit_original_response(view=self)
         self.sent_message, self.new_embed = await run_manifest(self.ctx_obj, self.player_user, method_info, self.sent_message)
         self.new_view = RepeatView(self.ctx_obj, self.player_user, self.method_info, self.new_embed, self.sent_message)
         await self.player_user.clear_cooldown("manifest")
@@ -1250,6 +1264,7 @@ class RepeatView(discord.ui.View):
     async def repeat_manifest(self, interaction: discord.Interaction, button: discord.ui.Button):
         if await sm.check_click(interaction, self.player_user, self.new_embed, self.new_view):
             return
+        await interaction.response.edit_message(embed=gli.processing_embed)
         await self.player_user.reload_player()
         self.new_embed = self.current_embed.copy()
         self.new_view = RepeatView(self.ctx_obj, self.player_user, self.method_info, self.current_embed,
@@ -1259,13 +1274,13 @@ class RepeatView(discord.ui.View):
         if existing_timestamp:
             name, value = "In Progress!", "You've already got a manifestation running!"
             self.new_embed.add_field(name=name, value=value, inline=False)
-            await interaction.response.edit_message(embed=self.new_embed, view=self.new_view)
+            await interaction.edit_original_response(embed=self.new_embed, view=self.new_view)
             return
         # Ensure there's enough stamina to perform the action
         if not await self.player_user.spend_stamina(500):
             name, value = "Insufficient Stamina", "You do not have enough stamina to repeat the action."
             self.new_embed.add_field(name=name, value=value, inline=False)
-            await interaction.response.edit_message(embed=self.new_embed, view=self.new_view)
+            await interaction.edit_original_response(embed=self.new_embed, view=self.new_view)
             return
         # Handle successful embark
         method, card_numeral, num_stars = self.method_info.split(';')
@@ -1280,4 +1295,4 @@ class RepeatView(discord.ui.View):
         value = f"Expected return time: {14 + self.player_user.player_echelon} hours."
         self.new_embed.add_field(name=name, value=value, inline=False)
         self.new_view = SkipView(self.ctx_obj, self.player_user, new_method_info, self.sent_message)
-        await interaction.response.edit_message(embed=self.new_embed, view=self.new_view)
+        await interaction.edit_original_response(embed=self.new_embed, view=self.new_view)

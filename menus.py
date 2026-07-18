@@ -75,21 +75,24 @@ class GuideMenu(discord.ui.View):
 
     @discord.ui.button(label="Beginner", style=discord.ButtonStyle.blurple, emoji="🌟")
     async def beginner_help_callback(self, interaction: discord.Interaction, button: discord.ui.Button):
+        await interaction.response.edit_message(embed=gli.processing_embed)
         embed_msg = discord.Embed(colour=discord.Colour.dark_teal(),
                                   title=guide_dict[0][0], description=guide_dict[0][1])
-        await interaction.response.edit_message(embed=embed_msg)
+        await interaction.edit_original_response(embed=embed_msg)
 
     @discord.ui.button(label="Intermediate", style=discord.ButtonStyle.blurple, emoji="✨")
     async def intermediate_help_callback(self, interaction: discord.Interaction, button: discord.ui.Button):
+        await interaction.response.edit_message(embed=gli.processing_embed)
         embed_msg = discord.Embed(colour=discord.Colour.dark_teal(),
                                   title=guide_dict[1][0], description=guide_dict[1][1])
-        await interaction.response.edit_message(embed=embed_msg)
+        await interaction.edit_original_response(embed=embed_msg)
 
     @discord.ui.button(label="Advanced", style=discord.ButtonStyle.blurple, emoji="🚀")
     async def advanced_help_callback(self, interaction: discord.Interaction, button: discord.ui.Button):
+        await interaction.response.edit_message(embed=gli.processing_embed)
         embed_msg = discord.Embed(colour=discord.Colour.dark_teal(),
                                   title=guide_dict[2][0], description=guide_dict[2][1])
-        await interaction.response.edit_message(embed=embed_msg)
+        await interaction.edit_original_response(embed=embed_msg)
 
 
 class HelpView(discord.ui.View):
@@ -99,43 +102,51 @@ class HelpView(discord.ui.View):
 
     @discord.ui.button(label="Game", style=discord.ButtonStyle.blurple, row=0, emoji="🐉")
     async def game_help_callback(self, interaction: discord.Interaction, button: discord.Button):
+        await interaction.response.edit_message(embed=gli.processing_embed)
         embed_msg = build_help_embed(self.category_dict, 'game')
-        await interaction.response.edit_message(embed=embed_msg)
+        await interaction.edit_original_response(embed=embed_msg)
 
     @discord.ui.button(label="Combat", style=discord.ButtonStyle.blurple, row=0, emoji="⚔️")
     async def combat_help_callback(self, interaction: discord.Interaction, button: discord.Button):
+        await interaction.response.edit_message(embed=gli.processing_embed)
         embed_msg = build_help_embed(self.category_dict, 'combat')
-        await interaction.response.edit_message(embed=embed_msg)
+        await interaction.edit_original_response(embed=embed_msg)
 
     @discord.ui.button(label="Gear", style=discord.ButtonStyle.blurple, row=0, emoji="⚔️")
     async def gear_help_callback(self, interaction: discord.Interaction, button: discord.Button):
+        await interaction.response.edit_message(embed=gli.processing_embed)
         embed_msg = build_help_embed(self.category_dict, 'gear')
-        await interaction.response.edit_message(embed=embed_msg)
+        await interaction.edit_original_response(embed=embed_msg)
 
     @discord.ui.button(label="Craft", style=discord.ButtonStyle.blurple, row=1, emoji="<:ehammer:1145520259248427069>")
     async def craft_help_callback(self, interaction: discord.Interaction, button: discord.Button):
+        await interaction.response.edit_message(embed=gli.processing_embed)
         embed_msg = build_help_embed(self.category_dict, 'craft')
-        await interaction.response.edit_message(embed=embed_msg)
+        await interaction.edit_original_response(embed=embed_msg)
 
     @discord.ui.button(label="Trade", style=discord.ButtonStyle.blurple, row=1, emoji="💲")
     async def trade_help_callback(self, interaction: discord.Interaction, button: discord.Button):
+        await interaction.response.edit_message(embed=gli.processing_embed)
         embed_msg = build_help_embed(self.category_dict, 'trade')
-        await interaction.response.edit_message(embed=embed_msg)
+        await interaction.edit_original_response(embed=embed_msg)
 
     @discord.ui.button(label="Areas", style=discord.ButtonStyle.blurple, row=1, emoji="ℹ️")
     async def location_help_callback(self, interaction: discord.Interaction, button: discord.Button):
+        await interaction.response.edit_message(embed=gli.processing_embed)
         embed_msg = build_help_embed(self.category_dict, 'location')
-        await interaction.response.edit_message(embed=embed_msg)
+        await interaction.edit_original_response(embed=embed_msg)
 
     @discord.ui.button(label="Info", style=discord.ButtonStyle.blurple, row=2, emoji="ℹ️")
     async def account_help_callback(self, interaction: discord.Interaction, button: discord.Button):
+        await interaction.response.edit_message(embed=gli.processing_embed)
         embed_msg = build_help_embed(self.category_dict, 'info')
-        await interaction.response.edit_message(embed=embed_msg)
+        await interaction.edit_original_response(embed=embed_msg)
 
     @discord.ui.button(label="Admin", style=discord.ButtonStyle.red, row=2, emoji="⌨")
     async def admin_help_callback(self, interaction: discord.Interaction, button: discord.Button):
+        await interaction.response.edit_message(embed=gli.processing_embed)
         embed_msg = build_help_embed(self.category_dict, 'admin')
-        await interaction.response.edit_message(embed=embed_msg)
+        await interaction.edit_original_response(embed=embed_msg)
 
 
 def build_help_embed(category_dict, category_name):
@@ -164,30 +175,33 @@ class TownView(discord.ui.View):
     async def refinery_callback(self, interaction: discord.Interaction, button: discord.Button):
         if interaction.user.id != self.player_obj.discord_id:
             return
+        await interaction.response.edit_message(embed=gli.processing_embed)
         title, description = "Refinery", "Please select the item to refine"
         embed_msg = discord.Embed(colour=discord.Colour.dark_orange(), title=title, description=description)
         embed_msg.set_image(url=gli.refinery_img)
-        await interaction.response.edit_message(embed=embed_msg, view=forge.RefSelectView(self.player_obj))
+        await interaction.edit_original_response(embed=embed_msg, view=forge.RefSelectView(self.player_obj))
 
     @discord.ui.button(label="Alchemist", style=discord.ButtonStyle.blurple, row=0)
     async def alchemist_callback(self, interaction: discord.Interaction, button: discord.Button):
         if interaction.user.id != self.player_obj.discord_id:
             return
+        await interaction.response.edit_message(embed=gli.processing_embed)
         title, description = "Cloaked Alchemist, Sangam", "I can make anything, if you bring the right stuff."
         embed_msg = discord.Embed(colour=discord.Colour.magenta(), title=title, description=description)
         embed_msg.set_image(url=gli.infuse_img)
-        await interaction.response.edit_message(embed=embed_msg, view=infuse.InfuseView(self.ctx_obj, self.player_obj))
+        await interaction.edit_original_response(embed=embed_msg, view=infuse.InfuseView(self.ctx_obj, self.player_obj))
 
     @discord.ui.button(label="Market", style=discord.ButtonStyle.blurple, row=0)
     async def market_callback(self, interaction: discord.Interaction, button: discord.Button):
         if interaction.user.id != self.player_obj.discord_id:
             return
+        await interaction.response.edit_message(embed=gli.processing_embed)
         title, description = "Black Market", "Everything has a price."
         embed_msg = discord.Embed(colour=discord.Colour.dark_orange(), title=title, description=description)
         embed_msg.set_image(url=gli.market_img)
         fish_obj, trade_obj = await market.get_daily_fish_items()
         new_view = market.TierSelectView(self.player_obj, fish_obj, trade_obj)
-        await interaction.response.edit_message(embed=embed_msg, view=new_view)
+        await interaction.edit_original_response(embed=embed_msg, view=new_view)
 
     @discord.ui.button(label="Bazaar", style=discord.ButtonStyle.blurple, row=0)
     async def bazaar_callback(self, interaction: discord.Interaction, button: discord.Button):
@@ -195,12 +209,13 @@ class TownView(discord.ui.View):
             return
         embed_msg = await bazaar.show_bazaar_items(self.player_obj)
         embed_msg.set_image(url=gli.bazaar_img)
-        await interaction.response.edit_message(embed=embed_msg, view=bazaar.BazaarView(self.player_obj))
+        await interaction.edit_original_response(embed=embed_msg, view=bazaar.BazaarView(self.player_obj))
 
     @discord.ui.button(label="?????", style=discord.ButtonStyle.secondary, disabled=True, row=1)
     async def monument_callback(self, interaction: discord.Interaction, button: discord.Button):
         if interaction.user.id != self.player_obj.discord_id:
             return
+        await interaction.response.edit_message(embed=gli.processing_embed)
         await monument.get_monument_embed(interaction, self.ctx_obj, self.player_obj, 0)
 
 
@@ -222,28 +237,31 @@ class CelestialView(discord.ui.View):
     async def forge_callback(self, interaction: discord.Interaction, button: discord.Button):
         if interaction.user.id != self.player_obj.discord_id:
             return
+        await interaction.response.edit_message(embed=gli.processing_embed)
         embed_msg = discord.Embed(colour=discord.Colour.blurple(), title="Pandora's Celestial Forge", description="")
         name, value = "Pandora, The Celestial", "Let me know what you'd like me to upgrade!"
         embed_msg.add_field(name=name, value=value, inline=False)
         embed_msg.set_image(url=gli.forge_img)
-        await interaction.response.edit_message(embed=embed_msg, view=forge.SelectView(self.player_obj, "celestial"))
+        await interaction.edit_original_response(embed=embed_msg, view=forge.SelectView(self.player_obj, "celestial"))
 
     @discord.ui.button(label="Tarot", style=discord.ButtonStyle.blurple, row=0)
     async def planetarium_callback(self, interaction: discord.Interaction, button: discord.Button):
         if interaction.user.id != self.player_obj.discord_id:
             return
+        await interaction.response.edit_message(embed=gli.processing_embed)
         completion_count = await tarot.collection_check(self.player_obj)
         title, description = "Pandora, The Celestial", "Welcome to the planetarium. Sealed tarots are stored here."
         embed_msg = discord.Embed(colour=discord.Colour.magenta(), title=title, description=description)
         name, value = f"{self.player_obj.player_username}'s Tarot Collection", f"Completion Total: {completion_count} / 31"
         embed_msg.add_field(name=name, value=value, inline=False)
         embed_msg.set_image(url=gli.planetarium_img)
-        await interaction.response.edit_message(embed=embed_msg, view=tarot.CollectionView(self.player_obj))
+        await interaction.edit_original_response(embed=embed_msg, view=tarot.CollectionView(self.player_obj))
 
     @discord.ui.button(label="?????", style=discord.ButtonStyle.blurple, row=0)
     async def summon_callback(self, interaction: discord.Interaction, button: discord.Button):
         if interaction.user.id != self.player_obj.discord_id:
             return
+        await interaction.response.edit_message(embed=gli.processing_embed)
         item_obj = inventory.BasicItem("Skull2")
         if self.num_visits == 0:
             description = (f"Ah so you're Pandora's new pet. One ought to be more cautious when speaking my name. "
@@ -259,7 +277,8 @@ class CelestialView(discord.ui.View):
             name = f"Heed my words human. I will not tolerate disobedience."
             value = (f"If you overestimate yourself and try to seal me, I will *KILL* you.\n"
                      f"If tell anyone I was here, I will *KILL* you.\n"
-                     f"If you hurt my little sister, I will *KILL* you.\n")
+                     f"If you hurt my little sister, I will *KILL* you.\n"
+                     f"**Lore Unlock:**\nhttps://pandoraportal.ca/play.php\n")
         else:
             player_deaths = int(await self.player_obj.check_misc_data('deaths'))
             description = (f"I will continue to revive your mortal body so long as you continue to aid me. "
@@ -276,7 +295,7 @@ class CelestialView(discord.ui.View):
             e_ring = await inventory.read_custom_item(self.player_obj.player_equipped[4])
             if e_ring.item_base_type == "Crown of Skulls":
                 skull_ring = True
-        await interaction.response.edit_message(embed=embed_msg, view=SkullSelectView(self.player_obj, skull_ring))
+        await iinteraction.edit_original_response(embed=embed_msg, view=SkullSelectView(self.player_obj, skull_ring))
 
     @discord.ui.button(label="?????", style=discord.ButtonStyle.secondary, disabled=True, row=1)
     async def monument_callback(self, interaction: discord.Interaction, button: discord.Button):
@@ -312,70 +331,77 @@ class DivineView(discord.ui.View):
     async def changeling_callback(self, interaction: discord.Interaction, button: discord.Button):
         if interaction.user.id != self.player_obj.discord_id:
             return
+        await interaction.response.edit_message(embed=gli.processing_embed)
         title = "Mysmir, The Changeling"
         token_obj, ore_obj = inventory.BasicItem("Token1"), inventory.BasicItem("Metamorphite")
         token_stock = await inventory.check_stock(self.player_obj, token_obj.item_id)
         embed_msg = await market.changeling_cost_msg(token_obj, token_stock, ore_obj)
         new_view = market.ChangelingShopView(self.player_obj, token_obj, ore_obj)
         embed_msg.set_image(url=gli.cathedral_img)
-        await interaction.response.edit_message(embed=embed_msg, view=new_view)
+        await interaction.edit_original_response(embed=embed_msg, view=new_view)
 
     @discord.ui.button(label="Avalon", style=discord.ButtonStyle.blurple, row=0)
     async def points_callback(self, interaction: discord.Interaction, button: discord.Button):
         if interaction.user.id != self.player_obj.discord_id:
             return
+        await interaction.response.edit_message(embed=gli.processing_embed)
         embed_msg = await skillpaths.create_path_embed(self.player_obj)
-        await interaction.response.edit_message(embed=embed_msg, view=PointsView(self.player_obj))
+        await interaction.edit_original_response(embed=embed_msg, view=PointsView(self.player_obj))
 
     @discord.ui.button(label="Isolde", style=discord.ButtonStyle.blurple, row=0)
     async def engrave_callback(self, interaction: discord.Interaction, button: discord.Button):
         if interaction.user.id != self.player_obj.discord_id:
             return
+        await interaction.response.edit_message(embed=gli.processing_embed)
         title = "Isolde, The Soulweaver"
         description = "You've come a long way from home child. Tell me, what kind of power do you seek?"
         embed_msg = discord.Embed(colour=discord.Colour.dark_orange(), title=title, description=description)
-        await interaction.response.edit_message(embed=embed_msg, view=insignia.InsigniaView(self.player_obj))
+        await interaction.edit_original_response(embed=embed_msg, view=insignia.InsigniaView(self.player_obj))
 
     @discord.ui.button(label="Vexia", style=discord.ButtonStyle.blurple, row=1)
     async def scribe_callback(self, interaction: discord.Interaction, button: discord.Button):
         if interaction.user.id != self.player_obj.discord_id:
             return
+        await interaction.response.edit_message(embed=gli.processing_embed)
         e_weapon = await inventory.read_custom_item(self.player_obj.player_equipped[0])
         title = "Vexia, The Scribe"
         entry_msg = ("We need not turn you away, mortal."
                      "\nThe oracle has already foretold your failure. Now it need only be written into truth.")
         embed_msg = discord.Embed(colour=discord.Colour.blurple(), title=title, description=entry_msg)
         embed_msg.set_image(url=gli.cathedral_img)
-        await interaction.response.edit_message(embed=embed_msg, view=forge.SelectView(self.player_obj, "custom"))
+        await interaction.edit_original_response(embed=embed_msg, view=forge.SelectView(self.player_obj, "custom"))
 
     @discord.ui.button(label="Fleur", style=discord.ButtonStyle.blurple, row=1)
     async def sanctuary_callback(self, interaction: discord.Interaction, button: discord.Button):
         if interaction.user.id != self.player_obj.discord_id:
             return
+        await interaction.response.edit_message(embed=gli.processing_embed)
         title = "Fleur, The Oracle"
         entry_msg = ("Have you come to desecrate my holy gardens once more? Well, I suppose it no longer matters, "
                      "I know you will inevitably find what you desire even without my guidance. "
                      "If you intend to sever the divine lotus, then I suppose the rest are nothing but pretty flowers.")
         embed_msg = discord.Embed(colour=discord.Colour.blurple(), title=title, description=entry_msg)
         embed_msg.set_image(url=gli.sanctuary_img)
-        await interaction.response.edit_message(embed=embed_msg, view=market.LotusSelectView(self.player_obj))
+        await interaction.edit_original_response(embed=embed_msg, view=market.LotusSelectView(self.player_obj))
 
     @discord.ui.button(label="Yubelle", style=discord.ButtonStyle.blurple, row=1)
     async def cathedral_callback(self, interaction: discord.Interaction, button: discord.Button):
         if interaction.user.id != self.player_obj.discord_id:
             return
+        await interaction.response.edit_message(embed=gli.processing_embed)
         title = "Yubelle, The Adjudicator"
         entry_msg = ("You would still follow Pandora's path in her place? Very well, I am no longer in a position "
                      "to object. I suppose, even as an echo, such things do indeed fall within my purview.")
         embed_msg = discord.Embed(colour=discord.Colour.blurple(), title=title, description=entry_msg)
         embed_msg.set_image(url=gli.cathedral_img)
         new_view = tarot.SearchTierView(self.player_obj, cathedral=True)
-        await interaction.response.edit_message(embed=embed_msg, view=new_view)
+        await interaction.edit_original_response(embed=embed_msg, view=new_view)
 
     @discord.ui.button(label="?????", style=discord.ButtonStyle.secondary, disabled=True, row=2)
     async def monument_callback(self, interaction: discord.Interaction, button: discord.Button):
         if interaction.user.id != self.player_obj.discord_id:
             return
+        await interaction.response.edit_message(embed=gli.processing_embed)
         await monument.get_monument_embed(interaction, self.ctx_obj, self.player_obj, 2)
 
 
@@ -406,14 +432,16 @@ class AbyssView(discord.ui.View):
     async def purify_callback(self, interaction: discord.Interaction, button: discord.Button):
         if interaction.user.id != self.player_obj.discord_id:
             return
+        await interaction.response.edit_message(embed=gli.processing_embed)
         embed_msg = sm.easy_embed("Black", "Echo of Oblivia, The Void", gli.abyss_msg)
         embed_msg.set_image(url=gli.abyss_img)
-        await interaction.response.edit_message(embed=embed_msg, view=forge.SelectView(self.player_obj, "purify"))
+        await interaction.edit_original_response(embed=embed_msg, view=forge.SelectView(self.player_obj, "purify"))
 
     @discord.ui.button(label="?????", style=discord.ButtonStyle.blurple, row=0)
     async def summon_callback(self, interaction: discord.Interaction, button: discord.Button):
         if interaction.user.id != self.player_obj.discord_id:
             return
+        await interaction.response.edit_message(embed=gli.processing_embed)
         description = (f"Honestly, I'd like to get to know you better. "
                        f"I know the abyssal plane isn't the safest of places to sit and have a discussion. "
                        f"Still, I'm glad that you came. Would you like to know about the past? "
@@ -433,7 +461,8 @@ class AbyssView(discord.ui.View):
                            f"I wish I'd been brave enough to tell her that. I wish I could've told her I'm sorry. "
                            f"But we can only wish for the future, even Chrona cannot rewrite the past. "
                            f"Once again my own wishes elude me. Why was I given this power at all? "
-                           f"\nShould you want to talk to me again, just call my name.")
+                           f"\nShould you want to talk to me again, just call my name."
+                           f"\n**Lore Unlock:**\nhttps://pandoraportal.ca/play.php")
             await self.player_obj.update_misc_data("eleuia_visits", 1)
         embed_msg = sm.easy_embed("Pink", eleuia_title, description)
         embed_msg.set_image(url="")
@@ -442,18 +471,20 @@ class AbyssView(discord.ui.View):
             e_ring = await inventory.read_custom_item(self.player_obj.player_equipped[4])
             if e_ring.item_base_type == "Chromatic Tears":
                 tears_ring = True
-        await interaction.response.edit_message(embed=embed_msg, view=TearLoreView(self.player_obj, tears_ring))
+        await interaction.edit_original_response(embed=embed_msg, view=TearLoreView(self.player_obj, tears_ring))
 
     @discord.ui.button(label="?????", style=discord.ButtonStyle.secondary, disabled=True, row=1)
     async def monument_callback(self, interaction: discord.Interaction, button: discord.Button):
         if interaction.user.id != self.player_obj.discord_id:
             return
+        await interaction.response.edit_message(embed=gli.processing_embed)
         await monument.get_monument_embed(interaction, self.ctx_obj, self.player_obj, 3)
 
     @discord.ui.button(label="★", style=discord.ButtonStyle.secondary, disabled=True, row=1)
     async def gear_monument_callback(self, interaction: discord.Interaction, button: discord.Button):
         if interaction.user.id != self.player_obj.discord_id:
             return
+        await interaction.response.edit_message(embed=gli.processing_embed)
         await monument.get_monument_embed(interaction, self.ctx_obj, self.player_obj, 4)
 
 
@@ -466,18 +497,20 @@ class TearLoreView(discord.ui.View):
     async def eleuia_lore_callback(self, interaction: discord.Interaction, button: discord.Button):
         if interaction.user.id != self.player_obj.discord_id:
             return
+        await interaction.response.edit_message(embed=gli.processing_embed)
         description = f"Lore will go here"
         embed_msg = sm.easy_embed("Pink", eleuia_title, description)
         lore_view = None
-        await interaction.response.edit_message(embed=embed_msg, view=lore_view)
+        await interaction.edit_original_response(embed=embed_msg, view=lore_view)
 
     @discord.ui.button(label="Imbue", style=discord.ButtonStyle.blurple, row=0)
     async def imbue_callback(self, interaction: discord.Interaction, button: discord.Button):
         if interaction.user.id != self.player_obj.discord_id:
             return
+        await interaction.response.edit_message(embed=gli.processing_embed)
         description = "You've collected more of my teardrops?\nYou really don't need to do this, but I'm glad you did."
         embed_msg = sm.easy_embed("Pink", eleuia_title, description)
-        await interaction.response.edit_message(embed=embed_msg, view=ImbueView(self.player_obj))
+        await interaction.edit_original_response(embed=embed_msg, view=ImbueView(self.player_obj))
 
 
 class ImbueView(discord.ui.View):
@@ -501,24 +534,25 @@ class ImbueView(discord.ui.View):
     async def imbue_callback(self, interaction: discord.Interaction, num_tears):
         if interaction.user.id != self.player_obj.discord_id:
             return
+        await interaction.response.edit_message(embed=gli.processing_embed)
         reload_view = ImbueView(self.player_obj)
         if self.embed is not None:
-            await interaction.response.edit_message(embed=self.embed, view=reload_view)
+            await interaction.edit_original_response(embed=self.embed, view=reload_view)
             return
         await self.player_obj.reload_player()
         equipped_ring_id = self.player_obj.player_equipped[4]
         self.embed = sm.easy_embed("Pink", eleuia_title, "Could you put the ring back on for me? Please.")
         if equipped_ring_id == 0:
-            await interaction.response.edit_message(embed=self.embed, view=reload_view)
+            await interaction.edit_original_response(embed=self.embed, view=reload_view)
             return
         equipped_ring = await inventory.read_custom_item(equipped_ring_id)
         if equipped_ring.item_base_type != "Chromatic Tears":
-            await interaction.response.edit_message(embed=self.embed, view=reload_view)
+            await interaction.edit_original_response(embed=self.embed, view=reload_view)
             return
         tears_stock = await inventory.check_stock(self.player_obj, "Gemstone10")
         if tears_stock < num_tears:
             self.embed.description = "I don't think you have that many."
-            await interaction.response.edit_message(embed=self.embed, view=reload_view)
+            await interaction.edit_original_response(embed=self.embed, view=reload_view)
             return
         await inventory.update_stock(self.player_obj, "Gemstone10", (-1 * num_tears))
         equipped_ring.roll_values[0] = str(int(equipped_ring.roll_values[0]) + num_tears)
@@ -526,7 +560,7 @@ class ImbueView(discord.ui.View):
         description = "Such a beautiful glow. I've imbued it for you, may it keep you safe until you return."
         self.embed = await equipped_ring.create_citem_embed()
         self.embed.add_field(name="", value=description, inline=False)
-        await interaction.response.edit_message(embed=self.embed, view=reload_view)
+        await interaction.edit_original_response(embed=self.embed, view=reload_view)
 
 
 async def add_skull_fields(player_obj, embed_msg, method="Return"):
@@ -562,41 +596,45 @@ class SkullSelectView(discord.ui.View):
     async def thana_lore_callback(self, interaction: discord.Interaction, button: discord.Button):
         if interaction.user.id != self.player_obj.discord_id:
             return
+        await interaction.response.edit_message(embed=gli.processing_embed)
         description = f"Lore will go here"
         embed_msg = discord.Embed(colour=discord.Colour.dark_purple(), title=thana_title, description=description)
         lore_view = None
-        await interaction.response.edit_message(embed=embed_msg, view=lore_view)
+        await interaction.edit_original_response(embed=embed_msg, view=lore_view)
 
     @discord.ui.button(label="Return Skulls", style=discord.ButtonStyle.blurple, row=0)
     async def return_skulls_callback(self, interaction: discord.Interaction, button: discord.Button):
         if interaction.user.id != self.player_obj.discord_id:
             return
+        await interaction.response.edit_message(embed=gli.processing_embed)
         description = f"Did you bring skulls for me {self.player_obj.player_username}? I shall reward you."
         embed_msg = discord.Embed(colour=discord.Colour.dark_purple(), title=thana_title, description=description)
         embed_msg = await add_skull_fields(self.player_obj, embed_msg, method="Return")
-        await interaction.response.edit_message(embed=embed_msg, view=SkullsView(self.player_obj, method="Return"))
+        await interaction.edit_original_response(embed=embed_msg, view=SkullsView(self.player_obj, method="Return"))
 
     @discord.ui.button(label="Buy Skulls", style=discord.ButtonStyle.blurple, row=0)
     async def buy_skulls_callback(self, interaction: discord.Interaction, button: discord.Button):
         if interaction.user.id != self.player_obj.discord_id:
             return
+        await interaction.response.edit_message(embed=gli.processing_embed)
         description = ("I'm not really sure...\nOh fine, I suppose you were the one who returned them after all. "
                        "If you're willing to compensate me appropriately, I suppose I can let you have some.")
         embed_msg = discord.Embed(colour=discord.Colour.dark_purple(), title=thana_title, description=description)
         embed_msg = await add_skull_fields(self.player_obj, embed_msg, method="Purchase")
-        await interaction.response.edit_message(embed=embed_msg, view=SkullsView(self.player_obj, method="Purchase"))
+        await interaction.edit_original_response(embed=embed_msg, view=SkullsView(self.player_obj, method="Purchase"))
 
     @discord.ui.button(label="Upgrade Ring", style=discord.ButtonStyle.secondary, row=0, disabled=True)
     async def feed_ring_callback(self, interaction: discord.Interaction, button: discord.Button):
         if interaction.user.id != self.player_obj.discord_id:
             return
+        await interaction.response.edit_message(embed=gli.processing_embed)
         description = ("Did you bring me more skulls so that I can imbue your ring with more of my love? "
                        "Take off your clothes and lie down for me. I'll be with you in a moment once I'm ready."
                        "Place the hand with the ring against my chest.\n"
                        "Now close your eyes, I'll begin the ritual...")
         embed_msg = discord.Embed(colour=discord.Colour.dark_purple(), title=thana_title, description=description)
         embed_msg = await add_skull_fields(self.player_obj, embed_msg, method="Sacrifice")
-        await interaction.response.edit_message(embed=embed_msg, view=SkullsView(self.player_obj, method="Sacrifice"))
+        await interaction.edit_original_response(embed=embed_msg, view=SkullsView(self.player_obj, method="Sacrifice"))
 
 
 class SkullsView(discord.ui.View):
@@ -614,8 +652,9 @@ class SkullsView(discord.ui.View):
     async def handle_skull_interaction(self, interaction_obj, item):
         if interaction_obj.user.id != self.player_obj.discord_id:
             return
+        await interaction_obj.response.edit_message(embed=gli.processing_embed)
         if self.new_embed is not None:
-            await interaction_obj.response.edit_message(embed=self.new_embed, view=self.new_view)
+            await interaction_obj.edit_original_response(embed=self.new_embed, view=self.new_view)
         await self.player_obj.reload_player()
         self.new_embed = discord.Embed(colour=discord.Colour.dark_purple(), title=thana_title, description="")
         self.new_view = SkullsView(self.player_obj, method=self.method)
@@ -626,34 +665,34 @@ class SkullsView(discord.ui.View):
             e_ring = await inventory.read_custom_item(ring_id) if ring_id != 0 else None
             if e_ring is None or e_ring.item_base_type != "Crown of Skulls":
                 self.new_embed.description = "Put the ring back on or I will *END* you. Okay darling?"
-                await interaction_obj.response.edit_message(embed=self.new_embed, view=self.new_view)
+                await interaction_obj.edit_original_response(embed=self.new_embed, view=self.new_view)
                 return
             if skull_stock <= 0:
                 self.new_embed = await e_ring.create_citem_embed()
                 self.new_embed = await add_skull_fields(self.player_obj, self.new_embed, self.method)
                 stock_msg = sm.get_stock_msg(item, skull_stock)
                 self.new_embed.add_field(name="", value=stock_msg, inline=False)
-                await interaction_obj.response.edit_message(embed=self.new_embed, view=self.new_view)
+                await interaction_obj.edit_original_response(embed=self.new_embed, view=self.new_view)
                 return
             await inventory.update_stock(self.player_obj, item.item_id, -1)
             e_ring.roll_values[0] = str(int(e_ring.roll_values[0]) + item.item_base_rate)
             await e_ring.update_stored_item()
             self.new_embed = await e_ring.create_citem_embed()
             self.new_embed = await add_skull_fields(self.player_obj, self.new_embed, self.method)
-            await interaction_obj.response.edit_message(embed=self.new_embed, view=self.new_view)
+            await interaction_obj.edit_original_response(embed=self.new_embed, view=self.new_view)
         # Buy skulls
         elif self.method == "Purchase":
             if self.player_obj.player_coins <= item.item_cost:
                 self.new_embed.description = "You'll need more coins than that to convince me to part with these."
                 self.new_embed = await add_skull_fields(self.player_obj, self.new_embed, method=self.method)
-                await interaction_obj.response.edit_message(embed=self.new_embed, view=self.new_view)
+                await interaction_obj.edit_original_response(embed=self.new_embed, view=self.new_view)
                 return
             _ = await self.player_obj.adjust_coins(item.item_cost, reduction=True)
             self.new_embed.description = (f"Alright, please take good care of it. Each one is precious to me.\n"
                                           f"Thana hands you a valuable item: {item.item_emoji} 1x {item.item_name}")
             self.new_embed = await add_skull_fields(self.player_obj, self.new_embed, method=self.method)
             await inventory.update_stock(self.player_obj, item.item_id, 1)
-            await interaction_obj.response.edit_message(embed=self.new_embed, view=self.new_view)
+            await interaction_obj.edit_original_response(embed=self.new_embed, view=self.new_view)
         # Sell skulls
         elif self.method == "Return":
             if skull_stock <= 0:
@@ -661,14 +700,14 @@ class SkullsView(discord.ui.View):
                                               "Or... is there actually another reason that you called for me?\n")
                 self.new_embed.description += sm.get_stock_msg(item, skull_stock)
                 self.new_embed = await add_skull_fields(self.player_obj, self.new_embed, method=self.method)
-                await interaction_obj.response.edit_message(embed=self.new_embed, view=self.new_view)
+                await interaction_obj.edit_original_response(embed=self.new_embed, view=self.new_view)
                 return
             await inventory.update_stock(self.player_obj, item.item_id, -1)
             coin_msg = await self.player_obj.adjust_coins(item.item_cost // 2, apply_pact=False)
             self.new_embed.description = (f"Thank you for bringing him home. As promised here's your reward.\n"
                                           f"Thana hands you {gli.coin_icon} {coin_msg} Lotus Coins")
             self.new_embed = await add_skull_fields(self.player_obj, self.new_embed, method=self.method)
-            await interaction_obj.response.edit_message(embed=self.new_embed, view=self.new_view)
+            await interaction_obj.edit_original_response(embed=self.new_embed, view=self.new_view)
 
     @discord.ui.button(label="Skull1", style=discord.ButtonStyle.blurple, row=0)
     async def skull1_callback(self, interaction: discord.Interaction, button: discord.Button):
@@ -724,6 +763,7 @@ class InlaySelectView(discord.ui.View):
     async def inlay_select_callback(self, interaction: discord.Interaction):
         if interaction.user.id != self.player_user.discord_id:
             return
+        await interaction.response.edit_message(embed=gli.processing_embed)
         selected_type = int(interaction.data['values'][0])
         # Set default embed.
         embed_msg = discord.Embed(colour=discord.Colour.dark_orange(),
@@ -731,29 +771,29 @@ class InlaySelectView(discord.ui.View):
         await self.player_user.reload_player()
         # Confirm an item is equipped in the selected slot.
         if self.player_user.player_equipped[selected_type] == 0:
-            await interaction.response.edit_message(embed=embed_msg)
+            await interaction.edit_original_response(embed=embed_msg)
             return
         e_item, gem_item = await asyncio.gather(
             inventory.read_custom_item(self.player_user.player_equipped[selected_type]),
             inventory.read_custom_item(self.gem_id))
         if e_item is None or gem_item is None:
             embed_msg.description = "Cannot load items."
-            await interaction.response.edit_message(embed=embed_msg)
+            await interaction.edit_original_response(embed=embed_msg)
             return
         # Confirm the item has sockets available.
         if e_item.item_num_sockets != 1:
             embed_msg.description = "The equipped item has no available sockets."
-            await interaction.response.edit_message(embed=embed_msg)
+            await interaction.edit_original_response(embed=embed_msg)
             return
         # Confirm the tier is eligible
         if e_item.item_tier < gem_item.item_tier:
             embed_msg.description = "Gem must be inlaid in an equal or higher tier item."
-            await interaction.response.edit_message(embed=embed_msg)
+            await interaction.edit_original_response(embed=embed_msg)
             return
         # Display confirmation menu.
         embed_msg = await e_item.create_citem_embed()
         confirm_view = ConfirmInlayView(self.player_user, e_item, self.gem_id)
-        await interaction.response.edit_message(embed=embed_msg, view=confirm_view)
+        await interaction.edit_original_response(embed=embed_msg, view=confirm_view)
 
 
 class ConfirmInlayView(discord.ui.View):
@@ -765,21 +805,22 @@ class ConfirmInlayView(discord.ui.View):
     async def tier_one_callback(self, interaction: discord.Interaction, button: discord.Button):
         if interaction.user.id != self.player_user.discord_id:
             return
+        await interaction.response.edit_message(embed=gli.processing_embed)
         if not await inventory.if_custom_exists(self.e_item.item_id):
             embed_msg = await self.e_item.create_citem_embed()
             embed_msg.add_field(name="Inlay Failed!", value=f"Item with id {self.e_item.item_id}", inline=False)
-            await interaction.response.edit_message(embed=embed_msg, view=None)
+            await interaction.edit_original_response(embed=embed_msg, view=None)
             return
         if not await inventory.if_custom_exists(self.gem_id):
             embed_msg = await self.e_item.create_citem_embed()
             embed_msg.add_field(name="Inlay Failed!", value=f"Item with id {self.gem_id}", inline=False)
-            await interaction.response.edit_message(embed=embed_msg, view=None)
+            await interaction.edit_original_response(embed=embed_msg, view=None)
             return
         # Update the inlaid gem and re-display the item.
         self.e_item.item_inlaid_gem_id = self.gem_id
         await self.e_item.update_stored_item()
         embed_msg = await self.e_item.create_citem_embed()
-        await interaction.response.edit_message(embed=embed_msg, view=None)
+        await interaction.edit_original_response(embed=embed_msg, view=None)
 
     @discord.ui.button(label="Cancel", style=discord.ButtonStyle.red, emoji="✖️")
     async def cancel_callback(self, interaction: discord.Interaction, button: discord.Button):
@@ -822,6 +863,7 @@ class StaminaView(discord.ui.View):
     async def transmute_callback(self, interaction: discord.Interaction, button: discord.Button):
         if interaction.user.id != self.player.discord_id:
             return
+        await interaction.response.edit_message(embed=gli.processing_embed)
         await self.player.reload_player()
         stamina_embed = await self.player.create_stamina_embed()
         new_mode = "Basic"
@@ -830,14 +872,15 @@ class StaminaView(discord.ui.View):
             description = "Potions will be consumed at 10x the rate, to grant EXP instead of stamina."
             stamina_embed.add_field(name="EXP Transmutation", value=description, inline=False)
         new_view = StaminaView(self.ctx_obj, self.player, new_mode)
-        await interaction.response.edit_message(embed=stamina_embed, view=new_view)
+        await interaction.edit_original_response(embed=stamina_embed, view=new_view)
 
     async def drink_potion(self, interaction, potion_version, potion_value):
         if interaction.user.id != self.player.discord_id:
             return
+        await interaction.response.edit_message(embed=gli.processing_embed)
         await self.player.reload_player()
         embed_msg, lvl_change = await self.use_stamina_potion(f"Potion{potion_version}", potion_value)
-        await interaction.response.edit_message(embed=embed_msg)
+        await interaction.edit_original_response(embed=embed_msg)
         if lvl_change == 0:
             return
         await sm.send_notification(self.ctx_obj, self.player, "Level", lvl_change)
@@ -932,35 +975,38 @@ class GearView(discord.ui.View):
     async def previous_button(self, interaction: discord.Interaction, button: discord.Button):
         if interaction.user.id != self.player_user.discord_id and interaction.user.id != self.target_user.discord_id:
             return
+        await interaction.response.edit_message(embed=gli.processing_embed)
         if self.new_embed is not None:
-            await interaction.response.edit_message(embed=self.new_embed, view=self.new_view)
+            await interaction.edit_original_response(embed=self.new_embed, view=self.new_view)
             return
         self.new_embed = await self.cycle_gear(-1)
         self.new_view = GearView(self.player_user, self.target_user, self.current_position, self.view_type)
-        await interaction.response.edit_message(embed=self.new_embed, view=self.new_view)
+        await interaction.edit_original_response(embed=self.new_embed, view=self.new_view)
 
     @discord.ui.button(style=discord.ButtonStyle.success)
     async def toggle_view_button(self, interaction: discord.Interaction, button: discord.Button):
         if interaction.user.id != self.player_user.discord_id and interaction.user.id != self.target_user.discord_id:
             return
+        await interaction.response.edit_message(embed=gli.processing_embed)
         if self.new_embed is not None:
-            await interaction.response.edit_message(embed=self.new_embed, view=self.new_view)
+            await interaction.edit_original_response(embed=self.new_embed, view=self.new_view)
             return
         self.view_type = "Gear" if self.view_type == "Gem" else "Gem"
         self.new_embed = await self.cycle_gear(0)
         self.new_view = GearView(self.player_user, self.target_user, self.current_position, self.view_type)
-        await interaction.response.edit_message(embed=self.new_embed, view=self.new_view)
+        await interaction.edit_original_response(embed=self.new_embed, view=self.new_view)
 
     @discord.ui.button(style=discord.ButtonStyle.blurple, emoji="➡️")
     async def next_button(self, interaction: discord.Interaction, button: discord.Button):
         if interaction.user.id != self.player_user.discord_id and interaction.user.id != self.target_user.discord_id:
             return
+        await interaction.response.edit_message(embed=gli.processing_embed)
         if self.new_embed is not None:
-            await interaction.response.edit_message(embed=self.new_embed, view=self.new_view)
+            await interaction.edit_original_response(embed=self.new_embed, view=self.new_view)
             return
         self.new_embed = await self.cycle_gear(1)
         self.new_view = GearView(self.player_user, self.target_user, self.current_position, self.view_type)
-        await interaction.response.edit_message(embed=self.new_embed, view=self.new_view)
+        await interaction.edit_original_response(embed=self.new_embed, view=self.new_view)
 
 
 class ManageCustomItemView(discord.ui.View):
@@ -974,18 +1020,20 @@ class ManageCustomItemView(discord.ui.View):
     @discord.ui.button(label="Equip", style=discord.ButtonStyle.blurple, emoji="⚔️")
     async def equip_item(self, interaction: discord.Interaction, button: discord.Button):
         if interaction.user.id == self.player_user.discord_id:
+            await interaction.response.edit_message(embed=gli.processing_embed)
             new_msg = await self.selected_item.create_citem_embed()
             if "D" in self.selected_item.item_type:
                 new_view = InlaySelectView(self.player_user, self.selected_item.item_id)
-                await interaction.response.edit_message(view=new_view)
+                await interaction.edit_original_response(view=new_view)
             else:
                 response = await self.player_user.equip(self.selected_item)
                 new_msg.add_field(name=response, value="", inline=False)
-                await interaction.response.edit_message(embed=new_msg, view=None)
+                await interaction.edit_original_response(embed=new_msg, view=None)
 
     @discord.ui.button(label="Sell", style=discord.ButtonStyle.success, emoji="💲")
     async def sell_item(self, interaction: discord.Interaction, button: discord.Button):
         if interaction.user.id == self.player_user.discord_id:
+            await interaction.response.edit_message(embed=gli.processing_embed)
             selected_item = await inventory.read_custom_item(self.selected_item.item_id)
             if not self.stored_embed:
                 if selected_item.player_owner == self.player_user.player_id:
@@ -998,7 +1046,7 @@ class ManageCustomItemView(discord.ui.View):
                                         value="Item is not owned or currently listed on the bazaar.", inline=False)
             else:
                 new_embed = self.stored_embed
-            await interaction.response.edit_message(embed=new_embed, view=None)
+            await interaction.edit_original_response(embed=new_embed, view=None)
 
 
 class TermsOfServiceView(discord.ui.View):
@@ -1010,10 +1058,11 @@ class TermsOfServiceView(discord.ui.View):
     async def accept_tos(self, interaction: discord.Interaction, button: discord.Button):
         if interaction.user.id != self.discord_id:
             return
+        await interaction.response.edit_message(embed=gli.processing_embed)
         title = "Register - Select Class"
         embed_msg = discord.Embed(colour=discord.Colour.dark_teal(), title=title, description=questdata.reg_msg)
         embed_msg.set_image(url="https://www.pandoraportal.ca/gallery/Displays/Banners/Pandora%20Awoken.png")
-        await interaction.response.edit_message(embed=embed_msg, view=ClassSelect(self.discord_id, self.username))
+        await interaction.edit_original_response(embed=embed_msg, view=ClassSelect(self.discord_id, self.username))
 
     @discord.ui.button(label="Deny", style=discord.ButtonStyle.red)
     async def deny_tos(self, interaction: discord.Interaction, button: discord.Button):
@@ -1037,6 +1086,7 @@ class ClassSelect(discord.ui.View):
     async def class_callback(self, interaction: discord.Interaction):
         if interaction.user.id != self.discord_id:
             return
+        await interaction.response.edit_message(embed=gli.processing_embed)
         new_player = player.PlayerProfile()
         new_player.player_username = self.username
         chosen_class = interaction.data['values'][0]
@@ -1048,7 +1098,7 @@ class ClassSelect(discord.ui.View):
         await asyncio.sleep(1)
         await interaction.user.remove_roles(remove_role)
         embed_msg = discord.Embed(colour=discord.Colour.dark_teal(), title="Registration Complete!", description=msg)
-        await interaction.response.edit_message(embed=embed_msg, view=None)
+        await interaction.edit_original_response(embed=embed_msg, view=None)
 
 
 class ClassChangeView(discord.ui.View):
@@ -1079,8 +1129,9 @@ class ClassChangeView(discord.ui.View):
     async def change_callback(self, interaction: discord.Interaction, class_select: discord.ui.Select):
         if interaction.user.id != self.player_obj.discord_id:
             return
+        await interaction.response.edit_message(embed=gli.processing_embed)
         if self.embed is not None:
-            await interaction.response.edit_message(embed=self.embed, view=None)
+            await interaction.edit_original_response(embed=self.embed, view=None)
             return
         await self.player_obj.reload_player()
         current_class = self.player_obj.player_class
@@ -1099,7 +1150,7 @@ class ClassChangeView(discord.ui.View):
             response = "Not enough tokens. I refuse."
         self.embed = discord.Embed(colour=discord.Colour.dark_teal(),
                                    title="Mysmir, The Changer", description=response)
-        await interaction.response.edit_message(embed=self.embed, view=None)
+        await interaction.edit_original_response(embed=self.embed, view=None)
 
 
 class StatView(discord.ui.View):
@@ -1109,38 +1160,45 @@ class StatView(discord.ui.View):
 
     @discord.ui.button(label="Offence", style=discord.ButtonStyle.blurple, row=1)
     async def offensive_stats(self, interaction: discord.Interaction, button: discord.Button):
+        await interaction.response.edit_message(embed=gli.processing_embed)
         new_msg = await self.target_user.get_player_stats(1)
-        await interaction.response.edit_message(embed=new_msg)
+        await interaction.edit_original_response(embed=new_msg)
 
     @discord.ui.button(label="Defence", style=discord.ButtonStyle.blurple, row=1)
     async def defensive_stats(self, interaction: discord.Interaction, button: discord.Button):
+        await interaction.response.edit_message(embed=gli.processing_embed)
         new_msg = await self.target_user.get_player_stats(3)
-        await interaction.response.edit_message(embed=new_msg)
+        await interaction.edit_original_response(embed=new_msg)
 
     @discord.ui.button(label="Details", style=discord.ButtonStyle.blurple, row=1)
     async def breakdown(self, interaction: discord.Interaction, button: discord.Button):
+        await interaction.response.edit_message(embed=gli.processing_embed)
         new_msg = await self.target_user.get_player_stats(2)
-        await interaction.response.edit_message(embed=new_msg)
+        await interaction.edit_original_response(embed=new_msg)
 
     @discord.ui.button(label="Application", style=discord.ButtonStyle.blurple, row=1)
     async def appli_stats(self, interaction: discord.Interaction, button: discord.Button):
+        await interaction.response.edit_message(embed=gli.processing_embed)
         new_msg = await self.target_user.get_player_stats(4)
-        await interaction.response.edit_message(embed=new_msg)
+        await interaction.edit_original_response(embed=new_msg)
 
     @discord.ui.button(label="Points", style=discord.ButtonStyle.blurple, row=2)
     async def bonus_stats(self, interaction: discord.Interaction, button: discord.Button):
+        await interaction.response.edit_message(embed=gli.processing_embed)
         new_msg = await self.target_user.get_player_stats(5)
-        await interaction.response.edit_message(embed=new_msg)
+        await interaction.edit_original_response(embed=new_msg)
 
     @discord.ui.button(label="Glyphs", style=discord.ButtonStyle.blurple, row=2)
     async def glyphs(self, interaction: discord.Interaction, button: discord.Button):
+        await interaction.response.edit_message(embed=gli.processing_embed)
         new_msg = await self.target_user.get_player_stats(6)
-        await interaction.response.edit_message(embed=new_msg)
+        await interaction.edit_original_response(embed=new_msg)
 
     @discord.ui.button(label="Misc", style=discord.ButtonStyle.blurple, row=2)
     async def misc(self, interaction: discord.Interaction, button: discord.Button):
+        await interaction.response.edit_message(embed=gli.processing_embed)
         new_msg = await self.target_user.get_player_stats(7)
-        await interaction.response.edit_message(embed=new_msg)
+        await interaction.edit_original_response(embed=new_msg)
 
     @discord.ui.button(label="Webpage", style=discord.ButtonStyle.success, row=2)
     async def webpage(self, interaction: discord.Interaction, button: discord.Button):
@@ -1160,6 +1218,7 @@ class BuyView(discord.ui.View):
     async def confirm(self, interaction: discord.Interaction, button: discord.Button):
         try:
             if interaction.user.id == self.player_user.discord_id:
+                await interaction.response.edit_message(embed=gli.processing_embed)
                 if self.selected_item.player_owner == -1:
                     # COMBINE LATER
                     item_cost = await bazaar.get_item_cost(self.selected_item.item_id)
@@ -1173,7 +1232,7 @@ class BuyView(discord.ui.View):
                         display_msg = "PURCHASE COMPLETED!"
                 embed_msg = await self.selected_item.create_citem_embed()
                 embed_msg.add_field(name=display_msg, value="", inline=False)
-                await interaction.response.edit_message(embed=embed_msg, view=None)
+                await interaction.edit_original_response(embed=embed_msg, view=None)
         except Exception as e:
             print(e)
 
@@ -1205,6 +1264,7 @@ class PointsView(discord.ui.View):
 
     async def path_select_callback(self, interaction: discord.Interaction):
         if interaction.user.id == self.player_obj.discord_id:
+            await interaction.response.edit_message(embed=gli.processing_embed)
             await self.player_obj.reload_player()
             selected_path = interaction.data['values'][0]
             if selected_path == "Reset":
@@ -1220,7 +1280,7 @@ class PointsView(discord.ui.View):
             else:
                 embed_msg = await skillpaths.build_points_embed(self.player_obj, selected_path)
                 new_view = PointsMenu(self.player_obj, selected_path)
-            await interaction.response.edit_message(embed=embed_msg, view=new_view)
+            await interaction.edit_original_response(embed=embed_msg, view=new_view)
 
 
 class PointsMenu(discord.ui.View):
@@ -1234,20 +1294,23 @@ class PointsMenu(discord.ui.View):
     @discord.ui.button(emoji="1️⃣", label="Allocate 1", style=discord.ButtonStyle.primary)
     async def add_one_point(self, interaction: discord.Interaction, button: discord.ui.Button):
         if interaction.user.id == self.player_obj.discord_id:
+            await interaction.response.edit_message(embed=gli.processing_embed)
             await self.allocate_callback(1)
-            await interaction.response.edit_message(embed=self.embed_msg, view=self.view)
+            await interaction.edit_original_response(embed=self.embed_msg, view=self.view)
 
     @discord.ui.button(emoji="5️⃣", label="Allocate 5", style=discord.ButtonStyle.primary)
     async def add_five_points(self, interaction: discord.Interaction, button: discord.ui.Button):
         if interaction.user.id == self.player_obj.discord_id:
+            await interaction.response.edit_message(embed=gli.processing_embed)
             await self.allocate_callback(5)
-            await interaction.response.edit_message(embed=self.embed_msg, view=self.view)
+            await interaction.edit_original_response(embed=self.embed_msg, view=self.view)
 
     @discord.ui.button(emoji="🔟", label="Allocate 10", style=discord.ButtonStyle.primary)
     async def add_ten_points(self, interaction: discord.Interaction, button: discord.ui.Button):
         if interaction.user.id == self.player_obj.discord_id:
+            await interaction.response.edit_message(embed=gli.processing_embed)
             await self.allocate_callback(10)
-            await interaction.response.edit_message(embed=self.embed_msg, view=self.view)
+            await interaction.edit_original_response(embed=self.embed_msg, view=self.view)
 
     async def allocate_callback(self, num_points):
         if not self.embed_msg:
@@ -1260,10 +1323,11 @@ class PointsMenu(discord.ui.View):
     @discord.ui.button(label="Reselect", style=discord.ButtonStyle.secondary)
     async def reselect_path_button(self, interaction: discord.Interaction, button: discord.ui.Button):
         if interaction.user.id == self.player_obj.discord_id:
+            await interaction.response.edit_message(embed=gli.processing_embed)
             await self.player_obj.reload_player()
             embed_msg = await skillpaths.create_path_embed(self.player_obj)
             points_view = PointsView(self.player_obj)
-            await interaction.response.edit_message(embed=embed_msg, view=points_view)
+            await interaction.edit_original_response(embed=embed_msg, view=points_view)
 
 
 class ResetView(discord.ui.View):
@@ -1275,6 +1339,7 @@ class ResetView(discord.ui.View):
     @discord.ui.button(label="Confirm Reset", style=discord.ButtonStyle.danger)
     async def confirm_reset_button(self, interaction: discord.Interaction, button: discord.ui.Button):
         if interaction.user.id == self.player_obj.discord_id:
+            await interaction.response.edit_message(embed=gli.processing_embed)
             if not self.embed_msg:
                 await self.player_obj.reload_player()
                 token_cost = sum(self.player_obj.player_stats) // 10
@@ -1289,17 +1354,18 @@ class ResetView(discord.ui.View):
                 self.embed_msg = await skillpaths.create_path_embed(self.player_obj)
                 self.embed_msg.add_field(name=result_msg, value="", inline=False)
             points_view = PointsView(self.player_obj)
-            await interaction.response.edit_message(embed=self.embed_msg, view=points_view)
+            await interaction.edit_original_response(embed=self.embed_msg, view=points_view)
 
     @discord.ui.button(label="Reselect", style=discord.ButtonStyle.secondary)
     async def reselect_path_button(self, interaction: discord.Interaction, button: discord.ui.Button):
         if interaction.user.id == self.player_obj.discord_id:
+            await interaction.response.edit_message(embed=gli.processing_embed)
             await self.player_obj.reload_player()
             embed_msg = await skillpaths.create_path_embed(self.player_obj)
             points_view = PointsView(self.player_obj)
             if self.embed_msg:
                 embed_msg.add_field(name="ALL SKILL POINTS RESET!", value="", inline=False)
-            await interaction.response.edit_message(embed=embed_msg, view=points_view)
+            await interaction.edit_original_response(embed=embed_msg, view=points_view)
 
 
 class LinkReviewView(discord.ui.View):
@@ -1389,6 +1455,10 @@ class ColourView(discord.ui.View):
              "label": "Flame", "emoji": "<:Gemstone0:1415356608753696868>", "row": 2},
             {"title": "Gem Title - Plague Coalescence", "role": "Gem Colour 9",
              "label": "Plague", "emoji": "🐀", "row": 2},
+            {"title": "Gem Title - Champion's Sacrifice", "role": "Gem Colour 10",
+             "label": "Champ", "emoji": "⚔️", "row": 3},
+            {"title": "Gem Title - Named One", "role": "Gem Colour 11",
+             "label": "Named", "emoji": "<:Gemstone7:1415356697408704523>", "row": 3},
             # Exclusive Titles
             {"title": "Exclusive", "role": "Relic Colour 1",
              "label": "Exclusive", "emoji": "<:r_lotus:1275615878456541215>", "row": 3},
@@ -1399,10 +1469,12 @@ class ColourView(discord.ui.View):
             {"title": "Collection", "role": "Relic Colour 3",
              "label": "Soul", "emoji": "<:Gemstone7:1415356697408704523>", "row": 3},
             # Special Titles
+            {"title": "Active Subscriber", "role": "Subscription Colour",
+             "label": "Sub", "emoji": "<:Star_PinkBlue:1179728849580343346>", "row": 4},
             {"title": "Precious Title - Dragon Coin", "role": "Relic Colour 4",
-             "label": "Coin", "emoji": "<:r_lotus:1275615878456541215>", "row": 4},
+             "label": "Coin", "emoji": "<:ARDN_icon:1495486049227374642>", "row": 4},
             {"title": "Precious Title - Cherished Hearts", "role": "Relic Colour 5",
-             "label": "Hearts", "emoji": "<:r_lotus:1275615878456541215>", "row": 4},
+             "label": "Hearts", "emoji": "<:DiamondHeart:1493330386833375232>", "row": 4},
             # Perfection Titles
             {"title": "Perfection Title - Golden Wish", "role": "Perfect Colour 1",
              "label": "Perfect", "emoji": "<:r_gem:1275615826015424543>", "row": 4}
@@ -1418,7 +1490,7 @@ class ColourView(discord.ui.View):
                 "Ranking Title - Damage Rank #1",
                 "Ranking Title - Player Level Rank #1",
                 "Ranking Title - Activity Rank #1",
-                "Ranking Title - Vouch Rank #1"
+                "Ranking Title - Headpat Rank #1"
             ],
             "Collection": [
                 "Collection Title - Soul of Destiny",
@@ -1447,6 +1519,7 @@ class ColourView(discord.ui.View):
             self.add_item(btn)
 
     async def assign_colour(self, interaction, selected_role):
+        await interaction.response.edit_message(embed=gli.processing_embed)
         target_role = discord.utils.get(interaction.guild.roles, name=selected_role)
         roles_to_remove = [discord.utils.get(interaction.guild.roles, name=role_set["role"])
                            for role_set in self.colour_roles]
@@ -1456,6 +1529,6 @@ class ColourView(discord.ui.View):
         await interaction.user.add_roles(target_role)
         role_msg = "Roles have successfully been updated. New colour applied."
         colour_embed = sm.easy_embed("Green", "Colour Selector", role_msg)
-        await interaction.response.edit_message(embed=colour_embed, view=ColourView(self.ctx))
+        await interaction.edit_original_response(embed=colour_embed, view=ColourView(self.ctx))
 
 
