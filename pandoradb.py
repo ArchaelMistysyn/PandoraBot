@@ -1,12 +1,13 @@
 # Data handling
 import pandas as pd
 import time
+import asyncio
 
 # Query and Engine handling
 from sqlalchemy import text, create_engine
 
 # Session handling
-from sqlalchemy.orm import scoped_session, sessionmaker
+from sqlalchemy.orm import sessionmaker
 
 # Error handling
 from mysql.connector.errors import Error as dbError
@@ -28,64 +29,47 @@ def start_engine():
         # Recycle time 6 hours.
         engine = create_engine(engine_url, pool_size=10, max_overflow=20, pool_recycle=43200, pool_pre_ping=True)
         SessionFactory = sessionmaker(bind=engine)
-        session_obj = scoped_session(SessionFactory)
-        return Database(session_obj)
-    except dbError as err:
+        return Database(SessionFactory)
+    except (SQLAlchemyError, pymysql.err.Error) as err:
         print("Database Error: {}".format(err))
         return None
 
 
 class Database:
-    def __init__(self, session):
-        self.session = session
+    def __init__(self, session_factory):
+        self.session_factory = session_factory
+
+    def _run_query(self, raw_query, return_value=False, batch=False, params=None):
+        retries = 0
+        query = text(raw_query)
+
+        while retries < 3:
+            try:
+                with self.session_factory() as session:
+                    if return_value:
+                        if batch and params is not None:
+                            results = []
+                            for param_set in params:
+                                result = session.execute(query, param_set)
+                                results.append(pd.DataFrame(result.fetchall(), columns=result.keys()))
+                            return results
+                        result = session.execute(query, params or {})
+                        return pd.DataFrame(result.fetchall(), columns=result.keys())
+                    with session.begin():
+                        if batch and params is not None:
+                            session.execute(query, params)
+                        else:
+                            session.execute(query, params or {})
+                    return None
+            except (SQLAlchemyError, pymysql.err.Error) as err:
+                retries += 1
+                print(f"Retrying... Attempt {retries}: {err}")
+                if retries >= 3:
+                    raise
+                time.sleep(0.5 * (2 ** retries))
 
     async def run_session_query(self, raw_query, return_value=False, batch=False, params=None):
-        retries, max_retries, backoff_factor = 0, 3, 0.5
-        results = []
-        while retries < max_retries:
-            try:
-                query = text(raw_query)
-                # Handle query or batch with a return value
-                if return_value:
-                    if batch and params is not None:
-                        for param_set in params:
-                            result = self.session.execute(query, param_set)
-                            df = pd.DataFrame(result.fetchall(), columns=result.keys())
-                            results.append(df)
-                        return results
-                    else:
-                        result = self.session.execute(query, params)
-                        return pd.DataFrame(result.fetchall(), columns=result.keys())
-                # Handle query with no return value
-                if batch and params is not None:
-                    with self.session.begin_nested():
-                        for param_set in params:
-                            self.session.execute(query, param_set)
-                    return
-                else:
-                    execution_params = params if params is not None else {}
-                    if not self.session.is_active:
-                        self.session.begin()
-                    self.session.execute(query, execution_params)
-                    if not self.session.is_active:
-                        self.session.commit()
-                    return
-            except (SQLAlchemyError, dbError, pymysql.err.OperationalError) as err:
-                self.session.rollback()
-                retries += 1
-                time.sleep(backoff_factor * (2 ** retries))
-                # if retries > 1:
-                print(f"Retrying... Attempt {retries} due to Database Error: {err}")
-            except Exception as e:
-                print(f"Unhandled exception: {e}")
-                break
-
-    def close_session(self, exc=None):
-        if exc:
-            self.session.rollback()
-        else:
-            self.session.commit()
-        self.session.remove()
+        return await asyncio.to_thread(self._run_query, raw_query, return_value, batch, params)
 
 
 pandora_database = start_engine()
@@ -94,6 +78,3 @@ pandora_database = start_engine()
 async def run_query(raw_query, return_value=False, batch=False, params=None):
     return await pandora_database.run_session_query(raw_query, return_value=return_value, batch=batch, params=params)
 
-
-async def close_database_session():
-    pandora_database.close_session()
